@@ -4,6 +4,8 @@ import androidx.room.*
 import io.github.aedev.flow.data.local.entity.WatchHistoryEntity
 import kotlinx.coroutines.flow.Flow
 
+data class WatchedVideoIdentity(val videoId: String, val serviceId: Int)
+
 @Dao
 interface WatchHistoryDao {
 
@@ -78,6 +80,10 @@ interface WatchHistoryDao {
      */
     @Query("SELECT videoId FROM watch_history WHERE isMusic = 0 AND isLocal = 0")
     suspend fun getAllWatchedVideoIds(): List<String>
+
+    /** Same rows as [getAllWatchedVideoIds], with the serviceId needed to rebuild a real per-service URL. */
+    @Query("SELECT videoId, serviceId FROM watch_history WHERE isMusic = 0 AND isLocal = 0")
+    suspend fun getAllWatchedVideoIdentities(): List<WatchedVideoIdentity>
 
     @Query("""
         SELECT videoId FROM watch_history

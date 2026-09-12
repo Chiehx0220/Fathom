@@ -348,6 +348,7 @@ fun VideoPlayerHost(
     // Short video prompt
     ShortVideoPromptEffect(
         videoDuration = completeVideo.duration,
+        videoServiceId = completeVideo.serviceId,
         screenState = screenState,
         isInQueue = playerState.queueSize > 1,
         disableShortsPlayer = prefs.disableShortsPlayer,

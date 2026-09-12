@@ -1,5 +1,8 @@
 package org.schabi.newpipe.localserver
 
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.ServiceList
+
 /**
  * Local Server keys videos/channels by their full YouTube URL; Flow's native subscription and
  * watch-history storage keys them by bare ID. These convert between the two at the boundary
@@ -9,12 +12,25 @@ package org.schabi.newpipe.localserver
 fun channelIdToUrl(channelId: String): String = "https://www.youtube.com/channel/$channelId"
 
 /**
- * Extracts a bare channel ID from a channel URL. Handles the canonical `/channel/UC...` form
- * (what NewPipeExtractor's YouTube uploader/channel URLs resolve to in the vast majority of
- * cases this module encounters them) as well as `/@handle`, `/c/name`, `/user/name` as a
- * fallback, so a vanity URL still yields *a* stable, consistently-reproducible key rather than
- * silently failing - even though it won't necessarily match the canonical UC id Flow's native
- * subscribe flow resolves for the same channel via a full page extraction.
+ * Same as [channelIdToUrl], but resolves through [serviceId]'s own link handler when it isn't
+ * YouTube, falling back to the plain YouTube form if resolution fails.
+ */
+fun channelIdToUrl(channelId: String, serviceId: Int): String {
+    if (serviceId == ServiceList.YouTube.serviceId) return channelIdToUrl(channelId)
+    return runCatching { NewPipe.getService(serviceId).channelLHFactory.getUrl(channelId) }
+        .getOrDefault(channelIdToUrl(channelId))
+}
+
+/**
+ * Extracts a bare channel ID from a channel URL. Tries manual parsing of the canonical
+ * `/channel/UC...` form (what NewPipeExtractor's YouTube uploader/channel URLs resolve to in the
+ * vast majority of cases this module encounters them) as well as `/@handle`, `/c/name`,
+ * `/user/name` FIRST - YouTube's own [NewPipe.getServiceByUrl] factory returns the id prefixed
+ * with its type (`"channel/UC..."`, not bare `"UC..."`), which doesn't match the bare-id format
+ * every other caller in this module (channelIdToUrl, subscription/history storage) assumes, so it
+ * must not be used for YouTube. Falls back to [NewPipe.getServiceByUrl] only when none of those
+ * markers match, which is how a non-YouTube URL (e.g. a Bilibili space page) resolves through its
+ * own extractor instead of being forced through YouTube's URL shape.
  */
 fun channelUrlToId(url: String?): String? {
     if (url == null) return null
@@ -30,10 +46,23 @@ fun channelUrlToId(url: String?): String? {
             if (id.isNotEmpty()) return if (marker == "/@") "@$id" else id
         }
     }
-    return null
+    return runCatching { NewPipe.getServiceByUrl(url).channelLHFactory.getId(url) }.getOrNull()
 }
 
 fun videoIdToUrl(videoId: String): String = "https://www.youtube.com/watch?v=$videoId"
+
+/**
+ * Same as [videoIdToUrl], but resolves the URL through [serviceId]'s own link handler when it
+ * isn't YouTube (e.g. Bilibili), falling back to the plain YouTube form if resolution fails.
+ * Local Server's own [InfoItem][org.schabi.newpipe.extractor.InfoItem] rendering keys everything
+ * off `item.url`, so a non-YouTube video whose URL doesn't round-trip back through its own
+ * extractor silently breaks resume/watched-matching/re-extraction for it.
+ */
+fun videoIdToUrl(videoId: String, serviceId: Int): String {
+    if (serviceId == ServiceList.YouTube.serviceId) return videoIdToUrl(videoId)
+    return runCatching { NewPipe.getService(serviceId).streamLHFactory.getUrl(videoId) }
+        .getOrDefault(videoIdToUrl(videoId))
+}
 
 fun playlistIdToUrl(playlistId: String): String = "https://www.youtube.com/playlist?list=$playlistId"
 

@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import io.github.aedev.flow.data.local.dao.WatchedVideoIdentity
 import io.github.aedev.flow.data.local.entity.WatchHistoryEntity
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.coroutines.CoroutineScope
@@ -112,6 +113,9 @@ class ViewHistory private constructor(private val context: Context) {
 
     /** Bare IDs of every non-music, non-local video the user has watched (any progress > 0). */
     suspend fun getAllWatchedVideoIds(): Set<String> = dao.getAllWatchedVideoIds().toHashSet()
+
+    /** Same as [getAllWatchedVideoIds], paired with each video's serviceId. */
+    suspend fun getAllWatchedVideoIdentities(): List<WatchedVideoIdentity> = dao.getAllWatchedVideoIdentities()
 
     /**
      * Create-or-touch a history entry **without** overwriting an already-saved

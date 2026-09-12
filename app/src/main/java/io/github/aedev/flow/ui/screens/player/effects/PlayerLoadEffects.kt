@@ -12,6 +12,7 @@ import io.github.aedev.flow.ui.screens.player.state.SubtitleSelection
 import io.github.aedev.flow.ui.screens.player.state.VideoPlayerUiState
 import io.github.aedev.flow.utils.NetworkState
 import kotlinx.coroutines.delay
+import org.schabi.newpipe.extractor.ServiceList
 
 @Composable
 internal fun VideoLoadEffect(
@@ -105,18 +106,22 @@ internal fun GlobalVideoSyncEffect(
 @Composable
 internal fun ShortVideoPromptEffect(
     videoDuration: Int,
+    videoServiceId: Int,
     screenState: PlayerScreenState,
     isInQueue: Boolean,
     disableShortsPlayer: Boolean,
     showShortsPlayerPrompt: Boolean,
 ) {
-    LaunchedEffect(videoDuration, screenState.hasShownShortsPrompt, isInQueue, disableShortsPlayer, showShortsPlayerPrompt) {
+    LaunchedEffect(videoDuration, videoServiceId, screenState.hasShownShortsPrompt, isInQueue, disableShortsPlayer, showShortsPlayerPrompt) {
         if (disableShortsPlayer || !showShortsPlayerPrompt) {
             screenState.showShortsPrompt = false
             return@LaunchedEffect
         }
 
-        if (!isInQueue && !screenState.hasShownShortsPrompt && videoDuration > 0 && videoDuration <= 80) {
+        // The Shorts player only knows how to play back YouTube streams; other services have no
+        // equivalent, so suggesting it there just leads to a dead end.
+        val isYouTube = videoServiceId == ServiceList.YouTube.serviceId
+        if (isYouTube && !isInQueue && !screenState.hasShownShortsPrompt && videoDuration > 0 && videoDuration <= 80) {
             delay(1000)
             if (!disableShortsPlayer && showShortsPlayerPrompt) {
                 screenState.showShortsPrompt = true

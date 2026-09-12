@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import org.schabi.newpipe.extractor.InfoItem
+import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -56,7 +57,7 @@ private fun HistoryDbHelper.viewHistory() = ViewHistory.getInstance(appContext)
 /** Subscriptions as [InfoItem]s, same shape the old SQLite-backed `getSubscriptions()` returned. */
 fun HistoryDbHelper.nativeSubscriptions(): List<InfoItem> = runBlocking {
     subscriptionRepository().getAllSubscriptions().first().map { sub ->
-        val item = ChannelInfoItem(0, channelIdToUrl(sub.channelId), sub.channelName)
+        val item = ChannelInfoItem(sub.serviceId, channelIdToUrl(sub.channelId, sub.serviceId), sub.channelName)
         if (sub.channelThumbnail.isNotEmpty()) {
             item.thumbnailUrl = sub.channelThumbnail
         }
@@ -72,8 +73,9 @@ fun HistoryDbHelper.nativeIsSubscribed(channelUrl: String?): Boolean {
 /** Subscribes, or refreshes name/avatar if already subscribed - never resets tracked state. */
 fun HistoryDbHelper.nativeAddSubscription(channelUrl: String, channelName: String?, channelAvatar: String?) {
     val channelId = channelUrlToId(channelUrl) ?: return
+    val serviceId = runCatching { NewPipe.getServiceByUrl(channelUrl).serviceId }.getOrDefault(0)
     runBlocking {
-        subscriptionRepository().subscribeOrUpdateInfo(channelId, channelName ?: "", channelAvatar ?: "")
+        subscriptionRepository().subscribeOrUpdateInfo(channelId, channelName ?: "", channelAvatar ?: "", serviceId)
     }
 }
 
@@ -116,7 +118,7 @@ fun HistoryDbHelper.nativeUnblockChannel(channelUrl: String) {
 
 /** Bare video IDs the user has watched, as full watch URLs - matches old `getWatchedUrls()` shape. */
 fun HistoryDbHelper.nativeWatchedUrls(): Set<String> = runBlocking {
-    viewHistory().getAllWatchedVideoIds().map { videoIdToUrl(it) }.toSet()
+    viewHistory().getAllWatchedVideoIdentities().map { videoIdToUrl(it.videoId, it.serviceId) }.toSet()
 }
 
 private fun HistoryDbHelper.playlistRepository() = PlaylistRepository(appContext)
@@ -307,16 +309,16 @@ fun HistoryDbHelper.nativeSetVideoQuality(quality: String) {
  * Create-or-touch a history entry's metadata without disturbing any already-saved playback
  * position. Call when a watch page loads. Same parameter shape as the old SQLite-backed
  * `saveToHistory(title, url, uploader, thumbnailUrl, serviceId, uploaderUrl, uploaderAvatar)` -
- * `serviceId`/`uploaderAvatar` have no destination column in Flow's native history table and are
- * dropped (Flow's own history screen never showed a channel avatar either, so this isn't a
- * regression versus the app's own UI).
+ * `uploaderAvatar` has no destination column in Flow's native history table and is dropped
+ * (Flow's own history screen never showed a channel avatar either, so this isn't a regression
+ * versus the app's own UI).
  */
 fun HistoryDbHelper.nativeSaveToHistory(
     title: String,
     url: String,
     uploader: String,
     thumbnailUrl: String,
-    @Suppress("UNUSED_PARAMETER") serviceId: Int,
+    serviceId: Int,
     uploaderUrl: String?,
     @Suppress("UNUSED_PARAMETER") uploaderAvatar: String?,
 ) {
@@ -329,6 +331,7 @@ fun HistoryDbHelper.nativeSaveToHistory(
             thumbnailUrl = thumbnailUrl,
             channelName = uploader,
             channelId = channelUrlToId(uploaderUrl) ?: "",
+            serviceId = serviceId,
         )
     }
 }
@@ -345,9 +348,9 @@ fun HistoryDbHelper.nativeUpdateWatchProgress(videoUrl: String, percentWatched: 
 /** History rows rendered as [InfoItem]s, same shape the old SQLite-backed `getHistory()` returned. */
 fun HistoryDbHelper.nativeHistory(): List<InfoItem> = runBlocking {
     viewHistory().getAllHistory().first().map { entry ->
-        val item = StreamInfoItem(0, videoIdToUrl(entry.videoId), entry.title, StreamType.VIDEO_STREAM)
+        val item = StreamInfoItem(entry.serviceId, videoIdToUrl(entry.videoId, entry.serviceId), entry.title, StreamType.VIDEO_STREAM)
         item.setUploaderName(entry.channelName)
-        item.setUploaderUrl(if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId) else "")
+        item.setUploaderUrl(if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId, entry.serviceId) else "")
         if (entry.thumbnailUrl.isNotEmpty()) {
             item.thumbnailUrl = entry.thumbnailUrl
         }
@@ -396,9 +399,9 @@ private suspend fun HistoryDbHelper.ensureFlowNeuroInitialized() {
     flowNeuroInitialized = true
 }
 
-// serviceId is unused in both mappings below (the extractor objects already carry everything
-// needed) but is kept as a parameter for symmetry with the rest of this module's serviceId-taking
-// converters.
+// The serviceId parameter below is unused - this.serviceId (the extractor's own value) is more
+// trustworthy than whatever the caller happens to be passing through, and is kept as a parameter
+// only for symmetry with the rest of this module's serviceId-taking converters.
 
 /**
  * Search-result / listing candidates (StreamInfoItem) never carry tags or a description - those
@@ -421,6 +424,7 @@ fun StreamInfoItem.toFlowVideo(@Suppress("UNUSED_PARAMETER") serviceId: Int): Fl
         tags = emptyList(),
         isLive = this.streamType == StreamType.LIVE_STREAM || this.streamType == StreamType.AUDIO_LIVE_STREAM,
         isShort = durationSeconds in 1..120,
+        serviceId = this.serviceId,
     )
 }
 
@@ -442,15 +446,16 @@ fun StreamInfo.toFlowVideo(@Suppress("UNUSED_PARAMETER") serviceId: Int): FlowVi
         tags = this.tags ?: emptyList(),
         isLive = this.streamType == StreamType.LIVE_STREAM || this.streamType == StreamType.AUDIO_LIVE_STREAM,
         isShort = durationSeconds in 1..120,
+        serviceId = this.serviceId,
     )
 }
 
 /** Converts a Flow-repository-sourced [FlowVideo] back into the [InfoItem] shape Local Server's
  * existing HTML rendering code (HtmlRenderer*) already knows how to draw. */
 fun FlowVideo.toStreamInfoItem(serviceId: Int): StreamInfoItem {
-    val item = StreamInfoItem(serviceId, videoIdToUrl(this.id), this.title, StreamType.VIDEO_STREAM)
+    val item = StreamInfoItem(serviceId, videoIdToUrl(this.id, serviceId), this.title, StreamType.VIDEO_STREAM)
     item.setUploaderName(this.channelName)
-    item.setUploaderUrl(if (this.channelId.isNotEmpty()) channelIdToUrl(this.channelId) else "")
+    item.setUploaderUrl(if (this.channelId.isNotEmpty()) channelIdToUrl(this.channelId, serviceId) else "")
     if (this.thumbnailUrl.isNotEmpty()) {
         item.thumbnailUrl = this.thumbnailUrl
     }
@@ -511,7 +516,10 @@ private suspend fun HistoryDbHelper.buildHomeFeedContext(): HomeFeedContext {
  * unranked order on failure), converts to [StreamInfoItem]. Used by [continueDiscoveryFeed]. */
 private suspend fun HistoryDbHelper.rankAndConvert(videos: List<FlowVideo>, serviceId: Int): List<StreamInfoItem> {
     val deduped = LinkedHashMap<String, FlowVideo>()
-    for (v in videos) if (v.id.isNotBlank()) deduped.putIfAbsent(v.id, v)
+    // Local Server renders one service per page (the page's own serviceId is baked into every
+    // watch/channel link it generates) - a video from any other service, however it got mixed
+    // into this candidate pool, would be a dead link if it slipped through.
+    for (v in videos) if (v.id.isNotBlank() && v.serviceId == serviceId) deduped.putIfAbsent(v.id, v)
     if (deduped.isEmpty()) return emptyList()
 
     val subIds = subscriptionRepository().getAllSubscriptionIds()
@@ -627,7 +635,10 @@ fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int, feedMode: String): Pair
         totalInteractions = context.brain.totalInteractions,
     )
 
-    val result = mix.videos.map { it.toStreamInfoItem(serviceId) }
+    // Subscriptions/history now span every service Flow supports, not just YouTube, so a candidate
+    // pulled from either can carry another service's video - filter before converting, since every
+    // watch/channel link this page generates is baked to this one serviceId (see YouTubeIdHelpers.kt).
+    val result = mix.videos.filter { it.serviceId == serviceId }.map { it.toStreamInfoItem(serviceId) }
     if (result.isEmpty()) return@runBlocking emptyList<InfoItem>() to false
 
     homeFeedCache[cacheKey] = HomeFeedCacheEntry(result, now)
@@ -656,6 +667,7 @@ fun HistoryDbHelper.buildSubsOnlyFeed(serviceId: Int): List<InfoItem> = runBlock
     val context = buildHomeFeedContext()
     val rawSubs = runCatching { youTubeRepository().getSubscriptionFeed(subIds.toList()) }.getOrDefault(emptyList())
     val pool = rawSubs
+        .filter { it.serviceId == serviceId }
         .filterValid()
         .filterWatched(context.watched)
         .filter { it.channelId.isBlank() || it.channelId !in context.excludedChannels }

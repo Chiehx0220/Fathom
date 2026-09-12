@@ -4,6 +4,7 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.ListExtractor.InfoItemsPage
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
+import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelExtractor
 import org.schabi.newpipe.extractor.channel.tabs.ChannelTabExtractor
@@ -217,8 +218,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             try {
                 val channelExtractor = service.getChannelExtractor(channelUrl)
                 channelExtractor.fetchPage()
-                val tabExtractor = service.getChannelTabExtractorFromId(
-                    channelExtractor.id, "videos", channelExtractor.baseUrl)
+                val tabExtractor = resolveChannelTabExtractor(service, channelExtractor, "videos")
                 tabExtractor.fetchPage()
                 val pageItems: List<*>? = if (tabExtractor.initialPage != null) tabExtractor.initialPage.items else null
                 val list = ArrayList<InfoItem>()
@@ -254,10 +254,28 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             }
         }
 
-        // YouTube-only for now; Bilibili support was dropped along with the PipePipeExtractor
-        // dependency (see the module's build notes) and may return in a future pass.
+        // A service that doesn't support the generic tab-query mechanism (getChannelTabLHFactory()
+        // returns null - Bilibili is the current example) instead exposes its tabs directly off the
+        // channel extractor itself, each already carrying a FilterItem named after the tab
+        // (ChannelTabs.VIDEOS/PLAYLISTS/...). getChannelTabExtractorFromId() calls
+        // getChannelTabLHFactory().fromQuery(...) unconditionally, so it NPEs for such a service -
+        // this picks the matching tab from getTabs() instead when there's no query factory to ask.
+        private fun resolveChannelTabExtractor(
+            service: StreamingService,
+            channelExtractor: ChannelExtractor,
+            tab: String,
+        ): ChannelTabExtractor {
+            if (service.channelTabLHFactory != null) {
+                return service.getChannelTabExtractorFromId(channelExtractor.id, tab, channelExtractor.baseUrl)
+            }
+            val handler = channelExtractor.tabs.firstOrNull { handler -> handler.contentFilters.any { it.name == tab } }
+                ?: channelExtractor.tabs.firstOrNull()
+                ?: throw ExtractionException("Channel exposes no tabs: ${channelExtractor.url}")
+            return service.getChannelTabExtractor(handler)
+        }
+
         const val SERVICE_YOUTUBE = 0
-        val SUPPORTED_SERVICE_IDS = intArrayOf(SERVICE_YOUTUBE)
+        val SUPPORTED_SERVICE_IDS = intArrayOf(SERVICE_YOUTUBE, ServiceList.BiliBili.serviceId)
 
         // Sentinel "nextPage" value for the home feed's "Load More" - not a real Page (trending
         // kiosk has no pagination), see continueDiscoveryFeed().
@@ -667,13 +685,11 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 var nextToken: String?
 
                 val feedMode = dbHelper.homeFeedMode
-                if ("subs" == feedMode) {
-                    // See LocalServerFlowData.kt's buildSubsOnlyFeed().
-                    items = dbHelper.buildSubsOnlyFeed(serviceId)
-                    nextToken = null
-                } else if (serviceId != SERVICE_YOUTUBE) {
-                    // Non-YouTube default kiosk. Dead code today (YouTube-only, see
-                    // SUPPORTED_SERVICE_IDS); kept for if service support returns.
+                if (serviceId != SERVICE_YOUTUBE) {
+                    // Non-YouTube default kiosk - homeFeedMode ("subs"/"mix") is a YouTube-only
+                    // FlowNeuro-fusion preference (see buildAndRankHomeFeed/buildSubsOnlyFeed's own
+                    // doc comments), so it's not consulted here; every other service always gets its
+                    // own native kiosk feed regardless of that setting.
                     val nextPage = HtmlRenderer.deserializePage(nextPageStr)
                     val kioskExtractor = service.kioskList.defaultKioskExtractor
                     kioskExtractor.fetchPage()
@@ -683,6 +699,10 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                         kioskExtractor.initialPage
                     items = ArrayList(page.items as List<InfoItem>)
                     nextToken = HtmlRendererCommon.serializePage(page.nextPage)
+                } else if ("subs" == feedMode) {
+                    // See LocalServerFlowData.kt's buildSubsOnlyFeed().
+                    items = dbHelper.buildSubsOnlyFeed(serviceId)
+                    nextToken = null
                 } else if (nextPageStr == HOME_DISCOVERY_LOAD_MORE_TOKEN) {
                     // "Load More" - see continueDiscoveryFeed() (trending kiosk has no pagination).
                     val (moreItems, hasMore) = dbHelper.continueDiscoveryFeed(serviceId)
@@ -865,16 +885,18 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 var items: List<InfoItem>
                 var next: Page?
                 val feedMode = dbHelper.homeFeedMode
-                if ("subs" == feedMode) {
-                    // See LocalServerFlowData.kt's buildSubsOnlyFeed().
-                    items = dbHelper.buildSubsOnlyFeed(serviceId)
-                    next = null
-                } else if (serviceId != SERVICE_YOUTUBE) {
+                if (serviceId != SERVICE_YOUTUBE) {
+                    // Non-YouTube default kiosk - see the same branch in handleHome() for why
+                    // homeFeedMode isn't consulted here.
                     val kioskExtractor = service.kioskList.defaultKioskExtractor
                     kioskExtractor.fetchPage()
                     val page: InfoItemsPage<*> = if (nextPage != null) kioskExtractor.getPage(nextPage) else kioskExtractor.initialPage
                     items = ArrayList(page.items as List<InfoItem>)
                     next = page.nextPage
+                } else if ("subs" == feedMode) {
+                    // See LocalServerFlowData.kt's buildSubsOnlyFeed().
+                    items = dbHelper.buildSubsOnlyFeed(serviceId)
+                    next = null
                 } else {
                     // Real trending kiosk - see fetchTrendingItems() (no pagination available,
                     // so nextPage isn't handled for this branch).
@@ -902,17 +924,20 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 var next: Page?
                 var alreadyRanked = false
                 val feedMode = dbHelper.homeFeedMode
-                if ("subs" == feedMode) {
-                    // See LocalServerFlowData.kt's buildSubsOnlyFeed().
-                    items = dbHelper.buildSubsOnlyFeed(serviceId)
-                    next = null
-                    alreadyRanked = true
-                } else if (serviceId != SERVICE_YOUTUBE) {
+                if (serviceId != SERVICE_YOUTUBE) {
+                    // Non-YouTube default kiosk - see the same branch in handleHome() for why
+                    // homeFeedMode isn't consulted here. alreadyRanked stays false so
+                    // applyFlowNeuroRanking() below still reorders these by the user's taste.
                     val kioskExtractor = service.kioskList.defaultKioskExtractor
                     kioskExtractor.fetchPage()
                     val page: InfoItemsPage<*> = if (nextPage != null) kioskExtractor.getPage(nextPage) else kioskExtractor.initialPage
                     items = ArrayList(page.items as List<InfoItem>)
                     next = page.nextPage
+                } else if ("subs" == feedMode) {
+                    // See LocalServerFlowData.kt's buildSubsOnlyFeed().
+                    items = dbHelper.buildSubsOnlyFeed(serviceId)
+                    next = null
+                    alreadyRanked = true
                 } else {
                     // Real trending + FlowNeuro discovery + (mix) subscription feed, ranked - see
                     // LocalServerFlowData.kt's buildAndRankHomeFeed(). No pagination available.
@@ -956,14 +981,14 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 // here directly instead. Stock NewPipeExtractor's channel-tab factory has no
                 // "search within a channel" tab at all, unlike the fork this was ported from, so
                 // that feature is dropped rather than adapted.
-                val tabExtractor = if (sort != null) {
+                val tabExtractor = if (sort != null && service.channelTabLHFactory != null) {
                     val contentFilter = listOf(FilterItem(Filter.ITEM_IDENTIFIER_UNKNOWN, tab))
                     val sortFilter = listOf(FilterItem(Filter.ITEM_IDENTIFIER_UNKNOWN, sort))
                     val linkHandler = service.channelTabLHFactory.fromQuery(
                         channelExtractor.id, contentFilter, sortFilter, channelExtractor.baseUrl)
                     service.getChannelTabExtractor(linkHandler)
                 } else {
-                    service.getChannelTabExtractorFromId(channelExtractor.id, tab, channelExtractor.baseUrl)
+                    resolveChannelTabExtractor(service, channelExtractor, tab)
                 }
                 if (nextPage != null) {
                     val page = tabExtractor.getPage(nextPage)
@@ -1905,7 +1930,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             var items: List<InfoItem>
             var next: Page?
             if ("playlists" == tab) {
-                val tabExtractor = service.getChannelTabExtractorFromId(channelExtractor.id, "playlists", channelExtractor.baseUrl)
+                val tabExtractor = resolveChannelTabExtractor(service, channelExtractor, "playlists")
                 if (nextPage != null) {
                     val page = tabExtractor.getPage(nextPage)
                     items = page.items as List<InfoItem>
@@ -1917,7 +1942,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     next = page.nextPage
                 }
             } else {
-                val tabExtractor = service.getChannelTabExtractorFromId(channelExtractor.id, "videos", channelExtractor.baseUrl)
+                val tabExtractor = resolveChannelTabExtractor(service, channelExtractor, "videos")
                 if (nextPage != null) {
                     val page = tabExtractor.getPage(nextPage)
                     items = page.items as List<InfoItem>

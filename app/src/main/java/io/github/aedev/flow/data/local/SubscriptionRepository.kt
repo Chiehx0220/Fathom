@@ -227,11 +227,12 @@ class SubscriptionRepository private constructor(
         channelId: String,
         channelName: String,
         channelThumbnail: String,
+        serviceId: Int = 0,
     ) {
         val existing = getSubscription(channelId).first()
         subscribe(
             existing?.copy(channelName = channelName, channelThumbnail = channelThumbnail)
-                ?: ChannelSubscription(channelId, channelName, channelThumbnail),
+                ?: ChannelSubscription(channelId, channelName, channelThumbnail, serviceId = serviceId),
         )
     }
 
