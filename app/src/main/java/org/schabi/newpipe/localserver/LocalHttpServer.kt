@@ -1,6 +1,7 @@
 package org.schabi.newpipe.localserver
 
 import org.schabi.newpipe.extractor.InfoItem
+import org.schabi.newpipe.extractor.ListExtractor
 import org.schabi.newpipe.extractor.ListExtractor.InfoItemsPage
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
@@ -9,7 +10,6 @@ import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelExtractor
 import org.schabi.newpipe.extractor.channel.tabs.ChannelTabExtractor
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
-import org.schabi.newpipe.extractor.kiosk.KioskExtractor
 import org.schabi.newpipe.extractor.playlist.PlaylistExtractor
 import org.schabi.newpipe.extractor.search.SearchExtractor
 import org.schabi.newpipe.extractor.search.filter.Filter
@@ -272,6 +272,29 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 ?: channelExtractor.tabs.firstOrNull()
                 ?: throw ExtractionException("Channel exposes no tabs: ${channelExtractor.url}")
             return service.getChannelTabExtractor(handler)
+        }
+
+        // Every paginated list extractor (search, a channel tab, a playlist) exposes the exact
+        // same "resume from an already-serialized nextPage token, otherwise fetch the first page"
+        // shape. This was independently copy-pasted at 6 call sites across this file; one shared
+        // extension keeps them in sync and makes the actual per-handler logic (what to do with the
+        // resulting items) the only thing left at each call site.
+        private fun <R : InfoItem> fetchInitialOrPage(extractor: ListExtractor<R>, nextPage: Page?): InfoItemsPage<R> {
+            if (nextPage != null) return extractor.getPage(nextPage)
+            extractor.fetchPage()
+            return extractor.initialPage
+        }
+
+        // KioskList.getDefaultKioskExtractor() returns a raw (unparameterized) KioskExtractor, so
+        // this can't use the generic fetchInitialOrPage() above - it mirrors the same shape by hand
+        // instead. Shared by handleHome/handleApiHome/handleApiRecommendations's identical
+        // non-YouTube branch: every service other than YouTube has no personalized feed, so it
+        // always falls back to its own native kiosk (trending) list regardless of the
+        // (YouTube-only) homeFeedMode preference.
+        private fun fetchKioskPage(service: StreamingService, nextPage: Page?): InfoItemsPage<*> {
+            val kioskExtractor = service.kioskList.defaultKioskExtractor
+            kioskExtractor.fetchPage()
+            return if (nextPage != null) kioskExtractor.getPage(nextPage) else kioskExtractor.initialPage
         }
 
         const val SERVICE_YOUTUBE = 0
@@ -691,12 +714,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     // doc comments), so it's not consulted here; every other service always gets its
                     // own native kiosk feed regardless of that setting.
                     val nextPage = HtmlRenderer.deserializePage(nextPageStr)
-                    val kioskExtractor = service.kioskList.defaultKioskExtractor
-                    kioskExtractor.fetchPage()
-                    val page: InfoItemsPage<*> = if (nextPage != null)
-                        kioskExtractor.getPage(nextPage)
-                    else
-                        kioskExtractor.initialPage
+                    val page = fetchKioskPage(service, nextPage)
                     items = ArrayList(page.items as List<InfoItem>)
                     nextToken = HtmlRendererCommon.serializePage(page.nextPage)
                 } else if ("subs" == feedMode) {
@@ -818,18 +836,9 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 val service = NewPipe.getService(serviceId)
                 val extractor = getDefaultSearchExtractor(service, query)
 
-                val items: List<InfoItem>
-                val next: Page?
-
-                if (nextPage != null) {
-                    val page = extractor.getPage(nextPage)
-                    items = page.items
-                    next = page.nextPage
-                } else {
-                    extractor.fetchPage()
-                    items = extractor.initialPage.items
-                    next = extractor.initialPage.nextPage
-                }
+                val page = fetchInitialOrPage(extractor, nextPage)
+                val items = page.items
+                val next = page.nextPage
 
                 val filtered = filterItems(items)
                 val html = HtmlRenderer.renderSearch(serviceId, query, filtered, next, isTv)
@@ -854,19 +863,9 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             try {
                 val service = NewPipe.getService(serviceId)
                 val extractor = getDefaultSearchExtractor(service, query)
-                val items: List<InfoItem>
-                val next: Page?
-                if (nextPage != null) {
-                    val page = extractor.getPage(nextPage)
-                    items = page.items
-                    next = page.nextPage
-                } else {
-                    extractor.fetchPage()
-                    items = extractor.initialPage.items
-                    next = extractor.initialPage.nextPage
-                }
-                val filtered = filterItems(items)
-                sendResponse(os, 200, ApiRenderer.searchResultJson(filtered, serviceId, next).toString(), "application/json")
+                val page = fetchInitialOrPage(extractor, nextPage)
+                val filtered = filterItems(page.items)
+                sendResponse(os, 200, ApiRenderer.searchResultJson(filtered, serviceId, page.nextPage).toString(), "application/json")
             } catch (e: Exception) {
                 sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
             }
@@ -888,9 +887,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 if (serviceId != SERVICE_YOUTUBE) {
                     // Non-YouTube default kiosk - see the same branch in handleHome() for why
                     // homeFeedMode isn't consulted here.
-                    val kioskExtractor = service.kioskList.defaultKioskExtractor
-                    kioskExtractor.fetchPage()
-                    val page: InfoItemsPage<*> = if (nextPage != null) kioskExtractor.getPage(nextPage) else kioskExtractor.initialPage
+                    val page = fetchKioskPage(service, nextPage)
                     items = ArrayList(page.items as List<InfoItem>)
                     next = page.nextPage
                 } else if ("subs" == feedMode) {
@@ -928,9 +925,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     // Non-YouTube default kiosk - see the same branch in handleHome() for why
                     // homeFeedMode isn't consulted here. alreadyRanked stays false so
                     // applyFlowNeuroRanking() below still reorders these by the user's taste.
-                    val kioskExtractor = service.kioskList.defaultKioskExtractor
-                    kioskExtractor.fetchPage()
-                    val page: InfoItemsPage<*> = if (nextPage != null) kioskExtractor.getPage(nextPage) else kioskExtractor.initialPage
+                    val page = fetchKioskPage(service, nextPage)
                     items = ArrayList(page.items as List<InfoItem>)
                     next = page.nextPage
                 } else if ("subs" == feedMode) {
@@ -973,8 +968,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 val channelExtractor = service.getChannelExtractor(channelUrl)
                 channelExtractor.fetchPage()
 
-                var items: List<InfoItem>
-                var next: Page?
                 // getChannelTabExtractorFromId(id, tab, baseUrl) (used by the plain
                 // else-branch below) hardcodes its sortFilter to "" - it has no way to pass one
                 // through - so a non-default sort needs the lower-level construction path built
@@ -990,16 +983,9 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 } else {
                     resolveChannelTabExtractor(service, channelExtractor, tab)
                 }
-                if (nextPage != null) {
-                    val page = tabExtractor.getPage(nextPage)
-                    items = page.items as List<InfoItem>
-                    next = page.nextPage
-                } else {
-                    tabExtractor.fetchPage()
-                    val page = tabExtractor.initialPage
-                    items = page.items as List<InfoItem>
-                    next = page.nextPage
-                }
+                val page = fetchInitialOrPage(tabExtractor, nextPage)
+                val items = page.items
+                val next = page.nextPage
                 backfillUploaderUrl(items, channelUrl)
                 val isSubscribed = dbHelper.nativeIsSubscribed(channelExtractor.linkHandler.url)
                 val filtered = filterItems(items)
@@ -1913,7 +1899,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             sendResponse(os, 200, html, "text/html; charset=UTF-8")
         }
 
-        @Suppress("UNCHECKED_CAST")
         @Throws(Exception::class)
         private fun handleChannel(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
             val serviceId = getServiceId(params)
@@ -1927,33 +1912,11 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             val channelExtractor = service.getChannelExtractor(channelUrl)
             channelExtractor.fetchPage()
 
-            var items: List<InfoItem>
-            var next: Page?
-            if ("playlists" == tab) {
-                val tabExtractor = resolveChannelTabExtractor(service, channelExtractor, "playlists")
-                if (nextPage != null) {
-                    val page = tabExtractor.getPage(nextPage)
-                    items = page.items as List<InfoItem>
-                    next = page.nextPage
-                } else {
-                    tabExtractor.fetchPage()
-                    val page = tabExtractor.initialPage
-                    items = page.items as List<InfoItem>
-                    next = page.nextPage
-                }
-            } else {
-                val tabExtractor = resolveChannelTabExtractor(service, channelExtractor, "videos")
-                if (nextPage != null) {
-                    val page = tabExtractor.getPage(nextPage)
-                    items = page.items as List<InfoItem>
-                    next = page.nextPage
-                } else {
-                    tabExtractor.fetchPage()
-                    val page = tabExtractor.initialPage
-                    items = page.items as List<InfoItem>
-                    next = page.nextPage
-                }
-            }
+            val tabExtractor = resolveChannelTabExtractor(
+                service, channelExtractor, if ("playlists" == tab) "playlists" else "videos")
+            val page = fetchInitialOrPage(tabExtractor, nextPage)
+            val items = page.items
+            val next = page.nextPage
 
             backfillUploaderUrl(items, channelUrl)
 
@@ -1975,7 +1938,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             sendResponse(os, 200, html, "text/html; charset=UTF-8")
         }
 
-        @Suppress("UNCHECKED_CAST")
         @Throws(Exception::class)
         private fun handlePlaylist(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
             val serviceId = getServiceId(params)
@@ -1987,18 +1949,9 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             val service = NewPipe.getService(serviceId)
             val extractor = service.getPlaylistExtractor(playlistUrl)
 
-            val items: List<InfoItem>
-            val next: Page?
-            if (nextPage != null) {
-                val page = extractor.getPage(nextPage)
-                items = page.items as List<InfoItem>
-                next = page.nextPage
-            } else {
-                extractor.fetchPage()
-                val page = extractor.initialPage
-                items = page.items as List<InfoItem>
-                next = page.nextPage
-            }
+            val page = fetchInitialOrPage(extractor, nextPage)
+            val items: List<InfoItem> = page.items
+            val next = page.nextPage
 
             val filtered = filterItems(items)
             val isBookmarked = dbHelper.nativeIsPlaylistBookmarked(playlistUrl)

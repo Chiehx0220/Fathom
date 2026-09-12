@@ -9,16 +9,16 @@ import org.schabi.newpipe.extractor.ServiceList
  * where Local Server reads/writes Flow's native data.
  */
 
-fun channelIdToUrl(channelId: String): String = "https://www.youtube.com/channel/$channelId"
-
 /**
- * Same as [channelIdToUrl], but resolves through [serviceId]'s own link handler when it isn't
- * YouTube, falling back to the plain YouTube form if resolution fails.
+ * Builds a channel URL from a bare channel ID. For YouTube (the default) this is just the
+ * canonical form; for any other [serviceId] it resolves through that service's own link handler,
+ * falling back to the plain YouTube form if resolution fails.
  */
-fun channelIdToUrl(channelId: String, serviceId: Int): String {
-    if (serviceId == ServiceList.YouTube.serviceId) return channelIdToUrl(channelId)
+fun channelIdToUrl(channelId: String, serviceId: Int = ServiceList.YouTube.serviceId): String {
+    val youtubeForm = "https://www.youtube.com/channel/$channelId"
+    if (serviceId == ServiceList.YouTube.serviceId) return youtubeForm
     return runCatching { NewPipe.getService(serviceId).channelLHFactory.getUrl(channelId) }
-        .getOrDefault(channelIdToUrl(channelId))
+        .getOrDefault(youtubeForm)
 }
 
 /**
@@ -49,19 +49,19 @@ fun channelUrlToId(url: String?): String? {
     return runCatching { NewPipe.getServiceByUrl(url).channelLHFactory.getId(url) }.getOrNull()
 }
 
-fun videoIdToUrl(videoId: String): String = "https://www.youtube.com/watch?v=$videoId"
-
 /**
- * Same as [videoIdToUrl], but resolves the URL through [serviceId]'s own link handler when it
- * isn't YouTube (e.g. Bilibili), falling back to the plain YouTube form if resolution fails.
- * Local Server's own [InfoItem][org.schabi.newpipe.extractor.InfoItem] rendering keys everything
- * off `item.url`, so a non-YouTube video whose URL doesn't round-trip back through its own
- * extractor silently breaks resume/watched-matching/re-extraction for it.
+ * Builds a video URL from a bare video ID. For YouTube (the default) this is just the canonical
+ * form; for any other [serviceId] (e.g. Bilibili) it resolves the URL through that service's own
+ * link handler, falling back to the plain YouTube form if resolution fails. Local Server's own
+ * [InfoItem][org.schabi.newpipe.extractor.InfoItem] rendering keys everything off `item.url`, so a
+ * non-YouTube video whose URL doesn't round-trip back through its own extractor silently breaks
+ * resume/watched-matching/re-extraction for it.
  */
-fun videoIdToUrl(videoId: String, serviceId: Int): String {
-    if (serviceId == ServiceList.YouTube.serviceId) return videoIdToUrl(videoId)
+fun videoIdToUrl(videoId: String, serviceId: Int = ServiceList.YouTube.serviceId): String {
+    val youtubeForm = "https://www.youtube.com/watch?v=$videoId"
+    if (serviceId == ServiceList.YouTube.serviceId) return youtubeForm
     return runCatching { NewPipe.getService(serviceId).streamLHFactory.getUrl(videoId) }
-        .getOrDefault(videoIdToUrl(videoId))
+        .getOrDefault(youtubeForm)
 }
 
 fun playlistIdToUrl(playlistId: String): String = "https://www.youtube.com/playlist?list=$playlistId"

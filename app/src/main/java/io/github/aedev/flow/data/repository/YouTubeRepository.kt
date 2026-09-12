@@ -1599,7 +1599,7 @@ class YouTubeRepository
             return Video(
                 id = videoId,
                 title = name ?: "Unknown Title",
-                channelName = uploaderName ?: "Unknown Channel",
+                channelName = uploaderName?.takeIf { it.isNotBlank() } ?: "Unknown Channel",
                 channelId = extractChannelId(uploaderUrl, service),
                 thumbnailUrl = bestThumbnail,
                 duration = durationSecs,
