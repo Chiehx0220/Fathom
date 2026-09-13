@@ -14,7 +14,7 @@ composeReorderable = "3.1.0"
 hilt = "2.60.1"
 hiltNavigationCompose = "1.4.0"
 # Our fork of PipePipeExtractor (Chiehx0220/PipePipeExtractor), pinned commit.
-newPipeExtractor = "311029ae839ca2e86d95dc274ce60d352f4419b2"
+newPipeExtractor = "1c0747145768445faa33804ee53abf4e20ff8415"
 okhttp = "5.4.0"
 ktor = "3.5.2"
 kotlinxSerialization = "1.11.0"

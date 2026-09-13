@@ -294,6 +294,20 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return if (nextPage != null) kioskExtractor.getPage(nextPage) else kioskExtractor.initialPage
         }
 
+        // For a Bilibili bangumi (paid series) url, the comments link handler needs this episode's
+        // bvid out of the same WatchDataCache the stream extractor populates - going through PPE's
+        // BilibiliCommentsCompat instead of calling getCommentsExtractor() directly means a comments
+        // request that beats /watch-content there doesn't come back with a bare NullPointerException.
+        // Every other url/service is unaffected - the compat helper only ever primes anything for
+        // bangumi/play/ urls.
+        private fun commentsExtractorFor(service: StreamingService, videoUrl: String) =
+            if (service is org.schabi.newpipe.extractor.services.bilibili.BilibiliService) {
+                org.schabi.newpipe.extractor.services.bilibili.compat.BilibiliCommentsCompat
+                    .getCommentsExtractor(service, videoUrl)
+            } else {
+                service.getCommentsExtractor(videoUrl)
+            }
+
         // BulletCommentsInfoItem.getLastingTime() always returns -1 regardless of what's set (a
         // bug in the extractor library itself, not this app) - the on-screen duration a danmaku
         // comment should play for is hardcoded client-side instead, so it's not serialized here.
@@ -1065,7 +1079,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
             try {
                 val service = NewPipe.getService(serviceId)
-                val extractor = service.getCommentsExtractor(videoUrl)
+                val extractor = commentsExtractorFor(service, videoUrl)
                 val page = if (nextPage != null) {
                     extractor.getPage(nextPage)
                 } else {
@@ -1210,7 +1224,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
 
             try {
                 val service = NewPipe.getService(serviceId)
-                val extractor = service.getCommentsExtractor(videoUrl)
+                val extractor = commentsExtractorFor(service, videoUrl)
 
                 val page = if (nextPage != null) {
                     // YoutubeCommentsExtractor.getPage() only reads the continuation token already
