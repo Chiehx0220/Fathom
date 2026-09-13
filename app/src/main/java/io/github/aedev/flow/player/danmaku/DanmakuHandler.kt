@@ -11,6 +11,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.bulletComments.BulletCommentsInfoItem
+import org.schabi.newpipe.extractor.services.bilibili.BilibiliService
+import org.schabi.newpipe.extractor.services.bilibili.compat.BilibiliBulletCommentsCompat
 
 enum class DanmakuPosition { SCROLL, TOP, BOTTOM }
 
@@ -29,9 +31,10 @@ data class DanmakuComment(
  * [io.github.aedev.flow.player.sponsorblock.SponsorBlockHandler]: a StateFlow the UI collects, an
  * explicit reset() + load call per video rather than anything automatic.
  *
- * Only Bilibili currently exposes a BulletCommentsExtractor
- * (StreamingService.getBulletCommentsExtractor() returns null for every other service), so
- * [loadComments] is a safe, cheap no-op for YouTube rather than something callers need to gate.
+ * Only Bilibili currently has bullet comments, so [loadComments] is a safe, cheap no-op for every
+ * other service rather than something callers need to gate. Building the extractor itself goes
+ * through [BilibiliBulletCommentsCompat] rather than [BilibiliService.getBulletCommentsExtractor]
+ * directly, so this doesn't have to run only-after-the-stream-extractor as an unstated precondition.
  */
 class DanmakuHandler(
     private val scope: CoroutineScope,
@@ -50,13 +53,6 @@ class DanmakuHandler(
         _comments.value = emptyList()
     }
 
-    /**
-     * [videoUrl] must be the same URL the video's own StreamExtractor was just fetched with -
-     * BilibiliBulletCommentsExtractor reads the video's cid out of a cache only that extractor's
-     * own fetchPage() populates (keyed by video id), so this must run after stream extraction has
-     * happened, not before. In practice that's always true here: a StreamInfo is required to start
-     * playback at all, so the stream extractor has already run by the time a caller can reach this.
-     */
     fun loadComments(
         serviceId: Int,
         videoUrl: String,
@@ -65,8 +61,8 @@ class DanmakuHandler(
         loadJob =
             scope.launch(Dispatchers.IO) {
                 try {
-                    val service = NewPipe.getService(serviceId)
-                    val extractor = service.getBulletCommentsExtractor(videoUrl) ?: return@launch
+                    val service = NewPipe.getService(serviceId) as? BilibiliService ?: return@launch
+                    val extractor = BilibiliBulletCommentsCompat.getBulletCommentsExtractor(service, videoUrl)
                     extractor.fetchPage()
                     if (extractor.isLive) {
                         // Live danmaku needs a persistent WebSocket connection, which a one-shot

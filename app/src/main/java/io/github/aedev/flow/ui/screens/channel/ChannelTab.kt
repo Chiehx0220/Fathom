@@ -26,7 +26,7 @@ enum class ChannelTab(
 
         /**
          * Live and Posts are YouTube-only concepts in this app - the generic extractor's
-         * [org.schabi.newpipe.extractor.channel.tabs.ChannelTabs] has no equivalent for either, and
+         * [org.schabi.newpipe.extractor.linkhandler.ChannelTabs] has no equivalent for either, and
          * Posts is backed entirely by Flow's own YouTube-InnerTube client. Hiding them for other
          * services avoids a tab that can only ever show empty/spinner.
          */

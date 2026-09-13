@@ -9,7 +9,7 @@ import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelExtractor
-import org.schabi.newpipe.extractor.channel.tabs.ChannelTabExtractor
+import org.schabi.newpipe.extractor.channel.ChannelTabExtractor
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.playlist.PlaylistExtractor
 import org.schabi.newpipe.extractor.search.SearchExtractor
@@ -277,14 +277,10 @@ class LocalHttpServer(private val context: android.content.Context, private val 
 
         // Every paginated list extractor (search, a channel tab, a playlist) exposes the exact
         // same "resume from an already-serialized nextPage token, otherwise fetch the first page"
-        // shape. This was independently copy-pasted at 6 call sites across this file; one shared
-        // extension keeps them in sync and makes the actual per-handler logic (what to do with the
-        // resulting items) the only thing left at each call site.
-        private fun <R : InfoItem> fetchInitialOrPage(extractor: ListExtractor<R>, nextPage: Page?): InfoItemsPage<R> {
-            if (nextPage != null) return extractor.getPage(nextPage)
-            extractor.fetchPage()
-            return extractor.initialPage
-        }
+        // shape. PPE's own ListExtractorCompat is the shared implementation now (this file used to
+        // carry a private copy, independently duplicated at 6 call sites before that).
+        private fun <R : InfoItem> fetchInitialOrPage(extractor: ListExtractor<R>, nextPage: Page?): InfoItemsPage<R> =
+            org.schabi.newpipe.extractor.compat.ListExtractorCompat.fetchInitialOrPage(extractor, nextPage)
 
         // KioskList.getDefaultKioskExtractor() returns a raw (unparameterized) KioskExtractor, so
         // this can't use the generic fetchInitialOrPage() above - it mirrors the same shape by hand
