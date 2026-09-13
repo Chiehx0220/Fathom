@@ -5,6 +5,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Cast
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.PictureInPicture
@@ -33,7 +34,7 @@ import io.github.aedev.flow.ui.components.shared.playbackSpeedLabel
 private const val VIDEO_ROWS = 1
 private const val PLAYBACK_ROWS = 3
 private const val AUDIO_ROWS = 1
-private const val CAPTION_ROWS = 2
+private const val CAPTION_ROWS_BASE = 2
 private const val OVERLAY_ROWS = 3
 private const val EFFECT_ROWS = 3
 private const val DISPLAY_ROWS = 1
@@ -44,6 +45,8 @@ internal fun PlayerSettingsMainPage(
     autoplayEnabled: Boolean,
     subtitlesEnabled: Boolean,
     ambientModeEnabled: Boolean,
+    showDanmakuOption: Boolean = false,
+    danmakuEnabled: Boolean = false,
     onNavigateToPage: (PlayerSettingsPage) -> Unit,
     onShowSubtitleStyle: () -> Unit,
     onCastClick: () -> Unit,
@@ -54,7 +57,9 @@ internal fun PlayerSettingsMainPage(
     onSkipSilenceToggle: (Boolean) -> Unit,
     onStableVolumeToggle: (Boolean) -> Unit,
     onAmbientModeToggle: (Boolean) -> Unit,
+    onDanmakuToggle: (Boolean) -> Unit = {},
 ) {
+    val captionRows = if (showDanmakuOption) CAPTION_ROWS_BASE + 1 else CAPTION_ROWS_BASE
     FlowSectionHeader(stringResource(R.string.video))
     FlowRowGroup {
         FlowNavRow(
@@ -114,18 +119,29 @@ internal fun PlayerSettingsMainPage(
 
     FlowSectionHeader(stringResource(R.string.captions))
     FlowRowGroup {
+        // Bilibili-only: danmaku has no equivalent for any other service (see
+        // StreamingService.getBulletCommentsExtractor()), so this row only exists on that page.
+        if (showDanmakuOption) {
+            FlowSwitchRow(
+                leadingIcon = Icons.Filled.ChatBubble,
+                title = stringResource(R.string.player_settings_danmaku),
+                checked = danmakuEnabled,
+                shape = flowRowGroupShape(0, captionRows),
+                onCheckedChange = onDanmakuToggle,
+            )
+        }
         FlowNavRow(
             leadingIcon = Icons.Filled.Subtitles,
             title = stringResource(R.string.filter_subtitles),
             trailingText =
                 if (subtitlesEnabled) stringResource(R.string.on) else stringResource(R.string.off),
-            shape = flowRowGroupShape(0, CAPTION_ROWS),
+            shape = flowRowGroupShape(if (showDanmakuOption) 1 else 0, captionRows),
             onClick = { onNavigateToPage(PlayerSettingsPage.Subtitles) },
         )
         FlowNavRow(
             leadingIcon = Icons.Filled.Tune,
             title = stringResource(R.string.subtitle_style),
-            shape = flowRowGroupShape(1, CAPTION_ROWS),
+            shape = flowRowGroupShape(if (showDanmakuOption) 2 else 1, captionRows),
             onClick = onShowSubtitleStyle,
         )
     }

@@ -2,6 +2,7 @@ package org.schabi.newpipe.localserver
 
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.ListExtractor
+import org.schabi.newpipe.extractor.bulletComments.BulletCommentsInfoItem
 import org.schabi.newpipe.extractor.ListExtractor.InfoItemsPage
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
@@ -297,6 +298,27 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return if (nextPage != null) kioskExtractor.getPage(nextPage) else kioskExtractor.initialPage
         }
 
+        // BulletCommentsInfoItem.getLastingTime() always returns -1 regardless of what's set (a
+        // bug in the extractor library itself, not this app) - the on-screen duration a danmaku
+        // comment should play for is hardcoded client-side instead, so it's not serialized here.
+        @JvmStatic
+        fun bulletCommentJson(item: BulletCommentsInfoItem): org.json.JSONObject {
+            val json = org.json.JSONObject()
+            json.put("text", item.commentText ?: "")
+            json.put("time", (item.duration?.toMillis() ?: 0L) / 1000.0)
+            json.put("color", String.format("#%06X", item.argbColor and 0xFFFFFF))
+            json.put(
+                "position",
+                when (item.position) {
+                    BulletCommentsInfoItem.Position.TOP -> "top"
+                    BulletCommentsInfoItem.Position.BOTTOM -> "bottom"
+                    else -> "scroll"
+                },
+            )
+            json.put("size", item.relativeFontSize)
+            return json
+        }
+
         const val SERVICE_YOUTUBE = 0
         val SUPPORTED_SERVICE_IDS = intArrayOf(SERVICE_YOUTUBE, ServiceList.BiliBili.serviceId)
 
@@ -323,16 +345,20 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         @JvmStatic
         @Throws(ExtractionException::class)
         fun getDefaultSearchExtractor(service: StreamingService, query: String): SearchExtractor {
+            // resolveContentFilters() looks "all" up by name, which doesn't exist for Bilibili
+            // (BilibiliFilters has no "all" content filter - see its own doc comment) and used to
+            // silently resolve to an empty list here, falling through to the no-filter
+            // getSearchExtractor(query) overload. Bilibili's search then omits the required
+            // search_type= query param entirely, which hits a differently-shaped API response
+            // BilibiliSearchExtractor can't parse - the actual cause of Bilibili search failing.
+            // resolveSearchContentFilters() is the fallback-aware version built for exactly this:
+            // it lands on Bilibili's own "videos" default instead of silently going filterless.
             val defaultFilter =
-                SearchFilterResolver.resolveContentFilters(
+                SearchFilterResolver.resolveSearchContentFilters(
                     service,
                     listOf(SearchFilterResolver.DEFAULT_CONTENT_FILTER_NAME),
                 )
-            return if (defaultFilter.isEmpty()) {
-                service.getSearchExtractor(query)
-            } else {
-                service.getSearchExtractor(query, defaultFilter, emptyList())
-            }
+            return service.getSearchExtractor(query, defaultFilter, emptyList())
         }
 
         /**
@@ -588,6 +614,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                                 handleWatchContent(os, params, isTv)
                             } else if (path == "/comments") {
                                 handleComments(os, params, isTv)
+                            } else if (path == "/danmaku") {
+                                handleDanmaku(os, params)
                             } else if (path == "/send-link" || path == "/play") {
                                 handleSendLink(os, params, socket.inetAddress.hostAddress)
                             } else if (path == "/send-command") {
@@ -1207,6 +1235,52 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 sendResponse(os, 200, html, "text/html; charset=UTF-8")
             } catch (e: Exception) {
                 sendResponse(os, 200, "<div class=\"loading-placeholder\">Failed to load comments: ${e.message}</div>", "text/html; charset=UTF-8")
+            }
+        }
+
+        // Bilibili danmaku ("bullet comments"). Fetched by an inline <script> in
+        // renderWatchContent() after the video itself has loaded, same rationale as
+        // handleComments() above - a video can carry thousands of these, so it shouldn't block
+        // the initial page. Only Bilibili currently exposes a BulletCommentsExtractor
+        // (StreamingService.getBulletCommentsExtractor() returns null otherwise), so this comes
+        // back empty for YouTube rather than erroring.
+        @Throws(Exception::class)
+        private fun handleDanmaku(os: OutputStream, params: Map<String, String>) {
+            val serviceId = getServiceId(params)
+            val mediaUrl = params["id"]
+            if (mediaUrl.isNullOrEmpty()) {
+                sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
+                return
+            }
+            try {
+                val service = NewPipe.getService(serviceId)
+                // BilibiliBulletCommentsExtractor reads the video's cid out of a cache that only
+                // the stream extractor's own fetchPage() populates (keyed by video id) - without
+                // this, looking it up NPEs. In practice /watch-content already primed this cache
+                // for the video the client is currently watching, so this is normally a cache hit.
+                getCachedExtractor(service, serviceId, mediaUrl)
+                val extractor = service.getBulletCommentsExtractor(mediaUrl)
+                if (extractor == null) {
+                    sendResponse(os, 200, "{\"danmaku\":[]}", "application/json")
+                    return
+                }
+                extractor.fetchPage()
+                if (extractor.isLive) {
+                    // Live danmaku needs a persistent connection (WebSocket) this one-shot HTTP
+                    // endpoint has no equivalent of - out of scope for now.
+                    extractor.disconnect()
+                    sendResponse(os, 200, "{\"danmaku\":[]}", "application/json")
+                    return
+                }
+                val danmaku = org.json.JSONArray()
+                for (item in extractor.initialPage.items) {
+                    danmaku.put(bulletCommentJson(item))
+                }
+                val json = org.json.JSONObject()
+                json.put("danmaku", danmaku)
+                sendResponse(os, 200, json.toString(), "application/json")
+            } catch (e: Exception) {
+                sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
             }
         }
 

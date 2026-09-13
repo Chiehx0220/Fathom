@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.PictureInPictureHelper
 import io.github.aedev.flow.player.dlna.DlnaCastManager
@@ -20,6 +21,7 @@ import io.github.aedev.flow.ui.screens.player.state.SubtitleSelection
 import io.github.aedev.flow.ui.screens.player.state.VideoPlayerUiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.schabi.newpipe.extractor.ServiceList
 
 /**
  * The single wiring of the player settings sheet. Both the bottom-sheet slot over the portrait
@@ -33,6 +35,7 @@ internal fun PlayerSettingsSheetHost(
     screenState: PlayerScreenState,
     playerState: EnhancedPlayerState,
     uiState: VideoPlayerUiState,
+    video: Video,
     viewModel: VideoPlayerViewModel,
     playerPreferences: PlayerPreferences,
     scope: CoroutineScope,
@@ -89,6 +92,9 @@ internal fun PlayerSettingsSheetHost(
         onLoopToggle = { viewModel.toggleLoop(it) },
         ambientModeEnabled = ambientModeEnabled,
         onAmbientModeToggle = { scope.launch { playerPreferences.setVideoAmbientModeEnabled(it) } },
+        showDanmakuOption = video.serviceId == ServiceList.BiliBili.serviceId,
+        danmakuEnabled = screenState.danmakuEnabled,
+        onDanmakuToggle = { screenState.danmakuEnabled = it },
         onCastClick = {
             DlnaCastManager.startDiscovery(context)
             screenState.open(PlayerSheet.Dlna)

@@ -50,6 +50,9 @@ fun SettingsMenuDialog(
     onLoopToggle: (Boolean) -> Unit,
     ambientModeEnabled: Boolean = false,
     onAmbientModeToggle: (Boolean) -> Unit = {},
+    showDanmakuOption: Boolean = false,
+    danmakuEnabled: Boolean = false,
+    onDanmakuToggle: (Boolean) -> Unit = {},
     onCastClick: () -> Unit = {},
     onPipClick: () -> Unit = {},
     onSleepTimerClick: () -> Unit = {},
@@ -144,6 +147,9 @@ fun SettingsMenuDialog(
                         onSkipSilenceToggle = onSkipSilenceToggle,
                         onStableVolumeToggle = onStableVolumeToggle,
                         onAmbientModeToggle = onAmbientModeToggle,
+                        showDanmakuOption = showDanmakuOption,
+                        danmakuEnabled = danmakuEnabled,
+                        onDanmakuToggle = onDanmakuToggle,
                     )
                 }
 

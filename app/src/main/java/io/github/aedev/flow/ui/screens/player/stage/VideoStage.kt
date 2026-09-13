@@ -23,6 +23,7 @@ import io.github.aedev.flow.ui.components.videoplayer.gesture.videoPlayerZoom
 import io.github.aedev.flow.ui.components.videoplayer.placedWhen
 import io.github.aedev.flow.ui.components.videoplayer.subtitle.Media3SubtitleOverlay
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
+import org.schabi.newpipe.extractor.ServiceList
 
 private const val EXIT_DRAG_MIN_SCALE = 0.94f
 
@@ -176,6 +177,13 @@ internal fun VideoStage(
                     style = screenState.subtitleStyle,
                     modifier = Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced),
                 )
+                if (video.serviceId == ServiceList.BiliBili.serviceId) {
+                    DanmakuLayer(
+                        currentPositionMs = screenState.currentPosition,
+                        enabled = screenState.danmakuEnabled,
+                        modifier = Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced),
+                    )
+                }
             }
             if (playerUiState.isRestoredSession) {
                 val thumbUrl =

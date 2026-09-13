@@ -200,6 +200,10 @@ internal class PlaybackPreparer(
                     preferSabr = preferSabr,
                     preferredLiveQualityHeight = preferredLiveQualityHeight,
                 )
+                // Same URL the StreamExtractor above was just fetched with - see
+                // DanmakuHandler.loadComments() for why that ordering matters. No-op for
+                // non-Bilibili services.
+                playerManager.loadDanmaku(streamInfo.serviceId, streamInfo.url)
             }
         }
         applyRememberedPlaybackSpeed(isLive = !hlsUrl.isNullOrEmpty())
@@ -222,6 +226,11 @@ internal class PlaybackPreparer(
         withContext(Dispatchers.Main) {
             if (!isCurrent()) return@withContext false
             if (playerManager.isPreparedForPlayback(videoId)) return@withContext false
+
+            // Live danmaku (real-time, WebSocket-based) is out of scope for now - see
+            // DanmakuHandler.loadComments()'s own isLive() branch - so this only needs to clear
+            // whatever the previous video (if any) left loaded.
+            playerManager.resetDanmaku()
 
             playerManager.setStreams(
                 videoId = videoId,

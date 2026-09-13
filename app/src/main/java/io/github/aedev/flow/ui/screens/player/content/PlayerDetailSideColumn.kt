@@ -82,6 +82,7 @@ internal fun PlayerDetailSideColumn(
                     screenState = screenState,
                     playerState = playerState,
                     uiState = uiState,
+                    video = video,
                     viewModel = viewModel,
                     playerPreferences = playerPreferences,
                     scope = scope,

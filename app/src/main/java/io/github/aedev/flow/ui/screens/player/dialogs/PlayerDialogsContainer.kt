@@ -71,6 +71,7 @@ internal fun PlayerDialogsContainer(
             screenState = screenState,
             playerState = playerState,
             uiState = uiState,
+            video = video,
             viewModel = viewModel,
             playerPreferences = playerPreferences,
             scope = coroutineScope,

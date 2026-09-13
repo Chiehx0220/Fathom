@@ -3,6 +3,7 @@ package org.schabi.newpipe.localserver
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.Page
+import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -479,6 +480,151 @@ object HtmlRendererWatch {
             "                })();\n"
         }
 
+        // Bilibili danmaku ("bullet comments") overlay. Fetched async from /danmaku (same
+        // rationale as the comments fragment below it - a video can carry thousands of these, so
+        // it shouldn't block the initial page). Scroll-type comments animate via a CSS `transform`
+        // transition (not `animation`/@keyframes) since the travel distance depends on the
+        // player's actual pixel width and each comment's own measured text width, neither known
+        // until render time. Top/bottom comments are simple fixed-position fades instead, since
+        // those don't move horizontally. BulletCommentsInfoItem.getLastingTime() always reports -1
+        // (an extractor-library bug, not this app's), so on-screen duration is hardcoded below to
+        // Bilibili's own typical defaults instead of coming from the API.
+        val danmakuJs = if (serviceId != ServiceList.BiliBili.serviceId) {
+            ""
+        } else {
+            val danmakuUrlJs = "/danmaku?serviceId=$serviceId&id=${HtmlRendererCommon.encodeUrl(info.url)}"
+            "                (function() {\n" +
+            "                    var layer = document.getElementById(\"danmaku-layer\");\n" +
+            "                    var toggleBtn = document.getElementById(\"danmaku-toggle-btn\");\n" +
+            "                    if (!layer) return;\n" +
+            // video.js's real fullscreen target is player.el() (a wrapper div it creates around
+            // the actual <video> tech element - see fitVideoLetterbox()'s own use of
+            // player.el().querySelector("video") above), NOT the .vjs-player-wrapper div this
+            // layer and the other overlays (double-tap indicators, volume HUD, up-next overlay,
+            // sponsor-skip button) live in as plain siblings of <video>. The Fullscreen API only
+            // renders the fullscreened element and its descendants, so anything outside player.el()
+            // - this layer included - simply isn't part of the screen while fullscreen is active.
+            // Moving it inside on fullscreenchange (and back out again on exit) fixes that; the
+            // other overlays have the same gap but are out of scope for this fix.
+            "                    var danmakuHome = layer.parentNode, danmakuNextSibling = layer.nextSibling;\n" +
+            "                    player.on(\"fullscreenchange\", function() {\n" +
+            "                        if (player.isFullscreen()) {\n" +
+            "                            player.el().appendChild(layer);\n" +
+            "                        } else if (danmakuHome) {\n" +
+            "                            danmakuHome.insertBefore(layer, danmakuNextSibling);\n" +
+            "                        }\n" +
+            "                    });\n" +
+            "                    var SCROLL_DURATION = 8, FIXED_DURATION = 4;\n" +
+            "                    var comments = [], nextIndex = 0, enabled = true;\n" +
+            "                    var scrollLaneUntil = new Array(14).fill(0);\n" +
+            "                    var topLaneUntil = new Array(4).fill(0);\n" +
+            "                    var bottomLaneUntil = new Array(4).fill(0);\n" +
+            "                    function pickLane(untilArr, lanes, now, dur) {\n" +
+            "                        for (var i = 0; i < lanes; i++) {\n" +
+            "                            if (untilArr[i] <= now) { untilArr[i] = now + dur; return i; }\n" +
+            "                        }\n" +
+            "                        var idx = 0;\n" +
+            "                        for (var i = 1; i < lanes; i++) { if (untilArr[i] < untilArr[idx]) idx = i; }\n" +
+            "                        untilArr[idx] = now + dur;\n" +
+            "                        return idx;\n" +
+            "                    }\n" +
+            "                    function spawn(item) {\n" +
+            "                        var h = layer.clientHeight || 200;\n" +
+            "                        var w = layer.clientWidth || 800;\n" +
+            "                        var el = document.createElement(\"div\");\n" +
+            "                        el.className = \"danmaku-item \" + item.position;\n" +
+            "                        el.textContent = item.text;\n" +
+            // Bilibili's own comment sizes are meant as a small, fairly constant font relative to
+            // the player's WIDTH (not height) - the first attempt scaled by height and produced
+            // comments 50-60px tall on a normal-width video, covering most of the frame.
+            "                        el.style.fontSize = Math.max(14, Math.min(30, Math.round(w * item.size * 0.028))) + \"px\";\n" +
+            "                        el.style.color = item.color;\n" +
+            "                        var laneH = parseFloat(el.style.fontSize) * 1.5;\n" +
+            "                        var now = player.currentTime();\n" +
+            "                        if (item.position === \"top\" || item.position === \"bottom\") {\n" +
+            "                            var lanes = Math.max(1, Math.min(4, Math.floor(h * 0.35 / laneH)));\n" +
+            "                            var untilArr = item.position === \"top\" ? topLaneUntil : bottomLaneUntil;\n" +
+            "                            var lane = pickLane(untilArr, lanes, now, FIXED_DURATION);\n" +
+            "                            el.style[item.position] = (8 + lane * laneH) + \"px\";\n" +
+            "                            el.style.animation = \"danmaku-fade \" + FIXED_DURATION + \"s linear\";\n" +
+            "                            el.addEventListener(\"animationend\", function() { el.remove(); });\n" +
+            "                            layer.appendChild(el);\n" +
+            "                        } else {\n" +
+            "                            var lanes = Math.max(1, Math.floor(h / laneH));\n" +
+            "                            var lane = pickLane(scrollLaneUntil, Math.min(14, lanes), now, SCROLL_DURATION);\n" +
+            "                            el.style.top = (lane * laneH) + \"px\";\n" +
+            "                            var startX = layer.clientWidth;\n" +
+            "                            el.style.transform = \"translateX(\" + startX + \"px)\";\n" +
+            "                            layer.appendChild(el);\n" +
+            "                            var endX = -el.offsetWidth;\n" +
+            "                            el.dataset.startX = startX; el.dataset.endX = endX; el.dataset.duration = SCROLL_DURATION;\n" +
+            "                            requestAnimationFrame(function() {\n" +
+            "                                el.style.transition = \"transform \" + SCROLL_DURATION + \"s linear\";\n" +
+            "                                el.style.transform = \"translateX(\" + endX + \"px)\";\n" +
+            "                            });\n" +
+            "                            el.addEventListener(\"transitionend\", function() { el.remove(); });\n" +
+            "                        }\n" +
+            "                    }\n" +
+            "                    function tick() {\n" +
+            "                        if (!enabled || !comments.length) return;\n" +
+            "                        var t = player.currentTime();\n" +
+            "                        while (nextIndex < comments.length && comments[nextIndex].time <= t) {\n" +
+            "                            if (t - comments[nextIndex].time < 1.2) spawn(comments[nextIndex]);\n" +
+            "                            nextIndex++;\n" +
+            "                        }\n" +
+            "                    }\n" +
+            "                    function resync() {\n" +
+            "                        layer.innerHTML = \"\";\n" +
+            "                        scrollLaneUntil.fill(0); topLaneUntil.fill(0); bottomLaneUntil.fill(0);\n" +
+            "                        var t = player.currentTime();\n" +
+            "                        nextIndex = 0;\n" +
+            "                        while (nextIndex < comments.length && comments[nextIndex].time < t) nextIndex++;\n" +
+            "                    }\n" +
+            "                    player.on(\"timeupdate\", tick);\n" +
+            "                    player.on(\"seeking\", resync);\n" +
+            "                    player.on(\"pause\", function() {\n" +
+            "                        layer.classList.add(\"video-paused\");\n" +
+            "                        layer.querySelectorAll(\".danmaku-item.scroll\").forEach(function(el) {\n" +
+            "                            var m = new DOMMatrixReadOnly(getComputedStyle(el).transform);\n" +
+            "                            el.style.transition = \"none\";\n" +
+            "                            el.style.transform = \"translateX(\" + m.m41 + \"px)\";\n" +
+            "                            el.dataset.pausedX = m.m41;\n" +
+            "                        });\n" +
+            "                    });\n" +
+            "                    player.on(\"play\", function() {\n" +
+            "                        layer.classList.remove(\"video-paused\");\n" +
+            "                        layer.querySelectorAll(\".danmaku-item.scroll\").forEach(function(el) {\n" +
+            "                            if (el.dataset.pausedX === undefined) return;\n" +
+            "                            var startX = parseFloat(el.dataset.pausedX);\n" +
+            "                            var endX = parseFloat(el.dataset.endX);\n" +
+            "                            var totalDist = parseFloat(el.dataset.startX) - endX;\n" +
+            "                            var remainDist = startX - endX;\n" +
+            "                            var remainDur = totalDist > 0 ? parseFloat(el.dataset.duration) * (remainDist / totalDist) : 0;\n" +
+            "                            delete el.dataset.pausedX;\n" +
+            "                            if (remainDur <= 0) { el.remove(); return; }\n" +
+            "                            requestAnimationFrame(function() {\n" +
+            "                                el.style.transition = \"transform \" + remainDur + \"s linear\";\n" +
+            "                                el.style.transform = \"translateX(\" + endX + \"px)\";\n" +
+            "                            });\n" +
+            "                        });\n" +
+            "                    });\n" +
+            "                    if (toggleBtn) {\n" +
+            "                        toggleBtn.addEventListener(\"click\", function() {\n" +
+            "                            enabled = !enabled;\n" +
+            "                            toggleBtn.classList.toggle(\"off\", !enabled);\n" +
+            "                            if (!enabled) layer.innerHTML = \"\";\n" +
+            "                        });\n" +
+            "                    }\n" +
+            "                    fetch(\"$danmakuUrlJs\")\n" +
+            "                        .then(function(res) { return res.json(); })\n" +
+            "                        .then(function(data) {\n" +
+            "                            comments = (data.danmaku || []).sort(function(a, b) { return a.time - b.time; });\n" +
+            "                            resync();\n" +
+            "                        })\n" +
+            "                        .catch(function() {});\n" +
+            "                })();\n"
+        }
+
         val infoNameJs = HtmlRendererCommon.escapeJs(info.name)
         sb.append("<script>document.title = \"$infoNameJs - Fathom\";</script>\n")
         sb.append("<div class=\"container\">\n")
@@ -512,6 +658,7 @@ object HtmlRendererWatch {
                   .append(trackTags.toString())
                   .append("            Your browser does not support HTML5 video.\n")
                   .append("          </video>\n")
+                  .append(if (serviceId == ServiceList.BiliBili.serviceId) "          <div class=\"danmaku-layer\" id=\"danmaku-layer\"></div>\n" else "")
                   .append("          <div class=\"double-tap-indicator left\" id=\"double-tap-left\">\n")
                   .append("            <svg viewBox=\"0 0 24 24\"><path d=\"M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z\"/></svg>\n")
                   .append("            <div class=\"double-tap-text\">-10s</div>\n")
@@ -627,6 +774,13 @@ object HtmlRendererWatch {
                   .append("            <span class=\"material-symbols-rounded md-select-arrow\">expand_more</span>\n")
                   .append("            </div>\n")
                   .append("          </div>\n")
+                  .append(
+                      if (serviceId == ServiceList.BiliBili.serviceId) {
+                          "          <button class=\"danmaku-toggle-btn\" id=\"danmaku-toggle-btn\" title=\"彈幕開關\"><span class=\"material-symbols-rounded\">chat_bubble</span></button>\n"
+                      } else {
+                          ""
+                      },
+                  )
                   .append("        </div>\n")
 
                 // Script for player quality switching and remote commands
@@ -746,6 +900,7 @@ object HtmlRendererWatch {
                   .append("                }\n")
                   .append(advancedJs)
                   .append(sponsorSegmentsJs)
+                  .append(danmakuJs)
                   .append(fullscreenLetterboxJs)
                   .append(watchProgressJs)
                   .append("                if ('mediaSession' in navigator) {\n")

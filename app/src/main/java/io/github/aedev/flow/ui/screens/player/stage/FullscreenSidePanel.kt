@@ -220,6 +220,7 @@ internal fun BoxScope.FullscreenSidePanel(
                 screenState = screenState,
                 playerState = playerState,
                 uiState = playerUiState,
+                video = video,
                 viewModel = playerViewModel,
                 playerPreferences = playerPreferences,
                 scope = scope,

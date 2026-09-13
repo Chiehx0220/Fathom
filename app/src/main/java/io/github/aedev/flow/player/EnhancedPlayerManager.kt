@@ -50,6 +50,8 @@ import io.github.aedev.flow.player.recovery.ClearedMediaRecoveryState
 import io.github.aedev.flow.player.sabr.integration.SabrStreamInfo
 import io.github.aedev.flow.player.sabr.integration.SabrUrlResolver
 import io.github.aedev.flow.player.service.BackgroundServiceManager
+import io.github.aedev.flow.player.danmaku.DanmakuComment
+import io.github.aedev.flow.player.danmaku.DanmakuHandler
 import io.github.aedev.flow.player.sponsorblock.SponsorBlockHandler
 import io.github.aedev.flow.player.state.EnhancedPlayerState
 import io.github.aedev.flow.player.state.QualityOption
@@ -422,6 +424,7 @@ class EnhancedPlayerManager private constructor() {
     private var qualityManager: QualityManager? = null
     private var surfaceManager: SurfaceManager? = null
     private var sponsorBlockHandler: SponsorBlockHandler? = null
+    private var danmakuHandler: DanmakuHandler? = null
     private var playbackTracker: PlaybackTracker? = null
     private var errorHandler: PlayerErrorHandler? = null
 
@@ -491,6 +494,9 @@ class EnhancedPlayerManager private constructor() {
 
         // Initialize sponsor block handler
         sponsorBlockHandler = SponsorBlockHandler(scope)
+
+        // Initialize danmaku (Bilibili bullet comments) handler
+        danmakuHandler = DanmakuHandler(scope)
 
         // Initialize audio features manager
         audioFeaturesManager = AudioFeaturesManager(scope, _playerState)
@@ -888,6 +894,10 @@ class EnhancedPlayerManager private constructor() {
                 availableSubtitles = StreamProcessor.toSubtitleOptions(availableSubtitles),
             )
         startPlaybackTracker()
+
+        // A local file has no Bilibili danmaku - clear out whatever the previous video (if any)
+        // left loaded, rather than leaving it to scroll over unrelated content.
+        danmakuHandler?.reset()
 
         // Apply SponsorBlock: use offline-saved segments if present, otherwise fall back to API.
         sponsorBlockHandler?.reset()
@@ -2658,6 +2668,25 @@ class EnhancedPlayerManager private constructor() {
 
     val sbCategoryActions: Map<String, SponsorBlockAction>
         get() = sponsorBlockHandler?.categoryActions ?: emptyMap()
+
+    /**
+     * Loads Bilibili danmaku for the video currently being prepared. [videoUrl] must be the exact
+     * URL its own StreamInfo was just extracted with - see [DanmakuHandler.loadComments] for why.
+     * A no-op (empty result) for every service other than Bilibili, so callers don't need to gate
+     * this themselves.
+     */
+    fun loadDanmaku(
+        serviceId: Int,
+        videoUrl: String,
+    ) {
+        danmakuHandler?.reset()
+        danmakuHandler?.loadComments(serviceId, videoUrl)
+    }
+
+    fun resetDanmaku() = danmakuHandler?.reset()
+
+    val danmakuComments: StateFlow<List<DanmakuComment>>
+        get() = danmakuHandler?.comments ?: MutableStateFlow(emptyList())
 
     // ===== Surface Management =====
 

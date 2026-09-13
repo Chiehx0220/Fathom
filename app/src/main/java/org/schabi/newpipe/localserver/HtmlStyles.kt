@@ -649,6 +649,22 @@ object HtmlStyles {
             // div around a separate child <video> for the DASH-manifest path).
             ".video-js.vjs-fullscreen, .video-js.vjs-fullscreen video { object-fit: contain !important; background-color: #000; }\n" +
 
+            // Bilibili danmaku overlay. pointer-events:none throughout so it never blocks clicks
+            // on the video or controls beneath/above it; placed early in vjs-player-wrapper's DOM
+            // (right after <video>) so the double-tap/volume-hud/up-next overlays added later
+            // naturally stack above it with no z-index juggling needed.
+            ".danmaku-layer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; }\n" +
+            ".danmaku-item { position: absolute; white-space: nowrap; font-weight: 600; line-height: 1; text-shadow: 0 0 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6); will-change: transform; }\n" +
+            ".danmaku-item.top, .danmaku-item.bottom { left: 50%; transform: translateX(-50%); }\n" +
+            // Scroll-type items animate via a JS-driven `transition` (travel distance depends on
+            // measured text/player width), so pausing them is handled in JS instead - this only
+            // needs to freeze the CSS `animation` the top/bottom fade variants use.
+            ".danmaku-layer.video-paused .danmaku-item.top, .danmaku-layer.video-paused .danmaku-item.bottom { animation-play-state: paused; }\n" +
+            "@keyframes danmaku-fade { 0% { opacity: 0; } 10%, 85% { opacity: 1; } 100% { opacity: 0; } }\n" +
+            ".danmaku-toggle-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer; background: rgba(124,58,237,0.15); color: var(--text-color); }\n" +
+            ".danmaku-toggle-btn .material-symbols-rounded { font-size: 20px; }\n" +
+            ".danmaku-toggle-btn.off { opacity: 0.45; }\n" +
+
             /* ---- Material 3 refinements -------------------------------------------------
              * Appended last so these win over the equivalent earlier rules. Three things the
              * page was missing: MD3 state layers (the 8%/12% onSurface overlay that gives every

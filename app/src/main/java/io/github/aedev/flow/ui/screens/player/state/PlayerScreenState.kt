@@ -53,6 +53,10 @@ class PlayerScreenState {
     var selectedSubtitleUrl by mutableStateOf<String?>(null)
     var subtitleStyle by mutableStateOf(SubtitleStyle())
 
+    // Danmaku (Bilibili bullet comments) toggle - a general viewing preference like showControls,
+    // not video-specific, so unlike subtitlesEnabled it's not reset in resetForNewVideo().
+    var danmakuEnabled by mutableStateOf(true)
+
     // Video Display
     var resizeMode by mutableIntStateOf(0) // 0=Fit, 1=Fill, 2=Zoom
 
