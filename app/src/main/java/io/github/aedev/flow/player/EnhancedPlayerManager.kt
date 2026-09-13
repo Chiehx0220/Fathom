@@ -89,7 +89,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
@@ -313,6 +312,7 @@ class EnhancedPlayerManager private constructor() {
     }
 
     @Volatile private var videoMediaSession: MediaSession? = null
+    private var videoMetadataSyncJob: Job? = null
 
     fun getVideoMediaSession(): MediaSession? = videoMediaSession
 
@@ -338,45 +338,84 @@ class EnhancedPlayerManager private constructor() {
                     )
                 }
 
-            val sessionPlayer =
-                object : ForwardingPlayer(realPlayer) {
-                    override fun getMediaMetadata(): MediaMetadata {
-                        val v = GlobalPlayerState.currentVideo.value ?: return super.getMediaMetadata()
-                        return v.toVideoSessionMetadata().toMedia3Metadata()
-                    }
+            // Media3's session attaches its own Player.Listener straight to whatever player this
+            // wraps (that's ForwardingPlayer's default addListener/removeListener), and only
+            // re-asks getMediaMetadata() when that real player fires an event - a transition, a
+            // timeline change. GlobalPlayerState.currentVideo finishes enriching well after that
+            // event already fired for this video, so overriding the getter alone is invisible to
+            // the session: it's stuck on whatever it read at that first ask. Tracking the
+            // session's listener here too (still forwarded to the real player as before, so normal
+            // playback events are untouched) lets notifyMediaMetadataChanged() push the corrected
+            // value through it directly once GlobalPlayerState actually has it.
+            class VideoSessionPlayer(wrapped: Player) : ForwardingPlayer(wrapped) {
+                private val extraListeners = java.util.concurrent.CopyOnWriteArraySet<Player.Listener>()
 
-                    override fun getAvailableCommands(): Player.Commands =
-                        super
-                            .getAvailableCommands()
-                            .buildUpon()
-                            .add(Player.COMMAND_SEEK_TO_NEXT)
-                            .add(Player.COMMAND_SEEK_TO_PREVIOUS)
-                            .build()
-
-                    override fun isCommandAvailable(command: Int): Boolean = availableCommands.contains(command)
-
-                    override fun seekToNext() {
-                        autoNextLog("MediaSession seekToNext")
-                        this@EnhancedPlayerManager.skipToNextFromSession()
-                    }
-
-                    override fun seekToNextMediaItem() {
-                        autoNextLog("MediaSession seekToNextMediaItem")
-                        this@EnhancedPlayerManager.skipToNextFromSession()
-                    }
-
-                    override fun seekToPrevious() {
-                        this@EnhancedPlayerManager.playPrevious()
-                    }
-
-                    override fun seekToPreviousMediaItem() {
-                        this@EnhancedPlayerManager.playPrevious()
-                    }
-
-                    override fun hasNextMediaItem(): Boolean = this@EnhancedPlayerManager.hasNextForSession()
-
-                    override fun hasPreviousMediaItem(): Boolean = this@EnhancedPlayerManager.hasPrevious()
+                override fun addListener(listener: Player.Listener) {
+                    extraListeners.add(listener)
+                    autoNextLog("VideoSessionPlayer addListener count=${extraListeners.size}")
+                    super.addListener(listener)
                 }
+
+                override fun removeListener(listener: Player.Listener) {
+                    extraListeners.remove(listener)
+                    autoNextLog("VideoSessionPlayer removeListener count=${extraListeners.size}")
+                    super.removeListener(listener)
+                }
+
+                override fun getMediaMetadata(): MediaMetadata {
+                    val v = GlobalPlayerState.currentVideo.value ?: return super.getMediaMetadata()
+                    return v.toVideoSessionMetadata().toMedia3Metadata()
+                }
+
+                fun notifyMediaMetadataChanged() {
+                    val metadata = mediaMetadata
+                    autoNextLog(
+                        "VideoSessionPlayer notifyMediaMetadataChanged title=${metadata.title} " +
+                            "artist=${metadata.artist} listeners=${extraListeners.size}",
+                    )
+                    extraListeners.forEach {
+                        try {
+                            it.onMediaMetadataChanged(metadata)
+                        } catch (e: Exception) {
+                            autoNextLog("VideoSessionPlayer notify listener threw ${e.javaClass.simpleName}: ${e.message}")
+                        }
+                    }
+                }
+
+                override fun getAvailableCommands(): Player.Commands =
+                    super
+                        .getAvailableCommands()
+                        .buildUpon()
+                        .add(Player.COMMAND_SEEK_TO_NEXT)
+                        .add(Player.COMMAND_SEEK_TO_PREVIOUS)
+                        .build()
+
+                override fun isCommandAvailable(command: Int): Boolean = availableCommands.contains(command)
+
+                override fun seekToNext() {
+                    autoNextLog("MediaSession seekToNext")
+                    this@EnhancedPlayerManager.skipToNextFromSession()
+                }
+
+                override fun seekToNextMediaItem() {
+                    autoNextLog("MediaSession seekToNextMediaItem")
+                    this@EnhancedPlayerManager.skipToNextFromSession()
+                }
+
+                override fun seekToPrevious() {
+                    this@EnhancedPlayerManager.playPrevious()
+                }
+
+                override fun seekToPreviousMediaItem() {
+                    this@EnhancedPlayerManager.playPrevious()
+                }
+
+                override fun hasNextMediaItem(): Boolean = this@EnhancedPlayerManager.hasNextForSession()
+
+                override fun hasPreviousMediaItem(): Boolean = this@EnhancedPlayerManager.hasPrevious()
+            }
+
+            val sessionPlayer = VideoSessionPlayer(realPlayer)
 
             val builder =
                 MediaSession
@@ -385,6 +424,13 @@ class EnhancedPlayerManager private constructor() {
                     .setBitmapLoader(sessionArtworkBitmapLoader(appCtx))
             if (sessionActivity != null) builder.setSessionActivity(sessionActivity)
             videoMediaSession = builder.build()
+            videoMetadataSyncJob =
+                scope.launch {
+                    GlobalPlayerState.currentVideo.collect { video ->
+                        autoNextLog("VideoSessionPlayer GlobalPlayerState.currentVideo changed id=${video?.id} title=${video?.title}")
+                        sessionPlayer.notifyMediaMetadataChanged()
+                    }
+                }
             Log.d(TAG, "Video MediaSession created")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create video MediaSession", e)
@@ -392,6 +438,8 @@ class EnhancedPlayerManager private constructor() {
     }
 
     private fun releaseVideoMediaSession() {
+        videoMetadataSyncJob?.cancel()
+        videoMetadataSyncJob = null
         try {
             videoMediaSession?.release()
         } catch (e: Exception) {
@@ -1685,22 +1733,8 @@ class EnhancedPlayerManager private constructor() {
                             error = null,
                         )
 
-                    val extractionDeferred =
-                        async(Dispatchers.IO) {
-                            try {
-                                withTimeoutOrNull(25000L) {
-                                    io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
-                                        .extract(video.id)
-                                }
-                            } catch (e: kotlinx.coroutines.CancellationException) {
-                                throw e
-                            } catch (_: Exception) {
-                                null
-                            }
-                        }
-
-                    val streamInfo =
-                        StreamInfoFetcher.fetchForPlayback(video.id) ?: run {
+                    val resolved =
+                        resolveStreamsForVideo(video, context) ?: run {
                             autoNextLog("playVideoFromServiceLayer streamInfo failed video=${video.id}")
                             _playerState.value =
                                 _playerState.value.copy(
@@ -1710,93 +1744,41 @@ class EnhancedPlayerManager private constructor() {
                             releaseAdvanceWakeLock()
                             return@launch
                         }
-
-                    val extraction = extractionDeferred.await()
                     if (shouldAbortServicePlaybackLoad(video.id, reason, checkpoint = "streams-resolved")) {
                         return@launch
                     }
-                    val sabrInfo = extraction?.sabrInfo
-                    val enrichedVideo = StreamInfoVideoMapper.videoFromStreamInfo(video.id, streamInfo, fallback = video)
-                    GlobalPlayerState.setCurrentVideo(enrichedVideo)
+                    GlobalPlayerState.setCurrentVideo(resolved.enrichedVideo)
                     startBackgroundService(
-                        videoId = enrichedVideo.id,
-                        title = enrichedVideo.title,
-                        channel = enrichedVideo.channelName,
-                        thumbnail = enrichedVideo.thumbnailUrl,
+                        videoId = resolved.enrichedVideo.id,
+                        title = resolved.enrichedVideo.title,
+                        channel = resolved.enrichedVideo.channelName,
+                        thumbnail = resolved.enrichedVideo.thumbnailUrl,
                     )
                     setAutoplayCandidates(
-                        sourceVideoId = enrichedVideo.id,
-                        videos = StreamInfoVideoMapper.relatedVideosFromStreamInfo(streamInfo),
+                        sourceVideoId = resolved.enrichedVideo.id,
+                        videos = resolved.relatedVideos,
                         enabled = autoplayEnabled,
                     )
 
-                    val prefs = PlayerPreferences(context)
-                    val preferredQuality =
-                        if (NetworkState.isOnWifi(context)) {
-                            prefs.defaultQualityWifi.first()
-                        } else {
-                            prefs.defaultQualityCellular.first()
-                        }
-                    val preferredAudioLanguage = prefs.preferredAudioLanguage.first()
-                    val preferredCodecKey = prefs.videoCodecPriority.first()
-                    val innerTubeVideoStreams =
-                        extraction
-                            ?.let {
-                                io.github.aedev.flow.player.stream.InnerTubeStreamBridge
-                                    .convertVideoFormats(it.videoFormats)
-                            }.orEmpty()
-                    val innerTubeAudioStreams =
-                        extraction
-                            ?.let {
-                                io.github.aedev.flow.player.stream.InnerTubeStreamBridge
-                                    .convertAudioFormats(it.audioFormats)
-                            }.orEmpty()
-                    val extractorVideoStreams =
-                        (streamInfo.videoStreams + (streamInfo.videoOnlyStreams ?: emptyList()))
-                            .filterIsInstance<VideoStream>()
-                    val mergedVideoStreams = StreamMergeUtils.mergeVideoStreams(extractorVideoStreams, innerTubeVideoStreams)
-                    val mergedAudioStreams = StreamMergeUtils.mergeAudioStreams(streamInfo.audioStreams, innerTubeAudioStreams)
-                    if (extractorVideoStreams.isNotEmpty()) {
-                        Log.d(
-                            TAG,
-                            "Queue advance using NewPipe streams: ${extractorVideoStreams.size} video " +
-                                "(merged=${mergedVideoStreams.size}, innerTube=${innerTubeVideoStreams.size})",
-                        )
-                    } else if (innerTubeVideoStreams.isNotEmpty()) {
-                        Log.d(
-                            TAG,
-                            "Queue advance using InnerTube streams: ${innerTubeVideoStreams.size} video, " +
-                                "${innerTubeAudioStreams.size} audio (merged=${mergedVideoStreams.size})",
-                        )
-                    }
-
-                    val selected =
-                        ServicePlaybackStreamSelector.selectStreams(
-                            videoCandidates = mergedVideoStreams,
-                            audioCandidatesAll = mergedAudioStreams,
-                            preferredQuality = preferredQuality,
-                            preferredAudioLanguage = preferredAudioLanguage,
-                            preferredCodecKey = preferredCodecKey,
-                        )
                     if (shouldAbortServicePlaybackLoad(video.id, reason, checkpoint = "before-commit")) {
                         return@launch
                     }
                     setStreams(
-                        videoId = enrichedVideo.id,
-                        videoStream = selected.first,
-                        audioStream = selected.second,
-                        videoStreams = mergedVideoStreams,
-                        audioStreams = mergedAudioStreams,
-                        subtitles = mergedSubtitles(streamInfo, extraction),
-                        durationSeconds = streamInfo.duration,
-                        dashManifestUrl = streamInfo.dashMpdUrl,
-                        hlsUrl = streamInfo.hlsUrl,
-                        streamType = streamInfo.streamType,
+                        videoId = resolved.enrichedVideo.id,
+                        videoStream = resolved.videoStream,
+                        audioStream = resolved.audioStream,
+                        videoStreams = resolved.videoStreams,
+                        audioStreams = resolved.audioStreams,
+                        subtitles = resolved.subtitles,
+                        durationSeconds = resolved.durationSeconds,
+                        dashManifestUrl = resolved.dashManifestUrl,
+                        hlsUrl = resolved.hlsUrl,
+                        streamType = resolved.streamType,
                         startPosition = 0L,
-                        sabrInfo = sabrInfo,
-                        itVideoFormats = extraction?.videoFormats ?: emptyList(),
-                        itAudioFormats = extraction?.audioFormats ?: emptyList(),
-                        preferredVideoCodec = preferredCodecKey,
+                        sabrInfo = resolved.sabrInfo,
+                        itVideoFormats = resolved.itVideoFormats,
+                        itAudioFormats = resolved.itAudioFormats,
+                        preferredVideoCodec = resolved.preferredCodec,
                         keepAudioOnly = resumeInAudioOnly,
                     )
                     play()
@@ -1863,6 +1845,11 @@ class EnhancedPlayerManager private constructor() {
             val extractionDeferred =
                 async(Dispatchers.IO) {
                     try {
+                        if (!io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
+                                .supportsService(video.serviceId)
+                        ) {
+                            return@async null
+                        }
                         withTimeoutOrNull(25000L) {
                             io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
                                 .extract(video.id)
@@ -1874,7 +1861,7 @@ class EnhancedPlayerManager private constructor() {
                     }
                 }
             val streamInfo =
-                StreamInfoFetcher.fetchForPlayback(video.id) ?: run {
+                StreamInfoFetcher.fetchForPlayback(video.id, video.serviceId) ?: run {
                     extractionDeferred.cancel()
                     return@coroutineScope null
                 }
@@ -1907,15 +1894,18 @@ class EnhancedPlayerManager private constructor() {
             val extractorVideoStreams =
                 (streamInfo.videoStreams + (streamInfo.videoOnlyStreams ?: emptyList()))
                     .filterIsInstance<VideoStream>()
+            // Extractor-first, matching MergedPlaybackAssembly.assemble()'s convention for loading a
+            // video for the first time (as opposed to selectQualityStreams()'s InnerTube-first order,
+            // which is specifically for re-picking quality on a video already on screen).
             val mergedVideoStreams =
                 StreamMergeUtils.mergeVideoStreams(
-                    innerTubeVideoStreams,
                     extractorVideoStreams,
+                    innerTubeVideoStreams,
                 )
             val mergedAudioStreams =
                 StreamMergeUtils.mergeAudioStreams(
-                    innerTubeAudioStreams,
                     streamInfo.audioStreams,
+                    innerTubeAudioStreams,
                 )
             val selected =
                 ServicePlaybackStreamSelector.selectStreams(
@@ -1934,6 +1924,8 @@ class EnhancedPlayerManager private constructor() {
                 subtitles = mergedSubtitles(streamInfo, extraction),
                 durationSeconds = streamInfo.duration,
                 dashManifestUrl = streamInfo.dashMpdUrl,
+                hlsUrl = streamInfo.hlsUrl,
+                sabrInfo = extraction?.sabrInfo,
                 streamType = streamInfo.streamType,
                 relatedVideos = StreamInfoVideoMapper.relatedVideosFromStreamInfo(streamInfo),
                 preferredCodec = preferredCodecKey,

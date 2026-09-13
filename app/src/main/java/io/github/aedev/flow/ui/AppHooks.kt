@@ -23,6 +23,7 @@ fun HandleDeepLinks(
     isShort: Boolean,
     navController: NavController,
     onDeeplinkConsumed: () -> Unit,
+    deeplinkServiceId: Int = org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId,
 ) {
     LaunchedEffect(deeplinkVideoId, isShort) {
         if (deeplinkVideoId != null) {
@@ -38,7 +39,11 @@ fun HandleDeepLinks(
                                 launchSingleTop = true
                             }
                         } else {
-                            navController.navigate("player/$deeplinkVideoId") {
+                            // The "player/{videoId}?serviceId={serviceId}" route defaults serviceId
+                            // to YouTube when it's missing from the nav args - the reopen-from-quick-
+                            // panel-notification case (deeplinkServiceId != YouTube) needs it spelled
+                            // out here or it silently misidentifies a non-YouTube video's own service.
+                            navController.navigate("player/$deeplinkVideoId?serviceId=$deeplinkServiceId") {
                                 launchSingleTop = true
                             }
                         }

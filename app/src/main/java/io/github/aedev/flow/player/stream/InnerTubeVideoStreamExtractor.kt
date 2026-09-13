@@ -27,6 +27,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.schabi.newpipe.extractor.ServiceList
 
 object InnerTubeVideoStreamExtractor {
     private const val TAG = "InnerTubeVideoExtractor"
@@ -111,6 +112,15 @@ object InnerTubeVideoStreamExtractor {
         val liveHlsUrl: String? = null,
         val liveDashUrl: String? = null,
     )
+
+    /**
+     * InnerTube is YouTube's own private web API - it has no notion of any other NewPipeExtractor
+     * service and will always fail (after wasting a full client-ladder timeout) for a non-YouTube id
+     * like Bilibili's "BVxxxxxxxxxx". Every caller that races this against the generic extractor
+     * path should check this first and skip straight to null off-YouTube, instead of each one
+     * re-deriving the same service check.
+     */
+    fun supportsService(serviceId: Int): Boolean = serviceId == ServiceList.YouTube.serviceId
 
     @OptIn(UnstableApi::class)
     suspend fun extract(

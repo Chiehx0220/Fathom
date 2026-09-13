@@ -74,6 +74,11 @@ class MainActivity : ComponentActivity() {
     private val _deeplinkVideoId = mutableStateOf<String?>(null)
     val deeplinkVideoId: State<String?> = _deeplinkVideoId
 
+    // Only the open_video_player case below ever sets this to anything but YouTube - every other
+    // deep link (a shared/opened youtube.com URL) is YouTube by construction.
+    private val _deeplinkServiceId = mutableStateOf(org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId)
+    val deeplinkServiceId: State<Int> = _deeplinkServiceId
+
     private val _isDeeplinkShort = mutableStateOf(false)
     val isDeeplinkShort: State<Boolean> = _isDeeplinkShort
 
@@ -363,6 +368,7 @@ class MainActivity : ComponentActivity() {
                                 // This loads *behind* the splash screen immediately.
                                 // By the time splash fades, this is ready.
                                 val deeplinkVideoId by this@MainActivity.deeplinkVideoId
+                                val deeplinkServiceId by this@MainActivity.deeplinkServiceId
                                 val isDeeplinkShort by this@MainActivity.isDeeplinkShort
                                 val openMusicPlayerRequest by this@MainActivity.openMusicPlayerRequest
                                 val pendingWidgetRoute by this@MainActivity.pendingWidgetRoute
@@ -419,6 +425,7 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             },
                                             deeplinkVideoId = deeplinkVideoId,
+                                            deeplinkServiceId = deeplinkServiceId,
                                             isShort = isDeeplinkShort,
                                             openMusicPlayerRequest = openMusicPlayerRequest,
                                             onDeeplinkConsumed = {
@@ -510,10 +517,11 @@ class MainActivity : ComponentActivity() {
 
         if (intent.getBooleanExtra("open_video_player", false)) {
             intent.removeExtra("open_video_player")
-            val currentVideoId = GlobalPlayerState.currentVideo.value?.id
-            if (currentVideoId != null) {
+            val currentVideo = GlobalPlayerState.currentVideo.value
+            if (currentVideo != null) {
                 _isDeeplinkShort.value = false
-                _deeplinkVideoId.value = currentVideoId
+                _deeplinkServiceId.value = currentVideo.serviceId
+                _deeplinkVideoId.value = currentVideo.id
             }
             return
         }
@@ -563,6 +571,7 @@ class MainActivity : ComponentActivity() {
     fun consumeDeeplink() {
         _deeplinkVideoId.value = null
         _isDeeplinkShort.value = false
+        _deeplinkServiceId.value = org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId
     }
 
     private fun extractVideoId(url: String): String? {

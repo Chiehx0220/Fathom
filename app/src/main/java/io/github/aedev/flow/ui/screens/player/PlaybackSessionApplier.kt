@@ -238,6 +238,12 @@ internal class PlaybackSessionApplier(
                 ?.takeIf { it.isNotBlank() }
         val enrichedVideo = uiState.value.primaryMetadataVideo(load.videoId, streamInfo) ?: return
         if (isLoadCurrent(load.token)) {
+            // cachedVideo has to carry this enrichment too, not just GlobalPlayerState directly:
+            // later secondary-metadata reducers (applyChannelMetadata, for one) read cachedVideo and
+            // merge their own update into it before pushing the result back to GlobalPlayerState -
+            // if cachedVideo were left at its pre-enrichment value, that merge would silently
+            // resurrect the blank/placeholder title over what was just set here.
+            uiState.update { it.copy(cachedVideo = enrichedVideo) }
             GlobalPlayerState.setCurrentVideo(enrichedVideo)
             playerManager.startBackgroundService(
                 videoId = load.videoId,

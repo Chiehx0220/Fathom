@@ -33,7 +33,6 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.exceptions.ContentNotAvailableException
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamType
@@ -94,13 +93,7 @@ class PlaybackLoadResolver
                 val streamInfoDeferred = scope.async(networkDispatcher) { fetchStreamInfo(videoId, request.serviceId) }
                 val innerTubeDeferred =
                     scope.async(networkDispatcher) {
-                        // InnerTubeVideoStreamExtractor talks to YouTube's private web API directly - it
-                        // has no notion of other services and will always fail (after wasting a full
-                        // client-ladder timeout) for a non-YouTube id like Bilibili's "BVxxxxxxxxxx".
-                        // Skip it entirely off-YouTube so those videos resolve purely through the
-                        // generic extractor path (streamInfoDeferred above) instead of racing a
-                        // guaranteed loser.
-                        if (request.serviceId != ServiceList.YouTube.serviceId) return@async null
+                        if (!InnerTubeVideoStreamExtractor.supportsService(request.serviceId)) return@async null
                         extractInnerTube(videoId, forceSabr = request.escalateToSabr)
                     }
 

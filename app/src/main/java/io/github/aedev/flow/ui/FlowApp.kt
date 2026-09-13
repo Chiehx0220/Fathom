@@ -82,6 +82,7 @@ fun FlowApp(
     onSystemDarkThemeChange: (ThemeMode) -> Unit,
     onSystemDarkThemeVariantChange: (ThemeVariant) -> Unit,
     deeplinkVideoId: String? = null,
+    deeplinkServiceId: Int = org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId,
     isShort: Boolean = false,
     openMusicPlayerRequest: Int = 0,
     onDeeplinkConsumed: () -> Unit = {},
@@ -187,7 +188,7 @@ fun FlowApp(
         }
     }
 
-    HandleDeepLinks(deeplinkVideoId, isShort, navController, onDeeplinkConsumed)
+    HandleDeepLinks(deeplinkVideoId, isShort, navController, onDeeplinkConsumed, deeplinkServiceId)
     OfflineMonitor(context, navController, snackbarHostState, currentRoute)
 
     val selectedBottomNavIndex = remember { mutableIntStateOf(resolvedDefaultNavTabIndex) }
