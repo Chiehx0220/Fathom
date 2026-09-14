@@ -41,6 +41,7 @@ import io.github.aedev.flow.player.LifecyclePlaybackPreferences
 import io.github.aedev.flow.player.MemoryPressurePolicy
 import io.github.aedev.flow.player.PictureInPictureHelper
 import io.github.aedev.flow.ui.FlowApp
+import io.github.aedev.flow.ui.PendingDeeplink
 import io.github.aedev.flow.ui.components.ProvideVideoCardState
 import io.github.aedev.flow.ui.components.UpdateDialog
 import io.github.aedev.flow.ui.components.shared.ProvideChannelGroupLabels
@@ -71,16 +72,8 @@ private const val PORTRAIT_REEL_ASPECT_RATIO = 9f / 16f
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val _deeplinkVideoId = mutableStateOf<String?>(null)
-    val deeplinkVideoId: State<String?> = _deeplinkVideoId
-
-    // Only the open_video_player case below ever sets this to anything but YouTube - every other
-    // deep link (a shared/opened youtube.com URL) is YouTube by construction.
-    private val _deeplinkServiceId = mutableStateOf(org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId)
-    val deeplinkServiceId: State<Int> = _deeplinkServiceId
-
-    private val _isDeeplinkShort = mutableStateOf(false)
-    val isDeeplinkShort: State<Boolean> = _isDeeplinkShort
+    private val _pendingDeeplink = mutableStateOf<PendingDeeplink?>(null)
+    val pendingDeeplink: State<PendingDeeplink?> = _pendingDeeplink
 
     private val _pendingUpdateInfo = mutableStateOf<UpdateInfo?>(null)
     val pendingUpdateInfo: State<UpdateInfo?> = _pendingUpdateInfo
@@ -367,16 +360,14 @@ class MainActivity : ComponentActivity() {
                                 // 1. MAIN APP (Home/NavHost)
                                 // This loads *behind* the splash screen immediately.
                                 // By the time splash fades, this is ready.
-                                val deeplinkVideoId by this@MainActivity.deeplinkVideoId
-                                val deeplinkServiceId by this@MainActivity.deeplinkServiceId
-                                val isDeeplinkShort by this@MainActivity.isDeeplinkShort
+                                val pendingDeeplink by this@MainActivity.pendingDeeplink
                                 val openMusicPlayerRequest by this@MainActivity.openMusicPlayerRequest
                                 val pendingWidgetRoute by this@MainActivity.pendingWidgetRoute
 
                                 if (appUiRoot == AppUiRoot.TV) {
                                     FlowTvApp(
-                                        deeplinkVideoId = deeplinkVideoId,
-                                        isShort = isDeeplinkShort,
+                                        deeplinkVideoId = pendingDeeplink?.videoId,
+                                        isShort = pendingDeeplink?.isShort ?: false,
                                         onDeeplinkConsumed = { consumeDeeplink() },
                                     )
                                 } else {
@@ -424,9 +415,7 @@ class MainActivity : ComponentActivity() {
                                                     dataManager.setSystemDarkThemeVariant(variant)
                                                 }
                                             },
-                                            deeplinkVideoId = deeplinkVideoId,
-                                            deeplinkServiceId = deeplinkServiceId,
-                                            isShort = isDeeplinkShort,
+                                            pendingDeeplink = pendingDeeplink,
                                             openMusicPlayerRequest = openMusicPlayerRequest,
                                             onDeeplinkConsumed = {
                                                 consumeDeeplink()
@@ -506,8 +495,7 @@ class MainActivity : ComponentActivity() {
         }
 
         if (intent.getBooleanExtra("open_music_player", false)) {
-            _deeplinkVideoId.value = null
-            _isDeeplinkShort.value = false
+            _pendingDeeplink.value = null
             _openMusicPlayerRequest.intValue += 1
             intent.removeExtra("notification_video_id")
             intent.removeExtra("video_id")
@@ -517,30 +505,25 @@ class MainActivity : ComponentActivity() {
 
         if (intent.getBooleanExtra("open_video_player", false)) {
             intent.removeExtra("open_video_player")
-            val currentVideo = GlobalPlayerState.currentVideo.value
-            if (currentVideo != null) {
-                _isDeeplinkShort.value = false
-                _deeplinkServiceId.value = currentVideo.serviceId
-                _deeplinkVideoId.value = currentVideo.id
+            GlobalPlayerState.currentVideo.value?.let { video ->
+                _pendingDeeplink.value = PendingDeeplink(videoId = video.id, serviceId = video.serviceId)
             }
             return
         }
 
-        // Reset shorts flag
-        _isDeeplinkShort.value = false
-
+        var isShort = false
         val videoId =
             if (data != null && intent.action == Intent.ACTION_VIEW) {
                 val urlString = data.toString()
                 if (urlString.contains("shorts/")) {
-                    _isDeeplinkShort.value = true
+                    isShort = true
                 }
                 extractVideoId(urlString)
             } else if (intent.action == Intent.ACTION_SEND && intent.type == "text/plain") {
                 val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
                 if (sharedText != null) {
                     if (sharedText.contains("shorts/")) {
-                        _isDeeplinkShort.value = true
+                        isShort = true
                     }
                     extractVideoId(sharedText)
                 } else {
@@ -551,11 +534,13 @@ class MainActivity : ComponentActivity() {
             }
         // Check extra
         if (intent.getBooleanExtra("is_short", false) || intent.getBooleanExtra("is_shorts", false)) {
-            _isDeeplinkShort.value = true
+            isShort = true
         }
 
+        // Every deep link that reaches this point (a shared/opened youtube.com URL) is YouTube by
+        // construction, so PendingDeeplink's serviceId default applies as-is.
         if (videoId != null) {
-            _deeplinkVideoId.value = videoId
+            _pendingDeeplink.value = PendingDeeplink(videoId = videoId, isShort = isShort)
             intent.putExtra("deeplink_video_id", videoId)
         }
 
@@ -569,9 +554,7 @@ class MainActivity : ComponentActivity() {
     }
 
     fun consumeDeeplink() {
-        _deeplinkVideoId.value = null
-        _isDeeplinkShort.value = false
-        _deeplinkServiceId.value = org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId
+        _pendingDeeplink.value = null
     }
 
     private fun extractVideoId(url: String): String? {

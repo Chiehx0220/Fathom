@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
 import io.github.aedev.flow.utils.NetworkConnectivityObserver
@@ -19,14 +20,13 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun HandleDeepLinks(
-    deeplinkVideoId: String?,
-    isShort: Boolean,
-    navController: NavController,
+    pendingDeeplink: PendingDeeplink?,
+    navController: NavHostController,
     onDeeplinkConsumed: () -> Unit,
-    deeplinkServiceId: Int = org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId,
 ) {
-    LaunchedEffect(deeplinkVideoId, isShort) {
-        if (deeplinkVideoId != null) {
+    LaunchedEffect(pendingDeeplink) {
+        if (pendingDeeplink != null) {
+            val (videoId, serviceId, isShort) = pendingDeeplink
             val maxAttempts = 30
             var navigated = false
             for (attempt in 1..maxAttempts) {
@@ -34,18 +34,16 @@ fun HandleDeepLinks(
                 try {
                     if (navController.currentDestination != null) {
                         if (isShort) {
-                            val src = Uri.encode(ShortsQueueSource.SeededFeed(deeplinkVideoId).encode())
+                            val src = Uri.encode(ShortsQueueSource.SeededFeed(videoId).encode())
                             navController.navigate("shorts?src=$src") {
                                 launchSingleTop = true
                             }
                         } else {
-                            // The "player/{videoId}?serviceId={serviceId}" route defaults serviceId
-                            // to YouTube when it's missing from the nav args - the reopen-from-quick-
-                            // panel-notification case (deeplinkServiceId != YouTube) needs it spelled
-                            // out here or it silently misidentifies a non-YouTube video's own service.
-                            navController.navigate("player/$deeplinkVideoId?serviceId=$deeplinkServiceId") {
-                                launchSingleTop = true
-                            }
+                            // Route through navigateToPlayer (PlayerNavigation.kt), not a hand-built
+                            // "player/$id?serviceId=$id" string: a raw Bilibili id can itself contain
+                            // "?p=1", which would inject a second "?" and make the route's own
+                            // "?serviceId=" query silently fail to parse, falling back to YouTube.
+                            navController.navigateToPlayer(videoId, serviceId)
                         }
                         navigated = true
                         break
@@ -53,14 +51,14 @@ fun HandleDeepLinks(
                 } catch (e: Exception) {
                     android.util.Log.w(
                         "HandleDeepLinks",
-                        "Navigation attempt $attempt failed for $deeplinkVideoId: ${e.message}",
+                        "Navigation attempt $attempt failed for $videoId: ${e.message}",
                     )
                 }
             }
             if (!navigated) {
                 android.util.Log.e(
                     "HandleDeepLinks",
-                    "Navigation failed after $maxAttempts attempts for: $deeplinkVideoId",
+                    "Navigation failed after $maxAttempts attempts for: $videoId",
                 )
             }
             onDeeplinkConsumed()
