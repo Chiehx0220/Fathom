@@ -18,6 +18,6 @@ val MIGRATIONS: Array<Migration> =
         Migration21To22(),
         Migration22To23(),
         Migration23To24(),
-        Migration26To27(),
         Migration27To28(),
+        Migration28To29(),
     )

@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 27,
-    "identityHash": "15e86183ef90207fbbdfb6471b786fb1",
+    "identityHash": "0e19f06767e5428b8599d34fd0c08b38",
     "entities": [
       {
         "tableName": "videos",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `channelName` TEXT NOT NULL, `channelId` TEXT NOT NULL, `thumbnailUrl` TEXT NOT NULL, `duration` INTEGER NOT NULL, `viewCount` INTEGER NOT NULL, `uploadDate` TEXT NOT NULL, `description` TEXT NOT NULL, `channelThumbnailUrl` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `savedAt` INTEGER NOT NULL, `isMusic` INTEGER NOT NULL, `serviceId` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `channelName` TEXT NOT NULL, `channelId` TEXT NOT NULL, `thumbnailUrl` TEXT NOT NULL, `duration` INTEGER NOT NULL, `viewCount` INTEGER NOT NULL, `uploadDate` TEXT NOT NULL, `description` TEXT NOT NULL, `channelThumbnailUrl` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `savedAt` INTEGER NOT NULL, `isMusic` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -85,12 +85,6 @@
             "columnName": "isMusic",
             "affinity": "INTEGER",
             "notNull": true
-          },
-          {
-            "fieldPath": "serviceId",
-            "columnName": "serviceId",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -102,7 +96,7 @@
       },
       {
         "tableName": "playlists",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `thumbnailUrl` TEXT NOT NULL, `isPrivate` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `videoCount` INTEGER NOT NULL, `isMusic` INTEGER NOT NULL, `isUserCreated` INTEGER NOT NULL, `syncId` TEXT, `serviceId` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `thumbnailUrl` TEXT NOT NULL, `isPrivate` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `videoCount` INTEGER NOT NULL, `isMusic` INTEGER NOT NULL, `isUserCreated` INTEGER NOT NULL, `syncId` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -162,12 +156,6 @@
             "fieldPath": "syncId",
             "columnName": "syncId",
             "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "serviceId",
-            "columnName": "serviceId",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -511,7 +499,7 @@
       },
       {
         "tableName": "downloads",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`videoId` TEXT NOT NULL, `title` TEXT NOT NULL, `uploader` TEXT NOT NULL, `duration` INTEGER NOT NULL, `thumbnailUrl` TEXT NOT NULL, `thumbnailPath` TEXT, `createdAt` INTEGER NOT NULL, `sponsorBlockSegmentsJson` TEXT, `serviceId` INTEGER NOT NULL, PRIMARY KEY(`videoId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`videoId` TEXT NOT NULL, `title` TEXT NOT NULL, `uploader` TEXT NOT NULL, `duration` INTEGER NOT NULL, `thumbnailUrl` TEXT NOT NULL, `thumbnailPath` TEXT, `createdAt` INTEGER NOT NULL, `sponsorBlockSegmentsJson` TEXT, PRIMARY KEY(`videoId`))",
         "fields": [
           {
             "fieldPath": "videoId",
@@ -558,12 +546,6 @@
             "fieldPath": "sponsorBlockSegmentsJson",
             "columnName": "sponsorBlockSegmentsJson",
             "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "serviceId",
-            "columnName": "serviceId",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -692,7 +674,7 @@
       },
       {
         "tableName": "watch_history",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`videoId` TEXT NOT NULL, `position` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `title` TEXT NOT NULL, `thumbnailUrl` TEXT NOT NULL, `channelName` TEXT NOT NULL, `channelId` TEXT NOT NULL, `isMusic` INTEGER NOT NULL, `isShort` INTEGER NOT NULL, `isLocal` INTEGER NOT NULL, `serviceId` INTEGER NOT NULL, PRIMARY KEY(`videoId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`videoId` TEXT NOT NULL, `position` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `title` TEXT NOT NULL, `thumbnailUrl` TEXT NOT NULL, `channelName` TEXT NOT NULL, `channelId` TEXT NOT NULL, `isMusic` INTEGER NOT NULL, `isShort` INTEGER NOT NULL, `isLocal` INTEGER NOT NULL, PRIMARY KEY(`videoId`))",
         "fields": [
           {
             "fieldPath": "videoId",
@@ -759,12 +741,6 @@
             "columnName": "isLocal",
             "affinity": "INTEGER",
             "notNull": true
-          },
-          {
-            "fieldPath": "serviceId",
-            "columnName": "serviceId",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -823,7 +799,7 @@
       },
       {
         "tableName": "home_feed_cache",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cacheKey` TEXT NOT NULL, `bucket` TEXT NOT NULL, `videoId` TEXT NOT NULL, `title` TEXT NOT NULL, `channelName` TEXT NOT NULL, `channelId` TEXT NOT NULL, `thumbnailUrl` TEXT NOT NULL, `duration` INTEGER NOT NULL, `viewCount` INTEGER NOT NULL, `likeCount` INTEGER NOT NULL, `uploadDate` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `description` TEXT NOT NULL, `channelThumbnailUrl` TEXT NOT NULL, `tagsJson` TEXT NOT NULL, `isMusic` INTEGER NOT NULL, `isLive` INTEGER NOT NULL, `isShort` INTEGER NOT NULL, `isUpcoming` INTEGER NOT NULL, `commentCountText` TEXT NOT NULL, `source` TEXT NOT NULL, `relatedSeedId` TEXT, `cachedAt` INTEGER NOT NULL, `expiresAt` INTEGER NOT NULL, `orderIndex` INTEGER NOT NULL, `serviceId` INTEGER NOT NULL, PRIMARY KEY(`cacheKey`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cacheKey` TEXT NOT NULL, `bucket` TEXT NOT NULL, `videoId` TEXT NOT NULL, `title` TEXT NOT NULL, `channelName` TEXT NOT NULL, `channelId` TEXT NOT NULL, `thumbnailUrl` TEXT NOT NULL, `duration` INTEGER NOT NULL, `viewCount` INTEGER NOT NULL, `likeCount` INTEGER NOT NULL, `uploadDate` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `description` TEXT NOT NULL, `channelThumbnailUrl` TEXT NOT NULL, `tagsJson` TEXT NOT NULL, `isMusic` INTEGER NOT NULL, `isLive` INTEGER NOT NULL, `isShort` INTEGER NOT NULL, `isUpcoming` INTEGER NOT NULL, `commentCountText` TEXT NOT NULL, `source` TEXT NOT NULL, `relatedSeedId` TEXT, `cachedAt` INTEGER NOT NULL, `expiresAt` INTEGER NOT NULL, `orderIndex` INTEGER NOT NULL, PRIMARY KEY(`cacheKey`))",
         "fields": [
           {
             "fieldPath": "cacheKey",
@@ -971,12 +947,6 @@
           {
             "fieldPath": "orderIndex",
             "columnName": "orderIndex",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "serviceId",
-            "columnName": "serviceId",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -1670,11 +1640,53 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_music_graph_edge_lastSeenAt` ON `${TABLE_NAME}` (`lastSeenAt`)"
           }
         ]
+      },
+      {
+        "tableName": "notes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `targetId` TEXT NOT NULL, `kind` TEXT NOT NULL, `text` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetId",
+            "columnName": "targetId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '15e86183ef90207fbbdfb6471b786fb1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0e19f06767e5428b8599d34fd0c08b38')"
     ]
   }
 }

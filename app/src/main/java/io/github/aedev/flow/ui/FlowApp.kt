@@ -84,8 +84,8 @@ fun FlowApp(
     pendingDeeplink: PendingDeeplink? = null,
     openMusicPlayerRequest: Int = 0,
     onDeeplinkConsumed: () -> Unit = {},
-    pendingWidgetRoute: String? = null,
-    onWidgetRouteConsumed: () -> Unit = {},
+    pendingRoute: String? = null,
+    onPendingRouteConsumed: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val activity = context as? androidx.activity.ComponentActivity
@@ -405,11 +405,11 @@ fun FlowApp(
             }
         }
 
-        LaunchedEffect(pendingWidgetRoute) {
-            pendingWidgetRoute?.let { route ->
+        LaunchedEffect(pendingRoute) {
+            pendingRoute?.let { route ->
                 navController.currentBackStackEntryFlow.first()
                 navController.navigate(route)
-                onWidgetRouteConsumed()
+                onPendingRouteConsumed()
             }
         }
 
