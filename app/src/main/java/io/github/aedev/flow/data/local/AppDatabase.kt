@@ -72,6 +72,16 @@ import io.github.aedev.flow.data.local.migrations.Migration24To25
     ],
     // 27 is upstream's (adds notes). Our own serviceId migrations, previously numbered 26->27 and
     // 27->28 before this collided with upstream's own use of 27, are renumbered 27->28 and 28->29.
+    //
+    // FORK VERSIONING POLICY: upstream keeps incrementing from here in its own small-number range
+    // (28, 29, 30...) on every future merge. Any migration that exists only in this fork - not
+    // merged from upstream - must NOT continue that sequence, or it collides with upstream's next
+    // version the same way this one did. Instead, jump to a reserved high block starting at 10001
+    // (e.g. the next fork-only migration is Migration(29, 10001)) so this fork's own version range
+    // can never overlap with anything upstream will ever reach on its own. Keep every migration
+    // that touches a column/table upstream might also add idempotent (see MigrationColumns.kt)
+    // regardless - a device can still arrive at a given version having already done the work under
+    // an older numbering, which a reserved block doesn't by itself prevent.
     version = 29,
     exportSchema = true,
 )

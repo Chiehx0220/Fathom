@@ -9,13 +9,18 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  *
  * Numbered 27->28 rather than 26->27 because upstream's own AutoMigration(26, 27) (adds notes)
  * already claims that version transition - this picks up right after it instead of colliding.
+ * A device that ran this migration under its old 26->27 number already has these columns, so
+ * each ADD COLUMN is guarded rather than assumed safe (see MigrationColumns.kt). Such a device
+ * also never ran upstream's AutoMigration(26, 27), which is where the `notes` table normally
+ * comes from - ensureNotesTable() covers that gap too.
  */
 class Migration27To28 : Migration(27, 28) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE videos ADD COLUMN serviceId INTEGER NOT NULL DEFAULT 0")
-        db.execSQL("ALTER TABLE playlists ADD COLUMN serviceId INTEGER NOT NULL DEFAULT 0")
-        db.execSQL("ALTER TABLE watch_history ADD COLUMN serviceId INTEGER NOT NULL DEFAULT 0")
-        db.execSQL("ALTER TABLE downloads ADD COLUMN serviceId INTEGER NOT NULL DEFAULT 0")
-        db.execSQL("ALTER TABLE home_feed_cache ADD COLUMN serviceId INTEGER NOT NULL DEFAULT 0")
+        db.ensureNotesTable()
+        db.addColumnIfMissing("videos", "serviceId", "INTEGER NOT NULL DEFAULT 0")
+        db.addColumnIfMissing("playlists", "serviceId", "INTEGER NOT NULL DEFAULT 0")
+        db.addColumnIfMissing("watch_history", "serviceId", "INTEGER NOT NULL DEFAULT 0")
+        db.addColumnIfMissing("downloads", "serviceId", "INTEGER NOT NULL DEFAULT 0")
+        db.addColumnIfMissing("home_feed_cache", "serviceId", "INTEGER NOT NULL DEFAULT 0")
     }
 }
