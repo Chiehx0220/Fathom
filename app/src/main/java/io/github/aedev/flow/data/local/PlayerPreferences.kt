@@ -133,6 +133,7 @@ class PlayerPreferences(
         val SHORTS_SHELF_ENABLED = booleanPreferencesKey("shorts_shelf_enabled")
         val HOME_SHORTS_SHELF_ENABLED = booleanPreferencesKey("home_shorts_shelf_enabled")
         val HOME_NAVIGATION_ENABLED = booleanPreferencesKey("home_navigation_enabled")
+        val HOME_CONTENT_SOURCE_FILTER = stringPreferencesKey("home_content_source_filter")
         val SHORTS_NAVIGATION_ENABLED = booleanPreferencesKey("shorts_navigation_enabled")
         val BOTTOM_NAV_HIDE_ON_SCROLL = booleanPreferencesKey("bottom_nav_hide_on_scroll")
         val MUSIC_NAVIGATION_ENABLED = booleanPreferencesKey("music_navigation_enabled")
@@ -840,6 +841,16 @@ class PlayerPreferences(
     suspend fun setHomeNavigationEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.HOME_NAVIGATION_ENABLED] = enabled
+        }
+    }
+
+    val homeContentSourceFilter: Flow<HomeContentSourceFilter> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> HomeContentSourceFilter.fromStoredName(preferences[Keys.HOME_CONTENT_SOURCE_FILTER]) }
+
+    suspend fun setHomeContentSourceFilter(filter: HomeContentSourceFilter) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.HOME_CONTENT_SOURCE_FILTER] = filter.name
         }
     }
 

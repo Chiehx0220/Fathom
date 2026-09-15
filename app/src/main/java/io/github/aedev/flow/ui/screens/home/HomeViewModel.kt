@@ -98,6 +98,22 @@ class HomeViewModel
                     initialValue = _uiState.value.withUniqueLazyContent(),
                 )
 
+        val contentSourceFilter: StateFlow<io.github.aedev.flow.data.local.HomeContentSourceFilter> =
+            playerPreferences.homeContentSourceFilter
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(UI_STATE_SUBSCRIPTION_TIMEOUT_MS),
+                    initialValue = io.github.aedev.flow.data.local.HomeContentSourceFilter.MIX,
+                )
+
+        /** Persists the filter and reloads immediately so the change is visible without a manual refresh. */
+        fun setContentSourceFilter(filter: io.github.aedev.flow.data.local.HomeContentSourceFilter) {
+            viewModelScope.launch(PerformanceDispatcher.diskIO) {
+                playerPreferences.setHomeContentSourceFilter(filter)
+                loadFlowFeed(forceRefresh = true)
+            }
+        }
+
         private var currentPage: Page? = null
         private var isInitialized = false
         private val homePrefetchQueue = HomePrefetchQueue()
@@ -601,10 +617,21 @@ class HomeViewModel
                             subCount = userSubs.size,
                             totalInteractions = brain.totalInteractions,
                         )
-                    val finalMix = mix.videos
-                    subsBacklog = mix.subsBacklog
+                    // Home-only source filter (YouTube/Bilibili/mix) - Subscriptions and Search are
+                    // untouched. Applied after assembly, not per-lane, since only the fresh-subs
+                    // lane can ever contain a non-YouTube video right now (see HomeContentSourceFilter).
+                    val sourceFilterServiceId = playerPreferences.homeContentSourceFilter.first().serviceId
+                    val finalMix =
+                        sourceFilterServiceId?.let { id -> mix.videos.filter { it.serviceId == id } } ?: mix.videos
+                    subsBacklog =
+                        sourceFilterServiceId?.let { id -> mix.subsBacklog.filter { it.serviceId == id } }
+                            ?: mix.subsBacklog
 
                     if (finalMix.isEmpty()) {
+                        // A real empty pool falls back to trending; a user-chosen filter that happens to
+                        // have nothing fresh right now would too - trending is YouTube-only, so a
+                        // Bilibili-only filter can render YouTube for one refresh. Accepted trade-off
+                        // over leaving the screen blank; the next successful refresh corrects it.
                         loadTrendingFallback()
                         return@launch
                     }

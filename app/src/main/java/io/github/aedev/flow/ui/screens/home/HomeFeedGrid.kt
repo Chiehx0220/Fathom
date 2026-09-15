@@ -1,8 +1,11 @@
 package io.github.aedev.flow.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
@@ -12,9 +15,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.local.VideoHistoryEntry
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.ui.components.ShortsShelf
@@ -31,6 +36,8 @@ internal fun HomeFeedGrid(
     layoutConfig: HomeLayoutConfig,
     isListView: Boolean,
     gridState: LazyGridState,
+    contentSourceFilter: HomeContentSourceFilter,
+    onContentSourceFilterSelect: (HomeContentSourceFilter) -> Unit,
     onVideoClick: (Video) -> Unit,
     onChannelClick: (String) -> Unit,
     onEnrichChannelMetadata: (Video) -> Unit,
@@ -53,12 +60,27 @@ internal fun HomeFeedGrid(
             PaddingValues(
                 start = if (isListView) 0.dp else layoutConfig.contentPadding,
                 end = if (isListView) 0.dp else layoutConfig.contentPadding,
-                top = 4.dp,
+                top = 0.dp,
                 bottom = 80.dp,
             ),
         horizontalArrangement = Arrangement.spacedBy(if (isListView) 0.dp else layoutConfig.cardSpacing),
         verticalArrangement = Arrangement.spacedBy(if (isListView) 0.dp else layoutConfig.cardSpacing),
     ) {
+        item(
+            span = { GridItemSpan(maxLineSpan) },
+            key = "content_source_filter_chip",
+        ) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                HomeContentSourceFilterChip(
+                    selected = contentSourceFilter,
+                    onSelect = onContentSourceFilterSelect,
+                )
+            }
+        }
+
         val videos = uiState.videos
         if (videos.isNotEmpty()) {
             val insertShortsAfter = layoutConfig.shortsShelfAfterIndex.coerceAtMost(videos.size)

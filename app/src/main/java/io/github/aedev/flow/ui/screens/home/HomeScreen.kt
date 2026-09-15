@@ -76,6 +76,7 @@ fun HomeScreen(
     val refreshHomeOnReselect by preferences.refreshHomeOnReselect.collectAsStateWithLifecycle(initialValue = true)
     val showAppLogoIcon by preferences.showAppLogoIcon.collectAsStateWithLifecycle(initialValue = true)
     val deepFlowActive by preferences.deepFlowActive.collectAsStateWithLifecycle(initialValue = false)
+    val contentSourceFilter by viewModel.contentSourceFilter.collectAsStateWithLifecycle()
 
     val gridState = rememberLazyGridState()
     val coroutineScope = rememberCoroutineScope()
@@ -214,6 +215,8 @@ fun HomeScreen(
                             layoutConfig = layoutConfig,
                             isListView = isListView,
                             gridState = gridState,
+                            contentSourceFilter = contentSourceFilter,
+                            onContentSourceFilterSelect = viewModel::setContentSourceFilter,
                             onVideoClick = onVideoClick,
                             onChannelClick = onChannelClick,
                             onEnrichChannelMetadata = viewModel::enrichChannelMetadataIfMissing,

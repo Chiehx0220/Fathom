@@ -896,6 +896,8 @@
     <string name="content_settings_home_reselect_refresh_subtitle">Reload suggestions after scrolling to the top when Home is tapped again</string>
     <string name="content_settings_home_feed_disabled_title">Home Feed Disabled</string>
     <string name="content_settings_home_feed_disabled_body">Personalized recommendations are turned off. You can re-enable this in Content Settings.</string>
+    <string name="home_content_filter_mix">Mix</string>
+    <string name="home_content_filter_description">Filter which service Home shows videos from</string>
     <!-- Video Player Related Card Style -->
     <string name="content_settings_header_player">Video Player</string>
     <string name="content_settings_related_card_style_title">Related Video Card Style</string>
@@ -2632,6 +2634,7 @@
     <string name="widget_no_downloads">Your downloads will appear here</string>
     <!-- Localization follow-up (#738) -->
     <string name="ui_open_in_youtube">Open in YouTube</string>
+    <string name="ui_open_in_service">Open in %1$s</string>
     <string name="ui_playback_error">Playback error</string>
     <string name="ui_replay">Replay</string>
     <string name="ui_skip_back_10_seconds">Skip Back 10s</string>
