@@ -1385,8 +1385,8 @@
     <string name="import_youtube_failed_template">Failed to import YouTube backup: %1$s</string>
     <string name="import_flow_backup_item_title">Import Flow Backup</string>
     <string name="import_flow_backup_desc">Restore your history, settings, and subscriptions from a Flow backup file.</string>
-    <string name="import_from_newpipe">Import from NewPipe</string>
-    <string name="import_from_newpipe_desc">Import subscriptions from a NewPipe export file (JSON).</string>
+    <string name="import_from_newpipe">Import from NewPipe / PipePipe</string>
+    <string name="import_from_newpipe_desc">Import subscriptions from a NewPipe or PipePipe export file (JSON).</string>
     <string name="import_from_libretube">Import from LibreTube</string>
     <string name="import_from_libretube_desc">Import subscriptions from a LibreTube backup file (JSON).</string>
     <string name="import_playlists_section_title">Playlists</string>

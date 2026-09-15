@@ -20,6 +20,7 @@ import io.github.aedev.flow.innertube.pages.SearchVideoItem
 import io.github.aedev.flow.utils.SearchFilterResolver
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.avatarImageIdentityKey
+import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -426,7 +427,7 @@ class SearchPagingSource(
         if (isYouTube || url.isBlank()) {
             extractChannelId(url)
         } else {
-            runCatching { service.channelLHFactory.getId(url) }.getOrDefault(extractChannelId(url))
+            resolveNonYouTubeChannelId(url, service) { extractChannelId(url) }
         }
 
     private fun resolvePlaylistId(url: String): String =

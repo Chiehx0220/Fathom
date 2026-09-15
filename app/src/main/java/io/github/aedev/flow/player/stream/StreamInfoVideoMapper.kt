@@ -99,6 +99,7 @@ object StreamInfoVideoMapper {
             isLive = isLiveStream,
             isShort = isReel,
             isMusic = isMusicCandidate,
+            serviceId = serviceId,
         )
     }
 

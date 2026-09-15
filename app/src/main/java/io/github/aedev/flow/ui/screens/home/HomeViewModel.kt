@@ -41,13 +41,37 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.Page
+import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
+
+// Bilibili's search extractor is a per-query network round trip, so wave 1 only spends this many
+// of the discovery queries on it rather than the full wave1Queries set.
+private const val BILIBILI_DISCOVERY_QUERY_LIMIT = 2
+
+/**
+ * Every wave-1 candidate fetch wants the same shape - skip the call outright when there's nothing
+ * to fetch for, bound it so one slow service can't stall the whole wave, and treat any failure as
+ * "no candidates" rather than propagating - so it's written once here instead of at each call site.
+ */
+private suspend fun <T> fetchSafely(
+    enabled: Boolean = true,
+    timeoutMs: Long = 8_000L,
+    fetch: suspend () -> List<T>,
+): List<T> {
+    if (!enabled) return emptyList()
+    return withTimeoutOrNull(timeoutMs) {
+        runCatching { fetch() }.getOrElse { emptyList() }
+    }.orEmpty()
+}
 
 private data class Wave1FeedResults(
     val subs: List<Video>,
     val discovery: List<Pair<String, List<Video>>>,
     val viral: List<Video>,
     val related: RelatedGraphFetchResult,
+    val bilibiliDiscovery: List<Video>,
+    val bilibiliViral: List<Video>,
+    val bilibiliSubs: List<Video>,
 )
 
 @HiltViewModel
@@ -457,6 +481,17 @@ class HomeViewModel
                     currentQueryIndex = 0
 
                     val userSubs = subscriptionRepository.getAllSubscriptionIds()
+                    // getAllSubscriptionIds() is a flat id set with no service info - the subs pool
+                    // fetch below needs to know which subscribed channels are Bilibili so it can
+                    // route them through the right extractor instead of silently dropping them.
+                    val bilibiliSubChannelIds =
+                        runCatching {
+                            subscriptionRepository
+                                .getAllSubscriptions()
+                                .first()
+                                .filter { it.serviceId == ServiceList.BiliBili.serviceId }
+                                .map { it.channelId }
+                        }.getOrElse { emptyList() }
                     val region = playerPreferences.trendingRegion.first()
                     val fetchStart = System.currentTimeMillis()
 
@@ -469,14 +504,23 @@ class HomeViewModel
                         supervisorScope {
                             val deferredSubs =
                                 async {
-                                    if (userSubs.isNotEmpty()) {
-                                        withTimeoutOrNull(8_000L) {
-                                            runCatching {
-                                                repository.getSubscriptionFeed(userSubs.toList())
-                                            }.getOrElse { emptyList() }
-                                        } ?: emptyList()
-                                    } else {
-                                        emptyList()
+                                    fetchSafely(enabled = userSubs.isNotEmpty()) {
+                                        repository.getSubscriptionFeed(userSubs.toList())
+                                    }
+                                }
+
+                            // getSubscriptionFeed() above is YouTube-only (its rotation cursor is
+                            // sized/tuned for that), so Bilibili subscriptions get their own small,
+                            // uncursored fetch here rather than being folded into that rotation.
+                            val deferredBilibiliSubs =
+                                async {
+                                    fetchSafely(enabled = bilibiliSubChannelIds.isNotEmpty()) {
+                                        repository.getVideosForChannels(
+                                            channelIdsOrUrls = bilibiliSubChannelIds,
+                                            perChannelLimit = 5,
+                                            totalLimit = 60,
+                                            service = ServiceList.BiliBili,
+                                        )
                                     }
                                 }
 
@@ -484,20 +528,33 @@ class HomeViewModel
                                 async {
                                     wave1Queries
                                         .map { query ->
-                                            async {
-                                                query to
-                                                    runCatching {
-                                                        repository.searchVideos(query).first
-                                                    }.getOrElse { emptyList() }
-                                            }
+                                            async { query to fetchSafely { repository.searchVideos(query).first } }
                                         }.awaitAll()
                                 }
 
                             val deferredViral =
+                                async { fetchSafely { repository.getTrendingVideos(region).first } }
+
+                            // Bilibili's own search/trending pool, so Home's content-source filter
+                            // (see HomeContentSourceFilter) has real non-subscription Bilibili
+                            // content to show, not just the fresh-subs RSS lane.
+                            val deferredBilibiliDiscovery =
                                 async {
-                                    runCatching {
-                                        repository.getTrendingVideos(region).first
-                                    }.getOrElse { emptyList() }
+                                    wave1Queries
+                                        .take(BILIBILI_DISCOVERY_QUERY_LIMIT)
+                                        .map { query ->
+                                            async {
+                                                fetchSafely {
+                                                    repository.searchVideos(query, service = ServiceList.BiliBili).first
+                                                }
+                                            }
+                                        }.awaitAll()
+                                        .flatten()
+                                }
+
+                            val deferredBilibiliViral =
+                                async {
+                                    fetchSafely { repository.getTrendingVideos(service = ServiceList.BiliBili).first }
                                 }
 
                             // ── Related-graph lane: harvest /next neighbours of recent positives ──
@@ -537,13 +594,16 @@ class HomeViewModel
                                 discovery = deferredDiscovery.await(),
                                 viral = viralResult,
                                 related = deferredRelated.await(),
+                                bilibiliDiscovery = deferredBilibiliDiscovery.await(),
+                                bilibiliViral = deferredBilibiliViral.await(),
+                                bilibiliSubs = deferredBilibiliSubs.await(),
                             )
                         }
 
-                    val rawSubs = results.subs
+                    val rawSubs = results.subs + results.bilibiliSubs
                     val discoveryPairs = results.discovery
-                    val rawDiscovery = discoveryPairs.flatMap { it.second }
-                    val rawViral = results.viral
+                    val rawDiscovery = discoveryPairs.flatMap { it.second } + results.bilibiliDiscovery
+                    val rawViral = results.viral + results.bilibiliViral
                     val relatedFetch = results.related
                     val rawRelated = relatedFetch.candidates
 

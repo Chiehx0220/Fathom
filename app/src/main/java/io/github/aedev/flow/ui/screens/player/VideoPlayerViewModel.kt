@@ -269,12 +269,23 @@ class VideoPlayerViewModel
                 }
 
             val videoId = _uiState.value.foreignVideoIdNeedingLoad(playerState) ?: return
-            GlobalPlayerState.currentVideo.value?.takeIf { it.id == videoId }?.let { currentVideo ->
+            val foreignVideo = GlobalPlayerState.currentVideo.value?.takeIf { it.id == videoId }
+            foreignVideo?.let { currentVideo ->
                 _uiState.update { it.resetForVideo(currentVideo) }
                 presence.armNotificationFor(currentVideo)
                 watchSessions.saveHistoryEntry(currentVideo)
             }
-            loadVideoInfo(videoId, isWifi = detectIsWifi(), forceRefresh = true)
+            // The player moved here on its own (queue auto-advance, quick-panel skip, restored
+            // session) rather than through playVideo()/syncWithCurrentPlayerVideo(), so
+            // currentServiceId is whatever the *previous* video's service was, not necessarily this
+            // one's — falling back to it here silently misidentifies the video's service (e.g. a
+            // Bilibili auto-advance getting treated as YouTube) whenever they differ.
+            loadVideoInfo(
+                videoId,
+                isWifi = detectIsWifi(),
+                forceRefresh = true,
+                serviceId = foreignVideo?.serviceId ?: currentServiceId,
+            )
         }
 
         fun resumeRestoredSession(stayMini: Boolean = false) = presence.resumeRestoredSession(stayMini)

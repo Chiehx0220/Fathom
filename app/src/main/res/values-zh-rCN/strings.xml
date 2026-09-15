@@ -1105,8 +1105,8 @@
     <string name="import_youtube_failed_template">无法导入 YouTube 备份：%1$s</string>
     <string name="import_flow_backup_item_title">导入Flow备份</string>
     <string name="import_flow_backup_desc">从 Flow 备份文件恢复您的历史记录、设置和订阅。</string>
-    <string name="import_from_newpipe">从 NewPipe 导入</string>
-    <string name="import_from_newpipe_desc">从 NewPipe 导出文件 (JSON) 导入订阅。</string>
+    <string name="import_from_newpipe">从 NewPipe / PipePipe 导入</string>
+    <string name="import_from_newpipe_desc">从 NewPipe 或 PipePipe 导出文件 (JSON) 导入订阅。</string>
     <string name="import_from_libretube">从 LibreTube 导入</string>
     <string name="import_from_libretube_desc">从 LibreTube 备份文件 (JSON) 导入订阅。</string>
     <string name="import_playlists_section_title">播放列表</string>

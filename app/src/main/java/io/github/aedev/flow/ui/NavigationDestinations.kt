@@ -1,6 +1,7 @@
 package io.github.aedev.flow.ui
 
 import io.github.aedev.flow.data.local.DEFAULT_NAV_TAB_ORDER
+import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 import java.net.URI
@@ -62,7 +63,7 @@ internal fun youtubeChannelUrl(
     if (serviceId != ServiceList.YouTube.serviceId) {
         // Bare id for a non-YouTube service (e.g. Bilibili's numeric "mid") - resolve through that
         // service's own link handler instead of assuming a YouTube URL shape.
-        return runCatching { NewPipe.getService(serviceId).channelLHFactory.getUrl(value) }.getOrNull()
+        return resolveNonYouTubeChannelUrl(value, NewPipe.getService(serviceId)) { "" }.ifEmpty { null }
     }
     return when {
         value.startsWith("UC") -> "https://www.youtube.com/channel/$value"

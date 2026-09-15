@@ -67,6 +67,7 @@ internal fun VideoInfoContent(
         PlayerErrorPanel(
             errorHint = uiState.errorHint,
             videoId = video.id,
+            serviceId = video.serviceId,
             context = context,
             onRetryClick = { viewModel.retryLoadVideo() },
         )

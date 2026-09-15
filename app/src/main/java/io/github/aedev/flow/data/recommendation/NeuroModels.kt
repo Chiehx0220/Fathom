@@ -16,6 +16,7 @@ package io.github.aedev.flow.data.recommendation
 
 import androidx.annotation.StringRes
 import io.github.aedev.flow.R
+import org.schabi.newpipe.extractor.ServiceList
 import java.util.Calendar
 
 /*
@@ -259,6 +260,7 @@ data class GraphSeedInput(
     val durationSec: Int,
     val percentWatched: Double,
     val isShort: Boolean = false,
+    val serviceId: Int = ServiceList.YouTube.serviceId,
 )
 
 /** A seed annotated with its interest cluster, for diversified selection. */

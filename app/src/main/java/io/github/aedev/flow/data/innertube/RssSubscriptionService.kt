@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.ServiceList
+import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelInfo
 import org.schabi.newpipe.extractor.channel.ChannelTabInfo
 import org.schabi.newpipe.extractor.linkhandler.ChannelTabs
@@ -224,6 +225,17 @@ class RssSubscriptionService
                 )
             }
 
+        private fun channelUrlFor(
+            service: StreamingService,
+            serviceId: Int,
+            channelId: String,
+        ): String =
+            if (serviceId == ServiceList.YouTube.serviceId) {
+                "$YOUTUBE_URL/channel/$channelId"
+            } else {
+                service.channelLHFactory.getUrl(channelId)
+            }
+
         /**
          * A single channel's most recent uploads via the full channel-tabs path, for services with
          * no lightweight feed at all (e.g. Bilibili) - used by the background new-upload check,
@@ -237,12 +249,7 @@ class RssSubscriptionService
             withContext(Dispatchers.IO) {
                 runCatching {
                     val service = NewPipe.getService(serviceId)
-                    val channelUrl =
-                        if (serviceId == ServiceList.YouTube.serviceId) {
-                            "$YOUTUBE_URL/channel/$channelId"
-                        } else {
-                            service.channelLHFactory.getUrl(channelId)
-                        }
+                    val channelUrl = channelUrlFor(service, serviceId, channelId)
                     val channelInfo = ChannelInfo.getInfo(service, channelUrl)
                     val channelAvatar =
                         channelInfo.avatars
@@ -477,12 +484,7 @@ class RssSubscriptionService
             rssDateMap: Map<String, Long>,
         ): ChannelFetchResult {
             val service = NewPipe.getService(serviceId)
-            val channelUrl =
-                if (serviceId == ServiceList.YouTube.serviceId) {
-                    "$YOUTUBE_URL/channel/$channelId"
-                } else {
-                    service.channelLHFactory.getUrl(channelId)
-                }
+            val channelUrl = channelUrlFor(service, serviceId, channelId)
 
             var lastFailure: ChannelFetchResult? = null
             for (attempt in 1..EMPTY_RESULT_MAX_ATTEMPTS) {

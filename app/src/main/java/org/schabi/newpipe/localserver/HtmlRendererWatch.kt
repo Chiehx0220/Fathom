@@ -1,9 +1,9 @@
 package org.schabi.newpipe.localserver
 
+import io.github.aedev.flow.player.stream.serviceSupportsBulletComments
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -489,7 +489,7 @@ object HtmlRendererWatch {
         // those don't move horizontally. BulletCommentsInfoItem.getLastingTime() always reports -1
         // (an extractor-library bug, not this app's), so on-screen duration is hardcoded below to
         // Bilibili's own typical defaults instead of coming from the API.
-        val danmakuJs = if (serviceId != ServiceList.BiliBili.serviceId) {
+        val danmakuJs = if (!serviceSupportsBulletComments(serviceId)) {
             ""
         } else {
             val danmakuUrlJs = "/danmaku?serviceId=$serviceId&id=${HtmlRendererCommon.encodeUrl(info.url)}"
@@ -658,7 +658,7 @@ object HtmlRendererWatch {
                   .append(trackTags.toString())
                   .append("            Your browser does not support HTML5 video.\n")
                   .append("          </video>\n")
-                  .append(if (serviceId == ServiceList.BiliBili.serviceId) "          <div class=\"danmaku-layer\" id=\"danmaku-layer\"></div>\n" else "")
+                  .append(if (serviceSupportsBulletComments(serviceId)) "          <div class=\"danmaku-layer\" id=\"danmaku-layer\"></div>\n" else "")
                   .append("          <div class=\"double-tap-indicator left\" id=\"double-tap-left\">\n")
                   .append("            <svg viewBox=\"0 0 24 24\"><path d=\"M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z\"/></svg>\n")
                   .append("            <div class=\"double-tap-text\">-10s</div>\n")
@@ -775,7 +775,7 @@ object HtmlRendererWatch {
                   .append("            </div>\n")
                   .append("          </div>\n")
                   .append(
-                      if (serviceId == ServiceList.BiliBili.serviceId) {
+                      if (serviceSupportsBulletComments(serviceId)) {
                           "          <button class=\"danmaku-toggle-btn\" id=\"danmaku-toggle-btn\" title=\"彈幕開關\"><span class=\"material-symbols-rounded\">chat_bubble</span></button>\n"
                       } else {
                           ""

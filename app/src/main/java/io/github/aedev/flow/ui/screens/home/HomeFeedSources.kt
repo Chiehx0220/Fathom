@@ -10,6 +10,7 @@ import io.github.aedev.flow.data.recommendation.GraphSeedInput
 import io.github.aedev.flow.data.recommendation.GraphSeedSelector
 import io.github.aedev.flow.data.recommendation.GraphSeedSource
 import io.github.aedev.flow.data.repository.YouTubeRepository
+import org.schabi.newpipe.extractor.ServiceList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -79,6 +80,7 @@ class HomeFeedSources
                             timestamp = it.likedAt,
                             durationSec = 0,
                             percentWatched = 0.0,
+                            serviceId = it.serviceId,
                         )
                     }
                 }.getOrElse { emptyList() }
@@ -94,6 +96,7 @@ class HomeFeedSources
                             timestamp = it.timestamp,
                             durationSec = it.duration,
                             percentWatched = 0.0,
+                            serviceId = it.serviceId,
                         )
                     }
                 }.getOrElse { emptyList() }
@@ -114,6 +117,7 @@ class HomeFeedSources
 
         private suspend fun fetchRelatedVideos(
             seedId: String,
+            serviceId: Int,
             filters: suspend () -> HomeFeedCacheFilters,
         ): List<Video> {
             val ts = System.currentTimeMillis()
@@ -131,7 +135,7 @@ class HomeFeedSources
             return (
                 relatedSemaphore.withPermit {
                     withTimeoutOrNull(RELATED_FETCH_TIMEOUT_MS) {
-                        repository.getRelatedCandidates(seedId)
+                        repository.getRelatedCandidates(seedId, serviceId)
                     } ?: emptyList()
                 }
             ).also {
@@ -162,7 +166,12 @@ class HomeFeedSources
                         .map { seedId ->
                             async {
                                 val seed = seedMetadata[seedId]
-                                val videos = fetchRelatedVideos(seedId, filters)
+                                val videos =
+                                    fetchRelatedVideos(
+                                        seedId,
+                                        seed?.serviceId ?: ServiceList.YouTube.serviceId,
+                                        filters,
+                                    )
                                 val seedScore = seed?.let { GraphSeedSelector.scoreSeed(it, now) } ?: 0.0
                                 val seedCluster = seed?.let { GraphSeedSelector.clusterKey(it) } ?: "misc"
                                 val candidates =
@@ -215,5 +224,6 @@ internal fun feedSeedInputs(
                 timestamp = now,
                 durationSec = video.duration,
                 percentWatched = 0.0,
+                serviceId = video.serviceId,
             )
         }.toList()

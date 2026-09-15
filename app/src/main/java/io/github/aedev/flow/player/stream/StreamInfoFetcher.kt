@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.stream.StreamInfo
 
@@ -15,23 +16,30 @@ object StreamInfoFetcher {
     private const val TIMEOUT_MS = 12_000L
 
     /**
-     * The second attempt swaps to the `youtu.be` short form: the two URL shapes take different
-     * extractor paths, so one can succeed where the other fails on the same video.
+     * On YouTube, the second attempt swaps to the `youtu.be` short form: the two URL shapes take
+     * different extractor paths, so one can succeed where the other fails on the same video. Other
+     * services only have one URL shape (via [org.schabi.newpipe.extractor.linkhandler.LinkHandlerFactory]),
+     * so every attempt reuses it.
      */
-    suspend fun fetchForPlayback(videoId: String): StreamInfo? =
+    suspend fun fetchForPlayback(
+        videoId: String,
+        serviceId: Int = ServiceList.YouTube.serviceId,
+    ): StreamInfo? =
         withContext(Dispatchers.IO) {
+            val service = NewPipe.getService(serviceId)
+            val isYouTube = serviceId == ServiceList.YouTube.serviceId
             var lastError: Throwable? = null
             repeat(ATTEMPTS) { attempt ->
                 val info =
                     try {
                         val url =
-                            if (attempt == 1) {
-                                "https://youtu.be/$videoId"
+                            if (isYouTube) {
+                                if (attempt == 1) "https://youtu.be/$videoId" else "https://www.youtube.com/watch?v=$videoId"
                             } else {
-                                "https://www.youtube.com/watch?v=$videoId"
+                                service.streamLHFactory.getUrl(videoId)
                             }
                         withTimeoutOrNull(TIMEOUT_MS) {
-                            StreamInfo.getInfo(ServiceList.YouTube, url)
+                            StreamInfo.getInfo(service, url)
                         }
                     } catch (e: Exception) {
                         lastError = e

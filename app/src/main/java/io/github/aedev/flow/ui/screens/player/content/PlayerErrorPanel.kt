@@ -12,6 +12,7 @@ import androidx.compose.material.icons.rounded.OpenInBrowser
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -19,14 +20,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.player.error.PlayerDiagnostics
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.ServiceList
 
 @Composable
 internal fun PlayerErrorPanel(
     errorHint: String?,
     videoId: String,
+    serviceId: Int,
     context: Context,
     onRetryClick: () -> Unit,
 ) {
+    val service = remember(serviceId) { NewPipe.getService(serviceId) }
+    val isYouTube = serviceId == ServiceList.YouTube.serviceId
     Surface(
         modifier =
             Modifier
@@ -94,13 +100,13 @@ internal fun PlayerErrorPanel(
                     Text(stringResource(R.string.copy_logs), fontSize = 13.sp)
                 }
             }
-            // Row 2: Open in YouTube (full width)
+            // Row 2: Open in the source service's own site/app (full width)
             OutlinedButton(
                 onClick = {
                     val intent =
                         Intent(
                             Intent.ACTION_VIEW,
-                            Uri.parse("https://www.youtube.com/watch?v=$videoId"),
+                            Uri.parse(service.streamLHFactory.getUrl(videoId)),
                         )
                     context.startActivity(intent)
                 },
@@ -114,7 +120,15 @@ internal fun PlayerErrorPanel(
                     modifier = Modifier.size(16.dp),
                 )
                 Spacer(Modifier.width(6.dp))
-                Text(stringResource(R.string.ui_open_in_youtube), fontSize = 13.sp)
+                Text(
+                    text =
+                        if (isYouTube) {
+                            stringResource(R.string.ui_open_in_youtube)
+                        } else {
+                            stringResource(R.string.ui_open_in_service, service.serviceInfo.name)
+                        },
+                    fontSize = 13.sp,
+                )
             }
         }
     }

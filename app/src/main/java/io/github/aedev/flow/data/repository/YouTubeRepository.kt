@@ -7,6 +7,8 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.VideoCollaborator
+import io.github.aedev.flow.data.model.isYouTube
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.model.needsCollaboratorResolution
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
 import io.github.aedev.flow.data.shorts.ShortsClassifier
@@ -25,6 +27,7 @@ import io.github.aedev.flow.utils.distinctBestImageUrls
 import io.github.aedev.flow.utils.newPipeContentCountry
 import io.github.aedev.flow.utils.newPipeLocalization
 import io.github.aedev.flow.utils.parseToTimestamp
+import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -43,6 +46,7 @@ import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
+import org.schabi.newpipe.extractor.compat.ListExtractorCompat
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.kiosk.KioskExtractor
 import org.schabi.newpipe.extractor.localization.ContentCountry
@@ -265,6 +269,7 @@ class YouTubeRepository
         suspend fun getTrendingVideos(
             region: String = "",
             nextPage: Page? = null,
+            service: StreamingService = this.service,
         ): Pair<List<Video>, Page?> =
             withContext(Dispatchers.IO) {
                 try {
@@ -275,7 +280,12 @@ class YouTubeRepository
                     )
 
                     val kioskList = service.kioskList
-                    val trendingExtractor = kioskList.getExtractorById("Trending", null) as KioskExtractor<*>
+                    // Each service names its "trending" kiosk id differently (this fork's YouTube
+                    // entry is literally keyed "Recommended Lives", Bilibili's is "Recommended
+                    // Videos") - the default kiosk is the one thing every service declares
+                    // consistently, so ask for that instead of a hardcoded "Trending" id that no
+                    // service here actually uses.
+                    val trendingExtractor = kioskList.getDefaultKioskExtractor(null) as KioskExtractor<*>
 
                     // FIX: ALWAYS call fetchPage to initialize the extractor state
                     trendingExtractor.fetchPage()
@@ -290,9 +300,15 @@ class YouTubeRepository
                     val videos =
                         infoItems.items
                             .filterIsInstance<StreamInfoItem>()
-                            .map { item -> item.toVideo() }
+                            .map { item -> item.toVideo(service) }
 
-                    Pair(enrichLikelyCollabAvatarStacks(videos), infoItems.nextPage)
+                    val enriched =
+                        if (service.isYouTube) {
+                            enrichLikelyCollabAvatarStacks(videos)
+                        } else {
+                            videos
+                        }
+                    Pair(enriched, infoItems.nextPage)
                 } catch (e: Exception) {
                     Log.w(TAG, "Trending unavailable: ${e.message}")
                     Pair(emptyList(), null)
@@ -313,15 +329,7 @@ class YouTubeRepository
                             SearchFilterResolver.resolveSearchContentFilters(service, emptyList()),
                             emptyList(),
                         )
-                    searchExtractor.fetchPage()
-
-                    // FIX: Correct Pagination Logic
-                    val infoItems =
-                        if (nextPage != null) {
-                            searchExtractor.getPage(nextPage)
-                        } else {
-                            searchExtractor.initialPage
-                        }
+                    val infoItems = ListExtractorCompat.fetchInitialOrPage(searchExtractor, nextPage)
 
                     val shorts =
                         infoItems.items
@@ -353,15 +361,7 @@ class YouTubeRepository
                             SearchFilterResolver.resolveSearchContentFilters(service, emptyList()),
                             emptyList(),
                         )
-                    searchExtractor.fetchPage()
-
-                    // FIX: Correct Pagination Logic
-                    val infoItems =
-                        if (nextPage != null) {
-                            searchExtractor.getPage(nextPage)
-                        } else {
-                            searchExtractor.initialPage
-                        }
+                    val infoItems = ListExtractorCompat.fetchInitialOrPage(searchExtractor, nextPage)
 
                     val videos =
                         infoItems.items
@@ -369,7 +369,7 @@ class YouTubeRepository
                             .map { item -> item.toVideo(service) }
 
                     val enriched =
-                        if (service.serviceId == ServiceList.YouTube.serviceId) {
+                        if (service.isYouTube) {
                             enrichLikelyCollabAvatarStacks(
                                 enrichVideosWithSearchAvatarStacks(query, videos),
                             )
@@ -400,15 +400,7 @@ class YouTubeRepository
                             SearchFilterResolver.resolveSearchContentFilters(service, contentFilters),
                             emptyList(),
                         )
-                    searchExtractor.fetchPage()
-
-                    // FIX: Correct Pagination Logic
-                    val infoItems =
-                        if (nextPage != null) {
-                            searchExtractor.getPage(nextPage)
-                        } else {
-                            searchExtractor.initialPage
-                        }
+                    val infoItems = ListExtractorCompat.fetchInitialOrPage(searchExtractor, nextPage)
 
                     val videos = mutableListOf<Video>()
                     val channels = mutableListOf<io.github.aedev.flow.data.model.Channel>()
@@ -432,7 +424,7 @@ class YouTubeRepository
 
                     io.github.aedev.flow.data.model.SearchResult(
                         videos =
-                            if (service.serviceId == ServiceList.YouTube.serviceId) {
+                            if (service.isYouTube) {
                                 enrichLikelyCollabAvatarStacks(
                                     enrichVideosWithSearchAvatarStacks(query, videos),
                                 )
@@ -594,7 +586,7 @@ class YouTubeRepository
             withContext(Dispatchers.IO) {
                 try {
                     val url =
-                        if (service.serviceId == ServiceList.YouTube.serviceId) {
+                        if (service.isYouTube) {
                             "https://www.youtube.com/watch?v=$videoId"
                         } else {
                             service.streamLHFactory.getUrl(videoId)
@@ -604,7 +596,7 @@ class YouTubeRepository
                     // NewPipe "The page needs to be reloaded" error handling
                     // This often happens due to stale internal state or specific YouTube bot identifiers
                     val isReloadError =
-                        service.serviceId == ServiceList.YouTube.serviceId &&
+                        service.isYouTube &&
                             (
                                 e.message?.contains("page needs to be reloaded", ignoreCase = true) == true ||
                                     (
@@ -716,7 +708,7 @@ class YouTubeRepository
         ): List<Video> =
             withContext(Dispatchers.IO) {
                 try {
-                    val isYouTube = service.serviceId == ServiceList.YouTube.serviceId
+                    val isYouTube = service.isYouTube
 
                     // Try to extract a channelId (UC...) from the input
                     val channelId =
@@ -739,8 +731,7 @@ class YouTubeRepository
                         val uploadsId = "UU" + channelId.removePrefix("UC")
                         val playlistUrl = "https://www.youtube.com/playlist?list=$uploadsId"
                         val playlistExtractor = service.getPlaylistExtractor(playlistUrl)
-                        playlistExtractor.fetchPage()
-                        val page = playlistExtractor.initialPage
+                        val page = ListExtractorCompat.fetchInitialOrPage(playlistExtractor, null)
                         val items =
                             page.items
                                 .filterIsInstance<StreamInfoItem>()
@@ -758,29 +749,7 @@ class YouTubeRepository
                             else -> runCatching { service.channelLHFactory.getUrl(channelIdOrUrl) }.getOrDefault(channelIdOrUrl)
                         }
                     val extractor = service.getChannelExtractor(channelUrl)
-                    extractor.fetchPage()
-
-                    // Extractors expose the first page through different method names across NewPipe versions.
-                    val pageItems =
-                        try {
-                            // Use reflection-safe approach: call getPage on extractor with null if available
-                            val method =
-                                extractor::class.java.methods.firstOrNull {
-                                    it.name == "getInitialPage" || it.name == "getInitialItems"
-                                }
-                            if (method != null) {
-                                val result = method.invoke(extractor)
-                                // Best-effort: if result is a Page-like object with 'items' field
-                                val itemsField = result!!::class.java.getMethod("getItems")
-                                @Suppress("UNCHECKED_CAST")
-                                (itemsField.invoke(result) as? List<*>)?.filterIsInstance<StreamInfoItem>() ?: emptyList()
-                            } else {
-                                emptyList()
-                            }
-                        } catch (e: Exception) {
-                            Log.w(TAG, "${e::class.simpleName}: ${e.message}")
-                            emptyList()
-                        }
+                    val pageItems = ListExtractorCompat.fetchInitialOrPage(extractor, null).items
 
                     val fallbackItems =
                         pageItems
@@ -816,7 +785,7 @@ class YouTubeRepository
             withContext(Dispatchers.IO) {
                 try {
                     val value = channelIdOrUrl.trim()
-                    val isYouTube = service.serviceId == ServiceList.YouTube.serviceId
+                    val isYouTube = service.isYouTube
                     val channelUrl =
                         when {
                             value.startsWith("http") -> value
@@ -858,6 +827,7 @@ class YouTubeRepository
             channelIdsOrUrls: List<String>,
             perChannelLimit: Int = 5,
             totalLimit: Int = 50,
+            service: StreamingService = this.service,
         ): List<Video> =
             withContext(PerformanceDispatcher.networkIO) {
                 try {
@@ -877,7 +847,7 @@ class YouTubeRepository
                                             withTimeoutOrNull(8_000L) {
                                                 // 8 second timeout per channel
                                                 try {
-                                                    getChannelUploads(id, perChannelLimit)
+                                                    getChannelUploads(id, perChannelLimit, service)
                                                 } catch (e: Exception) {
                                                     Log.w("YouTubeRepository", "Channel fetch failed: ${e.message}")
                                                     emptyList()
@@ -1113,7 +1083,7 @@ class YouTubeRepository
             withContext(Dispatchers.IO) {
                 // InnerTube is YouTube's own private web API - it has no notion of other services,
                 // so a non-YouTube video goes straight to the generic extractor path below.
-                if (serviceId == ServiceList.YouTube.serviceId) {
+                if (serviceId.isYouTubeServiceId) {
                     val token =
                         sortToken
                             ?: watchNextResponse(videoId)?.let(YouTube::commentsContinuation)
@@ -1166,7 +1136,7 @@ class YouTubeRepository
             withContext(Dispatchers.IO) {
                 try {
                     val url =
-                        if (service.serviceId == ServiceList.YouTube.serviceId) {
+                        if (service.isYouTube) {
                             "https://www.youtube.com/watch?v=$videoId"
                         } else {
                             service.streamLHFactory.getUrl(videoId)
@@ -1194,7 +1164,7 @@ class YouTubeRepository
             withContext(Dispatchers.IO) {
                 try {
                     val url =
-                        if (service.serviceId == ServiceList.YouTube.serviceId) {
+                        if (service.isYouTube) {
                             "https://www.youtube.com/watch?v=$videoId"
                         } else {
                             service.streamLHFactory.getUrl(videoId)
@@ -1296,7 +1266,7 @@ class YouTubeRepository
         ): io.github.aedev.flow.data.model.Playlist? =
             withContext(Dispatchers.IO) {
                 try {
-                    val isYouTube = service.serviceId == ServiceList.YouTube.serviceId
+                    val isYouTube = service.isYouTube
                     val playlistUrl =
                         if (isYouTube) {
                             "https://www.youtube.com/playlist?list=$playlistId"
@@ -1427,12 +1397,30 @@ class YouTubeRepository
             }
 
         /** Light related-video harvest for the feed (InnerTube /next, no stream resolution). */
-        suspend fun getRelatedCandidates(videoId: String): List<Video> =
+        suspend fun getRelatedCandidates(
+            videoId: String,
+            serviceId: Int = ServiceList.YouTube.serviceId,
+        ): List<Video> =
             withContext(Dispatchers.IO) {
-                val resp = YouTube.watchMetadata(videoId).getOrNull() ?: return@withContext emptyList()
-                enrichLikelyCollabAvatarStacks(WatchMetadataVideoMapper.relatedVideos(resp))
-                    .filter { it.id.isNotBlank() && it.id != videoId }
-                    .distinctBy { it.id }
+                if (serviceId.isYouTubeServiceId) {
+                    val resp = YouTube.watchMetadata(videoId).getOrNull() ?: return@withContext emptyList()
+                    enrichLikelyCollabAvatarStacks(WatchMetadataVideoMapper.relatedVideos(resp))
+                        .filter { it.id.isNotBlank() && it.id != videoId }
+                        .distinctBy { it.id }
+                } else {
+                    // InnerTube (YouTube.watchMetadata) is YouTube's own private web API - other
+                    // services get related videos from the generic extractor's stream page instead.
+                    runCatching {
+                        val relatedService = NewPipe.getService(serviceId)
+                        val info = getVideoStreamInfo(videoId, relatedService) ?: return@runCatching emptyList()
+                        getRelatedVideosFromStreamInfo(info)
+                            .filter { it.id.isNotBlank() && it.id != videoId }
+                            .distinctBy { it.id }
+                    }.getOrElse { e ->
+                        Log.w(TAG, "${e::class.simpleName}: ${e.message}")
+                        emptyList()
+                    }
+                }
             }
 
         suspend fun refreshVideoMetadata(video: Video): Video? =
@@ -1681,7 +1669,7 @@ class YouTubeRepository
             // follow that shape, so resolve their id through the service's own link handler
             // instead of assuming a "=" separator.
             val playlistId =
-                if (service.serviceId == ServiceList.YouTube.serviceId) {
+                if (service.isYouTube) {
                     url.substringAfterLast("=")
                 } else {
                     runCatching { service.playlistLHFactory.getId(url) }.getOrDefault(url.substringAfterLast("/"))
@@ -1703,16 +1691,14 @@ class YouTubeRepository
             service: StreamingService = this.service,
         ): String {
             if (uploaderUrl.isNullOrBlank()) return ""
-            if (service.serviceId != ServiceList.YouTube.serviceId) {
+            if (!service.isYouTube) {
                 // Other services' uploader URLs (e.g. Bilibili's "https://space.bilibili.com/584525428/")
                 // don't fit any of the YouTube-shaped patterns below, and a trailing slash makes even
                 // the naive last-path-segment fallback return "" - resolve through the service's own
                 // link handler instead of guessing at URL structure.
-                return runCatching {
-                    service.channelLHFactory.getId(uploaderUrl)
-                }.getOrDefault(
-                    uploaderUrl.trim().trimEnd('/').substringAfterLast("/").substringBefore("?"),
-                )
+                return resolveNonYouTubeChannelId(uploaderUrl, service) {
+                    uploaderUrl.trim().trimEnd('/').substringAfterLast("/").substringBefore("?")
+                }
             }
             val url = uploaderUrl.trim()
             return when {

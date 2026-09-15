@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.media3.common.util.UnstableApi
+import io.github.aedev.flow.data.model.supportsBulletComments
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.ui.components.videoplayer.MINI_PLAYER_CORNER_RADIUS_DP
 import io.github.aedev.flow.ui.components.videoplayer.VideoPlayerSurface
@@ -23,7 +24,6 @@ import io.github.aedev.flow.ui.components.videoplayer.gesture.videoPlayerZoom
 import io.github.aedev.flow.ui.components.videoplayer.placedWhen
 import io.github.aedev.flow.ui.components.videoplayer.subtitle.Media3SubtitleOverlay
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
-import org.schabi.newpipe.extractor.ServiceList
 
 private const val EXIT_DRAG_MIN_SCALE = 0.94f
 
@@ -177,7 +177,7 @@ internal fun VideoStage(
                     style = screenState.subtitleStyle,
                     modifier = Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced),
                 )
-                if (video.serviceId == ServiceList.BiliBili.serviceId) {
+                if (video.supportsBulletComments) {
                     DanmakuLayer(
                         currentPositionMs = screenState.currentPosition,
                         enabled = screenState.danmakuEnabled,

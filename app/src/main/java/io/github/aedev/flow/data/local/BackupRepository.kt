@@ -22,6 +22,8 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.util.AppIcons
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
+import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
+import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -309,9 +311,20 @@ class BackupRepository(
                 val subscriptions = subscriptionRepo.getAllSubscriptions().first()
                 val items =
                     subscriptions.mapNotNull { sub ->
-                        val url = toNewPipeChannelUrl(sub.channelId) ?: return@mapNotNull null
+                        val url =
+                            if (sub.serviceId == ServiceList.YouTube.serviceId) {
+                                toNewPipeChannelUrl(sub.channelId)
+                            } else {
+                                // Other services (e.g. Bilibili) don't share YouTube's URL shape -
+                                // resolve through that service's own link handler instead of
+                                // guessing at URL structure.
+                                runCatching { NewPipe.getService(sub.serviceId) }
+                                    .getOrNull()
+                                    ?.let { service -> resolveNonYouTubeChannelUrl(sub.channelId, service) { "" } }
+                                    ?.ifEmpty { null }
+                            } ?: return@mapNotNull null
                         NewPipeSubscriptionItem(
-                            serviceId = 0,
+                            serviceId = sub.serviceId,
                             url = url,
                             name = sub.channelName.ifBlank { sub.channelId.trim() },
                         )
@@ -395,19 +408,27 @@ class BackupRepository(
                             // NewPipe Export Format: service_id, url, name
                             val url = item.optString("url")
                             val name = item.optString("name")
+                            val serviceId = item.optInt("service_id", ServiceList.YouTube.serviceId)
 
                             if (url.isNotEmpty() && name.isNotEmpty()) {
                                 var channelId = ""
-                                if (url.contains("/channel/")) {
-                                    channelId = url.substringAfter("/channel/")
-                                } else if (url.contains("/@")) {
-                                    channelId = url.substringAfter("/@")
-                                } else if (url.contains("/user/")) {
-                                    channelId = url.substringAfter("/user/")
-                                }
+                                if (serviceId != ServiceList.YouTube.serviceId) {
+                                    // Other services (e.g. Bilibili) don't share YouTube's URL shape -
+                                    // resolve the id through that service's own link handler instead
+                                    // of guessing at URL structure.
+                                    channelId = resolveNonYouTubeChannelId(url, NewPipe.getService(serviceId)) { "" }
+                                } else {
+                                    if (url.contains("/channel/")) {
+                                        channelId = url.substringAfter("/channel/")
+                                    } else if (url.contains("/@")) {
+                                        channelId = url.substringAfter("/@")
+                                    } else if (url.contains("/user/")) {
+                                        channelId = url.substringAfter("/user/")
+                                    }
 
-                                if (channelId.contains("/")) channelId = channelId.substringBefore("/")
-                                if (channelId.contains("?")) channelId = channelId.substringBefore("?")
+                                    if (channelId.contains("/")) channelId = channelId.substringBefore("/")
+                                    if (channelId.contains("?")) channelId = channelId.substringBefore("?")
+                                }
 
                                 if (channelId.isNotEmpty()) {
                                     val subscription =
@@ -416,6 +437,7 @@ class BackupRepository(
                                             channelName = name,
                                             channelThumbnail = "", // Will be fetched
                                             subscribedAt = System.currentTimeMillis(),
+                                            serviceId = serviceId,
                                         )
                                     subscriptionsToImport.add(subscription)
                                 }
@@ -438,7 +460,7 @@ class BackupRepository(
                                         semaphore.withPermit {
                                             val result =
                                                 try {
-                                                    val avatarUrl = fetchChannelAvatar(sub.channelId)
+                                                    val avatarUrl = fetchChannelAvatar(sub.channelId, sub.serviceId)
                                                     sub.copy(channelThumbnail = avatarUrl)
                                                 } catch (e: Exception) {
                                                     sub
@@ -596,7 +618,7 @@ class BackupRepository(
                     .rawQuery(
                         """
                         SELECT s.url, s.title, s.duration, s.uploader, s.uploader_url, s.thumbnail_url,
-                               h.access_date, COALESCE(ss.progress_time, 0)
+                               h.access_date, COALESCE(ss.progress_time, 0), s.service_id
                         FROM stream_history h
                         INNER JOIN streams s ON s.uid = h.stream_id
                         LEFT JOIN stream_state ss ON ss.stream_id = s.uid
@@ -606,13 +628,36 @@ class BackupRepository(
                     ).use { cursor ->
                         while (cursor.moveToNext()) {
                             val videoUrl = cursor.getString(0).orEmpty()
-                            val videoId = extractYouTubeVideoId(videoUrl) ?: continue
+                            val serviceId = cursor.getInt(8)
+                            val service =
+                                if (serviceId == ServiceList.YouTube.serviceId) {
+                                    null
+                                } else {
+                                    runCatching { NewPipe.getService(serviceId) }.getOrNull()
+                                }
+                            val videoId =
+                                if (serviceId == ServiceList.YouTube.serviceId) {
+                                    extractYouTubeVideoId(videoUrl)
+                                } else {
+                                    // Other services (e.g. Bilibili) don't share YouTube's video-id
+                                    // URL shape - resolve through that service's own link handler
+                                    // instead of guessing at URL structure.
+                                    service?.let { resolveNonYouTubeStreamId(videoUrl, it) { "" } }?.ifEmpty { null }
+                                } ?: continue
 
                             val title = cursor.getString(1).orEmpty()
                             if (title.isBlank()) continue
                             val durationMs = if (cursor.isNull(2)) 0L else cursor.getLong(2).coerceAtLeast(0L) * 1000L
                             val channelName = cursor.getString(3).orEmpty()
-                            val channelId = extractImportedChannelId(cursor.getString(4))
+                            val uploaderUrl = cursor.getString(4)
+                            val channelId =
+                                if (serviceId == ServiceList.YouTube.serviceId) {
+                                    extractImportedChannelId(uploaderUrl)
+                                } else if (uploaderUrl.isNullOrBlank()) {
+                                    ""
+                                } else {
+                                    service?.let { resolveNonYouTubeChannelId(uploaderUrl, it) { "" } }.orEmpty()
+                                }
                             val storedThumbnail = cursor.getString(5).orEmpty()
                             val timestamp = readSqliteTimestamp(cursor, 6) ?: (System.currentTimeMillis() - entries.size)
                             val rawPositionMs = if (cursor.isNull(7)) 0L else cursor.getLong(7).coerceAtLeast(0L)
@@ -627,11 +672,16 @@ class BackupRepository(
                                     title = title,
                                     thumbnailUrl =
                                         storedThumbnail.ifBlank {
-                                            ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(videoId)
+                                            if (serviceId == ServiceList.YouTube.serviceId) {
+                                                ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(videoId)
+                                            } else {
+                                                ""
+                                            }
                                         },
                                     channelName = channelName,
                                     channelId = channelId,
                                     isMusic = false,
+                                    serviceId = serviceId,
                                 )
                             entries.add(historyEntry)
                             rememberNeuroBootstrapCandidate(neuroBootstrapCandidates, historyEntry)
@@ -1648,12 +1698,17 @@ class BackupRepository(
                         android.database.sqlite.SQLiteDatabase.OPEN_READONLY,
                     )
 
-                val streamUrlMap = mutableMapOf<Long, String>()
-                db.rawQuery("SELECT uid, url FROM streams", null).use { cursor ->
+                data class NpStream(
+                    val url: String,
+                    val serviceId: Int,
+                )
+                val streamMap = mutableMapOf<Long, NpStream>()
+                db.rawQuery("SELECT uid, service_id, url FROM streams", null).use { cursor ->
                     while (cursor.moveToNext()) {
                         val uid = cursor.getLong(0)
-                        val url = cursor.getString(1)
-                        streamUrlMap[uid] = url
+                        val serviceId = cursor.getInt(1)
+                        val url = cursor.getString(2)
+                        streamMap[uid] = NpStream(url, serviceId)
                     }
                 }
 
@@ -1690,13 +1745,32 @@ class BackupRepository(
 
                     val videoIds =
                         (playlistStreams[playlist.uid] ?: emptyList()).mapNotNull { streamId ->
-                            extractYouTubeVideoId(streamUrlMap[streamId] ?: return@mapNotNull null)
+                            val stream = streamMap[streamId] ?: return@mapNotNull null
+                            val videoId =
+                                if (stream.serviceId == ServiceList.YouTube.serviceId) {
+                                    extractYouTubeVideoId(stream.url)
+                                } else {
+                                    // Other services (e.g. Bilibili) don't share YouTube's video-id
+                                    // URL shape - resolve through that service's own link handler
+                                    // instead of guessing at URL structure.
+                                    runCatching { NewPipe.getService(stream.serviceId) }
+                                        .getOrNull()
+                                        ?.let { service -> resolveNonYouTubeStreamId(stream.url, service) { "" } }
+                                        ?.ifEmpty { null }
+                                }
+                            videoId?.let { it to stream.serviceId }
                         }
 
                     if (videoIds.isEmpty()) return@forEachIndexed
 
                     val playlistId = "newpipe_pl_${playlist.uid}_${System.currentTimeMillis()}"
-                    val firstThumb = ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(videoIds.first())
+                    val (firstVideoId, firstServiceId) = videoIds.first()
+                    val firstThumb =
+                        if (firstServiceId == ServiceList.YouTube.serviceId) {
+                            ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(firstVideoId)
+                        } else {
+                            ""
+                        }
 
                     database.withTransaction {
                         database.playlistDao().insertPlaylist(
@@ -1711,20 +1785,26 @@ class BackupRepository(
                                 isUserCreated = true,
                             ),
                         )
-                        videoIds.forEachIndexed { index, videoId ->
+                        videoIds.forEachIndexed { index, (videoId, serviceId) ->
                             database.videoDao().insertVideoOrIgnore(
                                 VideoEntity(
                                     id = videoId,
                                     title = "",
                                     channelName = "",
                                     channelId = "",
-                                    thumbnailUrl = ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(videoId),
+                                    thumbnailUrl =
+                                        if (serviceId == ServiceList.YouTube.serviceId) {
+                                            ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(videoId)
+                                        } else {
+                                            ""
+                                        },
                                     duration = 0,
                                     viewCount = 0L,
                                     uploadDate = "",
                                     description = "",
                                     channelThumbnailUrl = "",
                                     isMusic = false,
+                                    serviceId = serviceId,
                                 ),
                             )
                             database.playlistDao().insertPlaylistVideoCrossRef(
@@ -2294,15 +2374,21 @@ class BackupRepository(
         }
 
     // Helper to fetch channel avatar using NewPipe
-    private fun fetchChannelAvatar(channelId: String): String =
+    private fun fetchChannelAvatar(
+        channelId: String,
+        serviceId: Int = ServiceList.YouTube.serviceId,
+    ): String =
         try {
+            val service = NewPipe.getService(serviceId)
             val url =
-                if (channelId.startsWith("UC") && channelId.length > 20) {
+                if (serviceId != ServiceList.YouTube.serviceId) {
+                    service.channelLHFactory.getUrl(channelId)
+                } else if (channelId.startsWith("UC") && channelId.length > 20) {
                     "https://www.youtube.com/channel/$channelId"
                 } else {
                     "https://www.youtube.com/@$channelId"
                 }
-            val info = ChannelInfo.getInfo(ServiceList.YouTube, url)
+            val info = ChannelInfo.getInfo(service, url)
             info.avatars.maxByOrNull { it.height }?.url ?: ""
         } catch (e: Exception) {
             ""

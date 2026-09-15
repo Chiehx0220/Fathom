@@ -59,6 +59,7 @@ import io.github.aedev.flow.ui.components.shared.ShimmerVideoCardFullWidth
 import io.github.aedev.flow.utils.formatDuration
 import io.github.aedev.flow.utils.formatSubscriberCount
 import io.github.aedev.flow.utils.formatViewCount
+import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -577,9 +578,9 @@ private fun channelUrlFor(
     if (serviceId == ServiceList.YouTube.serviceId) {
         "https://www.youtube.com/channel/$channelId"
     } else {
-        runCatching {
-            NewPipe.getService(serviceId).channelLHFactory.getUrl(channelId)
-        }.getOrDefault("https://www.youtube.com/channel/$channelId")
+        resolveNonYouTubeChannelUrl(channelId, NewPipe.getService(serviceId)) {
+            "https://www.youtube.com/channel/$channelId"
+        }
     }
 
 @Composable
