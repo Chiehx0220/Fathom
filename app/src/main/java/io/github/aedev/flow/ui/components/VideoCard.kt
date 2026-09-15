@@ -68,6 +68,7 @@ import io.github.aedev.flow.data.model.needsCollaboratorResolution
 import io.github.aedev.flow.data.repository.VideoCollaboratorResolver
 import io.github.aedev.flow.ui.components.shared.FlowSubscribeButton
 import io.github.aedev.flow.ui.components.shared.MediaTextBadge
+import io.github.aedev.flow.ui.components.shared.PlatformBadge
 import io.github.aedev.flow.ui.components.shared.ShortWatchedIndicator
 import io.github.aedev.flow.ui.components.shared.VideoStatusBadge
 import io.github.aedev.flow.ui.components.shared.VideoThumbnailImage
@@ -498,17 +499,21 @@ fun VideoCardFullWidth(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (showChannelAvatar) {
-                ChannelAvatarStack(
-                    urls = video.channelAvatarUrls(collaboratorItems),
-                    contentDescription = displayChannelName,
-                    avatarSize = 40.dp,
-                    modifier =
-                        if (onChannelClick != null) {
-                            Modifier.clickable { openChannelOrCollaborators() }
-                        } else {
-                            Modifier
-                        },
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    ChannelAvatarStack(
+                        urls = video.channelAvatarUrls(collaboratorItems),
+                        contentDescription = displayChannelName,
+                        avatarSize = 40.dp,
+                        modifier =
+                            if (onChannelClick != null) {
+                                Modifier.clickable { openChannelOrCollaborators() }
+                            } else {
+                                Modifier
+                            },
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    PlatformBadge(serviceId = video.serviceId)
+                }
             }
 
             // Video details

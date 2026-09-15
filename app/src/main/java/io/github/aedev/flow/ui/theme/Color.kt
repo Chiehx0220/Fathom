@@ -13,6 +13,9 @@ val YouTubeRed = Color(0xFFFF0000)
 val YouTubeDark = Color(0xFF0F0F0F)
 val YouTubeGray = Color(0xFF282828)
 
+// Bilibili Brand Colors
+val BilibiliPink = Color(0xFFFB7299)
+
 // Dark Theme Colors
 val Black = Color(0xFF000000)
 val DarkBackground = Color(0xFF0F0F0F)
