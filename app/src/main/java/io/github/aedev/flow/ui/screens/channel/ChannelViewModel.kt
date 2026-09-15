@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +24,7 @@ import io.github.aedev.flow.data.model.toUiModel
 import io.github.aedev.flow.data.notes.NoteKind
 import io.github.aedev.flow.data.notes.NotesRepository
 import io.github.aedev.flow.data.paging.ChannelPlaylistsPagingSource
+import io.github.aedev.flow.data.paging.ChannelVideosPagingSource
 import io.github.aedev.flow.data.shorts.ShortsContentFilter
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.channel.ChannelHeader
@@ -35,7 +35,6 @@ import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
 import io.github.aedev.flow.innertube.pages.channel.CommunityPost
 import io.github.aedev.flow.ui.youtubeChannelBrowseId
 import io.github.aedev.flow.utils.PerformanceDispatcher
-import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,7 +42,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -54,10 +52,7 @@ import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelInfo
-import org.schabi.newpipe.extractor.channel.ChannelTabInfo
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -405,26 +400,15 @@ class ChannelViewModel
             when (kind) {
                 ChannelTabKind.Videos -> {
                     val tab = currentVideosTab ?: return
+                    val pager =
+                        Pager(
+                            config = PagingConfig(pageSize = 20, enablePlaceholders = false),
+                            pagingSourceFactory = { ChannelVideosPagingSource(tab, channelInfo) },
+                        ).flow
+                            .map { paging -> paging.map { video -> ChannelItem.VideoItem(video) as ChannelItem } }
+                            .cachedIn(viewModelScope)
                     _nonYouTubeTabStates.update {
-                        it + (kind to (it[kind] ?: ChannelTabState()).copy(isLoading = true))
-                    }
-                    viewModelScope.launch(PerformanceDispatcher.networkIO) {
-                        // Single page only for now, unlike the YouTube path - no continuation/
-                        // infinite-scroll support here yet.
-                        val items =
-                            try {
-                                ChannelTabInfo
-                                    .getInfo(NewPipe.getService(channelInfo.serviceId), tab)
-                                    .relatedItems
-                                    .filterIsInstance<StreamInfoItem>()
-                                    .map { ChannelItem.VideoItem(it.toChannelVideo(channelInfo)) as ChannelItem }
-                            } catch (e: CancellationException) {
-                                throw e
-                            } catch (e: Exception) {
-                                Log.w(TAG, "Non-YouTube videos tab load failed", e)
-                                emptyList()
-                            }
-                        publishNonYouTubeTab(kind, items)
+                        it + (kind to ChannelTabState(items = pager, isLoading = false, loaded = true))
                     }
                 }
 
@@ -444,100 +428,6 @@ class ChannelViewModel
 
                 else -> Unit
             }
-        }
-
-        private fun publishNonYouTubeTab(
-            kind: ChannelTabKind,
-            items: List<ChannelItem>,
-        ) {
-            _nonYouTubeTabStates.update {
-                it + (kind to ChannelTabState(items = flowOf(PagingData.from(items)), isLoading = false, loaded = true))
-            }
-        }
-
-        private fun StreamInfoItem.toChannelVideo(channelInfo: ChannelInfo): Video {
-            val isYouTube = channelInfo.serviceId == ServiceList.YouTube.serviceId
-            val videoId =
-                if (!isYouTube) {
-                    // Other services' ids (e.g. Bilibili's "BVxxxxxxxxxx?p=1") don't fit the
-                    // YouTube-shaped patterns below - resolve through the service's own link
-                    // handler instead of guessing at URL structure.
-                    runCatching {
-                        NewPipe.getService(channelInfo.serviceId).streamLHFactory.getId(url)
-                    }.getOrDefault(url.substringAfterLast("/").substringBefore("?"))
-                } else {
-                    when {
-                        url.contains("v=") -> url.substringAfter("v=").substringBefore("&")
-                        url.contains("/watch/") -> url.substringAfter("/watch/").substringBefore("?")
-                        url.contains("/shorts/") -> url.substringAfter("/shorts/").substringBefore("?")
-                        else -> url.substringAfterLast("/").substringBefore("?")
-                    }
-                }
-            val thumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, thumbnailUrl)
-            val absoluteUploadTimestamp = uploadDate?.offsetDateTime()?.toInstant()?.toEpochMilli()
-            val textualDate = textualUploadDate?.takeIf { it.isNotBlank() }
-            val displayUploadDate =
-                textualDate
-                    ?: io.github.aedev.flow.utils
-                        .formatTimeAgo(uploadDate?.offsetDateTime()?.toString())
-            val uploadTimestamp =
-                absoluteUploadTimestamp
-                    ?: parseRelativeUploadDate(textualDate)
-                    ?: 0L
-            return Video(
-                id = videoId,
-                title = name,
-                thumbnailUrl = thumbnail,
-                channelName = uploaderName ?: channelInfo.name,
-                channelId = channelInfo.id,
-                channelThumbnailUrl =
-                    channelInfo.avatars.maxByOrNull { it.height }?.url
-                        ?: channelInfo.avatars.firstOrNull()?.url
-                        ?: "",
-                viewCount = viewCount,
-                duration = duration.toInt().coerceAtLeast(0),
-                uploadDate = displayUploadDate,
-                timestamp = uploadTimestamp,
-                description = "",
-                serviceId = channelInfo.serviceId,
-            )
-        }
-
-        private fun parseRelativeUploadDate(text: String?): Long? {
-            val normalized =
-                text
-                    ?.lowercase(Locale.US)
-                    ?.replace("streamed", "")
-                    ?.replace("premiered", "")
-                    ?.replace("live", "")
-                    ?.replace("ago", "")
-                    ?.trim()
-                    ?: return null
-
-            if (normalized.isBlank()) return null
-            if (normalized.contains("just now") || normalized.contains("today")) return System.currentTimeMillis()
-            if (normalized.contains("yesterday")) return System.currentTimeMillis() - 24L * 60L * 60L * 1000L
-
-            val value =
-                Regex("(\\d+)")
-                    .find(normalized)
-                    ?.groupValues
-                    ?.getOrNull(1)
-                    ?.toLongOrNull()
-                    ?: return null
-            val unitMillis =
-                when {
-                    normalized.contains("second") || normalized.endsWith("s") -> 1_000L
-                    normalized.contains("minute") || normalized.endsWith("m") -> 60_000L
-                    normalized.contains("hour") || normalized.endsWith("h") -> 3_600_000L
-                    normalized.contains("day") || normalized.endsWith("d") -> 86_400_000L
-                    normalized.contains("week") || normalized.endsWith("w") -> 7L * 86_400_000L
-                    normalized.contains("month") || normalized.endsWith("mo") -> 30L * 86_400_000L
-                    normalized.contains("year") || normalized.endsWith("y") -> 365L * 86_400_000L
-                    else -> return null
-                }
-
-            return System.currentTimeMillis() - (value * unitMillis)
         }
 
         private fun loadSubscriptionState(channelId: String) {
