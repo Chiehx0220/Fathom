@@ -73,15 +73,6 @@ internal fun youtubeChannelUrl(
     }
 }
 
-internal fun videoUrl(
-    videoId: String,
-    serviceId: Int = ServiceList.YouTube.serviceId,
-): String {
-    if (serviceId.isYouTubeServiceId) return "https://www.youtube.com/watch?v=$videoId"
-    return runCatching { NewPipe.getService(serviceId).streamLHFactory.getUrl(videoId) }
-        .getOrDefault("https://www.youtube.com/watch?v=$videoId")
-}
-
 /**
  * The browseId InnerTube wants, from whatever the nav route carried. A channel id and an @handle are
  * both valid browse targets, so a handle is kept rather than resolved through an extra request.

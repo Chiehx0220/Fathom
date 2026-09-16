@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.Intent
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.model.isYouTubeServiceId
-import io.github.aedev.flow.ui.videoUrl
 import org.schabi.newpipe.extractor.ServiceList
+import org.schabi.newpipe.localserver.videoIdToUrl
 
 /**
  * The canonical watch link for a video, optionally seeked to [positionSeconds]. The timestamp
@@ -16,7 +16,7 @@ fun youtubeWatchUrl(
     positionSeconds: Long? = null,
     serviceId: Int = ServiceList.YouTube.serviceId,
 ): String {
-    val watchUrl = videoUrl(videoId, serviceId)
+    val watchUrl = videoIdToUrl(videoId, serviceId)
     return if (positionSeconds == null || !serviceId.isYouTubeServiceId) {
         watchUrl
     } else {

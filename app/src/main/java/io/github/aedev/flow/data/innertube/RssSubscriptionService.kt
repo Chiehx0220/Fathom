@@ -2,7 +2,6 @@ package io.github.aedev.flow.data.innertube
 
 import android.util.Log
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
 import io.github.aedev.flow.data.shorts.ShortsClassifier
@@ -23,13 +22,13 @@ import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.ServiceList
-import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelInfo
 import org.schabi.newpipe.extractor.channel.ChannelTabInfo
 import org.schabi.newpipe.extractor.linkhandler.ChannelTabs
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
+import org.schabi.newpipe.localserver.channelIdToUrl
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicInteger
@@ -227,16 +226,6 @@ class RssSubscriptionService
                 )
             }
 
-        private fun channelUrlFor(
-            service: StreamingService,
-            channelId: String,
-        ): String =
-            if (service.isYouTube) {
-                "$YOUTUBE_URL/channel/$channelId"
-            } else {
-                service.channelLHFactory.getUrl(channelId)
-            }
-
         /**
          * A single channel's most recent uploads via the full channel-tabs path, for services with
          * no lightweight feed at all (e.g. Bilibili) - used by the background new-upload check,
@@ -250,7 +239,7 @@ class RssSubscriptionService
             withContext(Dispatchers.IO) {
                 runCatching {
                     val service = NewPipe.getService(serviceId)
-                    val channelUrl = channelUrlFor(service, channelId)
+                    val channelUrl = channelIdToUrl(channelId, serviceId)
                     val channelInfo = ChannelInfo.getInfo(service, channelUrl)
                     val channelAvatar =
                         channelInfo.avatars
@@ -485,7 +474,7 @@ class RssSubscriptionService
             rssDateMap: Map<String, Long>,
         ): ChannelFetchResult {
             val service = NewPipe.getService(serviceId)
-            val channelUrl = channelUrlFor(service, channelId)
+            val channelUrl = channelIdToUrl(channelId, serviceId)
 
             var lastFailure: ChannelFetchResult? = null
             for (attempt in 1..EMPTY_RESULT_MAX_ATTEMPTS) {
@@ -791,7 +780,6 @@ class RssSubscriptionService
 
         private companion object {
             const val TAG = "InnertubeSubs"
-            const val YOUTUBE_URL = "https://www.youtube.com"
             const val UNKNOWN_LABEL = "Unknown"
 
             const val RSS_CHUNK_SIZE = 20
