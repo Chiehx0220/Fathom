@@ -14,6 +14,8 @@ import io.github.aedev.flow.data.shorts.ShortsClassifier
 import io.github.aedev.flow.utils.SearchFilterResolver
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
+import io.github.aedev.flow.utils.resolveNonYouTubePlaylistId
+import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.Page
@@ -194,7 +196,7 @@ internal object BilibiliSearchLoader {
     private fun resolveStreamId(
         service: StreamingService,
         url: String,
-    ): String = runCatching { service.streamLHFactory.getId(url) }.getOrDefault(url.substringAfterLast("/").substringBefore("?"))
+    ): String = resolveNonYouTubeStreamId(url, service) { url.substringAfterLast("/").substringBefore("?") }
 
     private fun resolveChannelId(
         service: StreamingService,
@@ -204,5 +206,5 @@ internal object BilibiliSearchLoader {
     private fun resolvePlaylistId(
         service: StreamingService,
         url: String,
-    ): String = runCatching { service.playlistLHFactory.getId(url) }.getOrDefault(extractPlaylistId(url))
+    ): String = resolveNonYouTubePlaylistId(url, service) { extractPlaylistId(url) }
 }

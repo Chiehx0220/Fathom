@@ -10,6 +10,7 @@ import io.github.aedev.flow.data.subscriptions.ChannelRssEntry
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.formatYouTubeRelativeTime
 import io.github.aedev.flow.utils.parsePremiereTimestamp
+import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -702,9 +703,9 @@ class RssSubscriptionService
                 // Bilibili ids (e.g. "BV1jJ411a7Rk?p=1") don't fit any YouTube-shaped pattern below,
                 // and naively stripping the query string would drop the page-part suffix the rest of
                 // the app keeps embedded in the id - resolve through the service's own link handler.
-                return runCatching {
-                    NewPipe.getService(serviceId).streamLHFactory.getId(url)
-                }.getOrDefault(url.substringAfterLast("/").substringBefore("?"))
+                return resolveNonYouTubeStreamId(url, NewPipe.getService(serviceId)) {
+                    url.substringAfterLast("/").substringBefore("?")
+                }
             }
             return when {
                 url.contains("v=") -> url.substringAfter("v=").substringBefore("&")

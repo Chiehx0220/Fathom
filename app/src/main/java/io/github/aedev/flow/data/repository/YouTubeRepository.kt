@@ -28,6 +28,8 @@ import io.github.aedev.flow.utils.newPipeContentCountry
 import io.github.aedev.flow.utils.newPipeLocalization
 import io.github.aedev.flow.utils.parseToTimestamp
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
+import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
+import io.github.aedev.flow.utils.resolveNonYouTubePlaylistId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -730,7 +732,7 @@ class YouTubeRepository
                         when {
                             channelIdOrUrl.startsWith("http") -> channelIdOrUrl
                             isYouTube -> "https://www.youtube.com/channel/$channelIdOrUrl"
-                            else -> runCatching { service.channelLHFactory.getUrl(channelIdOrUrl) }.getOrDefault(channelIdOrUrl)
+                            else -> resolveNonYouTubeChannelUrl(channelIdOrUrl, service) { channelIdOrUrl }
                         }
                     val extractor = service.getChannelExtractor(channelUrl)
                     val pageItems = ListExtractorCompat.fetchInitialOrPage(extractor, null).items
@@ -773,7 +775,7 @@ class YouTubeRepository
                     val channelUrl =
                         when {
                             value.startsWith("http") -> value
-                            !isYouTube -> runCatching { service.channelLHFactory.getUrl(value) }.getOrDefault(value)
+                            !isYouTube -> resolveNonYouTubeChannelUrl(value, service) { value }
                             value.startsWith("UC") -> "https://www.youtube.com/channel/$value"
                             value.startsWith("@") -> "https://www.youtube.com/$value"
                             else -> "https://www.youtube.com/@$value"
@@ -1656,7 +1658,7 @@ class YouTubeRepository
                 if (service.isYouTube) {
                     url.substringAfterLast("=")
                 } else {
-                    runCatching { service.playlistLHFactory.getId(url) }.getOrDefault(url.substringAfterLast("/"))
+                    resolveNonYouTubePlaylistId(url, service) { url.substringAfterLast("/") }
                 }
             val bestThumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(playlistId, thumbnailUrl)
 

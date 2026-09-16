@@ -7,6 +7,7 @@ import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
+import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
@@ -77,9 +78,9 @@ internal fun StreamInfoItem.toChannelVideo(channelInfo: ChannelInfo): Video {
             // Other services' ids (e.g. Bilibili's "BVxxxxxxxxxx?p=1") don't fit the YouTube-shaped
             // patterns below - resolve through the service's own link handler instead of guessing
             // at URL structure.
-            runCatching {
-                NewPipe.getService(channelInfo.serviceId).streamLHFactory.getId(url)
-            }.getOrDefault(url.substringAfterLast("/").substringBefore("?"))
+            resolveNonYouTubeStreamId(url, NewPipe.getService(channelInfo.serviceId)) {
+                url.substringAfterLast("/").substringBefore("?")
+            }
         } else {
             when {
                 url.contains("v=") -> url.substringAfter("v=").substringBefore("&")

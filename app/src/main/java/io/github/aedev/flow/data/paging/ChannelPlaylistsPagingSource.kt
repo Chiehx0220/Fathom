@@ -6,6 +6,7 @@ import androidx.paging.PagingState
 import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.data.model.Playlist
 import io.github.aedev.flow.data.model.isYouTubeServiceId
+import io.github.aedev.flow.utils.resolveNonYouTubePlaylistId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
@@ -88,9 +89,9 @@ class ChannelPlaylistsPagingSource(
                     else -> this.url.substringAfterLast("/").substringBefore("?")
                 }
             } else {
-                runCatching {
-                    NewPipe.getService(serviceId).playlistLHFactory.getId(this.url)
-                }.getOrDefault(this.url.substringAfterLast("/").substringBefore("?"))
+                resolveNonYouTubePlaylistId(this.url, NewPipe.getService(serviceId)) {
+                    this.url.substringAfterLast("/").substringBefore("?")
+                }
             }
 
         return Playlist(

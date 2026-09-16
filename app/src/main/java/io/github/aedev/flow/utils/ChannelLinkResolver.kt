@@ -27,3 +27,10 @@ fun resolveNonYouTubeStreamId(
     service: StreamingService,
     fallback: () -> String,
 ): String = runCatching { service.streamLHFactory.getId(url) }.getOrElse { fallback() }
+
+/** Same idea as [resolveNonYouTubeChannelId], for a playlist id instead of a channel id. */
+fun resolveNonYouTubePlaylistId(
+    url: String,
+    service: StreamingService,
+    fallback: () -> String,
+): String = runCatching { service.playlistLHFactory.getId(url) }.getOrElse { fallback() }
