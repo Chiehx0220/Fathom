@@ -133,8 +133,16 @@ class VideoPlayerViewModel
         private var playbackLoadToken: Long = 0L
         private var loadingVideoId: String? = null
 
-        /** Service (org.schabi.newpipe.extractor.ServiceList id) of the video currently loading/loaded. */
-        private var currentServiceId: Int = ServiceList.YouTube.serviceId
+        /**
+         * Service (org.schabi.newpipe.extractor.ServiceList id) of the video currently loading/loaded.
+         * Derived from [VideoPlayerUiState.cachedVideo] rather than tracked as its own mutable field -
+         * every path that starts a load (playVideo, syncWithCurrentPlayerVideo, the foreign-video branch
+         * of onPlayerStateChanged) already updates cachedVideo first, so reading it back here can never
+         * go stale the way a separately-assigned field can when a reload/retry/recovery path forgets to
+         * pass serviceId explicitly.
+         */
+        private val currentServiceId: Int
+            get() = _uiState.value.cachedVideo?.serviceId ?: ServiceList.YouTube.serviceId
         private var clearedUnplayableVideoId: String? = null
 
         private val recovery =
@@ -276,16 +284,11 @@ class VideoPlayerViewModel
                 watchSessions.saveHistoryEntry(currentVideo)
             }
             // The player moved here on its own (queue auto-advance, quick-panel skip, restored
-            // session) rather than through playVideo()/syncWithCurrentPlayerVideo(), so
-            // currentServiceId is whatever the *previous* video's service was, not necessarily this
-            // one's — falling back to it here silently misidentifies the video's service (e.g. a
-            // Bilibili auto-advance getting treated as YouTube) whenever they differ.
-            loadVideoInfo(
-                videoId,
-                isWifi = detectIsWifi(),
-                forceRefresh = true,
-                serviceId = foreignVideo?.serviceId ?: currentServiceId,
-            )
+            // session) rather than through playVideo()/syncWithCurrentPlayerVideo(). When foreignVideo
+            // is known, resetForVideo above already made it the current cachedVideo, so the default
+            // serviceId (derived from cachedVideo) already resolves to its service; when it isn't
+            // known, there's nothing more reliable to fall back to than the previous cachedVideo either.
+            loadVideoInfo(videoId, isWifi = detectIsWifi(), forceRefresh = true)
         }
 
         fun resumeRestoredSession(stayMini: Boolean = false) = presence.resumeRestoredSession(stayMini)
@@ -401,9 +404,10 @@ class VideoPlayerViewModel
         fun showVideoPlayer() = presence.showVideoPlayer()
 
         fun retryLoadVideo() {
-            val videoId = _uiState.value.cachedVideo?.id ?: return
+            val cachedVideo = _uiState.value.cachedVideo ?: return
+            val videoId = cachedVideo.id
             Log.d("VideoPlayerViewModel", "Retrying video load for $videoId")
-            if (upcomingPremiere.applyCountdown(_uiState.value.cachedVideo ?: return)) {
+            if (upcomingPremiere.applyCountdown(cachedVideo)) {
                 return
             }
             recovery.onPlaybackRequested()
@@ -485,7 +489,6 @@ class VideoPlayerViewModel
             resumePositionOverrideMs: Long? = null,
             serviceId: Int = currentServiceId,
         ) {
-            currentServiceId = serviceId
             notes.observe(videoId)
             if (isLocalMediaId(videoId)) {
                 Log.d("VideoPlayerViewModel", "loadVideoInfo: $videoId is a local file — skipping all network loading")

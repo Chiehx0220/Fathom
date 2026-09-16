@@ -451,7 +451,7 @@ fun FlowApp(
                 !currentRoute.value.startsWith("player") &&
                 currentVideo != null
             ) {
-                navController.navigate("player/${currentVideo!!.id}")
+                navController.navigateToPlayer(currentVideo!!.id, currentVideo!!.serviceId)
             }
         }
 

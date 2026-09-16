@@ -21,6 +21,7 @@ internal data class WatchHistoryEntry(
     val channelName: String,
     val channelId: String,
     val isShort: Boolean,
+    val serviceId: Int,
 )
 
 private fun resolveHistoryChannelName(
@@ -70,6 +71,7 @@ internal fun buildWatchHistoryEntry(
         channelName = resolveHistoryChannelName(video, streamInfo?.uploaderName),
         channelId = streamInfo?.uploaderChannelId ?: video.channelId,
         isShort = video.isShort,
+        serviceId = video.serviceId,
     )
 }
 
@@ -90,6 +92,7 @@ internal fun saveWatchProgress(
         channelName = entry.channelName,
         channelId = entry.channelId,
         isShort = entry.isShort,
+        serviceId = entry.serviceId,
     )
 }
 

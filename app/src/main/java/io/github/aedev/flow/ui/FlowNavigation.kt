@@ -251,7 +251,7 @@ fun NavGraphBuilder.flowAppGraph(
                 if (video.isShort && !disableShortsPlayer) {
                     navController.openShorts(ShortsQueueSource.SeededFeed(video.id))
                 } else {
-                    navController.navigateToPlayer(video.id)
+                    navController.navigateToPlayer(video.id, video.serviceId)
                 }
             },
             onMusicClick = { track, queue, sourceName ->
@@ -285,7 +285,7 @@ fun NavGraphBuilder.flowAppGraph(
             },
             onSavedShortClick = { video ->
                 if (disableShortsPlayer) {
-                    navController.navigateToPlayer(video.id)
+                    navController.navigateToPlayer(video.id, video.serviceId)
                 } else {
                     navController.openShorts(ShortsQueueSource.Saved(video.id))
                 }
@@ -335,7 +335,7 @@ fun NavGraphBuilder.flowAppGraph(
                 if (video.isShort && !disableShortsPlayer) {
                     navController.openShorts(ShortsQueueSource.SeededFeed(video.id))
                 } else {
-                    navController.navigateToPlayer(video.id)
+                    navController.navigateToPlayer(video.id, video.serviceId)
                 }
             },
             onChannelClick = { channelId ->
@@ -607,7 +607,7 @@ fun NavGraphBuilder.flowAppGraph(
                 if (video.isShort && !disableShortsPlayer) {
                     navController.openShorts(ShortsQueueSource.SeededFeed(video.id))
                 } else {
-                    navController.navigateToPlayer(video.id)
+                    navController.navigateToPlayer(video.id, video.serviceId)
                 }
             },
             onChannelClick = { channelId ->
@@ -750,7 +750,7 @@ fun NavGraphBuilder.flowAppGraph(
                 } else if (video.isShort && !disableShortsPlayer) {
                     navController.openShorts(ShortsQueueSource.SeededFeed(video.id))
                 } else {
-                    navController.navigateToPlayer(video.id)
+                    navController.navigateToPlayer(video.id, video.serviceId)
                 }
             },
             onPlayPlaylist = { videos, index ->

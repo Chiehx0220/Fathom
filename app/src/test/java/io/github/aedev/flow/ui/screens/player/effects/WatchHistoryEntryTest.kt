@@ -20,6 +20,7 @@ class WatchHistoryEntryTest {
         channelId: String = "cached_channel",
         thumbnailUrl: String = "https://example.invalid/cached.jpg",
         isShort: Boolean = false,
+        serviceId: Int = 0,
     ): Video =
         Video(
             id = id,
@@ -31,6 +32,7 @@ class WatchHistoryEntryTest {
             viewCount = 1L,
             uploadDate = "2026-01-01",
             isShort = isShort,
+            serviceId = serviceId,
         )
 
     private fun streamInfo(
@@ -134,5 +136,10 @@ class WatchHistoryEntryTest {
     @Test
     fun `the short flag comes from the cached video`() {
         assertThat(entry(VideoPlayerUiState(), video = video(isShort = true))!!.isShort).isTrue()
+    }
+
+    @Test
+    fun `the service id comes from the cached video, not the viewmodel's own default`() {
+        assertThat(entry(VideoPlayerUiState(), video = video(serviceId = 5))!!.serviceId).isEqualTo(5)
     }
 }
