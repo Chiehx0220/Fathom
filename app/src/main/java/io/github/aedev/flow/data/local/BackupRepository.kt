@@ -23,6 +23,7 @@ import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.util.AppIcons
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
+import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
 import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async

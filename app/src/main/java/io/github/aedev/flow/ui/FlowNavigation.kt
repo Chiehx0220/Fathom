@@ -659,7 +659,7 @@ fun NavGraphBuilder.flowAppGraph(
                     playerViewModel.playLocalVideo(video, uri)
                     GlobalPlayerState.setCurrentVideo(video)
                 } else {
-                    navController.navigateToPlayer(track.videoId)
+                    navController.navigateToPlayer(track.videoId, track.serviceId)
                 }
             },
             onShortsQueue = { source ->
@@ -704,7 +704,7 @@ fun NavGraphBuilder.flowAppGraph(
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
         LikesScreen(
             onVideoClick = { track ->
-                navController.navigateToPlayer(track.videoId)
+                navController.navigateToPlayer(track.videoId, track.serviceId)
             },
             onMusicClick = { track, queue ->
                 musicPlayerViewModel.loadAndPlayTrack(track, queue, "Likes")

@@ -43,6 +43,7 @@ internal fun VideoHistoryEntry.toTvMusicTrack(): MusicTrack =
         thumbnailUrl = thumbnailUrl,
         duration = (duration / 1_000L).toInt(),
         channelId = channelId,
+        serviceId = serviceId,
     )
 
 internal fun LikedVideoInfo.toTvMusicTrack(): MusicTrack =
@@ -52,6 +53,7 @@ internal fun LikedVideoInfo.toTvMusicTrack(): MusicTrack =
         artist = channelName,
         thumbnailUrl = thumbnail,
         duration = 0,
+        serviceId = serviceId,
     )
 
 internal fun Video.toTvMusicTrack(): MusicTrack =
