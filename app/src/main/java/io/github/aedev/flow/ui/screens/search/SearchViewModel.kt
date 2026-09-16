@@ -11,7 +11,6 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.aedev.flow.data.local.ContentType
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Video
@@ -19,9 +18,12 @@ import io.github.aedev.flow.data.paging.SearchPagingSource
 import io.github.aedev.flow.data.paging.SearchResultItem
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.repository.YouTubeRepository
+import io.github.aedev.flow.data.search.SearchSuggestionsRepository
 import io.github.aedev.flow.data.shorts.ShortsContentFilter
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueHandoff
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
+import io.github.aedev.flow.innertube.pages.search.SearchHeader
+import io.github.aedev.flow.innertube.pages.search.SearchSuggestion
 import io.github.aedev.flow.ui.youtubeChannelUrl
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -37,15 +39,12 @@ import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
 
-// ── UI state ─────────────────────────────────────────────────────────────────
-
 data class SearchUiState(
     val query: String = "",
-    val filters: SearchFilter? = null,
+    val filters: SearchFilter = SearchFilter.DEFAULT,
+    val header: SearchHeader = SearchHeader(),
     val serviceId: Int = ServiceList.YouTube.serviceId,
 )
-
-// ── ViewModel ─────────────────────────────────────────────────────────────────
 
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -54,31 +53,23 @@ class SearchViewModel
     constructor(
         @ApplicationContext private val context: Context,
         private val repository: YouTubeRepository,
+        private val suggestionsRepository: SearchSuggestionsRepository,
         private val shortsContentFilter: ShortsContentFilter,
         private val shortsQueueHandoff: ShortsQueueHandoff,
     ) : ViewModel() {
-        // Signal each distinct submitted query once — typing/filter churn stays silent.
+        // Signal each distinct submitted query once — typing and filter churn stay silent.
         private var lastSignaledQuery: String? = null
         private val _uiState = MutableStateFlow(SearchUiState())
         val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
-        /**
-         * Internal trigger: emitting a new value here restarts the pager from page 0.
-         * Holds (query, contentFilters) so the PagingSource gets fresh arguments.
-         */
         private data class SearchKey(
             val query: String,
-            val contentFilters: List<String>,
-            val searchFilter: SearchFilter?,
+            val filter: SearchFilter,
             val serviceId: Int,
         )
 
         private val _searchKey = MutableStateFlow<SearchKey?>(null)
 
-        /**
-         * flatMapLatest restarts the pager whenever [_searchKey] changes (new search
-         * or filter change), and cachedIn survives configuration changes.
-         */
         val searchResults: Flow<PagingData<SearchResultItem>> =
             _searchKey
                 .filterNotNull()
@@ -94,12 +85,17 @@ class SearchViewModel
                                 initialLoadSize = 20,
                             ),
                         pagingSourceFactory = {
-                            SearchPagingSource(key.query, key.contentFilters, key.searchFilter, shortsEnabled, key.serviceId)
+                            SearchPagingSource(
+                                query = key.query,
+                                filter = key.filter,
+                                shortsEnabled = shortsEnabled,
+                                serviceId = key.serviceId,
+                                onHeader = ::onHeader,
+                                blockedChannelIds = { FlowNeuroEngine.getInstance(context).getBlockedChannels() },
+                            )
                         },
                     ).flow
                 }.cachedIn(viewModelScope)
-
-        // ── public API ────────────────────────────────────────────────────────────
 
         fun shortsShelfSource(
             shelf: List<Video>,
@@ -143,16 +139,15 @@ class SearchViewModel
 
         fun search(
             query: String,
-            filters: SearchFilter? = null,
+            filters: SearchFilter = SearchFilter.DEFAULT,
         ) {
             if (query.isBlank()) {
-                _uiState.value = SearchUiState(serviceId = _uiState.value.serviceId)
-                _searchKey.value = null
+                clearSearch()
                 return
             }
             val serviceId = _uiState.value.serviceId
             _uiState.value = SearchUiState(query = query, filters = filters, serviceId = serviceId)
-            _searchKey.value = SearchKey(query, buildContentFilters(filters), filters, serviceId)
+            _searchKey.value = SearchKey(query, filters, serviceId)
 
             // A typed search is the most explicit interest statement the user makes.
             val normalized = query.trim().lowercase()
@@ -168,7 +163,7 @@ class SearchViewModel
             val currentQuery = _uiState.value.query
             _uiState.value = _uiState.value.copy(filters = filters)
             if (currentQuery.isNotBlank()) {
-                _searchKey.value = SearchKey(currentQuery, buildContentFilters(filters), filters, _uiState.value.serviceId)
+                _searchKey.value = SearchKey(currentQuery, filters, _uiState.value.serviceId)
             }
         }
 
@@ -178,50 +173,19 @@ class SearchViewModel
             _uiState.value = _uiState.value.copy(serviceId = serviceId)
             val currentQuery = _uiState.value.query
             if (currentQuery.isNotBlank()) {
-                _searchKey.value = SearchKey(currentQuery, buildContentFilters(_uiState.value.filters), _uiState.value.filters, serviceId)
+                _searchKey.value = SearchKey(currentQuery, _uiState.value.filters, serviceId)
             }
         }
 
         fun clearSearch() {
-            _uiState.value = SearchUiState()
+            _uiState.value = SearchUiState(serviceId = _uiState.value.serviceId)
             _searchKey.value = null
         }
 
-        suspend fun getSearchSuggestions(query: String): List<String> {
-            if (query.length < 2) return emptyList()
-            return try {
-                repository.getSearchSuggestions(query)
-            } catch (_: Exception) {
-                emptyList()
-            }
-        }
+        suspend fun getSearchSuggestions(query: String): List<SearchSuggestion> =
+            runCatching { suggestionsRepository.suggestions(query) }.getOrDefault(emptyList())
 
-        // ── helpers ───────────────────────────────────────────────────────────────
-
-        private fun buildContentFilters(filters: SearchFilter?): List<String> {
-            val list = mutableListOf<String>()
-            if (filters == null) return list
-
-            when (filters.contentType) {
-                ContentType.VIDEOS -> {
-                    list.add("videos")
-                }
-
-                ContentType.CHANNELS -> {
-                    list.add("channels")
-                }
-
-                ContentType.PLAYLISTS -> {
-                    list.add("playlists")
-                }
-
-                ContentType.LIVE -> {
-                    list.add("videos")
-                }
-
-                else -> {}
-            }
-
-            return list
+        private fun onHeader(header: SearchHeader) {
+            _uiState.value = _uiState.value.copy(header = header)
         }
     }

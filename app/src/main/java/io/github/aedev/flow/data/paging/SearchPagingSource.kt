@@ -6,24 +6,24 @@ import androidx.paging.PagingState
 import io.github.aedev.flow.data.local.ContentType
 import io.github.aedev.flow.data.local.Duration
 import io.github.aedev.flow.data.local.SearchFilter
-import io.github.aedev.flow.data.local.SortType
 import io.github.aedev.flow.data.local.UploadDate
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.data.model.Playlist
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.model.distinctByNonBlankKey
-import io.github.aedev.flow.data.model.hasLikelyCollaborationByline
 import io.github.aedev.flow.data.shorts.ShortsClassifier
 import io.github.aedev.flow.innertube.YouTube
-import io.github.aedev.flow.innertube.pages.SearchVideoItem
+import io.github.aedev.flow.innertube.pages.renderer.FeedItem
+import io.github.aedev.flow.innertube.pages.renderer.FeedShelf
+import io.github.aedev.flow.innertube.pages.renderer.FeedShelfStyle
+import io.github.aedev.flow.innertube.pages.search.SearchHeader
+import io.github.aedev.flow.innertube.pages.search.SearchResultsPage
+import io.github.aedev.flow.innertube.pages.search.SearchSection
 import io.github.aedev.flow.utils.SearchFilterResolver
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
-import io.github.aedev.flow.utils.avatarImageIdentityKey
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.ServiceList
@@ -33,374 +33,193 @@ import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
 
 /**
- * Sealed class representing any unified search result item.
- * Allows mixing videos, channels, and playlists in a single paged list.
- */
-sealed class SearchResultItem {
-    data class VideoResult(
-        val video: Video,
-    ) : SearchResultItem()
-
-    data class ChannelResult(
-        val channel: Channel,
-    ) : SearchResultItem()
-
-    data class PlaylistResult(
-        val playlist: Playlist,
-    ) : SearchResultItem()
-
-    data class ShortsShelfResult(
-        val shorts: List<Video>,
-    ) : SearchResultItem()
-}
-
-/**
- * Paging3 source for YouTube search results with infinite scroll support.
+ * One InnerTube request per page, and nothing after it.
  *
- * Each [load] call creates a fresh extractor for the given [query].
- * For subsequent pages the extractor's [getPage] API is used with the
- * [Page] token returned by the previous call — NewPipe handles the URL
- * resolution internally, so a fresh extractor is safe to reuse this way.
+ * Every filter and sort is a `params` token the server applies, so a page arrives already narrowed
+ * and already ordered; the avatars, badges and verification the old path fetched per video are read
+ * out of the same response.
  */
 class SearchPagingSource(
     private val query: String,
-    private val contentFilters: List<String> = emptyList(),
-    private val searchFilter: SearchFilter? = null,
+    private val filter: SearchFilter = SearchFilter.DEFAULT,
     private val shortsEnabled: Boolean = true,
     private val serviceId: Int = ServiceList.YouTube.serviceId,
-) : PagingSource<Page, SearchResultItem>() {
+    private val onHeader: (SearchHeader) -> Unit = {},
+    private val loadPage: SearchPageLoader = DefaultSearchPageLoader,
+    private val blockedChannelIds: suspend () -> Set<String> = { emptySet() },
+) : PagingSource<String, SearchResultItem>() {
     companion object {
         private const val TAG = "SearchPagingSource"
-        private val VIDEO_ID_PATTERNS =
-            listOf(
-                "v=([A-Za-z0-9_-]{11})".toRegex(),
-                "youtu\\.be/([A-Za-z0-9_-]{11})".toRegex(),
-                "shorts/([A-Za-z0-9_-]{11})".toRegex(),
-            )
-
-        internal fun extractVideoId(url: String): String {
-            for (pat in VIDEO_ID_PATTERNS) {
-                val m = pat.find(url) ?: continue
-                return m.groupValues[1]
-            }
-            return url.substringAfterLast("/").substringBefore("?").take(11)
-        }
     }
+
+    override fun getRefreshKey(state: PagingState<String, SearchResultItem>): String? = null
 
     private val service = runCatching { NewPipe.getService(serviceId) }.getOrDefault(ServiceList.YouTube)
     private val isYouTube = service.serviceId == ServiceList.YouTube.serviceId
     private val loadedItemKeys = DistinctKeyTracker()
 
-    override fun getRefreshKey(state: PagingState<Page, SearchResultItem>): Page? = null
-
-    override suspend fun load(params: LoadParams<Page>): LoadResult<Page, SearchResultItem> {
+    override suspend fun load(params: LoadParams<String>): LoadResult<String, SearchResultItem> {
+        val continuation = params.key
         return try {
-            withContext(Dispatchers.IO) {
-                val page = params.key
+            if (!isYouTube) return loadNonYouTubePage(continuation)
 
-                // Shorts tab: NewPipe search has no shorts, so serve them directly (single page).
-                // Shorts are sourced from YouTube's web-client shelf; not available for other services.
-                if (searchFilter?.contentType == ContentType.SHORTS) {
-                    val shorts =
-                        if (page == null && shortsEnabled && isYouTube) {
-                            fetchShortVideos().map { SearchResultItem.VideoResult(it) }
-                        } else {
-                            emptyList()
-                        }
-                    return@withContext LoadResult.Page(
-                        data = loadedItemKeys.filter(shorts) { it.contentIdentityKey() },
-                        prevKey = null,
-                        nextKey = null,
-                    )
-                }
-
-                if (isYouTube && searchFilter?.sortType == SortType.VIEWS) {
-                    return@withContext loadViewSortedPage(page)
-                }
-
-                val extractor =
-                    service.getSearchExtractor(
-                        query,
-                        SearchFilterResolver.resolveSearchContentFilters(service, contentFilters),
-                        emptyList(),
-                    )
-                extractor.fetchPage()
-
-                val infoPage =
-                    if (page != null) {
-                        extractor.getPage(page)
-                    } else {
-                        extractor.initialPage
-                    }
-
-                val searchAvatarStacks =
-                    if (page == null && isYouTube) {
-                        withTimeoutOrNull(4_000L) {
-                            YouTube.searchVideoAvatarStacks(query).getOrNull()
-                        }.orEmpty()
-                    } else {
-                        emptyMap()
-                    }
-
-                val items: List<SearchResultItem> =
-                    infoPage.items.mapNotNull { item ->
-                        when (item) {
-                            is StreamInfoItem -> {
-                                val isLiveStream =
-                                    item.streamType == StreamType.LIVE_STREAM ||
-                                        item.streamType == StreamType.AUDIO_LIVE_STREAM
-
-                                val videoId = resolveStreamId(item.url)
-                                val thumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, item.thumbnailUrl)
-                                val channelThumbs =
-                                    try {
-                                        listOfNotNull(item.uploaderAvatarUrl)
-                                    } catch (_: Exception) {
-                                        emptyList()
-                                    }
-                                val mergedChannelThumbs =
-                                    (
-                                        searchAvatarStacks[videoId].orEmpty() + channelThumbs
-                                    ).map { it.trim() }
-                                        .filter { it.isNotEmpty() }
-                                        .distinctBy { it.avatarImageIdentityKey() }
-                                        .take(2)
-                                val channelThumb = mergedChannelThumbs.firstOrNull().orEmpty()
-
-                                Video(
-                                    id = videoId,
-                                    title = item.name ?: "",
-                                    channelName = item.uploaderName ?: "",
-                                    channelId = resolveChannelId(item.uploaderUrl ?: ""),
-                                    thumbnailUrl = thumbnail,
-                                    duration = item.duration.toInt(),
-                                    viewCount = item.viewCount,
-                                    uploadDate = item.textualUploadDate ?: "",
-                                    timestamp = System.currentTimeMillis(),
-                                    channelThumbnailUrl = channelThumb,
-                                    channelThumbnailUrls = mergedChannelThumbs,
-                                    isShort = ShortsClassifier.isReel(item),
-                                    isLive = isLiveStream,
-                                    serviceId = service.serviceId,
-                                ).takeIf { shortsEnabled || !it.isShort }
-                                    ?.takeIf { it.matchesSearchFilters() }
-                                    ?.let { SearchResultItem.VideoResult(it) }
-                            }
-
-                            is ChannelInfoItem -> {
-                                val thumb =
-                                    try {
-                                        item.thumbnailUrl ?: ""
-                                    } catch (_: Exception) {
-                                        ""
-                                    }
-
-                                SearchResultItem.ChannelResult(
-                                    Channel(
-                                        id = resolveChannelId(item.url),
-                                        name = item.name ?: "",
-                                        thumbnailUrl = thumb,
-                                        subscriberCount = item.subscriberCount,
-                                        description = item.description ?: "",
-                                        url = item.url ?: "",
-                                        serviceId = service.serviceId,
-                                    ),
-                                )
-                            }
-
-                            is PlaylistInfoItem -> {
-                                val thumb =
-                                    try {
-                                        item.thumbnailUrl ?: ""
-                                    } catch (_: Exception) {
-                                        ""
-                                    }
-
-                                SearchResultItem.PlaylistResult(
-                                    Playlist(
-                                        id = resolvePlaylistId(item.url),
-                                        name = item.name ?: "",
-                                        thumbnailUrl = thumb,
-                                        videoCount = item.streamCount.toInt(),
-                                        serviceId = service.serviceId,
-                                    ),
-                                )
-                            }
-
-                            else -> {
-                                null
-                            }
-                        }
-                    }
-
-                // All tab (unfiltered): shorts sit in a shelf NewPipe skips; surface them
-                // as a horizontal shelf after the top result (first page only). YouTube-only shelf.
-                val unfilteredAll =
-                    searchFilter == null || (
-                        searchFilter.contentType == ContentType.ALL &&
-                            searchFilter.duration == Duration.ANY && searchFilter.uploadDate == UploadDate.ANY &&
-                            searchFilter.sortType == SortType.RELEVANCE
-                    )
-                val combined =
-                    if (page == null && unfilteredAll && shortsEnabled && isYouTube) {
-                        val shorts = fetchShortVideos().take(15)
-                        when {
-                            shorts.isEmpty() -> items
-                            items.isEmpty() -> listOf(SearchResultItem.ShortsShelfResult(shorts))
-                            else -> listOf(items.first(), SearchResultItem.ShortsShelfResult(shorts)) + items.drop(1)
-                        }
-                    } else {
-                        items
-                    }
-                val enrichedCombined = if (isYouTube) enrichCollabVideoResults(combined) else combined
-
-                Log.d(TAG, "Loaded ${items.size} items | query='$query' | nextPage=${infoPage.nextPage != null}")
-
-                val sortedItems =
-                    sortVideoItemsLocally(
-                        searchFilter = searchFilter,
-                        items = enrichedCombined,
-                    )
-                LoadResult.Page(
-                    data = loadedItemKeys.filter(sortedItems) { it.contentIdentityKey() },
-                    prevKey = null,
-                    nextKey = infoPage.nextPage,
-                )
-            }
+            val page = loadPage(query, filter.toSearchParams(), continuation)
+            if (continuation == null) onHeader(page.header)
+            val results = page.toResultItems(shortsEnabled).withoutBlockedChannels(blockedChannelIds())
+            LoadResult.Page(
+                data = loadedItemKeys.filter(results) { it.identityKey() },
+                prevKey = null,
+                nextKey = page.continuation,
+            )
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading search results for '$query': ${e.message}", e)
             LoadResult.Error(e)
         }
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────
+    // ── non-YouTube (NewPipe extractor) path ────────────────────────────────
 
-    private suspend fun loadViewSortedPage(page: Page?): LoadResult.Page<Page, SearchResultItem> {
-        val filter = requireNotNull(searchFilter)
-        val result =
-            YouTube
-                .searchByViews(
-                    query = query,
-                    searchParams = filter.toViewSortedSearchParams(),
-                    continuation = page?.id,
-                ).getOrThrow()
-
-        val items =
-            result.items
-                .filter { shortsEnabled || it !is SearchVideoItem || !it.isShort }
-                .map { it.toSearchResultItem() }
-        val enrichedItems = enrichCollabVideoResults(items)
-        val nextPage =
-            result.continuation?.let { token ->
-                Page("https://www.youtube.com/youtubei/v1/search", token)
+    /**
+     * Bilibili (and any other non-YouTube service) has no InnerTube-shaped search endpoint, so it
+     * keeps going through the service's own NewPipe search extractor instead of [loadPage]. None of
+     * the YouTube web-client enrichments (Shorts shelf, collab avatar stacks) apply to it.
+     */
+    private suspend fun loadNonYouTubePage(continuation: String?): LoadResult<String, SearchResultItem> =
+        withContext(Dispatchers.IO) {
+            // NewPipe search has no dedicated Shorts tab for non-YouTube services.
+            if (filter.contentType == ContentType.SHORTS) {
+                return@withContext LoadResult.Page(data = emptyList(), prevKey = null, nextKey = null)
             }
 
-        Log.d(TAG, "Loaded ${items.size} server-sorted items | query='$query' | nextPage=${nextPage != null}")
-        return LoadResult.Page(
-            data = loadedItemKeys.filter(enrichedItems) { it.contentIdentityKey() },
-            prevKey = null,
-            nextKey = nextPage,
-        )
-    }
+            val extractor =
+                service.getSearchExtractor(
+                    query,
+                    SearchFilterResolver.resolveSearchContentFilters(service, buildContentFilters(filter)),
+                    emptyList(),
+                )
+            extractor.fetchPage()
+
+            val infoPage = if (continuation != null) extractor.getPage(Page(continuation)) else extractor.initialPage
+
+            val items: List<SearchResultItem> =
+                infoPage.items.mapNotNull { item ->
+                    when (item) {
+                        is StreamInfoItem -> {
+                            val isLiveStream =
+                                item.streamType == StreamType.LIVE_STREAM ||
+                                    item.streamType == StreamType.AUDIO_LIVE_STREAM
+                            val videoId = resolveStreamId(item.url)
+                            val thumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, item.thumbnailUrl)
+                            val channelThumb =
+                                try {
+                                    item.uploaderAvatarUrl.orEmpty()
+                                } catch (_: Exception) {
+                                    ""
+                                }
+
+                            Video(
+                                id = videoId,
+                                title = item.name ?: "",
+                                channelName = item.uploaderName ?: "",
+                                channelId = resolveChannelId(item.uploaderUrl ?: ""),
+                                thumbnailUrl = thumbnail,
+                                duration = item.duration.toInt(),
+                                viewCount = item.viewCount,
+                                uploadDate = item.textualUploadDate ?: "",
+                                timestamp = System.currentTimeMillis(),
+                                channelThumbnailUrl = channelThumb,
+                                channelThumbnailUrls = listOfNotNull(channelThumb.takeIf { it.isNotBlank() }),
+                                isShort = ShortsClassifier.isReel(item),
+                                isLive = isLiveStream,
+                                serviceId = service.serviceId,
+                            ).takeIf { shortsEnabled || !it.isShort }
+                                ?.takeIf { it.matchesSearchFilters() }
+                                ?.let { SearchResultItem.VideoResult(it) }
+                        }
+
+                        is ChannelInfoItem -> {
+                            val thumb =
+                                try {
+                                    item.thumbnailUrl ?: ""
+                                } catch (_: Exception) {
+                                    ""
+                                }
+
+                            SearchResultItem.ChannelResult(
+                                Channel(
+                                    id = resolveChannelId(item.url),
+                                    name = item.name ?: "",
+                                    thumbnailUrl = thumb,
+                                    subscriberCount = item.subscriberCount,
+                                    description = item.description ?: "",
+                                    url = item.url ?: "",
+                                    serviceId = service.serviceId,
+                                ),
+                            )
+                        }
+
+                        is PlaylistInfoItem -> {
+                            val thumb =
+                                try {
+                                    item.thumbnailUrl ?: ""
+                                } catch (_: Exception) {
+                                    ""
+                                }
+
+                            SearchResultItem.PlaylistResult(
+                                Playlist(
+                                    id = resolvePlaylistId(item.url),
+                                    name = item.name ?: "",
+                                    thumbnailUrl = thumb,
+                                    videoCount = item.streamCount.toInt(),
+                                    serviceId = service.serviceId,
+                                ),
+                            )
+                        }
+
+                        else -> null
+                    }
+                }
+
+            Log.d(TAG, "Loaded ${items.size} items | query='$query' | service=$serviceId | nextPage=${infoPage.nextPage != null}")
+
+            LoadResult.Page(
+                data = loadedItemKeys.filter(items) { it.identityKey() },
+                prevKey = null,
+                nextKey = infoPage.nextPage?.url,
+            )
+        }
+
+    private fun buildContentFilters(filter: SearchFilter): List<String> =
+        when (filter.contentType) {
+            ContentType.VIDEOS -> listOf("videos")
+            ContentType.CHANNELS -> listOf("channels")
+            ContentType.PLAYLISTS -> listOf("playlists")
+            ContentType.LIVE -> listOf("videos")
+            else -> emptyList()
+        }
 
     private fun Video.matchesSearchFilters(): Boolean {
-        val filter = searchFilter ?: return true
         if (filter.contentType == ContentType.LIVE && !isLive) return false
-        if (filter.duration == Duration.UNDER_4_MINUTES && duration >= 240) return false
-        if (filter.duration == Duration.FROM_4_TO_20_MINUTES && duration !in 240..1_200) return false
+        if (filter.duration == Duration.UNDER_3_MINUTES && duration >= 180) return false
+        if (filter.duration == Duration.THREE_TO_20_MINUTES && duration !in 180..1_200) return false
         if (filter.duration == Duration.OVER_20_MINUTES && duration <= 1_200) return false
         if (filter.uploadDate == UploadDate.ANY || uploadDate.isEmpty()) return true
 
         val loweredDate = uploadDate.lowercase()
-        val isHoursOrLess = listOf("second", "minute", "hour").any(loweredDate::contains)
+        val isMinutesOrSeconds = listOf("second", "minute").any(loweredDate::contains)
+        val isHours = loweredDate.contains("hour")
         val isWeeks = loweredDate.contains("week")
         val isMonths = loweredDate.contains("month")
         val isYears = loweredDate.contains("year")
         return when (filter.uploadDate) {
-            UploadDate.TODAY -> isHoursOrLess || loweredDate.contains("1 day")
+            UploadDate.LAST_HOUR -> isMinutesOrSeconds || loweredDate.contains("1 hour")
+            UploadDate.TODAY -> isMinutesOrSeconds || isHours || loweredDate.contains("1 day")
             UploadDate.THIS_WEEK -> !isYears && !isMonths && (!isWeeks || loweredDate.contains("1 week"))
             UploadDate.THIS_MONTH -> !isYears && (!isMonths || loweredDate.contains("1 month"))
             UploadDate.THIS_YEAR -> !isYears || loweredDate.contains("1 year")
             UploadDate.ANY -> true
         }
     }
-
-    private suspend fun enrichCollabVideoResults(items: List<SearchResultItem>): List<SearchResultItem> {
-        val stacks = mutableMapOf<String, List<String>>()
-
-        items
-            .asSequence()
-            .flatMap { item ->
-                when (item) {
-                    is SearchResultItem.VideoResult -> sequenceOf(item.video)
-                    is SearchResultItem.ShortsShelfResult -> item.shorts.asSequence()
-                    else -> emptySequence()
-                }
-            }.filter { it.needsCollabAvatarStack() }
-            .take(10)
-            .forEach { video ->
-                val stack =
-                    withTimeoutOrNull(4_000L) {
-                        YouTube.videoAvatarStack(video.id).getOrNull()
-                    }.orEmpty()
-                if (stack.size > 1) stacks[video.id] = stack
-            }
-
-        if (stacks.isEmpty()) return items
-
-        fun Video.withCollabStack(): Video {
-            val stack = stacks[id].orEmpty()
-            if (stack.size <= 1) return this
-            val merged =
-                (stack + channelThumbnailUrls + channelThumbnailUrl)
-                    .map { it.trim() }
-                    .filter { it.isNotEmpty() }
-                    .distinctBy { it.avatarImageIdentityKey() }
-                    .take(2)
-            return if (merged.size > 1) {
-                copy(
-                    channelThumbnailUrl = merged.first(),
-                    channelThumbnailUrls = merged,
-                )
-            } else {
-                this
-            }
-        }
-
-        return items.map { item ->
-            when (item) {
-                is SearchResultItem.VideoResult -> item.copy(video = item.video.withCollabStack())
-                is SearchResultItem.ShortsShelfResult -> item.copy(shorts = item.shorts.map { it.withCollabStack() })
-                else -> item
-            }
-        }
-    }
-
-    private fun Video.needsCollabAvatarStack(): Boolean =
-        id.isNotBlank() &&
-            channelThumbnailUrls.size < 2 &&
-            channelName.hasLikelyCollaborationByline()
-
-    /** Shorts from the web-client search shelf, as [Video]s flagged [Video.isShort]. */
-    private suspend fun fetchShortVideos(): List<Video> =
-        YouTube
-            .searchShorts(query)
-            .getOrNull()
-            .orEmpty()
-            .map { short ->
-                Video(
-                    id = short.id,
-                    title = short.title,
-                    channelName = "",
-                    channelId = "",
-                    thumbnailUrl = "https://i.ytimg.com/vi/${short.id}/oar2.jpg",
-                    duration = 0,
-                    viewCount = short.viewCount,
-                    uploadDate = "",
-                    timestamp = System.currentTimeMillis(),
-                    isShort = true,
-                )
-            }.distinctByNonBlankKey(Video::id)
 
     private fun extractChannelId(url: String): String =
         url
@@ -415,59 +234,144 @@ class SearchPagingSource(
             .substringBefore("&")
             .ifEmpty { url.substringAfterLast("/").substringBefore("?") }
 
-    /** Resolves a stream item's id via the service's own link handler when it isn't YouTube. */
     private fun resolveStreamId(url: String): String =
-        if (isYouTube) {
-            extractVideoId(url)
-        } else {
-            runCatching { service.streamLHFactory.getId(url) }.getOrDefault(url.substringAfterLast("/").substringBefore("?"))
-        }
+        runCatching { service.streamLHFactory.getId(url) }.getOrDefault(url.substringAfterLast("/").substringBefore("?"))
 
     private fun resolveChannelId(url: String): String =
-        if (isYouTube || url.isBlank()) {
-            extractChannelId(url)
-        } else {
-            resolveNonYouTubeChannelId(url, service) { extractChannelId(url) }
-        }
+        if (url.isBlank()) extractChannelId(url) else resolveNonYouTubeChannelId(url, service) { extractChannelId(url) }
 
     private fun resolvePlaylistId(url: String): String =
-        if (isYouTube) {
-            extractPlaylistId(url)
-        } else {
-            runCatching { service.playlistLHFactory.getId(url) }.getOrDefault(extractPlaylistId(url))
+        runCatching { service.playlistLHFactory.getId(url) }.getOrDefault(extractPlaylistId(url))
+}
+
+fun interface SearchPageLoader {
+    suspend operator fun invoke(
+        query: String,
+        params: String?,
+        continuation: String?,
+    ): SearchResultsPage
+}
+
+private val DefaultSearchPageLoader =
+    SearchPageLoader { query, params, continuation ->
+        YouTube.videoSearch(query, params, continuation).getOrThrow()
+    }
+
+/**
+ * YouTube returns the creator's "Latest from" strip as its own shelf directly after the channel
+ * card and renders the two as one block, so they are folded together here rather than reaching the
+ * grid as two rows that have to find each other again.
+ */
+internal fun SearchResultsPage.toResultItems(shortsEnabled: Boolean): List<SearchResultItem> {
+    val items = mutableListOf<SearchResultItem>()
+    var index = 0
+    while (index < sections.size) {
+        val item =
+            when (val section = sections[index]) {
+                is SearchSection.Result -> section.item.toResultItem(shortsEnabled)
+                is SearchSection.Strip -> section.shelf.toShelfItem(shortsEnabled)
+            }
+        val latest = (item as? SearchResultItem.ChannelResult)?.let { sections.latestStripAfter(index) }
+        if (latest != null) {
+            items +=
+                (item as SearchResultItem.ChannelResult).copy(
+                    latestTitle = latest.title,
+                    latestVideos = latest.videos,
+                )
+            index += 2
+            continue
         }
+        item?.let(items::add)
+        index++
+    }
+    return items
+}
 
-    private fun SearchResultItem.contentIdentityKey(): String =
-        when (this) {
-            is SearchResultItem.VideoResult -> video.id.withTypePrefix("video")
-            is SearchResultItem.ChannelResult -> channel.id.withTypePrefix("channel")
-            is SearchResultItem.PlaylistResult -> playlist.id.withTypePrefix("playlist")
-            is SearchResultItem.ShortsShelfResult -> "shorts-shelf"
-        }
+/**
+ * Drops everything a blocked creator put in the results, the way the home feed already drops them
+ * before ranking: their own card, their videos, and their videos inside a strip. A strip left with
+ * nothing goes too, rather than staying as a heading over a gap.
+ *
+ * Community posts carry no channel id in the response, so a blocked creator's post survives here.
+ */
+internal fun List<SearchResultItem>.withoutBlockedChannels(blockedChannelIds: Set<String>): List<SearchResultItem> {
+    if (blockedChannelIds.isEmpty()) return this
 
-    private fun String.withTypePrefix(type: String): String = takeIf(String::isNotBlank)?.let { "$type:$it" }.orEmpty()
-
-    private fun sortVideoItemsLocally(
-        searchFilter: SearchFilter?,
-        items: List<SearchResultItem>,
-    ): List<SearchResultItem> =
-        when (searchFilter?.sortType) {
-            SortType.RELEVANCE -> {
-                items
+    fun blocked(channelId: String) = channelId.isNotBlank() && channelId in blockedChannelIds
+    return mapNotNull { item ->
+        when (item) {
+            is SearchResultItem.VideoResult -> {
+                item.takeUnless { blocked(it.video.channelId) }
             }
 
-            SortType.RATING -> {
-                items.sortedByDescending { item ->
-                    if (item is SearchResultItem.VideoResult) item.video.likeCount else 0L
+            is SearchResultItem.ChannelResult -> {
+                item.takeUnless { blocked(it.channel.id) }
+            }
+
+            is SearchResultItem.PlaylistResult -> {
+                item
+            }
+
+            is SearchResultItem.ShelfResult -> {
+                val videos = item.videos.filterNot { blocked(it.channelId) }
+                when {
+                    videos.isNotEmpty() -> item.copy(videos = videos)
+                    item.posts.isNotEmpty() -> item
+                    else -> null
                 }
             }
-
-            SortType.VIEWS -> {
-                items
-            }
-
-            else -> {
-                items
-            }
         }
+    }
 }
+
+/** The videos strip that immediately follows [index], if that is what the next section holds. */
+private fun List<SearchSection>.latestStripAfter(index: Int): SearchResultItem.ShelfResult? =
+    (getOrNull(index + 1) as? SearchSection.Strip)
+        ?.shelf
+        ?.toShelfItem(shortsEnabled = true)
+        ?.let { it as? SearchResultItem.ShelfResult }
+        ?.takeIf { it.kind == SearchShelfKind.VIDEOS }
+
+private fun FeedItem.toResultItem(shortsEnabled: Boolean): SearchResultItem? =
+    when (this) {
+        is FeedItem.VideoItem -> SearchResultItem.VideoResult(video)
+        is FeedItem.ShortItem -> SearchResultItem.VideoResult(video).takeIf { shortsEnabled }
+        is FeedItem.PlaylistItem -> SearchResultItem.PlaylistResult(playlist)
+        is FeedItem.RelatedChannelItem -> SearchResultItem.ChannelResult(channel)
+        is FeedItem.PostItem -> null
+    }
+
+private fun FeedShelf.toShelfItem(shortsEnabled: Boolean): SearchResultItem? {
+    val posts = items.filterIsInstance<FeedItem.PostItem>().map { it.post }
+    if (posts.isNotEmpty()) {
+        return SearchResultItem.ShelfResult(id, title, SearchShelfKind.POSTS, posts = posts)
+    }
+    val videos = items.mapNotNull { it.shelfVideo() }
+    if (videos.isEmpty()) return null
+    val kind = if (style == FeedShelfStyle.Grid) SearchShelfKind.SHORTS else SearchShelfKind.VIDEOS
+    if (kind == SearchShelfKind.SHORTS && !shortsEnabled) return null
+    return SearchResultItem.ShelfResult(
+        id = id,
+        title = title,
+        kind = kind,
+        videos = videos,
+        collapsedItemCount = collapsedItemCount,
+    )
+}
+
+private fun FeedItem.shelfVideo(): Video? =
+    when (this) {
+        is FeedItem.VideoItem -> video
+        is FeedItem.ShortItem -> video
+        else -> null
+    }
+
+private fun SearchResultItem.identityKey(): String =
+    when (this) {
+        is SearchResultItem.VideoResult -> video.id.prefixed("video")
+        is SearchResultItem.ChannelResult -> channel.id.prefixed("channel")
+        is SearchResultItem.PlaylistResult -> playlist.id.prefixed("playlist")
+        is SearchResultItem.ShelfResult -> "shelf:$id"
+    }
+
+private fun String.prefixed(type: String): String = takeIf(String::isNotBlank)?.let { "$type:$it" }.orEmpty()

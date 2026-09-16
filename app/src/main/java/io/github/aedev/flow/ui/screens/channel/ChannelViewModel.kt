@@ -28,11 +28,11 @@ import io.github.aedev.flow.data.paging.ChannelVideosPagingSource
 import io.github.aedev.flow.data.shorts.ShortsContentFilter
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.channel.ChannelHeader
-import io.github.aedev.flow.innertube.pages.channel.ChannelItem
-import io.github.aedev.flow.innertube.pages.channel.ChannelOwner
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabDescriptor
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
-import io.github.aedev.flow.innertube.pages.channel.CommunityPost
+import io.github.aedev.flow.innertube.pages.renderer.CommunityPost
+import io.github.aedev.flow.innertube.pages.renderer.FeedItem
+import io.github.aedev.flow.innertube.pages.renderer.FeedItemOwner
 import io.github.aedev.flow.ui.youtubeChannelBrowseId
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import kotlinx.coroutines.CancellationException
@@ -176,9 +176,9 @@ class ChannelViewModel
         private var currentVideosTab: ListLinkHandler? = null
         private var currentPlaylistsTab: ListLinkHandler? = null
 
-        private fun channelOwner(): ChannelOwner {
+        private fun channelOwner(): FeedItemOwner {
             val state = _uiState.value
-            return ChannelOwner(
+            return FeedItemOwner(
                 id = state.channelId.orEmpty(),
                 name = state.header?.title.orEmpty(),
                 avatarUrl = state.header?.avatarUrl.orEmpty(),
@@ -405,7 +405,7 @@ class ChannelViewModel
                             config = PagingConfig(pageSize = 20, enablePlaceholders = false),
                             pagingSourceFactory = { ChannelVideosPagingSource(tab, channelInfo) },
                         ).flow
-                            .map { paging -> paging.map { video -> ChannelItem.VideoItem(video) as ChannelItem } }
+                            .map { paging -> paging.map { video -> FeedItem.VideoItem(video) as FeedItem } }
                             .cachedIn(viewModelScope)
                     _nonYouTubeTabStates.update {
                         it + (kind to ChannelTabState(items = pager, isLoading = false, loaded = true))
@@ -419,7 +419,7 @@ class ChannelViewModel
                             config = PagingConfig(pageSize = 20, enablePlaceholders = false),
                             pagingSourceFactory = { ChannelPlaylistsPagingSource(tab, channelInfo.serviceId) },
                         ).flow
-                            .map { paging -> paging.map { playlist -> ChannelItem.PlaylistItem(playlist) as ChannelItem } }
+                            .map { paging -> paging.map { playlist -> FeedItem.PlaylistItem(playlist) as FeedItem } }
                             .cachedIn(viewModelScope)
                     _nonYouTubeTabStates.update {
                         it + (kind to ChannelTabState(items = pager, isLoading = false, loaded = true))
