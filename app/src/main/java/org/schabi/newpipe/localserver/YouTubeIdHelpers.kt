@@ -1,5 +1,6 @@
 package org.schabi.newpipe.localserver
 
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 
@@ -16,7 +17,7 @@ import org.schabi.newpipe.extractor.ServiceList
  */
 fun channelIdToUrl(channelId: String, serviceId: Int = ServiceList.YouTube.serviceId): String {
     val youtubeForm = "https://www.youtube.com/channel/$channelId"
-    if (serviceId == ServiceList.YouTube.serviceId) return youtubeForm
+    if (serviceId.isYouTubeServiceId) return youtubeForm
     return runCatching { NewPipe.getService(serviceId).channelLHFactory.getUrl(channelId) }
         .getOrDefault(youtubeForm)
 }
@@ -59,7 +60,7 @@ fun channelUrlToId(url: String?): String? {
  */
 fun videoIdToUrl(videoId: String, serviceId: Int = ServiceList.YouTube.serviceId): String {
     val youtubeForm = "https://www.youtube.com/watch?v=$videoId"
-    if (serviceId == ServiceList.YouTube.serviceId) return youtubeForm
+    if (serviceId.isYouTubeServiceId) return youtubeForm
     return runCatching { NewPipe.getService(serviceId).streamLHFactory.getUrl(videoId) }
         .getOrDefault(youtubeForm)
 }

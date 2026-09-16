@@ -16,6 +16,8 @@ import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.SubscriptionGroup
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.distinctByNonBlankKey
+import io.github.aedev.flow.data.model.isYouTube
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.model.toUiModel
 import io.github.aedev.flow.data.notes.NoteKind
 import io.github.aedev.flow.data.notes.NotesRepository
@@ -157,7 +159,7 @@ class ChannelViewModel
 
         internal val tabStates: StateFlow<Map<ChannelTabKind, ChannelTabState>> =
             combine(_uiState, tabController.states, bilibiliTabs.states) { state, youTubeStates, otherStates ->
-                if (state.serviceId == ServiceList.YouTube.serviceId) youTubeStates else otherStates
+                if (state.serviceId.isYouTubeServiceId) youTubeStates else otherStates
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(GROUPS_SUBSCRIPTION_TIMEOUT_MS), emptyMap())
 
         private fun channelOwner(): FeedItemOwner {
@@ -198,7 +200,7 @@ class ChannelViewModel
          */
         fun loadChannel(channelUrl: String) {
             val service = runCatching { NewPipe.getServiceByUrl(channelUrl) }.getOrNull()
-            if (service != null && service.serviceId != ServiceList.YouTube.serviceId) {
+            if (service != null && !service.isYouTube) {
                 loadNonYouTubeChannel(channelUrl, service)
                 return
             }
@@ -318,7 +320,7 @@ class ChannelViewModel
                 return
             }
             if (kind == ChannelTabKind.Shorts && !shortsEnabled) return
-            if (_uiState.value.serviceId != ServiceList.YouTube.serviceId) {
+            if (!_uiState.value.serviceId.isYouTubeServiceId) {
                 bilibiliTabs.ensureLoaded(kind)
                 return
             }

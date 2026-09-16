@@ -2,6 +2,7 @@ package io.github.aedev.flow.ui.screens.channel
 
 import android.util.Log
 import io.github.aedev.flow.data.model.Comment
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.renderer.CommunityPost
 import io.github.aedev.flow.utils.PerformanceDispatcher
@@ -53,11 +54,11 @@ internal class ChannelCommunityController(
     }
 
     /** Community Posts is a YouTube-only concept - other services have no equivalent here. */
-    fun isSupportedForCurrentChannel(): Boolean = channel?.serviceId == ServiceList.YouTube.serviceId
+    fun isSupportedForCurrentChannel(): Boolean = channel?.serviceId?.isYouTubeServiceId == true
 
     fun ensurePostsLoaded() {
         val channelSnapshot = channel ?: return
-        if (channelSnapshot.serviceId != ServiceList.YouTube.serviceId) return
+        if (!channelSnapshot.serviceId.isYouTubeServiceId) return
         val stateSnapshot = _state.value
         if (stateSnapshot.postsLoaded || stateSnapshot.isLoadingPosts) return
 

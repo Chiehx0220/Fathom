@@ -14,6 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.data.paging.SearchPagingSource
 import io.github.aedev.flow.data.paging.SearchResultItem
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
@@ -121,7 +122,7 @@ class SearchViewModel
                     serviceId = video.serviceId,
                 )
             }
-            if (video.serviceId == ServiceList.YouTube.serviceId) return null
+            if (video.isYouTube) return null
             val resolved =
                 runCatching {
                     repository.getVideo(video.id, NewPipe.getService(video.serviceId))

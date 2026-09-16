@@ -2,6 +2,8 @@ package io.github.aedev.flow.data.innertube
 
 import android.util.Log
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.model.isYouTube
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
 import io.github.aedev.flow.data.shorts.ShortsClassifier
 import io.github.aedev.flow.data.subscriptions.ChannelRssClient
@@ -106,7 +108,7 @@ class RssSubscriptionService
                                         // no such shortcut (e.g. Bilibili) goes straight to Phase 2, same as the
                                         // reference client treats StreamingService.getFeedExtractor() == null.
                                         val result =
-                                            if (serviceId == ServiceList.YouTube.serviceId) {
+                                            if (serviceId.isYouTubeServiceId) {
                                                 fetchRssVideos(channelId, minimumDateMillis, knownVideoIds)
                                             } else {
                                                 RssResult(
@@ -227,10 +229,9 @@ class RssSubscriptionService
 
         private fun channelUrlFor(
             service: StreamingService,
-            serviceId: Int,
             channelId: String,
         ): String =
-            if (serviceId == ServiceList.YouTube.serviceId) {
+            if (service.isYouTube) {
                 "$YOUTUBE_URL/channel/$channelId"
             } else {
                 service.channelLHFactory.getUrl(channelId)
@@ -249,7 +250,7 @@ class RssSubscriptionService
             withContext(Dispatchers.IO) {
                 runCatching {
                     val service = NewPipe.getService(serviceId)
-                    val channelUrl = channelUrlFor(service, serviceId, channelId)
+                    val channelUrl = channelUrlFor(service, channelId)
                     val channelInfo = ChannelInfo.getInfo(service, channelUrl)
                     val channelAvatar =
                         channelInfo.avatars
@@ -484,7 +485,7 @@ class RssSubscriptionService
             rssDateMap: Map<String, Long>,
         ): ChannelFetchResult {
             val service = NewPipe.getService(serviceId)
-            val channelUrl = channelUrlFor(service, serviceId, channelId)
+            val channelUrl = channelUrlFor(service, channelId)
 
             var lastFailure: ChannelFetchResult? = null
             for (attempt in 1..EMPTY_RESULT_MAX_ATTEMPTS) {
@@ -708,7 +709,7 @@ class RssSubscriptionService
             url: String,
             serviceId: Int = ServiceList.YouTube.serviceId,
         ): String {
-            if (serviceId != ServiceList.YouTube.serviceId) {
+            if (!serviceId.isYouTubeServiceId) {
                 // Bilibili ids (e.g. "BV1jJ411a7Rk?p=1") don't fit any YouTube-shaped pattern below,
                 // and naively stripping the query string would drop the page-part suffix the rest of
                 // the app keeps embedded in the id - resolve through the service's own link handler.

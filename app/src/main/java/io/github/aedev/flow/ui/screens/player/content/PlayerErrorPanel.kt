@@ -19,9 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.aedev.flow.R
+import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.player.error.PlayerDiagnostics
 import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.ServiceList
 
 @Composable
 internal fun PlayerErrorPanel(
@@ -32,7 +32,7 @@ internal fun PlayerErrorPanel(
     onRetryClick: () -> Unit,
 ) {
     val service = remember(serviceId) { NewPipe.getService(serviceId) }
-    val isYouTube = serviceId == ServiceList.YouTube.serviceId
+    val isYouTube = service.isYouTube
     Surface(
         modifier =
             Modifier

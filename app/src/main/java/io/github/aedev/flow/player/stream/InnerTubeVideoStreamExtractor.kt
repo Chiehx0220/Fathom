@@ -3,6 +3,7 @@ package io.github.aedev.flow.player.stream
 import android.net.Uri
 import android.util.Log
 import androidx.media3.common.util.UnstableApi
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.AttestationPlatform
 import io.github.aedev.flow.innertube.models.YouTubeClient
@@ -27,7 +28,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import org.schabi.newpipe.extractor.ServiceList
 
 object InnerTubeVideoStreamExtractor {
     private const val TAG = "InnerTubeVideoExtractor"
@@ -120,7 +120,7 @@ object InnerTubeVideoStreamExtractor {
      * path should check this first and skip straight to null off-YouTube, instead of each one
      * re-deriving the same service check.
      */
-    fun supportsService(serviceId: Int): Boolean = serviceId == ServiceList.YouTube.serviceId
+    fun supportsService(serviceId: Int): Boolean = serviceId.isYouTubeServiceId
 
     @OptIn(UnstableApi::class)
     suspend fun extract(

@@ -3,6 +3,7 @@ package io.github.aedev.flow.data.comments
 import android.util.Log
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.distinctByNonBlankKey
+import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.data.model.mergeDistinctByNonBlankKey
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.innertube.pages.VideoCommentSort
@@ -271,7 +272,7 @@ internal class CommentsPager(
                     } else {
                         val service = NewPipe.getService(serviceId)
                         val url =
-                            if (serviceId == ServiceList.YouTube.serviceId) {
+                            if (service.isYouTube) {
                                 "https://www.youtube.com/watch?v=$videoId"
                             } else {
                                 service.streamLHFactory.getUrl(videoId)

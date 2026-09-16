@@ -1093,7 +1093,7 @@ class YouTubeRepository
             serviceId: Int = ServiceList.YouTube.serviceId,
         ): CommentsPageResult =
             withContext(Dispatchers.IO) {
-                if (serviceId != ServiceList.YouTube.serviceId) return@withContext CommentsPageResult.EMPTY
+                if (!serviceId.isYouTubeServiceId) return@withContext CommentsPageResult.EMPTY
                 val page = YouTube.comments(continuation, videoId).getOrNull() ?: return@withContext CommentsPageResult.EMPTY
                 CommentsPageResult(comments = page.comments, continuation = page.continuation)
             }
@@ -1104,7 +1104,7 @@ class YouTubeRepository
             serviceId: Int = ServiceList.YouTube.serviceId,
         ): CommentsPageResult =
             withContext(Dispatchers.IO) {
-                if (serviceId != ServiceList.YouTube.serviceId) return@withContext CommentsPageResult.EMPTY
+                if (!serviceId.isYouTubeServiceId) return@withContext CommentsPageResult.EMPTY
                 val page = YouTube.commentReplies(continuation, videoId).getOrNull() ?: return@withContext CommentsPageResult.EMPTY
                 CommentsPageResult(comments = page.comments, continuation = page.continuation)
             }

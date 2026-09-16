@@ -5,6 +5,7 @@ import androidx.paging.PagingState
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.renderer.FeedItem
 import io.github.aedev.flow.innertube.pages.renderer.FeedShelf
@@ -34,7 +35,7 @@ class SearchPagingSource(
     override fun getRefreshKey(state: PagingState<String, SearchResultItem>): String? = null
 
     private val service = runCatching { NewPipe.getService(serviceId) }.getOrDefault(ServiceList.YouTube)
-    private val isYouTube = service.serviceId == ServiceList.YouTube.serviceId
+    private val isYouTube = service.isYouTube
     private val loadedItemKeys = DistinctKeyTracker()
 
     override suspend fun load(params: LoadParams<String>): LoadResult<String, SearchResultItem> {

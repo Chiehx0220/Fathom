@@ -3,6 +3,7 @@ package io.github.aedev.flow.utils
 import android.content.Context
 import android.content.Intent
 import io.github.aedev.flow.R
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.ui.videoUrl
 import org.schabi.newpipe.extractor.ServiceList
 
@@ -16,7 +17,7 @@ fun youtubeWatchUrl(
     serviceId: Int = ServiceList.YouTube.serviceId,
 ): String {
     val watchUrl = videoUrl(videoId, serviceId)
-    return if (positionSeconds == null || serviceId != ServiceList.YouTube.serviceId) {
+    return if (positionSeconds == null || !serviceId.isYouTubeServiceId) {
         watchUrl
     } else {
         "$watchUrl&t=${positionSeconds}s"

@@ -5,6 +5,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.data.model.Playlist
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
@@ -79,7 +80,7 @@ class ChannelPlaylistsPagingSource(
     }
 
     private fun PlaylistInfoItem.toPlaylist(): Playlist {
-        val isYouTube = serviceId == ServiceList.YouTube.serviceId
+        val isYouTube = serviceId.isYouTubeServiceId
         val playlistId =
             if (isYouTube) {
                 when {

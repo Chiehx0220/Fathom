@@ -1,6 +1,7 @@
 package io.github.aedev.flow.player.stream
 
 import android.util.Log
+import io.github.aedev.flow.data.model.isYouTube
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -27,7 +28,7 @@ object StreamInfoFetcher {
     ): StreamInfo? =
         withContext(Dispatchers.IO) {
             val service = NewPipe.getService(serviceId)
-            val isYouTube = serviceId == ServiceList.YouTube.serviceId
+            val isYouTube = service.isYouTube
             var lastError: Throwable? = null
             repeat(ATTEMPTS) { attempt ->
                 val info =

@@ -1,6 +1,7 @@
 package io.github.aedev.flow.player.stream
 
 import android.util.Log
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -42,7 +43,7 @@ object PlaybackPrefetcher {
         serviceId: Int = ServiceList.YouTube.serviceId,
     ) {
         if (videoId.isBlank() || videoId.startsWith("local_")) return
-        if (serviceId != ServiceList.YouTube.serviceId) return
+        if (!serviceId.isYouTubeServiceId) return
         synchronized(lock) {
             if (inFlightVideoId == videoId && inFlight?.isActive == true) return
             // Only the most recently tapped video is worth warming. Leaving an abandoned one

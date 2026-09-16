@@ -21,11 +21,11 @@ import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
 import io.github.aedev.flow.data.subscriptions.ChannelRssClient
 import io.github.aedev.flow.data.subscriptions.ChannelRssParser
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
-import org.schabi.newpipe.extractor.ServiceList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -231,7 +231,7 @@ class SubscriptionCheckWorker(
         // The RSS client only speaks YouTube's feed format - a non-YouTube subscription (e.g.
         // Bilibili) has no such shortcut and goes through the heavier channel-tabs path instead,
         // floored to its own minimum interval below.
-        if (subscription.serviceId != ServiceList.YouTube.serviceId) {
+        if (!subscription.serviceId.isYouTubeServiceId) {
             return checkNonYouTubeChannel(subscription, repository, announceReels)
         }
         val feed =

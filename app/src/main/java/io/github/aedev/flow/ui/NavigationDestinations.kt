@@ -1,6 +1,7 @@
 package io.github.aedev.flow.ui
 
 import io.github.aedev.flow.data.local.DEFAULT_NAV_TAB_ORDER
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
@@ -60,7 +61,7 @@ internal fun youtubeChannelUrl(
     val value = channelIdOrHandle.trim()
     if (value.isEmpty()) return null
     if (value.startsWith("http://") || value.startsWith("https://")) return normalizeYoutubeChannelUrl(value)
-    if (serviceId != ServiceList.YouTube.serviceId) {
+    if (!serviceId.isYouTubeServiceId) {
         // Bare id for a non-YouTube service (e.g. Bilibili's numeric "mid") - resolve through that
         // service's own link handler instead of assuming a YouTube URL shape.
         return resolveNonYouTubeChannelUrl(value, NewPipe.getService(serviceId)) { "" }.ifEmpty { null }
@@ -76,7 +77,7 @@ internal fun videoUrl(
     videoId: String,
     serviceId: Int = ServiceList.YouTube.serviceId,
 ): String {
-    if (serviceId == ServiceList.YouTube.serviceId) return "https://www.youtube.com/watch?v=$videoId"
+    if (serviceId.isYouTubeServiceId) return "https://www.youtube.com/watch?v=$videoId"
     return runCatching { NewPipe.getService(serviceId).streamLHFactory.getUrl(videoId) }
         .getOrDefault("https://www.youtube.com/watch?v=$videoId")
 }

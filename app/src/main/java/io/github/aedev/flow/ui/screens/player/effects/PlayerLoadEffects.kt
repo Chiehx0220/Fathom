@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.runtime.*
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
 import io.github.aedev.flow.ui.screens.player.state.PlayerScreenState
@@ -12,7 +13,6 @@ import io.github.aedev.flow.ui.screens.player.state.SubtitleSelection
 import io.github.aedev.flow.ui.screens.player.state.VideoPlayerUiState
 import io.github.aedev.flow.utils.NetworkState
 import kotlinx.coroutines.delay
-import org.schabi.newpipe.extractor.ServiceList
 
 @Composable
 internal fun VideoLoadEffect(
@@ -120,7 +120,7 @@ internal fun ShortVideoPromptEffect(
 
         // The Shorts player only knows how to play back YouTube streams; other services have no
         // equivalent, so suggesting it there just leads to a dead end.
-        val isYouTube = videoServiceId == ServiceList.YouTube.serviceId
+        val isYouTube = videoServiceId.isYouTubeServiceId
         if (isYouTube && !isInQueue && !screenState.hasShownShortsPrompt && videoDuration > 0 && videoDuration <= 80) {
             delay(1000)
             if (!disableShortsPlayer && showShortsPlayerPrompt) {

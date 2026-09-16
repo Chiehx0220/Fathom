@@ -5,12 +5,12 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.channel.ChannelInfo
 import org.schabi.newpipe.extractor.channel.ChannelTabInfo
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
@@ -71,7 +71,7 @@ class ChannelVideosPagingSource(
 }
 
 internal fun StreamInfoItem.toChannelVideo(channelInfo: ChannelInfo): Video {
-    val isYouTube = channelInfo.serviceId == ServiceList.YouTube.serviceId
+    val isYouTube = channelInfo.serviceId.isYouTubeServiceId
     val videoId =
         if (!isYouTube) {
             // Other services' ids (e.g. Bilibili's "BVxxxxxxxxxx?p=1") don't fit the YouTube-shaped

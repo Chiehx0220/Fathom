@@ -42,6 +42,7 @@ import io.github.aedev.flow.data.local.ContentType
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Playlist
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.paging.SearchResultItem
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
 import io.github.aedev.flow.ui.components.FEED_MAX_AUTO_COLUMNS
@@ -304,7 +305,7 @@ private fun sharedVideo(
     channelName = title,
     channelId = "",
     thumbnailUrl =
-        if (serviceId == ServiceList.YouTube.serviceId) {
+        if (serviceId.isYouTubeServiceId) {
             "https://img.youtube.com/vi/$videoId/maxresdefault.jpg"
         } else {
             ""
