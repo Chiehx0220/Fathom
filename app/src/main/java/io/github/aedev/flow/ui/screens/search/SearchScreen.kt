@@ -8,20 +8,16 @@ import android.speech.RecognizerIntent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,6 +52,7 @@ import io.github.aedev.flow.ui.components.search.SearchFilterDialog
 import io.github.aedev.flow.ui.components.search.SearchResultActions
 import io.github.aedev.flow.ui.components.search.SearchResults
 import io.github.aedev.flow.ui.components.search.SearchResultsShimmer
+import io.github.aedev.flow.ui.components.search.SearchServiceSwitcher
 import io.github.aedev.flow.ui.components.search.SearchShortsGrid
 import io.github.aedev.flow.ui.components.search.SearchSuggestionsPanel
 import io.github.aedev.flow.ui.components.search.SearchTopBar
@@ -317,31 +314,5 @@ private fun sharedVideo(
     uploadDate = "",
     serviceId = serviceId,
 )
-
-/** Two pills to pick which streaming service search/paste-link resolution runs against. */
-@Composable
-private fun SearchServiceSwitcher(
-    selectedServiceId: Int,
-    onServiceSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val options =
-        listOf(
-            ServiceList.YouTube.serviceId to "YouTube",
-            ServiceList.BiliBili.serviceId to "Bilibili",
-        )
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        options.forEach { (serviceId, label) ->
-            FilterChip(
-                selected = selectedServiceId == serviceId,
-                onClick = { onServiceSelected(serviceId) },
-                label = { Text(label) },
-            )
-        }
-    }
-}
 
 private val FilterBarVerticalPadding = 4.dp

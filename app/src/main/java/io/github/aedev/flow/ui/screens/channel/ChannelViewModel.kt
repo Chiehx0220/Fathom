@@ -4,10 +4,6 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
-import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
@@ -23,15 +19,10 @@ import io.github.aedev.flow.data.model.distinctByNonBlankKey
 import io.github.aedev.flow.data.model.toUiModel
 import io.github.aedev.flow.data.notes.NoteKind
 import io.github.aedev.flow.data.notes.NotesRepository
-import io.github.aedev.flow.data.paging.ChannelPlaylistsPagingSource
-import io.github.aedev.flow.data.paging.ChannelVideosPagingSource
 import io.github.aedev.flow.data.shorts.ShortsContentFilter
 import io.github.aedev.flow.innertube.YouTube
-import io.github.aedev.flow.innertube.pages.channel.ChannelHeader
-import io.github.aedev.flow.innertube.pages.channel.ChannelTabDescriptor
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
 import io.github.aedev.flow.innertube.pages.renderer.CommunityPost
-import io.github.aedev.flow.innertube.pages.renderer.FeedItem
 import io.github.aedev.flow.innertube.pages.renderer.FeedItemOwner
 import io.github.aedev.flow.ui.youtubeChannelBrowseId
 import io.github.aedev.flow.utils.PerformanceDispatcher
@@ -52,7 +43,6 @@ import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelInfo
-import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
 import javax.inject.Inject
 
 @HiltViewModel
@@ -163,18 +153,12 @@ class ChannelViewModel
         // Non-YouTube channels (e.g. Bilibili) don't go through tabController at all - it's built
         // entirely on YouTube's private InnerTube API. This holds their tab content instead, in the
         // same shape, so the screen doesn't need to know which source a tab's data came from.
-        private val _nonYouTubeTabStates = MutableStateFlow<Map<ChannelTabKind, ChannelTabState>>(emptyMap())
+        private val bilibiliTabs = BilibiliChannelTabController(viewModelScope)
 
         internal val tabStates: StateFlow<Map<ChannelTabKind, ChannelTabState>> =
-            combine(_uiState, tabController.states, _nonYouTubeTabStates) { state, youTubeStates, otherStates ->
+            combine(_uiState, tabController.states, bilibiliTabs.states) { state, youTubeStates, otherStates ->
                 if (state.serviceId == ServiceList.YouTube.serviceId) youTubeStates else otherStates
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(GROUPS_SUBSCRIPTION_TIMEOUT_MS), emptyMap())
-
-        // Only set for a non-YouTube channel - carries what the generic extractor found so the tabs
-        // below can be fetched on demand.
-        private var currentChannelInfo: ChannelInfo? = null
-        private var currentVideosTab: ListLinkHandler? = null
-        private var currentPlaylistsTab: ListLinkHandler? = null
 
         private fun channelOwner(): FeedItemOwner {
             val state = _uiState.value
@@ -207,10 +191,6 @@ class ChannelViewModel
         companion object {
             private const val TAG = "ChannelViewModel"
             private const val GROUPS_SUBSCRIPTION_TIMEOUT_MS = 5_000L
-
-            /** Placeholder tab params for a non-YouTube channel - real params only mean something to
-             *  YouTube's InnerTube tab controller, which these tabs never go through. */
-            private const val NON_YOUTUBE_TAB_PARAMS = "extractor"
         }
 
         /**
@@ -299,61 +279,13 @@ class ChannelViewModel
                     return@launch
                 }
 
-                currentChannelInfo = channelInfo
-                currentVideosTab = null
-                currentPlaylistsTab = null
-                for (tab in channelInfo.tabs) {
-                    try {
-                        val tabName = tab.contentFilters.joinToString { it.name }
-                        val tabUrl = tab.url.orEmpty()
-                        val isPlaylists =
-                            tabName.contains("playlist", ignoreCase = true) || tabUrl.contains("/playlists", ignoreCase = true)
-                        val isVideos =
-                            !isPlaylists &&
-                                (tabName.contains("video", ignoreCase = true) || tabUrl.contains("/videos", ignoreCase = true))
-                        if (isVideos) currentVideosTab = tab
-                        if (isPlaylists) currentPlaylistsTab = tab
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error checking non-YouTube tab", e)
-                    }
-                }
-
-                val avatarUrl =
-                    channelInfo.avatars.maxByOrNull { it.height }?.url
-                        ?: channelInfo.avatars.firstOrNull()?.url
-                        ?: ""
-                val header =
-                    ChannelHeader(
-                        id = channelInfo.id,
-                        title = channelInfo.name,
-                        avatarUrl = avatarUrl,
-                        bannerUrl = channelInfo.banners.maxByOrNull { it.height }?.url,
-                        subscriberCount = channelInfo.subscriberCount.takeIf { it >= 0 },
-                        description = channelInfo.description,
+                val (header, tabs) =
+                    bilibiliTabs.reset(
+                        channelInfo,
+                        appContext.getString(R.string.tab_videos),
+                        appContext.getString(R.string.tab_playlists),
                     )
-                val tabs =
-                    buildList {
-                        if (currentVideosTab != null) {
-                            add(
-                                ChannelTabDescriptor(
-                                    kind = ChannelTabKind.Videos,
-                                    title = appContext.getString(R.string.tab_videos),
-                                    params = NON_YOUTUBE_TAB_PARAMS,
-                                ),
-                            )
-                        }
-                        if (currentPlaylistsTab != null) {
-                            add(
-                                ChannelTabDescriptor(
-                                    kind = ChannelTabKind.Playlists,
-                                    title = appContext.getString(R.string.tab_playlists),
-                                    params = NON_YOUTUBE_TAB_PARAMS,
-                                ),
-                            )
-                        }
-                    }
 
-                _nonYouTubeTabStates.value = emptyMap()
                 _uiState.update {
                     it.copy(
                         channelId = channelInfo.id,
@@ -364,7 +296,7 @@ class ChannelViewModel
                         isLoading = false,
                     )
                 }
-                communityController.reset(channelInfo.id, channelInfo.name, avatarUrl, channelInfo.serviceId)
+                communityController.reset(channelInfo.id, channelInfo.name, header.avatarUrl, channelInfo.serviceId)
                 loadSubscriptionState(channelInfo.id)
                 observeNote(channelInfo.id)
                 tabs.firstOrNull()?.kind?.let(::ensureTabLoaded)
@@ -387,47 +319,10 @@ class ChannelViewModel
             }
             if (kind == ChannelTabKind.Shorts && !shortsEnabled) return
             if (_uiState.value.serviceId != ServiceList.YouTube.serviceId) {
-                ensureNonYouTubeTabLoaded(kind)
+                bilibiliTabs.ensureLoaded(kind)
                 return
             }
             tabController.ensureLoaded(kind, _uiState.value.tabParams(kind))
-        }
-
-        private fun ensureNonYouTubeTabLoaded(kind: ChannelTabKind) {
-            if (_nonYouTubeTabStates.value[kind]?.loaded == true) return
-            val channelInfo = currentChannelInfo ?: return
-
-            when (kind) {
-                ChannelTabKind.Videos -> {
-                    val tab = currentVideosTab ?: return
-                    val pager =
-                        Pager(
-                            config = PagingConfig(pageSize = 20, enablePlaceholders = false),
-                            pagingSourceFactory = { ChannelVideosPagingSource(tab, channelInfo) },
-                        ).flow
-                            .map { paging -> paging.map { video -> FeedItem.VideoItem(video) as FeedItem } }
-                            .cachedIn(viewModelScope)
-                    _nonYouTubeTabStates.update {
-                        it + (kind to ChannelTabState(items = pager, isLoading = false, loaded = true))
-                    }
-                }
-
-                ChannelTabKind.Playlists -> {
-                    val tab = currentPlaylistsTab ?: return
-                    val pager =
-                        Pager(
-                            config = PagingConfig(pageSize = 20, enablePlaceholders = false),
-                            pagingSourceFactory = { ChannelPlaylistsPagingSource(tab, channelInfo.serviceId) },
-                        ).flow
-                            .map { paging -> paging.map { playlist -> FeedItem.PlaylistItem(playlist) as FeedItem } }
-                            .cachedIn(viewModelScope)
-                    _nonYouTubeTabStates.update {
-                        it + (kind to ChannelTabState(items = pager, isLoading = false, loaded = true))
-                    }
-                }
-
-                else -> Unit
-            }
         }
 
         private fun loadSubscriptionState(channelId: String) {
