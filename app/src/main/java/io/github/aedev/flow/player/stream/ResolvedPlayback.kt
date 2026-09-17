@@ -19,6 +19,8 @@ data class PlaybackResolutionRequest(
     val allowShorts: Boolean,
     /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
     val serviceId: Int = ServiceList.YouTube.serviceId,
+    /** Creators the viewer has blocked; their videos never enter the related list. */
+    val blockedChannelIds: Set<String> = emptySet(),
 )
 
 /** Why a resolution produced nothing to play, and therefore which error string the screen shows. */
