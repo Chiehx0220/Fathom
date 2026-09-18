@@ -78,6 +78,16 @@ object HtmlRendererCommon {
         }
     }
 
+    // serializePage(page) + escapeJs(...) in one step, for embedding a page token inside a
+    // single-quoted onclick JS string literal (every "Load More" button does this). Returns null
+    // for both "no next page" and "serialization failed", so callers can use it directly as their
+    // "should a Load More button render at all" check - one less place to forget the escapeJs step.
+    @JvmStatic
+    fun serializePageJs(page: Page?): String? {
+        val serialized = serializePage(page) ?: return null
+        return escapeJs(serialized)
+    }
+
     // Deserialize a Page object from a Base64 URL parameter
     @JvmStatic
     fun deserializePage(b64: String?): Page? {
@@ -503,6 +513,12 @@ object HtmlRendererCommon {
                 // never match the raw URL stored in the DB - deletes would silently affect zero
                 // rows, which is exactly the bug the user reported (item reappears after refresh).
                 val deleteUrlJs = escapeJs(item.url)
+                // Plain HTML attribute below, not a JS string literal - escapeJs's backslash
+                // escapes mean nothing to the HTML parser, so a literal '"' in the URL would still
+                // terminate the attribute early. escapeHtml is the one that's actually safe here;
+                // deleteSelectedHistory() reads it back via .dataset.url, which the browser already
+                // HTML-decodes for us, then applies its own encodeURIComponent() same as above.
+                val deleteUrlHtml = escapeHtml(item.url)
                 sb.append("      <a href=\"$clickUrl\" style=\"position:relative; display:block;\">\n")
                   .append("        <img class=\"card-thumbnail\" src=\"$itemThumb\">\n")
                   .append("        <button type=\"button\" class=\"card-delete-btn\" onclick=\"removeHistoryItem(event, this, '$deleteUrlJs', $itemServiceId)\" aria-label=\"Remove from history\"><span class=\"material-symbols-rounded\">delete</span></button>\n")
@@ -512,7 +528,7 @@ object HtmlRendererCommon {
                   // default action, which for a checkbox IS the checked-state toggle. That's what
                   // made this control visually present but un-checkable before.
                   .append("        <span class=\"card-select-indicator\">\n")
-                  .append("          <input type=\"checkbox\" class=\"card-select-checkbox\" data-url=\"$deleteUrlJs\" onclick=\"event.stopPropagation();\" onchange=\"updateHistorySelectCount()\" aria-label=\"Select for batch delete\">\n")
+                  .append("          <input type=\"checkbox\" class=\"card-select-checkbox\" data-url=\"$deleteUrlHtml\" onclick=\"event.stopPropagation();\" onchange=\"updateHistorySelectCount()\" aria-label=\"Select for batch delete\">\n")
                   .append("          <span class=\"material-symbols-rounded card-select-check-icon\">check</span>\n")
                   .append("        </span>\n")
                   .append("      </a>\n")
@@ -624,6 +640,26 @@ object HtmlRendererCommon {
             return uploadDate.offsetDateTime().toLocalDate().toString()
         }
         return textualFallback ?: ""
+    }
+
+    // The Subscribe/Subscribed pill on the channel page and both watch pages' uploader row - same
+    // toggleSubscribe() wiring everywhere, so shared here instead of duplicating it three times.
+    // backUrlEncoded is the one thing callers still supply themselves: it's where /subscribe
+    // redirects back to on a non-ajax POST, and the channel page, watch page, and audio watch page
+    // each redirect to a different URL.
+    @JvmStatic
+    fun renderSubscribeButton(uploaderUrl: String, uploaderName: String, uploaderAvatarUrl: String, backUrlEncoded: String, isSubscribed: Boolean): String {
+        val uploaderUrlEncoded = encodeUrl(uploaderUrl)
+        val uploaderUrlJs = escapeJs(uploaderUrl)
+        val uploaderNameJs = escapeJs(uploaderName)
+        val uploaderAvatarJs = escapeJs(uploaderAvatarUrl)
+        return if (isSubscribed) {
+            "<a href=\"/subscribe?action=unsubscribe&id=$uploaderUrlEncoded&back=$backUrlEncoded\" onclick=\"toggleSubscribe(event, this, '$uploaderUrlJs', '$uploaderNameJs', '$uploaderAvatarJs')\" class=\"subscribe-btn subscribed\">Subscribed</a>\n"
+        } else {
+            val uploaderNameEncoded = encodeUrl(uploaderName)
+            val uploaderAvatarEncoded = encodeUrl(uploaderAvatarUrl)
+            "<a href=\"/subscribe?action=subscribe&id=$uploaderUrlEncoded&name=$uploaderNameEncoded&avatar=$uploaderAvatarEncoded&back=$backUrlEncoded\" onclick=\"toggleSubscribe(event, this, '$uploaderUrlJs', '$uploaderNameJs', '$uploaderAvatarJs')\" class=\"subscribe-btn\">Subscribe</a>\n"
+        }
     }
 
     // The watch_later table, its HTTP endpoint, and this exact placeholder copy ("click 'Watch
@@ -742,13 +778,16 @@ object HtmlRendererCommon {
     // Titles/uploader names below come straight from the extractor (real YouTube/Bilibili
     // metadata) and are appended as HTML text content, not through wrapInTemplate()'s <title>
     // chokepoint. An ampersand in a title (extremely common - "Tom & Jerry", "AT&T") renders as a
-    // broken entity, and "<"/">" can truncate or corrupt the surrounding markup. Deliberately does
-    // NOT touch getDescription()-sourced content - that's legitimately rich HTML from the
-    // extractor and escaping it would double-encode entities already in the markup.
+    // broken entity, and "<"/">" can truncate or corrupt the surrounding markup. Also escapes '"'
+    // so this is safe to drop into a double-quoted HTML attribute too, not just text content - a
+    // quote renders identically either way (as a plain `"`), so this is a no-op for every existing
+    // text-content call site and a real fix for any attribute one. Deliberately does NOT touch
+    // getDescription()-sourced content - that's legitimately rich HTML from the extractor and
+    // escaping it would double-encode entities already in the markup.
     @JvmStatic
     fun escapeHtml(str: String?): String {
         if (str == null) return ""
-        return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
     }
 
     private fun getCustomThemeCss(): String {

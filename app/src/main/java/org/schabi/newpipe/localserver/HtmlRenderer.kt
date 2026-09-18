@@ -49,6 +49,10 @@ object HtmlRenderer {
     fun renderSearch(serviceId: Int, query: String, items: List<InfoItem>, nextPage: Page?, isTv: Boolean): String = HtmlRendererListings.renderSearch(serviceId, query, items, nextPage, isTv)
 
     @JvmStatic
+    fun renderSearchResultsFragment(serviceId: Int, query: String, items: List<InfoItem>, nextPage: Page?): String =
+        HtmlRendererListings.renderSearchResultsFragment(serviceId, query, items, nextPage)
+
+    @JvmStatic
     fun renderHistory(serviceId: Int, items: List<InfoItem>?, isTv: Boolean): String = HtmlRendererListings.renderHistory(serviceId, items, isTv)
 
     @JvmStatic
@@ -80,9 +84,17 @@ object HtmlRenderer {
         HtmlRendererChannel.renderChannel(serviceId, channel, activeTab, items, nextPage, isSubscribed, isBlocked, isTv)
 
     @JvmStatic
+    fun renderChannelItemsFragment(serviceId: Int, channelUrl: String, activeTab: String, items: List<InfoItem>, nextPage: Page?, fallbackAvatarUrl: String?): String =
+        HtmlRendererChannel.renderChannelItemsFragment(serviceId, channelUrl, activeTab, items, nextPage, fallbackAvatarUrl)
+
+    @JvmStatic
     @Throws(Exception::class)
     fun renderPlaylist(serviceId: Int, playlist: PlaylistExtractor, items: List<InfoItem>?, nextPage: Page?, isBookmarked: Boolean, isTv: Boolean): String =
         HtmlRendererChannel.renderPlaylist(serviceId, playlist, items, nextPage, isBookmarked, isTv)
+
+    @JvmStatic
+    fun renderPlaylistItemsFragment(serviceId: Int, playlistUrl: String, items: List<InfoItem>, nextPage: Page?): String =
+        HtmlRendererChannel.renderPlaylistItemsFragment(serviceId, playlistUrl, items, nextPage)
 
     @JvmStatic
     fun renderSettings(serviceId: Int, currentQuality: String, hideWatched: Boolean, hideShorts: Boolean, homeFeedMode: String, saved: Boolean, isTv: Boolean): String =

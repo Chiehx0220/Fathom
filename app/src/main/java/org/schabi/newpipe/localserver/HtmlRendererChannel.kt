@@ -35,16 +35,8 @@ object HtmlRendererChannel {
         val channelUrlEncoded = HtmlRendererCommon.encodeUrl(channel.linkHandler.url)
         val channelBackUrl = HtmlRendererCommon.encodeUrl("/channel?serviceId=$serviceId&id=${channel.linkHandler.url}")
         val channelUrlJs = HtmlRendererCommon.escapeJs(channel.linkHandler.url)
-        val channelNameJs = HtmlRendererCommon.escapeJs(channel.name)
-        val channelAvatarJs = HtmlRendererCommon.escapeJs(channelAvatar)
 
-        if (isSubscribed) {
-            sb.append("      <a href=\"/subscribe?action=unsubscribe&id=$channelUrlEncoded&back=$channelBackUrl\" onclick=\"toggleSubscribe(event, this, '$channelUrlJs', '$channelNameJs', '$channelAvatarJs')\" class=\"subscribe-btn subscribed\">Subscribed</a>\n")
-        } else {
-            val channelNameEncoded = HtmlRendererCommon.encodeUrl(channel.name)
-            val channelAvatarEncoded = HtmlRendererCommon.encodeUrl(channelAvatar)
-            sb.append("      <a href=\"/subscribe?action=subscribe&id=$channelUrlEncoded&name=$channelNameEncoded&avatar=$channelAvatarEncoded&back=$channelBackUrl\" onclick=\"toggleSubscribe(event, this, '$channelUrlJs', '$channelNameJs', '$channelAvatarJs')\" class=\"subscribe-btn\">Subscribe</a>\n")
-        }
+        sb.append(HtmlRendererCommon.renderSubscribeButton(channel.linkHandler.url, channel.name, channelAvatar, channelBackUrl, isSubscribed))
 
         // Backed by Flow's native FlowNeuroEngine block list - see nativeBlockChannel() in
         // LocalServerFlowData.kt.
@@ -65,22 +57,32 @@ object HtmlRendererChannel {
           .append("  </div>\n")
 
         if (items != null && items.isNotEmpty()) {
-            HtmlRendererCommon.renderGrid(sb, serviceId, items, fallbackAvatarUrl = channelAvatarFallback)
-
-            if (nextPage != null) {
-                val serializedPage = HtmlRendererCommon.serializePage(nextPage)
-                if (serializedPage != null) {
-                    sb.append("  <div class=\"pagination\">\n")
-                      .append("    <a href=\"/channel?serviceId=$serviceId&id=${channel.linkHandler.url}&tab=$activeTab&nextPage=$serializedPage\" class=\"btn-page\">Load More</a>\n")
-                      .append("  </div>\n")
-                }
-            }
+            sb.append(renderChannelItemsFragment(serviceId, channel.linkHandler.url, activeTab, items, nextPage, channelAvatarFallback))
         } else {
             sb.append("<div class=\"loading-placeholder\">No items found under this tab.</div>\n")
         }
 
         sb.append("</div>\n")
         return HtmlRendererCommon.wrapInTemplate(channel.name, sb.toString(), isTv)
+    }
+
+    // Grid + "Load More" for a channel tab's batch - shared by renderChannel() (the full page) and
+    // the ajax=1 follow-up requests loadMoreChannel() fires. See renderSearchResultsFragment() in
+    // HtmlRendererListings.kt for why this is split out rather than left inline.
+    @JvmStatic
+    fun renderChannelItemsFragment(serviceId: Int, channelUrl: String, activeTab: String, items: List<InfoItem>, nextPage: Page?, fallbackAvatarUrl: String?): String {
+        val sb = StringBuilder()
+        HtmlRendererCommon.renderGrid(sb, serviceId, items, fallbackAvatarUrl = fallbackAvatarUrl)
+
+        val nextPageJs = HtmlRendererCommon.serializePageJs(nextPage)
+        if (nextPageJs != null) {
+            val channelUrlJs = HtmlRendererCommon.escapeJs(channelUrl)
+            val tabJs = HtmlRendererCommon.escapeJs(activeTab)
+            sb.append("  <div class=\"pagination\">\n")
+              .append("    <a href=\"#\" class=\"btn-page\" onclick=\"loadMoreChannel(this, '$nextPageJs', $serviceId, '$channelUrlJs', '$tabJs'); return false;\">Load More</a>\n")
+              .append("  </div>\n")
+        }
+        return sb.toString()
     }
 
     @JvmStatic
@@ -113,21 +115,30 @@ object HtmlRendererChannel {
         sb.append("  </div>\n")
 
         if (items != null && items.isNotEmpty()) {
-            HtmlRendererCommon.renderGrid(sb, serviceId, items)
-
-            if (nextPage != null) {
-                val serializedPage = HtmlRendererCommon.serializePage(nextPage)
-                if (serializedPage != null) {
-                    sb.append("  <div class=\"pagination\">\n")
-                      .append("    <a href=\"/playlist?serviceId=$serviceId&id=${playlist.linkHandler.url}&nextPage=$serializedPage\" class=\"btn-page\">Load More</a>\n")
-                      .append("  </div>\n")
-                }
-            }
+            sb.append(renderPlaylistItemsFragment(serviceId, playlist.linkHandler.url, items, nextPage))
         } else {
             sb.append("<div class=\"loading-placeholder\">No streams in this playlist.</div>\n")
         }
 
         sb.append("</div>\n")
         return HtmlRendererCommon.wrapInTemplate("Playlist: " + playlist.name, sb.toString(), isTv)
+    }
+
+    // Grid + "Load More" for a playlist batch - shared by renderPlaylist() (the full page) and the
+    // ajax=1 follow-up requests loadMorePlaylist() fires. See renderSearchResultsFragment() in
+    // HtmlRendererListings.kt for why this is split out rather than left inline.
+    @JvmStatic
+    fun renderPlaylistItemsFragment(serviceId: Int, playlistUrl: String, items: List<InfoItem>, nextPage: Page?): String {
+        val sb = StringBuilder()
+        HtmlRendererCommon.renderGrid(sb, serviceId, items)
+
+        val nextPageJs = HtmlRendererCommon.serializePageJs(nextPage)
+        if (nextPageJs != null) {
+            val playlistUrlJs = HtmlRendererCommon.escapeJs(playlistUrl)
+            sb.append("  <div class=\"pagination\">\n")
+              .append("    <a href=\"#\" class=\"btn-page\" onclick=\"loadMorePlaylist(this, '$nextPageJs', $serviceId, '$playlistUrlJs'); return false;\">Load More</a>\n")
+              .append("  </div>\n")
+        }
+        return sb.toString()
     }
 }

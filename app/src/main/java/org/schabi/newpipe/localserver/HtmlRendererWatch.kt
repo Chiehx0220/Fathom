@@ -14,6 +14,36 @@ import org.schabi.newpipe.extractor.stream.VideoStream
 // HtmlRenderer.java. renderWatchContent is the largest single chunk (~700 lines) from that file.
 object HtmlRendererWatch {
 
+    // The "Related Content"/"Up Next" sidebar list's per-item data prep - identical between
+    // renderWatchContent() and renderAudioWatch(), which otherwise render the card in visually
+    // different sizes (94px vs 80px thumbnails) so aren't collapsed into one shared markup
+    // function. This is the part a future extractor-shape change would actually need to touch.
+    private data class RelatedItemDisplay(
+        val uploaderEscaped: String,
+        val nameEscaped: String,
+        val thumbUrl: String,
+        val metaText: String,
+    )
+
+    private fun prepareRelatedItem(related: InfoItem): RelatedItemDisplay {
+        var uploader: String?
+        var metaText = ""
+        if (related is StreamInfoItem) {
+            uploader = related.uploaderName
+            val viewsText = if (related.viewCount >= 0) "${HtmlRendererCommon.formatCount(related.viewCount)} views" else "Live"
+            metaText = "$viewsText • ${HtmlRendererCommon.formatUploadDate(related.uploadDate, related.textualUploadDate ?: "")}"
+        } else {
+            uploader = related.name
+        }
+        if (uploader == null) uploader = ""
+        return RelatedItemDisplay(
+            uploaderEscaped = HtmlRendererCommon.escapeHtml(uploader),
+            nameEscaped = HtmlRendererCommon.escapeHtml(related.name),
+            thumbUrl = HtmlRendererCommon.getThumbnailUrl(related.thumbnailUrl),
+            metaText = metaText,
+        )
+    }
+
     @JvmStatic
     fun renderWatchSkeleton(serviceId: Int, mediaUrl: String?, isTv: Boolean): String {
         val sb = StringBuilder()
@@ -39,12 +69,8 @@ object HtmlRendererWatch {
           // serviceId must be forwarded: without it the server falls back to YouTube and fails to
           // resolve links from any other service (e.g. Bilibili). This was harmless while localtube
           // was YouTube-only, since the server ignored the parameter entirely.
-          .append("      fetch('/watch-content?serviceId=' + encodeURIComponent(new URLSearchParams(window.location.search).get('serviceId') || '0') + '&id=' + encodeURIComponent(url))\n")
-          .append("          .then(res => {\n")
-          .append("              if (!res.ok) throw new Error('HTTP ' + res.status);\n")
-          .append("              return res.text();\n")
-          .append("          })\n")
-          .append("          .then(html => {\n")
+          .append("      fetchText('/watch-content?serviceId=' + encodeURIComponent(new URLSearchParams(window.location.search).get('serviceId') || '0') + '&id=' + encodeURIComponent(url),\n")
+          .append("          html => {\n")
           .append("              if (loader) loader.style.display = 'none';\n")
           .append("              if (content) {\n")
           .append("                  content.style.display = 'block';\n")
@@ -58,8 +84,8 @@ object HtmlRendererWatch {
           .append("                      oldScript.parentNode.replaceChild(newScript, oldScript);\n")
           .append("                  });\n")
           .append("              }\n")
-          .append("          })\n")
-          .append("          .catch(err => {\n")
+          .append("          },\n")
+          .append("          err => {\n")
           .append("              if (loader) loader.style.display = 'none';\n")
           .append("              if (content) {\n")
           .append("                  content.style.display = 'block';\n")
@@ -968,17 +994,8 @@ object HtmlRendererWatch {
           .append("                <span class=\"uploader-subs\">$subsText</span>\n")
           .append("              </div>\n")
 
-        val uploaderUrlJs = HtmlRendererCommon.escapeJs(info.uploaderUrl)
-        val uploaderNameJs = HtmlRendererCommon.escapeJs(info.uploaderName)
-        val uploaderAvatarJs = HtmlRendererCommon.escapeJs(uploaderAvatar)
         val infoUrlEncodedForSub = HtmlRendererCommon.encodeUrl(info.url)
-        if (isSubscribed) {
-            sb.append("              <a href=\"/subscribe?action=unsubscribe&id=$uploaderUrlEncoded&back=$infoUrlEncodedForSub\" onclick=\"toggleSubscribe(event, this, '$uploaderUrlJs', '$uploaderNameJs', '$uploaderAvatarJs')\" class=\"subscribe-btn subscribed\">Subscribed</a>\n")
-        } else {
-            val uploaderNameEncoded = HtmlRendererCommon.encodeUrl(info.uploaderName)
-            val uploaderAvatarEncoded = HtmlRendererCommon.encodeUrl(uploaderAvatar)
-            sb.append("              <a href=\"/subscribe?action=subscribe&id=$uploaderUrlEncoded&name=$uploaderNameEncoded&avatar=$uploaderAvatarEncoded&back=$infoUrlEncodedForSub\" onclick=\"toggleSubscribe(event, this, '$uploaderUrlJs', '$uploaderNameJs', '$uploaderAvatarJs')\" class=\"subscribe-btn\">Subscribe</a>\n")
-        }
+        sb.append(HtmlRendererCommon.renderSubscribeButton(info.uploaderUrl, info.uploaderName, uploaderAvatar, infoUrlEncodedForSub, isSubscribed))
         sb.append("            </div>\n")
 
         sb.append("            <div class=\"action-buttons-group\">\n")
@@ -1013,10 +1030,9 @@ object HtmlRendererWatch {
           .append("                btn.textContent = 'Loading...';\n")
           .append("                btn.style.pointerEvents = 'none';\n")
           .append("                const ctx = isReplies ? '&context=replies' : '';\n")
-          .append("                fetch('/comments?serviceId=' + svcId + '&id=' + encodeURIComponent(videoUrl) + '&nextPage=' + encodeURIComponent(nextPage) + ctx)\n")
-          .append("                    .then(res => res.text())\n")
-          .append("                    .then(html => { if (wrapper) wrapper.outerHTML = html; })\n")
-          .append("                    .catch(() => { btn.textContent = 'Failed to load. Tap to retry'; btn.style.pointerEvents = 'auto'; });\n")
+          .append("                fetchText('/comments?serviceId=' + svcId + '&id=' + encodeURIComponent(videoUrl) + '&nextPage=' + encodeURIComponent(nextPage) + ctx,\n")
+          .append("                    html => { if (wrapper) wrapper.outerHTML = html; },\n")
+          .append("                    () => { btn.textContent = 'Failed to load. Tap to retry'; btn.style.pointerEvents = 'auto'; });\n")
           .append("            };\n")
           // Replies reuse the exact same /comments endpoint and CommentsInfoItem.getReplies()'s
           // Page - the extractor treats a reply thread as just another paginated comment list, so
@@ -1029,21 +1045,19 @@ object HtmlRendererWatch {
           .append("                if (!expanded) { container.classList.remove('expanded'); return; }\n")
           .append("                container.classList.add('expanded');\n")
           .append("                if (container.dataset.loaded === '1') return;\n")
-          .append("                fetch('/comments?serviceId=' + svcId + '&id=' + encodeURIComponent(videoUrl) + '&nextPage=' + encodeURIComponent(repliesPage) + '&context=replies')\n")
-          .append("                    .then(res => res.text())\n")
-          .append("                    .then(html => { container.innerHTML = html; container.dataset.loaded = '1'; })\n")
-          .append("                    .catch(() => { container.innerHTML = '<div class=\"loading-placeholder\">Failed to load replies.</div>'; });\n")
+          .append("                fetchText('/comments?serviceId=' + svcId + '&id=' + encodeURIComponent(videoUrl) + '&nextPage=' + encodeURIComponent(repliesPage) + '&context=replies',\n")
+          .append("                    html => { container.innerHTML = html; container.dataset.loaded = '1'; },\n")
+          .append("                    () => { container.innerHTML = '<div class=\"loading-placeholder\">Failed to load replies.</div>'; });\n")
           .append("            };\n")
           .append("            (function() {\n")
-          .append("                fetch('/comments?serviceId=$serviceId&id=$infoUrlEncodedForSub')\n")
-          .append("                    .then(res => res.text())\n")
-          .append("                    .then(html => {\n")
+          .append("                fetchText('/comments?serviceId=$serviceId&id=$infoUrlEncodedForSub',\n")
+          .append("                    html => {\n")
           .append("                        const loader = document.getElementById('comments-loader');\n")
           .append("                        const list = document.getElementById('comments-list');\n")
           .append("                        if (list) { list.innerHTML = html; list.style.display = 'block'; }\n")
           .append("                        if (loader) loader.style.display = 'none';\n")
-          .append("                    })\n")
-          .append("                    .catch(() => {\n")
+          .append("                    },\n")
+          .append("                    () => {\n")
           .append("                        const loader = document.getElementById('comments-loader');\n")
           .append("                        if (loader) loader.innerHTML = '<div class=\"loading-placeholder\">Failed to load comments.</div>';\n")
           .append("                    });\n")
@@ -1055,30 +1069,18 @@ object HtmlRendererWatch {
         sb.append("      <div class=\"sidebar\">\n")
           .append("        <h3 style=\"font-size: 16px; font-weight: 700; margin-bottom: 16px;\">Related Content</h3>\n")
         for (related in info.relatedItems) {
-            var uploader: String?
-            var metaText = ""
-            if (related is StreamInfoItem) {
-                uploader = related.uploaderName
-                val viewsText = if (related.viewCount >= 0) "${HtmlRendererCommon.formatCount(related.viewCount)} views" else "Live"
-                metaText = "$viewsText • ${HtmlRendererCommon.formatUploadDate(related.uploadDate, related.textualUploadDate ?: "")}"
-            } else {
-                uploader = related.name
-            }
-            if (uploader == null) uploader = ""
-            val uploaderEscaped = HtmlRendererCommon.escapeHtml(uploader)
-            val relatedNameEscaped = HtmlRendererCommon.escapeHtml(related.name)
-            val relatedThumb = HtmlRendererCommon.getThumbnailUrl(related.thumbnailUrl)
+            val item = prepareRelatedItem(related)
 
             sb.append("        <div class=\"card\" style=\"margin-bottom:8px; flex-direction:row; gap:8px; height:94px; background:transparent; border:none; box-shadow:none; min-width:0; overflow:hidden;\">\n")
               .append("          <a href=\"/watch?serviceId=$serviceId&id=${related.url}\" style=\"flex-shrink:0; width:168px; height:94px; border-radius:8px; overflow:hidden; background:var(--card-thumbnail-bg);\">\n")
-              .append("            <img src=\"$relatedThumb\" style=\"width:100%; height:100%; object-fit:cover; flex-shrink:0;\">\n")
+              .append("            <img src=\"${item.thumbUrl}\" style=\"width:100%; height:100%; object-fit:cover; flex-shrink:0;\">\n")
               .append("          </a>\n")
               .append("          <div class=\"card-details\" style=\"padding:0; display:flex; flex-direction:column; justify-content:flex-start; min-width:0; flex-grow:1; overflow:hidden;\">\n")
-              .append("            <a href=\"/watch?serviceId=$serviceId&id=${related.url}\" class=\"card-title\" style=\"font-size:14px; font-weight:500; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.2; margin-bottom:4px; word-break:break-word; overflow-wrap:break-word;\">$relatedNameEscaped</a>\n")
+              .append("            <a href=\"/watch?serviceId=$serviceId&id=${related.url}\" class=\"card-title\" style=\"font-size:14px; font-weight:500; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.2; margin-bottom:4px; word-break:break-word; overflow-wrap:break-word;\">${item.nameEscaped}</a>\n")
               .append("            <span class=\"card-meta\" style=\"font-size:12px; line-height:1.4;\">\n")
-              .append("              <span class=\"card-uploader\">$uploaderEscaped</span>\n")
-            if (metaText.isNotEmpty()) {
-                sb.append("              <span>$metaText</span>\n")
+              .append("              <span class=\"card-uploader\">${item.uploaderEscaped}</span>\n")
+            if (item.metaText.isNotEmpty()) {
+                sb.append("              <span>${item.metaText}</span>\n")
             }
             sb.append("            </span>\n")
               .append("          </div>\n")
@@ -1186,16 +1188,8 @@ object HtmlRendererWatch {
           .append("            ${HtmlRendererCommon.renderLikeDislikePill(info, likeState, includeDislike = false)}")
 
         val uploaderAvatar = HtmlRendererCommon.getThumbnailUrl(info.uploaderAvatars)
-        val uploaderUrlJs = HtmlRendererCommon.escapeJs(info.uploaderUrl)
-        val uploaderAvatarJs = HtmlRendererCommon.escapeJs(uploaderAvatar)
         val audioBackUrl = HtmlRendererCommon.encodeUrl("/audio?serviceId=$serviceId&id=${info.url}")
-        if (isSubscribed) {
-            sb.append("            <a href=\"/subscribe?action=unsubscribe&id=$uploaderUrlEncoded&back=$audioBackUrl\" onclick=\"toggleSubscribe(event, this, '$uploaderUrlJs', '$uploaderNameJs', '$uploaderAvatarJs')\" class=\"subscribe-btn subscribed\">Subscribed</a>\n")
-        } else {
-            val uploaderNameEncoded = HtmlRendererCommon.encodeUrl(info.uploaderName)
-            val uploaderAvatarEncoded = HtmlRendererCommon.encodeUrl(uploaderAvatar)
-            sb.append("            <a href=\"/subscribe?action=subscribe&id=$uploaderUrlEncoded&name=$uploaderNameEncoded&avatar=$uploaderAvatarEncoded&back=$audioBackUrl\" onclick=\"toggleSubscribe(event, this, '$uploaderUrlJs', '$uploaderNameJs', '$uploaderAvatarJs')\" class=\"subscribe-btn\">Subscribe</a>\n")
-        }
+        sb.append(HtmlRendererCommon.renderSubscribeButton(info.uploaderUrl, info.uploaderName, uploaderAvatar, audioBackUrl, isSubscribed))
         sb.append("            ${HtmlRendererCommon.renderWatchLaterButton(info, serviceId, isWatchLater)}")
 
         sb.append("          </div>\n")
@@ -1210,30 +1204,18 @@ object HtmlRendererWatch {
         sb.append("      <div class=\"sidebar\">\n")
           .append("        <h3 style=\"font-size:16px; font-weight:700; margin-bottom:16px;\">Up Next</h3>\n")
         for (related in info.relatedItems) {
-            var uploader: String?
-            var metaText = ""
-            if (related is StreamInfoItem) {
-                uploader = related.uploaderName
-                val viewsText = if (related.viewCount >= 0) "${HtmlRendererCommon.formatCount(related.viewCount)} views" else "Live"
-                metaText = "$viewsText • ${HtmlRendererCommon.formatUploadDate(related.uploadDate, related.textualUploadDate ?: "")}"
-            } else {
-                uploader = related.name
-            }
-            if (uploader == null) uploader = ""
-            val uploaderEscaped = HtmlRendererCommon.escapeHtml(uploader)
-            val relatedNameEscaped = HtmlRendererCommon.escapeHtml(related.name)
-            val relatedThumb = HtmlRendererCommon.getThumbnailUrl(related.thumbnailUrl)
+            val item = prepareRelatedItem(related)
 
             sb.append("        <div class=\"card\" style=\"margin-bottom:8px; flex-direction:row; gap:8px; height:94px; background:transparent; border:none; box-shadow:none;\">\n")
               .append("          <a href=\"/audio?serviceId=$serviceId&id=${related.url}\" style=\"flex-shrink:0; width:120px; height:80px; border-radius:12px; overflow:hidden; background:var(--card-thumbnail-bg);\">\n")
-              .append("            <img src=\"$relatedThumb\" style=\"width:100%; height:100%; object-fit:cover;\">\n")
+              .append("            <img src=\"${item.thumbUrl}\" style=\"width:100%; height:100%; object-fit:cover;\">\n")
               .append("          </a>\n")
               .append("          <div class=\"card-details\" style=\"padding:0; display:flex; flex-direction:column; justify-content:flex-start; min-width:0; flex-grow:1;\">\n")
-              .append("            <a href=\"/audio?serviceId=$serviceId&id=${related.url}\" class=\"card-title\" style=\"font-size:14px; font-weight:500; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.2; margin-bottom:4px;\">$relatedNameEscaped</a>\n")
+              .append("            <a href=\"/audio?serviceId=$serviceId&id=${related.url}\" class=\"card-title\" style=\"font-size:14px; font-weight:500; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.2; margin-bottom:4px;\">${item.nameEscaped}</a>\n")
               .append("            <span class=\"card-meta\" style=\"font-size:12px; line-height:1.4;\">\n")
-              .append("              <span class=\"card-uploader\">$uploaderEscaped</span>\n")
-            if (metaText.isNotEmpty()) {
-                sb.append("              <span>$metaText</span>\n")
+              .append("              <span class=\"card-uploader\">${item.uploaderEscaped}</span>\n")
+            if (item.metaText.isNotEmpty()) {
+                sb.append("              <span>${item.metaText}</span>\n")
             }
             sb.append("            </span>\n")
               .append("          </div>\n")
@@ -1318,9 +1300,8 @@ object HtmlRendererWatch {
 
             val replies = item.replies
             if (item.replyCount > 0 && replies != null) {
-                val serializedReplies = HtmlRendererCommon.serializePage(replies)
-                if (serializedReplies != null) {
-                    val repliesJs = HtmlRendererCommon.escapeJs(serializedReplies)
+                val repliesJs = HtmlRendererCommon.serializePageJs(replies)
+                if (repliesJs != null) {
                     sb.append("    <a href=\"#\" class=\"comment-replies-toggle\" onclick=\"toggleReplies(this, '$repliesJs', $serviceId, '$videoUrlJs'); return false;\">")
                       .append("<span class=\"material-symbols-rounded reply-chevron\">expand_more</span>${item.replyCount} replies</a>\n")
                       .append("    <div class=\"comment-replies\"></div>\n")
@@ -1332,14 +1313,11 @@ object HtmlRendererWatch {
         }
 
         sb.append("<div class=\"comments-load-more-wrapper\">\n")
-        if (nextPage != null) {
-            val serializedPage = HtmlRendererCommon.serializePage(nextPage)
-            if (serializedPage != null) {
-                val nextPageJs = HtmlRendererCommon.escapeJs(serializedPage)
-                val repliesFlag = if (isReplies) 1 else 0
-                val loadMoreLabel = if (isReplies) "Load More Replies" else "Load More Comments"
-                sb.append("  <a href=\"#\" class=\"btn-page\" onclick=\"loadMoreComments(this, '$nextPageJs', $serviceId, '$videoUrlJs', $repliesFlag); return false;\">$loadMoreLabel</a>\n")
-            }
+        val nextPageJs = HtmlRendererCommon.serializePageJs(nextPage)
+        if (nextPageJs != null) {
+            val repliesFlag = if (isReplies) 1 else 0
+            val loadMoreLabel = if (isReplies) "Load More Replies" else "Load More Comments"
+            sb.append("  <a href=\"#\" class=\"btn-page\" onclick=\"loadMoreComments(this, '$nextPageJs', $serviceId, '$videoUrlJs', $repliesFlag); return false;\">$loadMoreLabel</a>\n")
         }
         sb.append("</div>\n")
 

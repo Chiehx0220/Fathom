@@ -171,7 +171,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         private var logListener: LogListener? = null
-        private val streamUrlCache = StreamUrlCache()
+        internal val streamUrlCache = StreamUrlCache()
 
         // Bridges handleWatchContent/handleAudioWatch (need a full StreamInfo for the page) and
         // handleManifestProxy (needs the raw stream lists for the DASH manifest) so loading one video
@@ -179,7 +179,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // for a given video populates this for the other. Smaller than streamUrlCache since a
         // StreamExtractor holds parsed page data, not just a URL string.
         private val extractorCache = ExtractorCache()
-        private val httpClient: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder()
+        internal val httpClient: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
@@ -244,7 +244,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // "click the uploader" link built from that empty string hits the channel route with an empty
         // id and fails with "URL not accepted: ". Since every item here is already known to belong to
         // channelUrl (that's what was just fetched), backfill it directly instead of leaving it blank.
-        private fun backfillUploaderUrl(items: List<InfoItem>, channelUrl: String) {
+        internal fun backfillUploaderUrl(items: List<InfoItem>, channelUrl: String) {
             for (item in items) {
                 if (item is StreamInfoItem) {
                     val currentUploaderUrl = item.uploaderUrl
@@ -261,7 +261,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // (ChannelTabs.VIDEOS/PLAYLISTS/...). getChannelTabExtractorFromId() calls
         // getChannelTabLHFactory().fromQuery(...) unconditionally, so it NPEs for such a service -
         // this picks the matching tab from getTabs() instead when there's no query factory to ask.
-        private fun resolveChannelTabExtractor(
+        internal fun resolveChannelTabExtractor(
             service: StreamingService,
             channelExtractor: ChannelExtractor,
             tab: String,
@@ -279,7 +279,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // same "resume from an already-serialized nextPage token, otherwise fetch the first page"
         // shape. PPE's own ListExtractorCompat is the shared implementation now (this file used to
         // carry a private copy, independently duplicated at 6 call sites before that).
-        private fun <R : InfoItem> fetchInitialOrPage(extractor: ListExtractor<R>, nextPage: Page?): InfoItemsPage<R> =
+        internal fun <R : InfoItem> fetchInitialOrPage(extractor: ListExtractor<R>, nextPage: Page?): InfoItemsPage<R> =
             org.schabi.newpipe.extractor.compat.ListExtractorCompat.fetchInitialOrPage(extractor, nextPage)
 
         // KioskList.getDefaultKioskExtractor() returns a raw (unparameterized) KioskExtractor, so
@@ -288,7 +288,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // non-YouTube branch: every service other than YouTube has no personalized feed, so it
         // always falls back to its own native kiosk (trending) list regardless of the
         // (YouTube-only) homeFeedMode preference.
-        private fun fetchKioskPage(service: StreamingService, nextPage: Page?): InfoItemsPage<*> {
+        internal fun fetchKioskPage(service: StreamingService, nextPage: Page?): InfoItemsPage<*> {
             val kioskExtractor = service.kioskList.defaultKioskExtractor
             kioskExtractor.fetchPage()
             return if (nextPage != null) kioskExtractor.getPage(nextPage) else kioskExtractor.initialPage
@@ -300,7 +300,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // request that beats /watch-content there doesn't come back with a bare NullPointerException.
         // Every other url/service is unaffected - the compat helper only ever primes anything for
         // bangumi/play/ urls.
-        private fun commentsExtractorFor(service: StreamingService, videoUrl: String) =
+        internal fun commentsExtractorFor(service: StreamingService, videoUrl: String) =
             if (service is org.schabi.newpipe.extractor.services.bilibili.BilibiliService) {
                 org.schabi.newpipe.extractor.services.bilibili.compat.BilibiliCommentsCompat
                     .getCommentsExtractor(service, videoUrl)
@@ -520,9 +520,13 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         log("Local server stopped.")
     }
 
-    private class ClientHandler(
+    // internal (not private): a handful of handler groups live as extension functions in sibling
+    // files (LocalHttpServerActionHandlers.kt and friends) to keep this file from growing without
+    // bound - see that file's header comment. dbHelper/sendResponse/sendRedirect/getServiceId below
+    // are internal for the same reason.
+    internal class ClientHandler(
         private val socket: Socket,
-        private val dbHelper: HistoryDbHelper,
+        internal val dbHelper: HistoryDbHelper,
         private val context: android.content.Context,
         private val executorService: ExecutorService
     ) : Runnable {
@@ -612,101 +616,59 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                         }
 
                         try {
-                            if (path == "/") {
-                                handleHome(os, params, isTv)
-                            } else if (path == "/search") {
-                                handleSearch(os, params, isTv)
-                            } else if (path == "/watch") {
-                                handleWatch(os, params, isTv)
-                            } else if (path == "/audio") {
-                                handleAudioWatch(os, params, isTv)
-                            } else if (path == "/watch-content") {
-                                handleWatchContent(os, params, isTv)
-                            } else if (path == "/comments") {
-                                handleComments(os, params, isTv)
-                            } else if (path == "/danmaku") {
-                                handleDanmaku(os, params)
-                            } else if (path == "/send-link" || path == "/play") {
-                                handleSendLink(os, params, socket.inetAddress.hostAddress)
-                            } else if (path == "/send-command") {
-                                handleSendCommand(os, params)
-                            } else if (path == "/poll-commands") {
-                                handlePollCommands(os)
-                            } else if (path == "/release-lock") {
-                                handleReleaseLock(os, params)
-                            } else if (path == "/history") {
-                                handleHistory(os, params, isTv)
-                            } else if (path == "/history_action") {
-                                handleHistoryAction(os, params)
-                            } else if (path == "/channel") {
-                                handleChannel(os, params, isTv)
-                            } else if (path == "/playlist") {
-                                handlePlaylist(os, params, isTv)
-                            } else if (path == "/stream") {
-                                handleStreamProxy(os, params, requestHeaders)
-                            } else if (path == "/manifest") {
-                                handleManifestProxy(os, params)
-                            } else if (path == "/subtitles") {
-                                handleSubtitlesProxy(os, params)
-                            } else if (path == "/log_client_capabilities") {
-                                val supported = params["supported"]
-                                val error = params["error"]
-                                val playingQuality = params["playing_quality"]
-                                val userAgent = requestHeaders["user-agent"]
-                                if (error != null) {
-                                    log("Client player error: $error | User-Agent: $userAgent")
-                                } else if (playingQuality != null) {
-                                    log("Client is playing quality: $playingQuality | User-Agent: $userAgent")
-                                } else {
-                                    log("Client connection capability check: DASH supported = $supported | User-Agent: $userAgent")
-                                }
-                                sendResponse(os, 200, "OK", "text/plain; charset=UTF-8")
-                            } else if (path == "/api/player/play") {
-                                handleApiPlayerPlay(os, params)
-                            } else if (path == "/api/player/pause") {
-                                handleApiPlayerPause(os)
-                            } else if (path == "/api/player/resume") {
-                                handleApiPlayerResume(os)
-                            } else if (path == "/api/player/stop") {
-                                handleApiPlayerStop(os)
-                            } else if (path == "/search-history") {
-                                handleSearchHistory(os, params)
-                            } else if (path == "/subscriptions") {
-                                handleSubscriptions(os, params, isTv)
-                            } else if (path == "/subscribe") {
-                                handleSubscribeAction(os, params)
-                            } else if (path == "/block_channel") {
-                                handleBlockChannelAction(os, params)
-                            } else if (path == "/bookmark_playlist") {
-                                handlePlaylistBookmarkAction(os, params)
-                            } else if (path == "/static/style.css") {
-                                handleStaticCss(os)
-                            } else if (path == "/static/script.js") {
-                                handleStaticJs(os)
-                            } else if (path == "/settings") {
-                                handleSettings(os, params, isTv)
-                            } else if (path == "/watch-later") {
-                                handleWatchLater(os, params, isTv)
-                            } else if (path == "/watch_later_action") {
-                                handleWatchLaterAction(os, params)
-                            } else if (path == "/rate_video") {
-                                handleRateVideoAction(os, params)
-                            } else if (path == "/api/v1/search") {
-                                handleApiSearch(os, params)
-                            } else if (path == "/api/v1/home") {
-                                handleApiHome(os, params)
-                            } else if (path == "/api/v1/channel") {
-                                handleApiChannel(os, params)
-                            } else if (path == "/api/v1/video") {
-                                handleApiVideo(os, params)
-                            } else if (path == "/api/v1/comments") {
-                                handleApiComments(os, params)
-                            } else if (path == "/api/v1/watch_progress") {
-                                handleApiWatchProgress(os, params)
-                            } else if (path == "/api/v1/recommendations") {
-                                handleApiRecommendations(os, params)
-                            } else if (path == "/api/v1/ping") {
-                                handleApiPing(os)
+                            // One entry per route instead of a 60-branch if-else chain - adding a
+                            // route is now "add a map entry" instead of "find the right spot in the
+                            // chain." Rebuilt per request since each lambda closes over this
+                            // request's os/params/isTv/requestHeaders; with request volume this low
+                            // (a personal LAN server, not a public one) that allocation is noise.
+                            val routes: Map<String, () -> Unit> = mapOf(
+                                "/" to { handleHome(os, params, isTv) },
+                                "/search" to { handleSearch(os, params, isTv) },
+                                "/watch" to { handleWatch(os, params, isTv) },
+                                "/audio" to { handleAudioWatch(os, params, isTv) },
+                                "/watch-content" to { handleWatchContent(os, params, isTv) },
+                                "/comments" to { handleComments(os, params, isTv) },
+                                "/danmaku" to { handleDanmaku(os, params) },
+                                "/send-link" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
+                                "/play" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
+                                "/send-command" to { handleSendCommand(os, params) },
+                                "/poll-commands" to { handlePollCommands(os) },
+                                "/release-lock" to { handleReleaseLock(os, params) },
+                                "/history" to { handleHistory(os, params, isTv) },
+                                "/history_action" to { handleHistoryAction(os, params) },
+                                "/channel" to { handleChannel(os, params, isTv) },
+                                "/playlist" to { handlePlaylist(os, params, isTv) },
+                                "/stream" to { handleStreamProxy(os, params, requestHeaders) },
+                                "/manifest" to { handleManifestProxy(os, params) },
+                                "/subtitles" to { handleSubtitlesProxy(os, params) },
+                                "/log_client_capabilities" to { handleLogClientCapabilities(os, params, requestHeaders) },
+                                "/api/player/play" to { handleApiPlayerPlay(os, params) },
+                                "/api/player/pause" to { handleApiPlayerPause(os) },
+                                "/api/player/resume" to { handleApiPlayerResume(os) },
+                                "/api/player/stop" to { handleApiPlayerStop(os) },
+                                "/search-history" to { handleSearchHistory(os, params) },
+                                "/subscriptions" to { handleSubscriptions(os, params, isTv) },
+                                "/subscribe" to { handleSubscribeAction(os, params) },
+                                "/block_channel" to { handleBlockChannelAction(os, params) },
+                                "/bookmark_playlist" to { handlePlaylistBookmarkAction(os, params) },
+                                "/static/style.css" to { handleStaticCss(os) },
+                                "/static/script.js" to { handleStaticJs(os) },
+                                "/settings" to { handleSettings(os, params, isTv) },
+                                "/watch-later" to { handleWatchLater(os, params, isTv) },
+                                "/watch_later_action" to { handleWatchLaterAction(os, params) },
+                                "/rate_video" to { handleRateVideoAction(os, params) },
+                                "/api/v1/search" to { handleApiSearch(os, params) },
+                                "/api/v1/home" to { handleApiHome(os, params) },
+                                "/api/v1/channel" to { handleApiChannel(os, params) },
+                                "/api/v1/video" to { handleApiVideo(os, params) },
+                                "/api/v1/comments" to { handleApiComments(os, params) },
+                                "/api/v1/watch_progress" to { handleApiWatchProgress(os, params) },
+                                "/api/v1/recommendations" to { handleApiRecommendations(os, params) },
+                                "/api/v1/ping" to { handleApiPing(os) },
+                            )
+                            val route = routes[path]
+                            if (route != null) {
+                                route()
                             } else {
                                 sendResponse(os, 404, "Page Not Found", "text/plain; charset=UTF-8")
                             }
@@ -865,7 +827,12 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 sendRedirect(os, "/?serviceId=$serviceId")
                 return
             }
-            dbHelper.nativeAddSearchQuery(query)
+            // loadMoreSearch()'s ajax=1 follow-ups are a continuation of this same search, not a
+            // new one - only the initial page load should add a search-history entry.
+            val isAjax = params["ajax"] == "1"
+            if (!isAjax) {
+                dbHelper.nativeAddSearchQuery(query)
+            }
 
             val nextPageStr = params["nextPage"]
             val nextPage = HtmlRenderer.deserializePage(nextPageStr)
@@ -879,491 +846,24 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 val next = page.nextPage
 
                 val filtered = filterItems(items)
-                val html = HtmlRenderer.renderSearch(serviceId, query, filtered, next, isTv)
+                val html =
+                    if (isAjax) {
+                        HtmlRenderer.renderSearchResultsFragment(serviceId, query, filtered, next)
+                    } else {
+                        HtmlRenderer.renderSearch(serviceId, query, filtered, next, isTv)
+                    }
                 sendResponse(os, 200, html, "text/html; charset=UTF-8")
             } catch (e: Exception) {
                 sendResponse(os, 500, "Search failed: ${e.message}", "text/plain; charset=UTF-8")
             }
         }
 
-        // ==================== Fathom<->Flow Stage 2 JSON API (/api/v1/...) ====================
-        // Deliberately independent of the HTML handlers just above/below each of these (own
+        // Fathom<->Flow Stage 2 JSON API (/api/v1/...) handlers live in
+        // LocalHttpServerApiHandlers.kt - deliberately independent of the HTML handlers here (own
         // extraction calls, not shared helpers) - see ApiRenderer.kt's file header for why.
 
-        private fun handleApiSearch(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val query = params["q"]
-            if (query.isNullOrEmpty()) {
-                sendResponse(os, 400, ApiRenderer.errorJson("Missing 'q' parameter"), "application/json")
-                return
-            }
-            val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
-            try {
-                val service = NewPipe.getService(serviceId)
-                val extractor = getDefaultSearchExtractor(service, query)
-                val page = fetchInitialOrPage(extractor, nextPage)
-                val filtered = filterItems(page.items)
-                sendResponse(os, 200, ApiRenderer.searchResultJson(filtered, serviceId, page.nextPage).toString(), "application/json")
-            } catch (e: Exception) {
-                sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-            }
-        }
-
-        // Simplified relative to handleHome(): honors homeFeedMode ("subs" -> shuffled uploads
-        // from subscribed channels, "mix" -> personalized feed interleaved with subscriptions,
-        // default -> personalized-keyword-or-trending search) the same way, but skips the offline
-        // cached-video fallback handleHome() renders on failure - a JSON client is expected to
-        // handle a 500 itself rather than receive a page-shaped fallback.
-        private fun handleApiHome(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
-            try {
-                val service = NewPipe.getService(serviceId)
-                var items: List<InfoItem>
-                var next: Page?
-                val feedMode = dbHelper.homeFeedMode
-                if (serviceId != SERVICE_YOUTUBE) {
-                    // Non-YouTube default kiosk - see the same branch in handleHome() for why
-                    // homeFeedMode isn't consulted here.
-                    val page = fetchKioskPage(service, nextPage)
-                    items = ArrayList(page.items as List<InfoItem>)
-                    next = page.nextPage
-                } else if ("subs" == feedMode) {
-                    // See LocalServerFlowData.kt's buildSubsOnlyFeed().
-                    items = dbHelper.buildSubsOnlyFeed(serviceId)
-                    next = null
-                } else {
-                    // Real trending kiosk - see fetchTrendingItems() (no pagination available,
-                    // so nextPage isn't handled for this branch).
-                    items = dbHelper.fetchTrendingItems(serviceId)
-                    next = null
-                }
-                val filtered = filterItems(items)
-                sendResponse(os, 200, ApiRenderer.searchResultJson(filtered, serviceId, next).toString(), "application/json")
-            } catch (e: Exception) {
-                sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-            }
-        }
-
-        // New, additive route mirroring handleApiHome() above (same feedMode handling, same
-        // response shape via ApiRenderer.searchResultJson()) but sourced through
-        // buildAndRankHomeFeed() for the YouTube personalized path, so it comes back already
-        // ranked via Flow's real FlowNeuroEngine. handleApiHome() itself is untouched otherwise -
-        // this is a separate handler precisely so nothing about its raw/unranked behavior changes.
-        private fun handleApiRecommendations(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
-            try {
-                val service = NewPipe.getService(serviceId)
-                var items: List<InfoItem>
-                var next: Page?
-                var alreadyRanked = false
-                val feedMode = dbHelper.homeFeedMode
-                if (serviceId != SERVICE_YOUTUBE) {
-                    // Non-YouTube default kiosk - see the same branch in handleHome() for why
-                    // homeFeedMode isn't consulted here. alreadyRanked stays false so
-                    // applyFlowNeuroRanking() below still reorders these by the user's taste.
-                    val page = fetchKioskPage(service, nextPage)
-                    items = ArrayList(page.items as List<InfoItem>)
-                    next = page.nextPage
-                } else if ("subs" == feedMode) {
-                    // See LocalServerFlowData.kt's buildSubsOnlyFeed().
-                    items = dbHelper.buildSubsOnlyFeed(serviceId)
-                    next = null
-                    alreadyRanked = true
-                } else {
-                    // Real trending + FlowNeuro discovery + (mix) subscription feed, ranked - see
-                    // LocalServerFlowData.kt's buildAndRankHomeFeed(). No pagination available.
-                    val (feedItems, _) = dbHelper.buildAndRankHomeFeed(serviceId, feedMode)
-                    items = feedItems
-                    next = null
-                    alreadyRanked = true
-                }
-                val filtered = filterItems(items)
-                val ranked = if (alreadyRanked) filtered else applyFlowNeuroRanking(filtered, serviceId)
-                sendResponse(os, 200, ApiRenderer.searchResultJson(ranked, serviceId, next).toString(), "application/json")
-            } catch (e: Exception) {
-                sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-            }
-        }
-
-        private fun handleApiChannel(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val channelUrl = params["id"]
-            if (channelUrl.isNullOrEmpty()) {
-                sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
-                return
-            }
-            val tab = params.getOrDefault("tab", "videos")
-            // "latest"/"popular"/"oldest" - the exact literal values YoutubeChannelTabLinkHandlerFactory's
-            // own SORT_LATEST/SORT_POPULAR/SORT_OLDEST constants hold, so this can be passed straight
-            // through as a sort-filter string without a lookup table. Only meaningful for YouTube's
-            // "videos" tab; harmless no-op everywhere else.
-            val sort = params["sort"]?.takeIf { it.isNotBlank() }
-            val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
-            try {
-                val service = NewPipe.getService(serviceId)
-                val channelExtractor = service.getChannelExtractor(channelUrl)
-                channelExtractor.fetchPage()
-
-                // getChannelTabExtractorFromId(id, tab, baseUrl) (used by the plain
-                // else-branch below) hardcodes its sortFilter to "" - it has no way to pass one
-                // through - so a non-default sort needs the lower-level construction path built
-                // here directly instead. Stock NewPipeExtractor's channel-tab factory has no
-                // "search within a channel" tab at all, unlike the fork this was ported from, so
-                // that feature is dropped rather than adapted.
-                val tabExtractor = if (sort != null && service.channelTabLHFactory != null) {
-                    val contentFilter = listOf(FilterItem(Filter.ITEM_IDENTIFIER_UNKNOWN, tab))
-                    val sortFilter = listOf(FilterItem(Filter.ITEM_IDENTIFIER_UNKNOWN, sort))
-                    val linkHandler = service.channelTabLHFactory.fromQuery(
-                        channelExtractor.id, contentFilter, sortFilter, channelExtractor.baseUrl)
-                    service.getChannelTabExtractor(linkHandler)
-                } else {
-                    resolveChannelTabExtractor(service, channelExtractor, tab)
-                }
-                val page = fetchInitialOrPage(tabExtractor, nextPage)
-                val items = page.items
-                val next = page.nextPage
-                backfillUploaderUrl(items, channelUrl)
-                val isSubscribed = dbHelper.nativeIsSubscribed(channelExtractor.linkHandler.url)
-                val filtered = filterItems(items)
-
-                val json = org.json.JSONObject()
-                json.put("channel", ApiRenderer.channelJson(channelExtractor, isSubscribed))
-                json.put("videos", ApiRenderer.infoItemsToJson(filtered, serviceId))
-                json.put("nextPage", ApiRenderer.serializePageOrNull(next))
-                sendResponse(os, 200, json.toString(), "application/json")
-            } catch (e: Exception) {
-                sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-            }
-        }
-
-        private fun handleApiVideo(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val mediaUrl = params["id"]
-            if (mediaUrl.isNullOrEmpty()) {
-                sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
-                return
-            }
-            try {
-                val service = NewPipe.getService(serviceId)
-                val extractor = getCachedExtractor(service, serviceId, mediaUrl)
-                val info: StreamInfo
-                synchronized(extractor) {
-                    info = StreamInfo.getInfo(extractor)
-                }
-                info.relatedItems = dbHelper.nativeRelatedVideos(info, serviceId)
-                var thumbUrl = ""
-                if (info.thumbnails != null && !info.thumbnails.isEmpty()) {
-                    thumbUrl = info.thumbnails[info.thumbnails.size - 1].url
-                }
-                var uploaderAvatarUrl: String? = null
-                if (info.uploaderAvatars != null && !info.uploaderAvatars.isEmpty()) {
-                    uploaderAvatarUrl = HtmlRenderer.getThumbnailUrl(info.uploaderAvatars)
-                }
-                dbHelper.nativeSaveToHistory(info.name, info.url, info.uploaderName, thumbUrl, serviceId, info.uploaderUrl, uploaderAvatarUrl)
-                reportFlowNeuroClick(info, serviceId)
-                sendResponse(os, 200, ApiRenderer.videoDetailJson(info, serviceId).toString(), "application/json")
-            } catch (e: Exception) {
-                sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-            }
-        }
-
-        private fun handleApiComments(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val videoUrl = params["id"]
-            if (videoUrl.isNullOrEmpty()) {
-                sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
-                return
-            }
-            val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
-            try {
-                val service = NewPipe.getService(serviceId)
-                val extractor = commentsExtractorFor(service, videoUrl)
-                val page = if (nextPage != null) {
-                    extractor.getPage(nextPage)
-                } else {
-                    extractor.fetchPage()
-                    if (extractor.isCommentsDisabled) {
-                        sendResponse(os, 200, "{\"comments\":[],\"nextPage\":null,\"commentsDisabled\":true}", "application/json")
-                        return
-                    }
-                    extractor.initialPage
-                }
-                val comments = org.json.JSONArray()
-                for (item in page.items) {
-                    comments.put(ApiRenderer.commentJson(item))
-                }
-                val json = org.json.JSONObject()
-                json.put("comments", comments)
-                json.put("nextPage", ApiRenderer.serializePageOrNull(page.nextPage))
-                json.put("commentsDisabled", false)
-                sendResponse(os, 200, json.toString(), "application/json")
-            } catch (e: Exception) {
-                sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-            }
-        }
-
-        // Stage 4: lets a client (the Flow fork's new server-address settings screen) confirm it
-        // can actually reach this server before anything depends on it, without the cost of a
-        // real extraction call - every other /api/v1/... route does real work (search, extractor
-        // fetches) that isn't a fair test of plain reachability.
-        private fun handleApiPing(os: OutputStream) {
-            sendResponse(os, 200, "{\"status\":\"ok\",\"service\":\"fathom\"}", "application/json")
-        }
-
-        private fun handleApiWatchProgress(os: OutputStream, params: Map<String, String>) {
-            val videoUrl = params["id"]
-            if (videoUrl.isNullOrEmpty()) {
-                sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
-                return
-            }
-            val percent = params["percent"]?.toIntOrNull()
-            val durationSeconds = params["durationSeconds"]?.toIntOrNull() ?: 0
-            if (percent == null) {
-                sendResponse(os, 400, ApiRenderer.errorJson("Missing or invalid 'percent' parameter"), "application/json")
-                return
-            }
-            dbHelper.nativeUpdateWatchProgress(videoUrl, percent, durationSeconds)
-
-            // FlowNeuro's WATCHED signal - see the "FlowNeuro signal reporting" section below for
-            // why this is best-effort. serviceId wasn't previously sent by this endpoint's caller
-            // (watchProgressJs in HtmlRendererWatch.kt, updated alongside this); older cached pages
-            // still open in a tab won't send it, so this is a no-op (not an error) until reloaded.
-            val serviceId = params["serviceId"]?.toIntOrNull()
-            if (serviceId != null) {
-                try {
-                    val service = NewPipe.getService(serviceId)
-                    val extractor = getCachedExtractor(service, serviceId, videoUrl)
-                    val info: StreamInfo
-                    synchronized(extractor) {
-                        info = StreamInfo.getInfo(extractor)
-                    }
-                    dbHelper.reportFlowNeuroInteraction(info, serviceId, InteractionType.WATCHED, percent / 100f)
-                } catch (e: Exception) {
-                    log("FlowNeuro watch-signal error: " + e.message)
-                }
-            }
-
-            sendResponse(os, 200, "{\"status\":\"ok\"}", "application/json")
-        }
-
-        // ==================== end Stage 2 JSON API ====================
-
-        @Throws(Exception::class)
-        private fun handleWatch(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val mediaUrl = params["id"]
-
-            // Immediately send the fast watch skeleton layout
-            val html = HtmlRenderer.renderWatchSkeleton(serviceId, mediaUrl, isTv)
-            sendResponse(os, 200, html, "text/html; charset=UTF-8")
-        }
-
-        @Throws(Exception::class)
-        private fun handleWatchContent(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val mediaUrl = params["id"]
-
-            try {
-                val service = NewPipe.getService(serviceId)
-                // Shares one page extraction with handleManifestProxy for this same video,
-                // instead of each doing its own independent fetchPage().
-                val extractor = getCachedExtractor(service, serviceId, mediaUrl!!)
-                // Synchronized since extractor may be concurrently shared with a
-                // handleManifestProxy request for the same video (getCachedExtractor above),
-                // and StreamInfo.getInfo() calls many extractor getters in bulk here.
-                val info: StreamInfo
-                synchronized(extractor) {
-                    info = StreamInfo.getInfo(extractor)
-                }
-                info.relatedItems = dbHelper.nativeRelatedVideos(info, serviceId)
-
-                var thumbUrl = ""
-                if (info.thumbnails != null && !info.thumbnails.isEmpty()) {
-                    thumbUrl = info.thumbnails[info.thumbnails.size - 1].url
-                }
-                // getThumbnailUrl() always returns a non-null stock-photo URL as its own
-                // fallback, so it's only safe to call once we already know a real avatar exists -
-                // otherwise that placeholder would get baked permanently into the history row.
-                var uploaderAvatarUrl: String? = null
-                if (info.uploaderAvatars != null && !info.uploaderAvatars.isEmpty()) {
-                    uploaderAvatarUrl = HtmlRenderer.getThumbnailUrl(info.uploaderAvatars)
-                }
-                dbHelper.nativeSaveToHistory(info.name, info.url, info.uploaderName, thumbUrl, serviceId, info.uploaderUrl, uploaderAvatarUrl)
-                reportFlowNeuroClick(info, serviceId)
-
-                val isSubscribed = dbHelper.nativeIsSubscribed(info.uploaderUrl)
-                val isWatchLater = dbHelper.nativeIsWatchLater(info.url)
-                val likeState = dbHelper.nativeLikeState(info.url)
-                val targetQuality = dbHelper.nativeVideoQuality()
-
-                val duration = info.duration
-                val html = HtmlRenderer.renderWatchContent(serviceId, info, isSubscribed, isWatchLater, likeState, isTv, targetQuality, duration)
-                sendResponse(os, 200, html, "text/html; charset=UTF-8")
-            } catch (e: Exception) {
-                sendResponse(os, 500, "Error: " + e.message, "text/plain; charset=UTF-8")
-            }
-        }
-
-        // Fetched by an inline <script> in renderWatchContent()/renderAudioWatch() after the
-        // video itself has loaded, rather than blocking the initial /watch-content response on
-        // it - comments can be a slow network round-trip and shouldn't delay playback start.
-        // Returns a bare HTML fragment (like the "ajax" subscriptions-feed branch), not a full
-        // page, since it's injected via innerHTML into an already-rendered page.
-        @Throws(Exception::class)
-        private fun handleComments(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val videoUrl = params["id"]
-            if (videoUrl.isNullOrEmpty()) {
-                sendResponse(os, 200, "<div class=\"loading-placeholder\">No video specified.</div>", "text/html; charset=UTF-8")
-                return
-            }
-
-            val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
-
-            try {
-                val service = NewPipe.getService(serviceId)
-                val extractor = commentsExtractorFor(service, videoUrl)
-
-                val page = if (nextPage != null) {
-                    // YoutubeCommentsExtractor.getPage() only reads the continuation token already
-                    // inside nextPage - it doesn't touch anything fetchPage() would have populated,
-                    // so it's safe to skip for a fresh extractor with no prior call to rely on.
-                    extractor.getPage(nextPage)
-                } else {
-                    extractor.fetchPage()
-                    if (extractor.isCommentsDisabled) {
-                        sendResponse(os, 200, "<div class=\"loading-placeholder\">Comments are disabled for this video.</div>", "text/html; charset=UTF-8")
-                        return
-                    }
-                    extractor.initialPage
-                }
-
-                val isReplies = params["context"] == "replies"
-                val html = HtmlRenderer.renderComments(serviceId, videoUrl, page.items, page.nextPage, isTv, isReplies)
-                sendResponse(os, 200, html, "text/html; charset=UTF-8")
-            } catch (e: Exception) {
-                sendResponse(os, 200, "<div class=\"loading-placeholder\">Failed to load comments: ${e.message}</div>", "text/html; charset=UTF-8")
-            }
-        }
-
-        // Bilibili danmaku ("bullet comments"). Fetched by an inline <script> in
-        // renderWatchContent() after the video itself has loaded, same rationale as
-        // handleComments() above - a video can carry thousands of these, so it shouldn't block
-        // the initial page. Only Bilibili currently exposes a BulletCommentsExtractor
-        // (StreamingService.getBulletCommentsExtractor() returns null otherwise), so this comes
-        // back empty for YouTube rather than erroring.
-        @Throws(Exception::class)
-        private fun handleDanmaku(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val mediaUrl = params["id"]
-            if (mediaUrl.isNullOrEmpty()) {
-                sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
-                return
-            }
-            try {
-                val service = NewPipe.getService(serviceId)
-                // BilibiliBulletCommentsExtractor reads the video's cid out of a cache that only
-                // the stream extractor's own fetchPage() populates (keyed by video id) - without
-                // this, looking it up NPEs. In practice /watch-content already primed this cache
-                // for the video the client is currently watching, so this is normally a cache hit.
-                getCachedExtractor(service, serviceId, mediaUrl)
-                val extractor = service.getBulletCommentsExtractor(mediaUrl)
-                if (extractor == null) {
-                    sendResponse(os, 200, "{\"danmaku\":[]}", "application/json")
-                    return
-                }
-                extractor.fetchPage()
-                if (extractor.isLive) {
-                    // Live danmaku needs a persistent connection (WebSocket) this one-shot HTTP
-                    // endpoint has no equivalent of - out of scope for now.
-                    extractor.disconnect()
-                    sendResponse(os, 200, "{\"danmaku\":[]}", "application/json")
-                    return
-                }
-                val danmaku = org.json.JSONArray()
-                for (item in extractor.initialPage.items) {
-                    danmaku.put(bulletCommentJson(item))
-                }
-                val json = org.json.JSONObject()
-                json.put("danmaku", danmaku)
-                sendResponse(os, 200, json.toString(), "application/json")
-            } catch (e: Exception) {
-                sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-            }
-        }
-
-        @Throws(Exception::class)
-        private fun handleAudioWatch(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val mediaUrl = params["id"]
-            if (mediaUrl.isNullOrEmpty()) {
-                sendRedirect(os, "/?serviceId=$serviceId")
-                return
-            }
-
-            try {
-                val service = NewPipe.getService(serviceId)
-                // Shares one page extraction with handleManifestProxy for this same video,
-                // instead of each doing its own independent fetchPage().
-                val extractor = getCachedExtractor(service, serviceId, mediaUrl)
-                // Synchronized since extractor may be concurrently shared with a
-                // handleManifestProxy request for the same video (getCachedExtractor above),
-                // and StreamInfo.getInfo() calls many extractor getters in bulk here.
-                val info: StreamInfo
-                synchronized(extractor) {
-                    info = StreamInfo.getInfo(extractor)
-                }
-                info.relatedItems = dbHelper.nativeRelatedVideos(info, serviceId)
-
-                var thumbUrl = ""
-                if (info.thumbnails != null && !info.thumbnails.isEmpty()) {
-                    thumbUrl = info.thumbnails[info.thumbnails.size - 1].url
-                }
-                // getThumbnailUrl() always returns a non-null stock-photo URL as its own
-                // fallback, so it's only safe to call once we already know a real avatar exists -
-                // otherwise that placeholder would get baked permanently into the history row.
-                var uploaderAvatarUrl: String? = null
-                if (info.uploaderAvatars != null && !info.uploaderAvatars.isEmpty()) {
-                    uploaderAvatarUrl = HtmlRenderer.getThumbnailUrl(info.uploaderAvatars)
-                }
-                dbHelper.nativeSaveToHistory(info.name, info.url, info.uploaderName, thumbUrl, serviceId, info.uploaderUrl, uploaderAvatarUrl)
-                reportFlowNeuroClick(info, serviceId)
-
-                val isSubscribed = dbHelper.nativeIsSubscribed(info.uploaderUrl)
-                val isWatchLater = dbHelper.nativeIsWatchLater(info.url)
-                val likeState = dbHelper.nativeLikeState(info.url)
-                val html = HtmlRenderer.renderAudioWatch(serviceId, info, isSubscribed, isWatchLater, likeState, isTv)
-                sendResponse(os, 200, html, "text/html; charset=UTF-8")
-            } catch (e: Exception) {
-                sendResponse(os, 500, "Error loading audio stream: " + e.message, "text/plain; charset=UTF-8")
-            }
-        }
-
-        // Remote native-audio-player control (play/pause/resume/stop) was dropped along with
-        // ServerService's own ExoPlayer instance - it duplicated the host app's own player. These
-        // four endpoints are kept as graceful no-ops so older clients hitting them don't see a
-        // broken request, rather than removing the routes outright.
-        @Throws(Exception::class)
-        private fun handleApiPlayerPlay(os: OutputStream, params: Map<String, String>) {
-            sendResponse(os, 200, "{\"status\":\"unsupported\"}", "application/json")
-        }
-
-        @Throws(Exception::class)
-        private fun handleApiPlayerPause(os: OutputStream) {
-            sendResponse(os, 200, "{\"status\":\"unsupported\"}", "application/json")
-        }
-
-        @Throws(Exception::class)
-        private fun handleApiPlayerResume(os: OutputStream) {
-            sendResponse(os, 200, "{\"status\":\"unsupported\"}", "application/json")
-        }
-
-        @Throws(Exception::class)
-        private fun handleApiPlayerStop(os: OutputStream) {
-            sendResponse(os, 200, "{\"status\":\"unsupported\"}", "application/json")
-        }
+        // Video/audio watch-page content, comments, and danmaku handlers live in
+        // LocalHttpServerWatchHandlers.kt.
 
         @Throws(Exception::class)
         private fun handleHistory(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
@@ -1373,574 +873,21 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             sendResponse(os, 200, html, "text/html; charset=UTF-8")
         }
 
-        @Throws(Exception::class)
-        private fun handleStreamProxy(os: OutputStream, params: Map<String, String>, requestHeaders: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val mediaUrl = params["id"]
-            val itagParam = params["itag"]
+        // Stream/manifest/subtitles proxy handlers live in LocalHttpServerProxyHandlers.kt.
 
-            var rangeHeader: String? = null
-            for (key in requestHeaders.keys) {
-                if ("range".equals(key, ignoreCase = true)) {
-                    rangeHeader = requestHeaders[key]
-                    break
-                }
-            }
-
-            log("STREAM REQUEST itag=$itagParam range=$rangeHeader id=$mediaUrl")
-
-            var requestedItag = -1
-            if (itagParam != null) {
-                try {
-                    requestedItag = itagParam.toInt()
-                } catch (e: Exception) {
-                }
-            }
-
-            val requestedTrackId = params["trackId"]
-            // Must be part of the cache key: for itag-less services (Bilibili) the video and audio
-            // requests share itag=-1 and trackId, so without mtype they'd collide and the second
-            // one would be served the first one's URL.
-            val mediaType = params["mtype"]
-            val cacheKey = serviceId.toString() + "_" + mediaUrl + "_" + requestedItag +
-                    (if (requestedTrackId != null) "_$requestedTrackId" else "") +
-                    (if (mediaType != null) "_$mediaType" else "")
-            var directUrl = streamUrlCache.get(cacheKey)
-
-            if (directUrl == null) {
-                val service = NewPipe.getService(serviceId)
-                val extractor = service.getStreamExtractor(mediaUrl)
-                extractor.fetchPage()
-
-                // Streams from services without itags (Bilibili reports -1 for everything) can't be
-                // picked by itag, so the DASH manifest tags each Representation with mtype and we
-                // select the best stream of that kind instead.
-                if (requestedItag == -1 && mediaType != null) {
-                    if ("audio" == mediaType) {
-                        val audioOnly = extractor.audioStreams
-                        if (audioOnly != null && !audioOnly.isEmpty()) {
-                            var best = audioOnly[0]
-                            for (candidate in audioOnly) {
-                                if (candidate.averageBitrate > best.averageBitrate) {
-                                    best = candidate
-                                }
-                            }
-                            directUrl = best.content
-                        }
-                    } else if ("video" == mediaType) {
-                        var videoOnly = extractor.videoOnlyStreams
-                        if (videoOnly == null || videoOnly.isEmpty()) {
-                            videoOnly = extractor.videoStreams
-                        }
-                        if (videoOnly != null && !videoOnly.isEmpty()) {
-                            directUrl = videoOnly[0].content
-                        }
-                    }
-                }
-
-                if (directUrl == null && requestedItag != -1) {
-                    for (stream in extractor.videoStreams) {
-                        if (stream.itag == requestedItag) {
-                            directUrl = stream.content
-                            break
-                        }
-                    }
-                    if (directUrl == null) {
-                        for (stream in extractor.videoOnlyStreams) {
-                            if (stream.itag == requestedItag) {
-                                directUrl = stream.content
-                                break
-                            }
-                        }
-                    }
-                    if (directUrl == null) {
-                        for (stream in extractor.audioStreams) {
-                            if (stream.itag == requestedItag) {
-                                val streamTrackId = stream.audioTrackId ?: ""
-                                val reqTrackId = requestedTrackId ?: ""
-                                if (streamTrackId == reqTrackId) {
-                                    directUrl = stream.content
-                                    break
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (directUrl == null) {
-                    val qualityParam = params["quality"]
-                    val startTimeParam = params["start_time"]
-                    var startTime = 0.0
-                    if (startTimeParam != null) {
-                        try {
-                            startTime = startTimeParam.toDouble()
-                        } catch (e: Exception) {
-                        }
-                    }
-
-                    val targetQuality = qualityParam ?: dbHelper.nativeVideoQuality()
-                    val targetHeight = getResolutionHeight(targetQuality)
-
-                    // Fallback to progressive stream
-                    val progressiveStreams = extractor.videoStreams
-                    if (progressiveStreams != null && !progressiveStreams.isEmpty()) {
-                        var selectedStream: VideoStream? = null
-                        var bestHeight = -1
-                        for (stream in progressiveStreams) {
-                            val height = getResolutionHeight(stream.resolution)
-                            if (height <= targetHeight) {
-                                if (height > bestHeight) {
-                                    bestHeight = height
-                                    selectedStream = stream
-                                }
-                            }
-                        }
-                        if (selectedStream == null) {
-                            // If no stream is <= targetHeight, pick the highest quality one available
-                            for (stream in progressiveStreams) {
-                                val height = getResolutionHeight(stream.resolution)
-                                if (height > bestHeight) {
-                                    bestHeight = height
-                                    selectedStream = stream
-                                }
-                            }
-                        }
-                        if (selectedStream == null) {
-                            selectedStream = progressiveStreams[0]
-                        }
-                        directUrl = selectedStream.content
-                    } else {
-                        try {
-                            val hlsUrl = extractor.hlsUrl
-                            if (!hlsUrl.isNullOrEmpty()) {
-                                directUrl = hlsUrl
-                            }
-                        } catch (e: Exception) {
-                            // ignore
-                        }
-                        if (directUrl == null) {
-                            val rawAudioStreams = extractor.audioStreams
-                            if (rawAudioStreams != null && !rawAudioStreams.isEmpty()) {
-                                // 1. Sort using NewPipe-like ranking to find the best track at index 0.
-                                // This fork replaced the AudioTrackType enum (ORIGINAL/DUBBED/SECONDARY/
-                                // DESCRIPTIVE) with plain audioTrackName/audioLocale strings and no longer
-                                // distinguishes DUBBED/SECONDARY/DESCRIPTIVE from each other; "original" is
-                                // now signalled by the literal "(original)" suffix in audioTrackName (see
-                                // YoutubeStreamExtractor's HLS master-manifest parsing).
-                                var audioStreams: MutableList<AudioStream> = ArrayList(rawAudioStreams)
-                                audioStreams.sortWith(audioTrackPriorityComparator())
-                                // 2. Keep only streams of the best track
-                                val bestTrackId = audioStreams[0].audioTrackId
-                                val filteredStreams = audioStreams.filter { it.audioTrackId == bestTrackId }
-                                if (filteredStreams.isNotEmpty()) {
-                                    audioStreams = filteredStreams.toMutableList()
-                                }
-                                directUrl = audioStreams[0].content
-                            }
-                        }
-                    }
-                }
-
-                if (directUrl != null) {
-                    streamUrlCache.put(cacheKey, directUrl, 3600000)
-                }
-            }
-
-            if (directUrl != null) {
-                log("Proxying stream from: $directUrl")
-
-                // Use matching User-Agent for YouTube streams depending on the client (c) parameter to avoid 403 Forbidden
-                var ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                if (directUrl.contains("googlevideo.com")) {
-                    try {
-                        ua = if (directUrl.contains("c=IOS") || directUrl.contains("c=ios")) {
-                            org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getIosUserAgent(null)
-                        } else if (directUrl.contains("c=VISIONOS") || directUrl.contains("c=visionos")) {
-                            org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getVisionOsUserAgent(null)
-                        } else {
-                            org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getAndroidUserAgent(null)
-                        }
-                    } catch (e: Exception) {
-                    }
-                }
-
-                // Build remote request
-                val reqBuilder = okhttp3.Request.Builder()
-                    .url(directUrl)
-                    .header("User-Agent", ua)
-
-                // Bilibili's CDN enforces hotlink protection and returns 403 for any request
-                // without a matching Referer. Unlike a browser, this proxy has to set it itself.
-                if (directUrl.contains("bilivideo.com") || directUrl.contains("bilibili.com") ||
-                    directUrl.contains("akamaized.net")) {
-                    reqBuilder.header("Referer", "https://www.bilibili.com/")
-                    reqBuilder.header("Origin", "https://www.bilibili.com")
-                }
-
-                // Forward Range header if client sent it
-                if (rangeHeader != null) {
-                    reqBuilder.removeHeader("Range")
-                    reqBuilder.addHeader("Range", rangeHeader)
-                    log("Forwarding Range to CDN: $rangeHeader")
-                }
-
-                httpClient.newCall(reqBuilder.build()).execute().use { response ->
-                    val code = response.code
-                    log("Incoming Range = $rangeHeader CDN status=$code itag=$requestedItag")
-
-                    if (rangeHeader != null && code != 206) {
-                        log("WARNING: Range requested ($rangeHeader) but CDN returned $code")
-                    }
-
-                    val headBuilder = StringBuilder()
-                    val statusText = if (code == 206) "Partial Content" else "OK"
-                    headBuilder.append("HTTP/1.1 ").append(code).append(" ").append(statusText).append("\r\n")
-
-                    val headersToForward = arrayOf(
-                        "Content-Type",
-                        "Content-Length",
-                        "Content-Range",
-                        "Accept-Ranges"
-                    )
-
-                    for (h in headersToForward) {
-                        val v = response.header(h)
-                        if (v != null) {
-                            headBuilder.append(h).append(": ").append(v).append("\r\n")
-                        }
-                    }
-
-                    // Ensure Content-Type is set if missing
-                    if (response.header("Content-Type") == null) {
-                        var defaultType = if (requestedItag == 140) "audio/mp4" else "video/mp4"
-                        if (requestedItag == -1) {
-                            // For itag-less services, mtype from the manifest is authoritative;
-                            // handing a DASH player application/octet-stream can break playback.
-                            defaultType = if ("audio" == mediaType) "audio/mp4"
-                            else if ("video" == mediaType) "video/mp4"
-                            else "application/octet-stream"
-                        }
-                        headBuilder.append("Content-Type: ").append(defaultType).append("\r\n")
-                    }
-
-                    // Ensure Accept-Ranges is set for DASH
-                    if (response.header("Accept-Ranges") == null) {
-                        headBuilder.append("Accept-Ranges: bytes\r\n")
-                    }
-
-                    headBuilder.append("Access-Control-Allow-Origin: *\r\n")
-                    headBuilder.append("Access-Control-Allow-Headers: *\r\n")
-                    headBuilder.append("Access-Control-Expose-Headers: *\r\n")
-                    headBuilder.append("\r\n")
-
-                    if (code == 206) log("Successfully returning 206 Partial Content to client")
-
-                    os.write(headBuilder.toString().toByteArray(Charsets.UTF_8))
-                    os.flush()
-
-                    // Pipe body bytes
-                    val responseBody = response.body
-                    if (responseBody != null) {
-                        try {
-                            responseBody.byteStream().use { inputStream ->
-                                val buffer = ByteArray(65536)
-                                var read: Int
-                                while (inputStream.read(buffer).also { read = it } != -1) {
-                                    os.write(buffer, 0, read)
-                                }
-                            }
-                        } catch (e: IOException) {
-                            // Client disconnected (e.g. paused/sought)
-                            log("Stream proxy: Client connection closed.")
-                        }
-                    }
-                    os.flush()
-                }
+        private fun handleLogClientCapabilities(os: OutputStream, params: Map<String, String>, requestHeaders: Map<String, String>) {
+            val supported = params["supported"]
+            val error = params["error"]
+            val playingQuality = params["playing_quality"]
+            val userAgent = requestHeaders["user-agent"]
+            if (error != null) {
+                log("Client player error: $error | User-Agent: $userAgent")
+            } else if (playingQuality != null) {
+                log("Client is playing quality: $playingQuality | User-Agent: $userAgent")
             } else {
-                sendResponse(os, 404, "Stream URL not found.", "text/plain; charset=UTF-8")
+                log("Client connection capability check: DASH supported = $supported | User-Agent: $userAgent")
             }
-        }
-
-        @Throws(Exception::class)
-        private fun handleManifestProxy(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val mediaUrl = params["id"]!!
-
-            val service = NewPipe.getService(serviceId)
-            // Shares one page extraction with handleWatchContent/handleAudioWatch for this same
-            // video, instead of each doing its own independent fetchPage().
-            val extractor = getCachedExtractor(service, serviceId, mediaUrl)
-
-            // Construct standard DASH manifest (MPD) locally using extracted stream lists.
-            // extractor may be shared with a concurrent handleWatchContent/handleAudioWatch
-            // request for the same video (getCachedExtractor above) - synchronized on it since
-            // the extractor library's getters aren't guaranteed safe to call from two threads
-            // at once, unlike the plain-data VideoStream/AudioStream objects they return.
-            var durationSec: Double
-            synchronized(extractor) {
-                durationSec = extractor.length.toDouble()
-            }
-            if (durationSec <= 0) {
-                durationSec = 1800.0 // fallback 30 mins if length not available
-            }
-
-            val sb = StringBuilder()
-            sb.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
-            sb.append("<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\" type=\"static\" mediaPresentationDuration=\"PT").append(durationSec).append("S\" minBufferTime=\"PT1.5S\">\n")
-            sb.append("  <Period duration=\"PT").append(durationSec).append("S\">\n")
-
-            // Video AdaptationSet (Adaptive / Video-Only streams)
-            val rawVideoStreams: List<VideoStream>?
-            synchronized(extractor) {
-                rawVideoStreams = extractor.videoOnlyStreams
-            }
-            val videoStreams = (rawVideoStreams ?: emptyList()).filter { vs -> vs.format == org.schabi.newpipe.extractor.MediaFormat.MPEG_4 }
-
-            if (videoStreams.isNotEmpty()) {
-                sb.append("    <AdaptationSet id=\"0\" mimeType=\"video/mp4\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\">\n")
-                val seenVideoItags = HashSet<Int>()
-                for (vs in videoStreams) {
-                    val itag = vs.itag
-                    if (seenVideoItags.contains(itag)) {
-                        continue
-                    }
-                    seenVideoItags.add(itag)
-
-                    var bitrate = vs.bitrate.toLong()
-                    if (bitrate <= 0) {
-                        bitrate = 1000000L
-                    }
-                    // Extractors usually return bps. If it's suspiciously low, we might scale,
-                    // but the previous scaling (bitrate < 100000) was causing 360p (83kbps)
-                    // to be scaled to 83Mbps while 1080p (495kbps) was left at 0.5Mbps.
-                    // Let's use a much lower threshold or just trust the extractor.
-                    if (bitrate < 5000) {
-                        bitrate *= 1000
-                    }
-                    val codec = vs.codec
-                    val width = vs.width
-                    val height = vs.height
-                    val fps = vs.fps
-
-                    val initStart = vs.initStart
-                    val initEnd = vs.initEnd
-                    val indexStart = vs.indexStart
-                    val indexEnd = vs.indexEnd
-
-                    if (initStart < 0 || initEnd < 0 || indexStart < 0 || indexEnd < 0) {
-                        continue  // Skip streams without correct index range markers
-                    }
-
-                    // itag is a YouTube concept; Bilibili streams report -1, which would make the
-                    // video and audio Representations share an identical BaseURL. mtype gives the
-                    // proxy a way to tell them apart when itag can't.
-                    val proxyUrl = "/stream?serviceId=" + serviceId + "&amp;id=" + java.net.URLEncoder.encode(mediaUrl, "UTF-8") + "&amp;itag=" + itag + "&amp;mtype=video"
-                    // Pre-warm the cache handleStreamProxy checks first, with the exact key it will
-                    // compute for this Representation's proxy URL - the player requests this itag
-                    // moments after loading this manifest, and without this it would otherwise
-                    // redo the full page extraction that was just done to build this manifest.
-                    if (vs.content != null) {
-                        streamUrlCache.put(serviceId.toString() + "_" + mediaUrl + "_" + itag + "_video", vs.content, 3600000)
-                    }
-                    sb.append("      <Representation id=\"").append(itag).append("\" bandwidth=\"").append(bitrate).append("\" codecs=\"").append(codec).append("\" width=\"").append(width).append("\" height=\"").append(height).append("\" frameRate=\"").append(fps).append("\" sar=\"1:1\">\n")
-                    sb.append("        <BaseURL>").append(proxyUrl).append("</BaseURL>\n")
-                    sb.append("        <SegmentBase indexRange=\"").append(indexStart).append("-").append(indexEnd).append("\" indexRangeExact=\"true\">\n")
-                    sb.append("          <Initialization range=\"").append(initStart).append("-").append(initEnd).append("\"/>\n")
-                    sb.append("        </SegmentBase>\n")
-                    sb.append("      </Representation>\n")
-                }
-                sb.append("    </AdaptationSet>\n")
-            }
-
-            // Audio AdaptationSet
-            val rawAudioStreams: List<AudioStream>?
-            synchronized(extractor) {
-                rawAudioStreams = extractor.audioStreams
-            }
-            var audioStreams = (rawAudioStreams ?: emptyList()).filter { it.format == org.schabi.newpipe.extractor.MediaFormat.M4A }
-            if (audioStreams.isNotEmpty()) {
-                val targetAudioTrack = params["audio_track"]
-                var selectedTrackId: String
-
-                // If a track is explicitly selected, find it
-                if (targetAudioTrack != null) {
-                    selectedTrackId = targetAudioTrack
-                } else {
-                    // Default to best track using NewPipe comparator
-                    val sorted = audioStreams.sortedWith(audioTrackPriorityComparator())
-                    audioStreams = sorted
-
-                    val bestId = sorted[0].audioTrackId
-                    selectedTrackId = bestId ?: ""
-                }
-
-                // Filter to only keep streams matching the selectedTrackId
-                val finalTrackId = selectedTrackId
-                audioStreams = audioStreams.filter { (it.audioTrackId ?: "") == finalTrackId }
-
-                if (audioStreams.isNotEmpty()) {
-                    // Sort by quality (bitrate descending)
-                    audioStreams = audioStreams.sortedWith(Comparator { a, b ->
-                        val brA = if (a.averageBitrate > 0) a.averageBitrate else a.bitrate
-                        val brB = if (b.averageBitrate > 0) b.averageBitrate else b.bitrate
-                        brB.toLong().compareTo(brA.toLong())
-                    })
-
-                    val firstStream = audioStreams[0]
-                    val locale = firstStream.audioLocale
-                    var langStr = ""
-                    if (locale != null) {
-                        langStr = " lang=\"" + locale + "\""
-                    } else if (finalTrackId.isNotEmpty()) {
-                        val dotIdx = finalTrackId.indexOf(".")
-                        langStr = if (dotIdx != -1) {
-                            " lang=\"" + finalTrackId.substring(0, dotIdx) + "\""
-                        } else {
-                            " lang=\"$finalTrackId\""
-                        }
-                    }
-
-                    var labelStr = ""
-                    val trackName = firstStream.audioTrackName
-                    if (!trackName.isNullOrEmpty()) {
-                        labelStr = " label=\"" + trackName.replace("\"", "&quot;") + "\""
-                    }
-
-                    sb.append("    <AdaptationSet id=\"1\" mimeType=\"audio/mp4\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\"").append(langStr).append(labelStr).append(">\n")
-
-                    // Add Role element based on whether this is the original track. The fork no
-                    // longer classifies dub/description/secondary separately (see
-                    // isOriginalAudioTrack), so any non-original track is labelled "dub".
-                    if (firstStream.audioTrackId != null) {
-                        val roleVal = if (isOriginalAudioTrack(firstStream)) "main" else "dub"
-                        sb.append("      <Role schemeIdUri=\"urn:mpeg:dash:role:2011\" value=\"").append(roleVal).append("\"/>\n")
-                    }
-
-                    val seenAudioItags = HashSet<Int>()
-                    for (asStream in audioStreams) {
-                        val itag = asStream.itag
-                        if (seenAudioItags.contains(itag)) {
-                            continue
-                        }
-                        seenAudioItags.add(itag)
-
-                        var bitrate = asStream.averageBitrate.toLong()
-                        if (bitrate <= 0) {
-                            bitrate = asStream.bitrate.toLong()
-                        }
-                        if (bitrate <= 0) {
-                            bitrate = 128000L
-                        }
-                        if (bitrate < 1000) {
-                            bitrate *= 1000
-                        }
-                        val codec = normalizeAudioCodec(asStream.codec)
-
-                        val initStart = asStream.initStart
-                        val initEnd = asStream.initEnd
-                        val indexStart = asStream.indexStart
-                        val indexEnd = asStream.indexEnd
-
-                        if (initStart < 0 || initEnd < 0 || indexStart < 0 || indexEnd < 0) {
-                            continue  // Skip streams without index range markers
-                        }
-
-                        val proxyUrl = "/stream?serviceId=" + serviceId + "&amp;id=" + java.net.URLEncoder.encode(mediaUrl, "UTF-8") + "&amp;itag=" + itag + "&amp;mtype=audio" + (if (finalTrackId.isNotEmpty()) "&amp;trackId=" + java.net.URLEncoder.encode(finalTrackId, "UTF-8") else "")
-                        // Same cache pre-warm as the video Representations above - key must match
-                        // handleStreamProxy's construction exactly (itag, then trackId if present).
-                        if (asStream.content != null) {
-                            val audioCacheKey = serviceId.toString() + "_" + mediaUrl + "_" + itag +
-                                    (if (finalTrackId.isNotEmpty()) "_$finalTrackId" else "") + "_audio"
-                            streamUrlCache.put(audioCacheKey, asStream.content, 3600000)
-                        }
-                        sb.append("      <Representation id=\"").append(itag).append("\" bandwidth=\"").append(bitrate).append("\" codecs=\"").append(codec).append("\" audioSamplingRate=\"44100\">\n")
-                        sb.append("        <AudioChannelConfiguration schemeIdUri=\"urn:mpeg:dash:23003:3:audio_channel_configuration:2011\" value=\"2\"/>\n")
-                        sb.append("        <BaseURL>").append(proxyUrl).append("</BaseURL>\n")
-                        sb.append("        <SegmentBase indexRange=\"").append(indexStart).append("-").append(indexEnd).append("\" indexRangeExact=\"true\">\n")
-                        sb.append("          <Initialization range=\"").append(initStart).append("-").append(initEnd).append("\"/>\n")
-                        sb.append("        </SegmentBase>\n")
-                        sb.append("      </Representation>\n")
-                    }
-                    sb.append("    </AdaptationSet>\n")
-                }
-            }
-
-            sb.append("  </Period>\n")
-            sb.append("</MPD>\n")
-
-            val manifestXml = sb.toString()
-            log("Generated local DASH manifest:\n$manifestXml")
-
-            val bodyBytes = manifestXml.toByteArray(Charsets.UTF_8)
-
-            val responseHeaders = "HTTP/1.1 200 OK\r\n" +
-                    "Content-Type: application/dash+xml; charset=UTF-8\r\n" +
-                    "Content-Length: " + bodyBytes.size + "\r\n" +
-                    "Access-Control-Allow-Origin: *\r\n" +
-                    "Connection: close\r\n\r\n"
-            os.write(responseHeaders.toByteArray(Charsets.UTF_8))
-            os.write(bodyBytes)
-            os.flush()
-        }
-
-        @Throws(Exception::class)
-        private fun handleSubtitlesProxy(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val mediaUrl = params["id"]
-            val lang = params["lang"]
-            val isAuto = "true" == params["auto"]
-
-            val service = NewPipe.getService(serviceId)
-            val info = StreamInfo.getInfo(service, mediaUrl)
-
-            var targetStream: SubtitlesStream? = null
-            var subs: List<SubtitlesStream>? = null
-            try {
-                subs = info.subtitles
-            } catch (e: Exception) {
-            }
-
-            if (subs != null) {
-                for (sub in subs) {
-                    if (sub.languageTag == lang && sub.isAutoGenerated == isAuto) {
-                        targetStream = sub
-                        break
-                    }
-                }
-                if (targetStream == null) {
-                    for (sub in subs) {
-                        if (sub.languageTag == lang) {
-                            targetStream = sub
-                            break
-                        }
-                    }
-                }
-            }
-
-            if (targetStream != null) {
-                var subUrl = targetStream.content
-                if (subUrl != null) {
-                    subUrl = subUrl.replace(Regex("&fmt=[^&]*"), "") + "&fmt=vtt"
-                }
-                val req = okhttp3.Request.Builder()
-                    .url(subUrl!!)
-                    .header("User-Agent", "Mozilla/5.0")
-                    .build()
-                httpClient.newCall(req).execute().use { response ->
-                    val bodyBytes = response.body?.bytes() ?: ByteArray(0)
-                    val contentType = "text/vtt"
-                    val headers = "HTTP/1.1 200 OK\r\n" +
-                            "Content-Type: " + contentType + "; charset=UTF-8\r\n" +
-                            "Content-Length: " + bodyBytes.size + "\r\n" +
-                            "Access-Control-Allow-Origin: *\r\n" +
-                            "Connection: close\r\n\r\n"
-                    os.write(headers.toByteArray(Charsets.UTF_8))
-                    os.write(bodyBytes)
-                    os.flush()
-                }
-            } else {
-                sendResponse(os, 404, "Subtitles not found", "text/plain; charset=UTF-8")
-            }
+            sendResponse(os, 200, "OK", "text/plain; charset=UTF-8")
         }
 
         @Throws(Exception::class)
@@ -1983,67 +930,94 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             sendResponse(os, 200, html, "text/html; charset=UTF-8")
         }
 
-        @Throws(Exception::class)
         private fun handleChannel(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
             val serviceId = getServiceId(params)
             val channelUrl = params["id"]!!
             val tab = params.getOrDefault("tab", "videos")
+            // loadMoreChannel()'s ajax=1 follow-ups only need the next batch of the grid, not the
+            // channel header/subscribe-button chrome around it.
+            val isAjax = params["ajax"] == "1"
 
             val nextPageStr = params["nextPage"]
             val nextPage = HtmlRenderer.deserializePage(nextPageStr)
 
-            val service = NewPipe.getService(serviceId)
-            val channelExtractor = service.getChannelExtractor(channelUrl)
-            channelExtractor.fetchPage()
+            try {
+                val service = NewPipe.getService(serviceId)
+                val channelExtractor = service.getChannelExtractor(channelUrl)
+                channelExtractor.fetchPage()
 
-            val tabExtractor = resolveChannelTabExtractor(
-                service, channelExtractor, if ("playlists" == tab) "playlists" else "videos")
-            val page = fetchInitialOrPage(tabExtractor, nextPage)
-            val items = page.items
-            val next = page.nextPage
+                val tabExtractor = resolveChannelTabExtractor(
+                    service, channelExtractor, if ("playlists" == tab) "playlists" else "videos")
+                val page = fetchInitialOrPage(tabExtractor, nextPage)
+                val items = page.items
+                val next = page.nextPage
 
-            backfillUploaderUrl(items, channelUrl)
+                backfillUploaderUrl(items, channelUrl)
+                val filtered = filterItems(items)
 
-            val isSubscribed = dbHelper.nativeIsSubscribed(channelExtractor.linkHandler.url)
-            if (isSubscribed) {
-                try {
-                    val cUrl = channelExtractor.linkHandler.url
-                    val cName = channelExtractor.name
-                    val cAvatar = HtmlRenderer.getThumbnailUrl(channelExtractor.avatars)
-                    if (!cAvatar.isNullOrEmpty()) {
-                        dbHelper.nativeAddSubscription(cUrl, cName, cAvatar)
-                    }
-                } catch (ignored: Exception) {
+                if (isAjax) {
+                    val channelAvatar = HtmlRenderer.getThumbnailUrl(channelExtractor.avatars)
+                    val channelAvatarFallback = if (HtmlRendererCommon.hasThumbnail(channelExtractor.avatars)) channelAvatar else null
+                    val html = HtmlRenderer.renderChannelItemsFragment(serviceId, channelUrl, tab, filtered, next, channelAvatarFallback)
+                    sendResponse(os, 200, html, "text/html; charset=UTF-8")
+                    return
                 }
+
+                val isSubscribed = dbHelper.nativeIsSubscribed(channelExtractor.linkHandler.url)
+                if (isSubscribed) {
+                    try {
+                        val cUrl = channelExtractor.linkHandler.url
+                        val cName = channelExtractor.name
+                        val cAvatar = HtmlRenderer.getThumbnailUrl(channelExtractor.avatars)
+                        if (!cAvatar.isNullOrEmpty()) {
+                            dbHelper.nativeAddSubscription(cUrl, cName, cAvatar)
+                        }
+                    } catch (ignored: Exception) {
+                    }
+                }
+                val isBlocked = dbHelper.nativeIsChannelBlocked(channelExtractor.linkHandler.url)
+                val html = HtmlRenderer.renderChannel(serviceId, channelExtractor, tab, filtered, next, isSubscribed, isBlocked, isTv)
+                sendResponse(os, 200, html, "text/html; charset=UTF-8")
+            } catch (e: Exception) {
+                sendResponse(os, 500, "Channel failed: ${e.message}", "text/plain; charset=UTF-8")
             }
-            val isBlocked = dbHelper.nativeIsChannelBlocked(channelExtractor.linkHandler.url)
-            val filtered = filterItems(items)
-            val html = HtmlRenderer.renderChannel(serviceId, channelExtractor, tab, filtered, next, isSubscribed, isBlocked, isTv)
-            sendResponse(os, 200, html, "text/html; charset=UTF-8")
         }
 
-        @Throws(Exception::class)
         private fun handlePlaylist(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
             val serviceId = getServiceId(params)
             val playlistUrl = params["id"]!!
+            // loadMorePlaylist()'s ajax=1 follow-ups only need the next batch of the grid, not the
+            // playlist header/bookmark-button chrome around it.
+            val isAjax = params["ajax"] == "1"
 
             val nextPageStr = params["nextPage"]
             val nextPage = HtmlRenderer.deserializePage(nextPageStr)
 
-            val service = NewPipe.getService(serviceId)
-            val extractor = service.getPlaylistExtractor(playlistUrl)
+            try {
+                val service = NewPipe.getService(serviceId)
+                val extractor = service.getPlaylistExtractor(playlistUrl)
 
-            val page = fetchInitialOrPage(extractor, nextPage)
-            val items: List<InfoItem> = page.items
-            val next = page.nextPage
+                val page = fetchInitialOrPage(extractor, nextPage)
+                val items: List<InfoItem> = page.items
+                val next = page.nextPage
 
-            val filtered = filterItems(items)
-            val isBookmarked = dbHelper.nativeIsPlaylistBookmarked(playlistUrl)
-            val html = HtmlRenderer.renderPlaylist(serviceId, extractor, filtered, next, isBookmarked, isTv)
-            sendResponse(os, 200, html, "text/html; charset=UTF-8")
+                val filtered = filterItems(items)
+
+                if (isAjax) {
+                    val html = HtmlRenderer.renderPlaylistItemsFragment(serviceId, playlistUrl, filtered, next)
+                    sendResponse(os, 200, html, "text/html; charset=UTF-8")
+                    return
+                }
+
+                val isBookmarked = dbHelper.nativeIsPlaylistBookmarked(playlistUrl)
+                val html = HtmlRenderer.renderPlaylist(serviceId, extractor, filtered, next, isBookmarked, isTv)
+                sendResponse(os, 200, html, "text/html; charset=UTF-8")
+            } catch (e: Exception) {
+                sendResponse(os, 500, "Playlist failed: ${e.message}", "text/plain; charset=UTF-8")
+            }
         }
 
-        private fun getServiceId(params: Map<String, String>): Int {
+        internal fun getServiceId(params: Map<String, String>): Int {
             val raw = params["serviceId"]
             if (raw != null) {
                 try {
@@ -2076,7 +1050,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @Throws(IOException::class)
-        private fun sendResponse(os: OutputStream, code: Int, content: String, contentType: String) {
+        internal fun sendResponse(os: OutputStream, code: Int, content: String, contentType: String) {
             sendResponse(os, code, content, contentType, null)
         }
 
@@ -2085,7 +1059,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // per request). Only the externalized static CSS/JS (handleStaticCss/handleStaticJs) pass
         // a real value here.
         @Throws(IOException::class)
-        private fun sendResponse(os: OutputStream, code: Int, content: String, contentType: String, cacheControl: String?) {
+        internal fun sendResponse(os: OutputStream, code: Int, content: String, contentType: String, cacheControl: String?) {
             var bytes = content.toByteArray(Charsets.UTF_8)
             val status = if (code == 200) "OK" else (if (code == 404) "Not Found" else "Internal Server Error")
 
@@ -2122,7 +1096,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @Throws(IOException::class)
-        private fun sendRedirect(os: OutputStream, url: String) {
+        internal fun sendRedirect(os: OutputStream, url: String) {
             val response = "HTTP/1.1 302 Found\r\n" +
                     "Location: $url\r\n" +
                     "Content-Length: 0\r\n" +
@@ -2158,14 +1132,18 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             val activeTab = params.getOrDefault("tab", "feed")
 
             if ("feed" == activeTab && "ajax" == params["feed"]) {
-                val feedItems = fetchSubscriptionFeed(dbHelper.nativeSubscriptions())
-                val feedSb = StringBuilder()
-                if (feedItems.isEmpty()) {
-                    feedSb.append("<div class=\"loading-placeholder\">No recent uploads found from your subscribed channels.</div>\n")
-                } else {
-                    HtmlRenderer.renderGrid(feedSb, serviceId, feedItems)
+                try {
+                    val feedItems = fetchSubscriptionFeed(dbHelper.nativeSubscriptions())
+                    val feedSb = StringBuilder()
+                    if (feedItems.isEmpty()) {
+                        feedSb.append("<div class=\"loading-placeholder\">No recent uploads found from your subscribed channels.</div>\n")
+                    } else {
+                        HtmlRenderer.renderGrid(feedSb, serviceId, feedItems)
+                    }
+                    sendResponse(os, 200, feedSb.toString(), "text/html; charset=UTF-8")
+                } catch (e: Exception) {
+                    sendResponse(os, 500, "Subscription feed failed: ${e.message}", "text/plain; charset=UTF-8")
                 }
-                sendResponse(os, 200, feedSb.toString(), "text/html; charset=UTF-8")
                 return
             }
 
@@ -2176,98 +1154,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             sendResponse(os, 200, html, "text/html; charset=UTF-8")
         }
 
-        @Throws(Exception::class)
-        private fun handleSubscribeAction(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val action = params["action"]
-            val channelUrl = params["id"]
-            val back = params["back"]
-
-            if ("subscribe" == action && !channelUrl.isNullOrEmpty()) {
-                val name = params["name"]
-                val avatar = params["avatar"]
-                dbHelper.nativeAddSubscription(channelUrl, name, avatar)
-            } else if ("unsubscribe" == action && !channelUrl.isNullOrEmpty()) {
-                dbHelper.nativeRemoveSubscription(channelUrl)
-            }
-
-            if ("ajax" == back) {
-                sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
-            } else if (!back.isNullOrEmpty()) {
-                if (back.startsWith("/")) {
-                    sendRedirect(os, back)
-                } else {
-                    sendRedirect(os, "/watch?serviceId=" + serviceId + "&id=" + java.net.URLEncoder.encode(back, "UTF-8"))
-                }
-            } else {
-                sendRedirect(os, "/subscriptions?serviceId=$serviceId")
-            }
-        }
-
-        @Throws(Exception::class)
-        private fun handleBlockChannelAction(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val action = params["action"]
-            val channelUrl = params["id"]
-            val back = params["back"]
-
-            if ("block" == action && !channelUrl.isNullOrEmpty()) {
-                dbHelper.nativeBlockChannel(channelUrl)
-            } else if ("unblock" == action && !channelUrl.isNullOrEmpty()) {
-                dbHelper.nativeUnblockChannel(channelUrl)
-            }
-
-            if ("ajax" == back) {
-                sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
-            } else if (!back.isNullOrEmpty()) {
-                if (back.startsWith("/")) {
-                    sendRedirect(os, back)
-                } else {
-                    sendRedirect(os, "/watch?serviceId=" + serviceId + "&id=" + java.net.URLEncoder.encode(back, "UTF-8"))
-                }
-            } else {
-                sendRedirect(os, "/?serviceId=$serviceId")
-            }
-        }
-
-        @Throws(Exception::class)
-        private fun handlePlaylistBookmarkAction(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val action = params["action"]
-            val playlistUrl = params["id"]
-            val back = params["back"]
-
-            if ("bookmark" == action && !playlistUrl.isNullOrEmpty()) {
-                val name = params["name"]
-                dbHelper.nativeBookmarkPlaylist(playlistUrl, name, null)
-            } else if ("unbookmark" == action && !playlistUrl.isNullOrEmpty()) {
-                dbHelper.nativeUnbookmarkPlaylist(playlistUrl)
-            }
-
-            if (!back.isNullOrEmpty()) {
-                sendRedirect(os, back)
-            } else {
-                sendRedirect(os, "/subscriptions?serviceId=$serviceId&tab=playlists")
-            }
-        }
-
-        // The '?v=' cache-busting param on the request is intentionally ignored here - it only
-        // exists so the browser treats a content change as a different URL (see
-        // HtmlRendererCommon.STATIC_ASSET_VERSION); the response is the same file regardless of
-        // its value. max-age=31536000 (1 year) + immutable is safe specifically because of that:
-        // any real edit to HtmlStyles.CSS changes the version tag, which changes the URL, which
-        // bypasses this old cache entry entirely rather than serving stale content from it.
-        @Throws(Exception::class)
-        private fun handleStaticCss(os: OutputStream) {
-            sendResponse(os, 200, HtmlStyles.CSS, "text/css; charset=UTF-8", "public, max-age=31536000, immutable")
-        }
-
-        @Throws(Exception::class)
-        private fun handleStaticJs(os: OutputStream) {
-            sendResponse(os, 200, HtmlScripts.RAW_JS, "application/javascript; charset=UTF-8", "public, max-age=31536000, immutable")
-        }
-
-        private fun filterItems(items: List<InfoItem>): List<InfoItem> {
+        internal fun filterItems(items: List<InfoItem>): List<InfoItem> {
             val hideWatched = dbHelper.nativeHideWatched()
             val hideShorts = dbHelper.nativeHideShorts()
             // Flow's native FlowNeuroEngine block list (see nativeBlockedChannelIds()) - its own
@@ -2307,7 +1194,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // to the pre-existing saveToHistory() call) and the watch-progress endpoint - rather than
         // new routes. Both are best-effort and swallow their own exceptions: a FlowNeuro learning
         // failure must never break video playback or the watch-progress endpoint's own DB write.
-        private fun reportFlowNeuroClick(info: StreamInfo, serviceId: Int) {
+        internal fun reportFlowNeuroClick(info: StreamInfo, serviceId: Int) {
             dbHelper.reportFlowNeuroInteraction(info, serviceId, InteractionType.CLICK)
         }
 
@@ -2317,117 +1204,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // personalized/mix branch and from handleApiRecommendations() below - deliberately NOT
         // called from handleApiHome() (that handler's existing behavior is left untouched;
         // handleApiRecommendations() is the additive route for ranked results).
-        private fun applyFlowNeuroRanking(items: List<InfoItem>, serviceId: Int): List<InfoItem> =
+        internal fun applyFlowNeuroRanking(items: List<InfoItem>, serviceId: Int): List<InfoItem> =
             dbHelper.rankWithFlowNeuro(items, serviceId)
-
-        @Throws(Exception::class)
-        private fun handleSendLink(os: OutputStream, params: Map<String, String>, clientIp: String?) {
-            val videoUrl = params["id"]
-            val clientReleaseCode = params["release_code"]
-            var videoTitle = params["title"]
-            if (videoTitle.isNullOrEmpty()) {
-                videoTitle = "Video"
-            }
-
-            if (videoUrl.isNullOrEmpty()) {
-                sendResponse(os, 400, "{\"status\":\"error\",\"message\":\"Missing 'id' parameter\"}", "application/json; charset=UTF-8")
-                return
-            }
-
-            synchronized(LocalHttpServer::class.java) {
-                var hasLock = false
-                var currentLockCode = getActiveLockCode()
-
-                if (currentLockCode == null) {
-                    val newLockCode = UUID.randomUUID().toString()
-                    tryLock(newLockCode, clientIp ?: "", videoTitle)
-                    currentLockCode = newLockCode
-                    hasLock = true
-                } else if (currentLockCode == clientReleaseCode) {
-                    tryLock(currentLockCode, clientIp ?: "", videoTitle)
-                    hasLock = true
-                }
-
-                if (hasLock) {
-                    // "__connect_only__" is sent by the header's cast button when the current page
-                    // isn't a video (e.g. Home, Subscriptions) - it pairs this device as remote-
-                    // controllable without queuing a bogus play_video command for a non-video URL,
-                    // which used to make the connecting browser navigate itself to a broken /watch
-                    // link (see RemoteActivity's touchpad flow: pairing must work from any page).
-                    if ("__connect_only__" != videoUrl) {
-                        log("Casting link: $videoUrl from client IP $clientIp")
-                        addPendingCommand("play_video:$videoUrl")
-                    } else {
-                        log("Remote connected (pairing only) from client IP $clientIp")
-                    }
-
-                    val json = "{\"status\":\"success\",\"release_code\":\"" + currentLockCode + "\"}"
-                    sendResponse(os, 200, json, "application/json; charset=UTF-8")
-                } else {
-                    var busyMsg = "Server is currently controlled by device at IP " + getActiveClientIp()
-                    if (getActiveVideoTitle() != null) {
-                        busyMsg += " playing: " + getActiveVideoTitle()
-                    }
-                    val json = "{\"status\":\"busy\",\"message\":\"" + busyMsg.replace("\"", "\\\"") + "\"}"
-                    sendResponse(os, 200, json, "application/json; charset=UTF-8")
-                }
-            }
-        }
-
-        @Throws(Exception::class)
-        private fun handleReleaseLock(os: OutputStream, params: Map<String, String>) {
-            val clientReleaseCode = params["release_code"]
-            if (clientReleaseCode.isNullOrEmpty()) {
-                sendResponse(os, 400, "{\"status\":\"error\",\"message\":\"Missing 'release_code' parameter\"}", "application/json; charset=UTF-8")
-                return
-            }
-
-            synchronized(LocalHttpServer::class.java) {
-                val currentLockCode = getActiveLockCode()
-                if (currentLockCode != null && currentLockCode == clientReleaseCode) {
-                    releaseLock()
-                    log("Lock released by client.")
-                    sendResponse(os, 200, "{\"status\":\"success\"}", "application/json; charset=UTF-8")
-                } else {
-                    sendResponse(os, 200, "{\"status\":\"error\",\"message\":\"Invalid or expired lock code\"}", "application/json; charset=UTF-8")
-                }
-            }
-        }
-
-        @Throws(Exception::class)
-        private fun handleSendCommand(os: OutputStream, params: Map<String, String>) {
-            val cmd = params["command"]
-            val clientReleaseCode = params["release_code"]
-            if (cmd.isNullOrEmpty()) {
-                sendResponse(os, 400, "{\"status\":\"error\",\"message\":\"Missing 'command' parameter\"}", "application/json; charset=UTF-8")
-                return
-            }
-
-            synchronized(LocalHttpServer::class.java) {
-                val currentLockCode = getActiveLockCode()
-                if (currentLockCode != null && currentLockCode == clientReleaseCode) {
-                    addPendingCommand(cmd)
-                    sendResponse(os, 200, "{\"status\":\"success\"}", "application/json; charset=UTF-8")
-                } else {
-                    sendResponse(os, 200, "{\"status\":\"error\",\"message\":\"Not authorized / lock expired\"}", "application/json; charset=UTF-8")
-                }
-            }
-        }
-
-        @Throws(Exception::class)
-        private fun handlePollCommands(os: OutputStream) {
-            val cmds = getAndClearPendingCommands()
-            val sb = StringBuilder()
-            sb.append("{\"commands\":[")
-            for (i in cmds.indices) {
-                sb.append("\"").append(cmds[i].replace("\"", "\\\"")).append("\"")
-                if (i < cmds.size - 1) {
-                    sb.append(",")
-                }
-            }
-            sb.append("]}")
-            sendResponse(os, 200, sb.toString(), "application/json; charset=UTF-8")
-        }
 
         @Throws(Exception::class)
         private fun handleWatchLater(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
@@ -2435,86 +1213,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             val items = dbHelper.nativeWatchLaterItems()
             val html = HtmlRenderer.renderWatchLater(serviceId, items, isTv)
             sendResponse(os, 200, html, "text/html; charset=UTF-8")
-        }
-
-        @Throws(Exception::class)
-        private fun handleHistoryAction(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val action = params["action"]
-            val url = params["url"]
-            val back = params["back"]
-
-            if ("remove" == action && !url.isNullOrEmpty()) {
-                dbHelper.nativeRemoveFromHistory(url)
-            } else if ("clear" == action) {
-                dbHelper.nativeClearHistory()
-            }
-
-            if ("ajax" == back) {
-                sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
-            } else {
-                sendRedirect(os, "/history?serviceId=$serviceId")
-            }
-        }
-
-        private fun handleWatchLaterAction(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val action = params["action"]
-            val url = params["url"]
-            val back = params["back"]
-
-            if ("add" == action && !url.isNullOrEmpty()) {
-                val title = params["title"].takeUnless { it.isNullOrEmpty() } ?: "Shared Item"
-                val uploader = params["uploader"] ?: ""
-                val thumbnail = params["thumbnail"]
-                val uploaderUrl = params["uploaderUrl"]
-                dbHelper.nativeAddWatchLater(url, title, uploader, thumbnail, uploaderUrl)
-            } else if ("remove" == action && !url.isNullOrEmpty()) {
-                dbHelper.nativeRemoveWatchLater(url)
-            }
-
-            if ("ajax" == back) {
-                sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
-            } else if (!back.isNullOrEmpty()) {
-                if (back.startsWith("/")) {
-                    sendRedirect(os, back)
-                } else {
-                    sendRedirect(os, "/watch?serviceId=" + serviceId + "&id=" + java.net.URLEncoder.encode(back, "UTF-8"))
-                }
-            } else {
-                sendRedirect(os, "/watch-later?serviceId=$serviceId")
-            }
-        }
-
-        private fun handleRateVideoAction(os: OutputStream, params: Map<String, String>) {
-            val serviceId = getServiceId(params)
-            val action = params["action"]
-            val url = params["url"]
-            val back = params["back"]
-
-            if (!url.isNullOrEmpty()) {
-                val title = params["title"].takeUnless { it.isNullOrEmpty() } ?: "Shared Item"
-                val uploader = params["uploader"] ?: ""
-                val thumbnail = params["thumbnail"]
-                val uploaderUrl = params["uploaderUrl"]
-                when (action) {
-                    "like" -> dbHelper.nativeLikeVideo(url, title, uploader, thumbnail, uploaderUrl, serviceId)
-                    "dislike" -> dbHelper.nativeDislikeVideo(url, title, uploader, thumbnail, uploaderUrl)
-                    "remove" -> dbHelper.nativeRemoveLikeState(url)
-                }
-            }
-
-            if ("ajax" == back) {
-                sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
-            } else if (!back.isNullOrEmpty()) {
-                if (back.startsWith("/")) {
-                    sendRedirect(os, back)
-                } else {
-                    sendRedirect(os, "/watch?serviceId=" + serviceId + "&id=" + java.net.URLEncoder.encode(back, "UTF-8"))
-                }
-            } else {
-                sendRedirect(os, "/?serviceId=$serviceId")
-            }
         }
 
         private fun escapeJson(input: String?): String {
@@ -2532,7 +1230,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
     }
 
-    private class StreamUrlCache {
+    internal class StreamUrlCache {
         companion object {
             private const val MAX_ITEMS = 60
         }

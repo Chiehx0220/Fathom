@@ -28,32 +28,29 @@ object HtmlRendererListings {
           .append("</style>\n")
           .append("<script>\n")
           // Replaces the trailing .pagination wrapper with {new grid + new wrapper}, appending
-          // in place - same technique as loadMoreComments().
+          // in place - same technique as loadMoreComments(). fetchText (from the shared
+          // /static/script.js) is what makes a failed batch land in the .catch() below instead of
+          // getting rendered as if it were the next page of videos - see its own comment.
           .append("  window.loadMoreHome = function(btn, token, svcId) {\n")
           .append("      const wrapper = btn.parentElement;\n")
           .append("      btn.textContent = 'Loading...';\n")
           .append("      btn.style.pointerEvents = 'none';\n")
-          .append("      fetch('/?feed=ajax&serviceId=' + svcId + '&nextPage=' + encodeURIComponent(token))\n")
-          .append("          .then(res => res.text())\n")
-          .append("          .then(html => { if (wrapper) wrapper.outerHTML = html; })\n")
-          .append("          .catch(() => { btn.textContent = 'Failed to load. Tap to retry'; btn.style.pointerEvents = 'auto'; });\n")
+          .append("      fetchText('/?feed=ajax&serviceId=' + svcId + '&nextPage=' + encodeURIComponent(token),\n")
+          .append("          html => { if (wrapper) wrapper.outerHTML = html; },\n")
+          .append("          () => { btn.textContent = 'Failed to load. Tap to retry'; btn.style.pointerEvents = 'auto'; });\n")
           .append("  };\n")
           .append("  document.addEventListener('DOMContentLoaded', () => {\n")
-          .append("      let url = '/?feed=ajax&serviceId=' + $serviceId;\n")
-          .append("      \n")
-          .append("      fetch(url)\n")
-          .append("          .then(res => res.text())\n")
-          .append("          .then(html => {\n")
-          .append("              const loader = document.getElementById('home-feed-loader');\n")
-          .append("              const content = document.getElementById('home-feed-content');\n")
+          .append("      const loader = document.getElementById('home-feed-loader');\n")
+          .append("      const content = document.getElementById('home-feed-content');\n")
+          .append("      fetchText('/?feed=ajax&serviceId=' + $serviceId,\n")
+          .append("          html => {\n")
           .append("              if (content) {\n")
           .append("                  content.innerHTML = html;\n")
           .append("                  content.style.display = 'block';\n")
           .append("              }\n")
           .append("              if (loader) loader.style.display = 'none';\n")
-          .append("          })\n")
-          .append("          .catch(err => {\n")
-          .append("              const loader = document.getElementById('home-feed-loader');\n")
+          .append("          },\n")
+          .append("          err => {\n")
           .append("              if (loader) loader.innerHTML = '<div class=\"loading-placeholder\" style=\"color: #ff4b5c; border-color: rgba(255, 75, 92, 0.2);\">Failed to load home feed: ' + err.message + '</div>';\n")
           .append("          });\n")
           .append("  });\n")
@@ -132,21 +129,28 @@ object HtmlRendererListings {
         val queryEscaped = HtmlRendererCommon.escapeHtml(query)
         sb.append("<div class=\"container\">\n")
           .append("  <h2 style=\"margin-bottom: 20px; font-weight: 700;\">🔍 Search Results for: $queryEscaped</h2>\n")
+          .append(renderSearchResultsFragment(serviceId, query, items, nextPage))
+          .append("</div>\n")
+        return HtmlRendererCommon.wrapInTemplate("Search: $query", sb.toString(), isTv)
+    }
 
+    // Grid + "Load More" for a search results batch - shared by renderSearch() (the full page) and
+    // the ajax=1 follow-up requests loadMoreSearch() fires, same split as renderHomeFeed() vs.
+    // renderHomeSkeleton(). Keeps "Load More" an in-place append instead of a page navigation that
+    // would drop everything scrolled past so far.
+    @JvmStatic
+    fun renderSearchResultsFragment(serviceId: Int, query: String, items: List<InfoItem>, nextPage: Page?): String {
+        val sb = StringBuilder()
         HtmlRendererCommon.renderGrid(sb, serviceId, items)
 
-        if (nextPage != null) {
-            val serializedPage = HtmlRendererCommon.serializePage(nextPage)
-            if (serializedPage != null) {
-                val encodedQuery = java.net.URLEncoder.encode(query)
-                sb.append("  <div class=\"pagination\">\n")
-                  .append("    <a href=\"/search?serviceId=$serviceId&q=$encodedQuery&nextPage=$serializedPage\" class=\"btn-page\">Load More</a>\n")
-                  .append("  </div>\n")
-            }
+        val nextPageJs = HtmlRendererCommon.serializePageJs(nextPage)
+        if (nextPageJs != null) {
+            val queryJs = HtmlRendererCommon.escapeJs(query)
+            sb.append("  <div class=\"pagination\">\n")
+              .append("    <a href=\"#\" class=\"btn-page\" onclick=\"loadMoreSearch(this, '$nextPageJs', $serviceId, '$queryJs'); return false;\">Load More</a>\n")
+              .append("  </div>\n")
         }
-
-        sb.append("</div>\n")
-        return HtmlRendererCommon.wrapInTemplate("Search: $query", sb.toString(), isTv)
+        return sb.toString()
     }
 
     @JvmStatic
@@ -193,15 +197,14 @@ object HtmlRendererListings {
                   .append("    @keyframes subs-feed-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }\n")
                   .append("  </style>\n")
                   .append("  <script>\n")
-                  .append("    fetch('/subscriptions?tab=feed&feed=ajax&serviceId=$serviceId')\n")
-                  .append("        .then(res => res.text())\n")
-                  .append("        .then(html => {\n")
+                  .append("    fetchText('/subscriptions?tab=feed&feed=ajax&serviceId=$serviceId',\n")
+                  .append("        html => {\n")
                   .append("            const loader = document.getElementById('subs-feed-loader');\n")
                   .append("            const content = document.getElementById('subs-feed-content');\n")
                   .append("            if (content) { content.innerHTML = html; content.style.display = 'block'; }\n")
                   .append("            if (loader) loader.style.display = 'none';\n")
-                  .append("        })\n")
-                  .append("        .catch(err => {\n")
+                  .append("        },\n")
+                  .append("        err => {\n")
                   .append("            const loader = document.getElementById('subs-feed-loader');\n")
                   .append("            if (loader) loader.innerHTML = '<div class=\"loading-placeholder\" style=\"color: #ff4b5c;\">Failed to load feed: ' + err.message + '</div>';\n")
                   .append("        });\n")

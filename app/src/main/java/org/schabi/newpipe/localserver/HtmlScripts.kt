@@ -771,14 +771,67 @@ object HtmlScripts {
                 "            fetch(url).catch(() => setBlocked(isBlocked));\n" +
                 "        }\n" +
                 "        \n" +
+                // Single chokepoint for every "fetch a fragment, then splice it into the page"
+                // call in this file (Load More buttons, async feed loads). A plain
+                // fetch(url).then(res => res.text()) treats a 500 the same as a 200 - the error
+                // page's own body gets handed to onSuccess and rendered as if it were content.
+                // Routing everything through here means that mistake can only be made once, not
+                // once per call site.
+                "        function fetchText(url, onSuccess, onError) {\n" +
+                "            fetch(url)\n" +
+                "                .then(res => {\n" +
+                "                    if (!res.ok) throw new Error('HTTP ' + res.status);\n" +
+                "                    return res.text();\n" +
+                "                })\n" +
+                "                .then(onSuccess)\n" +
+                "                .catch(onError);\n" +
+                "        }\n" +
+                "        \n" +
+                // The url/title/uploader/thumbnail/uploaderUrl bundle a "share this video" request
+                // carries - same fields, same query-string shape in toggleWatchLater() and
+                // toggleLikeState(); each still prepends its own endpoint/action and appends its
+                // own extra params (type/serviceId, or none).
+                "        function sharedVideoParamsQs(url, title, uploader, thumbnail, uploaderUrl) {\n" +
+                "            return '&url=' + encodeURIComponent(url) + '&title=' + encodeURIComponent(title) +\n" +
+                "                '&uploader=' + encodeURIComponent(uploader) + '&thumbnail=' + encodeURIComponent(thumbnail) +\n" +
+                "                '&uploaderUrl=' + encodeURIComponent(uploaderUrl);\n" +
+                "        }\n" +
+                "        \n" +
+                // outerHTML-swaps the wrapper button with the next grid+pagination fragment, so
+                // already-loaded rows above stay put instead of the page re-navigating.
+                "        function loadMoreSearch(btn, nextPage, svcId, query) {\n" +
+                "            const wrapper = btn.parentElement;\n" +
+                "            btn.textContent = 'Loading...';\n" +
+                "            btn.style.pointerEvents = 'none';\n" +
+                "            fetchText('/search?ajax=1&serviceId=' + svcId + '&q=' + encodeURIComponent(query) + '&nextPage=' + encodeURIComponent(nextPage),\n" +
+                "                html => { if (wrapper) wrapper.outerHTML = html; },\n" +
+                "                () => { btn.textContent = 'Failed to load. Tap to retry'; btn.style.pointerEvents = 'auto'; });\n" +
+                "        }\n" +
+                "        \n" +
+                "        function loadMoreChannel(btn, nextPage, svcId, channelUrl, tab) {\n" +
+                "            const wrapper = btn.parentElement;\n" +
+                "            btn.textContent = 'Loading...';\n" +
+                "            btn.style.pointerEvents = 'none';\n" +
+                "            fetchText('/channel?ajax=1&serviceId=' + svcId + '&id=' + encodeURIComponent(channelUrl) + '&tab=' + tab + '&nextPage=' + encodeURIComponent(nextPage),\n" +
+                "                html => { if (wrapper) wrapper.outerHTML = html; },\n" +
+                "                () => { btn.textContent = 'Failed to load. Tap to retry'; btn.style.pointerEvents = 'auto'; });\n" +
+                "        }\n" +
+                "        \n" +
+                "        function loadMorePlaylist(btn, nextPage, svcId, playlistUrl) {\n" +
+                "            const wrapper = btn.parentElement;\n" +
+                "            btn.textContent = 'Loading...';\n" +
+                "            btn.style.pointerEvents = 'none';\n" +
+                "            fetchText('/playlist?ajax=1&serviceId=' + svcId + '&id=' + encodeURIComponent(playlistUrl) + '&nextPage=' + encodeURIComponent(nextPage),\n" +
+                "                html => { if (wrapper) wrapper.outerHTML = html; },\n" +
+                "                () => { btn.textContent = 'Failed to load. Tap to retry'; btn.style.pointerEvents = 'auto'; });\n" +
+                "        }\n" +
+                "        \n" +
                 "        function toggleWatchLater(event, btn, url, title, uploader, thumbnail, serviceId, uploaderUrl) {\n" +
                 "            event.preventDefault();\n" +
                 "            const isSaved = btn.classList.contains('added');\n" +
                 "            const action = isSaved ? 'remove' : 'add';\n" +
-                "            const qs = '/watch_later_action?action=' + action + '&url=' + encodeURIComponent(url) +\n" +
-                "                '&title=' + encodeURIComponent(title) + '&uploader=' + encodeURIComponent(uploader) +\n" +
-                "                '&thumbnail=' + encodeURIComponent(thumbnail) + '&type=video&serviceId=' + serviceId +\n" +
-                "                '&uploaderUrl=' + encodeURIComponent(uploaderUrl) + '&back=ajax';\n" +
+                "            const qs = '/watch_later_action?action=' + action + sharedVideoParamsQs(url, title, uploader, thumbnail, uploaderUrl) +\n" +
+                "                '&type=video&serviceId=' + serviceId + '&back=ajax';\n" +
                 "            \n" +
                 "            if (isSaved) {\n" +
                 "                btn.classList.remove('added');\n" +
@@ -813,10 +866,7 @@ object HtmlScripts {
                 "                if (dislikeBtn) dislikeBtn.classList.toggle('active', disliked);\n" +
                 "            };\n" +
                 "            apply(!wasActive && kind === 'like', !wasActive && kind === 'dislike');\n" +
-                "            const qs = '/rate_video?action=' + action + '&url=' + encodeURIComponent(url) +\n" +
-                "                '&title=' + encodeURIComponent(title) + '&uploader=' + encodeURIComponent(uploader) +\n" +
-                "                '&thumbnail=' + encodeURIComponent(thumbnail) +\n" +
-                "                '&uploaderUrl=' + encodeURIComponent(uploaderUrl) + '&back=ajax';\n" +
+                "            const qs = '/rate_video?action=' + action + sharedVideoParamsQs(url, title, uploader, thumbnail, uploaderUrl) + '&back=ajax';\n" +
                 "            fetch(qs).catch(() => apply(prevLike, prevDislike));\n" +
                 "        }\n" +
                 "        \n" +
