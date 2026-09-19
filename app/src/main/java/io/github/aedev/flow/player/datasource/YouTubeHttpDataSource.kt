@@ -1,6 +1,7 @@
 package io.github.aedev.flow.player.datasource
 
 import android.net.Uri
+import android.os.SystemClock
 import android.util.Log
 import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
@@ -48,8 +49,28 @@ class YouTubeHttpDataSource private constructor(
         }
     }
 
+    private class OpenedSource(
+        val source: DataSource,
+        val length: Long,
+    )
+
     companion object {
         private const val TAG = "YouTubeHttpDataSource"
+
+        // A mirror that has not answered in this long is raced against the next one. Measured
+        // requests answered in ~0.2s at the median and 2-7s in the slow tail, so this leaves the
+        // normal case alone and cuts the tail short.
+        private const val BILIBILI_HEDGE_DELAY_MS = 600L
+
+        // Bilibili opens that answered no faster than this are logged (see BiliCdn in open()).
+        private const val SLOW_OPEN_LOG_MS = 1_000L
+
+        private val warnedNoMirrors = java.util.concurrent.atomic.AtomicBoolean(false)
+
+        private val HEDGE_EXECUTOR: java.util.concurrent.ExecutorService =
+            java.util.concurrent.Executors.newCachedThreadPool { runnable ->
+                Thread(runnable, "bili-hedge").apply { isDaemon = true }
+            }
 
         // Matches the desktop UA the already-verified-working localserver Bilibili CDN proxy uses
         // (see LocalHttpServer.kt) — kept identical rather than reusing the mobile default below,
@@ -118,11 +139,69 @@ class YouTubeHttpDataSource private constructor(
             factory.setDefaultRequestProperties(requestHeaders)
         }
 
-        dataSource = factory.createDataSource()
+        val startedMs = SystemClock.elapsedRealtime()
+        // Bilibili lists two mirrors per file; when this request has one to fall back to, both may be
+        // tried (see HedgedOpen) so a stalled mirror costs one short delay rather than seconds.
+        val mirrors = if (isBili) BilibiliMirrors.groupFor(dataSpec.uri.toString()) else null
+        if (isBili && mirrors == null && warnedNoMirrors.compareAndSet(false, true)) {
+            Log.w("BiliCdn", "no mirror group registered for host=${dataSpec.uri.host}; requests are not hedged")
+        }
         return try {
-            dataSource!!.open(dataSpec)
+            val length: Long
+            var openedUri = dataSpec.uri
+            var hedged = false
+            if (mirrors != null) {
+                val winner =
+                    HedgedOpen.race(
+                        urls = mirrors.order(),
+                        hedgeDelayMs = BILIBILI_HEDGE_DELAY_MS,
+                        executor = HEDGE_EXECUTOR,
+                        open = { url ->
+                            val source = factory.createDataSource()
+                            try {
+                                OpenedSource(source, source.open(dataSpec.withUri(Uri.parse(url))))
+                            } catch (e: Throwable) {
+                                runCatching { source.close() }
+                                throw e
+                            }
+                        },
+                        close = { runCatching { it.source.close() } },
+                    )
+                mirrors.markWinner(winner.url)
+                dataSource = winner.value.source
+                length = winner.value.length
+                openedUri = Uri.parse(winner.url)
+                hedged = winner.hedged
+            } else {
+                dataSource = factory.createDataSource()
+                length = dataSource!!.open(dataSpec)
+            }
+            currentUri = openedUri
+            if (isBili) {
+                // Only the requests worth a look: one that needed its other mirror, or that took long
+                // to answer. The rest is the normal case and would bury these.
+                val answeredMs = SystemClock.elapsedRealtime() - startedMs
+                if (hedged || answeredMs >= SLOW_OPEN_LOG_MS) {
+                    Log.w(
+                        "BiliCdn",
+                        "open host=${openedUri.host} pos=${dataSpec.position} reqLen=${dataSpec.length} " +
+                            "answeredInMs=$answeredMs mirrored=${mirrors != null} hedged=$hedged",
+                    )
+                }
+            }
+            length
         } catch (e: HttpDataSource.InvalidResponseCodeException) {
             if (e.responseCode == 403) logForbidden(dataSpec, isBili, requestHeaders.keys)
+            throw e
+        } catch (e: java.io.IOException) {
+            // A cancelled request (the player seeked away) is not a failure; anything else is.
+            if (isBili && e !is java.io.InterruptedIOException && e.cause !is java.io.InterruptedIOException) {
+                Log.w(
+                    "BiliCdn",
+                    "open FAILED host=${dataSpec.uri.host} pos=${dataSpec.position} " +
+                        "afterMs=${SystemClock.elapsedRealtime() - startedMs} ${e::class.java.simpleName}: ${e.message}",
+                )
+            }
             throw e
         }
     }

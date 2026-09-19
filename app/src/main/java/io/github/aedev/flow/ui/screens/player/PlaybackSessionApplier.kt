@@ -3,6 +3,7 @@ package io.github.aedev.flow.ui.screens.player
 import android.content.Context
 import android.util.Log
 import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.model.SponsorBlockSegment
 import io.github.aedev.flow.data.model.Video
@@ -15,11 +16,15 @@ import io.github.aedev.flow.data.video.VideoDownloadManager
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.player.error.VideoErrorMapper
+import io.github.aedev.flow.player.stream.BilibiliStreamBridge
+import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
 import io.github.aedev.flow.player.stream.PlaybackFailure
 import io.github.aedev.flow.player.stream.ResolvedPlayback
+import io.github.aedev.flow.player.stream.ServicePlaybackStreamSelector
 import io.github.aedev.flow.player.stream.StoryboardSpec
 import io.github.aedev.flow.player.stream.UpcomingDetails
+import io.github.aedev.flow.player.stream.VideoQualityOptions
 import io.github.aedev.flow.ui.screens.player.state.*
 import io.github.aedev.flow.utils.NetworkState
 import kotlinx.coroutines.CancellationException
@@ -32,6 +37,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.stream.SubtitlesStream
 
 /** The load a step belongs to: the video it resolved for, and the token saying it is still current. */
@@ -108,6 +114,10 @@ internal class PlaybackSessionApplier(
 
             is ResolvedPlayback.VodFromInnerTube -> {
                 applyVodFromInnerTube(load, step)
+            }
+
+            is ResolvedPlayback.VodFromBilibili -> {
+                applyVodFromBilibili(load, step)
             }
 
             is ResolvedPlayback.Upcoming -> {
@@ -232,6 +242,118 @@ internal class PlaybackSessionApplier(
                 }
             }
         }
+    }
+
+    private suspend fun applyVodFromBilibili(
+        load: LoadContext,
+        step: ResolvedPlayback.VodFromBilibili,
+    ) {
+        try {
+            prepareVodStreamFromBilibili(load, step)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Bilibili VOD failed for ${load.videoId}", e)
+            val videoError = VideoErrorMapper.from(context, e, load.videoId)
+            if (isLoadCurrent(load.token)) {
+                uiState.update { it.applyVodFailure(step.relatedVideos, videoError) }
+            }
+        }
+    }
+
+    /**
+     * The Bilibili counterpart of [prepareVodStreamFromInnerTube]. Bilibili has no watch-response
+     * metadata (heatmap, chapters, category, watch info), so only the lanes it can fill are armed.
+     */
+    private suspend fun prepareVodStreamFromBilibili(
+        load: LoadContext,
+        step: ResolvedPlayback.VodFromBilibili,
+    ) = withContext(Dispatchers.Main) {
+        if (!isLoadCurrent(load.token)) return@withContext
+
+        val videoId = load.videoId
+        val playback = step.playback
+        val bvid = playback.info.bvid
+        val videoStreams = BilibiliStreamBridge.convertVideoFormats(bvid, playback.videoFormats)
+        val audioStreams = BilibiliStreamBridge.convertAudioFormats(bvid, playback.audioFormats)
+        val selected =
+            ServicePlaybackStreamSelector.selectStreams(
+                videoCandidates = videoStreams,
+                audioCandidatesAll = audioStreams,
+                preferredQuality = step.preferredQuality,
+                preferredAudioLanguage = step.preferredAudioLanguage,
+                preferredCodecKey = step.preferredCodecKey,
+            )
+        val enrichedVideo = BilibiliVideoMapper.videoFromInfo(videoId, playback.info, uiState.value.cachedVideo)
+        val durationSeconds = playback.info.durationSec.toLong()
+        val isAdaptiveMode = step.preferredQuality == VideoQuality.AUTO
+
+        GlobalPlayerState.setCurrentVideo(enrichedVideo)
+        recordWatchClick(enrichedVideo)
+        playbackPreparer.beginSession(videoId, enrichedVideo.title, enrichedVideo.channelName, enrichedVideo.thumbnailUrl)
+        val autoplay = playbackPreparer.applyAutoplayCandidates(videoId = videoId, videos = step.relatedVideos)
+
+        val savedPositionMs =
+            step.resumePositionOverrideMs
+                ?.takeIf { it > 0L }
+                ?: viewHistory.getPlaybackPosition(videoId).first()
+
+        Log.w(
+            TAG,
+            "VOD playing $videoId via native Bilibili client (video=${videoStreams.size}, audio=${audioStreams.size})",
+        )
+
+        uiState.update {
+            it.applyVodStreams(
+                cachedVideo = enrichedVideo,
+                isArchivedLivestream = false,
+                relatedVideos = step.relatedVideos,
+                videoStream = selected.first,
+                audioStream = selected.second,
+                availableQualities = VideoQualityOptions.availableQualities(videoStreams),
+                savedPositionMs = savedPositionMs,
+                isAdaptiveMode = isAdaptiveMode,
+                autoplayEnabled = autoplay,
+                innerTubeVideoFormats = emptyList(),
+                innerTubeAudioFormats = emptyList(),
+                streamSizes = emptyMap(),
+                storyboard = emptyList(),
+            )
+        }
+
+        secondaryMetadata.loadRelatedVideos(videoId, step.relatedVideos, load.token)
+        secondaryMetadata.loadChannelMetadata(
+            videoId = videoId,
+            uploaderUrl = null,
+            channelId = enrichedVideo.channelId,
+            embeddedAvatarUrls = listOfNotNull(enrichedVideo.channelThumbnailUrl.takeIf { it.isNotBlank() }),
+            loadToken = load.token,
+        )
+
+        playbackPreparer.prepareVodStreams(
+            videoId = videoId,
+            videoStream = selected.first,
+            audioStream = selected.second,
+            videoStreams = videoStreams,
+            audioStreams = audioStreams,
+            subtitles = emptyList(),
+            durationSeconds = durationSeconds,
+            savedPositionMs = savedPositionMs,
+            resumeOverrideRequested = step.resumePositionOverrideMs != null,
+            isAdaptiveMode = isAdaptiveMode,
+            sabrInfo = null,
+            itVideoFormats = emptyList(),
+            itAudioFormats = emptyList(),
+            preferredVideoCodec = step.preferredCodecKey,
+            preferredLiveQualityHeight = step.preferredQuality.height,
+            isCurrent = { isLoadCurrent(load.token) },
+        )
+
+        // Same URL shape the extractor is asked for elsewhere; a no-op unless it is Bilibili.
+        playerManager.loadDanmaku(
+            ServiceList.BiliBili.serviceId,
+            ServiceList.BiliBili.streamLHFactory.getUrl(videoId),
+        )
     }
 
     private suspend fun applyPlaybackFailure(

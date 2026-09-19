@@ -648,6 +648,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                                 "/api/v1/comments" to { handleApiComments(os, params) },
                                 "/api/v1/watch_progress" to { handleApiWatchProgress(os, params) },
                                 "/api/v1/download" to { handleApiDownload(os, params) },
+                                "/api/v1/bilibili_probe" to { handleApiBilibiliProbe(os, params) },
                                 "/api/v1/recommendations" to { handleApiRecommendations(os, params) },
                                 "/api/v1/ping" to { handleApiPing(os) },
                             )

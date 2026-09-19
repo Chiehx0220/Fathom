@@ -261,12 +261,9 @@ object HtmlRendererWatch {
                 // separate quality/audio <select>s are gone. Row is skipped entirely when there's
                 // nothing to put in it.
                 if (serviceSupportsBulletComments(serviceId)) {
-                    sb.append("        <div class=\"player-controls-row\" style=\"display: flex; gap: 15px; margin-top: 10px; margin-bottom: 15px; align-items: center; justify-content: flex-start; flex-wrap: wrap;\">
-")
-                      .append("          <button class=\"danmaku-toggle-btn\" id=\"danmaku-toggle-btn\" title=\"彈幕開關\"><span class=\"material-symbols-rounded\">chat_bubble</span></button>
-")
-                      .append("        </div>
-")
+                    sb.append("        <div class=\"player-controls-row\" style=\"display: flex; gap: 15px; margin-top: 10px; margin-bottom: 15px; align-items: center; justify-content: flex-start; flex-wrap: wrap;\">\n")
+                      .append("          <button class=\"danmaku-toggle-btn\" id=\"danmaku-toggle-btn\" title=\"彈幕開關\"><span class=\"material-symbols-rounded\">chat_bubble</span></button>\n")
+                      .append("        </div>\n")
                 }
 
                 if (chapters.isNotEmpty()) {

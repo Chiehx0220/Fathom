@@ -10,6 +10,7 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.video.VideoDownloadManager
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.di.IoDispatcher
 import io.github.aedev.flow.di.NetworkIoDispatcher
 import io.github.aedev.flow.player.error.PlayerDiagnostics
@@ -64,6 +65,8 @@ class PlaybackLoadResolver
         @NetworkIoDispatcher private val networkDispatcher: CoroutineDispatcher,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) {
+        private val bilibiliSource by lazy { BilibiliPlaybackSource(bilibiliApi(context), repository) }
+
         /**
          * @param scope the caller's load job, which owns the two extraction legs so a NewPipe leg
          *   that outlives the resolution (the late-metadata case) stays tied to that job.
@@ -206,6 +209,13 @@ class PlaybackLoadResolver
             val videoId = request.videoId
             Log.d(TAG, "Loading video $videoId with preferred quality: ${preferences.quality.label} (isWifi=${request.isWifi})")
 
+            // InnerTube is YouTube's own API; every other service resolves through its own native
+            // client, which produces its own step type rather than an InnerTube result.
+            if (!InnerTubeVideoStreamExtractor.supportsService(request.serviceId)) {
+                resolveNonYouTube(request, preferences, offlineAbsolutePath, isOfflineAvailable, isCurrent, onStep)
+                return
+            }
+
             var innerTubeResult = innerTubeDeferred.await()
             currentCoroutineContext().ensureActive()
             if (!isCurrent()) return
@@ -269,6 +279,54 @@ class PlaybackLoadResolver
             } else {
                 Log.e(TAG, "InnerTube resolved nothing playable for $videoId and no offline copy found.")
                 onStep(upcomingOrFailure(videoId, PlaybackFailure.EXTRACTION, null, relatedVideos, resolveUpcoming))
+            }
+        }
+
+        private suspend fun resolveNonYouTube(
+            request: PlaybackResolutionRequest,
+            preferences: StreamPreferences,
+            offlineAbsolutePath: String?,
+            isOfflineAvailable: Boolean,
+            isCurrent: () -> Boolean,
+            onStep: suspend (ResolvedPlayback) -> Unit,
+        ) {
+            val videoId = request.videoId
+            val step =
+                try {
+                    bilibiliSource.resolve(request, preferences)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "Native extraction failed for $videoId (service ${request.serviceId})", e)
+                    currentCoroutineContext().ensureActive()
+                    if (!isCurrent()) return
+                    if (isOfflineAvailable) {
+                        onStep(
+                            ResolvedPlayback.OfflineFallback(
+                                localFilePath = offlineAbsolutePath,
+                                offlineSegments = storedSponsorBlockSegments(videoId),
+                                relatedVideos = emptyList(),
+                            ),
+                        )
+                    } else {
+                        // No premiere lookup: that is a YouTube call and means nothing for these ids.
+                        onStep(ResolvedPlayback.Failed(PlaybackFailure.EXTRACTION, e, relatedVideos = null))
+                    }
+                    return
+                }
+
+            currentCoroutineContext().ensureActive()
+            if (!isCurrent()) return
+            if (isOfflineAvailable) {
+                onStep(
+                    ResolvedPlayback.OfflineFallback(
+                        localFilePath = offlineAbsolutePath,
+                        offlineSegments = storedSponsorBlockSegments(videoId),
+                        relatedVideos = step.relatedVideos,
+                    ),
+                )
+            } else {
+                onStep(step)
             }
         }
 

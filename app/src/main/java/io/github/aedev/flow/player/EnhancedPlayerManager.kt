@@ -1778,10 +1778,10 @@ class EnhancedPlayerManager private constructor() {
                     val enrichedVideo = InnerTubeVideoMapper.videoFromResult(video.id, extraction, fallback = video)
                     GlobalPlayerState.setCurrentVideo(enrichedVideo)
                     startBackgroundService(
-                        videoId = resolved.enrichedVideo.id,
-                        title = resolved.enrichedVideo.title,
-                        channel = resolved.enrichedVideo.channelName,
-                        thumbnail = resolved.enrichedVideo.thumbnailUrl,
+                        videoId = enrichedVideo.id,
+                        title = enrichedVideo.title,
+                        channel = enrichedVideo.channelName,
+                        thumbnail = enrichedVideo.thumbnailUrl,
                     )
                     setAutoplayCandidates(
                         sourceVideoId = enrichedVideo.id,

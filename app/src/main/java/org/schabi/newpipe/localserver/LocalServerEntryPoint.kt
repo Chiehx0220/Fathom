@@ -9,6 +9,7 @@ import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionWatchedVideos
 import io.github.aedev.flow.data.video.VideoDownloadManager
 import io.github.aedev.flow.ui.screens.home.HomeFeedSources
+import okhttp3.OkHttpClient
 
 /**
  * Local Server's HTTP handlers run outside Hilt's graph (a plain background thread pool, not an
@@ -26,6 +27,8 @@ interface LocalServerEntryPoint {
     fun subscriptionWatchedVideos(): SubscriptionWatchedVideos
 
     fun videoDownloadManager(): VideoDownloadManager
+
+    fun okHttpClient(): OkHttpClient
 }
 
 fun localServerEntryPoint(context: Context): LocalServerEntryPoint =

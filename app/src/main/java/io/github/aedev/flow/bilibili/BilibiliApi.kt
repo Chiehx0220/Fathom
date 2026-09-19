@@ -92,18 +92,18 @@ class BilibiliApi(
             throw BilibiliContentNotAvailableException(message.ifBlank { "Bilibili code ${response.code}" })
         }
         val dash = response.data?.dash
-        if (dash == null || (dash.video.isEmpty() && dash.audio.isEmpty())) {
+        if (dash == null || (dash.video.isNullOrEmpty() && dash.audio.isNullOrEmpty())) {
             throw BilibiliPaidContentException("Paid content")
         }
 
         // Highest-quality audio first: FLAC, then Dolby, then the regular tracks, as PipePipe orders them.
         val audioItems =
-            listOfNotNull(dash.flac?.audio) + (dash.dolby?.audio.orEmpty()) + dash.audio
+            listOfNotNull(dash.flac?.audio) + (dash.dolby?.audio.orEmpty()) + dash.audio.orEmpty()
 
         val playback =
             BilibiliPlayback(
                 info = info,
-                videoFormats = dash.video.mapNotNull { it.toFormat() },
+                videoFormats = dash.video.orEmpty().mapNotNull { it.toFormat() },
                 audioFormats = audioItems.mapNotNull { it.toFormat() },
                 requestHeaders = session.userAgentHeaders(originalUrl),
             )

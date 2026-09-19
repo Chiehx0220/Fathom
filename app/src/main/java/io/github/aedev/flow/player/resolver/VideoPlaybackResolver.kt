@@ -9,6 +9,7 @@ import androidx.media3.exoplayer.hls.playlist.DefaultHlsPlaylistTracker
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
 import io.github.aedev.flow.player.config.PlayerConfig
+import io.github.aedev.flow.player.stream.BilibiliDashManifest
 import io.github.aedev.flow.player.stream.StreamProcessor
 import io.github.aedev.flow.player.stream.VideoCodecUtils
 import org.schabi.newpipe.extractor.stream.AudioStream
@@ -293,7 +294,7 @@ class VideoPlaybackResolver(
 
                 DeliveryMethod.PROGRESSIVE_HTTP -> {
                     // Generate DASH manifest for audio to avoid throttling
-                    if (durationSeconds > 0 && audioStream.itagItem != null) {
+                    if (durationSeconds > 0) {
                         createProgressiveDashSourceForAudio(audioStream, durationSeconds)
                     } else {
                         createProgressiveSourceForAudio(audioStream)
@@ -360,6 +361,17 @@ class VideoPlaybackResolver(
             }
         }
 
+        // Bilibili streams carry their own init/index ranges instead of an ItagItem.
+        BilibiliDashManifest.forVideo(stream, durationSeconds)?.let { manifest ->
+            Log.d(TAG, "Generating Bilibili DASH manifest for ${VideoCodecUtils.qualityHeightFromStream(stream)}p")
+            return MediaSourceBuilder.buildDashSource(
+                dashDataSourceFactory,
+                manifest,
+                Uri.parse(stream.content),
+                playbackItem(stream.content).build(),
+            )
+        }
+
         Log.w(TAG, "Progressive DASH manifest generation failed, using raw progressive (may throttle)")
         return createProgressiveSource(stream)
     }
@@ -411,6 +423,16 @@ class VideoPlaybackResolver(
                     playbackItem(stream.content).build(),
                 )
             }
+        }
+
+        BilibiliDashManifest.forAudio(stream, durationSeconds)?.let { manifest ->
+            Log.d(TAG, "Generating Bilibili DASH manifest for audio")
+            return MediaSourceBuilder.buildDashSource(
+                dashDataSourceFactory,
+                manifest,
+                Uri.parse(stream.content),
+                playbackItem(stream.content).build(),
+            )
         }
 
         return createProgressiveSourceForAudio(stream)

@@ -144,8 +144,8 @@ internal data class PlayUrlResponse(
 
     @Serializable
     data class Dash(
-        val video: List<DashItem> = emptyList(),
-        val audio: List<DashItem> = emptyList(),
+        val video: List<DashItem>? = null,
+        val audio: List<DashItem>? = null,
         val dolby: Dolby? = null,
         val flac: Flac? = null,
     )
