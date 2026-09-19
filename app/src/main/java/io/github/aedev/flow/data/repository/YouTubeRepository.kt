@@ -28,7 +28,6 @@ import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.avatarImageIdentityKey
 import io.github.aedev.flow.utils.bestImageUrl
 import io.github.aedev.flow.utils.distinctBestImageUrls
-import io.github.aedev.flow.utils.newPipeContentCountry
 import io.github.aedev.flow.utils.newPipeLocalization
 import io.github.aedev.flow.utils.parseRelativeToTimestamp
 import io.github.aedev.flow.utils.parseToTimestamp
@@ -898,106 +897,6 @@ class YouTubeRepository
                             }.awaitAll()
 
                     results.flatten().distinctBy { it.id }
-                }
-            }
-
-        /**
-         * Fetch trending videos for a specific category.
-         * Categories map to YouTube kiosk IDs used by NewPipe.
-         * For ALL, fetches from all non-live categories in parallel and interleaves them.
-         */
-        suspend fun getTrendingByCategory(
-            category: TrendingCategory,
-            region: String = "",
-        ): List<Video> =
-            withContext(Dispatchers.IO) {
-                val effectiveRegion = region.ifBlank { playerPreferences.trendingRegion.first() }
-                val country = newPipeContentCountry(effectiveRegion)
-                NewPipe.setupLocalization(newPipeLocalization(playerPreferences.appLanguage.first()), country)
-
-                when (category) {
-                    TrendingCategory.ALL -> {
-                        supervisorScope {
-                            val deferreds =
-                                listOf(
-                                    TrendingCategory.TRENDING,
-                                    TrendingCategory.GAMING,
-                                    TrendingCategory.MUSIC,
-                                    TrendingCategory.MOVIES,
-                                ).map { cat ->
-                                    async {
-                                        try {
-                                            fetchKiosk(cat.kioskId, country)
-                                        } catch (e: Exception) {
-                                            emptyList()
-                                        }
-                                    }
-                                }
-                            val results = deferreds.map { it.await() }
-                            interleaveRoundRobin(results)
-                        }
-                    }
-
-                    else -> {
-                        fetchKiosk(category.kioskId, country)
-                    }
-                }
-            }
-
-        private fun fetchKiosk(
-            kioskId: String,
-            country: ContentCountry,
-        ): List<Video> {
-            val kioskList = service.kioskList
-            kioskList.forceContentCountry(country)
-            val extractor = kioskList.getExtractorById(kioskId, null) as KioskExtractor<*>
-            extractor.fetchPage()
-            return extractor.initialPage.items
-                .filterIsInstance<StreamInfoItem>()
-                .map { it.toVideo() }
-        }
-
-        private fun <T> interleaveRoundRobin(lists: List<List<T>>): List<T> {
-            val result = mutableListOf<T>()
-            val iterators = lists.map { it.iterator() }.toMutableList()
-            while (iterators.any { it.hasNext() }) {
-                val iter = iterators.iterator()
-                while (iter.hasNext()) {
-                    val it = iter.next()
-                    if (it.hasNext()) result.add(it.next()) else iter.remove()
-                }
-            }
-            return result
-        }
-
-        /**
-         * Trending categories supported by NewPipe kiosk extractors.
-         */
-        enum class TrendingCategory(
-            val kioskId: String,
-            val displayName: String,
-        ) {
-            ALL("Trending", "All"),
-            TRENDING("Trending", "Trending"),
-            GAMING("trending_gaming", "Gaming"),
-            MUSIC("trending_music", "Music"),
-            MOVIES("trending_movies_and_shows", "Movies"),
-            LIVE("live", "Live"),
-        }
-
-        suspend fun prefetchTrendingAndShorts(region: String = ""): Pair<List<Video>, List<Video>> =
-            withContext(PerformanceDispatcher.networkIO) {
-                supervisorScope {
-                    val trendingDeferred =
-                        async {
-                            withTimeoutOrNull(12_000L) { getTrendingVideos(region).first } ?: emptyList()
-                        }
-                    val shortsDeferred =
-                        async {
-                            withTimeoutOrNull(10_000L) { getShorts().first } ?: emptyList()
-                        }
-
-                    Pair(trendingDeferred.await(), shortsDeferred.await())
                 }
             }
 
