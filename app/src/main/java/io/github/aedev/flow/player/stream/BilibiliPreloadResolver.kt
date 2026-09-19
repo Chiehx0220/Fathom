@@ -4,7 +4,6 @@ import android.content.Context
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.utils.NetworkState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -23,7 +22,6 @@ internal object BilibiliPreloadResolver {
         video: Video,
         context: Context,
         api: BilibiliApi,
-        repository: YouTubeRepository,
     ): ResolvedStreamData? {
         val (bvid, page) = BilibiliPlaybackSource.parseVideoId(video.id)
         val playback = withTimeoutOrNull(RESOLVE_TIMEOUT_MS) { api.playback(bvid, page) } ?: return null
@@ -47,9 +45,7 @@ internal object BilibiliPreloadResolver {
         // cost the preload.
         val related =
             runCatching {
-                withTimeoutOrNull(RELATED_TIMEOUT_MS) {
-                    repository.getRelatedCandidates(video.id, video.serviceId)
-                }
+                withTimeoutOrNull(RELATED_TIMEOUT_MS) { BilibiliPlaybackSource.relatedVideos(api, bvid) }
             }.getOrNull().orEmpty()
 
         return ResolvedStreamData(

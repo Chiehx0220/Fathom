@@ -3,7 +3,6 @@ package io.github.aedev.flow.player.stream
 import android.util.Log
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.repository.YouTubeRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -11,12 +10,11 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Bilibili's leg of [PlaybackLoadResolver]: what [InnerTubeVideoStreamExtractor] is for YouTube.
- * Fetches the video's streams through the native client and its related lane through the
- * repository, and hands both back as one [ResolvedPlayback] step.
+ * Fetches the video's streams and its related lane through the native client, and hands both back
+ * as one [ResolvedPlayback] step.
  */
 internal class BilibiliPlaybackSource(
     private val api: BilibiliApi,
-    private val repository: YouTubeRepository,
 ) {
     suspend fun resolve(
         request: PlaybackResolutionRequest,
@@ -29,7 +27,7 @@ internal class BilibiliPlaybackSource(
                 async {
                     try {
                         withTimeoutOrNull(RELATED_TIMEOUT_MS) {
-                            repository.getRelatedCandidates(request.videoId, request.serviceId)
+                            relatedVideos(api, bvid)
                         }.orEmpty()
                     } catch (e: CancellationException) {
                         throw e
@@ -52,6 +50,16 @@ internal class BilibiliPlaybackSource(
     companion object {
         private const val TAG = "BilibiliPlaybackSource"
         private const val RELATED_TIMEOUT_MS = 6_000L
+
+        /** The related lane as screen [Video]s, without the video itself and without repeats. */
+        internal suspend fun relatedVideos(
+            api: BilibiliApi,
+            bvid: String,
+        ): List<Video> =
+            api.related(bvid)
+                .filter { it.bvid != bvid }
+                .map { BilibiliVideoMapper.videoFromRelated(it) }
+                .distinctBy { it.id }
 
         /** "BV1xx?p=3" -> ("BV1xx", 3). A missing or unreadable part number means the first part. */
         internal fun parseVideoId(videoId: String): Pair<String, Int> {

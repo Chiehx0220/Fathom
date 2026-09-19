@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import io.github.aedev.flow.data.model.Channel
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.model.Playlist
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.paging.SearchResultItem
@@ -218,7 +219,10 @@ private fun Video.asChannel(channelId: String) =
         name = channelName,
         thumbnailUrl = channelThumbnailUrl,
         subscriberCount = 0,
-        url = "https://www.youtube.com/channel/$channelId",
+        // Only YouTube ids fit this URL shape; another service's channel is opened from its id and
+        // service, which the navigation resolves through that service's own link handler.
+        url = if (serviceId.isYouTubeServiceId) "https://www.youtube.com/channel/$channelId" else "",
+        serviceId = serviceId,
     )
 
 /** The hero card and every strip own their row; only results share one. */

@@ -13,6 +13,8 @@ and re-port only what changed. Bump the commit above when done.
 | `BilibiliSigning.kt` | `services/bilibili/utils.java` | av/bv codec, WBI mixin key + signature, dm_img_* telemetry |
 | `BilibiliSession.kt` | `services/bilibili/BilibiliService.java`, `utils.java` (encWbi) | Anonymous cookies (spi, bili_ticket, buvid_fp), headers, daily mixin-key fetch |
 | `BilibiliDanmaku.kt` | `services/bilibili/extractors/BilibiliBulletCommentsExtractor.java`, `BilibiliBulletCommentsInfoItemExtractor.java`, `utils.decompress` | VOD danmaku list (`x/v1/dm/list.so`), raw-deflate XML, the 2.5s sync offset |
+| `BilibiliSearchParser.kt` (+ `BilibiliApi.search`) | `extractors/BilibiliStreamInfoItemExtractor.java`, `BilibiliSearchResultChannelInfoItemExtractor.java`, `BilibiliSearchExtractor.java` | search rows (video, user) |
+| `BilibiliApi.kt` (`related`) | `services/bilibili/extractors/BilibiliRelatedInfoItemExtractor.java`, `BilibiliService.GET_RELATED_URL` | related-videos lane |
 | `BilibiliApi.kt` | `services/bilibili/extractors/BillibiliStreamExtractor.java` | view + playurl request, DASH stream parsing |
 
 ## Not ported yet

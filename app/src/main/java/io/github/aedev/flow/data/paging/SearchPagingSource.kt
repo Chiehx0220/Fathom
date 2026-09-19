@@ -2,6 +2,7 @@ package io.github.aedev.flow.data.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.data.model.Video
@@ -31,6 +32,7 @@ class SearchPagingSource(
     private val onHeader: (SearchHeader) -> Unit = {},
     private val loadPage: SearchPageLoader = DefaultSearchPageLoader,
     private val blockedChannelIds: suspend () -> Set<String> = { emptySet() },
+    private val bilibiliApi: BilibiliApi? = null,
 ) : PagingSource<String, SearchResultItem>() {
     override fun getRefreshKey(state: PagingState<String, SearchResultItem>): String? = null
 
@@ -42,6 +44,9 @@ class SearchPagingSource(
         val continuation = params.key
         return try {
             if (!isYouTube) {
+                if (bilibiliApi != null && serviceId == ServiceList.BiliBili.serviceId) {
+                    return BilibiliNativeSearch.load(bilibiliApi, query, filter, continuation, loadedItemKeys)
+                }
                 return BilibiliSearchLoader.load(service, query, filter, shortsEnabled, continuation, loadedItemKeys)
             }
 

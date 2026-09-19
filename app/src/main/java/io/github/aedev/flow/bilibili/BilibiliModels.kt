@@ -15,6 +15,45 @@ data class BilibiliChapter(
     val imageUrl: String?,
 )
 
+/** One entry of a video's "related videos" lane. */
+data class BilibiliRelated(
+    val bvid: String,
+    val title: String,
+    val thumbnailUrl: String,
+    val durationSec: Int,
+    val viewCount: Long,
+    val uploader: BilibiliUploader,
+    val uploadTimeSec: Long,
+)
+
+enum class BilibiliSearchType(val apiValue: String) { VIDEO("video"), USER("bili_user") }
+
+sealed interface BilibiliSearchItem {
+    data class Video(
+        val bvid: String,
+        val title: String,
+        val thumbnailUrl: String,
+        val durationSec: Int,
+        val viewCount: Long,
+        val uploader: BilibiliUploader,
+        val uploadTimeSec: Long,
+    ) : BilibiliSearchItem
+
+    data class User(
+        val mid: Long,
+        val name: String,
+        val avatarUrl: String,
+        val description: String,
+        val followerCount: Long,
+        val videoCount: Int,
+    ) : BilibiliSearchItem
+}
+
+data class BilibiliSearchPage(
+    val items: List<BilibiliSearchItem>,
+    val hasMore: Boolean,
+)
+
 data class BilibiliUploader(
     val mid: Long,
     val name: String,
@@ -203,5 +242,55 @@ internal data class PlayerV2Response(
         val content: String = "",
         val from: Long = 0,
         val imgUrl: String = "",
+    )
+}
+
+@Serializable
+internal data class RelatedResponse(
+    val code: Int = 0,
+    val data: List<Item>? = null,
+) {
+    @Serializable
+    data class Item(
+        val bvid: String = "",
+        val aid: Long = 0,
+        val title: String = "",
+        val pic: String = "",
+        val duration: Int = 0,
+        val pubdate: Long = 0,
+        val owner: ViewResponse.Owner = ViewResponse.Owner(),
+        val stat: ViewResponse.Stat = ViewResponse.Stat(),
+    )
+}
+
+@Serializable
+internal data class SearchResponse(
+    val code: Int = 0,
+    val data: Data? = null,
+) {
+    @Serializable
+    data class Data(
+        val numPages: Int = 0,
+        val result: List<Item>? = null,
+    )
+
+    /** One row; the fields a video row and a user row each use are all optional here. */
+    @Serializable
+    data class Item(
+        val type: String = "",
+        val bvid: String = "",
+        val aid: Long = 0,
+        val title: String = "",
+        val pic: String = "",
+        val duration: String = "",
+        val play: Long = 0,
+        val author: String = "",
+        val mid: Long = 0,
+        val upic: String = "",
+        val pubdate: Long = 0,
+        val uname: String = "",
+        val usign: String = "",
+        val fans: Long = 0,
+        val videos: Int = 0,
     )
 }

@@ -65,7 +65,7 @@ class PlaybackLoadResolver
         @NetworkIoDispatcher private val networkDispatcher: CoroutineDispatcher,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) {
-        private val bilibiliSource by lazy { BilibiliPlaybackSource(bilibiliApi(context), repository) }
+        private val bilibiliSource by lazy { BilibiliPlaybackSource(bilibiliApi(context)) }
 
         /**
          * @param scope the caller's load job, which owns the two extraction legs so a NewPipe leg

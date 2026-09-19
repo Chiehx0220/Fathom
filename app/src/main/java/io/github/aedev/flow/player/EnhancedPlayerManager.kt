@@ -1916,7 +1916,6 @@ class EnhancedPlayerManager private constructor() {
                         video = video,
                         context = context,
                         api = io.github.aedev.flow.di.bilibiliApi(context),
-                        repository = YouTubeRepository.getInstance(),
                     )
                 } catch (e: CancellationException) {
                     throw e

@@ -93,6 +93,7 @@ class SearchViewModel
                                 serviceId = key.serviceId,
                                 onHeader = ::onHeader,
                                 blockedChannelIds = { FlowNeuroEngine.getInstance(context).getBlockedChannels() },
+                                bilibiliApi = io.github.aedev.flow.di.bilibiliApi(context),
                             )
                         },
                     ).flow

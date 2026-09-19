@@ -129,6 +129,52 @@ class BilibiliApi(
     }
 
     /**
+     * One page (1-based) of search results, as PipePipe's search extractor reads
+     * `search/type`: a plain GET carrying the anonymous cookies, no WBI signature. Live rooms,
+     * anime and film results are not read yet, so those rows are skipped.
+     */
+    suspend fun search(
+        keyword: String,
+        type: BilibiliSearchType,
+        page: Int,
+    ): BilibiliSearchPage {
+        val headers = session.headers("https://www.bilibili.com/")
+        val url =
+            "$SEARCH_URL?search_type=${type.apiValue}&keyword=${java.net.URLEncoder.encode(keyword, "UTF-8").replace("+", "%20")}&page=$page"
+        val response = json.decodeFromString<SearchResponse>(session.get(url, headers))
+        if (response.code != 0) {
+            throw BilibiliContentNotAvailableException("Bilibili search code ${response.code}")
+        }
+        val data = response.data ?: return BilibiliSearchPage(emptyList(), false)
+        val items = data.result.orEmpty().mapNotNull { BilibiliSearchParser.toItem(it) }
+        return BilibiliSearchPage(items, hasMore = page < data.numPages && !data.result.isNullOrEmpty())
+    }
+
+    /**
+     * The related-videos lane for [bvid], as PipePipe reads it (`archive/related`). Empty on any
+     * non-zero code: a missing lane must never fail the playback it sits beside.
+     */
+    suspend fun related(bvid: String): List<BilibiliRelated> {
+        val headers = session.headers("https://www.bilibili.com/video/$bvid")
+        val response = json.decodeFromString<RelatedResponse>(session.get("$RELATED_URL$bvid", headers))
+        if (response.code != 0) return emptyList()
+        return response.data.orEmpty().mapNotNull { item ->
+            // PipePipe falls back to the av number when a row carries no bvid.
+            val id = item.bvid.ifEmpty { if (item.aid > 0) BilibiliSigning.av2bv(item.aid) else "" }
+            if (id.isEmpty()) return@mapNotNull null
+            BilibiliRelated(
+                bvid = id,
+                title = item.title,
+                thumbnailUrl = item.pic.replace("http:", "https:"),
+                durationSec = item.duration,
+                viewCount = item.stat.view,
+                uploader = BilibiliUploader(item.owner.mid, item.owner.name, item.owner.face.replace("http:", "https:")),
+                uploadTimeSec = item.pubdate,
+            )
+        }
+    }
+
+    /**
      * Every danmaku of [info]'s part (the VOD list, not live). Ported from PipePipe's bullet-comment
      * extractor; the endpoint takes the part's cid.
      */
@@ -165,6 +211,8 @@ class BilibiliApi(
     companion object {
         const val VIEW_URL = "https://api.bilibili.com/x/web-interface/wbi/view"
         const val PLAYER_V2_URL = "https://api.bilibili.com/x/player/wbi/v2"
+        const val SEARCH_URL = "https://api.bilibili.com/x/web-interface/search/type"
+        const val RELATED_URL = "https://api.bilibili.com/x/web-interface/archive/related?bvid="
         const val DANMAKU_URL = "https://api.bilibili.com/x/v1/dm/list.so?oid="
         const val PLAYURL_URL = "https://api.bilibili.com/x/player/wbi/playurl"
     }
