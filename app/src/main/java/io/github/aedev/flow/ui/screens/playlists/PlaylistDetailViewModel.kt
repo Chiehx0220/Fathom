@@ -9,6 +9,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
+import io.github.aedev.flow.bilibili.BilibiliPlaylistId
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.migration.WatchLaterMetadataMigrator
@@ -23,6 +25,7 @@ import io.github.aedev.flow.ui.components.library.PlaylistSortOrder
 import io.github.aedev.flow.ui.components.library.sortedForPlaylist
 import io.github.aedev.flow.ui.screens.player.util.VideoPlayerUtils
 import io.github.aedev.flow.utils.PerformanceDispatcher
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -373,6 +376,10 @@ class PlaylistDetailViewModel
         }
 
         private suspend fun loadRemotePlaylist() {
+            BilibiliPlaylistId.parse(playlistId)?.let { ref ->
+                loadBilibiliPlaylist(ref)
+                return
+            }
             try {
                 val details = youTubeRepository.getPlaylistDetails(playlistId)
                 if (details != null) {
@@ -437,6 +444,33 @@ class PlaylistDetailViewModel
                         isLoading = false,
                         errorMessage = context.getString(R.string.playlist_load_failed),
                     )
+                }
+            }
+        }
+
+        private suspend fun loadBilibiliPlaylist(ref: BilibiliPlaylistId.Parsed) {
+            try {
+                val details = BilibiliPlaylistLoader.load(bilibiliApi(context), playlistId, ref)
+                _uiState.update {
+                    it.copy(
+                        playlistName = details.name,
+                        description = "",
+                        isPrivate = false,
+                        videos = details.videos,
+                        thumbnailUrl = details.thumbnailUrl,
+                        isLocalPlaylist = false,
+                        isSaved = false,
+                        isWatchLater = false,
+                        isLoading = false,
+                        errorMessage = null,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.w("PlaylistDetail", "Bilibili playlist failed: ${e.message}")
+                _uiState.update {
+                    it.copy(isLoading = false, errorMessage = context.getString(R.string.playlist_load_failed))
                 }
             }
         }

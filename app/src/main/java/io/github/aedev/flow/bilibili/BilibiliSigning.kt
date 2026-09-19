@@ -88,6 +88,19 @@ object BilibiliSigning {
     }
     // endregion
 
+    // region App signature
+    private const val APP_KEY = "1d8b6e7d45233436"
+    private const val APP_SEC = "560c52ccd288fed045859ed18bffd973"
+
+    /** Adds appkey and sign to [params] and returns the query string, as PipePipe's encAppSign does. */
+    fun signApp(params: LinkedHashMap<String, String>): String {
+        params["appkey"] = APP_KEY
+        val toSign = TreeMap(params).entries.joinToString("&") { URLEncoder.encode(it.key, "UTF-8") + "=" + URLEncoder.encode(it.value, "UTF-8") }
+        params["sign"] = MessageDigest.getInstance("MD5").digest((toSign + APP_SEC).toByteArray(Charsets.UTF_8)).toHex()
+        return params.entries.joinToString("&") { it.key + "=" + it.value }
+    }
+    // endregion
+
     // region dm_img telemetry
     private fun wh(width: Int, height: Int, random: Random): IntArray {
         val rnd = random.nextInt(114)

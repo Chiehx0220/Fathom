@@ -223,6 +223,19 @@ class BilibiliSession(
         }
     }
 
+    /** Like [get], but the body comes back whatever the HTTP status: a risk-control block is a 412 with a page in it. */
+    internal suspend fun getLenient(
+        url: String,
+        headers: Map<String, String>,
+    ): String {
+        val builder = Request.Builder().url(url)
+        headers.forEach { (k, v) -> builder.header(k, v) }
+        val request = builder.build()
+        return withContext(Dispatchers.IO) {
+            http.newCall(request).execute().use { response -> response.body?.string().orEmpty() }
+        }
+    }
+
     private fun ByteArray.toHexLower(): String = joinToString("") { "%02x".format(it) }
 
     private fun ByteArray.toHexUpper(): String = joinToString("") { "%02X".format(it) }

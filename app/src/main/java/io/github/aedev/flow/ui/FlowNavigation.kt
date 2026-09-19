@@ -262,7 +262,7 @@ fun NavGraphBuilder.flowAppGraph(
                 navController.navigate("musicPlayer/${track.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl")
             },
             onPlaylistClick = { playlistId ->
-                navController.navigate("playlist/$playlistId")
+                navController.navigate("playlist/${android.net.Uri.encode(playlistId)}")
             },
             onMusicPlaylistClick = { playlistId ->
                 navController.navigate("musicPlaylist/$playlistId")
@@ -318,7 +318,7 @@ fun NavGraphBuilder.flowAppGraph(
                 navController.navigateToYoutubeChannel(channel.url.ifBlank { channel.id }, channel.serviceId)
             },
             onPlaylistClick = { playlist ->
-                navController.navigate("playlist/${playlist.id}")
+                navController.navigate("playlist/${android.net.Uri.encode(playlist.id)}")
             },
             onBack = {
                 if (!navController.popBackStack()) navController.navigate("home")
@@ -627,7 +627,7 @@ fun NavGraphBuilder.flowAppGraph(
                 }
             },
             onPlaylistClick = { playlistId ->
-                navController.navigate("playlist/$playlistId")
+                navController.navigate("playlist/${android.net.Uri.encode(playlistId)}")
             },
             onBackClick = { navController.popBackStack() },
         )
@@ -728,7 +728,7 @@ fun NavGraphBuilder.flowAppGraph(
         PlaylistsScreen(
             onBackClick = { navController.popBackStack() },
             onVideoPlaylistClick = { playlist ->
-                navController.navigate("playlist/${playlist.id}")
+                navController.navigate("playlist/${android.net.Uri.encode(playlist.id)}")
             },
             onMusicPlaylistClick = { playlist ->
                 navController.navigate("musicPlaylist/${playlist.id}")
