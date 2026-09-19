@@ -82,20 +82,16 @@ private data class BilibiliWave1Feeds(
     val viral: List<Video>,
 )
 
-// Bilibili's three wave-1 fetches (subscribed-channel uploads, discovery search, trending),
-// factored out of the wave-1 supervisorScope in loadFlowFeed() so upstream's own YouTube-side
-// fetch logic there isn't interleaved with ours line-for-line - a future upstream change to the
-// wave-1 fetch strategy is far less likely to land on these lines when they're not sitting inline
-// next to it.
+// Bilibili's three wave-1 fetches (subs, discovery, trending), factored out of loadFlowFeed()'s
+// supervisorScope to reduce merge-conflict surface with upstream's YouTube-side fetch logic there.
 private fun CoroutineScope.launchBilibiliWave1Feeds(
     repository: YouTubeRepository,
     subscriptionRepository: SubscriptionRepository,
     wave1Queries: List<String>,
 ): Deferred<BilibiliWave1Feeds> =
     async {
-        // getAllSubscriptionIds() is a flat id set with no service info - the subs pool fetch
-        // below needs to know which subscribed channels are Bilibili so it can route them
-        // through the right extractor instead of silently dropping them.
+        // getAllSubscriptionIds() has no per-service info - filter to Bilibili channels here so
+        // the fetch below routes through the right extractor.
         val bilibiliSubChannelIds =
             runCatching {
                 subscriptionRepository
@@ -105,9 +101,8 @@ private fun CoroutineScope.launchBilibiliWave1Feeds(
                     .map { it.channelId }
             }.getOrElse { emptyList() }
 
-        // getSubscriptionFeed() is YouTube-only (its rotation cursor is sized/tuned for that),
-        // so Bilibili subscriptions get their own small, uncursored fetch here rather than being
-        // folded into that rotation.
+        // getSubscriptionFeed()'s rotation cursor is YouTube-tuned - Bilibili gets its own small,
+        // uncursored fetch instead.
         val deferredSubs =
             async {
                 fetchSafely(enabled = bilibiliSubChannelIds.isNotEmpty()) {
@@ -120,9 +115,8 @@ private fun CoroutineScope.launchBilibiliWave1Feeds(
                 }
             }
 
-        // Bilibili's own search/trending pool, so Home's content-source filter (see
-        // HomeContentSourceFilter) has real non-subscription Bilibili content to show, not just
-        // the fresh-subs RSS lane.
+        // Gives HomeContentSourceFilter real non-subscription Bilibili content, not just the
+        // fresh-subs RSS lane.
         val deferredDiscovery =
             async {
                 wave1Queries
