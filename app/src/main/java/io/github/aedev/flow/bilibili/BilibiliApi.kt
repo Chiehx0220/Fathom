@@ -113,6 +113,31 @@ class BilibiliApi(
         return playback
     }
 
+    /**
+     * The uploader's chapter marks for [info]'s part; empty when there are none. Not part of
+     * PipePipeExtractor: it reads the web player's own info endpoint, so PPE diffs do not cover it.
+     */
+    suspend fun chapters(info: BilibiliVideoInfo): List<BilibiliChapter> {
+        val params = linkedMapOf("aid" to info.aid.toString(), "cid" to info.cid.toString())
+        val headers = session.headers("https://www.bilibili.com/video/${info.bvid}")
+        loggedInCookie()?.let { headers["Cookie"] = it }
+        val body = session.get(session.signedUrl(PLAYER_V2_URL, params), headers)
+        val response = json.decodeFromString<PlayerV2Response>(body)
+        return response.data?.viewPoints.orEmpty()
+            .filter { it.content.isNotBlank() }
+            .map { BilibiliChapter(it.content, it.from.toInt(), it.imgUrl.takeIf { url -> url.isNotBlank() }) }
+    }
+
+    /**
+     * Every danmaku of [info]'s part (the VOD list, not live). Ported from PipePipe's bullet-comment
+     * extractor; the endpoint takes the part's cid.
+     */
+    suspend fun danmaku(info: BilibiliVideoInfo): List<BilibiliDanmaku> {
+        val headers = session.headers("https://www.bilibili.com/video/${info.bvid}")
+        val raw = session.getBytes("$DANMAKU_URL${info.cid}", headers)
+        return BilibiliDanmakuParser.parse(BilibiliDanmakuParser.decodeBody(raw))
+    }
+
     private fun PlayUrlResponse.DashItem.toFormat(): BilibiliStreamFormat? {
         if (baseUrl.isEmpty()) return null
         return BilibiliStreamFormat(
@@ -139,6 +164,8 @@ class BilibiliApi(
 
     companion object {
         const val VIEW_URL = "https://api.bilibili.com/x/web-interface/wbi/view"
+        const val PLAYER_V2_URL = "https://api.bilibili.com/x/player/wbi/v2"
+        const val DANMAKU_URL = "https://api.bilibili.com/x/v1/dm/list.so?oid="
         const val PLAYURL_URL = "https://api.bilibili.com/x/player/wbi/playurl"
     }
 }

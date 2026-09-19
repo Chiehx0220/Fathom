@@ -207,6 +207,22 @@ class BilibiliSession(
         return execute(builder.build()).body
     }
 
+    /** The response body as bytes, for endpoints that answer with something other than text. */
+    internal suspend fun getBytes(
+        url: String,
+        headers: Map<String, String>,
+    ): ByteArray {
+        val builder = Request.Builder().url(url)
+        headers.forEach { (k, v) -> builder.header(k, v) }
+        val request = builder.build()
+        return withContext(Dispatchers.IO) {
+            http.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw IOException("HTTP ${response.code} for ${request.url.host}")
+                response.body?.bytes() ?: ByteArray(0)
+            }
+        }
+    }
+
     private fun ByteArray.toHexLower(): String = joinToString("") { "%02x".format(it) }
 
     private fun ByteArray.toHexUpper(): String = joinToString("") { "%02X".format(it) }

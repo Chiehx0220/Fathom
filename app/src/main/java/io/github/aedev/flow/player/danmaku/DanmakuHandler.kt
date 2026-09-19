@@ -1,6 +1,11 @@
 package io.github.aedev.flow.player.danmaku
 
 import android.util.Log
+import io.github.aedev.flow.bilibili.BilibiliApi
+import io.github.aedev.flow.bilibili.BilibiliDanmaku
+import io.github.aedev.flow.bilibili.BilibiliDanmakuPosition
+import io.github.aedev.flow.bilibili.BilibiliVideoInfo
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -53,6 +58,29 @@ class DanmakuHandler(
         _comments.value = emptyList()
     }
 
+    /**
+     * Loads the danmaku of one Bilibili part through the native client, with no StreamInfo fetch
+     * ahead of it: the part's cid is already in [info].
+     */
+    fun loadBilibili(
+        api: BilibiliApi,
+        info: BilibiliVideoInfo,
+    ) {
+        loadJob?.cancel()
+        loadJob =
+            scope.launch(Dispatchers.IO) {
+                try {
+                    val loaded = api.danmaku(info).map { it.toDanmakuComment() }
+                    Log.w(TAG, "Bilibili danmaku for ${info.bvid}: ${loaded.size}")
+                    withContext(Dispatchers.Main) { _comments.value = loaded }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to load danmaku for ${info.bvid}: ${e.message}")
+                }
+            }
+    }
+
     fun loadComments(
         serviceId: Int,
         videoUrl: String,
@@ -95,4 +123,18 @@ private fun BulletCommentsInfoItem.toDanmakuComment() =
                 else -> DanmakuPosition.SCROLL
             },
         relativeFontSize = relativeFontSize.toFloat(),
+    )
+
+private fun BilibiliDanmaku.toDanmakuComment() =
+    DanmakuComment(
+        text = text,
+        timeMs = timeMs,
+        argbColor = argbColor,
+        position =
+            when (position) {
+                BilibiliDanmakuPosition.TOP -> DanmakuPosition.TOP
+                BilibiliDanmakuPosition.BOTTOM -> DanmakuPosition.BOTTOM
+                BilibiliDanmakuPosition.SCROLL -> DanmakuPosition.SCROLL
+            },
+        relativeFontSize = relativeFontSize,
     )

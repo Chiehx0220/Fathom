@@ -2,6 +2,9 @@ package io.github.aedev.flow.ui.screens.player
 
 import android.content.Context
 import android.util.Log
+import io.github.aedev.flow.bilibili.BilibiliVideoInfo
+import io.github.aedev.flow.di.bilibiliApi
+import io.github.aedev.flow.innertube.models.response.VideoChapter
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.local.ViewHistory
@@ -321,6 +324,7 @@ internal class PlaybackSessionApplier(
             )
         }
 
+        loadBilibiliChapters(load, playback.info)
         secondaryMetadata.loadRelatedVideos(videoId, step.relatedVideos, load.token)
         secondaryMetadata.loadChannelMetadata(
             videoId = videoId,
@@ -349,11 +353,7 @@ internal class PlaybackSessionApplier(
             isCurrent = { isLoadCurrent(load.token) },
         )
 
-        // Same URL shape the extractor is asked for elsewhere; a no-op unless it is Bilibili.
-        playerManager.loadDanmaku(
-            ServiceList.BiliBili.serviceId,
-            ServiceList.BiliBili.streamLHFactory.getUrl(videoId),
-        )
+        playerManager.loadDanmaku(bilibiliApi(context), playback.info)
     }
 
     private suspend fun applyPlaybackFailure(
@@ -545,6 +545,29 @@ internal class PlaybackSessionApplier(
     private fun applyHeatmap(result: SecondaryMetadata.Heatmap) {
         if (!isLoadCurrent(result.loadToken)) return
         uiState.update { it.copy(heatmap = result.heatmap) }
+    }
+
+    /** Off the playback path: a slow or failing chapter request must never delay the first frame. */
+    private fun loadBilibiliChapters(
+        load: LoadContext,
+        info: BilibiliVideoInfo,
+    ) {
+        scope.launch(networkDispatcher) {
+            val chapters =
+                try {
+                    withTimeoutOrNull(8_000L) { bilibiliApi(context).chapters(info) }.orEmpty()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "Bilibili chapters failed for ${load.videoId}: ${e.message}")
+                    emptyList()
+                }
+            Log.w(TAG, "Bilibili chapters for ${load.videoId}: ${chapters.size}")
+            if (chapters.isEmpty() || !isLoadCurrent(load.token)) return@launch
+            uiState.update { state ->
+                state.applyChapters(chapters.map { VideoChapter(it.title, it.startSeconds, it.imageUrl) })
+            }
+        }
     }
 
     private fun applyChapters(result: SecondaryMetadata.Chapters) {

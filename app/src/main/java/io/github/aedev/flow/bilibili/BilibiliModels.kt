@@ -9,6 +9,12 @@ import kotlinx.serialization.Serializable
 
 // region What callers get back
 
+data class BilibiliChapter(
+    val title: String,
+    val startSeconds: Int,
+    val imageUrl: String?,
+)
+
 data class BilibiliUploader(
     val mid: Long,
     val name: String,
@@ -181,3 +187,21 @@ internal data class PlayUrlResponse(
 }
 
 // endregion
+
+@Serializable
+internal data class PlayerV2Response(
+    val code: Int = 0,
+    val data: Data? = null,
+) {
+    @Serializable
+    data class Data(
+        @SerialName("view_points") val viewPoints: List<ViewPoint> = emptyList(),
+    )
+
+    @Serializable
+    data class ViewPoint(
+        val content: String = "",
+        val from: Long = 0,
+        val imgUrl: String = "",
+    )
+}

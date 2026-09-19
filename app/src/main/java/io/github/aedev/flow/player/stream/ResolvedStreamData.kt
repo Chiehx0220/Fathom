@@ -31,5 +31,7 @@ internal data class ResolvedStreamData(
     val itVideoFormats: List<PlayerResponse.StreamingData.Format>,
     val itAudioFormats: List<PlayerResponse.StreamingData.Format>,
     val hlsUrl: String? = null,
+    /** Set for Bilibili videos; what their danmaku is fetched by once the preload is promoted. */
+    val bilibiliInfo: io.github.aedev.flow.bilibili.BilibiliVideoInfo? = null,
     val sabrInfo: SabrStreamInfo? = null,
 )

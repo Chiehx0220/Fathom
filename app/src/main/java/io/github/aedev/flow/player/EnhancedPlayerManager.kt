@@ -1905,6 +1905,26 @@ class EnhancedPlayerManager private constructor() {
         context: Context,
     ): ResolvedStreamData? =
         coroutineScope {
+            if (!io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
+                    .supportsService(video.serviceId)
+            ) {
+                if (video.serviceId != org.schabi.newpipe.extractor.ServiceList.BiliBili.serviceId) {
+                    return@coroutineScope null
+                }
+                return@coroutineScope try {
+                    io.github.aedev.flow.player.stream.BilibiliPreloadResolver.resolve(
+                        video = video,
+                        context = context,
+                        api = io.github.aedev.flow.di.bilibiliApi(context),
+                        repository = YouTubeRepository.getInstance(),
+                    )
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "Bilibili preload resolve failed for ${video.id}: ${e.message}")
+                    null
+                }
+            }
             val extractionDeferred =
                 async(Dispatchers.IO) {
                     try {
@@ -2033,6 +2053,13 @@ class EnhancedPlayerManager private constructor() {
 
         sponsorBlockHandler?.reset()
         sponsorBlockHandler?.loadSegments(data.enrichedVideo.id)
+        val danmakuInfo = data.bilibiliInfo
+        val danmakuContext = appContext
+        if (danmakuInfo != null && danmakuContext != null) {
+            loadDanmaku(io.github.aedev.flow.di.bilibiliApi(danmakuContext), danmakuInfo)
+        } else {
+            resetDanmaku()
+        }
 
         GlobalPlayerState.setCurrentVideo(data.enrichedVideo)
         startBackgroundService(
@@ -2728,6 +2755,14 @@ class EnhancedPlayerManager private constructor() {
     ) {
         danmakuHandler?.reset()
         danmakuHandler?.loadComments(serviceId, videoUrl)
+    }
+
+    fun loadDanmaku(
+        api: io.github.aedev.flow.bilibili.BilibiliApi,
+        info: io.github.aedev.flow.bilibili.BilibiliVideoInfo,
+    ) {
+        danmakuHandler?.reset()
+        danmakuHandler?.loadBilibili(api, info)
     }
 
     fun resetDanmaku() = danmakuHandler?.reset()
