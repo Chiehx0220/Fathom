@@ -289,20 +289,7 @@ fun FlowApp(
 
         val musicPlayerSheetState = rememberMusicPlayerSheetState()
 
-        val activeVideo =
-            playerUiState.cachedVideo ?: playerUiState.streamInfo?.let { streamInfo ->
-                Video(
-                    id = streamInfo.id,
-                    title = streamInfo.name ?: "",
-                    channelName = streamInfo.uploaderName ?: "",
-                    channelId = streamInfo.uploaderUrl?.substringAfterLast("/") ?: "",
-                    thumbnailUrl = streamInfo.thumbnails.maxByOrNull { it.height }?.url ?: "",
-                    duration = streamInfo.duration.toInt(),
-                    viewCount = streamInfo.viewCount,
-                    uploadDate = "",
-                    serviceId = streamInfo.serviceId,
-                )
-            }
+        val activeVideo = playerUiState.cachedVideo
 
         LaunchedEffect(playerSheetState.currentValue, playerSheetState.isDragging) {
             if (!playerSheetState.isDragging) {
@@ -478,7 +465,6 @@ fun FlowApp(
                 currentMusicTrack != null &&
                     !suppressMusicMiniAfterVideo &&
                     playerUiState.cachedVideo == null &&
-                    playerUiState.streamInfo == null &&
                     !musicPlayerSheetState.isDismissed &&
                     !musicPlayerSheetState.isExpanded
             val musicMiniPlayerInset =
@@ -709,24 +695,14 @@ fun FlowApp(
             onNavigateToChannel = { channelArg ->
                 playerSheetState.collapse()
                 // channelArg can be a stale/blank id (the nav placeholder's channelId is never
-                // synced back from GlobalPlayerState once real metadata loads) — prefer the
-                // current StreamInfo's own uploaderUrl, which is always a real, complete URL.
-                val streamInfo = playerUiState.streamInfo
-                val uploaderUrl = streamInfo?.uploaderUrl?.takeIf { it.isNotBlank() }
-                PlayerDiagnostics.logWarning(
-                    "ChannelNav",
-                    "channelArg=$channelArg activeVideo.channelId=${activeVideo?.channelId} " +
-                        "activeVideo.serviceId=${activeVideo?.serviceId} streamInfo.uploaderUrl=${streamInfo?.uploaderUrl} " +
-                        "streamInfo.serviceId=${streamInfo?.serviceId}",
+                // synced back from GlobalPlayerState once real metadata loads), so fall back to the
+                // active video's own channel id, and carry its service so a non-YouTube channel
+                // opens on the right extractor.
+                val resolvedChannel = channelArg.takeIf { it.isNotBlank() } ?: activeVideo?.channelId.orEmpty()
+                navController.navigateToYoutubeChannel(
+                    resolvedChannel,
+                    activeVideo?.serviceId ?: org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId,
                 )
-                if (uploaderUrl != null) {
-                    navController.navigateToYoutubeChannel(uploaderUrl, streamInfo.serviceId)
-                } else {
-                    navController.navigateToYoutubeChannel(
-                        channelArg,
-                        activeVideo?.serviceId ?: org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId,
-                    )
-                }
             },
             onNavigateToShorts = { videoId ->
                 playerSheetState.collapse()
@@ -737,8 +713,7 @@ fun FlowApp(
         // ===== GLOBAL MUSIC PLAYER OVERLAY =====
         if (currentMusicTrack != null &&
             !suppressMusicMiniAfterVideo &&
-            playerUiState.cachedVideo == null &&
-            playerUiState.streamInfo == null
+            playerUiState.cachedVideo == null
         ) {
             UnifiedMusicPlayerSheet(
                 state = musicPlayerSheetState,

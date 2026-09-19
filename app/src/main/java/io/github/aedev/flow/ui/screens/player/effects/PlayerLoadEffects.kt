@@ -3,10 +3,14 @@ package io.github.aedev.flow.ui.screens.player.effects
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.player.EnhancedPlayerManager
+import io.github.aedev.flow.player.state.SubtitleLoadFailure
+import io.github.aedev.flow.player.state.SubtitleOption
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
 import io.github.aedev.flow.ui.screens.player.state.PlayerScreenState
 import io.github.aedev.flow.ui.screens.player.state.SubtitleSelection
@@ -51,7 +55,6 @@ internal fun PlayerFreshSessionEffects(
         videoId,
         uiState.isLoading,
         uiState.error,
-        uiState.streamInfo,
         uiState.audioStream,
         uiState.localFilePath,
     ) {
@@ -86,10 +89,11 @@ internal fun GlobalVideoSyncEffect(
 ) {
     LaunchedEffect(currentVideoId) {
         val current = currentVideo()
+        // Unconditional: the second half of the old guard compared an extractor id that was
+        // always absent, so this always fired, and the view model is the one that decides whether
+        // a sync is a no-op.
         if (current != null && !uiState.isRestoredSession) {
-            if (current.id != uiState.cachedVideo?.id || uiState.streamInfo?.id != current.id) {
-                viewModel.syncWithCurrentPlayerVideo(current)
-            }
+            viewModel.syncWithCurrentPlayerVideo(current)
         }
     }
 
@@ -137,12 +141,13 @@ internal fun SubscriptionAndLikeEffect(
     uiState: VideoPlayerUiState,
     viewModel: VideoPlayerViewModel,
 ) {
-    LaunchedEffect(uiState.streamInfo) {
-        uiState.streamInfo?.let { streamInfo ->
-            val channelId = streamInfo.uploaderUrl?.substringAfterLast("/") ?: ""
-            if (channelId.isNotEmpty()) {
-                viewModel.loadSubscriptionAndLikeState(channelId, videoId)
-            }
+    // Keyed on the cached video: the channel id arrives with it, and keying this on the extractor
+    // result is what stopped the subscribe button and the like state ever loading once the load
+    // stopped producing one.
+    LaunchedEffect(uiState.cachedVideo?.channelId) {
+        val channelId = uiState.cachedVideo?.channelId.orEmpty()
+        if (channelId.isNotEmpty()) {
+            viewModel.loadSubscriptionAndLikeState(channelId, videoId)
         }
     }
 }
@@ -160,11 +165,28 @@ internal fun SponsorSkipEffect(context: Context) {
 internal fun SubtitleLoadErrorEffect(
     context: Context,
     screenState: PlayerScreenState,
+    subtitles: List<SubtitleOption>,
+    rememberLanguage: (String) -> Unit,
 ) {
+    val currentSubtitles by rememberUpdatedState(subtitles)
     LaunchedEffect(Unit) {
-        EnhancedPlayerManager.getInstance().subtitleLoadFailedEvent.collect { label ->
-            SubtitleSelection.disable(screenState)
-            Toast.makeText(context, context.getString(R.string.subtitle_load_failed, label), Toast.LENGTH_SHORT).show()
+        EnhancedPlayerManager.getInstance().subtitleLoadFailedEvent.collect { failure ->
+            val options = currentSubtitles
+            val fallback =
+                SubtitleSelection.fallbackIndexFor(
+                    subtitles = options,
+                    failedIndex = failure.index,
+                    failedLanguage = failure.language,
+                    wasTranslated = failure.isTranslated,
+                )
+            val message =
+                if (fallback != null && SubtitleSelection.applyAt(screenState, options, fallback, rememberLanguage)) {
+                    context.getString(R.string.subtitle_translation_unavailable, options[fallback].label)
+                } else {
+                    SubtitleSelection.disable(screenState)
+                    context.getString(R.string.subtitle_load_failed, failure.label)
+                }
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
 }
