@@ -1,5 +1,6 @@
 package io.github.aedev.flow.player.stream
 
+import io.github.aedev.flow.bilibili.BilibiliVideoInfo
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
 import io.github.aedev.flow.player.sabr.integration.SabrStreamInfo
@@ -31,7 +32,7 @@ internal data class ResolvedStreamData(
     val itVideoFormats: List<PlayerResponse.StreamingData.Format>,
     val itAudioFormats: List<PlayerResponse.StreamingData.Format>,
     val hlsUrl: String? = null,
-    /** Set for Bilibili videos; what their danmaku is fetched by once the preload is promoted. */
-    val bilibiliInfo: io.github.aedev.flow.bilibili.BilibiliVideoInfo? = null,
     val sabrInfo: SabrStreamInfo? = null,
+    /** Bilibili only: what its danmaku is loaded by once this preload becomes the current video. */
+    val bilibiliInfo: BilibiliVideoInfo? = null,
 )

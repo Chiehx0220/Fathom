@@ -1,30 +1,28 @@
-# PPE reference map
+# PPE reference
 
-This package is a Kotlin port of the Bilibili service in PipePipeExtractor (GPL-3.0,
-InfinityLoop1308/PipePipeExtractor). Flow's copy of it lives at Chiehx0220/PipePipeExtractor.
-Ported at commit `aef9726d5b1172213066f60bc338eb4278651d61`.
+This package ports the Bilibili service of PipePipeExtractor (PPE, GPL-3.0). Flow's copy is
+Chiehx0220/PipePipeExtractor, ported at commit `aef9726d5b1172213066f60bc338eb4278651d61`.
 
-When Bilibili changes its risk control, diff the PPE file on the right against the file on the left,
-and re-port only what changed. Bump the commit above when done.
+When Bilibili changes its risk control, diff the PPE files on the right against the files on the
+left, re-port only what changed, and update the commit above. PPE paths are under
+`extractor/src/main/java/org/schabi/newpipe/extractor/services/bilibili/`.
 
-| Here | PPE file | What it holds |
+| Here | PPE | Holds |
 |---|---|---|
-| `DeviceForger.kt` | `services/bilibili/DeviceForger.java` | Forged Chrome UA, WebGL strings, window size |
-| `BilibiliSigning.kt` | `services/bilibili/utils.java` | av/bv codec, WBI mixin key + signature, dm_img_* telemetry |
-| `BilibiliSession.kt` | `services/bilibili/BilibiliService.java`, `utils.java` (encWbi) | Anonymous cookies (spi, bili_ticket, buvid_fp), headers, daily mixin-key fetch |
-| `BilibiliDanmaku.kt` | `services/bilibili/extractors/BilibiliBulletCommentsExtractor.java`, `BilibiliBulletCommentsInfoItemExtractor.java`, `utils.decompress` | VOD danmaku list (`x/v1/dm/list.so`), raw-deflate XML, the 2.5s sync offset |
-| `BilibiliSearchParser.kt` (+ `BilibiliApi.search`) | `extractors/BilibiliStreamInfoItemExtractor.java`, `BilibiliSearchResultChannelInfoItemExtractor.java`, `BilibiliSearchExtractor.java` | search rows (video, user) |
-| `BilibiliApi.kt` (`channelInfo`, `channelVideos`), `BilibiliSigning.signApp` | `extractors/BilibiliChannelExtractor.java` (Web, Search and Client video-list modes, mode rotation, `requestUserSpaceResponse`), `utils.encAppSign`, `BilibiliChannelInfoItem*APIExtractor.java` | channel header and Videos tab |
-| `BilibiliApi.kt` (`channelPlaylists`, `playlistVideos`), `BilibiliPlaylistId.kt` | `extractors/BilibiliChannelTabExtractor.java`, `BilibiliPlaylistExtractor.java`, `BilibiliPlaylistInfoItemExtractor.java` | channel Playlists tab, series and season contents; partition playlists not ported |
-| `BilibiliApi.kt` (`related`) | `services/bilibili/extractors/BilibiliRelatedInfoItemExtractor.java`, `BilibiliService.GET_RELATED_URL` | related-videos lane |
-| `BilibiliApi.kt` | `services/bilibili/extractors/BillibiliStreamExtractor.java` | view + playurl request, DASH stream parsing |
+| `DeviceForger.kt` | `DeviceForger.java` | Forged Chrome user agent, WebGL strings, window size |
+| `BilibiliSigning.kt` | `utils.java` | av/bv ids, WBI signature, app signature, dm_img telemetry |
+| `BilibiliSession.kt` | `BilibiliService.java`, `utils.java` | Anonymous cookies, headers, daily WBI key |
+| `BilibiliApi.kt` (video, related) | `extractors/BillibiliStreamExtractor.java`, `BilibiliRelatedInfoItemExtractor.java` | View and playurl requests, DASH streams, related videos |
+| `BilibiliApi.kt` (search), `BilibiliSearchParser.kt` | `extractors/BilibiliSearchExtractor.java`, `BilibiliStreamInfoItemExtractor.java`, `BilibiliSearchResultChannelInfoItemExtractor.java` | Search rows for videos and users |
+| `BilibiliDanmaku.kt` | `extractors/BilibiliBulletCommentsExtractor.java`, `BilibiliBulletCommentsInfoItemExtractor.java`, `utils.decompress` | Danmaku list, deflate XML, 2.5 s sync offset |
+| `BilibiliUserSpace.kt` | `extractors/BilibiliChannelExtractor.java`, `BilibiliChannelTabExtractor.java`, `BilibiliPlaylistExtractor.java`, `BilibiliChannelInfoItem*APIExtractor.java` | Channel profile, video list in three API modes, series and seasons |
 
-## Not ported yet
-Live, bangumi/premium (`pgc/...`), search, channel, comments, live danmaku (WebSocket), subtitles, app-signed endpoints
-(`APP_KEY` / `encAppSign`), the login-cookie feature flags.
+## Not ported
+- Live streams and live danmaku (WebSocket), bangumi and other paid content, partition playlists.
+- Comments, home feed, subtitles, login. Comments and the home feed still run on PPE.
+- Chapters (`BilibiliApi.chapters`) read the web player's own endpoint and are not in PPE.
 
-## Deliberate differences
-- HTTP goes through Flow's OkHttp client, not PPE's Downloader, so the default User-Agent on the one
-  request PPE sends with only an empty Cookie header (`wbi/view`) is OkHttp's, not PPE's downloader's.
-  If that request starts failing, this is the first thing to compare.
-- Nothing here has been run against the live Bilibili API yet.
+## Differences from PPE
+- Requests go through Flow's OkHttp client, not PPE's downloader, so the default user agent of the one
+  request sent with an empty Cookie header (`wbi/view`) is OkHttp's. Compare this first if that request fails.
+- A blocked video list moves to the next API in the same call. PPE moves on for the next call.

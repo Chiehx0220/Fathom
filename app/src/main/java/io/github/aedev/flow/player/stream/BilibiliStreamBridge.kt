@@ -14,12 +14,8 @@ import org.schabi.newpipe.extractor.stream.VideoStream
 import java.util.Locale
 
 /**
- * Bilibili counterpart of [InnerTubeStreamBridge]: turns the native client's formats into the
- * NewPipe-shaped [VideoStream]/[AudioStream] the rest of the player already speaks.
- *
- * The init and index byte ranges are carried onto the streams because [BilibiliDashManifest] builds
- * each stream's manifest from them; without them a stream could only be played as one long
- * progressive request, which Bilibili's CDN throttles.
+ * The Bilibili counterpart of [InnerTubeStreamBridge]: turns the native client's formats into the
+ * [VideoStream] and [AudioStream] the player uses. Init and index ranges are kept for [BilibiliDashManifest].
  */
 object BilibiliStreamBridge {
     private const val TAG = "BilibiliStreamBridge"

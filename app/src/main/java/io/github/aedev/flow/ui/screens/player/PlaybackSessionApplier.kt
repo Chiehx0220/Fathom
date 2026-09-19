@@ -3,8 +3,6 @@ package io.github.aedev.flow.ui.screens.player
 import android.content.Context
 import android.util.Log
 import io.github.aedev.flow.bilibili.BilibiliVideoInfo
-import io.github.aedev.flow.di.bilibiliApi
-import io.github.aedev.flow.innertube.models.response.VideoChapter
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.local.ViewHistory
@@ -16,6 +14,8 @@ import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.video.OfflineSubtitleStore
 import io.github.aedev.flow.data.video.VideoDownloadManager
+import io.github.aedev.flow.di.bilibiliApi
+import io.github.aedev.flow.innertube.models.response.VideoChapter
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.player.error.VideoErrorMapper
@@ -40,7 +40,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.stream.SubtitlesStream
 
 /** The load a step belongs to: the video it resolved for, and the token saying it is still current. */

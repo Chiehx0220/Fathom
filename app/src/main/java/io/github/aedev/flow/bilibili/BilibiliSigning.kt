@@ -39,6 +39,12 @@ object BilibiliSigning {
         return String(bytes)
     }
 
+    /** The bvid of a row that may carry only the av number, as PipePipe does; null when it has neither. */
+    fun bvidOf(
+        bvid: String,
+        aid: Long,
+    ): String? = bvid.ifEmpty { if (aid > 0) av2bv(aid) else "" }.ifEmpty { null }
+
     fun bv2av(bvid: String): Long {
         val chars = bvid.toCharArray()
         chars[3] = chars[9].also { chars[9] = chars[3] }
@@ -92,11 +98,15 @@ object BilibiliSigning {
     private const val APP_KEY = "1d8b6e7d45233436"
     private const val APP_SEC = "560c52ccd288fed045859ed18bffd973"
 
-    /** Adds appkey and sign to [params] and returns the query string, as PipePipe's encAppSign does. */
+    /** Adds appkey and sign to [params] and returns the query string. */
     fun signApp(params: LinkedHashMap<String, String>): String {
         params["appkey"] = APP_KEY
-        val toSign = TreeMap(params).entries.joinToString("&") { URLEncoder.encode(it.key, "UTF-8") + "=" + URLEncoder.encode(it.value, "UTF-8") }
-        params["sign"] = MessageDigest.getInstance("MD5").digest((toSign + APP_SEC).toByteArray(Charsets.UTF_8)).toHex()
+        val toSign =
+            TreeMap(params).entries.joinToString("&") {
+                URLEncoder.encode(it.key, "UTF-8") + "=" + URLEncoder.encode(it.value, "UTF-8")
+            }
+        val digest = MessageDigest.getInstance("MD5").digest((toSign + APP_SEC).toByteArray(Charsets.UTF_8))
+        params["sign"] = digest.toHex()
         return params.entries.joinToString("&") { it.key + "=" + it.value }
     }
     // endregion

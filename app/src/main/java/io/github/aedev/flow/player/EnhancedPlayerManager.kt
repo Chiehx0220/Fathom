@@ -25,12 +25,15 @@ import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
 import androidx.media3.session.MediaSession
+import io.github.aedev.flow.bilibili.BilibiliApi
+import io.github.aedev.flow.bilibili.BilibiliVideoInfo
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SponsorBlockAction
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.model.SponsorBlockSegment
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.repository.YouTubeRepository
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.YouTubeClient
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
@@ -58,6 +61,7 @@ import io.github.aedev.flow.player.state.EnhancedPlayerState
 import io.github.aedev.flow.player.state.QualityOption
 import io.github.aedev.flow.player.state.SubtitleLoadFailure
 import io.github.aedev.flow.player.state.queuePresence
+import io.github.aedev.flow.player.stream.BilibiliPreloadResolver
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.player.stream.InnerTubeVideoMapper
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
@@ -1905,24 +1909,8 @@ class EnhancedPlayerManager private constructor() {
         context: Context,
     ): ResolvedStreamData? =
         coroutineScope {
-            if (!io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
-                    .supportsService(video.serviceId)
-            ) {
-                if (video.serviceId != org.schabi.newpipe.extractor.ServiceList.BiliBili.serviceId) {
-                    return@coroutineScope null
-                }
-                return@coroutineScope try {
-                    io.github.aedev.flow.player.stream.BilibiliPreloadResolver.resolve(
-                        video = video,
-                        context = context,
-                        api = io.github.aedev.flow.di.bilibiliApi(context),
-                    )
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Log.w(TAG, "Bilibili preload resolve failed for ${video.id}: ${e.message}")
-                    null
-                }
+            if (!InnerTubeVideoStreamExtractor.supportsService(video.serviceId)) {
+                return@coroutineScope BilibiliPreloadResolver.resolveOrNull(video, context)
             }
             val extractionDeferred =
                 async(Dispatchers.IO) {
@@ -2055,7 +2043,7 @@ class EnhancedPlayerManager private constructor() {
         val danmakuInfo = data.bilibiliInfo
         val danmakuContext = appContext
         if (danmakuInfo != null && danmakuContext != null) {
-            loadDanmaku(io.github.aedev.flow.di.bilibiliApi(danmakuContext), danmakuInfo)
+            loadDanmaku(bilibiliApi(danmakuContext), danmakuInfo)
         } else {
             resetDanmaku()
         }
@@ -2757,8 +2745,8 @@ class EnhancedPlayerManager private constructor() {
     }
 
     fun loadDanmaku(
-        api: io.github.aedev.flow.bilibili.BilibiliApi,
-        info: io.github.aedev.flow.bilibili.BilibiliVideoInfo,
+        api: BilibiliApi,
+        info: BilibiliVideoInfo,
     ) {
         danmakuHandler?.reset()
         danmakuHandler?.loadBilibili(api, info)

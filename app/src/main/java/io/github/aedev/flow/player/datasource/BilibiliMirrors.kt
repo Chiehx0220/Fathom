@@ -1,10 +1,8 @@
 package io.github.aedev.flow.player.datasource
 
 /**
- * Bilibili serves every media file from two mirrors (its own CDN and Akamai) and lists both in the
- * playurl response. The player only ever holds one URL per stream, so this remembers the other
- * one(s): [YouTubeHttpDataSource] looks a request's URL up here to know what it can fall back to,
- * and which mirror answered fastest last time.
+ * The mirror URLs of each Bilibili stream (its own CDN and Akamai). The player holds one URL per
+ * stream, so [YouTubeHttpDataSource] looks the others up here, and which one answered first last time.
  */
 object BilibiliMirrors {
     /** The mirrors of one stream, in the order they were listed, plus the one that last won. */

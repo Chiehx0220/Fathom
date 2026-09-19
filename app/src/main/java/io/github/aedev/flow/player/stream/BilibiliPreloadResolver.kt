@@ -1,28 +1,44 @@
 package io.github.aedev.flow.player.stream
 
 import android.content.Context
-import io.github.aedev.flow.bilibili.BilibiliApi
+import android.util.Log
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.utils.NetworkState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
+import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.stream.StreamType
 
-/**
- * Bilibili's leg of the gapless next-video preload: resolves a video into the same
- * [ResolvedStreamData] the YouTube leg produces, so the preload controller can append it as a second
- * player window without knowing which service it came from.
- */
+/** Resolves the next Bilibili video for the gapless preload, into the same data the YouTube side produces. */
 internal object BilibiliPreloadResolver {
+    private const val TAG = "BilibiliPreload"
     private const val RESOLVE_TIMEOUT_MS = 25_000L
     private const val RELATED_TIMEOUT_MS = 6_000L
 
-    suspend fun resolve(
+    /** Null when [video] is not Bilibili's or could not be resolved; the preload then retries later. */
+    suspend fun resolveOrNull(
         video: Video,
         context: Context,
-        api: BilibiliApi,
     ): ResolvedStreamData? {
+        if (video.serviceId != ServiceList.BiliBili.serviceId) return null
+        return try {
+            resolve(video, context)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not resolve ${video.id}: ${e.message}")
+            null
+        }
+    }
+
+    private suspend fun resolve(
+        video: Video,
+        context: Context,
+    ): ResolvedStreamData? {
+        val api = bilibiliApi(context)
         val (bvid, page) = BilibiliPlaybackSource.parseVideoId(video.id)
         val playback = withTimeoutOrNull(RESOLVE_TIMEOUT_MS) { api.playback(bvid, page) } ?: return null
 
@@ -41,12 +57,15 @@ internal object BilibiliPreloadResolver {
                 preferredAudioLanguage = prefs.preferredAudioLanguage.first(),
                 preferredCodecKey = preferredCodecKey,
             )
-        // The related lane only feeds the autoplay list after promotion; failing to fetch it must not
-        // cost the preload.
+        // A missing related list must not cost the preload.
         val related =
-            runCatching {
-                withTimeoutOrNull(RELATED_TIMEOUT_MS) { BilibiliPlaybackSource.relatedVideos(api, bvid) }
-            }.getOrNull().orEmpty()
+            try {
+                withTimeoutOrNull(RELATED_TIMEOUT_MS) { BilibiliPlaybackSource.relatedVideos(api, bvid) }.orEmpty()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                emptyList()
+            }
 
         return ResolvedStreamData(
             enrichedVideo = BilibiliVideoMapper.videoFromInfo(video.id, playback.info, fallback = video),

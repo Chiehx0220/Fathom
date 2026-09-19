@@ -17,10 +17,9 @@ internal object BilibiliSearchParser {
         }
 
     private fun video(item: SearchResponse.Item): BilibiliSearchItem.Video? {
-        val id = item.bvid.ifEmpty { if (item.aid > 0) BilibiliSigning.av2bv(item.aid) else "" }
-        if (id.isEmpty()) return null
+        val bvid = BilibiliSigning.bvidOf(item.bvid, item.aid) ?: return null
         return BilibiliSearchItem.Video(
-            bvid = id,
+            bvid = bvid,
             title = cleanTitle(item.title),
             thumbnailUrl = absolute(item.pic),
             durationSec = parseDuration(item.duration),
@@ -42,15 +41,10 @@ internal object BilibiliSearchParser {
         )
     }
 
-    /** Result images come as protocol-relative "//i0.hdslb.com/...". */
-    private fun absolute(url: String): String =
-        when {
-            url.startsWith("//") -> "https:$url"
-            url.startsWith("http:") -> "https:" + url.removePrefix("http:")
-            else -> url
-        }
+    /** Result images come as "//i0.hdslb.com/...". */
+    private fun absolute(url: String): String = if (url.startsWith("//")) "https:$url" else url.toHttps()
 
-    /** Matched words arrive wrapped in an em tag, and the text is HTML-escaped. */
+    /** Matched words come wrapped in an em tag, and the text is HTML-escaped. */
     fun cleanTitle(raw: String): String = unescapeHtml(raw.replace("<em class=\"keyword\">", "").replace("</em>", ""))
 
     fun unescapeHtml(s: String): String {

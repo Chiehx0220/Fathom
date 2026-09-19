@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
+import io.github.aedev.flow.bilibili.BilibiliChannelId
 import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
@@ -22,6 +23,7 @@ import io.github.aedev.flow.data.model.toUiModel
 import io.github.aedev.flow.data.notes.NoteKind
 import io.github.aedev.flow.data.notes.NotesRepository
 import io.github.aedev.flow.data.shorts.ShortsContentFilter
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
 import io.github.aedev.flow.innertube.pages.renderer.CommunityPost
@@ -157,13 +159,18 @@ class ChannelViewModel
         // same shape, so the screen doesn't need to know which source a tab's data came from.
         private val bilibiliTabs = BilibiliChannelTabController(viewModelScope)
         private val bilibiliNative =
-            BilibiliNativeChannelController(viewModelScope, io.github.aedev.flow.di.bilibiliApi(appContext))
+            BilibiliNativeChannelController(viewModelScope, bilibiliApi(appContext))
 
         internal val tabStates: StateFlow<Map<ChannelTabKind, ChannelTabState>> =
-            combine(_uiState, tabController.states, bilibiliTabs.states, bilibiliNative.states) { state, youTubeStates, otherStates, nativeStates ->
+            combine(
+                _uiState,
+                tabController.states,
+                bilibiliTabs.states,
+                bilibiliNative.states,
+            ) { state, youTubeStates, otherStates, bilibiliStates ->
                 when {
                     state.serviceId.isYouTubeServiceId -> youTubeStates
-                    state.serviceId == ServiceList.BiliBili.serviceId -> nativeStates
+                    state.serviceId == ServiceList.BiliBili.serviceId -> bilibiliStates
                     else -> otherStates
                 }
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(GROUPS_SUBSCRIPTION_TIMEOUT_MS), emptyMap())
@@ -205,11 +212,8 @@ class ChannelViewModel
          *  PERFORMANCE OPTIMIZED: Load channel with timeout protection
          */
         fun loadChannel(channelUrl: String) {
-            Log.w(TAG, "loadChannel arg=$channelUrl")
-            // A Bilibili uploader is recognised here, ahead of any service lookup: a numeric mid must
-            // not depend on the extractor's URL matching, and must never fall through to YouTube,
-            // whose browse endpoint answers 400 to it.
-            bilibiliMidOf(channelUrl)?.let { mid ->
+            // Checked before any service lookup so a Bilibili uploader can never fall through to YouTube.
+            BilibiliChannelId.midOf(channelUrl)?.let { mid ->
                 loadBilibiliChannel(mid)
                 return
             }
@@ -319,19 +323,12 @@ class ChannelViewModel
             }
         }
 
-        /** A Bilibili uploader through the native client, publishing the same state the extractor path does. */
-        private fun bilibiliMidOf(channelArg: String): Long? {
-            val value = channelArg.trim()
-            if (value.isNotEmpty() && value.all(Char::isDigit)) return value.toLongOrNull()
-            return Regex("""space\.bilibili\.com/(\d+)""").find(value)?.groupValues?.get(1)?.toLongOrNull()
-        }
-
         private fun loadBilibiliChannel(mid: Long) {
             viewModelScope.launch(PerformanceDispatcher.networkIO) {
                 _uiState.update { it.copy(isLoading = true, error = null) }
                 val info =
                     try {
-                        withTimeoutOrNull(20_000L) { io.github.aedev.flow.di.bilibiliApi(appContext).channelInfo(mid) }
+                        withTimeoutOrNull(20_000L) { bilibiliApi(appContext).channelInfo(mid) }
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {

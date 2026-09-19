@@ -4,10 +4,26 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 
 /**
- * How a Bilibili series or season is named inside Flow: "bilibili:series:<mid>:<id>:<name>". Flow's
- * playlist route and stores hold one string per playlist, and this one is safe in a route and says
- * which service to ask, which a bare number would not. The name rides along because the series
- * listing endpoint does not return one, and the playlist screen wants a title.
+ * An uploader is identified by a number (the "mid"). Flow's channel code often holds just that
+ * string, and a YouTube channel is never all digits, so this is how the two are told apart.
+ */
+object BilibiliChannelId {
+    private val SPACE_URL = Regex("""space\.bilibili\.com/(\d+)""")
+
+    fun isMid(value: String): Boolean = value.isNotEmpty() && value.all(Char::isDigit)
+
+    /** The mid from a bare number or a space.bilibili.com link; null for anything else. */
+    fun midOf(value: String): Long? {
+        val trimmed = value.trim()
+        if (isMid(trimmed)) return trimmed.toLongOrNull()
+        return SPACE_URL.find(trimmed)?.groupValues?.get(1)?.toLongOrNull()
+    }
+}
+
+/**
+ * How a series or season is named inside Flow: "bilibili:series:<mid>:<id>:<name>". Playlist routes
+ * and stores hold one string per playlist; this one is safe in a route and says which service owns
+ * it. The name is included because the series endpoint does not return one.
  */
 object BilibiliPlaylistId {
     private const val PREFIX = "bilibili"

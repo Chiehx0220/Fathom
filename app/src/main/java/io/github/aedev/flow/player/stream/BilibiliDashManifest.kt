@@ -9,12 +9,9 @@ import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.VideoStream
 
 /**
- * A one-representation DASH manifest for a single Bilibili stream, built from the byte ranges the
- * API reports (init and sidx), the way PipePipe plays them.
- *
- * Played as a raw progressive file, one long open-ended request per stream is all the CDN sees, and
- * Bilibili's edges throttle those after the first burst. Through a DASH source ExoPlayer instead
- * asks for the index and then for short ranges, which is the traffic pattern the CDN serves fast.
+ * A one-representation DASH manifest for one Bilibili stream, built from the init and index ranges
+ * the API reports, as PipePipe does. Played as a plain file, one long request gets throttled by the
+ * CDN; through DASH the player asks for short ranges, which the CDN serves fast.
  */
 object BilibiliDashManifest {
     fun forVideo(

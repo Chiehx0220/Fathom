@@ -10,7 +10,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
 import io.github.aedev.flow.bilibili.BilibiliPlaylistId
-import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.migration.WatchLaterMetadataMigrator
@@ -19,6 +18,7 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.music.YouTubeMusicService
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.video.downloader.FlowDownloadService
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.player.quality.QualityManager
 import io.github.aedev.flow.player.stream.AudioStreamSelector
 import io.github.aedev.flow.ui.components.library.PlaylistSortOrder

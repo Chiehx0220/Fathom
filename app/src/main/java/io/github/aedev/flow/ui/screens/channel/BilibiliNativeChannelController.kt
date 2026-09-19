@@ -6,8 +6,8 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliChannelInfo
-import io.github.aedev.flow.data.paging.BilibiliChannelVideosPagingSource
 import io.github.aedev.flow.data.paging.BilibiliChannelPlaylistsPagingSource
+import io.github.aedev.flow.data.paging.BilibiliChannelVideosPagingSource
 import io.github.aedev.flow.innertube.pages.channel.ChannelHeader
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabDescriptor
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind

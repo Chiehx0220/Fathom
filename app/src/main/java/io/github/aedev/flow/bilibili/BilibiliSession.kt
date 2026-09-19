@@ -201,39 +201,37 @@ class BilibiliSession(
     internal suspend fun get(
         url: String,
         headers: Map<String, String>,
-    ): String {
-        val builder = Request.Builder().url(url)
-        headers.forEach { (k, v) -> builder.header(k, v) }
-        return execute(builder.build()).body
-    }
+    ): String = execute(request(url, headers)).body
 
-    /** The response body as bytes, for endpoints that answer with something other than text. */
+    /** For endpoints that answer with something other than text. */
     internal suspend fun getBytes(
         url: String,
         headers: Map<String, String>,
-    ): ByteArray {
-        val builder = Request.Builder().url(url)
-        headers.forEach { (k, v) -> builder.header(k, v) }
-        val request = builder.build()
-        return withContext(Dispatchers.IO) {
+    ): ByteArray =
+        withContext(Dispatchers.IO) {
+            val request = request(url, headers)
             http.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IOException("HTTP ${response.code} for ${request.url.host}")
                 response.body?.bytes() ?: ByteArray(0)
             }
         }
-    }
 
-    /** Like [get], but the body comes back whatever the HTTP status: a risk-control block is a 412 with a page in it. */
+    /** Returns the body whatever the HTTP status: Bilibili's risk control answers with a 412 and a page. */
     internal suspend fun getLenient(
         url: String,
         headers: Map<String, String>,
-    ): String {
+    ): String =
+        withContext(Dispatchers.IO) {
+            http.newCall(request(url, headers)).execute().use { it.body?.string().orEmpty() }
+        }
+
+    private fun request(
+        url: String,
+        headers: Map<String, String>,
+    ): Request {
         val builder = Request.Builder().url(url)
         headers.forEach { (k, v) -> builder.header(k, v) }
-        val request = builder.build()
-        return withContext(Dispatchers.IO) {
-            http.newCall(request).execute().use { response -> response.body?.string().orEmpty() }
-        }
+        return builder.build()
     }
 
     private fun ByteArray.toHexLower(): String = joinToString("") { "%02x".format(it) }
