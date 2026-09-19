@@ -6,11 +6,9 @@ import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
 
-// Video/audio watch-page content, comments, and danmaku handlers, split out of LocalHttpServer.kt
-// as extension functions on ClientHandler purely to keep that file from growing without bound -
-// no behavior changed by the move. getCachedExtractor/commentsExtractorFor/bulletCommentJson are
-// LocalHttpServer's companion object functions, qualified here because they're outside that
-// class's own lexical scope in this file, not because they're private - none of them are.
+// Watch-page content, comments, and danmaku handlers - split from LocalHttpServer.kt, no behavior
+// change. getCachedExtractor/commentsExtractorFor/bulletCommentJson need LocalHttpServer.
+// qualification: companion members aren't in unqualified lexical scope across files.
 
 internal fun ClientHandler.handleWatch(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
     val serviceId = getServiceId(params)
@@ -21,12 +19,9 @@ internal fun ClientHandler.handleWatch(os: OutputStream, params: Map<String, Str
     sendResponse(os, 200, html, "text/html; charset=UTF-8")
 }
 
-// The extraction + history/engagement-state loading that handleWatchContent() and
-// handleAudioWatch() both need before they can render anything - identical in both until the
-// point each picks its own render function. Shares one page extraction with handleManifestProxy
-// for this same video (getCachedExtractor), instead of each doing its own independent
-// fetchPage(). Synchronized since extractor may be concurrently shared with a handleManifestProxy
-// request for the same video, and StreamInfo.getInfo() calls many extractor getters in bulk here.
+// Shared extraction + history/engagement-state load for handleWatchContent/handleAudioWatch.
+// Reuses getCachedExtractor() (shared with handleManifestProxy) instead of a redundant
+// fetchPage(). Synchronized: extractor may be concurrently accessed by handleManifestProxy.
 private data class WatchPageInfo(
     val info: StreamInfo,
     val isSubscribed: Boolean,
@@ -46,9 +41,8 @@ private fun ClientHandler.loadWatchPageInfo(service: StreamingService, serviceId
     if (info.thumbnails != null && !info.thumbnails.isEmpty()) {
         thumbUrl = info.thumbnails[info.thumbnails.size - 1].url
     }
-    // getThumbnailUrl() always returns a non-null stock-photo URL as its own fallback, so it's
-    // only safe to call once we already know a real avatar exists - otherwise that placeholder
-    // would get baked permanently into the history row.
+    // getThumbnailUrl() falls back to a stock-photo URL - only call once a real avatar is
+    // confirmed, or the placeholder gets baked into the history row permanently.
     var uploaderAvatarUrl: String? = null
     if (info.uploaderAvatars != null && !info.uploaderAvatars.isEmpty()) {
         uploaderAvatarUrl = HtmlRenderer.getThumbnailUrl(info.uploaderAvatars)
@@ -80,11 +74,8 @@ internal fun ClientHandler.handleWatchContent(os: OutputStream, params: Map<Stri
     }
 }
 
-// Fetched by an inline <script> in renderWatchContent()/renderAudioWatch() after the video itself
-// has loaded, rather than blocking the initial /watch-content response on it - comments can be a
-// slow network round-trip and shouldn't delay playback start. Returns a bare HTML fragment (like
-// the "ajax" subscriptions-feed branch), not a full page, since it's injected via innerHTML into
-// an already-rendered page.
+// Fetched async post-load by renderWatchContent()/renderAudioWatch()'s inline <script>, not
+// blocking the initial response. Returns an HTML fragment for innerHTML injection, not a full page.
 @Throws(Exception::class)
 internal fun ClientHandler.handleComments(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
     val serviceId = getServiceId(params)
@@ -101,9 +92,8 @@ internal fun ClientHandler.handleComments(os: OutputStream, params: Map<String, 
         val extractor = LocalHttpServer.commentsExtractorFor(service, videoUrl)
 
         val page = if (nextPage != null) {
-            // YoutubeCommentsExtractor.getPage() only reads the continuation token already inside
-            // nextPage - it doesn't touch anything fetchPage() would have populated, so it's safe
-            // to skip for a fresh extractor with no prior call to rely on.
+            // getPage() only reads nextPage's continuation token, not fetchPage() state - safe on
+            // a fresh extractor.
             extractor.getPage(nextPage)
         } else {
             extractor.fetchPage()
@@ -122,11 +112,8 @@ internal fun ClientHandler.handleComments(os: OutputStream, params: Map<String, 
     }
 }
 
-// Bilibili danmaku ("bullet comments"). Fetched by an inline <script> in renderWatchContent()
-// after the video itself has loaded, same rationale as handleComments() above - a video can carry
-// thousands of these, so it shouldn't block the initial page. Only Bilibili currently exposes a
-// BulletCommentsExtractor (StreamingService.getBulletCommentsExtractor() returns null otherwise),
-// so this comes back empty for YouTube rather than erroring.
+// Bilibili danmaku ("bullet comments"), fetched async post-load like handleComments(). Only
+// Bilibili exposes a BulletCommentsExtractor (null elsewhere) - other services get an empty result.
 @Throws(Exception::class)
 internal fun ClientHandler.handleDanmaku(os: OutputStream, params: Map<String, String>) {
     val serviceId = getServiceId(params)
@@ -137,10 +124,8 @@ internal fun ClientHandler.handleDanmaku(os: OutputStream, params: Map<String, S
     }
     try {
         val service = NewPipe.getService(serviceId)
-        // BilibiliBulletCommentsExtractor reads the video's cid out of a cache that only the
-        // stream extractor's own fetchPage() populates (keyed by video id) - without this,
-        // looking it up NPEs. In practice /watch-content already primed this cache for the video
-        // the client is currently watching, so this is normally a cache hit.
+        // Primes the cid cache BilibiliBulletCommentsExtractor reads (populated only by the stream
+        // extractor's fetchPage()) - NPEs otherwise. Normally a cache hit via /watch-content.
         LocalHttpServer.getCachedExtractor(service, serviceId, mediaUrl)
         val extractor = service.getBulletCommentsExtractor(mediaUrl)
         if (extractor == null) {
@@ -149,8 +134,7 @@ internal fun ClientHandler.handleDanmaku(os: OutputStream, params: Map<String, S
         }
         extractor.fetchPage()
         if (extractor.isLive) {
-            // Live danmaku needs a persistent connection (WebSocket) this one-shot HTTP endpoint
-            // has no equivalent of - out of scope for now.
+            // Live danmaku needs a persistent WebSocket - out of scope for this one-shot endpoint.
             extractor.disconnect()
             sendResponse(os, 200, "{\"danmaku\":[]}", "application/json")
             return

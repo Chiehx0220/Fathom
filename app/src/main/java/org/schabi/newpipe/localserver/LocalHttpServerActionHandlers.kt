@@ -4,19 +4,13 @@ import org.schabi.newpipe.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
 import java.util.UUID
 
-// The toggle-style DB action endpoints (subscribe, block channel, bookmark playlist, history,
-// watch-later, like/dislike) and the TV remote-control endpoints (send-link, release-lock,
-// send-command, poll-commands), split out of LocalHttpServer.kt as extension functions on
-// ClientHandler purely to keep that file from growing without bound - no behavior changed by the
-// move. Needs ClientHandler/dbHelper/sendResponse/sendRedirect/getServiceId to be `internal`
-// rather than `private` in LocalHttpServer.kt for these to reach them from a different file; the
-// companion object functions called below (getActiveLockCode, tryLock, addPendingCommand, log,
-// etc.) were already non-private.
+// Toggle-style DB action endpoints (subscribe/block/bookmark/history/watch-later/like-dislike) and
+// TV remote-control endpoints (send-link/release-lock/send-command/poll-commands) - split from
+// LocalHttpServer.kt, no behavior change. Requires ClientHandler/dbHelper/sendResponse/
+// sendRedirect/getServiceId internal, not private.
 
-// The url/title/uploader/thumbnail/uploaderUrl bundle a "share this video" request carries -
-// identical field set and fallback defaults in handleWatchLaterAction and handleRateVideoAction
-// (both cover the same "server never saw this video before, all we know is what the client's own
-// page already had on screen" case).
+// Shared "share this video" field set/fallback defaults for handleWatchLaterAction and
+// handleRateVideoAction - server never saw this video before, only client-page metadata.
 private data class SharedVideoParams(val title: String, val uploader: String, val thumbnail: String?, val uploaderUrl: String?)
 
 private fun parseSharedVideoParams(params: Map<String, String>): SharedVideoParams {
@@ -27,13 +21,9 @@ private fun parseSharedVideoParams(params: Map<String, String>): SharedVideoPara
     return SharedVideoParams(title, uploader, thumbnail, uploaderUrl)
 }
 
-// Every toggle-style action handler (subscribe, block channel, watch-later, like/dislike, history
-// remove/clear, playlist bookmark) ends with the same "how do I answer this" call: an ajax caller
-// wants a bare JSON ack, a caller that already has a real page path wants a redirect back to it,
-// and a caller that only passed a bare video id (the older ?...&back=<videoId> shape some of
-// these endpoints still accept) wants a /watch redirect built from it. [fallbackPath] is used when
-// the caller passed no `back` at all. Was hand-copied into 4 of these handlers verbatim before
-// this - one word (the fallback path) was the only thing that ever differed between copies.
+// Shared response-decision logic for toggle-style action handlers: ajax -> JSON ack, a real page
+// path -> redirect to it, a bare video id (legacy `back=<videoId>` shape) -> /watch redirect.
+// [fallbackPath] applies when `back` is absent.
 private fun ClientHandler.sendActionResult(os: OutputStream, serviceId: Int, back: String?, fallbackPath: String) {
     when {
         "ajax" == back -> sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
@@ -168,11 +158,8 @@ internal fun ClientHandler.handleSendLink(os: OutputStream, params: Map<String, 
         }
 
         if (hasLock) {
-            // "__connect_only__" is sent by the header's cast button when the current page isn't a
-            // video (e.g. Home, Subscriptions) - it pairs this device as remote-controllable
-            // without queuing a bogus play_video command for a non-video URL, which used to make
-            // the connecting browser navigate itself to a broken /watch link (see RemoteActivity's
-            // touchpad flow: pairing must work from any page).
+            // "__connect_only__": cast button on a non-video page (Home, Subscriptions) - pairs for
+            // remote control without a play_video command that would 404 as a /watch link.
             if ("__connect_only__" != videoUrl) {
                 LocalHttpServer.log("Casting link: $videoUrl from client IP $clientIp")
                 LocalHttpServer.addPendingCommand("play_video:$videoUrl")

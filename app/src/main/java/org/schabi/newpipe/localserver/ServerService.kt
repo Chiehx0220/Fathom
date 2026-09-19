@@ -12,17 +12,18 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NetworkInterface
 
 /**
- * Holds the foreground promotion + notification for the embedded local web server. The extractor
- * is assumed already initialized by the host app's own startup (see FlowApplication) — this
- * service deliberately does not call NewPipe.init() itself, since that sets process-global state
- * shared with the app's own native extraction pipeline and re-initializing it here would race
- * against / clobber that.
+ * Foreground promotion + notification for the embedded local web server. Assumes NewPipe.init()
+ * already ran via FlowApplication - re-initializing here would race the app's own extraction
+ * pipeline (process-global state).
  */
 class ServerService : Service() {
 
@@ -72,7 +73,7 @@ class ServerService : Service() {
             val newServer = LocalHttpServer(this, PORT)
             server = newServer
             newServer.startServer()
-            isRunning = true
+            _running.value = true
 
             try {
                 val pm = getSystemService(POWER_SERVICE) as PowerManager?
@@ -100,9 +101,19 @@ class ServerService : Service() {
         wifiLock?.let { if (it.isHeld) runCatching { it.release() } }
         server?.stopServer()
         server = null
-        isRunning = false
+        _running.value = false
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
+    }
+
+    // Android 15+ caps dataSync foreground services (~6h); the system then calls this and
+    // expects stopSelf() within seconds, or throws ForegroundServiceDidNotStopInTimeException
+    // (the crash this fixes). stopSelf() -> onDestroy() -> stopServer() releases the locks and
+    // the notification. Restarting from here isn't allowed (background FGS start restriction),
+    // so the server stays down until the user re-enables it in Settings.
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        LocalHttpServer.log("Foreground service time limit reached, stopping local server")
+        stopSelf(startId)
     }
 
     override fun onDestroy() {
@@ -135,9 +146,16 @@ class ServerService : Service() {
         private const val NOTIFICATION_TITLE = "Local server running"
         const val PORT = 8080
 
-        @Volatile
-        var isRunning = false
-            private set
+        private val _running = MutableStateFlow(false)
+
+        // True only while the socket is actually bound (set after startServer() succeeds, cleared
+        // in stopServer()) - the Settings UI observes this instead of the saved "enabled"
+        // preference, which stays true after the system stops the service (e.g. dataSync timeout)
+        // or the process dies, so it used to keep showing "online" for a dead server.
+        val runningState: StateFlow<Boolean> = _running.asStateFlow()
+
+        val isRunning: Boolean
+            get() = _running.value
 
         fun start(context: Context) {
             val intent = Intent(context, ServerService::class.java)

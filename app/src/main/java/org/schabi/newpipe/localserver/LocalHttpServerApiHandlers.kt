@@ -10,13 +10,9 @@ import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
 
-// The Fathom<->Flow Stage 2 JSON API (/api/v1/...) handlers, split out of LocalHttpServer.kt as
-// extension functions on ClientHandler purely to keep that file from growing without bound - no
-// behavior changed by the move. Deliberately independent of the HTML handlers (own extraction
-// calls, not shared helpers) - see ApiRenderer.kt's file header for why. Calls into
-// LocalHttpServer's companion object (fetchInitialOrPage, fetchKioskPage, etc.) are qualified
-// because they're outside that class's own lexical scope here, not because they're private -
-// none of them are.
+// /api/v1/... JSON API handlers - split from LocalHttpServer.kt, no behavior change. Independent
+// of the HTML handlers (see ApiRenderer.kt's header). Companion calls (fetchInitialOrPage,
+// fetchKioskPage, etc.) need LocalHttpServer. qualification: outside lexical scope across files.
 
 internal fun ClientHandler.handleApiSearch(os: OutputStream, params: Map<String, String>) {
     val serviceId = getServiceId(params)
@@ -37,11 +33,8 @@ internal fun ClientHandler.handleApiSearch(os: OutputStream, params: Map<String,
     }
 }
 
-// Simplified relative to handleHome(): honors homeFeedMode ("subs" -> shuffled uploads from
-// subscribed channels, "mix" -> personalized feed interleaved with subscriptions, default ->
-// personalized-keyword-or-trending search) the same way, but skips the offline cached-video
-// fallback handleHome() renders on failure - a JSON client is expected to handle a 500 itself
-// rather than receive a page-shaped fallback.
+// Mirrors handleHome()'s homeFeedMode handling, minus the offline cached-video fallback - a JSON
+// client handles a 500 itself.
 internal fun ClientHandler.handleApiHome(os: OutputStream, params: Map<String, String>) {
     val serviceId = getServiceId(params)
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
@@ -51,18 +44,15 @@ internal fun ClientHandler.handleApiHome(os: OutputStream, params: Map<String, S
         var next: Page?
         val feedMode = dbHelper.homeFeedMode
         if (serviceId != LocalHttpServer.SERVICE_YOUTUBE) {
-            // Non-YouTube default kiosk - see the same branch in handleHome() for why
-            // homeFeedMode isn't consulted here.
+            // homeFeedMode is YouTube-only, see handleHome().
             val page = LocalHttpServer.fetchKioskPage(service, nextPage)
             items = ArrayList(page.items as List<InfoItem>)
             next = page.nextPage
         } else if ("subs" == feedMode) {
-            // See LocalServerFlowData.kt's buildSubsOnlyFeed().
             items = dbHelper.buildSubsOnlyFeed(serviceId)
             next = null
         } else {
-            // Real trending kiosk - see fetchTrendingItems() (no pagination available, so
-            // nextPage isn't handled for this branch).
+            // fetchTrendingItems(): no pagination available.
             items = dbHelper.fetchTrendingItems(serviceId)
             next = null
         }
@@ -73,11 +63,8 @@ internal fun ClientHandler.handleApiHome(os: OutputStream, params: Map<String, S
     }
 }
 
-// New, additive route mirroring handleApiHome() above (same feedMode handling, same response
-// shape via ApiRenderer.searchResultJson()) but sourced through buildAndRankHomeFeed() for the
-// YouTube personalized path, so it comes back already ranked via Flow's real FlowNeuroEngine.
-// handleApiHome() itself is untouched otherwise - this is a separate handler precisely so nothing
-// about its raw/unranked behavior changes.
+// Additive route mirroring handleApiHome(), sourced through buildAndRankHomeFeed() for the
+// YouTube path - ranked via FlowNeuroEngine. handleApiHome() itself stays raw/unranked.
 internal fun ClientHandler.handleApiRecommendations(os: OutputStream, params: Map<String, String>) {
     val serviceId = getServiceId(params)
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
@@ -88,20 +75,17 @@ internal fun ClientHandler.handleApiRecommendations(os: OutputStream, params: Ma
         var alreadyRanked = false
         val feedMode = dbHelper.homeFeedMode
         if (serviceId != LocalHttpServer.SERVICE_YOUTUBE) {
-            // Non-YouTube default kiosk - see the same branch in handleHome() for why
-            // homeFeedMode isn't consulted here. alreadyRanked stays false so
-            // applyFlowNeuroRanking() below still reorders these by the user's taste.
+            // homeFeedMode is YouTube-only. alreadyRanked stays false so applyFlowNeuroRanking()
+            // below still reorders these.
             val page = LocalHttpServer.fetchKioskPage(service, nextPage)
             items = ArrayList(page.items as List<InfoItem>)
             next = page.nextPage
         } else if ("subs" == feedMode) {
-            // See LocalServerFlowData.kt's buildSubsOnlyFeed().
             items = dbHelper.buildSubsOnlyFeed(serviceId)
             next = null
             alreadyRanked = true
         } else {
-            // Real trending + FlowNeuro discovery + (mix) subscription feed, ranked - see
-            // LocalServerFlowData.kt's buildAndRankHomeFeed(). No pagination available.
+            // buildAndRankHomeFeed(): trending + discovery + subs, ranked. No pagination.
             val (feedItems, _) = dbHelper.buildAndRankHomeFeed(serviceId, feedMode)
             items = feedItems
             next = null
@@ -123,10 +107,8 @@ internal fun ClientHandler.handleApiChannel(os: OutputStream, params: Map<String
         return
     }
     val tab = params.getOrDefault("tab", "videos")
-    // "latest"/"popular"/"oldest" - the exact literal values YoutubeChannelTabLinkHandlerFactory's
-    // own SORT_LATEST/SORT_POPULAR/SORT_OLDEST constants hold, so this can be passed straight
-    // through as a sort-filter string without a lookup table. Only meaningful for YouTube's
-    // "videos" tab; harmless no-op everywhere else.
+    // Matches YoutubeChannelTabLinkHandlerFactory's SORT_LATEST/POPULAR/OLDEST literals directly,
+    // no lookup table needed. YouTube "videos" tab only; no-op elsewhere.
     val sort = params["sort"]?.takeIf { it.isNotBlank() }
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     try {
@@ -134,11 +116,9 @@ internal fun ClientHandler.handleApiChannel(os: OutputStream, params: Map<String
         val channelExtractor = service.getChannelExtractor(channelUrl)
         channelExtractor.fetchPage()
 
-        // getChannelTabExtractorFromId(id, tab, baseUrl) (used by the plain else-branch below)
-        // hardcodes its sortFilter to "" - it has no way to pass one through - so a non-default
-        // sort needs the lower-level construction path built here directly instead. Stock
-        // NewPipeExtractor's channel-tab factory has no "search within a channel" tab at all,
-        // unlike the fork this was ported from, so that feature is dropped rather than adapted.
+        // getChannelTabExtractorFromId() (the else-branch below) hardcodes sortFilter to "" - a
+        // non-default sort needs manual construction instead. No "search within channel" tab in
+        // stock NewPipeExtractor - dropped, not adapted.
         val tabExtractor = if (sort != null && service.channelTabLHFactory != null) {
             val contentFilter = listOf(FilterItem(Filter.ITEM_IDENTIFIER_UNKNOWN, tab))
             val sortFilter = listOf(FilterItem(Filter.ITEM_IDENTIFIER_UNKNOWN, sort))
@@ -231,10 +211,8 @@ internal fun ClientHandler.handleApiComments(os: OutputStream, params: Map<Strin
     }
 }
 
-// Stage 4: lets a client (the Flow fork's new server-address settings screen) confirm it can
-// actually reach this server before anything depends on it, without the cost of a real extraction
-// call - every other /api/v1/... route does real work (search, extractor fetches) that isn't a
-// fair test of plain reachability.
+// Reachability check for the server-address settings screen - no extraction cost, unlike every
+// other /api/v1/... route.
 internal fun ClientHandler.handleApiPing(os: OutputStream) {
     sendResponse(os, 200, "{\"status\":\"ok\",\"service\":\"fathom\"}", "application/json")
 }
@@ -253,11 +231,9 @@ internal fun ClientHandler.handleApiWatchProgress(os: OutputStream, params: Map<
     }
     dbHelper.nativeUpdateWatchProgress(videoUrl, percent, durationSeconds)
 
-    // FlowNeuro's WATCHED signal - see the "FlowNeuro signal reporting" section in
-    // LocalHttpServer.kt for why this is best-effort. serviceId wasn't previously sent by this
-    // endpoint's caller (watchProgressJs in HtmlRendererWatch.kt, updated alongside this); older
-    // cached pages still open in a tab won't send it, so this is a no-op (not an error) until
-    // reloaded.
+    // FlowNeuro WATCHED signal, best-effort (see LocalHttpServer.kt's FlowNeuro section). serviceId
+    // is a newer param (HtmlScripts.kt's initWatchProgressReporting()) - a stale cached page
+    // without it is a silent no-op.
     val serviceId = params["serviceId"]?.toIntOrNull()
     if (serviceId != null) {
         try {
@@ -276,10 +252,8 @@ internal fun ClientHandler.handleApiWatchProgress(os: OutputStream, params: Map<
     sendResponse(os, 200, "{\"status\":\"ok\"}", "application/json")
 }
 
-// Remote native-audio-player control (play/pause/resume/stop) was dropped along with
-// ServerService's own ExoPlayer instance - it duplicated the host app's own player. These four
-// endpoints are kept as graceful no-ops so older clients hitting them don't see a broken request,
-// rather than removing the routes outright.
+// Native-audio-player control dropped with ServerService's ExoPlayer instance (duplicated the
+// host app's player). Kept as no-ops for older clients, not removed outright.
 internal fun ClientHandler.handleApiPlayerPlay(os: OutputStream, params: Map<String, String>) {
     sendResponse(os, 200, "{\"status\":\"unsupported\"}", "application/json")
 }

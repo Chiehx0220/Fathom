@@ -7,6 +7,7 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionWatchedVideos
+import io.github.aedev.flow.data.video.VideoDownloadManager
 import io.github.aedev.flow.ui.screens.home.HomeFeedSources
 
 /**
@@ -23,6 +24,8 @@ interface LocalServerEntryPoint {
     fun subscriptionFeedRepository(): SubscriptionFeedRepository
 
     fun subscriptionWatchedVideos(): SubscriptionWatchedVideos
+
+    fun videoDownloadManager(): VideoDownloadManager
 }
 
 fun localServerEntryPoint(context: Context): LocalServerEntryPoint =

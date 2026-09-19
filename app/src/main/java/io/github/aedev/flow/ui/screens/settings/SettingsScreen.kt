@@ -132,7 +132,10 @@ fun SettingsScreen(
 
     // Player preferences states
     val currentRegion by playerPreferences.trendingRegion.collectAsState(initial = "US")
-    val localServerEnabled by playerPreferences.localServerEnabled.collectAsState(initial = false)
+    // Actual socket state, not the saved on/off preference - the preference stays true after the
+    // system stops the service or the process dies, which made the card claim "online" for a
+    // dead server. Everything below (switch, badge, address, tap-to-open) follows this.
+    val localServerRunning by org.schabi.newpipe.localserver.ServerService.runningState.collectAsState()
     val currentAppLanguage by playerPreferences.appLanguage.collectAsState(initial = AppLanguageManager.SYSTEM_DEFAULT)
     val discordSettingsState by DiscordPresenceRuntime.settingsState.collectAsStateWithLifecycle()
     val discordSettingsSummary = discordSettingsSummaryText(discordSettingsState)
@@ -964,8 +967,8 @@ fun SettingsScreen(
                 }
                 item {
                     val localServerAddress =
-                        remember(localServerEnabled) {
-                            if (localServerEnabled) {
+                        remember(localServerRunning) {
+                            if (localServerRunning) {
                                 org.schabi.newpipe.localserver.ServerService.getLocalIpAddress()?.let { ip ->
                                     "http://$ip:${org.schabi.newpipe.localserver.ServerService.PORT}"
                                 }
@@ -995,7 +998,7 @@ fun SettingsScreen(
                             Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
-                                .clickable(enabled = localServerEnabled, onClick = openLocalServer),
+                                .clickable(enabled = localServerRunning, onClick = openLocalServer),
                         shape = RoundedCornerShape(24.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                     ) {
@@ -1071,7 +1074,7 @@ fun SettingsScreen(
                                                         .size(6.dp)
                                                         .background(
                                                             color =
-                                                                if (localServerEnabled) {
+                                                                if (localServerRunning) {
                                                                     Color(0xFF4CAF50)
                                                                 } else {
                                                                     onLocalServerAccent.copy(alpha = 0.5f)
@@ -1082,7 +1085,7 @@ fun SettingsScreen(
                                             Spacer(Modifier.width(6.dp))
                                             Text(
                                                 text =
-                                                    if (localServerEnabled) {
+                                                    if (localServerRunning) {
                                                         stringResource(R.string.settings_local_server_status_online)
                                                     } else {
                                                         stringResource(R.string.settings_local_server_status_offline)
@@ -1096,7 +1099,7 @@ fun SettingsScreen(
 
                                     // Power Switch
                                     Switch(
-                                        checked = localServerEnabled,
+                                        checked = localServerRunning,
                                         onCheckedChange = { enabled ->
                                             coroutineScope.launch {
                                                 playerPreferences.setLocalServerEnabled(enabled)
@@ -1133,7 +1136,7 @@ fun SettingsScreen(
                                 }
 
                                 // Bottom CTA
-                                if (localServerEnabled) {
+                                if (localServerRunning) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
                                             text = stringResource(R.string.settings_local_server_open_browser),

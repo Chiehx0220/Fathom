@@ -308,7 +308,7 @@ object HtmlScripts {
                 "                    if (window.history.length > 1) window.history.back();\n" +
                 "                } else if (cmd === 'play_pause') {\n" +
                 "                    if (window.videoPlayer) {\n" +
-                "                        if (window.videoPlayer.paused()) {\n" +
+                "                        if (window.videoPlayer.paused) {\n" +
                 "                            window.videoPlayer.play().catch(e => {});\n" +
                 "                        } else {\n" +
                 "                            window.videoPlayer.pause();\n" +
@@ -380,12 +380,9 @@ object HtmlScripts {
                 "            if (e.key === 'Tab' || e.key.indexOf('Arrow') === 0) document.body.classList.add('using-keyboard');\n" +
                 "        }, true);\n" +
                 "        document.addEventListener('pointerdown', () => document.body.classList.remove('using-keyboard'), true);\n" +
-                // Belt and braces for the sticky highlight on mobile: verified the ring is drawn by
-                // the browser rather than this stylesheet (our own focus-visible ring resolves to a
-                // grey primary, not the purple that was reported), and a UA highlight that isn't an
-                // `outline` can't be removed via CSS. Dropping focus after a pointer-driven
-                // activation removes the state the browser is painting from. Keyboard activation is
-                // excluded so focus is never stolen from keyboard users.
+                // The sticky mobile highlight is a UA-drawn ring, not this stylesheet's (grey, not
+                // the reported purple) - can't be removed via CSS, so blur after a pointer click
+                // instead. Keyboard activation excluded so focus isn't stolen from keyboard users.
                 "        document.addEventListener('click', (e) => {\n" +
                 "            if (document.body.classList.contains('using-keyboard')) return;\n" +
                 "            const el = e.target && e.target.closest && e.target.closest('a, button');\n" +
@@ -771,12 +768,8 @@ object HtmlScripts {
                 "            fetch(url).catch(() => setBlocked(isBlocked));\n" +
                 "        }\n" +
                 "        \n" +
-                // Single chokepoint for every "fetch a fragment, then splice it into the page"
-                // call in this file (Load More buttons, async feed loads). A plain
-                // fetch(url).then(res => res.text()) treats a 500 the same as a 200 - the error
-                // page's own body gets handed to onSuccess and rendered as if it were content.
-                // Routing everything through here means that mistake can only be made once, not
-                // once per call site.
+                // Single chokepoint for fragment fetches - a plain fetch().then(res.text()) treats
+                // a 500 like a 200, handing the error page's body to onSuccess as if it were content.
                 "        function fetchText(url, onSuccess, onError) {\n" +
                 "            fetch(url)\n" +
                 "                .then(res => {\n" +
@@ -787,10 +780,8 @@ object HtmlScripts {
                 "                .catch(onError);\n" +
                 "        }\n" +
                 "        \n" +
-                // The url/title/uploader/thumbnail/uploaderUrl bundle a "share this video" request
-                // carries - same fields, same query-string shape in toggleWatchLater() and
-                // toggleLikeState(); each still prepends its own endpoint/action and appends its
-                // own extra params (type/serviceId, or none).
+                // Shared "share this video" query-string shape, used by toggleWatchLater() and
+                // toggleLikeState() - each prepends its own endpoint/action.
                 "        function sharedVideoParamsQs(url, title, uploader, thumbnail, uploaderUrl) {\n" +
                 "            return '&url=' + encodeURIComponent(url) + '&title=' + encodeURIComponent(title) +\n" +
                 "                '&uploader=' + encodeURIComponent(uploader) + '&thumbnail=' + encodeURIComponent(thumbnail) +\n" +
@@ -911,6 +902,18 @@ object HtmlScripts {
                 "            if (label) label.textContent = count + ' selected';\n" +
                 "        }\n" +
                 "        \n" +
+                // Collapsed by default (chapters-list starts display:none - see the chapters
+                // section markup in HtmlRendererWatch.kt) so current-chapter-label in the header
+                // is the only thing visible until the user asks for the full list.
+                "        function toggleChaptersSection() {\n" +
+                "            const list = document.getElementById('chapters-list');\n" +
+                "            const icon = document.getElementById('chapters-toggle-icon');\n" +
+                "            if (!list) return;\n" +
+                "            const expanded = list.style.display !== 'none';\n" +
+                "            list.style.display = expanded ? 'none' : 'flex';\n" +
+                "            if (icon) icon.textContent = expanded ? 'expand_more' : 'expand_less';\n" +
+                "        }\n" +
+                "        \n" +
                 "        function deleteSelectedHistory(serviceId) {\n" +
                 "            const checked = document.querySelectorAll('.card-select-checkbox:checked');\n" +
                 "            if (checked.length === 0) return;\n" +
@@ -921,12 +924,646 @@ object HtmlScripts {
                 "                .catch(() => { location.reload(); });\n" +
                 "        }\n" +
                 "        \n" +
+                watchPlayerScripts() +
                 "    </script>\n";
 
-    // Raw JS body (SCRIPTS with its <script>/</script> wrapper stripped), served as a standalone,
-    // browser-cacheable file at /static/script.js so it only needs to be downloaded once per app
-    // version instead of being re-sent inline on every single page load. Computed from SCRIPTS
-    // itself (not hand-duplicated) so the two can never drift out of sync.
+    // video.js watch-page behaviors, shared across every /watch render instead of each living as
+    // its own hand-escaped Kotlin string in HtmlRendererWatch.kt (which had already grown to ~7
+    // near-duplicate (function(){...})() blocks, one per feature). Per-request data (segment
+    // times, chapter titles, URLs) stays server-side and is passed in as plain call arguments -
+    // e.g. "initChapterMarkers(player, [{s:12,t:\"Intro\"}]);" - same pattern the rest of this file
+    // already uses for toggleSubscribe()/toggleWatchLater()/etc.
+    // A function, not a property: SCRIPTS above calls it inside its own "..." + "..." chain, and a
+    // property here would either (a) not exist yet when SCRIPTS's own initializer runs, since
+    // object properties init in declaration order and this one is declared after SCRIPTS, or
+    // (b) if const, get inlined back into SCRIPTS's chain and re-fold the two into one string,
+    // risking the same 65535-byte constant-pool ceiling STATIC_ASSET_VERSION's comment
+    // (HtmlRendererCommon.kt) already had to work around once. A function call is neither.
+    private fun watchPlayerScripts(): String =
+                "        function initAdvancedPlayerControls(player, nextUrl, nextTitle, nextThumb) {\n" +
+                // <media-player> IS the wrapper element (no separate .el() to reach into) and the
+                // double-tap/volume-hud/autoplay-overlay markup is already rendered as its direct
+                // children server-side - video.js's old ready()-time relocation of these into
+                // player.el() (needed so they'd stay visible once video.js's fullscreen target
+                // took over) has no equivalent step to do here.
+                "            const wrapper = player;\n" +
+                "            \n" +
+                "            // Double tap & Double click to seek\n" +
+                "            if (wrapper) {\n" +
+                "                let lastTap = 0;\n" +
+                "                wrapper.addEventListener(\"touchstart\", function(e) {\n" +
+                "                    const now = Date.now();\n" +
+                "                    const DOUBLE_PRESS_DELAY = 300;\n" +
+                "                    if (now - lastTap < DOUBLE_PRESS_DELAY) {\n" +
+                "                        e.preventDefault();\n" +
+                "                        const rect = wrapper.getBoundingClientRect();\n" +
+                "                        const touchX = e.touches[0].clientX - rect.left;\n" +
+                "                        const isLeft = touchX < rect.width * 0.4;\n" +
+                "                        const isRight = touchX > rect.width * 0.6;\n" +
+                "                        if (isLeft) {\n" +
+                "                            window.seekVideo(-10);\n" +
+                "                            showDoubleTapRipple(\"left\");\n" +
+                "                        } else if (isRight) {\n" +
+                "                            window.seekVideo(10);\n" +
+                "                            showDoubleTapRipple(\"right\");\n" +
+                "                        }\n" +
+                "                    }\n" +
+                "                    lastTap = now;\n" +
+                "                }, { passive: false });\n" +
+                "                \n" +
+                "                wrapper.addEventListener(\"dblclick\", function(e) {\n" +
+                "                    e.preventDefault();\n" +
+                "                    const rect = wrapper.getBoundingClientRect();\n" +
+                "                    const clickX = e.clientX - rect.left;\n" +
+                "                    const isLeft = clickX < rect.width * 0.4;\n" +
+                "                    const isRight = clickX > rect.width * 0.6;\n" +
+                "                    if (isLeft) {\n" +
+                "                        window.seekVideo(-10);\n" +
+                "                        showDoubleTapRipple(\"left\");\n" +
+                "                    } else if (isRight) {\n" +
+                "                        window.seekVideo(10);\n" +
+                "                        showDoubleTapRipple(\"right\");\n" +
+                "                    }\n" +
+                "                });\n" +
+                "            }\n" +
+                "            \n" +
+                "            function showDoubleTapRipple(side) {\n" +
+                "                const ind = document.getElementById(\"double-tap-\" + side);\n" +
+                "                if (ind) {\n" +
+                "                    ind.classList.add(\"show\");\n" +
+                "                    setTimeout(() => ind.classList.remove(\"show\"), 650);\n" +
+                "                }\n" +
+                "            }\n" +
+                "            \n" +
+                "            // Swipe vertically on right side to adjust volume\n" +
+                "            if (wrapper) {\n" +
+                "                let touchStartY = 0;\n" +
+                "                let initialVolume = 1;\n" +
+                "                let isSwipeActive = false;\n" +
+                "                \n" +
+                "                wrapper.addEventListener(\"touchstart\", function(e) {\n" +
+                "                    if (e.touches.length === 1) {\n" +
+                "                        const rect = wrapper.getBoundingClientRect();\n" +
+                "                        const touchX = e.touches[0].clientX - rect.left;\n" +
+                "                        if (touchX > rect.width * 0.5) {\n" +
+                "                            touchStartY = e.touches[0].clientY;\n" +
+                "                            initialVolume = player.volume;\n" +
+                "                            isSwipeActive = true;\n" +
+                "                        }\n" +
+                "                    }\n" +
+                "                }, { passive: true });\n" +
+                "                \n" +
+                "                wrapper.addEventListener(\"touchmove\", function(e) {\n" +
+                "                    if (isSwipeActive && e.touches.length === 1) {\n" +
+                "                        e.preventDefault();\n" +
+                "                        const deltaY = touchStartY - e.touches[0].clientY;\n" +
+                "                        const rect = wrapper.getBoundingClientRect();\n" +
+                "                        const volumeChange = deltaY / (rect.height * 0.8);\n" +
+                "                        const newVolume = Math.max(0, Math.min(1, initialVolume + volumeChange));\n" +
+                "                        player.volume = newVolume;\n" +
+                "                        showVolumeHUD(Math.round(newVolume * 100));\n" +
+                "                    }\n" +
+                "                }, { passive: false });\n" +
+                "                \n" +
+                "                wrapper.addEventListener(\"touchend\", function() {\n" +
+                "                    isSwipeActive = false;\n" +
+                "                });\n" +
+                "            }\n" +
+                "            \n" +
+                "            let volumeHudTimeout = null;\n" +
+                "            function showVolumeHUD(volumePercent) {\n" +
+                "                const hud = document.getElementById(\"volume-hud-indicator\");\n" +
+                "                const text = document.getElementById(\"volume-hud-text\");\n" +
+                "                const icon = document.getElementById(\"volume-hud-icon\");\n" +
+                "                if (hud && text && icon) {\n" +
+                "                    text.innerText = volumePercent + \"%\";\n" +
+                "                    if (volumePercent === 0) icon.innerText = \"🔇\";\n" +
+                "                    else if (volumePercent < 30) icon.innerText = \"🔈\";\n" +
+                "                    else if (volumePercent < 70) icon.innerText = \"🔉\";\n" +
+                "                    else icon.innerText = \"🔊\";\n" +
+                "                    hud.classList.add(\"show\");\n" +
+                "                    clearTimeout(volumeHudTimeout);\n" +
+                "                    volumeHudTimeout = setTimeout(() => hud.classList.remove(\"show\"), 1000);\n" +
+                "                }\n" +
+                "            }\n" +
+                "            \n" +
+                "            // Autoplay Queue\n" +
+                "            let autoplayTimer = null;\n" +
+                "            let autoplayInterval = null;\n" +
+                "            player.addEventListener(\"ended\", function() {\n" +
+                "                if (!nextUrl) return;\n" +
+                "                const overlay = document.getElementById(\"autoplay-overlay\");\n" +
+                "                const titleEl = document.getElementById(\"autoplay-next-title\");\n" +
+                "                const thumbEl = document.getElementById(\"autoplay-next-thumb\");\n" +
+                "                const progressCircle = document.getElementById(\"autoplay-progress-circle\");\n" +
+                "                \n" +
+                "                if (overlay && titleEl && thumbEl && progressCircle) {\n" +
+                "                    titleEl.innerText = nextTitle;\n" +
+                "                    thumbEl.src = nextThumb;\n" +
+                "                    overlay.classList.add(\"show\");\n" +
+                "                    \n" +
+                "                    const totalDash = 138;\n" +
+                "                    progressCircle.style.strokeDashoffset = 0;\n" +
+                "                    \n" +
+                "                    autoplayTimer = setTimeout(() => {\n" +
+                "                        window.location.href = nextUrl;\n" +
+                "                    }, 5000);\n" +
+                "                    \n" +
+                "                    let elapsed = 0;\n" +
+                "                    autoplayInterval = setInterval(() => {\n" +
+                "                        elapsed += 100;\n" +
+                "                        const progress = elapsed / 5000;\n" +
+                "                        progressCircle.style.strokeDashoffset = totalDash * progress;\n" +
+                "                    }, 100);\n" +
+                "                }\n" +
+                "            });\n" +
+                "            \n" +
+                "            function clearAutoplay() {\n" +
+                "                clearTimeout(autoplayTimer);\n" +
+                "                clearInterval(autoplayInterval);\n" +
+                "                const overlay = document.getElementById(\"autoplay-overlay\");\n" +
+                "                if (overlay) overlay.classList.remove(\"show\");\n" +
+                "            }\n" +
+                "            \n" +
+                "            const cancelBtn = document.getElementById(\"autoplay-cancel\");\n" +
+                "            if (cancelBtn) cancelBtn.addEventListener(\"click\", clearAutoplay);\n" +
+                "            \n" +
+                "            const playNowBtn = document.getElementById(\"autoplay-play-now\");\n" +
+                "            if (playNowBtn) {\n" +
+                "                playNowBtn.addEventListener(\"click\", () => {\n" +
+                "                    if (nextUrl) window.location.href = nextUrl;\n" +
+                "                });\n" +
+                "            }\n" +
+                "            \n" +
+                "            // Keyboard Shortcuts\n" +
+                "            document.addEventListener(\"keydown\", (e) => {\n" +
+                "                const active = document.activeElement;\n" +
+                "                if (active && (active.tagName === \"INPUT\" || active.tagName === \"SELECT\" || active.tagName === \"TEXTAREA\" || active.isContentEditable)) {\n" +
+                "                    return;\n" +
+                "                }\n" +
+                "                if (e.key === \" \" || e.key === \"k\" || e.key === \"K\") {\n" +
+                "                    e.preventDefault();\n" +
+                "                    if (player.paused) player.play().catch(e => {}); else player.pause();\n" +
+                "                } else if (e.key === \"j\" || e.key === \"J\") {\n" +
+                "                    e.preventDefault();\n" +
+                "                    window.seekVideo(-10);\n" +
+                "                    showDoubleTapRipple(\"left\");\n" +
+                "                } else if (e.key === \"l\" || e.key === \"L\") {\n" +
+                "                    e.preventDefault();\n" +
+                "                    window.seekVideo(10);\n" +
+                "                    showDoubleTapRipple(\"right\");\n" +
+                "                } else if (e.key === \"m\" || e.key === \"M\") {\n" +
+                "                    e.preventDefault();\n" +
+                "                    player.muted = !player.muted;\n" +
+                "                    showVolumeHUD(player.muted ? 0 : Math.round(player.volume * 100));\n" +
+                "                }\n" +
+                "            });\n" +
+                "            \n" +
+                // Picture-in-Picture: Default Video Layout already ships its own PIP button
+                // (Vidstack detects support itself, see the player root's data-can-pip
+                // attribute) - no need to hand-register a custom control like video.js required.
+                "        }\n" +
+                "        \n" +
+                // CSS object-fit:contain (HtmlStyles.kt) still let real mobile fullscreen stretch/
+                // crop the picture, unreproducible on desktop. This computes the letterboxed size
+                // directly in JS instead - explicit pixel dimensions on the inner <video> via
+                // setProperty(...,'important'), winning the cascade regardless of what defeated the
+                // CSS-only version.
+                "        function initFullscreenLetterbox(player) {\n" +
+                "            function fitVideoLetterbox() {\n" +
+                "                var videoTag = player.querySelector(\"video\");\n" +
+                "                if (!videoTag) return;\n" +
+                "                if (!player.state.fullscreen) {\n" +
+                "                    videoTag.style.removeProperty(\"width\");\n" +
+                "                    videoTag.style.removeProperty(\"height\");\n" +
+                "                    videoTag.style.removeProperty(\"position\");\n" +
+                "                    videoTag.style.removeProperty(\"top\");\n" +
+                "                    videoTag.style.removeProperty(\"left\");\n" +
+                "                    return;\n" +
+                "                }\n" +
+                // Read straight off the native <video> element rather than a player-level
+                // videoWidth/videoHeight accessor - avoids depending on whether Vidstack exposes
+                // one, and this is exactly the element being resized below anyway.
+                "                var vw = videoTag.videoWidth || 16;\n" +
+                "                var vh = videoTag.videoHeight || 9;\n" +
+                "                var availW = window.innerWidth;\n" +
+                "                var availH = window.innerHeight;\n" +
+                "                var targetW, targetH;\n" +
+                "                if (vw / vh > availW / availH) {\n" +
+                "                    targetW = availW;\n" +
+                "                    targetH = availW * vh / vw;\n" +
+                "                } else {\n" +
+                "                    targetH = availH;\n" +
+                "                    targetW = availH * vw / vh;\n" +
+                "                }\n" +
+                "                videoTag.style.setProperty(\"width\", targetW + \"px\", \"important\");\n" +
+                "                videoTag.style.setProperty(\"height\", targetH + \"px\", \"important\");\n" +
+                "                videoTag.style.setProperty(\"position\", \"absolute\", \"important\");\n" +
+                "                videoTag.style.setProperty(\"top\", ((availH - targetH) / 2) + \"px\", \"important\");\n" +
+                "                videoTag.style.setProperty(\"left\", ((availW - targetW) / 2) + \"px\", \"important\");\n" +
+                "            }\n" +
+                "            player.addEventListener(\"fullscreen-change\", fitVideoLetterbox);\n" +
+                "            player.addEventListener(\"loaded-metadata\", fitVideoLetterbox);\n" +
+                "            window.addEventListener(\"resize\", fitVideoLetterbox);\n" +
+                "            window.addEventListener(\"orientationchange\", fitVideoLetterbox);\n" +
+                "        }\n" +
+                "        \n" +
+                // videoId is already URL-encoded server-side (HtmlRendererCommon.encodeUrl) and
+                // concatenated as-is - do not encodeURIComponent() it again here, that's the
+                // escapeJs-vs-encodeUrl double-encoding bug class documented elsewhere in this
+                // file (see e.g. HtmlRendererCommon.kt's history-save chokepoint comment).
+                "        function initWatchProgressReporting(player, videoId, serviceId) {\n" +
+                "            var lastReported = -1;\n" +
+                "            function reportProgress() {\n" +
+                "                var dur = player.duration;\n" +
+                "                if (!dur) return;\n" +
+                "                var percent = Math.round((player.currentTime / dur) * 100);\n" +
+                "                if (percent === lastReported) return;\n" +
+                "                lastReported = percent;\n" +
+                "                var url = \"/api/v1/watch_progress?id=\" + videoId + \"&serviceId=\" + serviceId + \"&percent=\" + percent + \"&durationSeconds=\" + Math.round(dur);\n" +
+                "                fetch(url, { keepalive: true }).catch(function() {});\n" +
+                "            }\n" +
+                "            var progressTimer = setInterval(reportProgress, 15000);\n" +
+                "            player.addEventListener(\"pause\", reportProgress);\n" +
+                "            window.addEventListener(\"pagehide\", reportProgress);\n" +
+                "        }\n" +
+                "        \n" +
+                // Download button <-> Flow's native downloader (/api/v1/download,
+                // LocalHttpServerDownloadHandlers.kt). videoId is already URL-encoded (concatenated
+                // as-is, same double-encoding rule as initWatchProgressReporting above). The server
+                // is the source of truth: the button only renders what /download says, polling
+                // while a download is in flight, so it also reflects downloads started from the app.
+                "        function initDownloadButton(videoId, serviceId) {\n" +
+                "            var btn = document.getElementById(\"download-btn\");\n" +
+                "            if (!btn) return;\n" +
+                "            var state = \"none\", timer = null;\n" +
+                "            function call(action) {\n" +
+                "                return fetch(\"/api/v1/download?action=\" + action + \"&serviceId=\" + serviceId + \"&id=\" + videoId)\n" +
+                "                    .then(function(res) { return res.json().then(function(body) { return { ok: res.ok, body: body }; }); });\n" +
+                "            }\n" +
+                "            function icon(name) { return '<span class=\"material-symbols-rounded\" style=\"font-size:18px;\">' + name + '</span>'; }\n" +
+                "            function render(s) {\n" +
+                "                state = s.state;\n" +
+                "                btn.classList.remove(\"added\", \"danger\");\n" +
+                "                btn.title = \"\";\n" +
+                "                if (state === \"pending\" || state === \"downloading\") {\n" +
+                "                    btn.innerHTML = icon(\"downloading\") + \"Downloading \" + s.progress + \"%\";\n" +
+                "                    btn.title = \"Click to cancel\";\n" +
+                "                } else if (state === \"paused\") {\n" +
+                "                    btn.innerHTML = icon(\"pause_circle\") + \"Paused \" + s.progress + \"%\";\n" +
+                "                    btn.title = \"Click to cancel\";\n" +
+                "                } else if (state === \"completed\") {\n" +
+                "                    btn.classList.add(\"added\");\n" +
+                "                    btn.innerHTML = icon(\"download_done\") + \"Downloaded\";\n" +
+                "                    btn.title = \"Click to delete the downloaded file\";\n" +
+                "                } else if (state === \"failed\") {\n" +
+                "                    btn.classList.add(\"danger\");\n" +
+                "                    btn.innerHTML = icon(\"error\") + \"Retry download\";\n" +
+                "                } else {\n" +
+                "                    btn.innerHTML = icon(\"download\") + \"Download\";\n" +
+                "                }\n" +
+                "                var active = state === \"pending\" || state === \"downloading\" || state === \"paused\";\n" +
+                "                if (active && !timer) timer = setInterval(refresh, 2000);\n" +
+                "                if (!active && timer) { clearInterval(timer); timer = null; }\n" +
+                "            }\n" +
+                "            function refresh() {\n" +
+                "                call(\"status\").then(function(r) { if (r.ok) render(r.body); }).catch(function() {});\n" +
+                "            }\n" +
+                "            btn.addEventListener(\"click\", function() {\n" +
+                "                var action;\n" +
+                "                if (state === \"none\" || state === \"failed\") action = \"start\";\n" +
+                "                else if (state === \"completed\") { if (!confirm(\"Delete the downloaded file?\")) return; action = \"delete\"; }\n" +
+                "                else action = \"cancel\";\n" +
+                "                call(action).then(function(r) {\n" +
+                "                    if (r.ok) render(r.body); else alert(r.body.error || \"Download failed\");\n" +
+                "                }).catch(function() { alert(\"Could not reach the server\"); });\n" +
+                "            });\n" +
+                "            refresh();\n" +
+                "        }\n" +
+                "        \n" +
+                "        function initSponsorBlockMarkers(player, segments) {\n" +
+                "            var skipBtn = document.getElementById(\"sponsor-skip-btn\");\n" +
+                "            var skipLabel = document.getElementById(\"sponsor-skip-label\");\n" +
+                "            var current = null;\n" +
+                "            function placeMarkers() {\n" +
+                "                var holder = player.querySelector(\"media-time-slider\");\n" +
+                "                var dur = player.duration;\n" +
+                "                if (!holder || !dur) return;\n" +
+                "                segments.forEach(function(seg) {\n" +
+                "                    var marker = document.createElement(\"div\");\n" +
+                "                    marker.className = \"sponsor-segment-marker cat-\" + seg.c;\n" +
+                "                    marker.style.left = (seg.s / dur * 100) + \"%\";\n" +
+                "                    marker.style.width = (Math.max(seg.e - seg.s, 0) / dur * 100) + \"%\";\n" +
+                // A short segment's proportional width can round to a sub-pixel value on a narrow
+                // mobile progress bar (measured: 0.16px for a 7s segment in a 33-min video on a
+                // 375px phone) - invisible and untappable. min-width floors the visual marker
+                // without touching the real start/end times the skip-button logic uses.
+                "                    marker.style.minWidth = \"3px\";\n" +
+                "                    holder.appendChild(marker);\n" +
+                "                });\n" +
+                "            }\n" +
+                "            player.addEventListener(\"loaded-metadata\", placeMarkers, { once: true });\n" +
+                "            if (player.duration) placeMarkers();\n" +
+                "            player.addEventListener(\"time-update\", function() {\n" +
+                "                var t = player.currentTime;\n" +
+                "                var seg = null;\n" +
+                "                for (var i = 0; i < segments.length; i++) {\n" +
+                "                    if (t >= segments[i].s && t < segments[i].e) { seg = segments[i]; break; }\n" +
+                "                }\n" +
+                "                if (seg) {\n" +
+                "                    if (current !== seg) {\n" +
+                "                        current = seg;\n" +
+                "                        if (skipLabel) skipLabel.textContent = \"跳過 \" + seg.l;\n" +
+                "                        if (skipBtn) skipBtn.classList.add(\"visible\");\n" +
+                "                    }\n" +
+                "                } else if (current) {\n" +
+                "                    current = null;\n" +
+                "                    if (skipBtn) skipBtn.classList.remove(\"visible\");\n" +
+                "                }\n" +
+                "            });\n" +
+                "            if (skipBtn) skipBtn.addEventListener(\"click\", function() {\n" +
+                "                if (current) {\n" +
+                "                    player.currentTime = current.e;\n" +
+                "                    skipBtn.classList.remove(\"visible\");\n" +
+                "                    current = null;\n" +
+                "                }\n" +
+                "            });\n" +
+                "        }\n" +
+                "        \n" +
+                "        function initChapterMarkers(player, chapters) {\n" +
+                "            var label = document.getElementById(\"current-chapter-label\");\n" +
+                "            var listEl = document.getElementById(\"chapters-list\");\n" +
+                "            var activeIndex = -1;\n" +
+                "            function placeTicks() {\n" +
+                "                var holder = player.querySelector(\"media-time-slider\");\n" +
+                "                var dur = player.duration;\n" +
+                "                if (!holder || !dur) return;\n" +
+                "                chapters.forEach(function(ch) {\n" +
+                "                    if (ch.s <= 0) return;\n" +
+                "                    var tick = document.createElement(\"div\");\n" +
+                "                    tick.className = \"chapter-tick-marker\";\n" +
+                "                    tick.style.left = (ch.s / dur * 100) + \"%\";\n" +
+                "                    holder.appendChild(tick);\n" +
+                "                });\n" +
+                "            }\n" +
+                "            player.addEventListener(\"loaded-metadata\", placeTicks, { once: true });\n" +
+                "            if (player.duration) placeTicks();\n" +
+                "            player.addEventListener(\"time-update\", function() {\n" +
+                "                var t = player.currentTime;\n" +
+                "                var idx = 0;\n" +
+                "                for (var i = 0; i < chapters.length; i++) {\n" +
+                "                    if (t >= chapters[i].s) idx = i; else break;\n" +
+                "                }\n" +
+                "                if (idx === activeIndex) return;\n" +
+                "                activeIndex = idx;\n" +
+                "                if (label) label.textContent = chapters[idx].t;\n" +
+                "                if (listEl) {\n" +
+                "                    listEl.querySelectorAll(\".chapter-item\").forEach(function(el, i) {\n" +
+                "                        el.classList.toggle(\"active\", i === idx);\n" +
+                "                    });\n" +
+                "                }\n" +
+                "            });\n" +
+                "            window.seekToChapter = function(seconds) {\n" +
+                "                player.currentTime = seconds;\n" +
+                "                document.querySelector(\".player-wrapper\").scrollIntoView({ behavior: \"smooth\", block: \"start\" });\n" +
+                "            };\n" +
+                "        }\n" +
+                "        \n" +
+                // Shrinks .player-wrapper to a fixed corner box once IntersectionObserver
+                // reports it fully scrolled out of view, so playback stays visible/controllable
+                // while reading the description or comments below. #player-space-holder keeps
+                // that space's height in normal flow so the wrapper going position:fixed doesn't
+                // jump the rest of the page up. Suspended during real fullscreen; the close button
+                // pauses and disconnects the observer rather than just hiding, so it doesn't
+                // immediately re-trigger.
+                "        function initMiniPlayer(player) {\n" +
+                "            var wrapper = document.querySelector(\".player-wrapper\");\n" +
+                "            var holder = document.getElementById(\"player-space-holder\");\n" +
+                "            var sentinel = document.getElementById(\"mini-player-sentinel\");\n" +
+                "            var closeBtn = document.getElementById(\"mini-player-close-btn\");\n" +
+                "            var dragHandle = document.getElementById(\"mini-player-drag-handle\");\n" +
+                "            if (!wrapper || !holder || !sentinel) return;\n" +
+                "            var isMini = false, dismissed = false;\n" +
+                // Position is inline left/top (overriding the CSS bottom/right default) once the
+                // user has dragged it; kept in localStorage so it stays where they left it.
+                // Clamped on every apply so a saved spot from a bigger window can't strand it
+                // off-screen after a resize/rotation.
+                "            var POS_KEY = \"miniPlayerPos\";\n" +
+                "            function applyPos(x, y) {\n" +
+                "                var maxX = Math.max(0, window.innerWidth - wrapper.offsetWidth);\n" +
+                "                var maxY = Math.max(0, window.innerHeight - wrapper.offsetHeight);\n" +
+                "                wrapper.style.left = Math.min(Math.max(0, x), maxX) + \"px\";\n" +
+                "                wrapper.style.top = Math.min(Math.max(0, y), maxY) + \"px\";\n" +
+                "                wrapper.style.right = \"auto\";\n" +
+                "                wrapper.style.bottom = \"auto\";\n" +
+                "            }\n" +
+                "            function clearPos() {\n" +
+                "                wrapper.style.left = \"\"; wrapper.style.top = \"\";\n" +
+                "                wrapper.style.right = \"\"; wrapper.style.bottom = \"\";\n" +
+                "            }\n" +
+                "            function restorePos() {\n" +
+                "                try {\n" +
+                "                    var saved = JSON.parse(localStorage.getItem(POS_KEY));\n" +
+                "                    if (saved && typeof saved.x === \"number\" && typeof saved.y === \"number\") applyPos(saved.x, saved.y);\n" +
+                "                } catch (e) {}\n" +
+                "            }\n" +
+                "            function enterMini() {\n" +
+                "                if (isMini || dismissed || player.state.fullscreen) return;\n" +
+                "                isMini = true;\n" +
+                "                holder.style.height = wrapper.offsetHeight + \"px\";\n" +
+                "                wrapper.classList.add(\"mini-player\");\n" +
+                "                restorePos();\n" +
+                "            }\n" +
+                "            function exitMini() {\n" +
+                "                if (!isMini) return;\n" +
+                "                isMini = false;\n" +
+                "                wrapper.classList.remove(\"mini-player\");\n" +
+                "                clearPos();\n" +
+                "                holder.style.height = \"0px\";\n" +
+                "            }\n" +
+                // A dedicated handle rather than dragging the whole box - the box is covered by
+                // Vidstack's own controls (tap = play/pause, slider drags) that would fight a
+                // drag gesture. Pointer capture keeps the drag tracking outside the handle.
+                "            if (dragHandle) {\n" +
+                "                var dragging = false, offX = 0, offY = 0;\n" +
+                "                dragHandle.addEventListener(\"pointerdown\", function(e) {\n" +
+                "                    var r = wrapper.getBoundingClientRect();\n" +
+                "                    dragging = true;\n" +
+                "                    offX = e.clientX - r.left;\n" +
+                "                    offY = e.clientY - r.top;\n" +
+                "                    dragHandle.setPointerCapture(e.pointerId);\n" +
+                "                    e.preventDefault();\n" +
+                "                });\n" +
+                "                dragHandle.addEventListener(\"pointermove\", function(e) {\n" +
+                "                    if (dragging) applyPos(e.clientX - offX, e.clientY - offY);\n" +
+                "                });\n" +
+                "                function endDrag(e) {\n" +
+                "                    if (!dragging) return;\n" +
+                "                    dragging = false;\n" +
+                "                    try { dragHandle.releasePointerCapture(e.pointerId); } catch (x) {}\n" +
+                "                    var r = wrapper.getBoundingClientRect();\n" +
+                "                    try { localStorage.setItem(POS_KEY, JSON.stringify({ x: r.left, y: r.top })); } catch (x) {}\n" +
+                "                }\n" +
+                "                dragHandle.addEventListener(\"pointerup\", endDrag);\n" +
+                "                dragHandle.addEventListener(\"pointercancel\", endDrag);\n" +
+                "            }\n" +
+                "            window.addEventListener(\"resize\", function() {\n" +
+                "                if (isMini && wrapper.style.left) applyPos(parseFloat(wrapper.style.left), parseFloat(wrapper.style.top));\n" +
+                "            });\n" +
+                // Watches the sentinel, not the wrapper - the wrapper's own geometry changes the
+                // instant mini-player toggles (position:fixed moves it back into view), which fed
+                // straight back into this same observer and flickered enter/exit forever. The
+                // sentinel's position only moves with page scroll, never with mini-player state,
+                // so cause (scrolled past) and effect (wrapper repositioned) can't cross-trigger.
+                "            var observer = new IntersectionObserver(function(entries) {\n" +
+                "                if (entries[0].isIntersecting) exitMini(); else enterMini();\n" +
+                "            }, { threshold: 0 });\n" +
+                "            observer.observe(sentinel);\n" +
+                "            player.addEventListener(\"fullscreen-change\", function() {\n" +
+                "                if (player.state.fullscreen) exitMini();\n" +
+                "            });\n" +
+                "            if (closeBtn) closeBtn.addEventListener(\"click\", function() {\n" +
+                "                player.pause();\n" +
+                "                dismissed = true;\n" +
+                "                exitMini();\n" +
+                "                observer.disconnect();\n" +
+                "            });\n" +
+                "        }\n" +
+                "        \n" +
+                // Bilibili danmaku ("bullet comments") overlay. Scroll-type comments animate via
+                // CSS `transform` (travel distance needs runtime-measured player/text width, not
+                // known until render); top/bottom are fixed-position fades. getLastingTime()
+                // always returns -1 (extractor bug) - duration hardcoded to Bilibili's typical
+                // defaults instead.
+                "        function initDanmakuOverlay(player, danmakuUrl) {\n" +
+                "            var layer = document.getElementById(\"danmaku-layer\");\n" +
+                "            var toggleBtn = document.getElementById(\"danmaku-toggle-btn\");\n" +
+                "            if (!layer) return;\n" +
+                // danmaku-layer is now rendered directly as a child of <media-player> itself
+                // (which, unlike video.js's separate .el() vs outer-wrapper split, is the actual
+                // fullscreen target here) - this relocation is likely a no-op in practice, but
+                // kept as a harmless defensive no-op (re-appending an existing child just reorders
+                // it) since the exact fullscreen-target element wasn't independently confirmed.
+                "            var danmakuHome = layer.parentNode, danmakuNextSibling = layer.nextSibling;\n" +
+                "            player.addEventListener(\"fullscreen-change\", function() {\n" +
+                "                if (player.state.fullscreen) {\n" +
+                "                    player.appendChild(layer);\n" +
+                "                } else if (danmakuHome) {\n" +
+                "                    danmakuHome.insertBefore(layer, danmakuNextSibling);\n" +
+                "                }\n" +
+                "            });\n" +
+                "            var SCROLL_DURATION = 8, FIXED_DURATION = 4;\n" +
+                "            var comments = [], nextIndex = 0, enabled = true;\n" +
+                "            var scrollLaneUntil = new Array(14).fill(0);\n" +
+                "            var topLaneUntil = new Array(4).fill(0);\n" +
+                "            var bottomLaneUntil = new Array(4).fill(0);\n" +
+                "            function pickLane(untilArr, lanes, now, dur) {\n" +
+                "                for (var i = 0; i < lanes; i++) {\n" +
+                "                    if (untilArr[i] <= now) { untilArr[i] = now + dur; return i; }\n" +
+                "                }\n" +
+                "                var idx = 0;\n" +
+                "                for (var i = 1; i < lanes; i++) { if (untilArr[i] < untilArr[idx]) idx = i; }\n" +
+                "                untilArr[idx] = now + dur;\n" +
+                "                return idx;\n" +
+                "            }\n" +
+                "            function spawn(item) {\n" +
+                "                var h = layer.clientHeight || 200;\n" +
+                "                var w = layer.clientWidth || 800;\n" +
+                "                var el = document.createElement(\"div\");\n" +
+                "                el.className = \"danmaku-item \" + item.position;\n" +
+                "                el.textContent = item.text;\n" +
+                // Scaled by player WIDTH, not height - height-scaling produced 50-60px comments
+                // covering most of the frame.
+                "                el.style.fontSize = Math.max(14, Math.min(30, Math.round(w * item.size * 0.028))) + \"px\";\n" +
+                "                el.style.color = item.color;\n" +
+                "                var laneH = parseFloat(el.style.fontSize) * 1.5;\n" +
+                "                var now = player.currentTime;\n" +
+                "                if (item.position === \"top\" || item.position === \"bottom\") {\n" +
+                "                    var lanes = Math.max(1, Math.min(4, Math.floor(h * 0.35 / laneH)));\n" +
+                "                    var untilArr = item.position === \"top\" ? topLaneUntil : bottomLaneUntil;\n" +
+                "                    var lane = pickLane(untilArr, lanes, now, FIXED_DURATION);\n" +
+                "                    el.style[item.position] = (8 + lane * laneH) + \"px\";\n" +
+                "                    el.style.animation = \"danmaku-fade \" + FIXED_DURATION + \"s linear\";\n" +
+                "                    el.addEventListener(\"animationend\", function() { el.remove(); });\n" +
+                "                    layer.appendChild(el);\n" +
+                "                } else {\n" +
+                "                    var lanes = Math.max(1, Math.floor(h / laneH));\n" +
+                "                    var lane = pickLane(scrollLaneUntil, Math.min(14, lanes), now, SCROLL_DURATION);\n" +
+                "                    el.style.top = (lane * laneH) + \"px\";\n" +
+                "                    var startX = layer.clientWidth;\n" +
+                "                    el.style.transform = \"translateX(\" + startX + \"px)\";\n" +
+                "                    layer.appendChild(el);\n" +
+                "                    var endX = -el.offsetWidth;\n" +
+                "                    el.dataset.startX = startX; el.dataset.endX = endX; el.dataset.duration = SCROLL_DURATION;\n" +
+                "                    requestAnimationFrame(function() {\n" +
+                "                        el.style.transition = \"transform \" + SCROLL_DURATION + \"s linear\";\n" +
+                "                        el.style.transform = \"translateX(\" + endX + \"px)\";\n" +
+                "                    });\n" +
+                "                    el.addEventListener(\"transitionend\", function() { el.remove(); });\n" +
+                "                }\n" +
+                "            }\n" +
+                "            function tick() {\n" +
+                "                if (!enabled || !comments.length) return;\n" +
+                "                var t = player.currentTime;\n" +
+                "                while (nextIndex < comments.length && comments[nextIndex].time <= t) {\n" +
+                "                    if (t - comments[nextIndex].time < 1.2) spawn(comments[nextIndex]);\n" +
+                "                    nextIndex++;\n" +
+                "                }\n" +
+                "            }\n" +
+                "            function resync() {\n" +
+                "                layer.innerHTML = \"\";\n" +
+                "                scrollLaneUntil.fill(0); topLaneUntil.fill(0); bottomLaneUntil.fill(0);\n" +
+                "                var t = player.currentTime;\n" +
+                "                nextIndex = 0;\n" +
+                "                while (nextIndex < comments.length && comments[nextIndex].time < t) nextIndex++;\n" +
+                "            }\n" +
+                "            player.addEventListener(\"time-update\", tick);\n" +
+                "            player.addEventListener(\"seeking\", resync);\n" +
+                "            player.addEventListener(\"pause\", function() {\n" +
+                "                layer.classList.add(\"video-paused\");\n" +
+                "                layer.querySelectorAll(\".danmaku-item.scroll\").forEach(function(el) {\n" +
+                "                    var m = new DOMMatrixReadOnly(getComputedStyle(el).transform);\n" +
+                "                    el.style.transition = \"none\";\n" +
+                "                    el.style.transform = \"translateX(\" + m.m41 + \"px)\";\n" +
+                "                    el.dataset.pausedX = m.m41;\n" +
+                "                });\n" +
+                "            });\n" +
+                "            player.addEventListener(\"play\", function() {\n" +
+                "                layer.classList.remove(\"video-paused\");\n" +
+                "                layer.querySelectorAll(\".danmaku-item.scroll\").forEach(function(el) {\n" +
+                "                    if (el.dataset.pausedX === undefined) return;\n" +
+                "                    var startX = parseFloat(el.dataset.pausedX);\n" +
+                "                    var endX = parseFloat(el.dataset.endX);\n" +
+                "                    var totalDist = parseFloat(el.dataset.startX) - endX;\n" +
+                "                    var remainDist = startX - endX;\n" +
+                "                    var remainDur = totalDist > 0 ? parseFloat(el.dataset.duration) * (remainDist / totalDist) : 0;\n" +
+                "                    delete el.dataset.pausedX;\n" +
+                "                    if (remainDur <= 0) { el.remove(); return; }\n" +
+                "                    requestAnimationFrame(function() {\n" +
+                "                        el.style.transition = \"transform \" + remainDur + \"s linear\";\n" +
+                "                        el.style.transform = \"translateX(\" + endX + \"px)\";\n" +
+                "                    });\n" +
+                "                });\n" +
+                "            });\n" +
+                "            if (toggleBtn) {\n" +
+                "                toggleBtn.addEventListener(\"click\", function() {\n" +
+                "                    enabled = !enabled;\n" +
+                "                    toggleBtn.classList.toggle(\"off\", !enabled);\n" +
+                "                    if (!enabled) layer.innerHTML = \"\";\n" +
+                "                });\n" +
+                "            }\n" +
+                "            fetch(danmakuUrl)\n" +
+                "                .then(function(res) { return res.json(); })\n" +
+                "                .then(function(data) {\n" +
+                "                    comments = (data.danmaku || []).sort(function(a, b) { return a.time - b.time; });\n" +
+                "                    resync();\n" +
+                "                })\n" +
+                "                .catch(function() {});\n" +
+                "        }\n" +
+                "        \n";
+
+    // SCRIPTS with its <script>/</script> wrapper stripped, served cacheably at /static/script.js.
+    // Computed from SCRIPTS, not hand-duplicated, so the two can't drift.
     @JvmField
     val RAW_JS: String = SCRIPTS.substring(SCRIPTS.indexOf('\n') + 1, SCRIPTS.lastIndexOf("</script>"))
 }

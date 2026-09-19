@@ -19,7 +19,7 @@ object HtmlRendererSettings {
           .append("          </div>\n")
           .append("          <select id=\"setting-video-quality\" name=\"video_quality\" style=\"padding: 8px 16px; border-radius: 8px; border: 1px solid var(--search-input-border); background-color: var(--bg-color); color: var(--text-color); font-family: inherit; font-size: 14px; outline: none; cursor: pointer; width: 100%; max-width: 280px;\">\n")
 
-        val qualities = arrayOf("144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p")
+        val qualities = arrayOf("Auto", "144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p")
         for (q in qualities) {
             val selected = if (q == currentQuality) "selected" else ""
             sb.append("            <option value=\"$q\" $selected>$q</option>\n")

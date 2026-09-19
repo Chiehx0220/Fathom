@@ -13,27 +13,17 @@ import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
 
 /**
- * JSON serialization for the `/api/v1/...` endpoints added in Fathom<->Flow integration Stage 2
- * (see the plan at C:\Users\Administrator\.claude\plans\witty-inventing-seahorse.md). Field names
- * deliberately mirror the Flow fork's `io.github.aedev.flow.data.model.Models.kt` (`Video`,
- * `Channel`, `Playlist`, `Comment`, `SearchResult`) as closely as this extractor's data allows -
- * the whole point of Stage 2 is minimizing the reshaping work whenever Stage 4 actually rewires
- * Flow's repository layer to call this API, so drifting from those names defeats the purpose.
+ * JSON serialization for `/api/v1/...`. Field names mirror
+ * `io.github.aedev.flow.data.model.Models.kt` (`Video`/`Channel`/`Playlist`/`Comment`/
+ * `SearchResult`) as closely as extractor data allows.
  *
- * Deliberately separate from HtmlRenderer*.kt and does not touch/reuse any of those functions -
- * this machine can't compile-check Kotlin changes (see feedback_windows_gradle_subprocess), so
- * refactoring the already-working, user-verified HTML handlers to share code with this brand new,
- * unverified JSON layer would risk silently breaking pages that currently work. Some duplicated
- * extraction calls against the same stable extractor APIs is the safer trade until this has a
- * real build+test cycle behind it.
+ * Deliberately independent of `HtmlRenderer*.kt` - no shared functions, own extraction calls
+ * against the same stable extractor APIs.
  */
 object ApiRenderer {
 
-    // channelId here is the *full channel URL* (e.g. "https://www.youtube.com/channel/UC...."),
-    // not a bare ID - PipePipeExtractor (and this whole app) deals in full URLs everywhere, there
-    // is no separate bare-ID concept surfaced anywhere in localtube today. Flow's own model just
-    // calls the field "channelId"; documenting the actual shape here since Stage 4 will need to
-    // know this when it wires Flow's repository layer up to these responses.
+    // channelId is the full channel URL, not a bare ID - PipePipeExtractor deals in URLs
+    // throughout; Flow's model field is just named "channelId".
     @JvmStatic
     fun videoJson(item: InfoItem, serviceId: Int): JSONObject {
         val json = JSONObject()
@@ -60,13 +50,9 @@ object ApiRenderer {
         return json
     }
 
-    // Full watch-page detail: everything videoJson() has, plus the fields only StreamInfo (not
-    // the lighter StreamInfoItem used in listings) actually carries - description, like count,
-    // related videos, and the playback URLs. Deliberately does NOT re-resolve stream/manifest
-    // URLs itself - it points at this server's own existing /stream, /manifest, /subtitles proxy
-    // routes (already fully working, PoToken-aware, DASH-manifest-generating - see
-    // handleStreamProxy/handleManifestProxy/handleSubtitlesProxy), matching the plan's explicit
-    // note that Stage 2 reuses that proxy logic as-is rather than duplicating it.
+    // Full watch-page detail: videoJson() plus StreamInfo-only fields (description, like count,
+    // related videos, playback URLs). Points at the existing /stream, /manifest, /subtitles proxy
+    // routes rather than re-resolving URLs itself.
     @JvmStatic
     fun videoDetailJson(info: StreamInfo, serviceId: Int): JSONObject {
         val json = JSONObject()
@@ -95,24 +81,17 @@ object ApiRenderer {
         }
         json.put("relatedVideos", related)
 
-        // Not part of Flow's Video model - Flow's ExoPlayer needs somewhere to actually point,
-        // and this server's proxy routes are it. isDash is true whenever the extractor didn't
-        // give a direct progressive URL, matching how HtmlRendererWatch.kt itself already decides
-        // between the two source types for the HTML <video> tag.
+        // Not part of Flow's Video model - points ExoPlayer at this server's proxy routes. isDash
+        // matches HtmlRendererWatch.kt's own progressive-vs-DASH decision for the <video> tag.
         val playback = JSONObject()
         val hasVideo = info.videoStreams.isNotEmpty() || info.videoOnlyStreams.isNotEmpty() || !info.hlsUrl.isNullOrEmpty()
         playback.put("isDash", hasVideo)
         playback.put("manifestUrl", "/manifest?serviceId=$serviceId&id=$infoUrlEncoded")
         playback.put("streamUrl", "/stream?serviceId=$serviceId&id=$infoUrlEncoded")
 
-        // Download quality choices, added for the Stage 4 download-feature rewrite. Deliberately
-        // limited to *progressive* (video+audio already combined) streams: each is a single
-        // /stream?itag=<itag> URL a client can download directly with no muxing step, unlike the
-        // video-only/audio-only adaptive streams handleStreamProxy also knows how to serve. One
-        // "audio" entry (the highest-bitrate audio-only stream, if any) is included for an
-        // audio-only download option. This reuses handleStreamProxy's existing itag-based stream
-        // selection as-is (see the itag branch there) - no new extraction or stream-serving logic,
-        // just exposing a slice of what StreamInfo already extracted.
+        // Download formats: progressive (video+audio combined) streams only - each a direct
+        // /stream?itag=<itag> URL needing no muxing, via handleStreamProxy's existing itag
+        // selection. Plus one highest-bitrate audio-only entry for an audio-only option.
         val formats = JSONArray()
         for (stream in info.videoStreams) {
             if (stream.isVideoOnly) continue
@@ -137,11 +116,8 @@ object ApiRenderer {
 
         json.put("playback", playback)
 
-        // Caption/subtitle track list, added alongside the download-formats work above for the
-        // same reason: handleSubtitlesProxy (/subtitles?serviceId=&id=&lang=&auto=) already fully
-        // works and is already used by this server's own HTML player (HtmlRendererWatch.kt) - it
-        // just needed the *list* of available tracks exposed over the JSON API so a client can
-        // build a picker menu, the same gap `formats` closed for downloads. No new extraction.
+        // Caption track list for a client picker menu - points at the existing handleSubtitlesProxy
+        // route, no new extraction.
         val subtitles = JSONArray()
         try {
             for (sub in info.subtitles.orEmpty()) {
@@ -158,8 +134,8 @@ object ApiRenderer {
                 subtitles.put(track)
             }
         } catch (e: Exception) {
-            // info.subtitles can throw for services/videos with no captions at all - same
-            // best-effort handling handleSubtitlesProxy itself already uses around this same call.
+            // info.subtitles throws for services/videos with no captions - same best-effort
+            // handling as handleSubtitlesProxy.
         }
         json.put("subtitles", subtitles)
 
@@ -221,11 +197,8 @@ object ApiRenderer {
         return json
     }
 
-    // Every paginated endpoint returns its nextPage the same way: the existing
-    // HtmlRendererCommon.serializePage()/deserializePage() Base64 round-trip already used by
-    // every HTML listing page's "Load More" link - reused as-is here (not reinvented) so a
-    // client can pass a nextPage token straight back as a query param the exact same way the
-    // HTML pages' own pagination links already do.
+    // Reuses HtmlRendererCommon's Base64 serializePage()/deserializePage() round-trip, same as
+    // every HTML listing page's "Load More" link.
     @JvmStatic
     fun serializePageOrNull(page: Page?): String? = HtmlRendererCommon.serializePage(page)
 

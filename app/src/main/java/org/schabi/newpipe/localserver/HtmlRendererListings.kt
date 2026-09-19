@@ -16,8 +16,7 @@ object HtmlRendererListings {
           .append("    <div style=\"display: inline-block; width: 50px; height: 50px; border: 4px solid var(--search-input-bg); border-top: 4px solid var(--logo-color); border-radius: 50%; animation: spin 0.8s linear infinite;\"></div>\n")
           .append("    <div style=\"margin-top: 24px; font-size: 16px; font-weight: 500; color: var(--text-color);\">Loading Home Feed...</div>\n")
           .append("  </div>\n")
-          // padding-top set once here, not per-batch in renderHomeFeed(), so appended "Load More"
-          // batches don't each add their own gap.
+          // padding-top set once here, not per-batch, so "Load More" appends don't each add a gap.
           .append("  <div id=\"home-feed-content\" style=\"display: none; padding-top: 20px;\"></div>\n")
           .append("</div>\n")
           .append("<style>\n")
@@ -27,10 +26,9 @@ object HtmlRendererListings {
           .append("  }\n")
           .append("</style>\n")
           .append("<script>\n")
-          // Replaces the trailing .pagination wrapper with {new grid + new wrapper}, appending
-          // in place - same technique as loadMoreComments(). fetchText (from the shared
-          // /static/script.js) is what makes a failed batch land in the .catch() below instead of
-          // getting rendered as if it were the next page of videos - see its own comment.
+          // Replaces the trailing .pagination wrapper with {new grid + new wrapper}, in place -
+          // same technique as loadMoreComments(). fetchText routes a failed batch to .catch()
+          // below instead of rendering it as the next page.
           .append("  window.loadMoreHome = function(btn, token, svcId) {\n")
           .append("      const wrapper = btn.parentElement;\n")
           .append("      btn.textContent = 'Loading...';\n")
@@ -134,10 +132,8 @@ object HtmlRendererListings {
         return HtmlRendererCommon.wrapInTemplate("Search: $query", sb.toString(), isTv)
     }
 
-    // Grid + "Load More" for a search results batch - shared by renderSearch() (the full page) and
-    // the ajax=1 follow-up requests loadMoreSearch() fires, same split as renderHomeFeed() vs.
-    // renderHomeSkeleton(). Keeps "Load More" an in-place append instead of a page navigation that
-    // would drop everything scrolled past so far.
+    // Grid + "Load More" for a search-results batch - shared by renderSearch() and loadMoreSearch()'s
+    // ajax=1 follow-ups, same split as renderHomeFeed()/renderHomeSkeleton().
     @JvmStatic
     fun renderSearchResultsFragment(serviceId: Int, query: String, items: List<InfoItem>, nextPage: Page?): String {
         val sb = StringBuilder()
@@ -184,10 +180,8 @@ object HtmlRendererListings {
             if (channels == null || channels.isEmpty()) {
                 sb.append("<div class=\"loading-placeholder\">You haven't subscribed to any channels yet.</div>\n")
             } else {
-                // Aggregating uploads across every subscribed channel is a network-bound
-                // operation (see fetchSubscriptionFeed in LocalHttpServer) that can take several
-                // seconds, so it's loaded asynchronously after the tab bar renders - mirroring
-                // renderHomeSkeleton - instead of blocking the whole page on it.
+                // fetchSubscriptionFeed() is network-bound and can take seconds - loaded async
+                // after the tab bar renders, mirroring renderHomeSkeleton.
                 sb.append("  <div id=\"subs-feed-loader\" style=\"text-align: center; padding: 100px 0;\">\n")
                   .append("    <div style=\"display: inline-block; width: 50px; height: 50px; border: 4px solid var(--search-input-bg); border-top: 4px solid var(--logo-color); border-radius: 50%; animation: subs-feed-spin 0.8s linear infinite;\"></div>\n")
                   .append("    <div style=\"margin-top: 24px; font-size: 16px; font-weight: 500; color: var(--text-color);\">Loading latest uploads...</div>\n")

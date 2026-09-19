@@ -4,15 +4,9 @@ import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import kotlinx.coroutines.runBlocking
 
 /**
- * Bridges to Flow's native SponsorBlockRepository (same sponsor.ajay.app API, same non-privacy-
- * preserving direct-by-videoID lookup this file used to do itself) instead of maintaining a
- * separate HTTP client - this also picks up AppProxyManager's proxy handling, which the old
- * standalone OkHttp client never did.
- *
- * Flow's native repository only fetches 6 of the 8 SponsorBlock categories (no preview/filler)
- * and doesn't filter by actionType, so POI (single-instant) segments are dropped here to keep
- * every returned Segment a real skippable range - the marker/skip-button UI this feeds assumes
- * that.
+ * Bridges to native `SponsorBlockRepository` instead of a separate HTTP client - inherits
+ * AppProxyManager's proxy handling. Fetches 6/8 categories (no preview/filler); POI (single-
+ * instant) segments are filtered out since the marker/skip-button UI expects real ranges.
  */
 object SponsorBlockClient {
     data class Segment(

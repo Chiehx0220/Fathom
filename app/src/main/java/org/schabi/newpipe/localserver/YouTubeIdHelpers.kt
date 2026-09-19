@@ -5,15 +5,13 @@ import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 
 /**
- * Local Server keys videos/channels by their full YouTube URL; Flow's native subscription and
- * watch-history storage keys them by bare ID. These convert between the two at the boundary
- * where Local Server reads/writes Flow's native data.
+ * Converts between Local Server's URL-keyed [InfoItem][org.schabi.newpipe.extractor.InfoItem]s
+ * and native storage's bare-ID keys.
  */
 
 /**
- * Builds a channel URL from a bare channel ID. For YouTube (the default) this is just the
- * canonical form; for any other [serviceId] it resolves through that service's own link handler,
- * falling back to the plain YouTube form if resolution fails.
+ * Bare channel ID -> URL. YouTube: canonical form. Other [serviceId]: via the service's link
+ * handler, falling back to the YouTube form on failure.
  */
 fun channelIdToUrl(channelId: String, serviceId: Int = ServiceList.YouTube.serviceId): String {
     val youtubeForm = "https://www.youtube.com/channel/$channelId"
@@ -23,15 +21,10 @@ fun channelIdToUrl(channelId: String, serviceId: Int = ServiceList.YouTube.servi
 }
 
 /**
- * Extracts a bare channel ID from a channel URL. Tries manual parsing of the canonical
- * `/channel/UC...` form (what NewPipeExtractor's YouTube uploader/channel URLs resolve to in the
- * vast majority of cases this module encounters them) as well as `/@handle`, `/c/name`,
- * `/user/name` FIRST - YouTube's own [NewPipe.getServiceByUrl] factory returns the id prefixed
- * with its type (`"channel/UC..."`, not bare `"UC..."`), which doesn't match the bare-id format
- * every other caller in this module (channelIdToUrl, subscription/history storage) assumes, so it
- * must not be used for YouTube. Falls back to [NewPipe.getServiceByUrl] only when none of those
- * markers match, which is how a non-YouTube URL (e.g. a Bilibili space page) resolves through its
- * own extractor instead of being forced through YouTube's URL shape.
+ * Channel URL -> bare ID. Manually parses `/channel/UC...`, `/@handle`, `/c/name`, `/user/name`
+ * first - [NewPipe.getServiceByUrl] returns a type-prefixed id (`"channel/UC..."`) for YouTube,
+ * incompatible with this module's bare-id convention. Falls back to it only for non-YouTube URLs
+ * (e.g. a Bilibili space page).
  */
 fun channelUrlToId(url: String?): String? {
     if (url == null) return null
@@ -51,12 +44,9 @@ fun channelUrlToId(url: String?): String? {
 }
 
 /**
- * Builds a video URL from a bare video ID. For YouTube (the default) this is just the canonical
- * form; for any other [serviceId] (e.g. Bilibili) it resolves the URL through that service's own
- * link handler, falling back to the plain YouTube form if resolution fails. Local Server's own
- * [InfoItem][org.schabi.newpipe.extractor.InfoItem] rendering keys everything off `item.url`, so a
- * non-YouTube video whose URL doesn't round-trip back through its own extractor silently breaks
- * resume/watched-matching/re-extraction for it.
+ * Bare video ID -> URL. YouTube: canonical form. Other [serviceId]: via the service's link
+ * handler - must round-trip through its own extractor, since rendering keys everything off
+ * `item.url`.
  */
 fun videoIdToUrl(videoId: String, serviceId: Int = ServiceList.YouTube.serviceId): String {
     val youtubeForm = "https://www.youtube.com/watch?v=$videoId"
@@ -67,9 +57,7 @@ fun videoIdToUrl(videoId: String, serviceId: Int = ServiceList.YouTube.serviceId
 
 fun playlistIdToUrl(playlistId: String): String = "https://www.youtube.com/playlist?list=$playlistId"
 
-/** Extracts the bare `list=` id from a playlist URL - also NewPipeExtractor's own playlist id for
- * the same URL, so it lines up with whatever id Flow's native UI would save the same playlist
- * under. */
+/** Bare `list=` id from a playlist URL - matches NewPipeExtractor's own playlist id for it. */
 fun playlistUrlToId(url: String?): String? {
     if (url == null) return null
     val idx = url.indexOf("list=")

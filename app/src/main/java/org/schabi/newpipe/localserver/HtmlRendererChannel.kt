@@ -66,9 +66,8 @@ object HtmlRendererChannel {
         return HtmlRendererCommon.wrapInTemplate(channel.name, sb.toString(), isTv)
     }
 
-    // Grid + "Load More" for a channel tab's batch - shared by renderChannel() (the full page) and
-    // the ajax=1 follow-up requests loadMoreChannel() fires. See renderSearchResultsFragment() in
-    // HtmlRendererListings.kt for why this is split out rather than left inline.
+    // Grid + "Load More" for a channel-tab batch - shared by renderChannel() and loadMoreChannel()'s
+    // ajax=1 follow-ups.
     @JvmStatic
     fun renderChannelItemsFragment(serviceId: Int, channelUrl: String, activeTab: String, items: List<InfoItem>, nextPage: Page?, fallbackAvatarUrl: String?): String {
         val sb = StringBuilder()
@@ -124,9 +123,8 @@ object HtmlRendererChannel {
         return HtmlRendererCommon.wrapInTemplate("Playlist: " + playlist.name, sb.toString(), isTv)
     }
 
-    // Grid + "Load More" for a playlist batch - shared by renderPlaylist() (the full page) and the
-    // ajax=1 follow-up requests loadMorePlaylist() fires. See renderSearchResultsFragment() in
-    // HtmlRendererListings.kt for why this is split out rather than left inline.
+    // Grid + "Load More" for a playlist batch - shared by renderPlaylist() and loadMorePlaylist()'s
+    // ajax=1 follow-ups.
     @JvmStatic
     fun renderPlaylistItemsFragment(serviceId: Int, playlistUrl: String, items: List<InfoItem>, nextPage: Page?): String {
         val sb = StringBuilder()

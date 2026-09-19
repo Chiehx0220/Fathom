@@ -10,11 +10,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
 /**
- * Which sources feed the home page ("mix" vs "subs") is Local Server's one remaining setting with
- * no Flow-native equivalent - Flow's own home screen has no such toggle (see
- * buildAndRankHomeFeed()/buildSubsOnlyFeed() in LocalServerFlowData.kt). DataStore-backed, matching
- * every other small setting/history store in this app, instead of keeping a standalone SQLite
- * database around for a single value.
+ * "mix" vs "subs" home-feed source - Local Server's one setting with no native equivalent (see
+ * buildAndRankHomeFeed()/buildSubsOnlyFeed()). DataStore-backed, matching other app stores.
  */
 private val Context.localServerDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "local_server_settings")
 private val HOME_FEED_MODE_KEY = stringPreferencesKey("home_feed_mode")

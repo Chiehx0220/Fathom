@@ -2,22 +2,18 @@ package org.schabi.newpipe.localserver
 
 import io.github.aedev.flow.player.stream.serviceSupportsBulletComments
 import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
-import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import org.schabi.newpipe.extractor.stream.StreamSegment
 import org.schabi.newpipe.extractor.stream.VideoStream
 
-// Video watch page and audio-only watch page rendering, split out of the former monolithic
-// HtmlRenderer.java. renderWatchContent is the largest single chunk (~700 lines) from that file.
+// Video watch page and audio-only watch page rendering.
 object HtmlRendererWatch {
 
-    // The "Related Content"/"Up Next" sidebar list's per-item data prep - identical between
-    // renderWatchContent() and renderAudioWatch(), which otherwise render the card in visually
-    // different sizes (94px vs 80px thumbnails) so aren't collapsed into one shared markup
-    // function. This is the part a future extractor-shape change would actually need to touch.
+    // Related-content sidebar item data prep, shared by renderWatchContent()/renderAudioWatch() -
+    // their card markup differs in size (94px vs 80px thumbnails) so isn't collapsed further.
     private data class RelatedItemDisplay(
         val uploaderEscaped: String,
         val nameEscaped: String,
@@ -44,6 +40,13 @@ object HtmlRendererWatch {
         )
     }
 
+    private fun formatChapterTimestamp(totalSeconds: Int): String {
+        val h = totalSeconds / 3600
+        val m = (totalSeconds % 3600) / 60
+        val s = totalSeconds % 60
+        return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
+    }
+
     @JvmStatic
     fun renderWatchSkeleton(serviceId: Int, mediaUrl: String?, isTv: Boolean): String {
         val sb = StringBuilder()
@@ -66,9 +69,8 @@ object HtmlRendererWatch {
           .append("      if (loader) loader.style.display = 'block';\n")
           .append("      if (content) content.style.display = 'none';\n")
           .append("      \n")
-          // serviceId must be forwarded: without it the server falls back to YouTube and fails to
-          // resolve links from any other service (e.g. Bilibili). This was harmless while localtube
-          // was YouTube-only, since the server ignored the parameter entirely.
+          // serviceId must be forwarded, or the server falls back to YouTube and fails to resolve
+          // non-YouTube (e.g. Bilibili) links.
           .append("      fetchText('/watch-content?serviceId=' + encodeURIComponent(new URLSearchParams(window.location.search).get('serviceId') || '0') + '&id=' + encodeURIComponent(url),\n")
           .append("          html => {\n")
           .append("              if (loader) loader.style.display = 'none';\n")
@@ -125,308 +127,16 @@ object HtmlRendererWatch {
         val nextVideoUrlJs = HtmlRendererCommon.escapeJs(nextVideoUrl)
         val nextVideoTitleJs = HtmlRendererCommon.escapeJs(nextVideoTitle)
         val nextVideoThumbJs = HtmlRendererCommon.escapeJs(nextVideoThumb)
-        val advancedJs =
-            "                (function() {\n" +
-            "                    const nextUrl = \"$nextVideoUrlJs\";\n" +
-            "                    const nextTitle = \"$nextVideoTitleJs\";\n" +
-            "                    const nextThumb = \"$nextVideoThumbJs\";\n" +
-            "                    \n" +
-            "                    const wrapper = player.el();\n" +
-            "                    player.ready(() => {\n" +
-            "                        const el = player.el();\n" +
-            "                        const leftTap = document.getElementById(\"double-tap-left\");\n" +
-            "                        const rightTap = document.getElementById(\"double-tap-right\");\n" +
-            "                        const volumeHud = document.getElementById(\"volume-hud-indicator\");\n" +
-            "                        const autoplayOverlay = document.getElementById(\"autoplay-overlay\");\n" +
-            "                        if (leftTap) el.appendChild(leftTap);\n" +
-            "                        if (rightTap) el.appendChild(rightTap);\n" +
-            "                        if (volumeHud) el.appendChild(volumeHud);\n" +
-            "                        if (autoplayOverlay) el.appendChild(autoplayOverlay);\n" +
-            "                    });\n" +
-            "                    \n" +
-            "                    // Double tap & Double click to seek\n" +
-            "                    if (wrapper) {\n" +
-            "                        let lastTap = 0;\n" +
-            "                        wrapper.addEventListener(\"touchstart\", function(e) {\n" +
-            "                            const now = Date.now();\n" +
-            "                            const DOUBLE_PRESS_DELAY = 300;\n" +
-            "                            if (now - lastTap < DOUBLE_PRESS_DELAY) {\n" +
-            "                                e.preventDefault();\n" +
-            "                                const rect = wrapper.getBoundingClientRect();\n" +
-            "                                const touchX = e.touches[0].clientX - rect.left;\n" +
-            "                                const isLeft = touchX < rect.width * 0.4;\n" +
-            "                                const isRight = touchX > rect.width * 0.6;\n" +
-            "                                if (isLeft) {\n" +
-            "                                    window.seekVideo(-10);\n" +
-            "                                    showDoubleTapRipple(\"left\");\n" +
-            "                                } else if (isRight) {\n" +
-            "                                    window.seekVideo(10);\n" +
-            "                                    showDoubleTapRipple(\"right\");\n" +
-            "                                }\n" +
-            "                            }\n" +
-            "                            lastTap = now;\n" +
-            "                        }, { passive: false });\n" +
-            "                        \n" +
-            "                        wrapper.addEventListener(\"dblclick\", function(e) {\n" +
-            "                            e.preventDefault();\n" +
-            "                            const rect = wrapper.getBoundingClientRect();\n" +
-            "                            const clickX = e.clientX - rect.left;\n" +
-            "                            const isLeft = clickX < rect.width * 0.4;\n" +
-            "                            const isRight = clickX > rect.width * 0.6;\n" +
-            "                            if (isLeft) {\n" +
-            "                                window.seekVideo(-10);\n" +
-            "                                showDoubleTapRipple(\"left\");\n" +
-            "                            } else if (isRight) {\n" +
-            "                                window.seekVideo(10);\n" +
-            "                                showDoubleTapRipple(\"right\");\n" +
-            "                            }\n" +
-            "                        });\n" +
-            "                    }\n" +
-            "                    \n" +
-            "                    function showDoubleTapRipple(side) {\n" +
-            "                        const ind = document.getElementById(\"double-tap-\" + side);\n" +
-            "                        if (ind) {\n" +
-            "                            ind.classList.add(\"show\");\n" +
-            "                            setTimeout(() => ind.classList.remove(\"show\"), 650);\n" +
-            "                        }\n" +
-            "                    }\n" +
-            "                    \n" +
-            "                    // Swipe vertically on right side to adjust volume\n" +
-            "                    if (wrapper) {\n" +
-            "                        let touchStartY = 0;\n" +
-            "                        let initialVolume = 1;\n" +
-            "                        let isSwipeActive = false;\n" +
-            "                        \n" +
-            "                        wrapper.addEventListener(\"touchstart\", function(e) {\n" +
-            "                            if (e.touches.length === 1) {\n" +
-            "                                const rect = wrapper.getBoundingClientRect();\n" +
-            "                                const touchX = e.touches[0].clientX - rect.left;\n" +
-            "                                if (touchX > rect.width * 0.5) {\n" +
-            "                                    touchStartY = e.touches[0].clientY;\n" +
-            "                                    initialVolume = player.volume();\n" +
-            "                                    isSwipeActive = true;\n" +
-            "                                }\n" +
-            "                            }\n" +
-            "                        }, { passive: true });\n" +
-            "                        \n" +
-            "                        wrapper.addEventListener(\"touchmove\", function(e) {\n" +
-            "                            if (isSwipeActive && e.touches.length === 1) {\n" +
-            "                                e.preventDefault();\n" +
-            "                                const deltaY = touchStartY - e.touches[0].clientY;\n" +
-            "                                const rect = wrapper.getBoundingClientRect();\n" +
-            "                                const volumeChange = deltaY / (rect.height * 0.8);\n" +
-            "                                const newVolume = Math.max(0, Math.min(1, initialVolume + volumeChange));\n" +
-            "                                player.volume(newVolume);\n" +
-            "                                showVolumeHUD(Math.round(newVolume * 100));\n" +
-            "                            }\n" +
-            "                        }, { passive: false });\n" +
-            "                        \n" +
-            "                        wrapper.addEventListener(\"touchend\", function() {\n" +
-            "                            isSwipeActive = false;\n" +
-            "                        });\n" +
-            "                    }\n" +
-            "                    \n" +
-            "                    let volumeHudTimeout = null;\n" +
-            "                    function showVolumeHUD(volumePercent) {\n" +
-            "                        const hud = document.getElementById(\"volume-hud-indicator\");\n" +
-            "                        const text = document.getElementById(\"volume-hud-text\");\n" +
-            "                        const icon = document.getElementById(\"volume-hud-icon\");\n" +
-            "                        if (hud && text && icon) {\n" +
-            "                            text.innerText = volumePercent + \"%\";\n" +
-            "                            if (volumePercent === 0) icon.innerText = \"🔇\";\n" +
-            "                            else if (volumePercent < 30) icon.innerText = \"🔈\";\n" +
-            "                            else if (volumePercent < 70) icon.innerText = \"🔉\";\n" +
-            "                            else icon.innerText = \"🔊\";\n" +
-            "                            hud.classList.add(\"show\");\n" +
-            "                            clearTimeout(volumeHudTimeout);\n" +
-            "                            volumeHudTimeout = setTimeout(() => hud.classList.remove(\"show\"), 1000);\n" +
-            "                        }\n" +
-            "                    }\n" +
-            "                    \n" +
-            "                    // Autoplay Queue\n" +
-            "                    let autoplayTimer = null;\n" +
-            "                    let autoplayInterval = null;\n" +
-            "                    player.on(\"ended\", function() {\n" +
-            "                        if (!nextUrl) return;\n" +
-            "                        const overlay = document.getElementById(\"autoplay-overlay\");\n" +
-            "                        const titleEl = document.getElementById(\"autoplay-next-title\");\n" +
-            "                        const thumbEl = document.getElementById(\"autoplay-next-thumb\");\n" +
-            "                        const progressCircle = document.getElementById(\"autoplay-progress-circle\");\n" +
-            "                        \n" +
-            "                        if (overlay && titleEl && thumbEl && progressCircle) {\n" +
-            "                            titleEl.innerText = nextTitle;\n" +
-            "                            thumbEl.src = nextThumb;\n" +
-            "                            overlay.classList.add(\"show\");\n" +
-            "                            \n" +
-            "                            const totalDash = 138;\n" +
-            "                            progressCircle.style.strokeDashoffset = 0;\n" +
-            "                            \n" +
-            "                            autoplayTimer = setTimeout(() => {\n" +
-            "                                window.location.href = nextUrl;\n" +
-            "                            }, 5000);\n" +
-            "                            \n" +
-            "                            let elapsed = 0;\n" +
-            "                            autoplayInterval = setInterval(() => {\n" +
-            "                                elapsed += 100;\n" +
-            "                                const progress = elapsed / 5000;\n" +
-            "                                progressCircle.style.strokeDashoffset = totalDash * progress;\n" +
-            "                            }, 100);\n" +
-            "                        }\n" +
-            "                    });\n" +
-            "                    \n" +
-            "                    function clearAutoplay() {\n" +
-            "                        clearTimeout(autoplayTimer);\n" +
-            "                        clearInterval(autoplayInterval);\n" +
-            "                        const overlay = document.getElementById(\"autoplay-overlay\");\n" +
-            "                        if (overlay) overlay.classList.remove(\"show\");\n" +
-            "                    }\n" +
-            "                    \n" +
-            "                    const cancelBtn = document.getElementById(\"autoplay-cancel\");\n" +
-            "                    if (cancelBtn) cancelBtn.addEventListener(\"click\", clearAutoplay);\n" +
-            "                    \n" +
-            "                    const playNowBtn = document.getElementById(\"autoplay-play-now\");\n" +
-            "                    if (playNowBtn) {\n" +
-            "                        playNowBtn.addEventListener(\"click\", () => {\n" +
-            "                            if (nextUrl) window.location.href = nextUrl;\n" +
-            "                        });\n" +
-            "                    }\n" +
-            "                    \n" +
-            "                    // Keyboard Shortcuts\n" +
-            "                    document.addEventListener(\"keydown\", (e) => {\n" +
-            "                        const active = document.activeElement;\n" +
-            "                        if (active && (active.tagName === \"INPUT\" || active.tagName === \"SELECT\" || active.tagName === \"TEXTAREA\" || active.isContentEditable)) {\n" +
-            "                            return;\n" +
-            "                        }\n" +
-            "                        if (e.key === \" \" || e.key === \"k\" || e.key === \"K\") {\n" +
-            "                            e.preventDefault();\n" +
-            "                            if (player.paused()) player.play().catch(e => {}); else player.pause();\n" +
-            "                        } else if (e.key === \"j\" || e.key === \"J\") {\n" +
-            "                            e.preventDefault();\n" +
-            "                            window.seekVideo(-10);\n" +
-            "                            showDoubleTapRipple(\"left\");\n" +
-            "                        } else if (e.key === \"l\" || e.key === \"L\") {\n" +
-            "                            e.preventDefault();\n" +
-            "                            window.seekVideo(10);\n" +
-            "                            showDoubleTapRipple(\"right\");\n" +
-            "                        } else if (e.key === \"m\" || e.key === \"M\") {\n" +
-            "                            e.preventDefault();\n" +
-            "                            player.muted(!player.muted());\n" +
-            "                            showVolumeHUD(player.muted() ? 0 : Math.round(player.volume() * 100));\n" +
-            "                        }\n" +
-            "                    });\n" +
-            "                    \n" +
-            "                    // Picture-in-Picture Control\n" +
-            "                    try {\n" +
-            "                        const Button = videojs.getComponent(\"Button\");\n" +
-            "                        const PipButton = videojs.extend(Button, {\n" +
-            "                            constructor: function() {\n" +
-            "                                Button.apply(this, arguments);\n" +
-            "                                this.controlText(\"Picture-in-Picture\");\n" +
-            "                            },\n" +
-            "                            createEl: function() {\n" +
-            "                                return videojs.dom.createEl(\"button\", {\n" +
-            "                                    className: \"vjs-pip-control vjs-control vjs-button\",\n" +
-            "                                    innerHTML: '<span aria-hidden=\"true\" class=\"vjs-icon-placeholder\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" style=\"width:18px;height:18px;vertical-align:middle;margin-top:6px;\"><path d=\"M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z\"/></svg></span>',\n" +
-            "                                    type: \"button\"\n" +
-            "                                });\n" +
-            "                            },\n" +
-            "                            handleClick: function() {\n" +
-            "                                const video = document.querySelector(\"#player_html5_api\") || document.querySelector(\"video\");\n" +
-            "                                if (video) {\n" +
-            "                                    if (document.pictureInPictureElement) {\n" +
-            "                                        document.exitPictureInPicture().catch(e => {});\n" +
-            "                                    } else {\n" +
-            "                                        video.requestPictureInPicture().catch(e => {});\n" +
-            "                                    }\n" +
-            "                                }\n" +
-            "                            }\n" +
-            "                        });\n" +
-            "                        videojs.registerComponent(\"PipButton\", PipButton);\n" +
-            "                        player.ready(() => {\n" +
-            "                            player.getChild(\"controlBar\").addChild(\"PipButton\", {}, player.getChild(\"controlBar\").children().length - 1);\n" +
-            "                        });\n" +
-            "                    } catch(e) { console.error(e); }\n" +
-            "                })();\n"
 
-        // CSS object-fit:contain (tried first, in HtmlStyles.kt) was expected to letterbox the
-        // picture in fullscreen regardless of the device screen's aspect ratio, and it does when
-        // simulated in a desktop browser - but the user still saw the picture stretched/cropped in
-        // real fullscreen on their phone. Since that couldn't be reproduced or diagnosed further
-        // without live access to whatever the real mobile browser is doing differently, this computes
-        // the correct letterboxed size directly in JS instead of depending on object-fit being
-        // honored at all - same end result (whole frame always visible, black bars fill the gap),
-        // but by setting explicit pixel dimensions on the inner <video> tag (not the .video-js
-        // wrapper - that stays CDN's forced 100%/100% so the control bar still spans the full
-        // screen width, only the picture itself gets boxed) with setProperty(...,'important'), which
-        // wins the cascade regardless of what other rule or quirk was defeating the CSS-only version.
-        val fullscreenLetterboxJs =
-            "                (function() {\n" +
-            "                    function fitVideoLetterbox() {\n" +
-            "                        var videoTag = player.el().querySelector(\"video\");\n" +
-            "                        if (!videoTag) return;\n" +
-            "                        if (!player.isFullscreen()) {\n" +
-            "                            videoTag.style.removeProperty(\"width\");\n" +
-            "                            videoTag.style.removeProperty(\"height\");\n" +
-            "                            videoTag.style.removeProperty(\"position\");\n" +
-            "                            videoTag.style.removeProperty(\"top\");\n" +
-            "                            videoTag.style.removeProperty(\"left\");\n" +
-            "                            return;\n" +
-            "                        }\n" +
-            "                        var vw = player.videoWidth() || 16;\n" +
-            "                        var vh = player.videoHeight() || 9;\n" +
-            "                        var availW = window.innerWidth;\n" +
-            "                        var availH = window.innerHeight;\n" +
-            "                        var targetW, targetH;\n" +
-            "                        if (vw / vh > availW / availH) {\n" +
-            "                            targetW = availW;\n" +
-            "                            targetH = availW * vh / vw;\n" +
-            "                        } else {\n" +
-            "                            targetH = availH;\n" +
-            "                            targetW = availH * vw / vh;\n" +
-            "                        }\n" +
-            "                        videoTag.style.setProperty(\"width\", targetW + \"px\", \"important\");\n" +
-            "                        videoTag.style.setProperty(\"height\", targetH + \"px\", \"important\");\n" +
-            "                        videoTag.style.setProperty(\"position\", \"absolute\", \"important\");\n" +
-            "                        videoTag.style.setProperty(\"top\", ((availH - targetH) / 2) + \"px\", \"important\");\n" +
-            "                        videoTag.style.setProperty(\"left\", ((availW - targetW) / 2) + \"px\", \"important\");\n" +
-            "                    }\n" +
-            "                    player.on(\"fullscreenchange\", fitVideoLetterbox);\n" +
-            "                    player.on(\"loadedmetadata\", fitVideoLetterbox);\n" +
-            "                    window.addEventListener(\"resize\", fitVideoLetterbox);\n" +
-            "                    window.addEventListener(\"orientationchange\", fitVideoLetterbox);\n" +
-            "                })();\n"
-
-        // Fathom<->Flow Stage 2: reports playback progress to the new /api/v1/watch_progress
-        // endpoint (ApiRenderer.kt / LocalHttpServer.handleApiWatchProgress), so a future Flow
-        // client hitting the same server sees the same "how far did I get" state this desktop
-        // HTML player itself produces. Recomputes the encoded URL locally rather than reusing the
-        // per-branch "infoUrlEncoded" val below - this block sits above where the isCached/DASH
-        // branches split, before that val exists in scope, and info.url itself is already
-        // available this high up (info is this function's own parameter).
+        // CSS object-fit:contain (HtmlStyles.kt) still let real mobile fullscreen stretch/crop the
+        // picture, unreproducible on desktop - see initFullscreenLetterbox() in HtmlScripts.kt,
+        // which computes the letterboxed size directly in JS instead.
         val progressUrlEncoded = HtmlRendererCommon.encodeUrl(info.url)
-        val watchProgressJs =
-            "                (function() {\n" +
-            "                    var lastReported = -1;\n" +
-            "                    function reportProgress() {\n" +
-            "                        var dur = player.duration();\n" +
-            "                        if (!dur) return;\n" +
-            "                        var percent = Math.round((player.currentTime() / dur) * 100);\n" +
-            "                        if (percent === lastReported) return;\n" +
-            "                        lastReported = percent;\n" +
-            "                        var url = \"/api/v1/watch_progress?id=$progressUrlEncoded&serviceId=$serviceId&percent=\" + percent + \"&durationSeconds=\" + Math.round(dur);\n" +
-            "                        fetch(url, { keepalive: true }).catch(function() {});\n" +
-            "                    }\n" +
-            "                    var progressTimer = setInterval(reportProgress, 15000);\n" +
-            "                    player.on(\"pause\", reportProgress);\n" +
-            "                    window.addEventListener(\"pagehide\", reportProgress);\n" +
-            "                })();\n"
 
-        // Times come back from SponsorBlockClient in milliseconds; dividing by 1000 here once
-        // means the JS side just compares against player.currentTime() (seconds) directly with
-        // no unit conversion scattered through it. actionType=skip is already filtered server-side
-        // by SponsorBlockClient, so every segment here is skippable by construction. Flow's native
-        // SponsorBlockRepository (which SponsorBlockClient now bridges to) only fetches these 6
-        // categories - no preview/filler.
+        // SponsorBlockClient returns milliseconds; divided by 1000 once here so the shared
+        // initSponsorBlockMarkers() (HtmlScripts.kt) can compare directly against
+        // player.currentTime() (seconds). actionType=skip already filtered server-side - every
+        // segment here is skippable by construction.
         val sponsorSegments = SponsorBlockClient.fetchSegments(LocalHttpServer.getVideoId(info.url))
         val sponsorItemsJs = StringBuilder()
         for (seg in sponsorSegments) {
@@ -445,210 +155,22 @@ object HtmlRendererWatch {
                 .append(",c:\"").append(seg.category).append("\"")
                 .append(",l:\"").append(label).append("\"}")
         }
-        val sponsorSegmentsJs = if (sponsorItemsJs.isEmpty()) {
-            ""
-        } else {
-            "                (function() {\n" +
-            "                    var segments = [$sponsorItemsJs];\n" +
-            "                    var skipBtn = document.getElementById(\"sponsor-skip-btn\");\n" +
-            "                    var skipLabel = document.getElementById(\"sponsor-skip-label\");\n" +
-            "                    var current = null;\n" +
-            "                    function placeMarkers() {\n" +
-            "                        var holder = player.el().querySelector(\".vjs-progress-holder\");\n" +
-            "                        var dur = player.duration();\n" +
-            "                        if (!holder || !dur) return;\n" +
-            "                        segments.forEach(function(seg) {\n" +
-            "                            var marker = document.createElement(\"div\");\n" +
-            "                            marker.className = \"sponsor-segment-marker cat-\" + seg.c;\n" +
-            "                            marker.style.left = (seg.s / dur * 100) + \"%\";\n" +
-            "                            marker.style.width = (Math.max(seg.e - seg.s, 0) / dur * 100) + \"%\";\n" +
-            // A segment's true proportional width can be a fraction of a pixel on a long video
-            // with a narrow mobile progress bar (confirmed live: a 7s segment in a 33-minute video
-            // computed to 0.16px on a 375px-wide phone, where the whole progress-holder itself is
-            // only 44px - the rest of that width goes to the other control-bar buttons). At that
-            // size the marker is both invisible and physically untappable, which is what made the
-            // "flashes and disappears" report - see [[project_localtube_sponsorblock_feature]] -
-            // and "no button after seeking to it" reports look like a logic bug when the underlying
-            // skip-button timing (driven by the real start/end times, unaffected by this) was
-            // actually correct the whole time. min-width floors the visual marker at a legible size
-            // without touching those real times, same accommodation the actual SponsorBlock browser
-            // extension makes for short segments.\n" +
-            "                            marker.style.minWidth = \"3px\";\n" +
-            "                            holder.appendChild(marker);\n" +
-            "                        });\n" +
-            "                    }\n" +
-            "                    player.one(\"loadedmetadata\", placeMarkers);\n" +
-            "                    if (player.duration()) placeMarkers();\n" +
-            "                    player.on(\"timeupdate\", function() {\n" +
-            "                        var t = player.currentTime();\n" +
-            "                        var seg = null;\n" +
-            "                        for (var i = 0; i < segments.length; i++) {\n" +
-            "                            if (t >= segments[i].s && t < segments[i].e) { seg = segments[i]; break; }\n" +
-            "                        }\n" +
-            "                        if (seg) {\n" +
-            "                            if (current !== seg) {\n" +
-            "                                current = seg;\n" +
-            "                                if (skipLabel) skipLabel.textContent = \"跳過 \" + seg.l;\n" +
-            "                                if (skipBtn) skipBtn.classList.add(\"visible\");\n" +
-            "                            }\n" +
-            "                        } else if (current) {\n" +
-            "                            current = null;\n" +
-            "                            if (skipBtn) skipBtn.classList.remove(\"visible\");\n" +
-            "                        }\n" +
-            "                    });\n" +
-            "                    if (skipBtn) skipBtn.addEventListener(\"click\", function() {\n" +
-            "                        if (current) {\n" +
-            "                            player.currentTime(current.e);\n" +
-            "                            skipBtn.classList.remove(\"visible\");\n" +
-            "                            current = null;\n" +
-            "                        }\n" +
-            "                    });\n" +
-            "                })();\n"
+
+        // Chapter data (StreamSegment) for the shared initChapterMarkers() (HtmlScripts.kt) -
+        // io.github.aedev.flow's FlowChaptersBottomSheet consumes the same field natively; this is
+        // a rendering gap on the web side, not a separate extraction path.
+        val chapters: List<StreamSegment> = info.streamSegments ?: emptyList()
+        val chaptersItemsJs = StringBuilder()
+        for (chapter in chapters) {
+            if (chaptersItemsJs.isNotEmpty()) chaptersItemsJs.append(",")
+            chaptersItemsJs.append("{s:").append(chapter.startTimeSeconds)
+                .append(",t:\"").append(HtmlRendererCommon.escapeJs(chapter.title)).append("\"}")
         }
 
-        // Bilibili danmaku ("bullet comments") overlay. Fetched async from /danmaku (same
-        // rationale as the comments fragment below it - a video can carry thousands of these, so
-        // it shouldn't block the initial page). Scroll-type comments animate via a CSS `transform`
-        // transition (not `animation`/@keyframes) since the travel distance depends on the
-        // player's actual pixel width and each comment's own measured text width, neither known
-        // until render time. Top/bottom comments are simple fixed-position fades instead, since
-        // those don't move horizontally. BulletCommentsInfoItem.getLastingTime() always reports -1
-        // (an extractor-library bug, not this app's), so on-screen duration is hardcoded below to
-        // Bilibili's own typical defaults instead of coming from the API.
-        val danmakuJs = if (!serviceSupportsBulletComments(serviceId)) {
+        val danmakuUrlJs = if (!serviceSupportsBulletComments(serviceId)) {
             ""
         } else {
-            val danmakuUrlJs = "/danmaku?serviceId=$serviceId&id=${HtmlRendererCommon.encodeUrl(info.url)}"
-            "                (function() {\n" +
-            "                    var layer = document.getElementById(\"danmaku-layer\");\n" +
-            "                    var toggleBtn = document.getElementById(\"danmaku-toggle-btn\");\n" +
-            "                    if (!layer) return;\n" +
-            // video.js's real fullscreen target is player.el() (a wrapper div it creates around
-            // the actual <video> tech element - see fitVideoLetterbox()'s own use of
-            // player.el().querySelector("video") above), NOT the .vjs-player-wrapper div this
-            // layer and the other overlays (double-tap indicators, volume HUD, up-next overlay,
-            // sponsor-skip button) live in as plain siblings of <video>. The Fullscreen API only
-            // renders the fullscreened element and its descendants, so anything outside player.el()
-            // - this layer included - simply isn't part of the screen while fullscreen is active.
-            // Moving it inside on fullscreenchange (and back out again on exit) fixes that; the
-            // other overlays have the same gap but are out of scope for this fix.
-            "                    var danmakuHome = layer.parentNode, danmakuNextSibling = layer.nextSibling;\n" +
-            "                    player.on(\"fullscreenchange\", function() {\n" +
-            "                        if (player.isFullscreen()) {\n" +
-            "                            player.el().appendChild(layer);\n" +
-            "                        } else if (danmakuHome) {\n" +
-            "                            danmakuHome.insertBefore(layer, danmakuNextSibling);\n" +
-            "                        }\n" +
-            "                    });\n" +
-            "                    var SCROLL_DURATION = 8, FIXED_DURATION = 4;\n" +
-            "                    var comments = [], nextIndex = 0, enabled = true;\n" +
-            "                    var scrollLaneUntil = new Array(14).fill(0);\n" +
-            "                    var topLaneUntil = new Array(4).fill(0);\n" +
-            "                    var bottomLaneUntil = new Array(4).fill(0);\n" +
-            "                    function pickLane(untilArr, lanes, now, dur) {\n" +
-            "                        for (var i = 0; i < lanes; i++) {\n" +
-            "                            if (untilArr[i] <= now) { untilArr[i] = now + dur; return i; }\n" +
-            "                        }\n" +
-            "                        var idx = 0;\n" +
-            "                        for (var i = 1; i < lanes; i++) { if (untilArr[i] < untilArr[idx]) idx = i; }\n" +
-            "                        untilArr[idx] = now + dur;\n" +
-            "                        return idx;\n" +
-            "                    }\n" +
-            "                    function spawn(item) {\n" +
-            "                        var h = layer.clientHeight || 200;\n" +
-            "                        var w = layer.clientWidth || 800;\n" +
-            "                        var el = document.createElement(\"div\");\n" +
-            "                        el.className = \"danmaku-item \" + item.position;\n" +
-            "                        el.textContent = item.text;\n" +
-            // Bilibili's own comment sizes are meant as a small, fairly constant font relative to
-            // the player's WIDTH (not height) - the first attempt scaled by height and produced
-            // comments 50-60px tall on a normal-width video, covering most of the frame.
-            "                        el.style.fontSize = Math.max(14, Math.min(30, Math.round(w * item.size * 0.028))) + \"px\";\n" +
-            "                        el.style.color = item.color;\n" +
-            "                        var laneH = parseFloat(el.style.fontSize) * 1.5;\n" +
-            "                        var now = player.currentTime();\n" +
-            "                        if (item.position === \"top\" || item.position === \"bottom\") {\n" +
-            "                            var lanes = Math.max(1, Math.min(4, Math.floor(h * 0.35 / laneH)));\n" +
-            "                            var untilArr = item.position === \"top\" ? topLaneUntil : bottomLaneUntil;\n" +
-            "                            var lane = pickLane(untilArr, lanes, now, FIXED_DURATION);\n" +
-            "                            el.style[item.position] = (8 + lane * laneH) + \"px\";\n" +
-            "                            el.style.animation = \"danmaku-fade \" + FIXED_DURATION + \"s linear\";\n" +
-            "                            el.addEventListener(\"animationend\", function() { el.remove(); });\n" +
-            "                            layer.appendChild(el);\n" +
-            "                        } else {\n" +
-            "                            var lanes = Math.max(1, Math.floor(h / laneH));\n" +
-            "                            var lane = pickLane(scrollLaneUntil, Math.min(14, lanes), now, SCROLL_DURATION);\n" +
-            "                            el.style.top = (lane * laneH) + \"px\";\n" +
-            "                            var startX = layer.clientWidth;\n" +
-            "                            el.style.transform = \"translateX(\" + startX + \"px)\";\n" +
-            "                            layer.appendChild(el);\n" +
-            "                            var endX = -el.offsetWidth;\n" +
-            "                            el.dataset.startX = startX; el.dataset.endX = endX; el.dataset.duration = SCROLL_DURATION;\n" +
-            "                            requestAnimationFrame(function() {\n" +
-            "                                el.style.transition = \"transform \" + SCROLL_DURATION + \"s linear\";\n" +
-            "                                el.style.transform = \"translateX(\" + endX + \"px)\";\n" +
-            "                            });\n" +
-            "                            el.addEventListener(\"transitionend\", function() { el.remove(); });\n" +
-            "                        }\n" +
-            "                    }\n" +
-            "                    function tick() {\n" +
-            "                        if (!enabled || !comments.length) return;\n" +
-            "                        var t = player.currentTime();\n" +
-            "                        while (nextIndex < comments.length && comments[nextIndex].time <= t) {\n" +
-            "                            if (t - comments[nextIndex].time < 1.2) spawn(comments[nextIndex]);\n" +
-            "                            nextIndex++;\n" +
-            "                        }\n" +
-            "                    }\n" +
-            "                    function resync() {\n" +
-            "                        layer.innerHTML = \"\";\n" +
-            "                        scrollLaneUntil.fill(0); topLaneUntil.fill(0); bottomLaneUntil.fill(0);\n" +
-            "                        var t = player.currentTime();\n" +
-            "                        nextIndex = 0;\n" +
-            "                        while (nextIndex < comments.length && comments[nextIndex].time < t) nextIndex++;\n" +
-            "                    }\n" +
-            "                    player.on(\"timeupdate\", tick);\n" +
-            "                    player.on(\"seeking\", resync);\n" +
-            "                    player.on(\"pause\", function() {\n" +
-            "                        layer.classList.add(\"video-paused\");\n" +
-            "                        layer.querySelectorAll(\".danmaku-item.scroll\").forEach(function(el) {\n" +
-            "                            var m = new DOMMatrixReadOnly(getComputedStyle(el).transform);\n" +
-            "                            el.style.transition = \"none\";\n" +
-            "                            el.style.transform = \"translateX(\" + m.m41 + \"px)\";\n" +
-            "                            el.dataset.pausedX = m.m41;\n" +
-            "                        });\n" +
-            "                    });\n" +
-            "                    player.on(\"play\", function() {\n" +
-            "                        layer.classList.remove(\"video-paused\");\n" +
-            "                        layer.querySelectorAll(\".danmaku-item.scroll\").forEach(function(el) {\n" +
-            "                            if (el.dataset.pausedX === undefined) return;\n" +
-            "                            var startX = parseFloat(el.dataset.pausedX);\n" +
-            "                            var endX = parseFloat(el.dataset.endX);\n" +
-            "                            var totalDist = parseFloat(el.dataset.startX) - endX;\n" +
-            "                            var remainDist = startX - endX;\n" +
-            "                            var remainDur = totalDist > 0 ? parseFloat(el.dataset.duration) * (remainDist / totalDist) : 0;\n" +
-            "                            delete el.dataset.pausedX;\n" +
-            "                            if (remainDur <= 0) { el.remove(); return; }\n" +
-            "                            requestAnimationFrame(function() {\n" +
-            "                                el.style.transition = \"transform \" + remainDur + \"s linear\";\n" +
-            "                                el.style.transform = \"translateX(\" + endX + \"px)\";\n" +
-            "                            });\n" +
-            "                        });\n" +
-            "                    });\n" +
-            "                    if (toggleBtn) {\n" +
-            "                        toggleBtn.addEventListener(\"click\", function() {\n" +
-            "                            enabled = !enabled;\n" +
-            "                            toggleBtn.classList.toggle(\"off\", !enabled);\n" +
-            "                            if (!enabled) layer.innerHTML = \"\";\n" +
-            "                        });\n" +
-            "                    }\n" +
-            "                    fetch(\"$danmakuUrlJs\")\n" +
-            "                        .then(function(res) { return res.json(); })\n" +
-            "                        .then(function(data) {\n" +
-            "                            comments = (data.danmaku || []).sort(function(a, b) { return a.time - b.time; });\n" +
-            "                            resync();\n" +
-            "                        })\n" +
-            "                        .catch(function() {});\n" +
-            "                })();\n"
+            "/danmaku?serviceId=$serviceId&id=${HtmlRendererCommon.encodeUrl(info.url)}"
         }
 
         val infoNameJs = HtmlRendererCommon.escapeJs(info.name)
@@ -660,8 +182,11 @@ object HtmlRendererWatch {
 
         val hasVideo = info.videoStreams.isNotEmpty() || info.videoOnlyStreams.isNotEmpty() || !info.hlsUrl.isNullOrEmpty()
         if (hasVideo) {
-            @Suppress("UNUSED_VARIABLE")
-            val defaultQuality = targetQuality ?: "720p"
+            // Settings' "Preferred Video Quality" (dbHelper.nativeVideoQuality(), read all the way
+            // back in LocalHttpServerWatchHandlers.handleWatchContent) - matched by height, not
+            // exact string, since a NewPipeExtractor resolution can carry a frame-rate suffix
+            // ("1080p60") that VideoQuality's plain label ("1080p") never has.
+            val defaultQualityHeight = LocalHttpServer.getResolutionHeight(targetQuality)
 
             val subtitles = info.subtitles
             val trackTags = StringBuilder()
@@ -677,13 +202,17 @@ object HtmlRendererWatch {
 
             val infoUrlEncoded = HtmlRendererCommon.encodeUrl(info.url)
 
+            val playerTitleEscaped = HtmlRendererCommon.escapeHtml(info.name)
             run {
-                sb.append("        <div class=\"vjs-player-wrapper\">\n")
-                  .append("          <video id=\"player\" class=\"video-js vjs-default-skin vjs-big-play-centered\" controls autoplay preload=\"auto\" style=\"width:100%; height:auto; aspect-ratio:16/9; display:block;\">\n")
-                  .append("            <source src=\"/manifest?serviceId=$serviceId&id=$infoUrlEncoded\" type=\"application/dash+xml\">\n")
+                // class="player-wrapper" (not video.js-specific despite the historical name) is
+                // what the mini-player logic (initMiniPlayer(), HtmlScripts.kt) toggles
+                // position:fixed on directly - <media-player> IS the wrapper now, no separate
+                // wrapper div is needed since Vidstack's custom element already accepts a class.
+                sb.append("        <media-player id=\"player\" class=\"player-wrapper\" title=\"$playerTitleEscaped\" crossorigin playsinline>\n")
+                  .append("          <media-provider>\n")
                   .append(trackTags.toString())
-                  .append("            Your browser does not support HTML5 video.\n")
-                  .append("          </video>\n")
+                  .append("          </media-provider>\n")
+                  .append("          <media-video-layout></media-video-layout>\n")
                   .append(if (serviceSupportsBulletComments(serviceId)) "          <div class=\"danmaku-layer\" id=\"danmaku-layer\"></div>\n" else "")
                   .append("          <div class=\"double-tap-indicator left\" id=\"double-tap-left\">\n")
                   .append("            <svg viewBox=\"0 0 24 24\"><path d=\"M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z\"/></svg>\n")
@@ -713,114 +242,74 @@ object HtmlRendererWatch {
                   .append("            </div>\n")
                   .append("          </div>\n")
                   .append("          <button class=\"sponsor-skip-btn\" id=\"sponsor-skip-btn\"><span class=\"material-symbols-rounded\" style=\"font-size:18px;\">fast_forward</span><span id=\"sponsor-skip-label\"></span></button>\n")
-                  .append("        </div>\n")
+                  .append("          <div class=\"mini-player-drag-handle\" id=\"mini-player-drag-handle\" title=\"Drag to move\"><span class=\"material-symbols-rounded\">open_with</span></div>\n")
+                  .append("          <button class=\"mini-player-close-btn\" id=\"mini-player-close-btn\" title=\"Close\"><span class=\"material-symbols-rounded\">close</span></button>\n")
+                  .append("        </media-player>\n")
+                  // Keeps layout height stable once .player-wrapper switches to position:fixed
+                  // for the mini-player - without this, the title/description below jump upward.
+                  .append("        <div id=\"player-space-holder\" style=\"height:0;\"></div>\n")
+                  // Geometry never changes (unlike the wrapper, which the mini-player logic
+                  // itself repositions) - the scroll-triggered IntersectionObserver watches this
+                  // instead of the wrapper, so entering mini-player can never itself flip the
+                  // observed intersection state and retrigger. See initMiniPlayer() for why that
+                  // self-observation caused an enter/exit flicker loop.
+                  .append("        <div id=\"mini-player-sentinel\" style=\"height:1px;\"></div>\n")
 
-                // Serialize available audio tracks for JavaScript dropdown rendering
-                var defaultAudio: AudioStream? = null
-                val audioStreams = info.audioStreams
-                if (!audioStreams.isNullOrEmpty()) {
-                    var m4aStreams: MutableList<AudioStream> = audioStreams.filterTo(ArrayList()) { it.format == MediaFormat.M4A }
-                    if (m4aStreams.isEmpty()) {
-                        m4aStreams = ArrayList(audioStreams)
-                    }
-                    java.util.Collections.sort(m4aStreams, LocalHttpServer.audioTrackPriorityComparator())
-                    defaultAudio = m4aStreams[0]
+                // Only the danmaku toggle lives in this row now: playback quality and audio
+                // language are both picked from Vidstack's own settings menu (the manifest lists
+                // every audio track, dash.js exposes them as player.audioTracks), so the old
+                // separate quality/audio <select>s are gone. Row is skipped entirely when there's
+                // nothing to put in it.
+                if (serviceSupportsBulletComments(serviceId)) {
+                    sb.append("        <div class=\"player-controls-row\" style=\"display: flex; gap: 15px; margin-top: 10px; margin-bottom: 15px; align-items: center; justify-content: flex-start; flex-wrap: wrap;\">
+")
+                      .append("          <button class=\"danmaku-toggle-btn\" id=\"danmaku-toggle-btn\" title=\"彈幕開關\"><span class=\"material-symbols-rounded\">chat_bubble</span></button>
+")
+                      .append("        </div>
+")
                 }
 
-                val defaultTrackId = defaultAudio?.audioTrackId ?: ""
-
-                val tracksJson = StringBuilder("[")
-                if (audioStreams != null) {
-                    var first = true
-                    val processedTrackIds = java.util.HashSet<String>()
-                    for (stream in audioStreams) {
-                        var trackId = stream.audioTrackId
-                        if (trackId == null) trackId = ""
-                        if (processedTrackIds.contains(trackId)) {
-                            continue
-                        }
-                        processedTrackIds.add(trackId)
-
-                        var label = stream.audioTrackName
-                        if (label.isNullOrEmpty()) {
-                            val locale = stream.audioLocale
-                            label = locale?.let { java.util.Locale.forLanguageTag(it.replace('_', '-')).displayName } ?: "Audio Track"
-                        }
-
-                        if (!first) tracksJson.append(",")
-                        first = false
-                        val trackIdJs = HtmlRendererCommon.escapeJs(trackId)
-                        val trackLabelJs = HtmlRendererCommon.escapeJs(label)
-                        tracksJson.append("{\"id\":\"$trackIdJs\",\"label\":\"$trackLabelJs\"}")
+                if (chapters.isNotEmpty()) {
+                    val fallbackChapterThumb = HtmlRendererCommon.getThumbnailUrl(info.thumbnails)
+                    val firstChapterTitleEscaped = HtmlRendererCommon.escapeHtml(chapters[0].title)
+                    // Collapsed by default: the header alone (title + live current-chapter label)
+                    // covers "what chapter am I in", so the full thumbnail list only costs space
+                    // once the user actually asks for it via toggleChaptersSection().
+                    sb.append("        <div class=\"chapters-section\">\n")
+                      .append("          <div class=\"chapters-header\" onclick=\"toggleChaptersSection()\">\n")
+                      .append("            <h3 class=\"comment-count\">Chapters</h3>\n")
+                      .append("            <div class=\"chapters-header-right\">\n")
+                      .append("              <span id=\"current-chapter-label\">$firstChapterTitleEscaped</span>\n")
+                      .append("              <span class=\"material-symbols-rounded chapters-toggle-icon\" id=\"chapters-toggle-icon\">expand_more</span>\n")
+                      .append("            </div>\n")
+                      .append("          </div>\n")
+                      .append("          <div class=\"chapters-list\" id=\"chapters-list\" style=\"display:none;\">\n")
+                    for (chapter in chapters) {
+                        val thumb = HtmlRendererCommon.getThumbnailUrl(
+                            chapter.previewUrl?.takeIf { it.isNotBlank() } ?: fallbackChapterThumb,
+                        )
+                        val titleEscaped = HtmlRendererCommon.escapeHtml(chapter.title)
+                        sb.append("            <div class=\"chapter-item\" onclick=\"seekToChapter(${chapter.startTimeSeconds})\">\n")
+                          .append("              <img class=\"chapter-thumb\" src=\"$thumb\" loading=\"lazy\">\n")
+                          .append("              <div class=\"chapter-item-body\">\n")
+                          .append("                <span class=\"chapter-item-time\">${formatChapterTimestamp(chapter.startTimeSeconds)}</span>\n")
+                          .append("                <span class=\"chapter-item-title\">$titleEscaped</span>\n")
+                          .append("              </div>\n")
+                          .append("            </div>\n")
                     }
+                    sb.append("          </div>\n")
+                      .append("        </div>\n")
                 }
-                tracksJson.append("]")
 
-                // Generate quality selector and audio track selector HTML options
-                sb.append("        <div class=\"player-controls-row\" style=\"display: flex; gap: 15px; margin-top: 10px; margin-bottom: 15px; align-items: center; justify-content: flex-start; flex-wrap: wrap;\">\n")
-                  .append("          <div style=\"display: flex; align-items: center; gap: 8px;\">\n")
-                  .append("            <label for=\"quality-select\" style=\"font-size: 13px; font-weight: 500; color: var(--text-color); opacity: 0.8;\">Quality:</label>\n")
-                  .append("            <div class=\"md-select-wrap\">\n")
-                  .append("            <select id=\"quality-select\" class=\"md-select\">\n")
-                  .append("              <option value=\"auto\" selected>Auto</option>\n")
-
-                // List available qualities
-                val addedQualities = java.util.HashSet<String>()
-                // Check video-only streams (HD)
-                val videoOnlyStreams = info.videoOnlyStreams
-                if (videoOnlyStreams != null) {
-                    for (vs in videoOnlyStreams) {
-                        val res = vs.resolution
-                        if (res != null && !addedQualities.contains(res)) {
-                            addedQualities.add(res)
-                            sb.append("              <option value=\"$res\">$res</option>\n")
-                        }
-                    }
-                }
-                // Check progressive streams (SD)
-                val videoStreams = info.videoStreams
-                if (videoStreams != null) {
-                    for (vs in videoStreams) {
-                        val res = vs.resolution
-                        if (res != null && !addedQualities.contains(res)) {
-                            addedQualities.add(res)
-                            sb.append("              <option value=\"$res\">$res</option>\n")
-                        }
-                    }
-                }
-                sb.append("            </select>\n")
-                  .append("            <span class=\"material-symbols-rounded md-select-arrow\">expand_more</span>\n")
-                  .append("            </div>\n")
-                  .append("          </div>\n")
-                  .append("          <div id=\"audio-track-container\" style=\"display: flex; align-items: center; gap: 8px;\">\n")
-                  .append("            <label for=\"audio-track-select\" style=\"font-size: 13px; font-weight: 500; color: var(--text-color); opacity: 0.8;\">Audio Language:</label>\n")
-                  .append("            <div class=\"md-select-wrap\">\n")
-                  .append("            <select id=\"audio-track-select\" class=\"md-select\">\n")
-                  .append("            </select>\n")
-                  .append("            <span class=\"material-symbols-rounded md-select-arrow\">expand_more</span>\n")
-                  .append("            </div>\n")
-                  .append("          </div>\n")
-                  .append(
-                      if (serviceSupportsBulletComments(serviceId)) {
-                          "          <button class=\"danmaku-toggle-btn\" id=\"danmaku-toggle-btn\" title=\"彈幕開關\"><span class=\"material-symbols-rounded\">chat_bubble</span></button>\n"
-                      } else {
-                          ""
-                      },
-                  )
-                  .append("        </div>\n")
-
-                // Script for player quality switching and remote commands
+                // Script for player setup, quality defaults and remote commands
                 sb.append("        <script>\n")
-                  .append("            window.availableAudioTracks = $tracksJson;\n")
-                  .append("            window.defaultAudioTrackId = '${HtmlRendererCommon.escapeJs(defaultTrackId)}';\n")
                   .append("            (function() {\n")
-                  .append("                const player = videojs('player', {\n")
-                  .append("                    playbackRates: [0.5, 1, 1.25, 1.5, 2],\n")
-                  .append("                    controlBar: { audioTrackButton: false }\n")
-                  .append("                });\n")
+                  .append("                const player = document.getElementById('player');\n")
                   .append("                window.videoPlayer = player;\n")
-                  .append("                player.on('fullscreenchange', () => {\n")
-                  .append("                    if (player.isFullscreen()) {\n")
+                  // fullscreen-change's detail is a boolean (entered/exited) - confirmed against
+                  // a live Vidstack instance, not guessed from docs.
+                  .append("                player.addEventListener('fullscreen-change', (e) => {\n")
+                  .append("                    if (e.detail) {\n")
                   .append("                        if (screen.orientation && screen.orientation.lock) {\n")
                   .append("                            screen.orientation.lock('landscape').catch(e => {});\n")
                   .append("                        }\n")
@@ -830,105 +319,56 @@ object HtmlRendererWatch {
                   .append("                        }\n")
                   .append("                    }\n")
                   .append("                });\n")
-                  .append("                player.ready(() => {\n")
+                  .append("                player.src = { src: '/manifest?serviceId=$serviceId&id=$infoUrlEncoded', type: 'application/dash+xml' };\n")
+                  .append("                player.addEventListener('can-play', () => {\n")
                   .append("                    player.play().catch(err => console.error(err));\n")
-                  .append("                });\n")
+                  .append("                }, { once: true });\n")
                   .append("                \n")
-                  .append("                const selector = document.getElementById('quality-select');\n")
                   .append("                const streamDuration = $duration;\n")
                   .append("                \n")
                   .append("                // Extract initial start time if available\n")
                   .append("                const urlParams = new URLSearchParams(window.location.search);\n")
                   .append("                let initialStartTime = parseFloat(urlParams.get('start_time')) || 0;\n")
                   .append("                if (initialStartTime > 0) {\n")
-                  .append("                    player.ready(() => {\n")
-                  .append("                        player.currentTime(initialStartTime);\n")
-                  .append("                    });\n")
+                  .append("                    player.addEventListener('can-play', () => {\n")
+                  .append("                        player.currentTime = initialStartTime;\n")
+                  .append("                    }, { once: true });\n")
                   .append("                }\n")
                   .append("                \n")
+                  // currentTime/duration are direct properties on <media-player> (confirmed live,
+                  // not video.js-style getter methods).
                   .append("                window.seekVideo = (delta) => {\n")
-                  .append("                    const targetTime = Math.max(0, Math.min(streamDuration || player.duration() || 0, player.currentTime() + delta));\n")
-                  .append("                    player.currentTime(targetTime);\n")
+                  .append("                    const targetTime = Math.max(0, Math.min(streamDuration || player.duration || 0, player.currentTime + delta));\n")
+                  .append("                    player.currentTime = targetTime;\n")
                   .append("                };\n")
                   .append("                \n")
-                  .append("                if (selector) {\n")
-                  .append("                    selector.addEventListener('change', () => {\n")
-                  .append("                        const targetQuality = selector.value;\n")
-                  .append("                        const qualityLevels = player.qualityLevels();\n")
-                  .append("                        if (!qualityLevels) return;\n")
-                  .append("                        \n")
-                  .append("                        if (targetQuality === 'auto') {\n")
-                  .append("                            for (let i = 0; i < qualityLevels.length; i++) {\n")
-                  .append("                                qualityLevels[i].enabled = true;\n")
-                  .append("                            }\n")
-                  .append("                        } else {\n")
-                  .append("                            const targetHeight = parseInt(targetQuality);\n")
-                  .append("                            for (let i = 0; i < qualityLevels.length; i++) {\n")
-                  .append("                                const level = qualityLevels[i];\n")
-                  .append("                                if (level.height === targetHeight) {\n")
-                  .append("                                    level.enabled = true;\n")
-                  .append("                                } else {\n")
-                  .append("                                    level.enabled = false;\n")
-                  .append("                                }\n")
-                  .append("                            }\n")
+                  // Settings' "Preferred Video Quality" default, applied once dash.js has actually
+                  // populated player.qualities (empty before then) - qualities-change fires once
+                  // per level as the list is built, so this only acts the first time a match shows
+                  // up. Live-verified: setting an individual VideoQuality's .selected = true is the
+                  // real API (mirrors video.js's old qualityLevels()[i].enabled toggle) - the
+                  // documented-looking `player.qualities.selected = quality` form is a no-op.
+                  .append("                const preferredQualityHeight = $defaultQualityHeight;\n")
+                  .append("                if (preferredQualityHeight > 0) {\n")
+                  .append("                    let appliedDefaultQuality = false;\n")
+                  .append("                    player.addEventListener('qualities-change', () => {\n")
+                  .append("                        if (appliedDefaultQuality) return;\n")
+                  .append("                        const match = Array.from(player.qualities).find(q => q.height === preferredQualityHeight);\n")
+                  .append("                        if (match) {\n")
+                  .append("                            match.selected = true;\n")
+                  .append("                            appliedDefaultQuality = true;\n")
                   .append("                        }\n")
                   .append("                    });\n")
                   .append("                }\n")
                   .append("                \n")
-                  .append("                const audioSelect = document.getElementById('audio-track-select');\n")
-                  .append("                if (audioSelect && window.availableAudioTracks) {\n")
-                  .append("                    audioSelect.innerHTML = '';\n")
-                  .append("                    const urlParams = new URLSearchParams(window.location.search);\n")
-                  .append("                    let currentAudioTrack = urlParams.get('audio_track');\n")
-                  .append("                    if (currentAudioTrack === null) {\n")
-                  .append("                        currentAudioTrack = window.defaultAudioTrackId || '';\n")
-                  .append("                    }\n")
-                  .append("                    window.availableAudioTracks.forEach(track => {\n")
-                  .append("                        const option = document.createElement('option');\n")
-                  .append("                        option.value = track.id;\n")
-                  .append("                        option.text = track.label;\n")
-                  .append("                        option.selected = (track.id === currentAudioTrack);\n")
-                  .append("                        audioSelect.appendChild(option);\n")
-                  .append("                    });\n")
-                  .append("                    audioSelect.addEventListener('change', () => {\n")
-                  .append("                        const selectedTrackId = audioSelect.value;\n")
-                  .append("                        const currUrl = new URL(window.location.href);\n")
-                  .append("                        currUrl.searchParams.set('audio_track', selectedTrackId);\n")
-                  .append("                        window.history.replaceState({}, '', currUrl);\n")
-                  .append("                        const currentTime = player.currentTime();\n")
-                  .append("                        const isPaused = player.paused();\n")
-                  .append("                        const manifestUrl = '/manifest?serviceId=$serviceId&id=$infoUrlEncoded&audio_track=' + encodeURIComponent(selectedTrackId);\n")
-                  .append("                        player.src({ src: manifestUrl, type: 'application/dash+xml' });\n")
-                  .append("                        player.ready(() => {\n")
-                  .append("                            setTimeout(() => {\n")
-                  .append("                                player.currentTime(currentTime);\n")
-                  .append("                                if (!isPaused) {\n")
-                  .append("                                    player.play().catch(e => {});\n")
-                  .append("                                }\n")
-                  .append("                            }, 150);\n")
-                  .append("                        });\n")
-                  .append("                    });\n")
-                  .append("                }\n")
-                  .append("                \n")
-                  .append("                const cacheBtn = document.getElementById('cache-offline-btn');\n")
-                  .append("                if (cacheBtn) {\n")
-                  .append("                    cacheBtn.addEventListener('click', (e) => {\n")
-                  .append("                        e.preventDefault();\n")
-                  .append("                        const qualitySelect = document.getElementById('quality-select');\n")
-                  .append("                        const audioSelectEl = document.getElementById('audio-track-select');\n")
-                  .append("                        const quality = qualitySelect ? qualitySelect.value : 'auto';\n")
-                  .append("                        const audioTrack = audioSelectEl ? audioSelectEl.value : '';\n")
-                  .append("                        const url = new URL(cacheBtn.href, window.location.origin);\n")
-                  .append("                        url.searchParams.set('quality', quality);\n")
-                  .append("                        url.searchParams.set('audio_track', audioTrack);\n")
-                  .append("                        window.location.href = url.toString();\n")
-                  .append("                    });\n")
-                  .append("                }\n")
-                  .append(advancedJs)
-                  .append(sponsorSegmentsJs)
-                  .append(danmakuJs)
-                  .append(fullscreenLetterboxJs)
-                  .append(watchProgressJs)
+                  .append("                initAdvancedPlayerControls(player, \"$nextVideoUrlJs\", \"$nextVideoTitleJs\", \"$nextVideoThumbJs\");\n")
+                  .append(if (sponsorItemsJs.isEmpty()) "" else "                initSponsorBlockMarkers(player, [$sponsorItemsJs]);\n")
+                  .append(if (chaptersItemsJs.isEmpty()) "" else "                initChapterMarkers(player, [$chaptersItemsJs]);\n")
+                  .append("                initMiniPlayer(player);\n")
+                  .append(if (danmakuUrlJs.isEmpty()) "" else "                initDanmakuOverlay(player, \"$danmakuUrlJs\");\n")
+                  .append("                initFullscreenLetterbox(player);\n")
+                  .append("                initWatchProgressReporting(player, \"$progressUrlEncoded\", $serviceId);\n")
+                  .append(if (serviceId == 0) "                initDownloadButton(\"$progressUrlEncoded\", $serviceId);\n" else "")
                   .append("                if ('mediaSession' in navigator) {\n")
                   .append("                    navigator.mediaSession.metadata = new MediaMetadata({\n")
                   .append("                        title: '$infoNameJs',\n")
@@ -1003,7 +443,13 @@ object HtmlRendererWatch {
           .append("              <button type=\"button\" onclick=\"if (window.NewPipeApp &amp;&amp; window.NewPipeApp.enterPip) { window.NewPipeApp.enterPip(); } else if (document.pictureInPictureEnabled &amp;&amp; document.querySelector('video')) { document.querySelector('video').requestPictureInPicture(); }\" class=\"action-pill-btn\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" width=\"16\" height=\"16\" style=\"margin-right:6px;\"><path d=\"M19 11h-8v6h8v-6zm4-8H1c-.55 0-1 .45-1 1v16c0 .55.45 1 1 1h22c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zm-2 16H3V5h18v14z\"/></svg>Pop-up</button>\n")
           .append("              <a href=\"/audio?serviceId=$serviceId&id=$infoUrlEncodedForSub\" class=\"action-pill-btn\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" width=\"16\" height=\"16\" style=\"margin-right:6px;\"><path d=\"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z\"/></svg>Audio Only</a>\n")
           .append("              <button type=\"button\" onclick=\"shareLink('${HtmlRendererCommon.escapeJs(info.url)}', '$infoNameJs')\" class=\"action-pill-btn\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" width=\"16\" height=\"16\" style=\"margin-right:6px;\"><path d=\"M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z\"/></svg>Share</button>\n")
-          .append("              ${HtmlRendererCommon.renderWatchLaterButton(info, serviceId, isWatchLater)}")
+        // Hands off to Flow's own downloader (LocalHttpServerDownloadHandlers.kt) - YouTube only,
+        // since Flow's downloader has no header plumbing for other services' CDNs. Label/state is
+        // filled in by initDownloadButton() once it has asked the server what's already downloaded.
+        if (serviceId == 0) {
+            sb.append("              <button type=\"button\" id=\"download-btn\" class=\"action-pill-btn\"><span class=\"material-symbols-rounded\" style=\"font-size:18px;\">download</span>Download</button>\n")
+        }
+        sb.append("              ${HtmlRendererCommon.renderWatchLaterButton(info, serviceId, isWatchLater)}")
 
         sb.append("            </div>\n")
         sb.append("          </div>\n")
@@ -1022,9 +468,8 @@ object HtmlRendererWatch {
           .append("          <div id=\"comments-list\" style=\"display:none;\"></div>\n")
           .append("          <style>@keyframes comments-spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }</style>\n")
           .append("          <script>\n")
-          // btn.parentElement rather than a global id lookup: this same wrapper markup appears
-          // once for the top-level "Load More Comments" and once per expanded reply thread, so a
-          // fixed id would collide the moment more than one is on the page at once.
+          // btn.parentElement, not a global id: this wrapper markup repeats per expanded reply
+          // thread - a fixed id would collide.
           .append("            window.loadMoreComments = function(btn, nextPage, svcId, videoUrl, isReplies) {\n")
           .append("                const wrapper = btn.parentElement;\n")
           .append("                btn.textContent = 'Loading...';\n")
@@ -1034,11 +479,9 @@ object HtmlRendererWatch {
           .append("                    html => { if (wrapper) wrapper.outerHTML = html; },\n")
           .append("                    () => { btn.textContent = 'Failed to load. Tap to retry'; btn.style.pointerEvents = 'auto'; });\n")
           .append("            };\n")
-          // Replies reuse the exact same /comments endpoint and CommentsInfoItem.getReplies()'s
-          // Page - the extractor treats a reply thread as just another paginated comment list, so
-          // no separate backend route was needed. Fetched once per thread (dataset.loaded guards
-          // re-fetching); after that, re-clicking just toggles the "expanded" class on the toggle
-          // link (rotates the chevron via CSS) and its sibling container (show/hide via CSS).
+          // Replies reuse /comments and getReplies()'s Page - a reply thread is just another
+          // paginated list. Fetched once per thread (dataset.loaded guards re-fetching); re-clicks
+          // just toggle the "expanded" class via CSS.
           .append("            window.toggleReplies = function(btn, repliesPage, svcId, videoUrl) {\n")
           .append("                const container = btn.nextElementSibling;\n")
           .append("                const expanded = btn.classList.toggle('expanded');\n")
@@ -1229,23 +672,16 @@ object HtmlRendererWatch {
         return HtmlRendererCommon.wrapInTemplate("Audio: ${info.name}", sb.toString(), isTv)
     }
 
-    // Bare HTML fragment (no wrapInTemplate) - injected via innerHTML by the comments-loading
-    // <script> in renderWatchContent(), and re-fetched as-is both for top-level pagination and
-    // (with isReplies=true) for a reply thread, which is just another Page from the same
-    // extractor. .comments-load-more-wrapper is the seam: a "Load More" click replaces
-    // btn.parentElement's outerHTML with a fresh batch of comments plus a new wrapper, so
-    // repeated pagination keeps appending in place. Deliberately a class, not an id - this
-    // markup appears once per expanded reply thread as well as once for the top-level list, and
-    // window.loadMoreComments finds its target via btn.parentElement rather than a lookup that
-    // would collide the moment more than one instance exists on the page.
+    // Bare HTML fragment (no wrapInTemplate), injected via innerHTML - used for both top-level
+    // pagination and (isReplies=true) a reply thread, just another Page from the same extractor.
+    // .comments-load-more-wrapper is a class, not an id: this markup repeats per expanded reply
+    // thread, and window.loadMoreComments targets it via btn.parentElement to avoid collisions.
     @JvmStatic
     fun renderComments(serviceId: Int, videoUrl: String, items: List<CommentsInfoItem>, nextPage: Page?, isTv: Boolean, isReplies: Boolean = false): String {
         val sb = StringBuilder()
 
-        // Always ends with a .comments-load-more-wrapper div (populated or empty), even on this
-        // empty-items branch, rather than returning early - loadMoreComments() replaces
-        // btn.parentElement's outerHTML with whatever comes back from a "Load More" click, so
-        // every response (first load or a later page) needs that same anchor to stay replaceable.
+        // Always ends with a .comments-load-more-wrapper div, even here - every response needs
+        // that anchor for loadMoreComments() to stay replaceable.
         if (items.isEmpty()) {
             sb.append("<div class=\"loading-placeholder\">No comments yet.</div>\n")
         }
@@ -1254,8 +690,8 @@ object HtmlRendererWatch {
 
         for (item in items) {
             val authorEscaped = HtmlRendererCommon.escapeHtml(item.uploaderName)
-            // Description.content is real HTML (<br>, <a href>), same as .media-description above
-            // - not plain text, so it's rendered unescaped rather than double-escaped.
+            // Description.content is real HTML (<br>, <a href>) - rendered unescaped, not
+            // double-escaped.
             val commentTextHtml = item.commentText.content ?: ""
             val timeText = HtmlRendererCommon.formatUploadDate(item.uploadDate, item.textualUploadDate ?: "")
             val likeCountText = if (item.likeCount > 0) HtmlRendererCommon.formatCount(item.likeCount.toLong()) else ""

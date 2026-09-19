@@ -10,10 +10,8 @@ import io.github.aedev.flow.R
 
 object DynamicColorHelper {
 
-    // Single source of truth for the static MD3 baseline palette, used both as the per-attr
-    // fallback when a theme attribute fails to resolve, and as the full override applied when
-    // the resolved dynamic palette comes back internally inconsistent (see isColorDark check
-    // below). Previously this literal list was duplicated in both places and could drift.
+    // Single source of truth for the MD3 baseline palette: per-attr resolve fallback, and full
+    // override when the resolved dynamic palette is internally inconsistent (see isColorDark).
     private fun baselinePalette(dark: Boolean): Map<String, String> {
         val p = HashMap<String, String>()
         p["primary"] = if (dark) "#d0bcff" else "#6750A4"
@@ -28,16 +26,14 @@ object DynamicColorHelper {
         p["surfaceContainerLow"] = if (dark) "#1d1b20" else "#f7f2fa"
         p["surfaceContainerHigh"] = if (dark) "#2b2930" else "#ece6f0"
         p["outline"] = if (dark) "#938f99" else "#79747e"
-        // Roles needed so every CSS variable can be derived from one tonal scheme. Without
-        // these, the parts of the stylesheet they'd feed keep their hardcoded baseline-purple
-        // values, which clashes with a neutral dynamic palette and stops reading as MD3.
+        // Roles needed so every CSS variable derives from one tonal scheme, not a hardcoded
+        // baseline-purple fallback that clashes with a neutral dynamic palette.
         p["onPrimary"] = if (dark) "#381e72" else "#ffffff"
         p["onSecondaryContainer"] = if (dark) "#e8def8" else "#1d192b"
         p["onSurfaceVariant"] = if (dark) "#cac4d0" else "#49454f"
         p["outlineVariant"] = if (dark) "#49454f" else "#cac4d0"
         p["surfaceContainerHighest"] = if (dark) "#36343b" else "#e6e0e9"
-        // MD3 baseline error tones, so "delete"/"danger" actions and error banners can stop
-        // hardcoding raw red hex values that never adapted to dark mode.
+        // MD3 baseline error tones - avoids hardcoded red hex that never adapted to dark mode.
         p["error"] = if (dark) "#f2b8b5" else "#b3261e"
         p["onError"] = if (dark) "#601410" else "#ffffff"
         p["errorContainer"] = if (dark) "#8c1d18" else "#f9dedc"

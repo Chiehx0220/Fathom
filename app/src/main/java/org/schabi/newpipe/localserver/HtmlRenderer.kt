@@ -8,14 +8,9 @@ import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.playlist.PlaylistExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfo
 
-// Thin facade over the page-specific HtmlRenderer* files (HtmlRendererCommon, HtmlRendererListings,
-// HtmlRendererWatch, HtmlRendererChannel, HtmlRendererSettings) that this file
-// used to contain directly. Kept as a facade - rather than
-// updating every LocalHttpServer.java/ServerService.java call site to the new class names -
-// so every existing "HtmlRenderer.xxx(...)" call in the rest of the app keeps working unchanged.
-// lightColors/darkColors stay here (not moved) for the same reason: ServerService.java sets them
-// via "HtmlRenderer.lightColors = ...", and HtmlRendererCommon reads them back qualified as
-// "HtmlRenderer.lightColors" when building the theme CSS.
+// Thin facade over the page-specific HtmlRenderer* files - preserves every existing
+// "HtmlRenderer.xxx(...)" call site. lightColors/darkColors stay here (not moved): ServerService
+// sets them via "HtmlRenderer.lightColors = ...", HtmlRendererCommon reads them back qualified.
 object HtmlRenderer {
 
     @JvmField
