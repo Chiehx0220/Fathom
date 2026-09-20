@@ -21,7 +21,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **91** (1932 changed lines). New files: **15** (809 lines).
+- Modified upstream files: **91** (1925 changed lines). New files: **16** (1073 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -40,24 +40,24 @@ in it). **New files** never conflict; they are ours alone.
 | ui/FlowNavigation.kt | 26 | 16 |
 | ui/screens/player/VideoPlayerViewModel.kt | 32 | 7 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 36 | 0 |
-| data/local/SubscriptionRepository.kt | 34 | 1 |
 | data/comments/CommentsPager.kt | 28 | 5 |
+| ui/screens/home/HomeFeedSources.kt | 28 | 4 |
 | player/resolver/VideoPlaybackResolver.kt | 28 | 3 |
-| ui/screens/home/HomeFeedSources.kt | 27 | 4 |
+| data/local/SubscriptionRepository.kt | 29 | 1 |
 | ui/components/VideoCard.kt | 16 | 11 |
 | ui/AppHooks.kt | 14 | 11 |
 | ui/NavigationDestinations.kt | 20 | 5 |
 | data/local/PlayerPreferences.kt | 24 | 0 |
+| data/local/ViewHistory.kt | 24 | 0 |
 | ui/screens/home/HomeFeedGrid.kt | 23 | 1 |
 | utils/ShareVideo.kt | 18 | 6 |
-| data/local/ViewHistory.kt | 22 | 0 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 21 | 0 |
-| ui/ChannelNavigation.kt | 19 | 2 |
 | ui/FlowApp.kt | 13 | 5 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 15 | 3 |
 | player/stream/ResolvedPlayback.kt | 17 | 0 |
 | ui/PlayerNavigation.kt | 12 | 4 |
+| ui/ChannelNavigation.kt | 13 | 2 |
 | ui/screens/player/WatchSessionTracker.kt | 12 | 3 |
 | data/local/AppDatabase.kt | 13 | 1 |
 | data/local/dao/WatchHistoryDao.kt | 14 | 0 |
@@ -84,12 +84,12 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/dialogs/PlayerSettingsSheetHost.kt | 6 | 0 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 5 | 0 |
 | ui/components/VideoQuickActionsSheet.kt | 3 | 2 |
-| data/model/MediaItemMappers.kt | 4 | 0 |
+| data/local/entity/WatchHistoryEntity.kt | 4 | 0 |
 | ... 31 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
-- Modified upstream files: **7** (37 changed lines). New files: **0** (0 lines).
+- Modified upstream files: **7** (37 changed lines). New files: **2** (172 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -103,11 +103,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **31** (3459 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **40** (4164 lines).
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **24** (8405 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **27** (8765 lines).
 
 ## Build
 
