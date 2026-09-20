@@ -10,6 +10,10 @@
 </p>
 
 <p align="center">
+  <b>Powered by FlowNeuro</b>, the on-device recommendation engine from Flow
+</p>
+
+<p align="center">
   Android 9+ · Kotlin · Jetpack Compose · GPL-3.0 · no account, no ads, no analytics
 </p>
 
@@ -19,12 +23,25 @@
 
 Fathom is a fork of Flow, a YouTube client with an on-device recommendation engine (FlowNeuro), that adds a second service. Bilibili videos, channels, comments, and danmaku sit next to YouTube's in search, the home feed, subscriptions, history, and playlists, and both feed the same local recommender.
 
-Two things are added on top of upstream:
+Two things are added on top of upstream (the recommender itself is [FlowNeuro](#powered-by-flowneuro), unchanged in principle):
 
 1. **A native Bilibili client**, written in Kotlin against Bilibili's web API. No web view, no extractor library.
 2. **A local web server** on the phone, so any browser on the same network can search and play from your library.
 
 Upstream keeps doing what it does. YouTube still runs on NewPipeExtractor, and the fork stays a small, mergeable diff.
+
+<a id="powered-by-flowneuro"></a>
+## Powered by FlowNeuro
+
+Every recommendation in Fathom comes from **FlowNeuro**, the engine A-EDev built for Flow. It runs entirely on the device: no server, no account, no telemetry.
+
+- Learns from what you watch, skip, like, dislike, and search for, and how long you stay
+- Separates weekday from weekend and morning from night habits
+- Notices when you are tired of a topic and mixes in something new, so the feed does not collapse into two or three subjects
+- Turns recent watches into related-video transitions and filters low-quality videos by engagement ratios
+- Shows what it knows and why it recommended something, and lets you edit, export, import, or wipe the profile
+
+What this fork adds is reach: Bilibili watches, likes, and searches train the same profile as YouTube's, and titles in Chinese and Japanese are split into topics, so a mixed YouTube and Bilibili history still produces one coherent feed.
 
 ## What works where
 
