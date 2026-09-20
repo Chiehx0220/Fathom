@@ -18,7 +18,7 @@
 - 📺 **YouTube 和 Bilibili 一個 App 搞定。** 一個搜尋、一個首頁、一個資料庫。
 - 🧠 **推薦引擎就在你手機裡。** 由 [FlowNeuro](#-flowneuro) 驅動,資料不出裝置。
 - 🔒 **不用帳號、沒有廣告、不追蹤。**
-- 🌐 **手機直接變伺服器。** 手機上開 `localhost:8080`,或在同 Wi-Fi 的任何瀏覽器輸入手機的位址。
+- 🌐 **手機直接變伺服器,補齊電腦端。** 在電腦的任何瀏覽器輸入手機的位址就能用,不用另外下載桌面版(例如 [Flow-Desktop](https://github.com/Flow-Tube/Flow-Desktop))。
 - 🔗 **Bilibili 連結直接在 App 開**,`b23.tv` 短連結也行。
 
 ## 🧠 FlowNeuro
@@ -40,6 +40,8 @@
 - 訂閱、觀看紀錄、按讚、播放清單,和 YouTube 放在一起
 
 ## 🌐 本地網頁伺服器
+
+Flow 本身沒有電腦端,這個功能就是來補這個缺口。不用另外安裝桌面版(例如 [Flow-Desktop](https://github.com/Flow-Tube/Flow-Desktop)),開啟伺服器後在任何瀏覽器就能用你的片庫,而且訂閱、觀看紀錄和稍後觀看都是 App 自己的資料,因為都是手機在提供。
 
 開啟後,手機會在 8080 連接埠提供一個網頁 App。
 

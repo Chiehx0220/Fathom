@@ -18,7 +18,7 @@
 - 📺 **YouTube and Bilibili in one app.** One search, one feed, one library.
 - 🧠 **A recommender that lives on your phone.** Powered by [FlowNeuro](#-flowneuro). Nothing leaves the device.
 - 🔒 **No account. No ads. No tracking.**
-- 🌐 **Your phone is a server.** Open `localhost:8080` on the phone, or the phone's address from any browser on the Wi-Fi.
+- 🌐 **Your phone is the server, so the desktop is covered.** Open the phone's address in any browser on your computer, with no separate desktop app to download (like [Flow-Desktop](https://github.com/Flow-Tube/Flow-Desktop)).
 - 🔗 **Bilibili links open in the app**, `b23.tv` short links included.
 
 ## 🧠 FlowNeuro
@@ -40,6 +40,8 @@ No web view. A Kotlin client talks to Bilibili's web API directly.
 - Subscriptions, history, likes, playlists next to YouTube's
 
 ## 🌐 Local web server
+
+Flow has no desktop side of its own, and this fills that gap. Instead of installing a separate desktop app such as [Flow-Desktop](https://github.com/Flow-Tube/Flow-Desktop), turn the server on and use your library from any browser. Subscriptions, history, and watch-later are the app's own, because the phone serves them.
 
 Turn it on and the phone serves a web app on port 8080.
 
