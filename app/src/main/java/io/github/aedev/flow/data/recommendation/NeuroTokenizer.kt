@@ -52,7 +52,6 @@ internal class NeuroTokenizer {
         const val TAG_MAX_INGEST = 8
         const val TAG_VERIFIED_WEIGHT = 0.65
         const val TAG_UNVERIFIED_WEIGHT = 0.10
-        const val TAG_MIN_LENGTH = 3
         const val TAG_MAX_LENGTH = 40
 
         /** Matches any year 2020-2099, used to filter year-spam tags and tokens */
@@ -711,11 +710,7 @@ internal class NeuroTokenizer {
     fun normalizeLemma(word: String): String = lemmaMap[word.lowercase()] ?: word.lowercase()
 
     fun tokenize(text: String): List<String> =
-        text
-            .lowercase()
-            .split(WHITESPACE_REGEX)
-            .map { word -> word.trim { !it.isLetterOrDigit() } }
-            .filter { it.length > 2 }
+        splitWords(text, minLength = 3)
             .map { normalizeLemma(it) }
             .filter { !stopWords.contains(it) && !YEAR_TAG_REGEX.matches(it) }
 
@@ -728,14 +723,14 @@ internal class NeuroTokenizer {
      */
     fun isNoiseTopic(topic: String): Boolean {
         val base = topic.substringBefore(':').lowercase().trim()
-        if (base.length < 3) return true
+        if (!base.isUsableTopic()) return true
         if (base.all { it.isDigit() } || YEAR_TAG_REGEX.matches(base)) return true
         val parts = base.split(' ').filter { it.isNotBlank() }
         if (parts.isEmpty()) return true
         // Degenerate bigrams like "code code" are tokenizer echoes, not topics.
         if (parts.size > 1 && parts.distinct().size < parts.size) return true
         return parts.any { part ->
-            part in stopWords || normalizeLemma(part) in stopWords || part.length < 3
+            part in stopWords || normalizeLemma(part) in stopWords || !part.isUsableTopic()
         }
     }
 
@@ -779,6 +774,10 @@ internal class NeuroTokenizer {
 
         if (titleWords.size >= 2) {
             for (i in 0 until titleWords.size - 1) {
+                // A Chinese or Japanese word is already a pair of characters, and its neighbour
+                // overlaps it, so pairing them again would only make up phrases.
+                if (titleWords[i].any(::isCjk) || titleWords[i + 1].any(::isCjk)) continue
+
                 val bigram = "${titleWords[i]} ${titleWords[i + 1]}"
 
                 val isMeaningful =
@@ -1054,7 +1053,7 @@ internal class NeuroTokenizer {
         tags.take(TAG_MAX_INGEST).forEach { rawTag ->
             val cleaned = rawTag.trim().lowercase()
 
-            if (cleaned.length < TAG_MIN_LENGTH ||
+            if (!cleaned.isUsableTopic() ||
                 cleaned.length > TAG_MAX_LENGTH
             ) {
                 return@forEach

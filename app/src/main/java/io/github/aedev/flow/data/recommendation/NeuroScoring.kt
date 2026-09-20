@@ -856,7 +856,7 @@ internal object NeuroScoring {
                 .sortedByDescending { it.value }
                 .take(3)
                 .map { stripDomainTag(it.key) }
-                .filter { it.length >= 3 }
+                .filter { it.isUsableTopic() }
 
         if (topTopics.isEmpty()) return emptyList()
 
@@ -1025,7 +1025,7 @@ internal object NeuroScoring {
                 .sortedByDescending { it.value }
                 .take(4)
                 .map { stripDomainTag(it.key) }
-                .filter { it.length >= 3 }
+                .filter { it.isUsableTopic() }
                 .distinct()
 
         if (topTopics.isEmpty()) return 1.0

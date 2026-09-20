@@ -758,7 +758,7 @@ class FlowNeuroEngine(
                 .sortedByDescending { it.value }
                 .take(5)
                 .map { NeuroScoring.stripDomainTag(it.key) }
-                .filter { it.length >= 3 }
+                .filter { it.isUsableTopic() }
                 .distinct()
 
         if (topics.isEmpty()) return current
@@ -808,7 +808,7 @@ class FlowNeuroEngine(
                 .sortedByDescending { it.value }
                 .take(5)
                 .map { NeuroScoring.stripDomainTag(it.key) }
-                .filter { it.length >= 3 }
+                .filter { it.isUsableTopic() }
                 .distinct()
         if (topics.isEmpty()) return current
 

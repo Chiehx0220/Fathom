@@ -999,7 +999,7 @@ internal class NeuroDiscovery(
                 .map { it.trim() }
                 .filter { pref ->
                     val lemma = tokenizer.normalizeLemma(pref)
-                    lemma.length >= 3 &&
+                    lemma.isUsableTopic() &&
                         lemma !in existingTokens &&
                         !blocked.any { b -> lemma.contains(b) }
                 }.shuffled()
@@ -1099,14 +1099,14 @@ internal class NeuroDiscovery(
     }
 
     private fun isSubstantialTopic(topic: String): Boolean {
-        if (topic.length < 3) return false
+        if (!topic.isUsableTopic()) return false
         val lower = topic.lowercase()
         if (lower in queryNoiseWords) return false
         if (yearRegex.matches(lower)) return false
         if (lower.all { it.isDigit() }) return false
         // Strip domain tags for checking: "metal:music" → "metal"
         val base = if (lower.contains(":")) lower.substringBefore(":") else lower
-        if (base.length < 3) return false
+        if (!base.isUsableTopic()) return false
         return true
     }
 

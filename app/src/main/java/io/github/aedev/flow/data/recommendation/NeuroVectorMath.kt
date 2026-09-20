@@ -250,7 +250,7 @@ internal object NeuroVectorMath {
         source.topics.entries
             .sortedByDescending { it.value }
             .asSequence()
-            .filter { it.key.length >= 3 }
+            .filter { it.key.isUsableTopic() }
             .take(topK)
             .forEach { (topic, _) ->
                 if ((planted[topic] ?: 0.0) < floor) planted[topic] = floor
