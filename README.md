@@ -10,7 +10,7 @@
 <br>
 
 <!-- Tech Stack -->
-<img src="https://img.shields.io/badge/Platform-Android_8.0+-3DDC84?style=for-the-badge&logo=android&logoColor=white">
+<img src="https://img.shields.io/badge/Platform-Android_9.0+-3DDC84?style=for-the-badge&logo=android&logoColor=white">
 <img src="https://img.shields.io/badge/Kotlin-100%25-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white">
 <img src="https://img.shields.io/badge/Compose-Material_3-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white">
 
@@ -43,26 +43,36 @@
 
 ## Why this fork?
 
-Flow already does the hard part: a real recommendation engine that runs entirely on-device, no accounts, no tracking. The one thing missing for me was Bilibili — I watch a mix of YouTube and Bilibili content and wanted one app that could search, play, and recommend across both instead of switching apps.
+Flow already does the hard part: a recommendation engine that runs entirely on-device, with no accounts and no tracking. What it lacked for me was Bilibili. I watch a mix of YouTube and Bilibili and wanted one app to search, play, and recommend across both.
 
-This fork adds Bilibili as a first-class service throughout the app through a native client (`io.github.aedev.flow.bilibili`) that talks to Bilibili's web API directly. YouTube stays on upstream [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor), so the fork no longer depends on PipePipeExtractor and stays merge-compatible with upstream Flow. Fork-specific code lives in its own packages and the differences from upstream are tracked in [FORK-DIFF.md](FORK-DIFF.md).
+The fork adds Bilibili as a second service through a native client (`io.github.aedev.flow.bilibili`) that calls Bilibili's web API directly. It began as a port of the Bilibili service in [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor) and no longer depends on it: YouTube stays on upstream [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor), as in upstream Flow.
+
+The work is kept merge-compatible with upstream. Fork code lives in its own files, upstream files carry only small hooks, and [FORK-DIFF.md](FORK-DIFF.md) lists every place the two differ.
 
 ---
 
 ## What's different in this fork
 
-- **Bilibili search** — video, channel, and playlist results alongside YouTube's
-- **Bilibili channel pages** — videos and playlists tabs, subscriber count, avatar
-- **Bilibili playback** — native API client (not a web view) with DASH streams, quality selection, multi-part videos, resume position
-- **Bilibili comments and bullet comments (弹幕)** — including bangumi (premium series) episodes
-- **Bilibili subscriptions** — feed refresh through the native client, with channel names and avatars filled in
-- **Bilibili watch history and likes**, kept alongside YouTube's in the same library
-- **NewPipe and PipePipe import/export** — subscription JSON from either app imports with Bilibili channels (service id 5) and avatars; export writes the same format
-- **Bilibili links open in Flow** — `bilibili.com/video`, `space.bilibili.com`, and `b23.tv` short links (including shared text) can be set to open by default
-- A YouTube/Bilibili source switcher on the relevant screens (search, home feed) so either service can be filtered in or out
-- **A built-in local web server** — browse, search, and watch (YouTube and Bilibili, including danmaku/bullet comments) from any browser on the same network, no app install needed on the other device. The web player is built on [Vidstack](https://vidstack.io) with chapters, seek-bar thumbnails, subtitles, and keyboard and touch shortcuts. Ported over from [localtube](https://github.com/diekaiju/localtube), a separate self-hosted NewPipeExtractor-based server project — see [Acknowledgments](#acknowledgments).
+**Bilibili**
+- **Search** — video, channel, and playlist results next to YouTube's, with a service switcher on search and the home feed
+- **Home feed** — Bilibili popular videos and related videos, with FlowNeuro topics that handle Chinese and Japanese titles
+- **Channel pages** — uploads, series and seasons, subscriber count, avatar
+- **Playback** — DASH streams through ExoPlayer, quality selection, multi-part videos, resume position
+- **Comments and bullet comments (弹幕)**
+- **Subscriptions, watch history, and likes**, stored in the same library as YouTube's
+- **Optional sign-in cookie** — without it Bilibili serves up to 1080p
+- Not covered yet: bangumi (series), live streams, and paid content
 
-Everything below this is Flow itself, unchanged, and applies equally to Bilibili where the two features overlap (history, likes, playlists, the recommendation engine).
+**Links and data exchange**
+- **Bilibili links open in Flow** — `bilibili.com/video`, `space.bilibili.com`, and `b23.tv` short links, including shared text, once Flow is set to open supported links by default
+- **NewPipe and PipePipe subscription import** — Bilibili channels (service id 5) and their avatars come through; the export writes the same JSON format
+
+**Local web server**
+- Runs on the phone and serves search, channels, playlists, subscriptions, history, and watch-later to any browser on the same network
+- Plays YouTube and Bilibili in a [Vidstack](https://vidstack.io) player: DASH quality menu, chapters, seek-bar thumbnails, subtitles, audio-only layout, keyboard and touch shortcuts, resume position, danmaku overlay
+- Ported from [localtube](https://github.com/diekaiju/localtube) and adapted to the native Bilibili client and Flow's own data
+
+Everything else is upstream Flow and works the same for Bilibili where the features overlap (history, likes, playlists, recommendations).
 
 ---
 
@@ -118,14 +128,13 @@ Flow gives you both. The recommendation engine learns what you like by analyzing
 - Subscription management with cached feeds
 
 ### Local Server *(fork-only)*
-- Runs a local web server on your device — open its address from a browser on any other device on the same Wi-Fi, no app or account needed there
-- Search, browse channels, and watch — YouTube and Bilibili both — including comments and Bilibili's bullet comments (danmaku)
-- Vidstack player: DASH quality menu, chapters, storyboard thumbnails, subtitles, audio-only layout, resume position
+- Runs a web server on the device; open its address from any browser on the same Wi-Fi, with no app or account needed there
+- Search, channels, playlists, and playback for YouTube and Bilibili, including comments and Bilibili's danmaku
 - Subscriptions, watch history, and watch-later stay in sync with the app
-- Ported from [localtube](https://github.com/diekaiju/localtube), a separate self-hosted server project — see Acknowledgments
+- Vidstack player with DASH quality menu, chapters, thumbnails, and subtitles
 
 ### Privacy
-- No Google or Bilibili account required
+- No Google or Bilibili account required (a Bilibili cookie is optional, for higher quality)
 - No ads, analytics, or tracking
 - All data stored locally on your device
 - Import subscriptions and history from NewPipe and PipePipe
@@ -169,7 +178,7 @@ Flow gives you both. The recommendation engine learns what you like by analyzing
 <a id="building-from-source"></a>
 ## Building from Source
 
-This fork doesn't currently publish signed release builds — upstream's release workflow needs a signing key this fork doesn't have, so the reliable way to run it today is to build it yourself:
+This fork does not publish signed release builds, since upstream's release workflow needs a signing key it doesn't have. Build it yourself:
 
 ```bash
 git clone https://github.com/Chiehx0220/Flow.git
@@ -178,10 +187,10 @@ git checkout Btest
 ./gradlew assembleGithubDebug
 ```
 
-The resulting APK is unsigned/debug-signed and installable directly on a device with developer options enabled.
+The APK is debug-signed and installs directly on a device with developer options enabled. The `foss` flavor (no updater) and the `nightly` build type (installs beside the debug build) are also available.
 
 ### Requirements
-**Minimum Requirement:** Android 8.0+
+**Minimum Requirement:** Android 9.0+ (API 28)
 
 ---
 
@@ -216,7 +225,7 @@ Flow (upstream) is a free and open-source project. As an independent developer w
 This fork stands on the shoulders of:
 
 *   **[Flow](https://github.com/A-EDev/Flow)** by A-EDev: The app this fork is built on — the player, FlowNeuro recommendation engine, and YouTube/Music experience are theirs.
-*   **[PipePipe](https://codeberg.org/NullPointerException/PipePipe)** and **[PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor)** by InfinityLoop1308: Bilibili support in this fork was first built on their extractor and its API behavior remains the reference for the native client and the service id used in exports.
+*   **[PipePipe](https://codeberg.org/NullPointerException/PipePipe)** and **[PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor)** by InfinityLoop1308 (GPL-3.0): the native Bilibili client is a port of the extractor's Bilibili service (see `bilibili/PPE-REFERENCE.md`), and PipePipe's service id 5 is kept so imports and exports stay compatible.
 *   **[NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor)** / **[NewPipe](https://github.com/TeamNewPipe/NewPipe)**: The extraction library and app this whole lineage descends from.
 *   **[localtube](https://github.com/diekaiju/localtube)** by diekaiju: The self-hosted NewPipeExtractor-based web server this fork's built-in Local Server feature was ported from.
 *   **[Vidstack](https://vidstack.io)** and **[dash.js](https://github.com/Dash-Industry-Forum/dash.js)**: The web player used by the Local Server.
