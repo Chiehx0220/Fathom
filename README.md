@@ -69,7 +69,7 @@ No signed releases yet. Variants: `foss` (no updater), `nightly` (installs besid
 | | |
 |---|---|
 | `bilibili/` | the Bilibili client |
-| `org/schabi/newpipe/localserver/` | the web server and player |
+| `localserver/` | the web server and player |
 | upstream files | small hooks only, listed in [FORK-DIFF.md](FORK-DIFF.md) |
 
 Everything else in Flow (SponsorBlock, DeArrow, music, Shorts, downloads, themes) is still here. See [upstream](https://github.com/A-EDev/Flow#features).

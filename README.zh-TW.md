@@ -69,7 +69,7 @@ cd Flow && git checkout Btest
 | | |
 |---|---|
 | `bilibili/` | Bilibili 用戶端 |
-| `org/schabi/newpipe/localserver/` | 網頁伺服器與播放器 |
+| `localserver/` | 網頁伺服器與播放器 |
 | 上游檔案 | 只放小型掛鉤,列在 [FORK-DIFF.md](FORK-DIFF.md) |
 
 Flow 原有的一切(SponsorBlock、DeArrow、音樂、Shorts、下載、主題)都還在,詳見[上游](https://github.com/A-EDev/Flow#features)。
