@@ -17,6 +17,10 @@
   Android 9+ · Kotlin · Jetpack Compose · GPL-3.0 · no account, no ads, no analytics
 </p>
 
+<p align="center">
+  <b>English</b> · <a href="README.zh-TW.md">繁體中文</a>
+</p>
+
 ---
 
 ## The short version
