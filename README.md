@@ -18,7 +18,7 @@
 - 📺 **YouTube and Bilibili in one app.** One search, one feed, one library.
 - 🧠 **A recommender that lives on your phone.** Powered by [FlowNeuro](#-flowneuro). Nothing leaves the device.
 - 🔒 **No account. No ads. No tracking.**
-- 🌐 **Your phone is a server.** Watch your library from any browser on the Wi-Fi.
+- 🌐 **Your phone is a server.** Open `localhost:8080` on the phone, or the phone's address from any browser on the Wi-Fi.
 - 🔗 **Bilibili links open in the app**, `b23.tv` short links included.
 
 ## 🧠 FlowNeuro
@@ -43,7 +43,10 @@ No web view. A Kotlin client talks to Bilibili's web API directly.
 
 ## 🌐 Local web server
 
-Turn it on, then open `http://<phone-ip>:8080` on any device on the same Wi-Fi. Nothing to install there.
+Turn it on and the phone serves a web app on port 8080.
+
+- **On the phone itself:** `http://localhost:8080`
+- **On any device on the same Wi-Fi:** `http://<phone-ip>:8080`, with nothing to install there
 
 - Search, channels, playlists, subscriptions, history, watch-later
 - A [Vidstack](https://vidstack.io) player: quality menu, chapters, seek-bar thumbnails, subtitles, audio-only mode, shortcuts, resume
