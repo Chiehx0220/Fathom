@@ -66,11 +66,17 @@ cd Flow && git checkout Btest
 
 ## 🧩 程式碼結構
 
-| | |
+路徑都在 `app/src/main/java/io/github/aedev/flow/` 底下。
+
+| 位置 | 內容 |
 |---|---|
-| `bilibili/` | Bilibili 用戶端 |
-| `localserver/` | 網頁伺服器與播放器 |
-| 上游檔案 | 只放小型掛鉤,列在 [FORK-DIFF.md](FORK-DIFF.md) |
+| `bilibili/` | 用戶端本體:API、請求簽章、工作階段、留言、彈幕、id、深層連結 |
+| `data/paging/`、`player/stream/`、`ui/screens/playlists/`(`Bilibili*`) | 把它接進搜尋、播放和播放清單的轉換與銜接程式碼 |
+| `di/BilibiliModule.kt` | 整個 App 共用一個工作階段 |
+| `localserver/` | 網頁伺服器、它的 Bilibili 轉接層,以及 Vidstack 頁面 |
+| 約 90 個上游檔案 | 小型掛鉤,多半是傳遞服務代碼 |
+
+原則:新程式碼放新檔案,上游檔案只加一個呼叫。這樣從上游合併時衝突才會少。[FORK-DIFF.md](FORK-DIFF.md) 列出動過的每個上游檔案(`node scripts/fork-diff.js` 產生),`bilibili/PPE-REFERENCE.md` 記錄用戶端移植自 PipePipeExtractor 的哪個版本。
 
 Flow 原有的一切(SponsorBlock、DeArrow、音樂、Shorts、下載、主題)都還在,詳見[上游](https://github.com/A-EDev/Flow#features)。
 

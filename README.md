@@ -66,11 +66,17 @@ No signed releases yet. Variants: `foss` (no updater), `nightly` (installs besid
 
 ## 🧩 Under the hood
 
-| | |
+Paths are under `app/src/main/java/io/github/aedev/flow/`.
+
+| Where | What |
 |---|---|
-| `bilibili/` | the Bilibili client |
-| `localserver/` | the web server and player |
-| upstream files | small hooks only, listed in [FORK-DIFF.md](FORK-DIFF.md) |
+| `bilibili/` | The client: API, request signing, sessions, comments, danmaku, ids, deep links |
+| `data/paging/`, `player/stream/`, `ui/screens/playlists/` (`Bilibili*`) | Mappers and glue that plug it into search, playback, and playlists |
+| `di/BilibiliModule.kt` | One shared session for the whole app |
+| `localserver/` | The web server, its Bilibili adapters, and the Vidstack pages |
+| about 90 upstream files | Small hooks, mostly passing a service id through |
+
+The rule: new code goes in new files, and upstream files only get a call into it. That keeps merges from upstream small. [FORK-DIFF.md](FORK-DIFF.md) lists every upstream file touched (`node scripts/fork-diff.js`), and `bilibili/PPE-REFERENCE.md` records which PipePipeExtractor revision the client was ported from.
 
 Everything else in Flow (SponsorBlock, DeArrow, music, Shorts, downloads, themes) is still here. See [upstream](https://github.com/A-EDev/Flow#features).
 
