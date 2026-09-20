@@ -6,8 +6,7 @@ import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliChannelId
+import io.github.aedev.flow.bilibili.serviceIdOfChannel
 import io.github.aedev.flow.data.local.AppDatabase
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.coroutines.flow.Flow
@@ -302,14 +301,10 @@ class SubscriptionRepository private constructor(
                     isMusic = if (parts.size > 7 && parts[7].isNotEmpty()) parts[7].toBoolean() else false,
                     lastFeedFetchAt = if (parts.size > 8 && parts[8].isNotEmpty()) parts[8].toLong() else 0L,
                     serviceId =
-                        // Rows saved before Bilibili had its own service id say 0; a YouTube channel id is never all digits.
-                        if (BilibiliChannelId.isMid(parts[0])) {
-                            BILIBILI_SERVICE_ID
-                        } else if (parts.size > 9 && parts[9].isNotEmpty()) {
-                            parts[9].toIntOrNull() ?: 0
-                        } else {
-                            0
-                        },
+                        serviceIdOfChannel(
+                            parts[0],
+                            if (parts.size > 9 && parts[9].isNotEmpty()) parts[9].toIntOrNull() ?: 0 else 0,
+                        ),
                 )
             } else {
                 null

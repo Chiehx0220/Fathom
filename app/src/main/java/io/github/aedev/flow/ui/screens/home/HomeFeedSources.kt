@@ -12,6 +12,7 @@ import io.github.aedev.flow.data.recommendation.GraphSeedSource
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import org.schabi.newpipe.extractor.ServiceList
@@ -140,7 +141,7 @@ class HomeFeedSources
             return (
                 relatedSemaphore.withPermit {
                     withTimeoutOrNull(RELATED_FETCH_TIMEOUT_MS) {
-                        if (serviceId == BILIBILI_SERVICE_ID || BilibiliVideoId.isBilibili(seedId)) {
+                        if (serviceIdOfVideo(seedId, serviceId) == BILIBILI_SERVICE_ID) {
                             bilibili.related(BilibiliVideoId.parse(seedId).first).map(BilibiliVideoMapper::videoFromRelated)
                         } else {
                             repository.getRelatedCandidates(seedId)

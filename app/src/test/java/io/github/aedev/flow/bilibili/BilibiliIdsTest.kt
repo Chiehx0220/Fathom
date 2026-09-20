@@ -75,4 +75,18 @@ class BilibiliIdsTest {
         assertThat(BilibiliLink.isBilibili("https://www.youtube.com/watch?v=bilibili.com")).isFalse()
         assertThat(BilibiliLink.isBilibili("https://notbilibili.com/x")).isFalse()
     }
+
+    @Test
+    fun aSavedServiceIdOfZeroIsCorrectedByTheVideoId() {
+        assertThat(serviceIdOfVideo("BV1SHM36KE6Y?p=1", 0)).isEqualTo(BILIBILI_SERVICE_ID)
+        assertThat(serviceIdOfVideo("dQw4w9WgXcQ", 0)).isEqualTo(0)
+    }
+
+    @Test
+    fun aSavedServiceIdOfZeroIsCorrectedByTheChannelId() {
+        assertThat(serviceIdOfChannel("455557356", 0)).isEqualTo(BILIBILI_SERVICE_ID)
+        assertThat(serviceIdOfChannel(" 455557356 ", 0)).isEqualTo(BILIBILI_SERVICE_ID)
+        assertThat(serviceIdOfChannel("UCabc123", 0)).isEqualTo(0)
+        assertThat(serviceIdOfChannel("@handle", 0)).isEqualTo(0)
+    }
 }

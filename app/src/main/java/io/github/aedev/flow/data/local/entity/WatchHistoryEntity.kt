@@ -3,6 +3,7 @@ package io.github.aedev.flow.data.local.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.VideoHistoryEntry
 import io.github.aedev.flow.data.model.Video
 
@@ -51,7 +52,7 @@ data class WatchHistoryEntity(
             isMusic = isMusic,
             isShort = isShort,
             isLocal = isLocal,
-            serviceId = serviceId,
+            serviceId = serviceIdOfVideo(videoId, serviceId),
         )
 
     /** Reconstruct a lightweight [Video] from history metadata (no stream info). */

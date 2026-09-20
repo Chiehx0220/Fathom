@@ -1,21 +1,15 @@
 package io.github.aedev.flow.ui
 
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import androidx.navigation.NavHostController
-import io.github.aedev.flow.bilibili.BilibiliChannelId
+import io.github.aedev.flow.bilibili.serviceIdOfChannel
 import org.schabi.newpipe.extractor.ServiceList
 import java.net.URLDecoder
 
-/** Most channel clicks carry only an id. A bare number is a Bilibili uploader, never a YouTube channel. */
+/** Most channel clicks carry only an id; a bare number is a Bilibili uploader. */
 internal fun effectiveServiceId(
     channelIdOrHandle: String,
     serviceId: Int,
-): Int =
-    if (serviceId == ServiceList.YouTube.serviceId && BilibiliChannelId.isMid(channelIdOrHandle.trim())) {
-        BILIBILI_SERVICE_ID
-    } else {
-        serviceId
-    }
+): Int = serviceIdOfChannel(channelIdOrHandle, serviceId)
 
 internal fun NavHostController.navigateToYoutubeChannel(
     channelIdOrHandle: String,

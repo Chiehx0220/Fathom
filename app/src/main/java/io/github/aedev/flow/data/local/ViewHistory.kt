@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.dao.WatchedVideoIdentity
 import io.github.aedev.flow.data.local.entity.WatchHistoryEntity
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
@@ -102,7 +103,7 @@ class ViewHistory private constructor(
                 isMusic = isMusic,
                 isShort = isShort,
                 isLocal = isLocal,
-                serviceId = serviceId,
+                serviceId = serviceIdOfVideo(videoId, serviceId),
             ),
         )
     }
@@ -122,7 +123,8 @@ class ViewHistory private constructor(
     suspend fun getAllWatchedVideoIds(): Set<String> = dao.getAllWatchedVideoIds().toHashSet()
 
     /** Same as [getAllWatchedVideoIds], paired with each video's serviceId. */
-    suspend fun getAllWatchedVideoIdentities(): List<WatchedVideoIdentity> = dao.getAllWatchedVideoIdentities()
+    suspend fun getAllWatchedVideoIdentities(): List<WatchedVideoIdentity> =
+        dao.getAllWatchedVideoIdentities().map { it.copy(serviceId = serviceIdOfVideo(it.videoId, it.serviceId)) }
 
     /**
      * Create-or-touch a history entry **without** overwriting an already-saved
@@ -160,7 +162,7 @@ class ViewHistory private constructor(
                 channelId = channelId,
                 isMusic = false,
                 isShort = isShort,
-                serviceId = serviceId,
+                serviceId = serviceIdOfVideo(videoId, serviceId),
             ),
         )
     }
@@ -185,7 +187,7 @@ class ViewHistory private constructor(
                     channelId = entry.channelId,
                     isMusic = entry.isMusic,
                     isShort = entry.isShort,
-                    serviceId = entry.serviceId,
+                    serviceId = serviceIdOfVideo(entry.videoId, entry.serviceId),
                 )
             }
         dao.insertAll(entities)
