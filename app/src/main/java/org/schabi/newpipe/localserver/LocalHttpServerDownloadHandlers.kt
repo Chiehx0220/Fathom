@@ -47,12 +47,7 @@ private fun HistoryDbHelper.downloadStateFor(videoId: String): String {
 // video that would need those fails here with a message rather than silently doing something
 // different from the app. Returns null on success, else a user-facing error.
 private fun HistoryDbHelper.startNativeDownload(serviceId: Int, mediaUrl: String, videoId: String): String? {
-    val service = NewPipe.getService(serviceId)
-    val extractor = LocalHttpServer.getCachedExtractor(service, serviceId, mediaUrl)
-    val info: StreamInfo
-    synchronized(extractor) {
-        info = StreamInfo.getInfo(extractor)
-    }
+    val info = LocalServerSource.streamInfo(appContext, serviceId, mediaUrl)
 
     val prefs = PlayerPreferences(appContext)
     val targetHeight = runBlocking { prefs.defaultDownloadQuality.first() }.height

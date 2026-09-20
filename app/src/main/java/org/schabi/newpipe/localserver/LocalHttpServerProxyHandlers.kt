@@ -9,10 +9,7 @@ import org.schabi.newpipe.localserver.LocalHttpServer.ClientHandler
 import java.io.IOException
 import java.io.OutputStream
 
-// Stream/manifest/subtitle proxying and static CSS/JS assets - split from LocalHttpServer.kt, no
-// behavior change. Companion members (getCachedExtractor, getResolutionHeight,
-// audioTrackPriorityComparator, isOriginalAudioTrack, normalizeAudioCodec, log, streamUrlCache,
-// httpClient) need LocalHttpServer. qualification: outside lexical scope across files.
+// Stream, manifest and subtitle proxying plus static assets, split from LocalHttpServer.kt. Companion members are referenced with the LocalHttpServer. qualifier.
 
 @Throws(Exception::class)
 internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<String, String>, requestHeaders: Map<String, String>) {
@@ -39,8 +36,7 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
     }
 
     val requestedTrackId = params["trackId"]
-    // mtype in cache key: itag-less services (Bilibili) share itag=-1/trackId between video and
-    // audio requests - would collide without it.
+    // mtype is part of the cache key: itag-less services (Bilibili) share itag=-1 between video and audio.
     val mediaType = params["mtype"]
     val cacheKey = serviceId.toString() + "_" + mediaUrl + "_" + requestedItag +
             (if (requestedTrackId != null) "_$requestedTrackId" else "") +
@@ -48,12 +44,9 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
     var directUrl = LocalHttpServer.streamUrlCache.get(cacheKey)
 
     if (directUrl == null) {
-        val service = NewPipe.getService(serviceId)
-        val extractor = service.getStreamExtractor(mediaUrl)
-        extractor.fetchPage()
+        val extractor = LocalServerSource.streams(dbHelper.appContext, serviceId, requireNotNull(mediaUrl) { "Missing 'id' parameter" }, fresh = true)
 
-        // Bilibili reports itag=-1 for everything - manifest tags each Representation with mtype
-        // instead, select the best stream of that kind.
+        // Bilibili reports itag=-1 for everything; the manifest tags each Representation with mtype instead.
         if (requestedItag == -1 && mediaType != null) {
             if ("audio" == mediaType) {
                 val audioOnly = extractor.audioStreams
@@ -120,7 +113,6 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
             val targetQuality = qualityParam ?: dbHelper.nativeVideoQuality()
             val targetHeight = LocalHttpServer.getResolutionHeight(targetQuality)
 
-            // Fallback to progressive stream
             val progressiveStreams = extractor.videoStreams
             if (progressiveStreams != null && !progressiveStreams.isEmpty()) {
                 var selectedStream: VideoStream? = null
@@ -135,7 +127,6 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
                     }
                 }
                 if (selectedStream == null) {
-                    // If no stream is <= targetHeight, pick the highest quality one available
                     for (stream in progressiveStreams) {
                         val height = LocalHttpServer.getResolutionHeight(stream.resolution)
                         if (height > bestHeight) {
@@ -155,17 +146,13 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
                         directUrl = hlsUrl
                     }
                 } catch (e: Exception) {
-                    // ignore
                 }
                 if (directUrl == null) {
                     val rawAudioStreams = extractor.audioStreams
                     if (rawAudioStreams != null && !rawAudioStreams.isEmpty()) {
-                        // 1. Rank to find best track at index 0. Fork replaced AudioTrackType enum
-                        // with plain audioTrackName/audioLocale strings; "original" is now signalled
-                        // by a literal "(original)" suffix in audioTrackName.
+                        // Best track first; "original" is marked by an "(original)" suffix in audioTrackName.
                         var audioStreams: MutableList<AudioStream> = ArrayList(rawAudioStreams)
                         audioStreams.sortWith(LocalHttpServer.audioTrackPriorityComparator())
-                        // 2. Keep only streams of the best track
                         val bestTrackId = audioStreams[0].audioTrackId
                         val filteredStreams = audioStreams.filter { it.audioTrackId == bestTrackId }
                         if (filteredStreams.isNotEmpty()) {
@@ -185,7 +172,7 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
     if (directUrl != null) {
         LocalHttpServer.log("Proxying stream from: $directUrl")
 
-        // Matching User-Agent per YouTube client (c) param - avoids 403
+        // User-Agent matching the YouTube client (c param) avoids 403.
         var ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         if (directUrl.contains("googlevideo.com")) {
             try {
@@ -200,19 +187,17 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
             }
         }
 
-        // Build remote request
         val reqBuilder = okhttp3.Request.Builder()
             .url(directUrl)
             .header("User-Agent", ua)
 
-        // Bilibili CDN hotlink protection: 403 without a matching Referer.
+        // Bilibili's CDN answers 403 without a matching Referer.
         if (directUrl.contains("bilivideo.com") || directUrl.contains("bilibili.com") ||
             directUrl.contains("akamaized.net")) {
             reqBuilder.header("Referer", "https://www.bilibili.com/")
             reqBuilder.header("Origin", "https://www.bilibili.com")
         }
 
-        // Forward Range header if client sent it
         if (rangeHeader != null) {
             reqBuilder.removeHeader("Range")
             reqBuilder.addHeader("Range", rangeHeader)
@@ -245,11 +230,10 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
                 }
             }
 
-            // Ensure Content-Type is set if missing
             if (response.header("Content-Type") == null) {
                 var defaultType = if (requestedItag == 140) "audio/mp4" else "video/mp4"
                 if (requestedItag == -1) {
-                    // Itag-less services: mtype from the manifest is authoritative here.
+                    // Itag-less services: the manifest's mtype decides.
                     defaultType = if ("audio" == mediaType) "audio/mp4"
                     else if ("video" == mediaType) "video/mp4"
                     else "application/octet-stream"
@@ -257,7 +241,6 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
                 headBuilder.append("Content-Type: ").append(defaultType).append("\r\n")
             }
 
-            // Ensure Accept-Ranges is set for DASH
             if (response.header("Accept-Ranges") == null) {
                 headBuilder.append("Accept-Ranges: bytes\r\n")
             }
@@ -272,7 +255,6 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
             os.write(headBuilder.toString().toByteArray(Charsets.UTF_8))
             os.flush()
 
-            // Pipe body bytes
             val responseBody = response.body
             if (responseBody != null) {
                 try {
@@ -284,7 +266,7 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
                         }
                     }
                 } catch (e: IOException) {
-                    // Client disconnected (e.g. paused/sought)
+                    // Client disconnected (pause/seek).
                     LocalHttpServer.log("Stream proxy: Client connection closed.")
                 }
             }
@@ -300,12 +282,10 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
     val serviceId = getServiceId(params)
     val mediaUrl = params["id"]!!
 
-    val service = NewPipe.getService(serviceId)
-    // Reuses getCachedExtractor() - shared page extraction with handleWatchContent/handleAudioWatch.
-    val extractor = LocalHttpServer.getCachedExtractor(service, serviceId, mediaUrl)
+    // Cached: shares its extraction with the watch handlers.
+    val extractor = LocalServerSource.streams(dbHelper.appContext, serviceId, mediaUrl, fresh = false)
 
-    // Synchronized: extractor may be concurrently accessed by handleWatchContent/handleAudioWatch;
-    // its getters aren't thread-safe, unlike the plain-data VideoStream/AudioStream they return.
+    // Synchronized: extractor getters are not thread-safe.
     var durationSec: Double
     synchronized(extractor) {
         durationSec = extractor.length.toDouble()
@@ -319,14 +299,11 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
     sb.append("<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\" type=\"static\" mediaPresentationDuration=\"PT").append(durationSec).append("S\" minBufferTime=\"PT1.5S\">\n")
     sb.append("  <Period duration=\"PT").append(durationSec).append("S\">\n")
 
-    // Video AdaptationSet (Adaptive / Video-Only streams)
     val rawVideoStreams: List<VideoStream>?
     synchronized(extractor) {
         rawVideoStreams = extractor.videoOnlyStreams
     }
-    // Shared with the quality dropdown (HtmlRendererWatch.kt) via
-    // LocalHttpServer.dashPlayableVideoOnlyStreams() - the dropdown must offer exactly what this
-    // manifest can actually serve, or a selection outside this filter silently does nothing.
+    // Shared with the quality list via dashPlayableVideoOnlyStreams(): it must offer exactly what this manifest serves.
     val videoStreams = LocalHttpServer.dashPlayableVideoOnlyStreams(rawVideoStreams)
 
     if (videoStreams.isNotEmpty()) {
@@ -338,8 +315,7 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
             if (bitrate <= 0) {
                 bitrate = 1000000L
             }
-            // Threshold 5000, not the old 100000 - that scaled 360p (83kbps) to 83Mbps while
-            // leaving 1080p (495kbps) at 0.5Mbps.
+            // Threshold 5000: the old 100000 scaled 360p to 83 Mbps and left 1080p at 0.5 Mbps.
             if (bitrate < 5000) {
                 bitrate *= 1000
             }
@@ -353,11 +329,9 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
             val indexStart = vs.indexStart
             val indexEnd = vs.indexEnd
 
-            // Bilibili itag=-1 would make video/audio Representations share a BaseURL - mtype
-            // disambiguates.
+            // mtype keeps video and audio Representations apart when itag=-1 gives them the same BaseURL.
             val proxyUrl = "/stream?serviceId=" + serviceId + "&amp;id=" + java.net.URLEncoder.encode(mediaUrl, "UTF-8") + "&amp;itag=" + itag + "&amp;mtype=video"
-            // Pre-warms handleStreamProxy's cache with this Representation's exact key, so the
-            // player's imminent request skips redoing the page extraction just done here.
+            // Pre-warms handleStreamProxy's cache with this Representation's key.
             if (vs.content != null) {
                 LocalHttpServer.streamUrlCache.put(serviceId.toString() + "_" + mediaUrl + "_" + itag + "_video", vs.content, 3600000)
             }
@@ -371,18 +345,13 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
         sb.append("    </AdaptationSet>\n")
     }
 
-    // Audio AdaptationSet
     val rawAudioStreams: List<AudioStream>?
     synchronized(extractor) {
         rawAudioStreams = extractor.audioStreams
     }
     val allM4aStreams = (rawAudioStreams ?: emptyList()).filter { it.format == org.schabi.newpipe.extractor.MediaFormat.M4A }
     if (allM4aStreams.isNotEmpty()) {
-        // Every language/dub becomes its own audio AdaptationSet, so dash.js exposes them all as
-        // player.audioTracks and Vidstack's built-in Audio menu switches between them in-place
-        // (no manifest reload, no separate <select> on the page). The track the player should
-        // start on goes FIRST - dash.js picks the first AdaptationSet by default: an explicit
-        // ?audio_track= if given, otherwise NewPipe's best-track priority.
+        // Each language/dub is its own audio AdaptationSet, so dash.js exposes them as player.audioTracks. The starting track goes first (dash.js picks the first): ?audio_track= if given, else NewPipe's best-track priority.
         val prioritySorted = allM4aStreams.sortedWith(LocalHttpServer.audioTrackPriorityComparator())
         val preferredTrackId = params["audio_track"] ?: (prioritySorted[0].audioTrackId ?: "")
         val orderedTrackIds = LinkedHashSet<String>()
@@ -394,7 +363,6 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
             var audioStreams = allM4aStreams.filter { (it.audioTrackId ?: "") == finalTrackId }
 
             if (audioStreams.isNotEmpty()) {
-                // Sort by quality (bitrate descending)
                 audioStreams = audioStreams.sortedWith(Comparator { a, b ->
                     val brA = if (a.averageBitrate > 0) a.averageBitrate else a.bitrate
                     val brB = if (b.averageBitrate > 0) b.averageBitrate else b.bitrate
@@ -423,8 +391,7 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
 
                 sb.append("    <AdaptationSet id=\"").append(audioAdaptationId++).append("\" mimeType=\"audio/mp4\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\"").append(langStr).append(labelStr).append(">\n")
 
-                // Role: fork no longer classifies dub/description/secondary separately - any
-                // non-original track is "dub".
+                // Any non-original track is "dub".
                 if (firstStream.audioTrackId != null) {
                     val roleVal = if (LocalHttpServer.isOriginalAudioTrack(firstStream)) "main" else "dub"
                     sb.append("      <Role schemeIdUri=\"urn:mpeg:dash:role:2011\" value=\"").append(roleVal).append("\"/>\n")
@@ -460,7 +427,7 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
                     }
 
                     val proxyUrl = "/stream?serviceId=" + serviceId + "&amp;id=" + java.net.URLEncoder.encode(mediaUrl, "UTF-8") + "&amp;itag=" + itag + "&amp;mtype=audio" + (if (finalTrackId.isNotEmpty()) "&amp;trackId=" + java.net.URLEncoder.encode(finalTrackId, "UTF-8") else "")
-                    // Cache-key must match handleStreamProxy's construction exactly (itag, then trackId).
+                    // Cache key must match handleStreamProxy's (itag, then trackId).
                     if (asStream.content != null) {
                         val audioCacheKey = serviceId.toString() + "_" + mediaUrl + "_" + itag +
                                 (if (finalTrackId.isNotEmpty()) "_$finalTrackId" else "") + "_audio"
@@ -504,8 +471,7 @@ internal fun ClientHandler.handleSubtitlesProxy(os: OutputStream, params: Map<St
     val lang = params["lang"]
     val isAuto = "true" == params["auto"]
 
-    val service = NewPipe.getService(serviceId)
-    val info = StreamInfo.getInfo(service, mediaUrl)
+    val info = LocalServerSource.streamInfo(dbHelper.appContext, serviceId, requireNotNull(mediaUrl) { "Missing 'id' parameter" })
 
     var targetStream: SubtitlesStream? = null
     var subs: List<SubtitlesStream>? = null
@@ -541,7 +507,7 @@ internal fun ClientHandler.handleSubtitlesProxy(os: OutputStream, params: Map<St
             .header("User-Agent", "Mozilla/5.0")
             .build()
         LocalHttpServer.httpClient.newCall(req).execute().use { response ->
-            val bodyBytes = response.body?.bytes() ?: ByteArray(0)
+            val bodyBytes = (response.body?.string() ?: "").withoutCueSettings().toByteArray(Charsets.UTF_8)
             val contentType = "text/vtt"
             val headers = "HTTP/1.1 200 OK\r\n" +
                     "Content-Type: " + contentType + "; charset=UTF-8\r\n" +
@@ -557,9 +523,14 @@ internal fun ClientHandler.handleSubtitlesProxy(os: OutputStream, params: Map<St
     }
 }
 
-// '?v=' cache-busting param intentionally ignored (see HtmlRendererCommon.STATIC_ASSET_VERSION) -
-// a content edit changes the version tag, hence the URL, bypassing this cache entry entirely.
-// max-age=31536000 immutable is safe for exactly that reason.
+/**
+ * YouTube's WebVTT puts placement on every cue's timing line ("align:start position:0%"), which the
+ * player obeys, pinning captions to the left. Dropping it leaves them centred by the player.
+ */
+private fun String.withoutCueSettings(): String =
+    replace(Regex("""^(\S+ --> \S+)[ \t]+\S.*$""", RegexOption.MULTILINE), "$1")
+
+// The ?v= cache-busting parameter is ignored (see STATIC_ASSET_VERSION): a content change changes the URL, so max-age=31536000 immutable is safe.
 @Throws(Exception::class)
 internal fun ClientHandler.handleStaticCss(os: OutputStream) {
     sendResponse(os, 200, HtmlStyles.CSS, "text/css; charset=UTF-8", "public, max-age=31536000, immutable")

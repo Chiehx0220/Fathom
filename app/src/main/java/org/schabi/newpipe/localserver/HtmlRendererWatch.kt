@@ -4,16 +4,15 @@ import io.github.aedev.flow.player.stream.serviceSupportsBulletComments
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
+import org.schabi.newpipe.extractor.stream.Description
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamSegment
 import org.schabi.newpipe.extractor.stream.VideoStream
 
-// Video watch page and audio-only watch page rendering.
 object HtmlRendererWatch {
 
-    // Related-content sidebar item data prep, shared by renderWatchContent()/renderAudioWatch() -
-    // their card markup differs in size (94px vs 80px thumbnails) so isn't collapsed further.
+    // Related-item data shared by the video and audio pages; their card sizes differ.
     private data class RelatedItemDisplay(
         val uploaderEscaped: String,
         val nameEscaped: String,
@@ -69,8 +68,7 @@ object HtmlRendererWatch {
           .append("      if (loader) loader.style.display = 'block';\n")
           .append("      if (content) content.style.display = 'none';\n")
           .append("      \n")
-          // serviceId must be forwarded, or the server falls back to YouTube and fails to resolve
-          // non-YouTube (e.g. Bilibili) links.
+          // Forward serviceId, or the server falls back to YouTube for non-YouTube links.
           .append("      fetchText('/watch-content?serviceId=' + encodeURIComponent(new URLSearchParams(window.location.search).get('serviceId') || '0') + '&id=' + encodeURIComponent(url),\n")
           .append("          html => {\n")
           .append("              if (loader) loader.style.display = 'none';\n")
@@ -111,6 +109,13 @@ object HtmlRendererWatch {
         return HtmlRendererCommon.wrapInTemplate("Loading video...", sb.toString(), isTv, true)
     }
 
+    /** The description as it goes into the box: plain text is escaped, and stray blank lines at the ends dropped. */
+    private fun descriptionHtml(info: StreamInfo): String {
+        val description = info.description ?: return "No description provided."
+        val content = description.content?.trim().orEmpty().ifEmpty { return "No description provided." }
+        return if (description.type == Description.PLAIN_TEXT) HtmlRendererCommon.escapeHtml(content) else content
+    }
+
     @JvmStatic
     fun renderWatchContent(serviceId: Int, info: StreamInfo, isSubscribed: Boolean, isWatchLater: Boolean, likeState: String?, isTv: Boolean, targetQuality: String?, duration: Long): String {
         val sb = StringBuilder()
@@ -128,15 +133,9 @@ object HtmlRendererWatch {
         val nextVideoTitleJs = HtmlRendererCommon.escapeJs(nextVideoTitle)
         val nextVideoThumbJs = HtmlRendererCommon.escapeJs(nextVideoThumb)
 
-        // CSS object-fit:contain (HtmlStyles.kt) still let real mobile fullscreen stretch/crop the
-        // picture, unreproducible on desktop - see initFullscreenLetterbox() in HtmlScripts.kt,
-        // which computes the letterboxed size directly in JS instead.
         val progressUrlEncoded = HtmlRendererCommon.encodeUrl(info.url)
 
-        // SponsorBlockClient returns milliseconds; divided by 1000 once here so the shared
-        // initSponsorBlockMarkers() (HtmlScripts.kt) can compare directly against
-        // player.currentTime() (seconds). actionType=skip already filtered server-side - every
-        // segment here is skippable by construction.
+        // SponsorBlockClient returns milliseconds; converted to seconds for initSponsorBlockMarkers(). Only skippable segments are requested.
         val sponsorSegments = SponsorBlockClient.fetchSegments(LocalHttpServer.getVideoId(info.url))
         val sponsorItemsJs = StringBuilder()
         for (seg in sponsorSegments) {
@@ -156,9 +155,7 @@ object HtmlRendererWatch {
                 .append(",l:\"").append(label).append("\"}")
         }
 
-        // Chapter data (StreamSegment) for the shared initChapterMarkers() (HtmlScripts.kt) -
-        // io.github.aedev.flow's FlowChaptersBottomSheet consumes the same field natively; this is
-        // a rendering gap on the web side, not a separate extraction path.
+        // Chapter data for initChapterMarkers().
         val chapters: List<StreamSegment> = info.streamSegments ?: emptyList()
         val chaptersItemsJs = StringBuilder()
         for (chapter in chapters) {
@@ -182,10 +179,7 @@ object HtmlRendererWatch {
 
         val hasVideo = info.videoStreams.isNotEmpty() || info.videoOnlyStreams.isNotEmpty() || !info.hlsUrl.isNullOrEmpty()
         if (hasVideo) {
-            // Settings' "Preferred Video Quality" (dbHelper.nativeVideoQuality(), read all the way
-            // back in LocalHttpServerWatchHandlers.handleWatchContent) - matched by height, not
-            // exact string, since a NewPipeExtractor resolution can carry a frame-rate suffix
-            // ("1080p60") that VideoQuality's plain label ("1080p") never has.
+            // "Preferred Video Quality": matched by height, since an extractor resolution can carry a frame-rate suffix ("1080p60").
             val defaultQualityHeight = LocalHttpServer.getResolutionHeight(targetQuality)
 
             val subtitles = info.subtitles
@@ -204,15 +198,20 @@ object HtmlRendererWatch {
 
             val playerTitleEscaped = HtmlRendererCommon.escapeHtml(info.name)
             run {
-                // class="player-wrapper" (not video.js-specific despite the historical name) is
-                // what the mini-player logic (initMiniPlayer(), HtmlScripts.kt) toggles
-                // position:fixed on directly - <media-player> IS the wrapper now, no separate
-                // wrapper div is needed since Vidstack's custom element already accepts a class.
-                sb.append("        <media-player id=\"player\" class=\"player-wrapper\" title=\"$playerTitleEscaped\" crossorigin playsinline>\n")
+                // .player-wrapper is the <media-player> itself; the mini-player logic toggles position:fixed on it.
+                sb.append("        <media-player id=\"player\" class=\"player-wrapper\" title=\"$playerTitleEscaped\" artist=\"${HtmlRendererCommon.escapeHtml(info.uploaderName)}\" storage=\"fathom-player\" key-target=\"document\" crossorigin playsinline>\n")
                   .append("          <media-provider>\n")
                   .append(trackTags.toString())
                   .append("          </media-provider>\n")
-                  .append("          <media-video-layout></media-video-layout>\n")
+                  // Cover until the first frame; served same-origin because the player loads it in CORS mode (LocalHttpServerThumbnails.kt).
+                  .append(sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(info.thumbnails))?.let { "          <media-poster class=\"vds-poster\" src=\"${HtmlRendererCommon.escapeHtml(it)}\" alt=\"\"></media-poster>\n" } ?: "")
+                  .append(
+                      if (info.previewFrames.bestForSeekBar() != null) {
+                          "          <media-video-layout thumbnails=\"/thumbnails?serviceId=$serviceId&id=$infoUrlEncoded\"></media-video-layout>\n"
+                      } else {
+                          "          <media-video-layout></media-video-layout>\n"
+                      },
+                  )
                   .append(if (serviceSupportsBulletComments(serviceId)) "          <div class=\"danmaku-layer\" id=\"danmaku-layer\"></div>\n" else "")
                   .append("          <div class=\"double-tap-indicator left\" id=\"double-tap-left\">\n")
                   .append("            <svg viewBox=\"0 0 24 24\"><path d=\"M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z\"/></svg>\n")
@@ -245,33 +244,22 @@ object HtmlRendererWatch {
                   .append("          <div class=\"mini-player-drag-handle\" id=\"mini-player-drag-handle\" title=\"Drag to move\"><span class=\"material-symbols-rounded\">open_with</span></div>\n")
                   .append("          <button class=\"mini-player-close-btn\" id=\"mini-player-close-btn\" title=\"Close\"><span class=\"material-symbols-rounded\">close</span></button>\n")
                   .append("        </media-player>\n")
-                  // Keeps layout height stable once .player-wrapper switches to position:fixed
-                  // for the mini-player - without this, the title/description below jump upward.
+                  // Keeps the layout height when .player-wrapper becomes fixed.
                   .append("        <div id=\"player-space-holder\" style=\"height:0;\"></div>\n")
-                  // Geometry never changes (unlike the wrapper, which the mini-player logic
-                  // itself repositions) - the scroll-triggered IntersectionObserver watches this
-                  // instead of the wrapper, so entering mini-player can never itself flip the
-                  // observed intersection state and retrigger. See initMiniPlayer() for why that
-                  // self-observation caused an enter/exit flicker loop.
+                  // Static observation target for the mini-player: the wrapper itself moves, which would retrigger the observer.
                   .append("        <div id=\"mini-player-sentinel\" style=\"height:1px;\"></div>\n")
 
-                // Only the danmaku toggle lives in this row now: playback quality and audio
-                // language are both picked from Vidstack's own settings menu (the manifest lists
-                // every audio track, dash.js exposes them as player.audioTracks), so the old
-                // separate quality/audio <select>s are gone. Row is skipped entirely when there's
-                // nothing to put in it.
+                // Only the danmaku toggle lives here; quality and audio language come from Vidstack's settings menu.
                 if (serviceSupportsBulletComments(serviceId)) {
-                    sb.append("        <div class=\"player-controls-row\" style=\"display: flex; gap: 15px; margin-top: 10px; margin-bottom: 15px; align-items: center; justify-content: flex-start; flex-wrap: wrap;\">\n")
-                      .append("          <button class=\"danmaku-toggle-btn\" id=\"danmaku-toggle-btn\" title=\"彈幕開關\"><span class=\"material-symbols-rounded\">chat_bubble</span></button>\n")
+                    sb.append("        <div class=\"player-controls-row\">\n")
+                      .append("          <button type=\"button\" class=\"action-pill-btn danmaku-toggle-btn\" id=\"danmaku-toggle-btn\" title=\"彈幕開關\"><span class=\"material-symbols-rounded\" style=\"font-size:18px;\">chat_bubble</span>Danmaku</button>\n")
                       .append("        </div>\n")
                 }
 
                 if (chapters.isNotEmpty()) {
                     val fallbackChapterThumb = HtmlRendererCommon.getThumbnailUrl(info.thumbnails)
                     val firstChapterTitleEscaped = HtmlRendererCommon.escapeHtml(chapters[0].title)
-                    // Collapsed by default: the header alone (title + live current-chapter label)
-                    // covers "what chapter am I in", so the full thumbnail list only costs space
-                    // once the user actually asks for it via toggleChaptersSection().
+                    // Collapsed by default; toggleChaptersSection() opens the full list.
                     sb.append("        <div class=\"chapters-section\">\n")
                       .append("          <div class=\"chapters-header\" onclick=\"toggleChaptersSection()\">\n")
                       .append("            <h3 class=\"comment-count\">Chapters</h3>\n")
@@ -298,13 +286,11 @@ object HtmlRendererWatch {
                       .append("        </div>\n")
                 }
 
-                // Script for player setup, quality defaults and remote commands
                 sb.append("        <script>\n")
                   .append("            (function() {\n")
                   .append("                const player = document.getElementById('player');\n")
                   .append("                window.videoPlayer = player;\n")
-                  // fullscreen-change's detail is a boolean (entered/exited) - confirmed against
-                  // a live Vidstack instance, not guessed from docs.
+                  // fullscreen-change detail is a boolean.
                   .append("                player.addEventListener('fullscreen-change', (e) => {\n")
                   .append("                    if (e.detail) {\n")
                   .append("                        if (screen.orientation && screen.orientation.lock) {\n")
@@ -314,6 +300,19 @@ object HtmlRendererWatch {
                   .append("                        if (screen.orientation && screen.orientation.unlock) {\n")
                   .append("                            screen.orientation.unlock();\n")
                   .append("                        }\n")
+                  .append("                    }\n")
+                  .append("                });\n")
+                  // Buffer ahead of dash.js's default so a stall on a slow link does not drain it; keep played data for small rewinds.
+                  .append("                player.addEventListener('provider-change', (event) => {\n")
+                  .append("                    const provider = event.detail;\n")
+                  .append("                    if (provider && provider.type === 'dash') {\n")
+                  .append("                        provider.config = { streaming: { buffer: {\n")
+                  .append("                            stableBufferTime: 60,\n")
+                  .append("                            bufferTimeAtTopQuality: 90,\n")
+                  .append("                            bufferTimeAtTopQualityLongForm: 120,\n")
+                  .append("                            bufferToKeep: 30,\n")
+                  .append("                            avoidCurrentTimeRangePruning: true\n")
+                  .append("                        } } };\n")
                   .append("                    }\n")
                   .append("                });\n")
                   .append("                player.src = { src: '/manifest?serviceId=$serviceId&id=$infoUrlEncoded', type: 'application/dash+xml' };\n")
@@ -332,19 +331,13 @@ object HtmlRendererWatch {
                   .append("                    }, { once: true });\n")
                   .append("                }\n")
                   .append("                \n")
-                  // currentTime/duration are direct properties on <media-player> (confirmed live,
-                  // not video.js-style getter methods).
+                  // currentTime/duration are direct properties of <media-player>.
                   .append("                window.seekVideo = (delta) => {\n")
                   .append("                    const targetTime = Math.max(0, Math.min(streamDuration || player.duration || 0, player.currentTime + delta));\n")
                   .append("                    player.currentTime = targetTime;\n")
                   .append("                };\n")
                   .append("                \n")
-                  // Settings' "Preferred Video Quality" default, applied once dash.js has actually
-                  // populated player.qualities (empty before then) - qualities-change fires once
-                  // per level as the list is built, so this only acts the first time a match shows
-                  // up. Live-verified: setting an individual VideoQuality's .selected = true is the
-                  // real API (mirrors video.js's old qualityLevels()[i].enabled toggle) - the
-                  // documented-looking `player.qualities.selected = quality` form is a no-op.
+                  // Apply "Preferred Video Quality" once dash.js has filled player.qualities. Setting an individual quality's .selected is the working API; player.qualities.selected is a no-op.
                   .append("                const preferredQualityHeight = $defaultQualityHeight;\n")
                   .append("                if (preferredQualityHeight > 0) {\n")
                   .append("                    let appliedDefaultQuality = false;\n")
@@ -366,12 +359,6 @@ object HtmlRendererWatch {
                   .append("                initFullscreenLetterbox(player);\n")
                   .append("                initWatchProgressReporting(player, \"$progressUrlEncoded\", $serviceId);\n")
                   .append(if (serviceId == 0) "                initDownloadButton(\"$progressUrlEncoded\", $serviceId);\n" else "")
-                  .append("                if ('mediaSession' in navigator) {\n")
-                  .append("                    navigator.mediaSession.metadata = new MediaMetadata({\n")
-                  .append("                        title: '$infoNameJs',\n")
-                  .append("                        artist: '${HtmlRendererCommon.escapeJs(info.uploaderName)}'\n")
-                  .append("                    });\n")
-                  .append("                }\n")
                   .append("            })();\n")
                   .append("        </script>\n")
             }
@@ -440,9 +427,7 @@ object HtmlRendererWatch {
           .append("              <button type=\"button\" onclick=\"if (window.NewPipeApp &amp;&amp; window.NewPipeApp.enterPip) { window.NewPipeApp.enterPip(); } else if (document.pictureInPictureEnabled &amp;&amp; document.querySelector('video')) { document.querySelector('video').requestPictureInPicture(); }\" class=\"action-pill-btn\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" width=\"16\" height=\"16\" style=\"margin-right:6px;\"><path d=\"M19 11h-8v6h8v-6zm4-8H1c-.55 0-1 .45-1 1v16c0 .55.45 1 1 1h22c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zm-2 16H3V5h18v14z\"/></svg>Pop-up</button>\n")
           .append("              <a href=\"/audio?serviceId=$serviceId&id=$infoUrlEncodedForSub\" class=\"action-pill-btn\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" width=\"16\" height=\"16\" style=\"margin-right:6px;\"><path d=\"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z\"/></svg>Audio Only</a>\n")
           .append("              <button type=\"button\" onclick=\"shareLink('${HtmlRendererCommon.escapeJs(info.url)}', '$infoNameJs')\" class=\"action-pill-btn\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" width=\"16\" height=\"16\" style=\"margin-right:6px;\"><path d=\"M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z\"/></svg>Share</button>\n")
-        // Hands off to Flow's own downloader (LocalHttpServerDownloadHandlers.kt) - YouTube only,
-        // since Flow's downloader has no header plumbing for other services' CDNs. Label/state is
-        // filled in by initDownloadButton() once it has asked the server what's already downloaded.
+        // Hands off to Flow's downloader (YouTube only: it has no header handling for other CDNs); initDownloadButton() fills in the state.
         if (serviceId == 0) {
             sb.append("              <button type=\"button\" id=\"download-btn\" class=\"action-pill-btn\"><span class=\"material-symbols-rounded\" style=\"font-size:18px;\">download</span>Download</button>\n")
         }
@@ -451,10 +436,11 @@ object HtmlRendererWatch {
         sb.append("            </div>\n")
         sb.append("          </div>\n")
 
-        sb.append("          <div class=\"media-description\">\n")
-          .append("            <div style=\"font-weight:700; font-size:13.5px; margin-bottom:8px; color:var(--text-color);\">$formattedViews &nbsp;•&nbsp; $uploadDate</div>\n")
-          .append(info.description?.content ?: "No description provided.")
-          .append("          </div>\n")
+        // No whitespace between tags and text: the box is white-space:pre-wrap.
+        sb.append("          <div class=\"media-description\">")
+          .append("<div style=\"font-weight:700; font-size:13.5px; margin-bottom:8px; color:var(--text-color);\">$formattedViews &nbsp;•&nbsp; $uploadDate</div>")
+          .append(descriptionHtml(info))
+          .append("</div>\n")
           .append("        </div>\n")
 
         sb.append("        <div class=\"comments-section\">\n")
@@ -465,8 +451,7 @@ object HtmlRendererWatch {
           .append("          <div id=\"comments-list\" style=\"display:none;\"></div>\n")
           .append("          <style>@keyframes comments-spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }</style>\n")
           .append("          <script>\n")
-          // btn.parentElement, not a global id: this wrapper markup repeats per expanded reply
-          // thread - a fixed id would collide.
+          // btn.parentElement instead of an id: this markup repeats per reply thread.
           .append("            window.loadMoreComments = function(btn, nextPage, svcId, videoUrl, isReplies) {\n")
           .append("                const wrapper = btn.parentElement;\n")
           .append("                btn.textContent = 'Loading...';\n")
@@ -476,9 +461,7 @@ object HtmlRendererWatch {
           .append("                    html => { if (wrapper) wrapper.outerHTML = html; },\n")
           .append("                    () => { btn.textContent = 'Failed to load. Tap to retry'; btn.style.pointerEvents = 'auto'; });\n")
           .append("            };\n")
-          // Replies reuse /comments and getReplies()'s Page - a reply thread is just another
-          // paginated list. Fetched once per thread (dataset.loaded guards re-fetching); re-clicks
-          // just toggle the "expanded" class via CSS.
+          // Replies reuse /comments; fetched once per thread (dataset.loaded), later clicks toggle the "expanded" class.
           .append("            window.toggleReplies = function(btn, repliesPage, svcId, videoUrl) {\n")
           .append("                const container = btn.nextElementSibling;\n")
           .append("                const expanded = btn.classList.toggle('expanded');\n")
@@ -570,14 +553,19 @@ object HtmlRendererWatch {
           .append("          </div>\n")
           .append("          <h1 class=\"media-title\" style=\"font-size:22px; font-weight:700; margin-bottom:8px;\">$infoNameEscaped</h1>\n")
           .append("          <a href=\"/channel?serviceId=$serviceId&id=$uploaderUrlEncoded\" style=\"font-size:15px; color:var(--logo-color, #6750A4); font-weight:600; margin-bottom:20px;\">$uploaderNameEscaped</a>\n")
-          .append("          <audio id=\"audio-player\" controls autoplay style=\"width:100%; max-width:540px; height:48px; border-radius:24px; margin-bottom:20px;\">\n")
-          .append("            <source src=\"/stream?serviceId=$serviceId&id=$infoUrlEncoded\" type=\"$audioMime\">\n")
-          .append("            Your browser does not support the HTML5 audio element.\n")
-          .append("          </audio>\n")
+          // Vidstack audio layout. The element keeps id="audio-player" and the media API the native-app sync below uses.
+          .append("          <media-player id=\"audio-player\" class=\"audio-player\" view-type=\"audio\" title=\"$infoNameEscaped\" artist=\"$uploaderNameEscaped\" storage=\"fathom-player\" key-target=\"document\" crossorigin playsinline>\n")
+          .append("            <media-provider></media-provider>\n")
+          .append("            <media-audio-layout></media-audio-layout>\n")
+          .append("          </media-player>\n")
           .append("          <script>\n")
           .append("            (function() {\n")
           .append("              const audio = document.getElementById('audio-player');\n")
           .append("              const cover = document.getElementById('audio-cover');\n")
+          // The type is given explicitly: Vidstack cannot infer it from the extension-less URL.
+          .append("              audio.src = { src: '/stream?serviceId=$serviceId&id=$infoUrlEncoded', type: '$audioMime' };\n")
+          .append("              audio.addEventListener('can-play', () => audio.play().catch(() => {}), { once: true });\n")
+          .append(sameOriginImageUrl(posterUrl)?.let { "              audio.poster = '${HtmlRendererCommon.escapeJs(it)}';\n" } ?: "")
           .append("              const audioStreamUrl = window.location.origin + '/stream?serviceId=$serviceId&id=' + encodeURIComponent('$infoUrlJs');\n")
           .append("              const titleText = '$infoNameJs';\n")
           .append("              const artistText = '$uploaderNameJs';\n")
@@ -614,13 +602,6 @@ object HtmlRendererWatch {
           .append("                }\n")
           .append("                window.NewPipeApp.playNativeAudio(audioStreamUrl, titleText, artistText);\n")
           .append("              }\n")
-          .append("              if ('mediaSession' in navigator) {\n")
-          .append("                navigator.mediaSession.metadata = new MediaMetadata({\n")
-          .append("                  title: titleText,\n")
-          .append("                  artist: artistText,\n")
-          .append("                  artwork: [{ src: '${HtmlRendererCommon.escapeJs(posterUrl)}', sizes: '512x512', type: 'image/png' }]\n")
-          .append("                });\n")
-          .append("              }\n")
           .append("            })();\n")
           .append("          </script>\n")
           .append("          <div class=\"action-buttons-group\" style=\"justify-content:center; flex-wrap:wrap; gap:10px;\">\n")
@@ -635,10 +616,10 @@ object HtmlRendererWatch {
         sb.append("          </div>\n")
         sb.append("        </div>\n")
 
-        sb.append("        <div class=\"media-description\" style=\"margin-top:20px;\">\n")
-          .append("          <div style=\"font-weight:700; font-size:13.5px; margin-bottom:8px; color:var(--text-color);\">$formattedViews &nbsp;•&nbsp; $uploadDate</div>\n")
-          .append(info.description?.content ?: "No description provided.")
-          .append("        </div>\n")
+        sb.append("        <div class=\"media-description\" style=\"margin-top:20px;\">")
+          .append("<div style=\"font-weight:700; font-size:13.5px; margin-bottom:8px; color:var(--text-color);\">$formattedViews &nbsp;•&nbsp; $uploadDate</div>")
+          .append(descriptionHtml(info))
+          .append("</div>\n")
           .append("      </div>\n")
 
         sb.append("      <div class=\"sidebar\">\n")
@@ -666,19 +647,15 @@ object HtmlRendererWatch {
         sb.append("  </div>\n")
         sb.append("</div>\n")
 
-        return HtmlRendererCommon.wrapInTemplate("Audio: ${info.name}", sb.toString(), isTv)
+        return HtmlRendererCommon.wrapInTemplate("Audio: ${info.name}", sb.toString(), isTv, true)
     }
 
-    // Bare HTML fragment (no wrapInTemplate), injected via innerHTML - used for both top-level
-    // pagination and (isReplies=true) a reply thread, just another Page from the same extractor.
-    // .comments-load-more-wrapper is a class, not an id: this markup repeats per expanded reply
-    // thread, and window.loadMoreComments targets it via btn.parentElement to avoid collisions.
+    // Bare HTML fragment injected via innerHTML, for pagination and reply threads. The load-more wrapper is a class because it repeats per thread.
     @JvmStatic
     fun renderComments(serviceId: Int, videoUrl: String, items: List<CommentsInfoItem>, nextPage: Page?, isTv: Boolean, isReplies: Boolean = false): String {
         val sb = StringBuilder()
 
-        // Always ends with a .comments-load-more-wrapper div, even here - every response needs
-        // that anchor for loadMoreComments() to stay replaceable.
+        // Always ends with the load-more wrapper, the anchor loadMoreComments() replaces.
         if (items.isEmpty()) {
             sb.append("<div class=\"loading-placeholder\">No comments yet.</div>\n")
         }
@@ -687,8 +664,7 @@ object HtmlRendererWatch {
 
         for (item in items) {
             val authorEscaped = HtmlRendererCommon.escapeHtml(item.uploaderName)
-            // Description.content is real HTML (<br>, <a href>) - rendered unescaped, not
-            // double-escaped.
+            // Description.content is HTML; rendered unescaped.
             val commentTextHtml = item.commentText.content ?: ""
             val timeText = HtmlRendererCommon.formatUploadDate(item.uploadDate, item.textualUploadDate ?: "")
             val likeCountText = if (item.likeCount > 0) HtmlRendererCommon.formatCount(item.likeCount.toLong()) else ""
@@ -698,8 +674,7 @@ object HtmlRendererWatch {
                 val avatarUrl = HtmlRendererCommon.getThumbnailUrl(item.uploaderAvatarUrl)
                 sb.append("  <img class=\"comment-avatar\" src=\"$avatarUrl\">\n")
             } else {
-                // Extractor limitation, not fixable here - fall back to a colored initial instead
-                // of the generic placeholder photo.
+                // Extractor limitation: fall back to a colored initial.
                 val avatarBg = HtmlRendererCommon.avatarColorFor(item.uploaderName ?: "")
                 val initial = HtmlRendererCommon.avatarInitial(item.uploaderName)
                 sb.append("  <div class=\"comment-avatar\" style=\"display:flex; background-color:$avatarBg; color:#ffffff; font-weight:700; align-items:center; justify-content:center;\">$initial</div>\n")

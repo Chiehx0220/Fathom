@@ -7,7 +7,6 @@ package org.schabi.newpipe.localserver
  */
 object HtmlStyles {
 
-    // Global CSS stylesheet for a premium, themeable, responsive user experience
     @JvmField
     val CSS: String =
             "@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');\n" +
@@ -18,8 +17,7 @@ object HtmlStyles {
             "  --header-bg: #f3f4f9;\n" +
             "  --header-border: transparent;\n" +
             "  --logo-color: #6750A4;\n" +
-            // Fixed brand-mark colors, unlike --logo-color (follows Material You accent) - only
-            // light/dark contrast should change.
+            // Fixed brand colors (not the Material You accent); only light/dark contrast changes.
             "  --logo-badge-bg: #F2EDE0;\n" +
             "  --logo-badge-fg: #0F1D33;\n" +
             "  --logo-badge-accent: #C99A34;\n" +
@@ -149,39 +147,26 @@ object HtmlStyles {
             ".search-btn:hover { background-color: var(--search-btn-hover); }\n" +
             ".service-selector { display: none; }\n" +
             ".container { transition: all 0.2s ease; }\n" +
-            // Shared "heading + action button" row. Margin lives on the row, not the h2, so the
-            // row's edges (not the text baseline) set the page spacing - keeps heading/button level.
+            // Page heading + action row: spacing lives on the row so heading and button stay level.
             ".page-header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }\n" +
             ".page-header-row h2 { margin: 0; }\n" +
-            // Watch History select-mode toolbar. flex-wrap drops the two button actions to their
-            // own row on narrow phones instead of crushing them.
+            // History select-mode toolbar; wraps the actions onto their own row on narrow phones.
             ".history-select-bar { align-items: center; justify-content: space-between; gap: 12px; row-gap: 12px; flex-wrap: wrap; margin-bottom: 20px; padding: 12px 16px; background-color: var(--card-bg); border-radius: 12px; }\n" +
             ".history-select-info { display: flex; align-items: center; gap: 12px; }\n" +
             ".history-select-all-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }\n" +
             ".history-select-count { color: var(--card-meta-color); }\n" +
             ".history-select-actions { display: flex; gap: 8px; }\n" +
-            // gap folded in from the MD3 pass directly, not left as a later unconditional rule -
-            // that was beating the mobile-only "gap: 20px" rule below. Same merge pattern used
-            // throughout this file.
             ".grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 28px 20px; }\n" +
-            // background-color/border/border-radius/padding: MD3 pass's !important values, folded
-            // in directly - no behavior change, just one source of truth.
             ".card { display: flex; flex-direction: column; cursor: pointer; background-color: transparent; border-radius: 0; padding: 0; border: none; transition: transform 0.2s, box-shadow 0.2s; min-width: 0; overflow: visible; word-break: break-word; overflow-wrap: break-word; }\n" +
             ".card:hover { transform: none; box-shadow: none; }\n" +
             ".card-thumbnail { width: 100%; aspect-ratio: 16/9; background-color: var(--card-thumbnail-bg); object-fit: cover; border-radius: 16px; transition: border-radius 0.2s; flex-shrink: 0; max-height: 240px; }\n" +
             ".card-details { display: flex; gap: 12px; padding: 12px 0 0 0; min-width: 0; overflow: hidden; }\n" +
             ".card-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 15px; flex-shrink: 0; aspect-ratio: 1 / 1; object-fit: cover; }\n" +
-            // Always visible (not hover-only) so it's reachable on touch, where hover never fires.
+            // Always visible: touch has no hover.
             ".card-delete-btn { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; border: none; background-color: rgba(0,0,0,0.6); color: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; transition: background-color 0.2s; }\n" +
             ".card-delete-btn:hover { background-color: rgba(0,0,0,0.8); }\n" +
             ".card-delete-btn .material-symbols-rounded { font-size: 18px; }\n" +
-            // Selection indicator hidden until "history-select-mode" is on <body>; delete button
-            // hides at the same time to avoid competing for the thumbnail's corners.
-            //
-            // MD3 circular selection badge (Google Photos/Files convention), not a bare checkbox.
-            // Real <input> stretched invisibly over the badge (click/keyboard/a11y semantics), with
-            // a Material Symbols check glyph shown via :checked sibling selector - Chrome doesn't
-            // render ::before/::after on replaced elements like <input>.
+            // Circular selection badge: an invisible <input> over the badge, check glyph via :checked (pseudo-elements do not render on inputs).
             ".card-select-indicator { display: none; position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; z-index: 2; border-radius: 50%; background-color: rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 1px 3px rgba(0,0,0,0.3); align-items: center; justify-content: center; transition: background-color 0.15s var(--md-easing), border-color 0.15s var(--md-easing); }\n" +
             "body.history-select-mode .card-select-indicator { display: flex; }\n" +
             "body.history-select-mode .card-delete-btn { display: none; }\n" +
@@ -190,8 +175,6 @@ object HtmlStyles {
             ".card-select-checkbox:checked ~ .card-select-check-icon { opacity: 1; }\n" +
             ".card-select-indicator:has(.card-select-checkbox:checked) { background-color: var(--md-primary); border-color: var(--md-primary); }\n" +
             ".card-info { display: flex; flex-direction: column; flex-grow: 1; min-width: 0; overflow: hidden; word-break: break-word; overflow-wrap: break-word; }\n" +
-            // font-size/letter-spacing: MD3 type-scale values (title-medium/body-small), folded
-            // in directly.
             ".card-title { font-size: 16px; font-weight: 500; letter-spacing: 0.15px; line-height: 1.4; max-height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 4px; color: var(--card-title-color); word-break: break-word; overflow-wrap: break-word; min-width: 0; }\n" +
             ".card-meta { font-size: 12px; letter-spacing: 0.4px; color: var(--card-meta-color); display: flex; flex-direction: column; gap: 2px; word-break: break-word; overflow-wrap: break-word; min-width: 0; }\n" +
             ".card-uploader { font-weight: 500; color: var(--card-meta-color); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: inline-block; }\n" +
@@ -200,8 +183,6 @@ object HtmlStyles {
             ".btn-page { display: inline-block; padding: 10px 24px; border-radius: 100px; font-weight: 500; font-size: 14px; background-color: var(--service-tab-bg); color: var(--text-color); border: none; cursor: pointer; transition: background-color 0.2s; }\n" +
             ".btn-page:hover { background-color: var(--service-tab-hover-bg); }\n" +
             ".sidebar-nav { position: fixed; top: 56px; left: 0; bottom: 0; width: 240px; background-color: var(--bg-color); padding: 12px 4px; display: flex; flex-direction: column; gap: 4px; z-index: 99; overflow-y: auto; }\n" +
-            // transition/hover background are the MD3 pass's values, folded in directly (that
-            // pass had no !important here but came later, so it already won regardless of order).
             ".sidebar-item { display: flex; align-items: center; gap: 24px; padding: 12px 24px; border-radius: 100px; font-size: 14px; font-weight: 500; color: var(--text-color); transition: background-color 0.2s var(--md-easing); cursor: pointer; margin: 0 12px; }\n" +
             ".sidebar-item:hover { background-color: var(--md-state-hover); }\n" +
             ".sidebar-item.active { font-weight: 700; background-color: var(--bottom-nav-active-pill-bg); color: var(--bottom-nav-item-active-color); }\n" +
@@ -218,14 +199,7 @@ object HtmlStyles {
             "  .sidebar-nav:hover { width: 240px; box-shadow: 2px 0 8px rgba(0,0,0,0.24); }\n" +
             "  .sidebar-nav:hover .sidebar-label { display: inline; }\n" +
             "  .sidebar-nav:hover .sidebar-item { justify-content: flex-start; padding: 12px 24px; }\n" +
-            // Desktop only - mobile uses .top-bar.search-active's collapse/expand mechanics instead.
-            //
-            // Not CSS Grid: asymmetric side widths (logo+switcher ~277px vs icon cluster ~90px)
-            // break "1fr" track-sizing whenever content-based minimums differ - a track exceeding
-            // its fair share freezes at content size and dumps all slack onto the other fr track,
-            // so no fr-ratio combination centers pixel-exactly. Instead: search bar out of flow
-            // (position:absolute), HtmlScripts.SCRIPTS' centerSearchBar() measures both flanking
-            // groups' real widths on load/resize and centers on the bar's own midpoint.
+            // Desktop only. The search bar is absolutely positioned and centered by centerSearchBar() (HtmlScripts), which measures both flanking groups; fr-based grids cannot center it exactly.
             "  .top-bar { position: relative; }\n" +
             "  .search-form { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0 !important; }\n" +
             "}\n" +
@@ -238,18 +212,13 @@ object HtmlStyles {
             "  .sidebar-nav { display: none !important; }\n" +
             "  .bottom-nav { display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; height: 80px; background: var(--bottom-nav-bg); border-top: none; box-shadow: 0 -1px 3px rgba(0,0,0,0.05); justify-content: space-around; align-items: center; z-index: 1000; padding-bottom: 8px; }\n" +
             "  .container { margin-left: 0; max-width: 100%; padding: 0 12px; margin-top: 56px; padding-bottom: 96px; }\n" +
-            // Bottom padding, not just top - was 0 before, so headings sat flush on the grid below.
             "  .container h2 { padding: 16px 4px 16px 4px; margin: 0 !important; }\n" +
-            // .page-header-row's h2 still matches the descendant rule above, stacking its own
-            // padding on the row's margin - this wins (later, same specificity) and moves all
-            // spacing to the row so heading/button stay level.
+            // Spacing lives on the row so the heading and button stay level.
             "  .page-header-row { padding: 16px 4px 16px 4px; margin-bottom: 16px; }\n" +
             "  .page-header-row h2 { padding: 0 !important; }\n" +
             "  .history-select-actions { flex: 1 1 100%; }\n" +
             "  .history-select-actions .btn-page { flex: 1; }\n" +
-            // repeat(auto-fill, minmax(300px,1fr)), not a hardcoded 1 column - auto-fill already
-            // degrades to 1 column below ~620px, so tablets/landscape phones in 620-768px keep
-            // two columns instead of one oversized card.
+            // auto-fill keeps two columns on 620-768px screens.
             "  .grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }\n" +
             "  .card-details { padding: 12px 4px; }\n" +
             "  .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--bottom-nav-item-color); font-size: 12px; font-weight: 500; text-decoration: none; flex-grow: 1; justify-content: center; }\n" +
@@ -288,15 +257,13 @@ object HtmlStyles {
             "@media (min-width: 1024px) {\n" +
             "  .player-layout { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }\n" +
             "}\n" +
-            // min-width:0 required: as a grid item of .player-layout's "1fr 360px" track,
-            // .main-content's auto min-width is its content's min-content size - an unspaced long
-            // URL in a description can blow it past its 1fr share into page-wide horizontal scroll.
-            // .sidebar gets the same treatment defensively (same grid).
+            // min-width:0 stops long unbroken text from widening the 1fr grid track.
             ".main-content { display: flex; flex-direction: column; gap: 16px; min-width: 0; }\n" +
+            // Pull the two invisible helpers under the player back so only one 16px gap remains.
+            ".main-content > #player-space-holder, .main-content > #mini-player-sentinel { margin-bottom: -16px; }\n" +
             ".sidebar { display: flex; flex-direction: column; gap: 16px; min-width: 0; }\n" +
             ".native-player { width: 100%; aspect-ratio: 16/9; border-radius: 12px; background-color: #000; outline: none; }\n" +
             ".media-info { padding: 16px 0; border-bottom: 1px solid var(--media-info-border); min-width: 0; overflow: hidden; }\n" +
-            // font-size/font-weight/letter-spacing: MD3 title-large values, folded in directly.
             ".media-title { font-size: 22px; font-weight: 500; letter-spacing: 0px; margin-bottom: 8px; color: var(--media-title-color); line-height: 1.4; word-break: break-word; overflow-wrap: break-word; min-width: 0; }\n" +
             ".media-stats { font-size: 14px; color: var(--media-stats-color); margin-bottom: 12px; }\n" +
             ".uploader-profile { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }\n" +
@@ -316,8 +283,6 @@ object HtmlStyles {
             "  .action-buttons-group { width: auto; }\n" +
             "}\n" +
             ".action-buttons-group::-webkit-scrollbar { display: none; }\n" +
-            // background-color/height/color/cursor: MD3 values, folded in directly. .pill-btn's
-            // height:40px still comes from the shared ".action-pill-btn, .btn-page, .pill-btn" rule.
             ".like-dislike-pill { display: inline-flex; align-items: center; background-color: var(--md-surface-high); border-radius: 100px; height: 40px; overflow: hidden; flex-shrink: 0; }\n" +
             ".pill-btn { background: none; border: none; padding: 0 14px; height: 100%; color: var(--md-on-surface); font-weight: 500; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap; }\n" +
             ".pill-divider { width: 1px; height: 18px; background-color: var(--md-outline-variant); }\n" +
@@ -326,17 +291,8 @@ object HtmlStyles {
             ".action-pill-btn.danger { background-color: var(--md-error, #c00c0c); color: var(--md-on-error, #ffffff); }\n" +
             ".action-pill-btn.watch-later-btn.added { background-color: var(--md-primary); color: var(--md-on-primary); }\n" +
             ".action-pill-btn.disabled { opacity: 0.6; cursor: default; pointer-events: none; }\n" +
-            // Consolidated from 3 scattered ".settings-card" rules that each overrode a piece of
-            // the last - these are the values that won the cascade; no visual change.
             ".settings-card { background-color: var(--settings-card-bg); padding: 24px; border-radius: 16px; border: 1px solid var(--settings-card-border); box-shadow: none; min-width: 0; overflow: hidden; word-break: break-word; overflow-wrap: break-word; max-width: 600px; margin: 0 auto; }\n" +
-            // Control-bar accent theming deliberately dropped (reverted after repeated bugs,
-            // back in the video.js era) - Vidstack's Default Layout keeps its own default control
-            // colors. Fullscreen fit fix and SponsorBlock markers below are kept. Rounding/overflow
-            // for the player itself now lives on .player-wrapper (below), since <media-player> IS
-            // that wrapper - no separate rule needed here.
-            // SponsorBlock markers - JS-created inside <media-time-slider> (Vidstack's own CSS
-            // already gives it position:relative). Colors match SponsorBlock's own established
-            // category colors.
+            // SponsorBlock markers are created inside <media-time-slider>; colors follow SponsorBlock's category colors.
             ".sponsor-segment-marker { position: absolute; top: 0; height: 100%; pointer-events: none; opacity: 0.85; }\n" +
             ".sponsor-segment-marker.cat-sponsor { background: #00d400; }\n" +
             ".sponsor-segment-marker.cat-intro { background: #00ffff; }\n" +
@@ -347,21 +303,17 @@ object HtmlStyles {
             ".sponsor-segment-marker.cat-preview { background: #008fd6; }\n" +
             ".sponsor-segment-marker.cat-music_offtopic { background: #ff9900; }\n" +
             ".sponsor-segment-marker.cat-filler { background: #7300ff; }\n" +
-            // Chapter boundary ticks, same <media-time-slider> JS-injection point as SponsorBlock
-            // markers above - a thin line rather than a filled range since a chapter is a single
-            // instant, not a start/end segment.
-            ".chapter-tick-marker { position: absolute; top: 0; width: 2px; height: 100%; background: rgba(255,255,255,0.7); pointer-events: none; z-index: 1; }\n" +
-            // Skip button, YouTube skip-ad role. opacity/pointer-events not display:none, so
-            // appear/disappear transitions; bottom offset clears both control-bar heights.
+            // Vidstack accent follows the page accent.
+            "media-player { --media-brand: var(--logo-color); --video-brand: var(--logo-color); --audio-brand: var(--logo-color); }\n" +
+            ".audio-player { width: 100%; max-width: 540px; margin-bottom: 20px; }\n" +
+            // Rows must not shrink, or a long chapter list collapses to flat rows; the list scrolls instead.
+            ".vds-chapters-menu-items { --media-menu-max-height: min(420px, 70vh); height: auto !important; max-height: min(420px, 70vh) !important; overflow-y: auto; }\n" +
+            ".vds-chapters-menu-items > *, .vds-chapters-menu-items [role=radiogroup] > *, .vds-chapters-menu-items [role=radio] { flex-shrink: 0; min-height: 44px; }\n" +
+            // Skip button: opacity/pointer-events (not display) so it can transition.
             ".sponsor-skip-btn { position: absolute; right: 16px; bottom: 76px; background: rgba(29,27,32,0.9); color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; z-index: 10; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity 0.2s var(--md-easing), transform 0.2s var(--md-easing), background-color 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }\n" +
             ".sponsor-skip-btn:hover { background: rgba(45,42,54,0.95); }\n" +
             ".sponsor-skip-btn.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }\n" +
-            // No fullscreen control-bar size overrides here (video.js needed hand-tuned ones) -
-            // Vidstack's Default Layout scales its own control bar responsively in fullscreen.
-            // Shared native-<select> styling. appearance:none strips the native arrow so a themed
-            // Material Symbols chevron overlays it instead of a fixed-color SVG - inherits the
-            // dynamic theme like any other icon. Closed state only; the option list is native
-            // OS chrome outside CSS's reach.
+            // Shared select styling: native arrow removed and replaced by a themed chevron; the open option list is OS-drawn.
             ".md-select-wrap { position: relative; display: inline-flex; align-items: center; }\n" +
             ".md-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; padding: 6px 32px 6px 12px; border-radius: 6px; border: 1px solid var(--search-input-border); background-color: var(--card-bg); color: var(--text-color); font-family: inherit; font-size: 13px; cursor: pointer; }\n" +
             ".md-select-arrow { position: absolute; right: 8px; font-size: 18px; color: var(--md-on-surface-variant); pointer-events: none; }\n" +
@@ -370,21 +322,16 @@ object HtmlStyles {
             "body.pip-mode .container { margin: 0 !important; padding: 0 !important; max-width: 100% !important; margin-top: 0 !important; }\n" +
             "body.pip-mode .player-container { margin-top: 0 !important; }\n" +
             "body.pip-mode .native-player, body.pip-mode .player-wrapper { height: 100vh !important; width: 100vw !important; border-radius: 0 !important; }\n" +
-            // border is the MD3 pass's "read as a container, not a floating card" value, folded
-            // in directly (that pass came later with no !important, so it already won).
             ".media-description { font-size: 14px; line-height: 1.5; color: var(--media-desc-color); white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word; min-width: 0; background-color: var(--media-desc-bg); padding: 12px; border-radius: 12px; border: none; margin-top: 12px; }\n" +
             ".comments-section { padding-top: 16px; min-width: 0; }\n" +
             ".comment-count { font-size: 16px; font-weight: 500; letter-spacing: 0.15px; margin-bottom: 16px; color: var(--comment-count-color); }\n" +
             ".chapters-section { margin-top: 4px; min-width: 0; }\n" +
-            // Card treatment (background + radius), not plain text, so the row reads as a control
-            // rather than a label - same affordance problem .md-select-wrap solves for dropdowns.
+            // Card treatment so the row reads as a control.
             ".chapters-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; background-color: var(--search-input-bg); padding: 10px 14px; border-radius: 12px; transition: background-color 0.15s ease; }\n" +
             ".chapters-header:hover, .chapters-header:active { background-color: var(--md-state-hover, rgba(124, 58, 237, 0.12)); }\n" +
             ".chapters-header .comment-count { margin-bottom: 0; }\n" +
             ".chapters-header-right { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--comment-time-color); font-size: 13px; }\n" +
             "#current-chapter-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }\n" +
-            // Circular badge around the chevron, same "this is a button" cue as .md-select-arrow's
-            // own treatment, so the toggle affordance doesn't rely on the icon shape alone.
             ".chapters-toggle-icon { font-size: 18px; flex-shrink: 0; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background-color: var(--card-bg); color: var(--text-color); }\n" +
             ".chapters-list { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; padding: 0 2px; }\n" +
             ".chapter-item { display: flex; align-items: center; gap: 12px; padding: 6px; border-radius: 8px; cursor: pointer; min-width: 0; }\n" +
@@ -401,9 +348,7 @@ object HtmlStyles {
             ".comment-author { font-size: 13px; font-weight: 500; color: var(--comment-author-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n" +
             ".comment-time { font-size: 12px; color: var(--comment-time-color); flex-shrink: 0; }\n" +
             ".comment-text { font-size: 14px; line-height: 1.4; color: var(--comment-text-color); white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word; min-width: 0; }\n" +
-            // YouTube-style comment chrome: verified checkmark, pinned label, icon-led like count,
-            // hearted badge - driven by CommentsInfoItem's isUploaderVerified/isPinned/
-            // isHeartedByUploader fields, previously unrendered.
+            // Comment chrome: verified badge, pinned label, like count, uploader heart.
             ".comment-verified { font-size: 14px; color: var(--md-primary); vertical-align: middle; margin-left: 2px; }\n" +
             ".comment-pinned { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--comment-time-color); }\n" +
             ".comment-pinned .material-symbols-rounded { font-size: 14px; }\n" +
@@ -411,8 +356,7 @@ object HtmlStyles {
             ".comment-like { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--comment-time-color); }\n" +
             ".comment-like .material-symbols-rounded { font-size: 16px; }\n" +
             ".comment-hearted .material-symbols-rounded { font-size: 14px; color: #ff4b5c; }\n" +
-            // Replies fetch through the same /comments endpoint (getReplies() is just another Page)
-            // - .comment-replies starts empty/collapsed, fills on first click (window.toggleReplies).
+            // Replies load through the same /comments endpoint on first expand.
             ".comment-replies-toggle { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--md-primary); text-decoration: none; cursor: pointer; }\n" +
             ".comment-replies-toggle .reply-chevron { font-size: 18px; transition: transform 0.2s var(--md-easing); }\n" +
             ".comment-replies-toggle.expanded .reply-chevron { transform: rotate(180deg); }\n" +
@@ -427,15 +371,11 @@ object HtmlStyles {
             ".channel-info-block { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; min-width: 0; overflow: hidden; word-break: break-word; overflow-wrap: break-word; }\n" +
             ".channel-name { font-size: 24px; font-weight: 700; color: var(--channel-name-color); word-break: break-word; overflow-wrap: break-word; min-width: 0; }\n" +
             ".channel-desc { font-size: 14px; color: var(--channel-desc-color); max-width: 600px; margin-top: 8px; line-height: 1.4; word-break: break-word; overflow-wrap: break-word; min-width: 0; }\n" +
-            // MD3 Tabs: flush underline, not a filled pill - outlineVariant divider spans the row,
-            // active tab's 3dp border-bottom picks up primary color. Was hardcoded #0f0f0f/#ffffff
-            // per theme, the one place not wired to dynamic color - now uses --md-primary like
-            // .subs-tab.
+            // Underline tabs; the active tab takes the primary color.
             ".channel-tabs-selector { display: flex; border-top: 1px solid var(--media-info-border); border-bottom: 1px solid var(--md-outline-variant); padding: 0 16px; }\n" +
             ".channel-tab-btn { display: flex; align-items: center; padding: 12px 16px; font-size: 14px; font-weight: 500; color: var(--md-on-surface-variant); border-bottom: 3px solid transparent; cursor: pointer; text-decoration: none; transition: color 0.2s var(--md-easing), border-color 0.2s var(--md-easing); }\n" +
             ".channel-tab-btn:hover { color: var(--text-color); }\n" +
             ".channel-tab-btn.active { color: var(--md-primary); border-bottom-color: var(--md-primary); }\n" +
-            // border/background-color: MD3 !important values, folded in directly.
             ".loading-placeholder { text-align: center; font-size: 15px; padding: 48px 16px; color: var(--card-meta-color); background-color: var(--md-surface-high); border-radius: 16px; border: none; margin: 16px 0; }\n" +
             ".m3-spinner { width: 40px; height: 40px; border: 4px solid var(--search-input-bg); border-top: 4px solid var(--logo-color); border-radius: 50%; animation: m3-spin 0.8s linear infinite; margin: 24px auto; }\n" +
             "@keyframes m3-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }\n" +
@@ -443,8 +383,7 @@ object HtmlStyles {
             ".settings-section { margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--settings-section-border); }\n" +
             ".settings-section:last-child { border-bottom: none; }\n" +
             ".settings-section-title { font-size: 16px; font-weight: 500; margin-bottom: 12px; color: var(--settings-section-title-color); }\n" +
-            // gap: minimum breathing room when space-between has no slack left - the quality/
-            // home-feed-mode <select> (width:100%) touched the label with zero gap on a 375px phone.
+            // Minimum gap when space-between has no slack.
             ".setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }\n" +
             ".setting-label-group { display: flex; flex-direction: column; gap: 2px; }\n" +
             ".setting-label { font-size: 14px; font-weight: 500; color: var(--setting-label-color); }\n" +
@@ -457,8 +396,7 @@ object HtmlStyles {
             "input:checked + .slider:before { transform: translateX(20px); }\n" +
             ".textarea-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }\n" +
             ".textarea-label { font-size: 14px; font-weight: 500; color: var(--textarea-label-color); }\n" +
-            // No :focus rule here on purpose - falls through to the shared body.using-keyboard
-            // :focus-visible mechanism instead of a hardcoded #1a73e8 border firing on every click.
+            // No :focus rule: falls through to the shared body.using-keyboard :focus-visible styling.
             ".settings-textarea { width: 100%; height: 100px; padding: 12px; border-radius: 8px; border: 1px solid var(--textarea-border); background-color: var(--textarea-bg); color: var(--textarea-color); font-size: 14px; outline: none; transition: border-color 0.2s; resize: vertical; font-family: inherit; }\n" +
             ".btn-save { display: inline-block; width: 100%; padding: 12px; border-radius: 24px; font-size: 14px; font-weight: 500; text-align: center; border: none; cursor: pointer; transition: background-color 0.2s; }\n" +
             ".btn-save-primary { background-color: var(--md-primary, #cc0000); color: var(--md-on-primary, #ffffff); }\n" +
@@ -489,29 +427,18 @@ object HtmlStyles {
             ".search-suggestion-text { display: flex; align-items: center; gap: 12px; flex-grow: 1; }\n" +
             ".search-suggestion-delete { color: var(--md-error, #cc0000); font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }\n" +
             ".search-suggestion-delete:hover { background-color: rgba(204,0,0,0.1); }\n" +
-            // <media-player class="player-wrapper"> IS the wrapper now (no separate div) - class
-            // kept generic (not video.js-specific) since it doubles as the mini-player's toggle
-            // target and the pip-mode selector above.
+            // .player-wrapper is the <media-player> itself; also the mini-player toggle target and pip-mode selector.
             ".player-wrapper { position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #000; }\n" +
-            // Mini-player: fixed corner box once IntersectionObserver reports the wrapper fully
-            // scrolled out of view (HtmlScripts.kt's initMiniPlayer()). Overlays sized for the
-            // full-width player (double-tap icons, volume HUD, up-next card, SponsorBlock button)
-            // read as oversized clutter at this scale, so they're hidden rather than rescaled -
-            // Vidstack's Default Layout control bar shrinks itself responsively at this width,
-            // no extra CSS needed for that part.
+            // Mini-player: fixed corner box once the sentinel scrolls out (initMiniPlayer()). Oversized overlays are hidden at this size.
             ".player-wrapper.mini-player { position: fixed; bottom: 16px; right: 16px; width: min(320px, 42vw); z-index: 1000; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }\n" +
             ".player-wrapper.mini-player .double-tap-indicator, .player-wrapper.mini-player .volume-hud, .player-wrapper.mini-player .up-next-overlay, .player-wrapper.mini-player .sponsor-skip-btn, .player-wrapper.mini-player .danmaku-layer { display: none; }\n" +
             ".mini-player-close-btn { position: absolute; top: 6px; right: 6px; display: none; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; cursor: pointer; z-index: 1001; }\n" +
             ".mini-player-close-btn .material-symbols-rounded { font-size: 16px; }\n" +
-            // touch-action:none so a finger drag moves the box instead of scrolling the page.
+            // touch-action:none so a drag moves the box instead of scrolling.
             ".mini-player-drag-handle { position: absolute; top: 6px; left: 6px; display: none; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; cursor: grab; touch-action: none; z-index: 1001; }\n" +
             ".mini-player-drag-handle:active { cursor: grabbing; }\n" +
             ".mini-player-drag-handle .material-symbols-rounded { font-size: 18px; }\n" +
-            // Handle + close button: laid out in mini mode but invisible/untappable until revealed,
-            // so they don't sit over the picture all the time. Mouse: revealed on hover of the box
-            // (:focus-within covers keyboard). Touch has no hover, so there they follow Vidstack's
-            // own controls visibility ([data-controls], toggled by tapping the player) instead -
-            // hover-only would leave them unreachable on a phone.
+            // Handle and close button: shown on hover/focus with a mouse, and with Vidstack's [data-controls] on touch.
             ".player-wrapper.mini-player .mini-player-close-btn, .player-wrapper.mini-player .mini-player-drag-handle { display: flex; opacity: 0; pointer-events: none; transition: opacity 0.15s ease; }\n" +
             "@media (hover: hover) {\n" +
             "  .player-wrapper.mini-player:hover .mini-player-close-btn, .player-wrapper.mini-player:hover .mini-player-drag-handle, .player-wrapper.mini-player:focus-within .mini-player-close-btn, .player-wrapper.mini-player:focus-within .mini-player-drag-handle { opacity: 1; pointer-events: auto; }\n" +
@@ -592,27 +519,18 @@ object HtmlStyles {
             ".up-next-circle-bg { stroke: rgba(255,255,255,0.2); }\n" +
             ".up-next-circle-val { stroke: var(--md-primary, #7c3aed); stroke-dasharray: 138; stroke-dashoffset: 0; transition: stroke-dashoffset 0.1s linear; }\n" +
             "video, .player-wrapper video { object-fit: fill !important; }\n" +
-            // "fill" is fine normally (player box already pinned to 16:9), but browser fullscreen
-            // replaces that box with the actual (usually non-16:9) screen shape, stretching the
-            // picture worse if orientation.lock() fails. "contain" letterboxes instead.
-            // [data-fullscreen] is Vidstack's own boolean-attribute reflection on <media-player>
-            // (same convention as its confirmed data-paused/data-can-fullscreen attributes) - not
-            // independently confirmed live, but initFullscreenLetterbox() in HtmlScripts.kt sets
-            // the same object-fit inline with !important as a JS-side fallback regardless.
+            // Fullscreen replaces the 16:9 box with the screen shape; contain avoids stretching. initFullscreenLetterbox() sets the same fit inline as a fallback.
             ".player-wrapper[data-fullscreen], .player-wrapper[data-fullscreen] video { object-fit: contain !important; background-color: #000; }\n" +
 
-            // Bilibili danmaku overlay. pointer-events:none throughout; placed early in
-            // <media-player>'s DOM (right after <media-provider>) so later overlays stack above it
-            // with no z-index juggling.
+            // Danmaku overlay: pointer-events none; placed right after <media-provider> so later overlays stack above it.
             ".danmaku-layer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; }\n" +
             ".danmaku-item { position: absolute; white-space: nowrap; font-weight: 600; line-height: 1; text-shadow: 0 0 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6); will-change: transform; }\n" +
             ".danmaku-item.top, .danmaku-item.bottom { left: 50%; transform: translateX(-50%); }\n" +
-            // Scroll-type items animate via a JS-driven `transition`, paused in JS instead - this
-            // only freezes the CSS `animation` the top/bottom fade variants use.
+            // Scroll items animate via a JS transition; this only freezes the CSS animation of top/bottom items.
             ".danmaku-layer.video-paused .danmaku-item.top, .danmaku-layer.video-paused .danmaku-item.bottom { animation-play-state: paused; }\n" +
             "@keyframes danmaku-fade { 0% { opacity: 0; } 10%, 85% { opacity: 1; } 100% { opacity: 0; } }\n" +
-            ".danmaku-toggle-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer; background: rgba(124,58,237,0.15); color: var(--text-color); }\n" +
-            ".danmaku-toggle-btn .material-symbols-rounded { font-size: 20px; }\n" +
+            ".player-controls-row { display: flex; align-items: center; gap: 8px; }\n" +
+            ".danmaku-toggle-btn { display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer; }\n" +
             ".danmaku-toggle-btn.off { opacity: 0.45; }\n" +
 
             /* ---- Material 3 refinements -------------------------------------------------
@@ -667,8 +585,7 @@ object HtmlStyles {
 
             /* Tonal buttons (action pills, pagination, like/dislike) share one MD3 spec. */
             ".action-pill-btn, .btn-page, .pill-btn { height: 40px; border-radius: 20px; font-size: 14px; font-weight: 500; letter-spacing: 0.1px; position: relative; overflow: hidden; transition: background-color 0.2s var(--md-easing); }\n" +
-            // justify-content, not text-align: these are inline-flex, and text-align has no effect
-            // on a flex container's content.
+            // justify-content, not text-align: these are inline-flex.
             ".action-pill-btn, .btn-page { background-color: var(--md-surface-high); color: var(--md-on-surface); padding: 0 20px; line-height: normal; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }\n" +
             ".action-pill-btn:hover, .btn-page:hover { background-color: var(--md-state-hover); }\n" +
             ".action-pill-btn:active, .btn-page:active { background-color: var(--md-state-press); }\n" +

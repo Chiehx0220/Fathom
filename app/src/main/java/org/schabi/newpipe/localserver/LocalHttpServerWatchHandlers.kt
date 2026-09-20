@@ -1,7 +1,5 @@
 package org.schabi.newpipe.localserver
 
-import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
@@ -29,13 +27,8 @@ private data class WatchPageInfo(
     val likeState: String?,
 )
 
-private fun ClientHandler.loadWatchPageInfo(service: StreamingService, serviceId: Int, mediaUrl: String): WatchPageInfo {
-    val extractor = LocalHttpServer.getCachedExtractor(service, serviceId, mediaUrl)
-    val info: StreamInfo
-    synchronized(extractor) {
-        info = StreamInfo.getInfo(extractor)
-    }
-    info.relatedItems = dbHelper.nativeRelatedVideos(info, serviceId)
+private fun ClientHandler.loadWatchPageInfo(serviceId: Int, mediaUrl: String): WatchPageInfo {
+    val info = LocalServerSource.watchInfo(dbHelper, serviceId, mediaUrl)
 
     var thumbUrl = ""
     if (info.thumbnails != null && !info.thumbnails.isEmpty()) {
@@ -64,8 +57,7 @@ internal fun ClientHandler.handleWatchContent(os: OutputStream, params: Map<Stri
     val mediaUrl = params["id"]!!
 
     try {
-        val service = NewPipe.getService(serviceId)
-        val page = loadWatchPageInfo(service, serviceId, mediaUrl)
+        val page = loadWatchPageInfo(serviceId, mediaUrl)
         val targetQuality = dbHelper.nativeVideoQuality()
         val html = HtmlRenderer.renderWatchContent(serviceId, page.info, page.isSubscribed, page.isWatchLater, page.likeState, isTv, targetQuality, page.info.duration)
         sendResponse(os, 200, html, "text/html; charset=UTF-8")
@@ -88,24 +80,14 @@ internal fun ClientHandler.handleComments(os: OutputStream, params: Map<String, 
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
 
     try {
-        val service = NewPipe.getService(serviceId)
-        val extractor = LocalHttpServer.commentsExtractorFor(service, videoUrl)
-
-        val page = if (nextPage != null) {
-            // getPage() only reads nextPage's continuation token, not fetchPage() state - safe on
-            // a fresh extractor.
-            extractor.getPage(nextPage)
-        } else {
-            extractor.fetchPage()
-            if (extractor.isCommentsDisabled) {
-                sendResponse(os, 200, "<div class=\"loading-placeholder\">Comments are disabled for this video.</div>", "text/html; charset=UTF-8")
-                return
-            }
-            extractor.initialPage
+        val page = LocalServerSource.comments(dbHelper.appContext, serviceId, videoUrl, nextPage)
+        if (page.disabled) {
+            sendResponse(os, 200, "<div class=\"loading-placeholder\">Comments are disabled for this video.</div>", "text/html; charset=UTF-8")
+            return
         }
 
         val isReplies = params["context"] == "replies"
-        val html = HtmlRenderer.renderComments(serviceId, videoUrl, page.items, page.nextPage, isTv, isReplies)
+        val html = HtmlRenderer.renderComments(serviceId, videoUrl, page.items, page.next, isTv, isReplies)
         sendResponse(os, 200, html, "text/html; charset=UTF-8")
     } catch (e: Exception) {
         sendResponse(os, 200, "<div class=\"loading-placeholder\">Failed to load comments: ${e.message}</div>", "text/html; charset=UTF-8")
@@ -123,26 +105,7 @@ internal fun ClientHandler.handleDanmaku(os: OutputStream, params: Map<String, S
         return
     }
     try {
-        val service = NewPipe.getService(serviceId)
-        // Primes the cid cache BilibiliBulletCommentsExtractor reads (populated only by the stream
-        // extractor's fetchPage()) - NPEs otherwise. Normally a cache hit via /watch-content.
-        LocalHttpServer.getCachedExtractor(service, serviceId, mediaUrl)
-        val extractor = service.getBulletCommentsExtractor(mediaUrl)
-        if (extractor == null) {
-            sendResponse(os, 200, "{\"danmaku\":[]}", "application/json")
-            return
-        }
-        extractor.fetchPage()
-        if (extractor.isLive) {
-            // Live danmaku needs a persistent WebSocket - out of scope for this one-shot endpoint.
-            extractor.disconnect()
-            sendResponse(os, 200, "{\"danmaku\":[]}", "application/json")
-            return
-        }
-        val danmaku = org.json.JSONArray()
-        for (item in extractor.initialPage.items) {
-            danmaku.put(LocalHttpServer.bulletCommentJson(item))
-        }
+        val danmaku = LocalServerSource.danmaku(dbHelper.appContext, serviceId, mediaUrl)
         val json = org.json.JSONObject()
         json.put("danmaku", danmaku)
         sendResponse(os, 200, json.toString(), "application/json")
@@ -161,8 +124,7 @@ internal fun ClientHandler.handleAudioWatch(os: OutputStream, params: Map<String
     }
 
     try {
-        val service = NewPipe.getService(serviceId)
-        val page = loadWatchPageInfo(service, serviceId, mediaUrl)
+        val page = loadWatchPageInfo(serviceId, mediaUrl)
         val html = HtmlRenderer.renderAudioWatch(serviceId, page.info, page.isSubscribed, page.isWatchLater, page.likeState, isTv)
         sendResponse(os, 200, html, "text/html; charset=UTF-8")
     } catch (e: Exception) {

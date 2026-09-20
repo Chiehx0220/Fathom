@@ -4,8 +4,6 @@ import io.github.aedev.flow.data.recommendation.InteractionType
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.search.filter.Filter
-import org.schabi.newpipe.extractor.search.filter.FilterItem
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
@@ -23,11 +21,9 @@ internal fun ClientHandler.handleApiSearch(os: OutputStream, params: Map<String,
     }
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     try {
-        val service = NewPipe.getService(serviceId)
-        val extractor = LocalHttpServer.getDefaultSearchExtractor(service, query)
-        val page = LocalHttpServer.fetchInitialOrPage(extractor, nextPage)
+        val page = LocalServerSource.search(dbHelper.appContext, serviceId, query, nextPage)
         val filtered = filterItems(page.items)
-        sendResponse(os, 200, ApiRenderer.searchResultJson(filtered, serviceId, page.nextPage).toString(), "application/json")
+        sendResponse(os, 200, ApiRenderer.searchResultJson(filtered, serviceId, page.next).toString(), "application/json")
     } catch (e: Exception) {
         sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
     }
@@ -39,15 +35,14 @@ internal fun ClientHandler.handleApiHome(os: OutputStream, params: Map<String, S
     val serviceId = getServiceId(params)
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     try {
-        val service = NewPipe.getService(serviceId)
         var items: List<InfoItem>
         var next: Page?
         val feedMode = dbHelper.homeFeedMode
         if (serviceId != LocalHttpServer.SERVICE_YOUTUBE) {
             // homeFeedMode is YouTube-only, see handleHome().
-            val page = LocalHttpServer.fetchKioskPage(service, nextPage)
-            items = ArrayList(page.items as List<InfoItem>)
-            next = page.nextPage
+            val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
+            items = page.items
+            next = page.next
         } else if ("subs" == feedMode) {
             items = dbHelper.buildSubsOnlyFeed(serviceId)
             next = null
@@ -69,7 +64,6 @@ internal fun ClientHandler.handleApiRecommendations(os: OutputStream, params: Ma
     val serviceId = getServiceId(params)
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     try {
-        val service = NewPipe.getService(serviceId)
         var items: List<InfoItem>
         var next: Page?
         var alreadyRanked = false
@@ -77,9 +71,9 @@ internal fun ClientHandler.handleApiRecommendations(os: OutputStream, params: Ma
         if (serviceId != LocalHttpServer.SERVICE_YOUTUBE) {
             // homeFeedMode is YouTube-only. alreadyRanked stays false so applyFlowNeuroRanking()
             // below still reorders these.
-            val page = LocalHttpServer.fetchKioskPage(service, nextPage)
-            items = ArrayList(page.items as List<InfoItem>)
-            next = page.nextPage
+            val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
+            items = page.items
+            next = page.next
         } else if ("subs" == feedMode) {
             items = dbHelper.buildSubsOnlyFeed(serviceId)
             next = null
@@ -112,33 +106,14 @@ internal fun ClientHandler.handleApiChannel(os: OutputStream, params: Map<String
     val sort = params["sort"]?.takeIf { it.isNotBlank() }
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     try {
-        val service = NewPipe.getService(serviceId)
-        val channelExtractor = service.getChannelExtractor(channelUrl)
-        channelExtractor.fetchPage()
-
-        // getChannelTabExtractorFromId() (the else-branch below) hardcodes sortFilter to "" - a
-        // non-default sort needs manual construction instead. No "search within channel" tab in
-        // stock NewPipeExtractor - dropped, not adapted.
-        val tabExtractor = if (sort != null && service.channelTabLHFactory != null) {
-            val contentFilter = listOf(FilterItem(Filter.ITEM_IDENTIFIER_UNKNOWN, tab))
-            val sortFilter = listOf(FilterItem(Filter.ITEM_IDENTIFIER_UNKNOWN, sort))
-            val linkHandler = service.channelTabLHFactory.fromQuery(
-                channelExtractor.id, contentFilter, sortFilter, channelExtractor.baseUrl)
-            service.getChannelTabExtractor(linkHandler)
-        } else {
-            LocalHttpServer.resolveChannelTabExtractor(service, channelExtractor, tab)
-        }
-        val page = LocalHttpServer.fetchInitialOrPage(tabExtractor, nextPage)
-        val items = page.items
-        val next = page.nextPage
-        LocalHttpServer.backfillUploaderUrl(items, channelUrl)
-        val isSubscribed = dbHelper.nativeIsSubscribed(channelExtractor.linkHandler.url)
-        val filtered = filterItems(items)
+        val channel = LocalServerSource.channel(dbHelper.appContext, serviceId, channelUrl, tab, sort, nextPage)
+        val isSubscribed = dbHelper.nativeIsSubscribed(channel.header.url)
+        val filtered = filterItems(channel.items)
 
         val json = org.json.JSONObject()
-        json.put("channel", ApiRenderer.channelJson(channelExtractor, isSubscribed))
+        json.put("channel", ApiRenderer.channelJson(channel.header, isSubscribed))
         json.put("videos", ApiRenderer.infoItemsToJson(filtered, serviceId))
-        json.put("nextPage", ApiRenderer.serializePageOrNull(next))
+        json.put("nextPage", ApiRenderer.serializePageOrNull(channel.next))
         sendResponse(os, 200, json.toString(), "application/json")
     } catch (e: Exception) {
         sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
@@ -153,13 +128,7 @@ internal fun ClientHandler.handleApiVideo(os: OutputStream, params: Map<String, 
         return
     }
     try {
-        val service = NewPipe.getService(serviceId)
-        val extractor = LocalHttpServer.getCachedExtractor(service, serviceId, mediaUrl)
-        val info: StreamInfo
-        synchronized(extractor) {
-            info = StreamInfo.getInfo(extractor)
-        }
-        info.relatedItems = dbHelper.nativeRelatedVideos(info, serviceId)
+        val info = LocalServerSource.watchInfo(dbHelper, serviceId, mediaUrl)
         var thumbUrl = ""
         if (info.thumbnails != null && !info.thumbnails.isEmpty()) {
             thumbUrl = info.thumbnails[info.thumbnails.size - 1].url
@@ -185,17 +154,10 @@ internal fun ClientHandler.handleApiComments(os: OutputStream, params: Map<Strin
     }
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     try {
-        val service = NewPipe.getService(serviceId)
-        val extractor = LocalHttpServer.commentsExtractorFor(service, videoUrl)
-        val page = if (nextPage != null) {
-            extractor.getPage(nextPage)
-        } else {
-            extractor.fetchPage()
-            if (extractor.isCommentsDisabled) {
-                sendResponse(os, 200, "{\"comments\":[],\"nextPage\":null,\"commentsDisabled\":true}", "application/json")
-                return
-            }
-            extractor.initialPage
+        val page = LocalServerSource.comments(dbHelper.appContext, serviceId, videoUrl, nextPage)
+        if (page.disabled) {
+            sendResponse(os, 200, "{\"comments\":[],\"nextPage\":null,\"commentsDisabled\":true}", "application/json")
+            return
         }
         val comments = org.json.JSONArray()
         for (item in page.items) {
@@ -203,7 +165,7 @@ internal fun ClientHandler.handleApiComments(os: OutputStream, params: Map<Strin
         }
         val json = org.json.JSONObject()
         json.put("comments", comments)
-        json.put("nextPage", ApiRenderer.serializePageOrNull(page.nextPage))
+        json.put("nextPage", ApiRenderer.serializePageOrNull(page.next))
         json.put("commentsDisabled", false)
         sendResponse(os, 200, json.toString(), "application/json")
     } catch (e: Exception) {
@@ -237,12 +199,7 @@ internal fun ClientHandler.handleApiWatchProgress(os: OutputStream, params: Map<
     val serviceId = params["serviceId"]?.toIntOrNull()
     if (serviceId != null) {
         try {
-            val service = NewPipe.getService(serviceId)
-            val extractor = LocalHttpServer.getCachedExtractor(service, serviceId, videoUrl)
-            val info: StreamInfo
-            synchronized(extractor) {
-                info = StreamInfo.getInfo(extractor)
-            }
+            val info = LocalServerSource.streamInfo(dbHelper.appContext, serviceId, videoUrl)
             dbHelper.reportFlowNeuroInteraction(info, serviceId, InteractionType.WATCHED, percent / 100f)
         } catch (e: Exception) {
             LocalHttpServer.log("FlowNeuro watch-signal error: " + e.message)

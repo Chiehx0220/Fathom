@@ -253,7 +253,6 @@ object HtmlScripts {
                 "                }\n" +
                 "                const loader = document.getElementById('watch-container-loader');\n" +
                 "                const content = document.getElementById('watch-content');\n" +
-                // Same serviceId forwarding as the non-SPA path above.
                 "                fetch('/watch-content?serviceId=' + encodeURIComponent(new URLSearchParams(window.location.search).get('serviceId') || '0') + '&id=' + encodeURIComponent(url))\n" +
                 "                    .then(res => {\n" +
                 "                        if (!res.ok) throw new Error('HTTP ' + res.status);\n" +
@@ -374,15 +373,12 @@ object HtmlScripts {
                 "                });\n" +
                 "        }\n" +
                 "        \n" +
-                // Drives the keyboard-only focus ring (see the :focus rules in the stylesheet).
-                // Registered outside DOMContentLoaded so the very first Tab is caught.
+                // Keyboard-only focus ring; registered before DOMContentLoaded so the first Tab is caught.
                 "        document.addEventListener('keydown', (e) => {\n" +
                 "            if (e.key === 'Tab' || e.key.indexOf('Arrow') === 0) document.body.classList.add('using-keyboard');\n" +
                 "        }, true);\n" +
                 "        document.addEventListener('pointerdown', () => document.body.classList.remove('using-keyboard'), true);\n" +
-                // The sticky mobile highlight is a UA-drawn ring, not this stylesheet's (grey, not
-                // the reported purple) - can't be removed via CSS, so blur after a pointer click
-                // instead. Keyboard activation excluded so focus isn't stolen from keyboard users.
+                // Blur after a pointer click to clear the sticky mobile highlight (a UA ring CSS cannot remove); keyboard activation is excluded.
                 "        document.addEventListener('click', (e) => {\n" +
                 "            if (document.body.classList.contains('using-keyboard')) return;\n" +
                 "            const el = e.target && e.target.closest && e.target.closest('a, button');\n" +
@@ -768,8 +764,7 @@ object HtmlScripts {
                 "            fetch(url).catch(() => setBlocked(isBlocked));\n" +
                 "        }\n" +
                 "        \n" +
-                // Single chokepoint for fragment fetches - a plain fetch().then(res.text()) treats
-                // a 500 like a 200, handing the error page's body to onSuccess as if it were content.
+                // Single chokepoint for fragment fetches: a plain fetch().then(text) would hand a 500 page to onSuccess.
                 "        function fetchText(url, onSuccess, onError) {\n" +
                 "            fetch(url)\n" +
                 "                .then(res => {\n" +
@@ -780,16 +775,14 @@ object HtmlScripts {
                 "                .catch(onError);\n" +
                 "        }\n" +
                 "        \n" +
-                // Shared "share this video" query-string shape, used by toggleWatchLater() and
-                // toggleLikeState() - each prepends its own endpoint/action.
+                // Shared query string for toggleWatchLater() and toggleLikeState().
                 "        function sharedVideoParamsQs(url, title, uploader, thumbnail, uploaderUrl) {\n" +
                 "            return '&url=' + encodeURIComponent(url) + '&title=' + encodeURIComponent(title) +\n" +
                 "                '&uploader=' + encodeURIComponent(uploader) + '&thumbnail=' + encodeURIComponent(thumbnail) +\n" +
                 "                '&uploaderUrl=' + encodeURIComponent(uploaderUrl);\n" +
                 "        }\n" +
                 "        \n" +
-                // outerHTML-swaps the wrapper button with the next grid+pagination fragment, so
-                // already-loaded rows above stay put instead of the page re-navigating.
+                // Swaps the button for the next grid + pagination fragment so loaded rows stay in place.
                 "        function loadMoreSearch(btn, nextPage, svcId, query) {\n" +
                 "            const wrapper = btn.parentElement;\n" +
                 "            btn.textContent = 'Loading...';\n" +
@@ -902,9 +895,7 @@ object HtmlScripts {
                 "            if (label) label.textContent = count + ' selected';\n" +
                 "        }\n" +
                 "        \n" +
-                // Collapsed by default (chapters-list starts display:none - see the chapters
-                // section markup in HtmlRendererWatch.kt) so current-chapter-label in the header
-                // is the only thing visible until the user asks for the full list.
+                // Collapsed by default; the header's current-chapter label is visible until the list is opened.
                 "        function toggleChaptersSection() {\n" +
                 "            const list = document.getElementById('chapters-list');\n" +
                 "            const icon = document.getElementById('chapters-toggle-icon');\n" +
@@ -927,65 +918,12 @@ object HtmlScripts {
                 watchPlayerScripts() +
                 "    </script>\n";
 
-    // video.js watch-page behaviors, shared across every /watch render instead of each living as
-    // its own hand-escaped Kotlin string in HtmlRendererWatch.kt (which had already grown to ~7
-    // near-duplicate (function(){...})() blocks, one per feature). Per-request data (segment
-    // times, chapter titles, URLs) stays server-side and is passed in as plain call arguments -
-    // e.g. "initChapterMarkers(player, [{s:12,t:\"Intro\"}]);" - same pattern the rest of this file
-    // already uses for toggleSubscribe()/toggleWatchLater()/etc.
-    // A function, not a property: SCRIPTS above calls it inside its own "..." + "..." chain, and a
-    // property here would either (a) not exist yet when SCRIPTS's own initializer runs, since
-    // object properties init in declaration order and this one is declared after SCRIPTS, or
-    // (b) if const, get inlined back into SCRIPTS's chain and re-fold the two into one string,
-    // risking the same 65535-byte constant-pool ceiling STATIC_ASSET_VERSION's comment
-    // (HtmlRendererCommon.kt) already had to work around once. A function call is neither.
+    // Watch-page player behaviors shared by every /watch render. Per-request data is passed as call arguments, e.g. initChapterMarkers(player, [{s:12,t:"Intro"}]).
+    // A function rather than a property: a property would depend on initialization order with SCRIPTS or be inlined into its constant chain and hit the 65535-byte constant-pool limit.
     private fun watchPlayerScripts(): String =
                 "        function initAdvancedPlayerControls(player, nextUrl, nextTitle, nextThumb) {\n" +
-                // <media-player> IS the wrapper element (no separate .el() to reach into) and the
-                // double-tap/volume-hud/autoplay-overlay markup is already rendered as its direct
-                // children server-side - video.js's old ready()-time relocation of these into
-                // player.el() (needed so they'd stay visible once video.js's fullscreen target
-                // took over) has no equivalent step to do here.
                 "            const wrapper = player;\n" +
                 "            \n" +
-                "            // Double tap & Double click to seek\n" +
-                "            if (wrapper) {\n" +
-                "                let lastTap = 0;\n" +
-                "                wrapper.addEventListener(\"touchstart\", function(e) {\n" +
-                "                    const now = Date.now();\n" +
-                "                    const DOUBLE_PRESS_DELAY = 300;\n" +
-                "                    if (now - lastTap < DOUBLE_PRESS_DELAY) {\n" +
-                "                        e.preventDefault();\n" +
-                "                        const rect = wrapper.getBoundingClientRect();\n" +
-                "                        const touchX = e.touches[0].clientX - rect.left;\n" +
-                "                        const isLeft = touchX < rect.width * 0.4;\n" +
-                "                        const isRight = touchX > rect.width * 0.6;\n" +
-                "                        if (isLeft) {\n" +
-                "                            window.seekVideo(-10);\n" +
-                "                            showDoubleTapRipple(\"left\");\n" +
-                "                        } else if (isRight) {\n" +
-                "                            window.seekVideo(10);\n" +
-                "                            showDoubleTapRipple(\"right\");\n" +
-                "                        }\n" +
-                "                    }\n" +
-                "                    lastTap = now;\n" +
-                "                }, { passive: false });\n" +
-                "                \n" +
-                "                wrapper.addEventListener(\"dblclick\", function(e) {\n" +
-                "                    e.preventDefault();\n" +
-                "                    const rect = wrapper.getBoundingClientRect();\n" +
-                "                    const clickX = e.clientX - rect.left;\n" +
-                "                    const isLeft = clickX < rect.width * 0.4;\n" +
-                "                    const isRight = clickX > rect.width * 0.6;\n" +
-                "                    if (isLeft) {\n" +
-                "                        window.seekVideo(-10);\n" +
-                "                        showDoubleTapRipple(\"left\");\n" +
-                "                    } else if (isRight) {\n" +
-                "                        window.seekVideo(10);\n" +
-                "                        showDoubleTapRipple(\"right\");\n" +
-                "                    }\n" +
-                "                });\n" +
-                "            }\n" +
                 "            \n" +
                 "            function showDoubleTapRipple(side) {\n" +
                 "                const ind = document.getElementById(\"double-tap-\" + side);\n" +
@@ -1047,6 +985,19 @@ object HtmlScripts {
                 "                }\n" +
                 "            }\n" +
                 "            \n" +
+                // Double-tap seek and the k/j/l/m/f/c/i shortcuts are Vidstack's; this only drives the ripple and volume HUD. Arrow keys stay with the global handler (also TV focus navigation), so they are removed from Vidstack's set.
+                "            player.keyShortcuts = { togglePaused: \"k Space\", toggleMuted: \"m\", toggleFullscreen: \"f\", togglePictureInPicture: \"i\", toggleCaptions: \"c\", seekBackward: \"j J\", seekForward: \"l L\", volumeUp: \"\", volumeDown: \"\" };\n" +
+                "            player.addEventListener(\"media-seek-request\", function(e) {\n" +
+                "                if (typeof e.detail === \"number\") showDoubleTapRipple(e.detail < player.currentTime ? \"left\" : \"right\");\n" +
+                "            });\n" +
+                "            let lastMuted = player.muted;\n" +
+                "            player.addEventListener(\"volume-change\", function(e) {\n" +
+                "                const muted = !!(e.detail && e.detail.muted);\n" +
+                "                if (muted === lastMuted) return;\n" +
+                "                lastMuted = muted;\n" +
+                "                showVolumeHUD(muted ? 0 : Math.round(player.volume * 100));\n" +
+                "            });\n" +
+                "            \n" +
                 "            // Autoplay Queue\n" +
                 "            let autoplayTimer = null;\n" +
                 "            let autoplayInterval = null;\n" +
@@ -1095,40 +1046,11 @@ object HtmlScripts {
                 "                });\n" +
                 "            }\n" +
                 "            \n" +
-                "            // Keyboard Shortcuts\n" +
-                "            document.addEventListener(\"keydown\", (e) => {\n" +
-                "                const active = document.activeElement;\n" +
-                "                if (active && (active.tagName === \"INPUT\" || active.tagName === \"SELECT\" || active.tagName === \"TEXTAREA\" || active.isContentEditable)) {\n" +
-                "                    return;\n" +
-                "                }\n" +
-                "                if (e.key === \" \" || e.key === \"k\" || e.key === \"K\") {\n" +
-                "                    e.preventDefault();\n" +
-                "                    if (player.paused) player.play().catch(e => {}); else player.pause();\n" +
-                "                } else if (e.key === \"j\" || e.key === \"J\") {\n" +
-                "                    e.preventDefault();\n" +
-                "                    window.seekVideo(-10);\n" +
-                "                    showDoubleTapRipple(\"left\");\n" +
-                "                } else if (e.key === \"l\" || e.key === \"L\") {\n" +
-                "                    e.preventDefault();\n" +
-                "                    window.seekVideo(10);\n" +
-                "                    showDoubleTapRipple(\"right\");\n" +
-                "                } else if (e.key === \"m\" || e.key === \"M\") {\n" +
-                "                    e.preventDefault();\n" +
-                "                    player.muted = !player.muted;\n" +
-                "                    showVolumeHUD(player.muted ? 0 : Math.round(player.volume * 100));\n" +
-                "                }\n" +
-                "            });\n" +
                 "            \n" +
-                // Picture-in-Picture: Default Video Layout already ships its own PIP button
-                // (Vidstack detects support itself, see the player root's data-can-pip
-                // attribute) - no need to hand-register a custom control like video.js required.
+                // Picture-in-Picture: provided by the default layout.
                 "        }\n" +
                 "        \n" +
-                // CSS object-fit:contain (HtmlStyles.kt) still let real mobile fullscreen stretch/
-                // crop the picture, unreproducible on desktop. This computes the letterboxed size
-                // directly in JS instead - explicit pixel dimensions on the inner <video> via
-                // setProperty(...,'important'), winning the cascade regardless of what defeated the
-                // CSS-only version.
+                // Computes the letterboxed size in JS: CSS object-fit:contain alone still stretched the picture in mobile fullscreen.
                 "        function initFullscreenLetterbox(player) {\n" +
                 "            function fitVideoLetterbox() {\n" +
                 "                var videoTag = player.querySelector(\"video\");\n" +
@@ -1141,9 +1063,7 @@ object HtmlScripts {
                 "                    videoTag.style.removeProperty(\"left\");\n" +
                 "                    return;\n" +
                 "                }\n" +
-                // Read straight off the native <video> element rather than a player-level
-                // videoWidth/videoHeight accessor - avoids depending on whether Vidstack exposes
-                // one, and this is exactly the element being resized below anyway.
+                // Read from the native <video>, the element being resized.
                 "                var vw = videoTag.videoWidth || 16;\n" +
                 "                var vh = videoTag.videoHeight || 9;\n" +
                 "                var availW = window.innerWidth;\n" +
@@ -1168,10 +1088,7 @@ object HtmlScripts {
                 "            window.addEventListener(\"orientationchange\", fitVideoLetterbox);\n" +
                 "        }\n" +
                 "        \n" +
-                // videoId is already URL-encoded server-side (HtmlRendererCommon.encodeUrl) and
-                // concatenated as-is - do not encodeURIComponent() it again here, that's the
-                // escapeJs-vs-encodeUrl double-encoding bug class documented elsewhere in this
-                // file (see e.g. HtmlRendererCommon.kt's history-save chokepoint comment).
+                // videoId is already URL-encoded server-side; do not encode it again.
                 "        function initWatchProgressReporting(player, videoId, serviceId) {\n" +
                 "            var lastReported = -1;\n" +
                 "            function reportProgress() {\n" +
@@ -1188,11 +1105,7 @@ object HtmlScripts {
                 "            window.addEventListener(\"pagehide\", reportProgress);\n" +
                 "        }\n" +
                 "        \n" +
-                // Download button <-> Flow's native downloader (/api/v1/download,
-                // LocalHttpServerDownloadHandlers.kt). videoId is already URL-encoded (concatenated
-                // as-is, same double-encoding rule as initWatchProgressReporting above). The server
-                // is the source of truth: the button only renders what /download says, polling
-                // while a download is in flight, so it also reflects downloads started from the app.
+                // Download button backed by /api/v1/download. The server is the source of truth; the button polls while a download is active, so it also reflects downloads started in the app.
                 "        function initDownloadButton(videoId, serviceId) {\n" +
                 "            var btn = document.getElementById(\"download-btn\");\n" +
                 "            if (!btn) return;\n" +
@@ -1246,7 +1159,7 @@ object HtmlScripts {
                 "            var skipLabel = document.getElementById(\"sponsor-skip-label\");\n" +
                 "            var current = null;\n" +
                 "            function placeMarkers() {\n" +
-                "                var holder = player.querySelector(\"media-time-slider\");\n" +
+                "                var holder = player.querySelector(\"media-time-slider .vds-slider-track\") || player.querySelector(\"media-time-slider\");\n" +
                 "                var dur = player.duration;\n" +
                 "                if (!holder || !dur) return;\n" +
                 "                segments.forEach(function(seg) {\n" +
@@ -1254,10 +1167,7 @@ object HtmlScripts {
                 "                    marker.className = \"sponsor-segment-marker cat-\" + seg.c;\n" +
                 "                    marker.style.left = (seg.s / dur * 100) + \"%\";\n" +
                 "                    marker.style.width = (Math.max(seg.e - seg.s, 0) / dur * 100) + \"%\";\n" +
-                // A short segment's proportional width can round to a sub-pixel value on a narrow
-                // mobile progress bar (measured: 0.16px for a 7s segment in a 33-min video on a
-                // 375px phone) - invisible and untappable. min-width floors the visual marker
-                // without touching the real start/end times the skip-button logic uses.
+                // min-width keeps very short segments visible and tappable on narrow screens without changing the real start/end times.
                 "                    marker.style.minWidth = \"3px\";\n" +
                 "                    holder.appendChild(marker);\n" +
                 "                });\n" +
@@ -1294,20 +1204,28 @@ object HtmlScripts {
                 "            var label = document.getElementById(\"current-chapter-label\");\n" +
                 "            var listEl = document.getElementById(\"chapters-list\");\n" +
                 "            var activeIndex = -1;\n" +
-                "            function placeTicks() {\n" +
-                "                var holder = player.querySelector(\"media-time-slider\");\n" +
-                "                var dur = player.duration;\n" +
-                "                if (!holder || !dur) return;\n" +
-                "                chapters.forEach(function(ch) {\n" +
-                "                    if (ch.s <= 0) return;\n" +
-                "                    var tick = document.createElement(\"div\");\n" +
-                "                    tick.className = \"chapter-tick-marker\";\n" +
-                "                    tick.style.left = (ch.s / dur * 100) + \"%\";\n" +
-                "                    holder.appendChild(tick);\n" +
-                "                });\n" +
+                // Vidstack draws chapter gaps and the chapter title from a chapters text track, built here from the chapter list.
+                "            function pad(n, len) { var s = String(n); while (s.length < len) s = \"0\" + s; return s; }\n" +
+                "            function vttTime(sec) {\n" +
+                "                var ms = Math.round(sec * 1000);\n" +
+                "                return pad(Math.floor(ms / 3600000), 2) + \":\" + pad(Math.floor(ms / 60000) % 60, 2) + \":\" + pad(Math.floor(ms / 1000) % 60, 2) + \".\" + pad(ms % 1000, 3);\n" +
                 "            }\n" +
-                "            player.addEventListener(\"loaded-metadata\", placeTicks, { once: true });\n" +
-                "            if (player.duration) placeTicks();\n" +
+                "            var trackAdded = false;\n" +
+                "            function addChapterTrack() {\n" +
+                "                var dur = player.duration;\n" +
+                "                if (trackAdded || !dur || !isFinite(dur)) return;\n" +
+                "                trackAdded = true;\n" +
+                "                var vtt = \"WEBVTT\\n\\n\";\n" +
+                "                chapters.forEach(function(ch, i) {\n" +
+                "                    var end = i + 1 < chapters.length ? chapters[i + 1].s : dur;\n" +
+                "                    if (end <= ch.s) return;\n" +
+                "                    vtt += vttTime(ch.s) + \" --> \" + vttTime(end) + \"\\n\" + ch.t.replace(/[\\r\\n]+/g, \" \") + \"\\n\\n\";\n" +
+                "                });\n" +
+                "                player.textTracks.add({ kind: \"chapters\", label: \"Chapters\", language: \"en-US\", type: \"vtt\", default: true, content: vtt });\n" +
+                "            }\n" +
+                "            player.addEventListener(\"loaded-metadata\", addChapterTrack, { once: true });\n" +
+                "            player.addEventListener(\"duration-change\", addChapterTrack);\n" +
+                "            if (player.duration) addChapterTrack();\n" +
                 "            player.addEventListener(\"time-update\", function() {\n" +
                 "                var t = player.currentTime;\n" +
                 "                var idx = 0;\n" +
@@ -1329,13 +1247,7 @@ object HtmlScripts {
                 "            };\n" +
                 "        }\n" +
                 "        \n" +
-                // Shrinks .player-wrapper to a fixed corner box once IntersectionObserver
-                // reports it fully scrolled out of view, so playback stays visible/controllable
-                // while reading the description or comments below. #player-space-holder keeps
-                // that space's height in normal flow so the wrapper going position:fixed doesn't
-                // jump the rest of the page up. Suspended during real fullscreen; the close button
-                // pauses and disconnects the observer rather than just hiding, so it doesn't
-                // immediately re-trigger.
+                // Mini-player: shrinks .player-wrapper to a corner box once the sentinel is scrolled out. #player-space-holder keeps the layout height. Suspended in fullscreen; the close button pauses and disconnects the observer.
                 "        function initMiniPlayer(player) {\n" +
                 "            var wrapper = document.querySelector(\".player-wrapper\");\n" +
                 "            var holder = document.getElementById(\"player-space-holder\");\n" +
@@ -1344,10 +1256,7 @@ object HtmlScripts {
                 "            var dragHandle = document.getElementById(\"mini-player-drag-handle\");\n" +
                 "            if (!wrapper || !holder || !sentinel) return;\n" +
                 "            var isMini = false, dismissed = false;\n" +
-                // Position is inline left/top (overriding the CSS bottom/right default) once the
-                // user has dragged it; kept in localStorage so it stays where they left it.
-                // Clamped on every apply so a saved spot from a bigger window can't strand it
-                // off-screen after a resize/rotation.
+                // A dragged position is stored in localStorage and clamped on every apply so it cannot end up off-screen after a resize.
                 "            var POS_KEY = \"miniPlayerPos\";\n" +
                 "            function applyPos(x, y) {\n" +
                 "                var maxX = Math.max(0, window.innerWidth - wrapper.offsetWidth);\n" +
@@ -1381,9 +1290,7 @@ object HtmlScripts {
                 "                clearPos();\n" +
                 "                holder.style.height = \"0px\";\n" +
                 "            }\n" +
-                // A dedicated handle rather than dragging the whole box - the box is covered by
-                // Vidstack's own controls (tap = play/pause, slider drags) that would fight a
-                // drag gesture. Pointer capture keeps the drag tracking outside the handle.
+                // Drag handle instead of the whole box, which Vidstack's own controls cover; pointer capture keeps the drag tracking.
                 "            if (dragHandle) {\n" +
                 "                var dragging = false, offX = 0, offY = 0;\n" +
                 "                dragHandle.addEventListener(\"pointerdown\", function(e) {\n" +
@@ -1410,11 +1317,7 @@ object HtmlScripts {
                 "            window.addEventListener(\"resize\", function() {\n" +
                 "                if (isMini && wrapper.style.left) applyPos(parseFloat(wrapper.style.left), parseFloat(wrapper.style.top));\n" +
                 "            });\n" +
-                // Watches the sentinel, not the wrapper - the wrapper's own geometry changes the
-                // instant mini-player toggles (position:fixed moves it back into view), which fed
-                // straight back into this same observer and flickered enter/exit forever. The
-                // sentinel's position only moves with page scroll, never with mini-player state,
-                // so cause (scrolled past) and effect (wrapper repositioned) can't cross-trigger.
+                // Observes the sentinel, not the wrapper: the wrapper moves when the mini-player toggles, which would retrigger the observer.
                 "            var observer = new IntersectionObserver(function(entries) {\n" +
                 "                if (entries[0].isIntersecting) exitMini(); else enterMini();\n" +
                 "            }, { threshold: 0 });\n" +
@@ -1430,20 +1333,12 @@ object HtmlScripts {
                 "            });\n" +
                 "        }\n" +
                 "        \n" +
-                // Bilibili danmaku ("bullet comments") overlay. Scroll-type comments animate via
-                // CSS `transform` (travel distance needs runtime-measured player/text width, not
-                // known until render); top/bottom are fixed-position fades. getLastingTime()
-                // always returns -1 (extractor bug) - duration hardcoded to Bilibili's typical
-                // defaults instead.
+                // Bilibili danmaku overlay. Scroll comments animate via transform (distance needs the measured player width); top/bottom comments are fixed fades. The extractor's lasting time is unreliable, so durations use Bilibili's defaults.
                 "        function initDanmakuOverlay(player, danmakuUrl) {\n" +
                 "            var layer = document.getElementById(\"danmaku-layer\");\n" +
                 "            var toggleBtn = document.getElementById(\"danmaku-toggle-btn\");\n" +
                 "            if (!layer) return;\n" +
-                // danmaku-layer is now rendered directly as a child of <media-player> itself
-                // (which, unlike video.js's separate .el() vs outer-wrapper split, is the actual
-                // fullscreen target here) - this relocation is likely a no-op in practice, but
-                // kept as a harmless defensive no-op (re-appending an existing child just reorders
-                // it) since the exact fullscreen-target element wasn't independently confirmed.
+                // Defensive re-append into <media-player>, the fullscreen target.
                 "            var danmakuHome = layer.parentNode, danmakuNextSibling = layer.nextSibling;\n" +
                 "            player.addEventListener(\"fullscreen-change\", function() {\n" +
                 "                if (player.state.fullscreen) {\n" +
@@ -1472,8 +1367,7 @@ object HtmlScripts {
                 "                var el = document.createElement(\"div\");\n" +
                 "                el.className = \"danmaku-item \" + item.position;\n" +
                 "                el.textContent = item.text;\n" +
-                // Scaled by player WIDTH, not height - height-scaling produced 50-60px comments
-                // covering most of the frame.
+                // Scaled by player width; scaling by height made comments cover the frame.
                 "                el.style.fontSize = Math.max(14, Math.min(30, Math.round(w * item.size * 0.028))) + \"px\";\n" +
                 "                el.style.color = item.color;\n" +
                 "                var laneH = parseFloat(el.style.fontSize) * 1.5;\n" +
@@ -1562,8 +1456,7 @@ object HtmlScripts {
                 "        }\n" +
                 "        \n";
 
-    // SCRIPTS with its <script>/</script> wrapper stripped, served cacheably at /static/script.js.
-    // Computed from SCRIPTS, not hand-duplicated, so the two can't drift.
+    // SCRIPTS without its <script> wrapper, served cacheably at /static/script.js.
     @JvmField
     val RAW_JS: String = SCRIPTS.substring(SCRIPTS.indexOf('\n') + 1, SCRIPTS.lastIndexOf("</script>"))
 }

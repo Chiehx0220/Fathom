@@ -2,6 +2,7 @@ package org.schabi.newpipe.localserver
 
 import android.util.Base64
 
+import io.github.aedev.flow.bilibili.BilibiliLink
 import org.schabi.newpipe.extractor.Image
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
@@ -16,15 +17,14 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.util.Locale
 
-// Shared rendering toolbox (page-frame template, grid renderer, thumbnail/date/count formatting,
-// HTML/JS escaping, theme CSS) used by every other HtmlRenderer* page file.
+// Shared page toolbox: page template, grid renderer, formatting, HTML/JS escaping, theme CSS.
 object HtmlRendererCommon {
 
-    // Fallback avatar palette, keyed deterministically by name hash via avatarColorFor().
+    // Fallback avatar palette, picked by name hash (avatarColorFor()).
     @JvmField
     val AVATAR_COLORS = arrayOf("#ff5722", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39", "#ffc107", "#ff9800")
 
-    // Trims a leading "@" first - comment authors are often handles ("@name"), not display names.
+    // Leading "@" is trimmed: comment authors are often handles.
     @JvmStatic
     fun avatarInitial(name: String?): String {
         val trimmed = name?.trimStart('@')
@@ -34,21 +34,14 @@ object HtmlRendererCommon {
     @JvmStatic
     fun avatarColorFor(name: String): String = AVATAR_COLORS[Math.abs(name.hashCode()) % AVATAR_COLORS.size]
 
-    // Cache-busting tag for /static/style.css and /static/script.js, derived from content - no
-    // version number to bump manually. Combines two hashCode() calls rather than concatenating
-    // HtmlStyles.CSS + HtmlScripts.SCRIPTS first: both are compile-time-constant Strings, and
-    // javac would fold that ~60KB "+" into a single constant-pool entry, exceeding the JVM's
-    // 65535-byte-per-entry limit ("constant string too long").
+    // Cache-busting tag derived from content. Two hashCode() calls are combined instead of concatenating CSS + SCRIPTS, which would exceed the 65535-byte constant-pool limit.
     @JvmField
     val STATIC_ASSET_VERSION: String = Integer.toHexString(HtmlStyles.CSS.hashCode() * 31 + HtmlScripts.SCRIPTS.hashCode())
 
-    /**
-     * Service display name. Delegates to the extractor so the name always matches whatever
-     * PipePipeExtractor has registered — the previous `String[]` indexed by serviceId threw
-     * ArrayIndexOutOfBounds as soon as a non-YouTube service (BiliBili is id 5) was selected.
-     */
+    /** Service display name: Bilibili's is fixed, everything else comes from the registered extractor service. */
     @JvmStatic
     fun getServiceName(serviceId: Int): String {
+        if (LocalServerBilibili.isBilibili(serviceId)) return "Bilibili"
         return try {
             val name = org.schabi.newpipe.extractor.NewPipe.getService(serviceId).serviceInfo.name
             if (name.isNullOrEmpty()) "Fathom" else name
@@ -57,7 +50,6 @@ object HtmlRendererCommon {
         }
     }
 
-    // Serialize a Page object to a Base64 string for URL injection
     @JvmStatic
     fun serializePage(page: Page?): String? {
         if (page == null) return null
@@ -73,15 +65,13 @@ object HtmlRendererCommon {
         }
     }
 
-    // serializePage(page) + escapeJs(...) in one step, for a "Load More" button's onclick literal.
-    // Null for both "no next page" and "serialization failed" - doubles as the render-button check.
+    // serializePage() + escapeJs() in one step for a load-more onclick. Null when there is no next page or serialization failed.
     @JvmStatic
     fun serializePageJs(page: Page?): String? {
         val serialized = serializePage(page) ?: return null
         return escapeJs(serialized)
     }
 
-    // Deserialize a Page object from a Base64 URL parameter
     @JvmStatic
     fun deserializePage(b64: String?): Page? {
         if (b64.isNullOrEmpty()) return null
@@ -121,11 +111,9 @@ object HtmlRendererCommon {
             sb.append("  --$name: $value;\n")
         }
 
-        // MD3 roles consumed directly by the component CSS below.
         v("md-primary", c.getOrDefault("primary", if (dark) "#d0bcff" else "#6750A4"))
         v("md-on-primary", onPrimary)
-        // Built from onPrimary, not onSurface: overlay for controls sitting on a --md-primary
-        // fill (e.g. the TV-lock banner's button), not the neutral background.
+        // Overlay for controls sitting on a --md-primary fill (e.g. the TV-lock banner button).
         v("md-on-primary-state", hexToRgba(onPrimary, 0.16))
         v("md-on-primary-outline", hexToRgba(onPrimary, 0.3))
         v("md-on-secondary-container", onSecondaryContainer)
@@ -137,11 +125,10 @@ object HtmlRendererCommon {
         v("md-on-surface-variant", onSurfaceVariant)
         v("md-outline-variant", outlineVariant)
         v("md-surface-high", surfaceHigh)
-        // State layers: MD3 uses an onSurface overlay at 8%/12% for hover/pressed.
+        // State layers: onSurface overlay at 8%/12% for hover/pressed.
         v("md-state-hover", hexToRgba(onSurface, 0.08))
         v("md-state-press", hexToRgba(onSurface, 0.12))
 
-        // Previously-stale variables, now tied to the same scheme.
         v("card-thumbnail-bg", surfaceHigh)
         v("card-title-color", onSurface)
         v("card-meta-color", onSurfaceVariant)
@@ -165,7 +152,7 @@ object HtmlRendererCommon {
         v("service-tab-color", onSurfaceVariant)
         v("service-tab-hover-color", onSecondaryContainer)
         v("bottom-nav-item-color", onSurfaceVariant)
-        // Hairlines: MD3 uses outlineVariant rather than a flat white/black alpha.
+        // Hairlines use outlineVariant.
         v("media-info-border", outlineVariant)
         v("comments-border", outlineVariant)
         v("comment-border", outlineVariant)
@@ -188,7 +175,6 @@ object HtmlRendererCommon {
                 return "rgba($r, $g, $b, $alpha)"
             }
         } catch (ignored: Exception) {
-            // Fall through to a neutral overlay.
         }
         return "rgba(127, 127, 127, $alpha)"
     }
@@ -283,7 +269,7 @@ object HtmlRendererCommon {
         appendNavItem(sb, "sidebar-item", "sidebar-icon", true, "/settings", settingsActive, "settings", "Settings")
         sb.append("</div>\n")
 
-        // Same items as the sidebar above, minus History (less room on a phone-width bottom bar).
+        // Sidebar items minus History (narrow bottom bar).
         sb.append("<div class=\"bottom-nav\">\n")
         appendNavItem(sb, "bottom-nav-item", "bottom-nav-icon", false, "/?serviceId=$activeServiceId", ytActive, "home", "Home")
         appendNavItem(sb, "bottom-nav-item", "bottom-nav-icon", false, "/subscriptions", subsActive, "subscriptions", "Subscriptions")
@@ -293,18 +279,14 @@ object HtmlRendererCommon {
         return sb.toString()
     }
 
-    // needsPlayer defaults false - most callers don't need the player library.
     @JvmStatic
     @JvmOverloads
     fun wrapInTemplate(title: String?, bodyContent: String, isTv: Boolean, needsPlayer: Boolean = false): String {
-        // Escapes raw extractor titles (any YouTube/Bilibili title can contain "&"/"<"/'"') at
-        // this single chokepoint, covering every page title without touching each call site.
+        // Escapes raw extractor titles at this single chokepoint.
         val safeTitle = if (title != null) title.replace("&", "&amp;").replace("<", "&lt;")
             .replace(">", "&gt;").replace("\"", "&quot;") else ""
         val bodyClass = if (isTv) "is-tv" else "is-phone"
-        // Light/dark favicon variants via prefers-color-scheme media query - favicons are fetched
-        // as standalone resources and can't read this page's CSS custom properties like the
-        // inline header logo does.
+        // Light/dark favicon variants: favicons cannot read this page's CSS variables.
         val faviconLight = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjRjJFREUwIi8+PGcgc3Ryb2tlPSIjMEYxRDMzIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PGxpbmUgeDE9IjM3IiB5MT0iMTgiIHgyPSIzNyIgeTI9Ijc4Ii8+PGxpbmUgeDE9IjM3IiB5MT0iMjIiIHgyPSI3NiIgeTI9IjIyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNDIiIHgyPSI1MCIgeTI9IjQyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNjIiIHgyPSI1MCIgeTI9IjYyIi8+PC9nPjxwb2x5Z29uIHBvaW50cz0iNTgsNDIgNTgsNjIgNzUsNTIiIGZpbGw9IiNDOTlBMzQiLz48L3N2Zz4K"
         val faviconDark = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjMEYxRDMzIi8+PGcgc3Ryb2tlPSIjRjJFREUwIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PGxpbmUgeDE9IjM3IiB5MT0iMTgiIHgyPSIzNyIgeTI9Ijc4Ii8+PGxpbmUgeDE9IjM3IiB5MT0iMjIiIHgyPSI3NiIgeTI9IjIyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNDIiIHgyPSI1MCIgeTI9IjQyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNjIiIHgyPSI1MCIgeTI9IjYyIi8+PC9nPjxwb2x5Z29uIHBvaW50cz0iNTgsNDIgNTgsNjIgNzUsNTIiIGZpbGw9IiNFOEM0NjgiLz48L3N2Zz4K"
 
@@ -312,30 +294,23 @@ object HtmlRendererCommon {
                 "<html>\n" +
                 "<head>\n" +
                 "    <meta charset=\"UTF-8\">\n" +
-                // Bilibili's CDN (i*.hdslb.com) 403s a Referer pointing at this server. Page-wide
-                // policy also covers dynamically injected images a per-tag attribute would miss.
+                // Bilibili's CDN (i*.hdslb.com) rejects a Referer from this server; a page-wide policy also covers injected images.
                 "    <meta name=\"referrer\" content=\"no-referrer\">\n" +
                 "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
                 "    <title>$safeTitle</title>\n" +
                 "    <link rel=\"icon\" type=\"image/svg+xml\" media=\"(prefers-color-scheme: light)\" href=\"$faviconLight\">\n" +
                 "    <link rel=\"icon\" type=\"image/svg+xml\" media=\"(prefers-color-scheme: dark)\" href=\"$faviconDark\">\n" +
                 "    <link rel=\"icon\" type=\"image/svg+xml\" href=\"$faviconLight\">\n" +
-                // Must precede the cdn.jsdelivr.net <script>/<link> tags below - the module
-                // script is render+parser-blocking (no defer honored on type="module" until
-                // after fetch), delaying discovery of this <link> until it finishes, leaving
-                // the page unstyled longer.
+                // Must precede the jsdelivr tags: the module script blocks rendering and delays discovery of this stylesheet.
                 "    <link rel=\"stylesheet\" href=\"/static/style.css?v=$STATIC_ASSET_VERSION\">\n" +
                 (if (needsPlayer)
-                    // Version pinned deliberately: npm's "latest" dist-tag for this package still
-                    // points at the pre-1.x line (0.6.15) - "next" (1.15.6) is actually the
-                    // current stable major. Never use @latest here.
+                    // Vidstack version is pinned: npm's "latest" tag still points at the old 0.6.x line.
                     "    <link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/vidstack@1.15.6/player/styles/default/theme.css\" />\n" +
                         "    <link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/vidstack@1.15.6/player/styles/default/layouts/video.css\" />\n" +
+                        "    <link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/vidstack@1.15.6/player/styles/default/layouts/audio.css\" />\n" +
                         "    <script type=\"module\" src=\"https://cdn.jsdelivr.net/npm/vidstack@1.15.6/cdn/with-layouts/vidstack.js\"></script>\n"
                 else "") +
                 "    <style>\n" + getCustomThemeCss() + "\n" +
-                // Appended last, so it used to beat the MD3 focus rules with a pre-MD3 neon
-                // box-shadow on every focused control - removed for one focus treatment everywhere.
                 "        #share-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 100000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.25s ease; }\n" +
                 "        #share-modal-overlay.active { display: flex; opacity: 1; }\n" +
                 "        .share-modal-card { background: var(--card-bg, #1c1b1f); color: var(--text-color, #fff); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translateY(20px); transition: transform 0.25s ease; font-family: 'Roboto', sans-serif; }\n" +
@@ -399,6 +374,7 @@ object HtmlRendererCommon {
      * where every item already matches the page serviceId and this is just a no-op confirmation).
      */
     private fun resolveServiceId(fallback: Int, url: String): Int {
+        if (BilibiliLink.isBilibili(url)) return LocalServerBilibili.serviceId
         return try {
             org.schabi.newpipe.extractor.NewPipe.getServiceByUrl(url).serviceId
         } catch (e: Exception) {
@@ -406,8 +382,7 @@ object HtmlRendererCommon {
         }
     }
 
-    // fallbackAvatarUrl: for a StreamInfoItem with no per-item avatar (e.g. a channel's upload
-    // listing) - caller passes its already-fetched channel avatar instead of a colored initial.
+    // fallbackAvatarUrl: avatar for a StreamInfoItem without its own (e.g. a channel's upload list).
     @JvmStatic
     fun renderGrid(sb: StringBuilder, serviceId: Int, items: List<InfoItem>, showDeleteButton: Boolean = false, fallbackAvatarUrl: String? = null) {
         sb.append("  <div class=\"grid\">\n")
@@ -432,8 +407,7 @@ object HtmlRendererCommon {
                 val avatarBg = avatarColorFor(cName)
                 val rawThumb = getThumbnailUrl(item.thumbnailUrl).takeIf { it.isNotBlank() }
 
-                // Subscriber count when available (search/kiosk results have it, subscriptions
-                // list doesn't) - more useful than repeating the channel name.
+                // Subscriber count when available (search results have it, the subscription list does not).
                 var subLabel = "Channel"
                 if (item is ChannelInfoItem) {
                     val subs = item.subscriberCount
@@ -442,8 +416,7 @@ object HtmlRendererCommon {
                     }
                 }
 
-                // A channel is a list row, not a card - own MD3 list-item treatment, not a bare
-                // avatar+text pair.
+                // A channel is a list row, not a card.
                 val cNameEscaped = escapeHtml(cName)
 
                 sb.append("    <div class=\"card channel-row-card\">\n")
@@ -484,20 +457,14 @@ object HtmlRendererCommon {
 
             sb.append("    <div class=\"card\">\n")
             if (showDeleteButton) {
-                // escapeJs, not encodeUrl: removeHistoryItem() does the one encodeURIComponent()
-                // itself - double-encoding here breaks the backend's percent-decode match against
-                // the DB's raw URL, silently deleting zero rows.
+                // escapeJs, not encodeUrl: removeHistoryItem() encodes once itself; double-encoding breaks the backend's match.
                 val deleteUrlJs = escapeJs(item.url)
-                // Plain HTML attribute, not a JS string literal - escapeJs's backslash escapes
-                // don't protect against a literal '"' terminating the attribute early. escapeHtml
-                // is correct here; deleteSelectedHistory() reads it via .dataset.url (browser
-                // HTML-decodes) then applies its own encodeURIComponent().
+                // HTML attribute, not a JS literal: escapeHtml is the right escape; deleteSelectedHistory() reads it via .dataset.url.
                 val deleteUrlHtml = escapeHtml(item.url)
                 sb.append("      <a href=\"$clickUrl\" style=\"position:relative; display:block;\">\n")
                   .append("        <img class=\"card-thumbnail\" src=\"$itemThumb\">\n")
                   .append("        <button type=\"button\" class=\"card-delete-btn\" onclick=\"removeHistoryItem(event, this, '$deleteUrlJs', $itemServiceId)\" aria-label=\"Remove from history\"><span class=\"material-symbols-rounded\">delete</span></button>\n")
-                  // stopPropagation only, no preventDefault: preventDefault on a checkbox's click
-                  // cancels its own checked-state toggle, making it visually present but un-checkable.
+                  // stopPropagation only: preventDefault would cancel the checkbox's own toggle.
                   .append("        <span class=\"card-select-indicator\">\n")
                   .append("          <input type=\"checkbox\" class=\"card-select-checkbox\" data-url=\"$deleteUrlHtml\" onclick=\"event.stopPropagation();\" onchange=\"updateHistorySelectCount()\" aria-label=\"Select for batch delete\">\n")
                   .append("          <span class=\"material-symbols-rounded card-select-check-icon\">check</span>\n")
@@ -510,9 +477,7 @@ object HtmlRendererCommon {
             }
             sb.append("      <div class=\"card-details\">\n")
 
-            // Checked against the raw field, not getThumbnailUrl()'s return value - that helper
-            // always returns a non-null stock-photo fallback, so testing its result would always
-            // look "present" and never actually fall back to the colored initial.
+            // Checked against the raw field: getThumbnailUrl() always returns a non-null fallback.
             if (!uploaderAvatarUrl.isNullOrBlank()) {
                 val uploaderAvatarThumb = getThumbnailUrl(uploaderAvatarUrl)
                 sb.append("        <img class=\"card-avatar\" src=\"$uploaderAvatarThumb\" onerror=\"this.style.display='none'; this.nextElementSibling.style.display='flex';\">\n")
@@ -547,10 +512,7 @@ object HtmlRendererCommon {
         sb.append("  </div>\n")
     }
 
-    // IMPORTANT: both getThumbnailUrl() overloads always return non-null/non-empty - never call
-    // them to test "has an image?" (indistinguishable from a real URL); check the raw field
-    // (List<Image>/String) for null/empty first. Got this backwards twice already, both times
-    // showing this placeholder for every card instead of the per-channel avatar.
+    // getThumbnailUrl() overloads always return a non-empty fallback: check the raw field for null/empty to test for an image.
     private const val NO_THUMBNAIL_PLACEHOLDER =
         "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=300&auto=format&fit=crop"
 
@@ -577,8 +539,7 @@ object HtmlRendererCommon {
     fun hasThumbnail(thumbnails: List<Image>?): Boolean =
         thumbnails != null && thumbnails.any { it != null && !it.url.isNullOrBlank() }
 
-    // PipePipeExtractor image shape is inconsistent: InfoItem/CommentsInfoItem carry a single URL
-    // string, StreamInfo/ChannelExtractor return List<Image>. This overload covers the URL shape.
+    // Image shape differs by source: items carry a URL string, StreamInfo/ChannelExtractor a List<Image>. This overload takes the URL.
     @JvmStatic
     fun getThumbnailUrl(url: String?): String {
         if (!url.isNullOrBlank()) {
@@ -591,9 +552,7 @@ object HtmlRendererCommon {
     @JvmStatic
     fun hasThumbnail(url: String?): Boolean = !url.isNullOrBlank()
 
-    // YoutubeService forces hl=zu (Zulu) to stop YouTube auto-translating titles - side effect:
-    // getTextualUploadDate() returns a Zulu relative-time phrase. DateWrapper is still reliable
-    // (parsed from that same string), so format it ourselves instead of showing raw Zulu text.
+    // YoutubeService forces hl=zu, so the textual upload date is Zulu; DateWrapper is still reliable, so the date is formatted here.
     @JvmStatic
     fun formatUploadDate(uploadDate: DateWrapper?, textualFallback: String?): String {
         if (uploadDate != null) {
@@ -602,9 +561,7 @@ object HtmlRendererCommon {
         return textualFallback ?: ""
     }
 
-    // Subscribe/Subscribed pill, shared across channel page and both watch pages instead of
-    // duplicating toggleSubscribe() wiring three times. backUrlEncoded: each caller's own
-    // /subscribe redirect target.
+    // Subscribe pill shared by the channel and watch pages; backUrlEncoded is the /subscribe redirect target.
     @JvmStatic
     fun renderSubscribeButton(uploaderUrl: String, uploaderName: String, uploaderAvatarUrl: String, backUrlEncoded: String, isSubscribed: Boolean): String {
         val uploaderUrlEncoded = encodeUrl(uploaderUrl)
@@ -620,7 +577,7 @@ object HtmlRendererCommon {
         }
     }
 
-    // Shared so watch and audio pages render an identical Watch Later control.
+    // Shared by the watch and audio pages.
     @JvmStatic
     fun renderWatchLaterButton(info: StreamInfo, serviceId: Int, isWatchLater: Boolean): String {
         val action = if (isWatchLater) "remove" else "add"
@@ -651,8 +608,7 @@ object HtmlRendererCommon {
             "class=\"$cls\">$icon$label</a>\n"
     }
 
-    // Shared so video/audio watch pages render identical like/dislike buttons. includeDislike is
-    // false on the audio page (never had one).
+    // Shared by the watch and audio pages; the audio page has no dislike.
     @JvmStatic
     @JvmOverloads
     fun renderLikeDislikePill(info: StreamInfo, likeState: String?, includeDislike: Boolean = true): String {
@@ -713,9 +669,7 @@ object HtmlRendererCommon {
         }
     }
 
-    // Most call sites wrap this in a single-quoted JS literal (onclick="toggleX(...,'...')") -
-    // must escape the apostrophe too, not just backslash/double-quote, or a title like "Don't Stop"
-    // breaks the onclick syntax.
+    // Also escapes the apostrophe: most call sites wrap this in a single-quoted JS literal.
     @JvmStatic
     fun escapeJs(str: String?): String {
         if (str == null) return ""
@@ -726,11 +680,7 @@ object HtmlRendererCommon {
             .replace("\r", "\\r")
     }
 
-    // For raw extractor titles/uploader names appended as HTML text content, outside
-    // wrapInTemplate()'s <title> chokepoint - "&"/"<"/">" would otherwise break/corrupt markup.
-    // Also escapes '"' so it's safe in a double-quoted attribute too, a no-op for text-content
-    // sites. Deliberately does NOT touch getDescription() content - already rich HTML, would
-    // double-encode.
+    // For raw titles and names used as HTML text (outside wrapInTemplate's title). Also escapes '"' for attributes. Not for getDescription(), which is already HTML.
     @JvmStatic
     fun escapeHtml(str: String?): String {
         if (str == null) return ""

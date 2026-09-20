@@ -2,24 +2,22 @@ package org.schabi.newpipe.localserver
 
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.channel.ChannelExtractor
-import org.schabi.newpipe.extractor.playlist.PlaylistExtractor
 
 // Channel page and playlist page rendering, split out of the former monolithic HtmlRenderer.java.
 object HtmlRendererChannel {
 
     @JvmStatic
     @Throws(Exception::class)
-    fun renderChannel(serviceId: Int, channel: ChannelExtractor, activeTab: String, items: List<InfoItem>?, nextPage: Page?, isSubscribed: Boolean, isBlocked: Boolean, isTv: Boolean): String {
+    fun renderChannel(serviceId: Int, channel: ChannelHeader, activeTab: String, items: List<InfoItem>?, nextPage: Page?, isSubscribed: Boolean, isBlocked: Boolean, isTv: Boolean): String {
         val sb = StringBuilder()
         sb.append(HtmlRendererCommon.getHeaderHtml(serviceId, ""))
 
-        val channelBanner = HtmlRendererCommon.getThumbnailUrl(channel.banners)
-        val channelAvatar = HtmlRendererCommon.getThumbnailUrl(channel.avatars)
-        val channelAvatarFallback = if (HtmlRendererCommon.hasThumbnail(channel.avatars)) channelAvatar else null
+        val channelBanner = HtmlRendererCommon.getThumbnailUrl(channel.bannerUrl)
+        val channelAvatar = HtmlRendererCommon.getThumbnailUrl(channel.avatarUrl)
+        val channelAvatarFallback = channel.avatarUrl?.let { channelAvatar }
         val channelName = HtmlRendererCommon.escapeHtml(channel.name)
         val subscriberText = if (channel.subscriberCount >= 0) "${channel.subscriberCount} subscribers" else ""
-        val channelDesc = channel.description ?: ""
+        val channelDesc = channel.description
 
         sb.append("<div class=\"container\">\n")
           .append("  <div class=\"channel-header\">\n")
@@ -32,11 +30,11 @@ object HtmlRendererChannel {
           .append("        <p class=\"channel-desc\">$channelDesc</p>\n")
           .append("      </div>\n")
 
-        val channelUrlEncoded = HtmlRendererCommon.encodeUrl(channel.linkHandler.url)
-        val channelBackUrl = HtmlRendererCommon.encodeUrl("/channel?serviceId=$serviceId&id=${channel.linkHandler.url}")
-        val channelUrlJs = HtmlRendererCommon.escapeJs(channel.linkHandler.url)
+        val channelUrlEncoded = HtmlRendererCommon.encodeUrl(channel.url)
+        val channelBackUrl = HtmlRendererCommon.encodeUrl("/channel?serviceId=$serviceId&id=${channel.url}")
+        val channelUrlJs = HtmlRendererCommon.escapeJs(channel.url)
 
-        sb.append(HtmlRendererCommon.renderSubscribeButton(channel.linkHandler.url, channel.name, channelAvatar, channelBackUrl, isSubscribed))
+        sb.append(HtmlRendererCommon.renderSubscribeButton(channel.url, channel.name, channelAvatar, channelBackUrl, isSubscribed))
 
         // Backed by Flow's native FlowNeuroEngine block list - see nativeBlockChannel() in
         // LocalServerFlowData.kt.
@@ -51,13 +49,13 @@ object HtmlRendererChannel {
 
         sb.append("    </div>\n")
           .append("    <div class=\"channel-tabs-selector\">\n")
-          .append("      <a href=\"/channel?serviceId=$serviceId&id=${channel.linkHandler.url}&tab=videos\" class=\"channel-tab-btn $videosActive\">Uploads</a>\n")
-          .append("      <a href=\"/channel?serviceId=$serviceId&id=${channel.linkHandler.url}&tab=playlists\" class=\"channel-tab-btn $playlistsActive\">Playlists</a>\n")
+          .append("      <a href=\"/channel?serviceId=$serviceId&id=${channel.url}&tab=videos\" class=\"channel-tab-btn $videosActive\">Uploads</a>\n")
+          .append("      <a href=\"/channel?serviceId=$serviceId&id=${channel.url}&tab=playlists\" class=\"channel-tab-btn $playlistsActive\">Playlists</a>\n")
           .append("    </div>\n")
           .append("  </div>\n")
 
         if (items != null && items.isNotEmpty()) {
-            sb.append(renderChannelItemsFragment(serviceId, channel.linkHandler.url, activeTab, items, nextPage, channelAvatarFallback))
+            sb.append(renderChannelItemsFragment(serviceId, channel.url, activeTab, items, nextPage, channelAvatarFallback))
         } else {
             sb.append("<div class=\"loading-placeholder\">No items found under this tab.</div>\n")
         }
@@ -86,7 +84,7 @@ object HtmlRendererChannel {
 
     @JvmStatic
     @Throws(Exception::class)
-    fun renderPlaylist(serviceId: Int, playlist: PlaylistExtractor, items: List<InfoItem>?, nextPage: Page?, isBookmarked: Boolean, isTv: Boolean): String {
+    fun renderPlaylist(serviceId: Int, playlist: PlaylistHeader, items: List<InfoItem>?, nextPage: Page?, isBookmarked: Boolean, isTv: Boolean): String {
         val sb = StringBuilder()
         sb.append(HtmlRendererCommon.getHeaderHtml(serviceId, ""))
 
@@ -101,8 +99,8 @@ object HtmlRendererChannel {
           .append("      <span class=\"uploader-subs\">Playlist by $playlistUploader • $playlistItemCount</span>\n")
           .append("    </div>\n")
 
-        val playlistUrlEncoded = HtmlRendererCommon.encodeUrl(playlist.linkHandler.url)
-        val playlistBackUrl = HtmlRendererCommon.encodeUrl("/playlist?serviceId=$serviceId&id=${playlist.linkHandler.url}")
+        val playlistUrlEncoded = HtmlRendererCommon.encodeUrl(playlist.url)
+        val playlistBackUrl = HtmlRendererCommon.encodeUrl("/playlist?serviceId=$serviceId&id=${playlist.url}")
 
         if (isBookmarked) {
             sb.append("    <a href=\"/bookmark_playlist?action=unbookmark&id=$playlistUrlEncoded&back=$playlistBackUrl\" class=\"subscribe-btn subscribed\" style=\"text-decoration:none;\">⭐ Bookmarked</a>\n")
@@ -114,7 +112,7 @@ object HtmlRendererChannel {
         sb.append("  </div>\n")
 
         if (items != null && items.isNotEmpty()) {
-            sb.append(renderPlaylistItemsFragment(serviceId, playlist.linkHandler.url, items, nextPage))
+            sb.append(renderPlaylistItemsFragment(serviceId, playlist.url, items, nextPage))
         } else {
             sb.append("<div class=\"loading-placeholder\">No streams in this playlist.</div>\n")
         }

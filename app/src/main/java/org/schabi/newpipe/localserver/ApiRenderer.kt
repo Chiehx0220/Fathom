@@ -4,7 +4,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.channel.ChannelExtractor
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
@@ -22,8 +21,7 @@ import org.schabi.newpipe.extractor.stream.StreamType
  */
 object ApiRenderer {
 
-    // channelId is the full channel URL, not a bare ID - PipePipeExtractor deals in URLs
-    // throughout; Flow's model field is just named "channelId".
+    // channelId is the full channel URL, not a bare id.
     @JvmStatic
     fun videoJson(item: InfoItem, serviceId: Int): JSONObject {
         val json = JSONObject()
@@ -143,15 +141,15 @@ object ApiRenderer {
     }
 
     @JvmStatic
-    fun channelJson(channel: ChannelExtractor, isSubscribed: Boolean): JSONObject {
+    fun channelJson(channel: ChannelHeader, isSubscribed: Boolean): JSONObject {
         val json = JSONObject()
-        json.put("id", channel.linkHandler.url)
-        json.put("name", channel.name ?: "")
-        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(channel.avatars))
+        json.put("id", channel.url)
+        json.put("name", channel.name)
+        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(channel.avatarUrl))
         json.put("subscriberCount", channel.subscriberCount.coerceAtLeast(-1))
-        json.put("description", channel.description ?: "")
+        json.put("description", channel.description)
         json.put("isSubscribed", isSubscribed)
-        json.put("url", channel.linkHandler.url)
+        json.put("url", channel.url)
         return json
     }
 

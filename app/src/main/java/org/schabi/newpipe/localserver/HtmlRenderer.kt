@@ -3,9 +3,7 @@ package org.schabi.newpipe.localserver
 import org.schabi.newpipe.extractor.Image
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.channel.ChannelExtractor
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
-import org.schabi.newpipe.extractor.playlist.PlaylistExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfo
 
 // Thin facade over the page-specific HtmlRenderer* files - preserves every existing
@@ -75,7 +73,7 @@ object HtmlRenderer {
 
     @JvmStatic
     @Throws(Exception::class)
-    fun renderChannel(serviceId: Int, channel: ChannelExtractor, activeTab: String, items: List<InfoItem>?, nextPage: Page?, isSubscribed: Boolean, isBlocked: Boolean, isTv: Boolean): String =
+    fun renderChannel(serviceId: Int, channel: ChannelHeader, activeTab: String, items: List<InfoItem>?, nextPage: Page?, isSubscribed: Boolean, isBlocked: Boolean, isTv: Boolean): String =
         HtmlRendererChannel.renderChannel(serviceId, channel, activeTab, items, nextPage, isSubscribed, isBlocked, isTv)
 
     @JvmStatic
@@ -84,7 +82,7 @@ object HtmlRenderer {
 
     @JvmStatic
     @Throws(Exception::class)
-    fun renderPlaylist(serviceId: Int, playlist: PlaylistExtractor, items: List<InfoItem>?, nextPage: Page?, isBookmarked: Boolean, isTv: Boolean): String =
+    fun renderPlaylist(serviceId: Int, playlist: PlaylistHeader, items: List<InfoItem>?, nextPage: Page?, isBookmarked: Boolean, isTv: Boolean): String =
         HtmlRendererChannel.renderPlaylist(serviceId, playlist, items, nextPage, isBookmarked, isTv)
 
     @JvmStatic

@@ -10,6 +10,8 @@ import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.model.Video as FlowVideo
+import io.github.aedev.flow.innertube.YouTube
+import io.github.aedev.flow.innertube.pages.explore.chartsCountryOrFallback
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.InteractionType
 import io.github.aedev.flow.data.recommendation.UserBrain
@@ -35,6 +37,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import org.schabi.newpipe.extractor.InfoItem
+import io.github.aedev.flow.bilibili.BilibiliLink
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
@@ -71,7 +74,12 @@ fun HistoryDbHelper.nativeIsSubscribed(channelUrl: String?): Boolean {
 /** Subscribes, or refreshes name/avatar if already subscribed - never resets tracked state. */
 fun HistoryDbHelper.nativeAddSubscription(channelUrl: String, channelName: String?, channelAvatar: String?) {
     val channelId = channelUrlToId(channelUrl) ?: return
-    val serviceId = runCatching { NewPipe.getServiceByUrl(channelUrl).serviceId }.getOrDefault(0)
+    val serviceId =
+        if (BilibiliLink.isBilibili(channelUrl)) {
+            LocalServerBilibili.serviceId
+        } else {
+            runCatching { NewPipe.getServiceByUrl(channelUrl).serviceId }.getOrDefault(0)
+        }
     runBlocking {
         subscriptionRepository().subscribeOrUpdateInfo(channelId, channelName ?: "", channelAvatar ?: "", serviceId)
     }
@@ -358,13 +366,11 @@ fun HistoryDbHelper.nativeClearHistory() {
  * Flow's video-only [FlowVideo] display model.
  */
 
-// getInstance() double-checked-caches internally and matches RepositoryModule.kt's Hilt @Provides
-// factory - same singleton instance as native, no second cache layer needed.
+// Singleton shared with native (same instance as the Hilt provider).
 private fun HistoryDbHelper.youTubeRepository(): YouTubeRepository =
     YouTubeRepository.getInstance(PlayerPreferences(appContext), ChannelReelIndex())
 
-// @Singleton-scoped in Hilt's graph; reached via LocalServerEntryPoint since this runs outside
-// Hilt. Hilt's own scoping already caches the instance.
+// Singleton reached through LocalServerEntryPoint, since this runs outside Hilt.
 private fun HistoryDbHelper.homeFeedSources(): HomeFeedSources =
     localServerEntryPoint(appContext).homeFeedSources()
 
@@ -377,8 +383,7 @@ private suspend fun HistoryDbHelper.ensureFlowNeuroInitialized() {
     flowNeuroInitialized = true
 }
 
-// serviceId param unused: this.serviceId is authoritative; kept for signature symmetry with the
-// module's other converters.
+// serviceId is unused: this.serviceId is authoritative; the parameter keeps the converters symmetric.
 
 /**
  * Listing candidates (StreamInfoItem) carry no tags/description - only the watch-page StreamInfo
@@ -445,7 +450,7 @@ fun FlowVideo.toStreamInfoItem(serviceId: Int): StreamInfoItem {
     return item
 }
 
-// 5-min TTL cache for the assembled/ranked home feed, keyed by serviceId+feedMode.
+// 5-minute cache of the assembled home feed, keyed by serviceId + feedMode.
 private const val HOME_FEED_CACHE_TTL_MS = 5 * 60 * 1000L
 private data class HomeFeedCacheEntry(val items: List<InfoItem>, val timestampMs: Long)
 private val homeFeedCache = java.util.concurrent.ConcurrentHashMap<String, HomeFeedCacheEntry>()
@@ -490,8 +495,7 @@ private suspend fun HistoryDbHelper.buildHomeFeedContext(): HomeFeedContext {
  * converts to [StreamInfoItem]. Used by [continueDiscoveryFeed]. */
 private suspend fun HistoryDbHelper.rankAndConvert(videos: List<FlowVideo>, serviceId: Int): List<StreamInfoItem> {
     val deduped = LinkedHashMap<String, FlowVideo>()
-    // serviceId filter: every watch/channel link on this page is baked to one serviceId; a
-    // cross-service video here would be a dead link.
+    // Only this page's serviceId: watch and channel links are built for one service.
     for (v in videos) if (v.id.isNotBlank() && v.serviceId == serviceId) deduped.putIfAbsent(v.id, v)
     if (deduped.isEmpty()) return emptyList()
 
@@ -558,8 +562,7 @@ fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int, feedMode: String): Pair
             runCatching { repo.getSubscriptionFeed(subIds.toList()) }.getOrDefault(emptyList())
         }
         val discoveryDeferred = async { fetchDiscoveryVideos(repo, resetDepth = true) }
-        // Blank region: getTrendingVideos() falls back to playerPreferences.trendingRegion itself.
-        val viralDeferred = async { runCatching { repo.getTrendingVideos("").first }.getOrDefault(emptyList()) }
+        val viralDeferred = async { runCatching { trendingVideos() }.getOrDefault(emptyList()) }
         val relatedDeferred = async {
             runCatching {
                 val seedInputs = sources.historySeedInputs()
@@ -567,8 +570,7 @@ fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int, feedMode: String): Pair
                 sources.fetchRelatedGraph(seedInputs, seedIds, cacheFilters).candidates
             }.getOrDefault(emptyList())
         }
-        // Same SubscriptionFeedRepository (RSS + Room cache) as native's fresh-uploads lane, via
-        // LocalServerEntryPoint. Cache read only, no network call.
+        // Cache read from the same SubscriptionFeedRepository as native; no network call.
         val rssDeferred = async {
             runCatching {
                 localServerEntryPoint(appContext).subscriptionFeedRepository().observeFeed().first()
@@ -603,8 +605,7 @@ fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int, feedMode: String): Pair
         totalInteractions = context.brain.totalInteractions,
     )
 
-    // Subscriptions/history span every Flow-supported service; filter to this page's serviceId
-    // before converting (see YouTubeIdHelpers.kt).
+    // Subscriptions and history span all services; filter to this page's serviceId first (ServiceIdHelpers.kt).
     val result = mix.videos.filter { it.serviceId == serviceId }.map { it.toStreamInfoItem(serviceId) }
     if (result.isEmpty()) return@runBlocking emptyList<InfoItem>() to false
 
@@ -658,17 +659,19 @@ fun HistoryDbHelper.continueDiscoveryFeed(serviceId: Int): Pair<List<InfoItem>, 
     result to result.isNotEmpty()
 }
 
-// NOTE (2026-09): Shorts/Reels feed removed entirely - unpartitioned global cache, disconnected
-// cache layers, single-fetch subscription pool, refill-lock-coupled polling. Rebuild as fresh
-// design. Native's equivalent: [io.github.aedev.flow.data.shorts.ShortsRepository] (InnerTube +
-// continuation token) and [io.github.aedev.flow.data.shorts.ShortsDiscoveryEngine] (gated on
-// `awaitFirstPlaybackResolved()`, no HTTP-handler equivalent).
+// The Shorts feed is not served here. Native equivalents: ShortsRepository and ShortsDiscoveryEngine.
 
 /** Trending kiosk, unranked - `handleApiHome()`'s raw JSON feed (vs. `handleApiRecommendations()`,
  * which uses [buildAndRankHomeFeed]'s ranked pool). No pagination (`YoutubeTrendingExtractor`
  * has no next page). */
 fun HistoryDbHelper.fetchTrendingItems(serviceId: Int): List<StreamInfoItem> = runBlocking {
-    youTubeRepository().getTrendingVideos("").first.map { it.toStreamInfoItem(serviceId) }
+    trendingVideos().map { it.toStreamInfoItem(serviceId) }
+}
+
+/** YouTube's trending chart for the user's trending region. */
+private suspend fun HistoryDbHelper.trendingVideos(): List<FlowVideo> {
+    val region = playerPreferences().trendingRegion.first()
+    return YouTube.videoCharts("TRENDING_VIDEOS", chartsCountryOrFallback(region)).getOrNull()?.entries.orEmpty()
 }
 
 /**

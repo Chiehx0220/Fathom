@@ -1,21 +1,20 @@
 package org.schabi.newpipe.localserver
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliLink
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.ListExtractor
 import org.schabi.newpipe.extractor.MediaFormat
-import org.schabi.newpipe.extractor.bulletComments.BulletCommentsInfoItem
 import org.schabi.newpipe.extractor.ListExtractor.InfoItemsPage
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelExtractor
-import org.schabi.newpipe.extractor.channel.ChannelTabExtractor
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
+import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
 import org.schabi.newpipe.extractor.playlist.PlaylistExtractor
 import org.schabi.newpipe.extractor.search.SearchExtractor
-import org.schabi.newpipe.extractor.search.filter.Filter
-import org.schabi.newpipe.extractor.search.filter.FilterItem
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -25,8 +24,6 @@ import org.schabi.newpipe.extractor.stream.SubtitlesStream
 import org.schabi.newpipe.extractor.stream.StreamType
 
 import io.github.aedev.flow.data.recommendation.InteractionType
-import io.github.aedev.flow.player.stream.isOriginalAudioTrack
-import io.github.aedev.flow.utils.SearchFilterResolver
 
 import java.io.BufferedReader
 import java.io.IOException
@@ -174,9 +171,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         private var logListener: LogListener? = null
         internal val streamUrlCache = StreamUrlCache()
 
-        // Shared by handleWatchContent/handleAudioWatch (StreamInfo) and handleManifestProxy
-        // (raw stream lists) - one page extraction per video, not two. Smaller than streamUrlCache
-        // since entries hold parsed extractor state, not just a URL string.
+        // One extraction per video, shared by the watch and manifest handlers. Smaller than streamUrlCache: entries hold parsed extractor state.
         private val extractorCache = ExtractorCache()
         internal val httpClient: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -218,7 +213,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             try {
                 val channelExtractor = service.getChannelExtractor(channelUrl)
                 channelExtractor.fetchPage()
-                val tabExtractor = resolveChannelTabExtractor(service, channelExtractor, "videos")
+                val tabExtractor = service.getChannelTabExtractor(resolveChannelTabHandler(channelExtractor, "videos"))
                 tabExtractor.fetchPage()
                 val pageItems: List<*>? = if (tabExtractor.initialPage != null) tabExtractor.initialPage.items else null
                 val list = ArrayList<InfoItem>()
@@ -237,9 +232,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             }
         }
 
-        // BilibiliChannelInfoItemWebAPIExtractor/ClientAPIExtractor never override getUploaderUrl(),
-        // falling through to the "" default - an empty uploader link 404s the channel route. Every
-        // item here already belongs to channelUrl, so backfill it directly.
+        // Backfill the uploader link: an empty one 404s the channel route, and every item here already belongs to channelUrl.
         internal fun backfillUploaderUrl(items: List<InfoItem>, channelUrl: String) {
             for (item in items) {
                 if (item is StreamInfoItem) {
@@ -251,74 +244,25 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             }
         }
 
-        // getChannelTabExtractorFromId() calls getChannelTabLHFactory().fromQuery() unconditionally,
-        // NPEing for a service with no query factory (Bilibili) - falls back to matching by
-        // ChannelTabs FilterItem name off getTabs() instead.
-        internal fun resolveChannelTabExtractor(
-            service: StreamingService,
+        // The channel's handler for [tab] ("videos", "playlists", ...), else its first tab.
+        internal fun resolveChannelTabHandler(
             channelExtractor: ChannelExtractor,
             tab: String,
-        ): ChannelTabExtractor {
-            if (service.channelTabLHFactory != null) {
-                return service.getChannelTabExtractorFromId(channelExtractor.id, tab, channelExtractor.baseUrl)
-            }
-            val handler = channelExtractor.tabs.firstOrNull { handler -> handler.contentFilters.any { it.name == tab } }
+        ): ListLinkHandler =
+            channelExtractor.tabs.firstOrNull { handler -> handler.contentFilters.contains(tab) }
                 ?: channelExtractor.tabs.firstOrNull()
                 ?: throw ExtractionException("Channel exposes no tabs: ${channelExtractor.url}")
-            return service.getChannelTabExtractor(handler)
-        }
 
-        // Common "resume from nextPage token, else fetch first page" shape for search/channel-tab/
-        // playlist extractors - delegates to PPE's shared ListExtractorCompat.
-        internal fun <R : InfoItem> fetchInitialOrPage(extractor: ListExtractor<R>, nextPage: Page?): InfoItemsPage<R> =
-            org.schabi.newpipe.extractor.compat.ListExtractorCompat.fetchInitialOrPage(extractor, nextPage)
-
-        // Manual fetchInitialOrPage() equivalent: getDefaultKioskExtractor() returns a raw
-        // KioskExtractor, incompatible with the generic version's type param. Shared by
-        // handleHome/handleApiHome/handleApiRecommendations's non-YouTube branch (no personalized
-        // feed outside YouTube - always native trending kiosk, regardless of homeFeedMode).
-        internal fun fetchKioskPage(service: StreamingService, nextPage: Page?): InfoItemsPage<*> {
-            val kioskExtractor = service.kioskList.defaultKioskExtractor
-            kioskExtractor.fetchPage()
-            return if (nextPage != null) kioskExtractor.getPage(nextPage) else kioskExtractor.initialPage
-        }
-
-        // Bilibili bangumi urls: comments need the episode's bvid from WatchDataCache, populated by
-        // the stream extractor. BilibiliCommentsCompat avoids an NPE when /comments races
-        // /watch-content; a no-op for non-bangumi urls.
-        internal fun commentsExtractorFor(service: StreamingService, videoUrl: String) =
-            if (service is org.schabi.newpipe.extractor.services.bilibili.BilibiliService) {
-                org.schabi.newpipe.extractor.services.bilibili.compat.BilibiliCommentsCompat
-                    .getCommentsExtractor(service, videoUrl)
-            } else {
-                service.getCommentsExtractor(videoUrl)
-            }
-
-        // BulletCommentsInfoItem.getLastingTime() always returns -1 (extractor bug) - on-screen
-        // duration is hardcoded client-side instead, not serialized here.
-        @JvmStatic
-        fun bulletCommentJson(item: BulletCommentsInfoItem): org.json.JSONObject {
-            val json = org.json.JSONObject()
-            json.put("text", item.commentText ?: "")
-            json.put("time", (item.duration?.toMillis() ?: 0L) / 1000.0)
-            json.put("color", String.format("#%06X", item.argbColor and 0xFFFFFF))
-            json.put(
-                "position",
-                when (item.position) {
-                    BulletCommentsInfoItem.Position.TOP -> "top"
-                    BulletCommentsInfoItem.Position.BOTTOM -> "bottom"
-                    else -> "scroll"
-                },
-            )
-            json.put("size", item.relativeFontSize)
-            return json
+        // Resume from the nextPage token, else fetch the first page. getPage() reads only the token, so a fresh extractor can resume.
+        internal fun <R : InfoItem> fetchInitialOrPage(extractor: ListExtractor<R>, nextPage: Page?): InfoItemsPage<R> {
+            extractor.fetchPage()
+            return if (nextPage != null) extractor.getPage(nextPage) else extractor.initialPage
         }
 
         const val SERVICE_YOUTUBE = 0
-        val SUPPORTED_SERVICE_IDS = intArrayOf(SERVICE_YOUTUBE, ServiceList.BiliBili.serviceId)
+        val SUPPORTED_SERVICE_IDS = intArrayOf(SERVICE_YOUTUBE, BILIBILI_SERVICE_ID)
 
-        // Sentinel "nextPage" value for the home feed's "Load More" - not a real Page (trending
-        // kiosk has no pagination), see continueDiscoveryFeed().
+        // Sentinel nextPage for the home feed's "Load More": not a real Page (see continueDiscoveryFeed()).
         const val HOME_DISCOVERY_LOAD_MORE_TOKEN = "discovery-more"
 
         @JvmStatic
@@ -331,23 +275,10 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return false
         }
 
-        /**
-         * Search extractor with the default "all" content filter. An empty filter list is not a
-         * safe substitute: `YoutubeFilters.evaluateSelectedFilters()` throws on it.
-         */
         @JvmStatic
         @Throws(ExtractionException::class)
-        fun getDefaultSearchExtractor(service: StreamingService, query: String): SearchExtractor {
-            // BilibiliFilters has no "all" filter - resolveSearchContentFilters() falls back to
-            // Bilibili's "videos" default instead of silently going filterless (which drops the
-            // required search_type= param and breaks BilibiliSearchExtractor's response parsing).
-            val defaultFilter =
-                SearchFilterResolver.resolveSearchContentFilters(
-                    service,
-                    listOf(SearchFilterResolver.DEFAULT_CONTENT_FILTER_NAME),
-                )
-            return service.getSearchExtractor(query, defaultFilter, emptyList())
-        }
+        fun getDefaultSearchExtractor(service: StreamingService, query: String): SearchExtractor =
+            service.getSearchExtractor(query)
 
         /**
          * Normalizes an audio codec string for a DASH manifest. Bilibili reports bare `"mp4a"`,
@@ -367,15 +298,12 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return trimmed
         }
 
-        // Shared by both the stream-proxy track selection and the DASH manifest generator.
         @JvmStatic
         fun isOriginalAudioTrack(stream: AudioStream): Boolean {
-            return stream.isOriginalAudioTrack()
+            return stream.audioTrackType == org.schabi.newpipe.extractor.stream.AudioTrackType.ORIGINAL
         }
 
-        // Default audio-track priority: original track, then device-locale match, then English,
-        // then highest bitrate. Shared across the stream proxy, DASH manifest generator, and
-        // HtmlRenderer's UI track picker - keeps "default" consistent with what's actually served.
+        // Default audio-track priority: original, then device locale, then English, then highest bitrate. Shared by the stream proxy, the manifest and the track picker.
         @JvmStatic
         fun audioTrackPriorityComparator(): Comparator<AudioStream> {
             val langCode = Locale.getDefault().language
@@ -385,8 +313,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 if (isOrigA != isOrigB) {
                     return@Comparator if (isOrigA) -1 else 1
                 }
-                val localeA = a.audioLocale?.let { Locale.forLanguageTag(it.replace('_', '-')).language }
-                val localeB = b.audioLocale?.let { Locale.forLanguageTag(it.replace('_', '-')).language }
+                val localeA = a.audioLocale?.language
+                val localeB = b.audioLocale?.language
                 val langMatchA = (localeA != null && localeA.equals(langCode, ignoreCase = true))
                 val langMatchB = (localeB != null && localeB.equals(langCode, ignoreCase = true))
                 if (langMatchA != langMatchB) {
@@ -403,7 +331,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             }
         }
 
-        // Used by this class's stream proxy for quality selection.
         @JvmStatic
         fun getResolutionHeight(resolution: String?): Int {
             if (resolution == null || resolution.isEmpty()) return 0
@@ -415,17 +342,11 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     return if (numeric.isEmpty()) 0 else numeric.toInt()
                 }
             } catch (e: Exception) {
-                // fallback
             }
             return 0
         }
 
-        // The DASH manifest (handleManifestProxy) only ever draws its video AdaptationSet from
-        // video-ONLY streams that are MPEG_4 and carry valid SegmentBase index/init ranges -
-        // progressive streams and other formats (e.g. WebM/VP9) never appear in it. The quality
-        // dropdown (HtmlRendererWatch.kt) must offer exactly this same set, or a selection that
-        // doesn't exist in the manifest silently matches no QualityLevel and does nothing -
-        // exactly the "quality selection doesn't work" symptom this was written to fix.
+        // The manifest's video AdaptationSet only contains video-only MPEG_4 streams with valid SegmentBase ranges; the quality list must offer exactly that set, or a selection matches nothing.
         @JvmStatic
         fun dashPlayableVideoOnlyStreams(videoOnlyStreams: List<VideoStream>?): List<VideoStream> {
             if (videoOnlyStreams.isNullOrEmpty()) return emptyList()
@@ -437,8 +358,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             }
         }
 
-        // Shared by handleWatchContent/handleAudioWatch/handleManifestProxy - one
-        // getStreamExtractor()+fetchPage() per video, regardless of which handler runs first.
+        // One extractor and page fetch per video, whichever handler runs first.
         @JvmStatic
         @Throws(Exception::class)
         fun getCachedExtractor(service: StreamingService, serviceId: Int, mediaUrl: String): StreamExtractor {
@@ -467,7 +387,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         isRunning = true
         log("Local server started on port $port")
 
-        // Start WebSocket Server on port 8081
         if (wsServer == null) {
             val server = RemoteWebSocketServer(8081)
             wsServer = server
@@ -492,14 +411,12 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         try {
             serverSocket?.close()
         } catch (e: IOException) {
-            // ignore
         }
         val server = wsServer
         if (server != null) {
             try {
                 server.stop()
             } catch (e: InterruptedException) {
-                // ignore
             }
             wsServer = null
         }
@@ -507,9 +424,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         log("Local server stopped.")
     }
 
-    // internal, not private: handler groups live as extension functions in sibling files
-    // (LocalHttpServerActionHandlers.kt et al.). dbHelper/sendResponse/sendRedirect/getServiceId
-    // below are internal for the same reason.
+    // internal: handler groups are extension functions in sibling files.
     internal class ClientHandler(
         private val socket: Socket,
         internal val dbHelper: HistoryDbHelper,
@@ -517,8 +432,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         private val executorService: ExecutorService
     ) : Runnable {
 
-        // Set once near the top of run() before any handler method runs, so sendResponse() can
-        // check Accept-Encoding without every handler needing to thread the header map through.
+        // Set once at the top of run() so sendResponse() can check Accept-Encoding.
         private var requestHeaders: MutableMap<String, String>? = null
 
         override fun run() {
@@ -533,7 +447,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                         val method = parts[0]
                         val rawUri = parts[1]
 
-                        // Parse path and query parameters
                         var path = rawUri
                         var query: String? = null
                         val qIdx = rawUri.indexOf("?")
@@ -545,7 +458,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                         val params = parseQueryParams(query)
                         log("Request: $method $path" + (if (query != null) "?$query" else ""))
 
-                        // Parse headers
                         val requestHeaders = HashMap<String, String>()
                         this.requestHeaders = requestHeaders
                         var headerLine: String?
@@ -572,7 +484,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                             return
                         }
 
-                        // Read POST body if Content-Length is present
                         var postBody = ""
                         if ("POST".equals(method, ignoreCase = true)) {
                             val contentLengthHeader = requestHeaders["content-length"]
@@ -593,7 +504,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                             }
                         }
 
-                        // Detect device class (TV vs Phone)
                         val ua = requestHeaders["user-agent"]
                         var isTv = false
                         if (ua != null) {
@@ -602,9 +512,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                         }
 
                         try {
-                            // Route table, not an if-else chain. Rebuilt per request: each lambda
-                            // closes over this request's os/params/isTv/requestHeaders; negligible
-                            // allocation at LAN-server request volume.
+                            // Route table rebuilt per request: each lambda captures this request's state.
                             val routes: Map<String, () -> Unit> = mapOf(
                                 "/" to { handleHome(os, params, isTv) },
                                 "/search" to { handleSearch(os, params, isTv) },
@@ -625,6 +533,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                                 "/stream" to { handleStreamProxy(os, params, requestHeaders) },
                                 "/manifest" to { handleManifestProxy(os, params) },
                                 "/subtitles" to { handleSubtitlesProxy(os, params) },
+                                "/thumbnails" to { handleThumbnailsProxy(os, params) },
+                                "/thumbnail-sheet" to { handleThumbnailSheetProxy(os, params) },
                                 "/log_client_capabilities" to { handleLogClientCapabilities(os, params, requestHeaders) },
                                 "/api/player/play" to { handleApiPlayerPlay(os, params) },
                                 "/api/player/pause" to { handleApiPlayerPause(os) },
@@ -666,7 +576,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     }
                 }
             } catch (e: Exception) {
-                // Connection error
             } finally {
                 try {
                     socket.close()
@@ -687,31 +596,25 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             }
 
             try {
-                val service = NewPipe.getService(serviceId)
                 var items: List<InfoItem>
-                // Ready-to-embed "Load More" value - a serialized Page for the (dead) kiosk
-                // branch, or HOME_DISCOVERY_LOAD_MORE_TOKEN for YouTube's personalized feed.
+                // Ready-to-embed "Load More" value: a serialized Page, or HOME_DISCOVERY_LOAD_MORE_TOKEN for the personalized feed.
                 var nextToken: String?
 
                 val feedMode = dbHelper.homeFeedMode
                 if (serviceId != SERVICE_YOUTUBE) {
-                    // homeFeedMode ("subs"/"mix") is YouTube-only (see buildAndRankHomeFeed/
-                    // buildSubsOnlyFeed) - other services always get their native kiosk feed.
+                    // homeFeedMode ("subs"/"mix") is YouTube-only; other services get their kiosk feed.
                     val nextPage = HtmlRenderer.deserializePage(nextPageStr)
-                    val page = fetchKioskPage(service, nextPage)
-                    items = ArrayList(page.items as List<InfoItem>)
-                    nextToken = HtmlRendererCommon.serializePage(page.nextPage)
+                    val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
+                    items = page.items
+                    nextToken = HtmlRendererCommon.serializePage(page.next)
                 } else if ("subs" == feedMode) {
-                    // See LocalServerFlowData.kt's buildSubsOnlyFeed().
                     items = dbHelper.buildSubsOnlyFeed(serviceId)
                     nextToken = null
                 } else if (nextPageStr == HOME_DISCOVERY_LOAD_MORE_TOKEN) {
-                    // "Load More" - see continueDiscoveryFeed() (trending kiosk has no pagination).
                     val (moreItems, hasMore) = dbHelper.continueDiscoveryFeed(serviceId)
                     items = moreItems
                     nextToken = if (hasMore) HOME_DISCOVERY_LOAD_MORE_TOKEN else null
                 } else {
-                    // See LocalServerFlowData.kt's buildAndRankHomeFeed().
                     val (feedItems, hasMore) = dbHelper.buildAndRankHomeFeed(serviceId, feedMode)
                     items = feedItems
                     nextToken = if (hasMore) HOME_DISCOVERY_LOAD_MORE_TOKEN else null
@@ -721,8 +624,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 val html = HtmlRenderer.renderHomeFeed(serviceId, filtered, nextToken)
                 sendResponse(os, 200, html, "text/html; charset=UTF-8")
             } catch (e: Exception) {
-                // Fires for any feed failure, not just connectivity loss - surface the actual
-                // exception rather than assuming "offline".
+                // Any feed failure, not just connectivity: report the actual exception.
                 log("Home feed failed: $e")
                 val feedSb = StringBuilder()
                 feedSb.append("  <div style=\"background-color:#fce8e6; color:#c5221f; padding:16px; border-radius:12px; margin-bottom:24px; font-size:14px; font-weight:500; border: 1px solid #fad2cf;\">\n")
@@ -734,9 +636,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             }
         }
 
-        // Aggregates subscribed-channel uploads into one reverse-chronological feed (Subscriptions
-        // tab). Resolves each channel via getServiceByUrl, not the page's serviceId - the
-        // subscriptions list mixes YouTube/Bilibili. Capped to 60 items.
+        // Merges subscribed channels' uploads into one newest-first feed (capped at 60). Each channel is resolved by its own URL, since subscriptions mix services.
         private fun fetchSubscriptionFeed(channels: List<InfoItem>?): List<InfoItem> {
             var feed = ArrayList<InfoItem>()
             if (channels == null || channels.isEmpty()) {
@@ -745,12 +645,15 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             val futures = ArrayList<Future<List<InfoItem>>>()
             for (channel in channels) {
                 val url = channel.url
-                // Channel-uploads-tab items carry no per-video avatar - backfill from the
-                // subscription's stored avatar, else cards fall back to a placeholder.
+                // Backfill the avatar from the subscription; upload listings carry none.
                 val subscribedAvatarUrl = channel.thumbnailUrl?.takeIf { it.isNotBlank() }
                 futures.add(executorService.submit(Callable {
-                    val channelService = NewPipe.getServiceByUrl(url)
-                    val uploads = fetchChannelUploads(channelService, url)
+                    val uploads =
+                        if (BilibiliLink.isBilibili(url)) {
+                            LocalServerBilibili.uploads(dbHelper.appContext, url, channel.name.orEmpty(), subscribedAvatarUrl.orEmpty())
+                        } else {
+                            fetchChannelUploads(NewPipe.getServiceByUrl(url), url)
+                        }
                     if (!subscribedAvatarUrl.isNullOrEmpty()) {
                         for (upload in uploads) {
                             if (upload is StreamInfoItem && upload.uploaderAvatarUrl.isNullOrBlank()) {
@@ -761,9 +664,11 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     uploads
                 }))
             }
-            for (future in futures) {
+            for ((index, future) in futures.withIndex()) {
                 try {
-                    val res = future.get(5, TimeUnit.SECONDS)
+                    // Bilibili's first request of a session sets up cookies and a signing key, which takes longer.
+                    val waitSeconds = if (BilibiliLink.isBilibili(channels[index].url)) 20L else 5L
+                    val res = future.get(waitSeconds, TimeUnit.SECONDS)
                     if (res != null) {
                         feed.addAll(res)
                     }
@@ -785,8 +690,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return feed
         }
 
-        // getUploadDate() is null unless the extractor provides a precise timestamp; unparseable
-        // "N hours ago" text is never guessed from - items without one sort last.
+        // getUploadDate() is null without a precise timestamp; items without one sort last.
         private fun uploadDateOf(item: InfoItem): java.time.OffsetDateTime? {
             if (item is StreamInfoItem) {
                 val dw = item.uploadDate
@@ -805,8 +709,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 sendRedirect(os, "/?serviceId=$serviceId")
                 return
             }
-            // loadMoreSearch()'s ajax=1 follow-ups are a continuation of this same search, not a
-            // new one - only the initial page load should add a search-history entry.
+            // Only the initial page load adds a search-history entry; ajax follow-ups continue the same search.
             val isAjax = params["ajax"] == "1"
             if (!isAjax) {
                 dbHelper.nativeAddSearchQuery(query)
@@ -816,12 +719,9 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             val nextPage = HtmlRenderer.deserializePage(nextPageStr)
 
             try {
-                val service = NewPipe.getService(serviceId)
-                val extractor = getDefaultSearchExtractor(service, query)
-
-                val page = fetchInitialOrPage(extractor, nextPage)
+                val page = LocalServerSource.search(dbHelper.appContext, serviceId, query, nextPage)
                 val items = page.items
-                val next = page.nextPage
+                val next = page.next
 
                 val filtered = filterItems(items)
                 val html =
@@ -836,11 +736,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             }
         }
 
-        // /api/v1/... JSON API handlers live in LocalHttpServerApiHandlers.kt - independent of the
-        // HTML handlers here (see ApiRenderer.kt's header).
 
-        // Video/audio watch-page content, comments, and danmaku handlers live in
-        // LocalHttpServerWatchHandlers.kt.
 
         @Throws(Exception::class)
         private fun handleHistory(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
@@ -850,7 +746,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             sendResponse(os, 200, html, "text/html; charset=UTF-8")
         }
 
-        // Stream/manifest/subtitles proxy handlers live in LocalHttpServerProxyHandlers.kt.
 
         private fun handleLogClientCapabilities(os: OutputStream, params: Map<String, String>, requestHeaders: Map<String, String>) {
             val supported = params["supported"]
@@ -911,49 +806,31 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             val serviceId = getServiceId(params)
             val channelUrl = params["id"]!!
             val tab = params.getOrDefault("tab", "videos")
-            // loadMoreChannel()'s ajax=1 follow-ups only need the next batch of the grid, not the
-            // channel header/subscribe-button chrome around it.
+            // ajax=1 follow-ups only need the next grid batch, not the header chrome.
             val isAjax = params["ajax"] == "1"
 
             val nextPageStr = params["nextPage"]
             val nextPage = HtmlRenderer.deserializePage(nextPageStr)
 
             try {
-                val service = NewPipe.getService(serviceId)
-                val channelExtractor = service.getChannelExtractor(channelUrl)
-                channelExtractor.fetchPage()
-
-                val tabExtractor = resolveChannelTabExtractor(
-                    service, channelExtractor, if ("playlists" == tab) "playlists" else "videos")
-                val page = fetchInitialOrPage(tabExtractor, nextPage)
-                val items = page.items
-                val next = page.nextPage
-
-                backfillUploaderUrl(items, channelUrl)
-                val filtered = filterItems(items)
+                val channelTab = if ("playlists" == tab) "playlists" else "videos"
+                val channel = LocalServerSource.channel(dbHelper.appContext, serviceId, channelUrl, channelTab, null, nextPage)
+                val next = channel.next
+                val filtered = filterItems(channel.items)
+                val header = channel.header
 
                 if (isAjax) {
-                    val channelAvatar = HtmlRenderer.getThumbnailUrl(channelExtractor.avatars)
-                    val channelAvatarFallback = if (HtmlRendererCommon.hasThumbnail(channelExtractor.avatars)) channelAvatar else null
-                    val html = HtmlRenderer.renderChannelItemsFragment(serviceId, channelUrl, tab, filtered, next, channelAvatarFallback)
+                    val html = HtmlRenderer.renderChannelItemsFragment(serviceId, channelUrl, tab, filtered, next, header.avatarUrl)
                     sendResponse(os, 200, html, "text/html; charset=UTF-8")
                     return
                 }
 
-                val isSubscribed = dbHelper.nativeIsSubscribed(channelExtractor.linkHandler.url)
+                val isSubscribed = dbHelper.nativeIsSubscribed(header.url)
                 if (isSubscribed) {
-                    try {
-                        val cUrl = channelExtractor.linkHandler.url
-                        val cName = channelExtractor.name
-                        val cAvatar = HtmlRenderer.getThumbnailUrl(channelExtractor.avatars)
-                        if (!cAvatar.isNullOrEmpty()) {
-                            dbHelper.nativeAddSubscription(cUrl, cName, cAvatar)
-                        }
-                    } catch (ignored: Exception) {
-                    }
+                    header.avatarUrl?.let { dbHelper.nativeAddSubscription(header.url, header.name, HtmlRenderer.getThumbnailUrl(it)) }
                 }
-                val isBlocked = dbHelper.nativeIsChannelBlocked(channelExtractor.linkHandler.url)
-                val html = HtmlRenderer.renderChannel(serviceId, channelExtractor, tab, filtered, next, isSubscribed, isBlocked, isTv)
+                val isBlocked = dbHelper.nativeIsChannelBlocked(header.url)
+                val html = HtmlRenderer.renderChannel(serviceId, header, tab, filtered, next, isSubscribed, isBlocked, isTv)
                 sendResponse(os, 200, html, "text/html; charset=UTF-8")
             } catch (e: Exception) {
                 sendResponse(os, 500, "Channel failed: ${e.message}", "text/plain; charset=UTF-8")
@@ -963,22 +840,16 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         private fun handlePlaylist(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
             val serviceId = getServiceId(params)
             val playlistUrl = params["id"]!!
-            // loadMorePlaylist()'s ajax=1 follow-ups only need the next batch of the grid, not the
-            // playlist header/bookmark-button chrome around it.
+            // ajax=1 follow-ups only need the next grid batch, not the header chrome.
             val isAjax = params["ajax"] == "1"
 
             val nextPageStr = params["nextPage"]
             val nextPage = HtmlRenderer.deserializePage(nextPageStr)
 
             try {
-                val service = NewPipe.getService(serviceId)
-                val extractor = service.getPlaylistExtractor(playlistUrl)
-
-                val page = fetchInitialOrPage(extractor, nextPage)
-                val items: List<InfoItem> = page.items
-                val next = page.nextPage
-
-                val filtered = filterItems(items)
+                val playlist = LocalServerSource.playlist(dbHelper.appContext, serviceId, playlistUrl, nextPage)
+                val next = playlist.next
+                val filtered = filterItems(playlist.items)
 
                 if (isAjax) {
                     val html = HtmlRenderer.renderPlaylistItemsFragment(serviceId, playlistUrl, filtered, next)
@@ -987,7 +858,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 }
 
                 val isBookmarked = dbHelper.nativeIsPlaylistBookmarked(playlistUrl)
-                val html = HtmlRenderer.renderPlaylist(serviceId, extractor, filtered, next, isBookmarked, isTv)
+                val html = HtmlRenderer.renderPlaylist(serviceId, playlist.header, filtered, next, isBookmarked, isTv)
                 sendResponse(os, 200, html, "text/html; charset=UTF-8")
             } catch (e: Exception) {
                 sendResponse(os, 500, "Playlist failed: ${e.message}", "text/plain; charset=UTF-8")
@@ -1003,7 +874,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                         return id
                     }
                 } catch (ignored: NumberFormatException) {
-                    // Fall through to the default below.
                 }
             }
             return SERVICE_YOUTUBE
@@ -1020,7 +890,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     val value = if (idx > 0 && pair.length > idx + 1) URLDecoder.decode(pair.substring(idx + 1), "UTF-8") else ""
                     params[key] = value
                 } catch (e: Exception) {
-                    // ignore
                 }
             }
             return params
@@ -1031,16 +900,13 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             sendResponse(os, code, content, contentType, null)
         }
 
-        // cacheControl: Cache-Control header value, or null to omit (default for all page/API
-        // responses). Only handleStaticCss/handleStaticJs pass a real value.
+        // cacheControl: header value, or null to omit; only the static handlers pass one.
         @Throws(IOException::class)
         internal fun sendResponse(os: OutputStream, code: Int, content: String, contentType: String, cacheControl: String?) {
             var bytes = content.toByteArray(Charsets.UTF_8)
             val status = if (code == 200) "OK" else (if (code == 404) "Not Found" else "Internal Server Error")
 
-            // gzip: worthwhile for HTML (still carries inline markup/script) and /static files;
-            // never applied to media bytes (already compressed); skipped below 512B where
-            // header/footer overhead exceeds the savings.
+            // gzip for HTML and /static files; not for media (already compressed) or bodies under 512 bytes.
             var contentEncodingHeader = ""
             val currentRequestHeaders = requestHeaders
             if (bytes.size > 512 && currentRequestHeaders != null) {
@@ -1128,11 +994,9 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         internal fun filterItems(items: List<InfoItem>): List<InfoItem> {
             val hideWatched = dbHelper.nativeHideWatched()
             val hideShorts = dbHelper.nativeHideShorts()
-            // FlowNeuroEngine's block list - shared with native ranking.
             val blockedChannelIds = dbHelper.nativeBlockedChannelIds()
 
             val filtered = ArrayList<InfoItem>()
-            // URL-only read, no full StreamInfoItem hydration per history row.
             val watchedUrls: Set<String> = if (hideWatched) dbHelper.nativeWatchedUrls() else emptySet()
 
             for (item in items) {
@@ -1156,18 +1020,12 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return filtered
         }
 
-        // ==================== FlowNeuro signal reporting ====================
-        // Hooked at handleWatchContent/handleApiVideo (next to saveToHistory()) and the
-        // watch-progress endpoint, not new routes. Best-effort: exceptions never break playback
-        // or the endpoint's own DB write.
+        // FlowNeuro signals: reported from handleWatchContent/handleApiVideo and the progress endpoint. Best-effort: failures never affect playback or the DB write.
         internal fun reportFlowNeuroClick(info: StreamInfo, serviceId: Int) {
             dbHelper.reportFlowNeuroInteraction(info, serviceId, InteractionType.CLICK)
         }
 
-        // ==================== FlowNeuro ranking ====================
-        // Delegates to native FlowNeuroEngine (rankWithFlowNeuro()), not a ported copy. Used by
-        // handleHome()'s mix branch and handleApiRecommendations() - NOT handleApiHome(), whose
-        // existing behavior stays untouched.
+        // Ranking delegates to the native FlowNeuroEngine (rankWithFlowNeuro()); used by the home mix branch and handleApiRecommendations(), not handleApiHome().
         internal fun applyFlowNeuroRanking(items: List<InfoItem>, serviceId: Int): List<InfoItem> =
             dbHelper.rankWithFlowNeuro(items, serviceId)
 

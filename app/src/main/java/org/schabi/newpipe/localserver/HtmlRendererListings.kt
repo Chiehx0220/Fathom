@@ -191,6 +191,8 @@ object HtmlRendererListings {
                   .append("    @keyframes subs-feed-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }\n")
                   .append("  </style>\n")
                   .append("  <script>\n")
+                  // fetchText lives in /static/script.js, which loads after this tag.
+                  .append("  document.addEventListener('DOMContentLoaded', () => {\n")
                   .append("    fetchText('/subscriptions?tab=feed&feed=ajax&serviceId=$serviceId',\n")
                   .append("        html => {\n")
                   .append("            const loader = document.getElementById('subs-feed-loader');\n")
@@ -202,6 +204,7 @@ object HtmlRendererListings {
                   .append("            const loader = document.getElementById('subs-feed-loader');\n")
                   .append("            if (loader) loader.innerHTML = '<div class=\"loading-placeholder\" style=\"color: #ff4b5c;\">Failed to load feed: ' + err.message + '</div>';\n")
                   .append("        });\n")
+                  .append("  });\n")
                   .append("  </script>\n")
             }
         } else if (isPlaylists) {
