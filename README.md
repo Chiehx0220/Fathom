@@ -38,8 +38,6 @@ No web view. A Kotlin client talks to Bilibili's web API directly.
 - Search, channels (uploads, series, seasons), playback, quality, multi-part videos
 - Comments and 弹幕 danmaku
 - Subscriptions, history, likes, playlists next to YouTube's
-- Not yet: bangumi, live, paid content
-- Up to 1080p as a guest; an optional cookie of your own unlocks more
 
 ## 🌐 Local web server
 
