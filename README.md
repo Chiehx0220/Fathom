@@ -1,131 +1,83 @@
 <p align="center">
-  <img src="Assets/fathom-icon.png" alt="Fathom" width="112" height="112">
-</p>
-
-<h1 align="center">Fathom</h1>
-
-<p align="center">
-  A YouTube and Bilibili player for Android, forked from <a href="https://github.com/A-EDev/Flow">Flow</a>,<br>
-  with one library and recommendations that never leave the phone.
-</p>
-
-<p align="center">
-  <b>Powered by FlowNeuro</b>, the on-device recommendation engine from Flow
-</p>
-
-<p align="center">
-  Android 9+ · Kotlin · Jetpack Compose · GPL-3.0 · no account, no ads, no analytics
+  <img src="Assets/fathom-banner.png" alt="Fathom: YouTube + Bilibili. One feed. Zero tracking.">
 </p>
 
 <p align="center">
   <b>English</b> · <a href="README.zh-TW.md">繁體中文</a>
 </p>
 
+<p align="center">
+  Android 9+ · Kotlin · Jetpack Compose · GPL-3.0<br>
+  A fork of <a href="https://github.com/A-EDev/Flow">Flow</a> by A-EDev
+</p>
+
 ---
 
-## The short version
+## ⚡ In 10 seconds
 
-Fathom is a fork of Flow, a YouTube client with an on-device recommendation engine (FlowNeuro), that adds a second service. Bilibili videos, channels, comments, and danmaku sit next to YouTube's in search, the home feed, subscriptions, history, and playlists, and both feed the same local recommender.
+- 📺 **YouTube and Bilibili in one app.** One search, one feed, one library.
+- 🧠 **A recommender that lives on your phone.** Powered by [FlowNeuro](#-flowneuro). Nothing leaves the device.
+- 🔒 **No account. No ads. No tracking.**
+- 🌐 **Your phone is a server.** Watch your library from any browser on the Wi-Fi.
+- 🔗 **Bilibili links open in the app**, `b23.tv` short links included.
 
-Two things are added on top of upstream (the recommender itself is [FlowNeuro](#powered-by-flowneuro), unchanged in principle):
+## 🧠 FlowNeuro
 
-1. **A native Bilibili client**, written in Kotlin against Bilibili's web API. No web view, no extractor library.
-2. **A local web server** on the phone, so any browser on the same network can search and play from your library.
+Every recommendation comes from **FlowNeuro**, A-EDev's on-device engine from Flow.
 
-Upstream keeps doing what it does. YouTube still runs on NewPipeExtractor, and the fork stays a small, mergeable diff.
+- Learns from watches, skips, likes, searches, and how long you stay
+- Spots when you're bored of a topic and mixes in something new
+- Shows exactly what it knows about you, and lets you edit, export, or wipe it
 
-<a id="powered-by-flowneuro"></a>
-## Powered by FlowNeuro
+**What Fathom adds:** Bilibili watches train the same profile as YouTube's, and Chinese and Japanese titles are split into topics. Mixed history, one coherent feed.
 
-Every recommendation in Fathom comes from **FlowNeuro**, the engine A-EDev built for Flow. It runs entirely on the device: no server, no account, no telemetry.
+## 🎬 Bilibili, natively
 
-- Learns from what you watch, skip, like, dislike, and search for, and how long you stay
-- Separates weekday from weekend and morning from night habits
-- Notices when you are tired of a topic and mixes in something new, so the feed does not collapse into two or three subjects
-- Turns recent watches into related-video transitions and filters low-quality videos by engagement ratios
-- Shows what it knows and why it recommended something, and lets you edit, export, import, or wipe the profile
+No web view. A Kotlin client talks to Bilibili's web API directly.
 
-What this fork adds is reach: Bilibili watches, likes, and searches train the same profile as YouTube's, and titles in Chinese and Japanese are split into topics, so a mixed YouTube and Bilibili history still produces one coherent feed.
+- Search, channels (uploads, series, seasons), playback, quality, multi-part videos
+- Comments and 弹幕 danmaku
+- Subscriptions, history, likes, playlists next to YouTube's
+- Not yet: bangumi, live, paid content
+- Up to 1080p as a guest; an optional cookie of your own unlocks more
 
-## What works where
+## 🌐 Local web server
 
-| | YouTube | Bilibili |
-|---|:---:|:---:|
-| Search (videos, channels, playlists) | ✓ | ✓ |
-| Home feed and related videos | ✓ | ✓ |
-| Playback, quality, resume | ✓ | ✓ |
-| Comments | ✓ | ✓ |
-| Danmaku (bullet comments) | | ✓ |
-| Subscriptions and feed refresh | ✓ | ✓ |
-| Watch history, likes, playlists | ✓ | ✓ |
-| Channel pages | ✓ | ✓ (uploads, series, seasons) |
-| Open links from other apps | ✓ | ✓ |
-| Local web server playback | ✓ | ✓ |
-| Music, Shorts | ✓ | |
-| Bangumi, live streams, paid content | | not yet |
+Turn it on, then open `http://<phone-ip>:8080` on any device on the same Wi-Fi. Nothing to install there.
 
-Without a sign-in cookie Bilibili serves up to 1080p. An optional cookie of your own lifts that limit; nothing else needs an account.
+- Search, channels, playlists, subscriptions, history, watch-later
+- A [Vidstack](https://vidstack.io) player: quality menu, chapters, seek-bar thumbnails, subtitles, audio-only mode, shortcuts, resume
+- Plays YouTube and Bilibili, with danmaku
 
-## Opening Bilibili links
+## 🔁 Bring your data
 
-Set Flow to open supported links in Android's app settings, and these open directly in the app:
+- **Import** NewPipe or PipePipe subscription JSON. Bilibili channels and avatars come along.
+- **Export** the same JSON back to either app.
 
-- `bilibili.com/video/BV…` (with `?p=` for multi-part videos)
-- `space.bilibili.com/<uid>`
-- `b23.tv/…` short links, including a whole shared text from Bilibili's share sheet
-
-## Local web server
-
-Turn it on and the phone serves a web app on port 8080. Open `http://<phone-ip>:8080` from a laptop, TV, or another phone on the same Wi-Fi.
-
-- Search, channels, playlists, subscriptions, history, and watch-later, all backed by the app's own data
-- A [Vidstack](https://vidstack.io) player over DASH: quality menu, chapters on the seek bar, thumbnail previews, subtitles, audio-only layout, keyboard and touch shortcuts, resume position
-- YouTube and Bilibili both play, with the danmaku overlay for Bilibili
-- Streams are proxied through the phone, so the other device needs nothing installed
-
-The server began as [localtube](https://github.com/diekaiju/localtube) and was rebuilt around the native Bilibili client.
-
-## Moving data in and out
-
-- **Import** subscription JSON from NewPipe or PipePipe. Bilibili channels keep their service id (5) and get their avatars fetched.
-- **Export** writes the same JSON, so it can go back into either app.
-- Watch history and playlists come across from NewPipe backups. PipePipe's full backup ZIP is not read for subscriptions yet; use its subscription export instead.
-
-## Features inherited from Flow
-
-Everything upstream ships still applies: ExoPlayer playback with SponsorBlock, DeArrow, and Return YouTube Dislike; background play, picture-in-picture, casting; a music player with lyrics; Shorts; downloads; eleven themes; and the FlowNeuro transparency dashboard with exportable profiles. See [upstream's README](https://github.com/A-EDev/Flow#features) for the full list.
-
-## Build
-
-No signed releases are published. Build a debug APK:
+## 🛠 Build
 
 ```bash
 git clone https://github.com/Chiehx0220/Flow.git
-cd Flow
-git checkout Btest
+cd Flow && git checkout Btest
 ./gradlew assembleGithubDebug
 ```
 
-Variants: the `foss` flavor drops the self-updater, and the `nightly` build type installs beside the debug build (`.nightly` suffix). Requires Android 9 (API 28) or newer to run.
+No signed releases yet. Variants: `foss` (no updater), `nightly` (installs beside debug).
 
-## How the fork is organised
+## 🧩 Under the hood
 
-| Where | What |
+| | |
 |---|---|
-| `bilibili/` | The Bilibili client: API, signing, sessions, comments, danmaku, ids, link parsing |
-| `org/schabi/newpipe/localserver/` | The local web server and its Vidstack pages |
-| upstream files | Small hooks only, mostly passing a service id through |
+| `bilibili/` | the Bilibili client |
+| `org/schabi/newpipe/localserver/` | the web server and player |
+| upstream files | small hooks only, listed in [FORK-DIFF.md](FORK-DIFF.md) |
 
-[FORK-DIFF.md](FORK-DIFF.md) is generated from `git diff upstream/main` (`node scripts/fork-diff.js`) and lists every upstream file the fork touches, which is where merge conflicts come from. `bilibili/PPE-REFERENCE.md` records which PipePipeExtractor revision the Bilibili client was ported from, so risk-control changes can be diffed and re-ported.
+Everything else in Flow (SponsorBlock, DeArrow, music, Shorts, downloads, themes) is still here. See [upstream](https://github.com/A-EDev/Flow#features).
 
-## Credits
+## 🙏 Credits
 
-- [**Flow**](https://github.com/A-EDev/Flow) by A-EDev: the app, the player, and FlowNeuro. Most of this project is theirs. If you want to support it, support them.
-- [**PipePipeExtractor**](https://github.com/InfinityLoop1308/PipePipeExtractor) and [PipePipe](https://codeberg.org/NullPointerException/PipePipe) by InfinityLoop1308: the origin of the Bilibili client's request signing and session handling, and the source of service id 5.
-- [**NewPipeExtractor**](https://github.com/TeamNewPipe/NewPipeExtractor): YouTube extraction.
-- [**localtube**](https://github.com/diekaiju/localtube) by diekaiju: the local server's starting point.
-- [**Vidstack**](https://vidstack.io) and [dash.js](https://github.com/Dash-Industry-Forum/dash.js): the web player.
+[Flow](https://github.com/A-EDev/Flow) and FlowNeuro by A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor) by InfinityLoop1308 (Bilibili client origin) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube) by diekaiju · [Vidstack](https://vidstack.io) and [dash.js](https://github.com/Dash-Industry-Forum/dash.js)
 
-## License
+## 📄 License
 
-GPL-3.0, like upstream. Copyright © 2025–2026 A-EDev for Flow; modifications © 2026 Chiehx0220. Anything built on this code, including the FlowNeuro engine, must stay open source under the same license.
+GPL-3.0. © 2025–2026 A-EDev (Flow); modifications © 2026 Chiehx0220. Code built on this, FlowNeuro included, must stay open source under the same license.
