@@ -10,6 +10,7 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
 import io.github.aedev.flow.player.config.PlayerConfig
 import io.github.aedev.flow.player.stream.BilibiliDashManifest
+import io.github.aedev.flow.player.stream.BilibiliStreamBridge
 import io.github.aedev.flow.player.stream.StreamProcessor
 import io.github.aedev.flow.player.stream.VideoCodecUtils
 import org.schabi.newpipe.extractor.stream.AudioStream
@@ -347,7 +348,8 @@ class VideoPlaybackResolver(
     ): MediaSource {
         val itagItem = stream.itagItem
 
-        if (itagItem != null && durationSeconds > 0) {
+        // A Bilibili stream has an ItagItem for its ranges, but nothing YouTube's manifest makers know.
+        if (itagItem != null && !BilibiliStreamBridge.isBilibili(stream) && durationSeconds > 0) {
             Log.d(TAG, "Generating progressive DASH manifest for ${VideoCodecUtils.qualityHeightFromStream(stream)}p to avoid throttling")
             val manifestString = ManifestGenerator.generateProgressiveManifest(stream, itagItem, durationSeconds)
 
@@ -411,7 +413,8 @@ class VideoPlaybackResolver(
     ): MediaSource {
         val itagItem = stream.itagItem
 
-        if (itagItem != null && durationSeconds > 0) {
+        // A Bilibili stream has an ItagItem for its ranges, but nothing YouTube's manifest makers know.
+        if (itagItem != null && !BilibiliStreamBridge.isBilibili(stream) && durationSeconds > 0) {
             Log.d(TAG, "Generating progressive DASH manifest for audio to avoid throttling")
             val manifestString = ManifestGenerator.generateProgressiveManifest(stream, itagItem, durationSeconds)
 

@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui.screens.player
 
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import android.content.Context
 import android.util.Log
 import io.github.aedev.flow.data.local.CachedHomeVideo
@@ -233,9 +234,13 @@ internal class WatchSessionTracker(
                         videoId = videoId,
                         candidates =
                             playerRelated.ifEmpty {
-                                withTimeoutOrNull(RELATED_PREWARM_TIMEOUT_MS) {
-                                    repository.getRelatedCandidates(videoId)
-                                }.orEmpty()
+                                if (BilibiliVideoId.isBilibili(videoId)) {
+                                    emptyList()
+                                } else {
+                                    withTimeoutOrNull(RELATED_PREWARM_TIMEOUT_MS) {
+                                        repository.getRelatedCandidates(videoId)
+                                    }.orEmpty()
+                                }
                             },
                         shortsEnabled = shortsEnabled(),
                     )

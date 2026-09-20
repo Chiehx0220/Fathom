@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui.components.shared
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -22,13 +23,13 @@ private val PlatformBadgeFontSize = 8.sp
 /** The service's brand color, for anything (this badge, a future accent) that wants to color-code by source. */
 fun serviceBrandColor(serviceId: Int): Color =
     when (serviceId) {
-        ServiceList.BiliBili.serviceId -> BilibiliPink
+        BILIBILI_SERVICE_ID -> BilibiliPink
         else -> YouTubeRed
     }
 
 private fun serviceDisplayName(serviceId: Int): String =
     when (serviceId) {
-        ServiceList.BiliBili.serviceId -> "Bilibili"
+        BILIBILI_SERVICE_ID -> "Bilibili"
         else -> "YouTube"
     }
 

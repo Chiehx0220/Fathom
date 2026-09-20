@@ -41,6 +41,7 @@ import okhttp3.OkHttpClient
 import org.conscrypt.Conscrypt
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.ContentCountry
+import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeStreamExtractor
 import java.security.Security
 import java.util.Locale
 import javax.inject.Inject
@@ -100,7 +101,7 @@ class FlowApplication :
                 localization,
                 newPipeContentCountry(Locale.getDefault().country),
             )
-            NewPipe.setYoutubePoTokenResolver(NewPipePoTokenProvider)
+            YoutubeStreamExtractor.setPoTokenProvider(NewPipePoTokenProvider)
             Log.d(TAG, "NewPipe initialized with ${localization.localizationCode}")
         } catch (e: Exception) {
             // Log error but don't crash the app

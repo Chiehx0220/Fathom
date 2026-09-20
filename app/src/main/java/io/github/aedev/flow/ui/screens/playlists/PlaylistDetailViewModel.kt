@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui.screens.playlists
 
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import android.content.Context
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
@@ -507,6 +508,7 @@ class PlaylistDetailViewModel
                     stubs.chunked(ENRICHMENT_CHUNK_SIZE).forEach { chunk ->
                         chunk.forEach { video ->
                             try {
+                                if (BilibiliVideoId.isBilibili(video.id)) return@forEach
                                 val refreshed = youTubeRepository.getVideo(video.id) ?: return@forEach
                                 repository.updateVideoMetadata(refreshed)
                             } catch (_: Exception) {

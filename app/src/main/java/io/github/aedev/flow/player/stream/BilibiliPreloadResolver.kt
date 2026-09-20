@@ -1,7 +1,9 @@
 package io.github.aedev.flow.player.stream
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import android.content.Context
 import android.util.Log
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.di.bilibiliApi
@@ -23,7 +25,7 @@ internal object BilibiliPreloadResolver {
         video: Video,
         context: Context,
     ): ResolvedStreamData? {
-        if (video.serviceId != ServiceList.BiliBili.serviceId) return null
+        if (video.serviceId != BILIBILI_SERVICE_ID) return null
         return try {
             resolve(video, context)
         } catch (e: CancellationException) {
@@ -39,7 +41,7 @@ internal object BilibiliPreloadResolver {
         context: Context,
     ): ResolvedStreamData? {
         val api = bilibiliApi(context)
-        val (bvid, page) = BilibiliPlaybackSource.parseVideoId(video.id)
+        val (bvid, page) = BilibiliVideoId.parse(video.id)
         val playback = withTimeoutOrNull(RESOLVE_TIMEOUT_MS) { api.playback(bvid, page) } ?: return null
 
         val prefs = PlayerPreferences(context)

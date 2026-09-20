@@ -22,6 +22,8 @@ internal data class ViewResponse(
         val desc: String = "",
         val pubdate: Long = 0,
         val duration: Int = 0,
+        /** The partition the uploader filed it under: "游戏", "生活", ... */
+        val tname: String = "",
         val owner: Owner = Owner(),
         val stat: Stat = Stat(),
         val pages: List<Page> = emptyList(),
@@ -136,6 +138,7 @@ internal data class RelatedResponse(
         val pic: String = "",
         val duration: Int = 0,
         val pubdate: Long = 0,
+        val tname: String = "",
         val owner: ViewResponse.Owner = ViewResponse.Owner(),
         val stat: ViewResponse.Stat = ViewResponse.Stat(),
     )
@@ -170,6 +173,10 @@ internal data class SearchResponse(
         val usign: String = "",
         val fans: Long = 0,
         val videos: Int = 0,
+        /** Comma-separated tags the uploader gave the video. */
+        val tag: String = "",
+        /** The partition, as on a view response. */
+        val typename: String = "",
     )
 }
 
@@ -288,5 +295,69 @@ internal data class PlaylistArchivesResponse(
     @Serializable
     data class Page(
         val total: Int = 0,
+    )
+}
+
+@Serializable
+internal data class CommentsResponse(
+    val code: Int = 0,
+    val message: String = "",
+    val data: Data? = null,
+) {
+    @Serializable
+    data class Data(
+        val replies: List<Reply>? = null,
+        @SerialName("top_replies") val topReplies: List<Reply>? = null,
+        val cursor: Cursor = Cursor(),
+    )
+
+    @Serializable
+    data class Cursor(
+        @SerialName("is_end") val isEnd: Boolean = true,
+        @SerialName("pagination_reply") val paginationReply: PaginationReply = PaginationReply(),
+    )
+
+    @Serializable
+    data class PaginationReply(
+        @SerialName("next_offset") val nextOffset: String = "",
+    )
+
+    @Serializable
+    data class Reply(
+        @SerialName("rpid_str") val rpidStr: String = "",
+        val mid: Long = 0,
+        val like: Long = 0,
+        val ctime: Long = 0,
+        val rcount: Int = 0,
+        val member: Member = Member(),
+        val content: Content = Content(),
+        @SerialName("up_action") val upAction: UpAction = UpAction(),
+    )
+
+    @Serializable
+    data class Member(
+        val uname: String = "",
+        val avatar: String = "",
+    )
+
+    @Serializable
+    data class Content(
+        val message: String = "",
+    )
+
+    @Serializable
+    data class UpAction(
+        val like: Boolean = false,
+    )
+}
+
+@Serializable
+internal data class PopularResponse(
+    val code: Int = 0,
+    val data: Data? = null,
+) {
+    @Serializable
+    data class Data(
+        val list: List<RelatedResponse.Item>? = null,
     )
 }

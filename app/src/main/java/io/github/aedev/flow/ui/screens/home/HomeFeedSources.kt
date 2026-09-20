@@ -9,7 +9,11 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.recommendation.GraphSeedInput
 import io.github.aedev.flow.data.recommendation.GraphSeedSelector
 import io.github.aedev.flow.data.recommendation.GraphSeedSource
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliApi
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.repository.YouTubeRepository
+import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import org.schabi.newpipe.extractor.ServiceList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -51,6 +55,7 @@ class HomeFeedSources
         private val viewHistory: ViewHistory,
         private val likedVideosRepository: LikedVideosRepository,
         private val playlistRepository: PlaylistRepository,
+        private val bilibili: BilibiliApi,
     ) {
         private data class CachedRelated(
             val videos: List<Video>,
@@ -135,7 +140,11 @@ class HomeFeedSources
             return (
                 relatedSemaphore.withPermit {
                     withTimeoutOrNull(RELATED_FETCH_TIMEOUT_MS) {
-                        repository.getRelatedCandidates(seedId, serviceId)
+                        if (serviceId == BILIBILI_SERVICE_ID || BilibiliVideoId.isBilibili(seedId)) {
+                            bilibili.related(BilibiliVideoId.parse(seedId).first).map(BilibiliVideoMapper::videoFromRelated)
+                        } else {
+                            repository.getRelatedCandidates(seedId)
+                        }
                     } ?: emptyList()
                 }
             ).also {

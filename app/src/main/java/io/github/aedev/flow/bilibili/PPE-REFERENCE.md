@@ -1,7 +1,8 @@
 # PPE reference
 
-This package ports the Bilibili service of PipePipeExtractor (PPE, GPL-3.0). Flow's copy is
-Chiehx0220/PipePipeExtractor, ported at commit `aef9726d5b1172213066f60bc338eb4278651d61`.
+This package ports the Bilibili service of PipePipeExtractor (PPE, GPL-3.0). Flow no longer depends
+on PPE (it uses NewPipeExtractor, like upstream); the port is kept in step by hand. The copy it was
+ported from is Chiehx0220/PipePipeExtractor at commit `aef9726d5b1172213066f60bc338eb4278651d61`.
 
 When Bilibili changes its risk control, diff the PPE files on the right against the files on the
 left, re-port only what changed, and update the commit above. PPE paths are under
@@ -16,11 +17,13 @@ left, re-port only what changed, and update the commit above. PPE paths are unde
 | `BilibiliApi.kt` (search), `BilibiliSearchParser.kt` | `extractors/BilibiliSearchExtractor.java`, `BilibiliStreamInfoItemExtractor.java`, `BilibiliSearchResultChannelInfoItemExtractor.java` | Search rows for videos and users |
 | `BilibiliDanmaku.kt` | `extractors/BilibiliBulletCommentsExtractor.java`, `BilibiliBulletCommentsInfoItemExtractor.java`, `utils.decompress` | Danmaku list, deflate XML, 2.5 s sync offset |
 | `BilibiliUserSpace.kt` | `extractors/BilibiliChannelExtractor.java`, `BilibiliChannelTabExtractor.java`, `BilibiliPlaylistExtractor.java`, `BilibiliChannelInfoItem*APIExtractor.java` | Channel profile, video list in three API modes, series and seasons |
+| `BilibiliComments.kt` | `extractors/BilibiliCommentExtractor.java`, `BilibiliCommentsInfoItemExtractor.java`, `linkHandler/BilibiliCommentsLinkHandlerFactory.java` | Hot-ordered comments, pinned first, and replies |
 
 ## Not ported
 - Live streams and live danmaku (WebSocket), bangumi and other paid content, partition playlists.
-- Comments, home feed, subtitles, login. Comments and the home feed still run on PPE.
-- Chapters (`BilibiliApi.chapters`) read the web player's own endpoint and are not in PPE.
+- Subtitles, login.
+- Chapters (`BilibiliApi.chapters`) read the web player's own endpoint, and the popular list
+  (`BilibiliApi.popular`) is Bilibili's public `web-interface/popular`; neither is in PPE.
 
 ## Differences from PPE
 - Requests go through Flow's OkHttp client, not PPE's downloader, so the default user agent of the one

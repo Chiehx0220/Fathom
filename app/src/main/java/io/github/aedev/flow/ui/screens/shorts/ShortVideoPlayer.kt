@@ -1100,7 +1100,7 @@ internal fun ShortVideoPage(
                                         stream.audioTrackId
                                             ?.substringAfterLast(".")
                                             ?.takeIf { it.isNotBlank() && it != stream.audioTrackId }
-                                    val localeLang = stream.audioLocale?.takeIf { it.isNotBlank() }
+                                    val localeLang = stream.audioLocale?.language?.takeIf { it.isNotBlank() }
                                     val trackName = stream.audioTrackName?.takeIf { it.isNotBlank() }
                                     trackIdLang ?: localeLang ?: trackName ?: "default"
                                 }?.map { (_, group) -> group.first() }

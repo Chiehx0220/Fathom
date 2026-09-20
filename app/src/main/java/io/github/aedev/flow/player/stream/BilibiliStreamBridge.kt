@@ -9,7 +9,9 @@ import android.util.Log
 import io.github.aedev.flow.bilibili.BilibiliStreamFormat
 import io.github.aedev.flow.player.datasource.BilibiliMirrors
 import org.schabi.newpipe.extractor.MediaFormat
+import org.schabi.newpipe.extractor.services.youtube.ItagItem
 import org.schabi.newpipe.extractor.stream.AudioStream
+import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.util.Locale
 
@@ -27,21 +29,22 @@ object BilibiliStreamBridge {
         formats.mapIndexedNotNull { index, format ->
             BilibiliMirrors.register(format.url, format.backupUrls)
             try {
-                val builder =
-                    VideoStream.Builder()
-                        .setId("bilibili-$bvid-video-${format.id}-$index")
-                        .setContent(format.url, true)
-                        .setMediaFormat(MediaFormat.MPEG_4)
-                        .setCodec(format.codecs)
-                        .setBitrate(format.bandwidth)
-                        .setWidth(format.width)
-                        .setHeight(format.height)
-                        .setFps(parseFps(format.frameRate))
-                        .setIsVideoOnly(true)
-                        .setResolution(resolutionLabel(format))
-                format.initRange?.let { builder.setInitStart(it.first.toInt()).setInitEnd(it.last.toInt()) }
-                format.indexRange?.let { builder.setIndexStart(it.first.toInt()).setIndexEnd(it.last.toInt()) }
-                builder.build()
+                val label = resolutionLabel(format)
+                val item = ItagItem(NO_ITAG, ItagItem.ItagType.VIDEO_ONLY, MediaFormat.MPEG_4, label)
+                item.codec = format.codecs
+                item.bitrate = format.bandwidth
+                item.width = format.width
+                item.height = format.height
+                item.fps = parseFps(format.frameRate)
+                item.applyRanges(format)
+                VideoStream.Builder()
+                    .setId("bilibili-$bvid-video-${format.id}-$index")
+                    .setContent(format.url, true)
+                    .setMediaFormat(MediaFormat.MPEG_4)
+                    .setIsVideoOnly(true)
+                    .setResolution(label)
+                    .setItagItem(item)
+                    .build()
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to build VideoStream for qn=${format.id}: ${e.message}")
                 null
@@ -62,22 +65,39 @@ object BilibiliStreamBridge {
             .mapIndexedNotNull { index, format ->
                 BilibiliMirrors.register(format.url, format.backupUrls)
                 try {
-                    val builder =
-                        AudioStream.Builder()
-                            .setId("bilibili-$bvid-audio-${format.id}-$index")
-                            .setContent(format.url, true)
-                            .setMediaFormat(MediaFormat.M4A)
-                            .setCodec(format.codecs)
-                            .setBitrate(format.bandwidth)
-                            .setAverageBitrate(format.bandwidth)
-                    format.initRange?.let { builder.setInitStart(it.first.toInt()).setInitEnd(it.last.toInt()) }
-                    format.indexRange?.let { builder.setIndexStart(it.first.toInt()).setIndexEnd(it.last.toInt()) }
-                    builder.build()
+                    val item = ItagItem(NO_ITAG, ItagItem.ItagType.AUDIO, MediaFormat.M4A, format.bandwidth)
+                    item.codec = format.codecs
+                    item.bitrate = format.bandwidth
+                    item.applyRanges(format)
+                    AudioStream.Builder()
+                        .setId("bilibili-$bvid-audio-${format.id}-$index")
+                        .setContent(format.url, true)
+                        .setMediaFormat(MediaFormat.M4A)
+                        .setAverageBitrate(format.bandwidth)
+                        .setItagItem(item)
+                        .build()
                 } catch (e: Exception) {
                     Log.w(TAG, "Failed to build AudioStream for qn=${format.id}: ${e.message}")
                     null
                 }
             }
+
+    /** Bilibili's quality ids repeat across codecs, so they cannot serve as an itag; -1 is "none". */
+    private const val NO_ITAG = -1
+
+    /** True for a stream this bridge built. */
+    fun isBilibili(stream: Stream): Boolean = stream.id?.startsWith("bilibili-") == true
+
+    private fun ItagItem.applyRanges(format: BilibiliStreamFormat) {
+        format.initRange?.let {
+            initStart = it.first.toInt()
+            initEnd = it.last.toInt()
+        }
+        format.indexRange?.let {
+            indexStart = it.first.toInt()
+            indexEnd = it.last.toInt()
+        }
+    }
 
     private fun isSupportedAudio(codecs: String): Boolean {
         val codec = codecs.lowercase(Locale.ROOT)

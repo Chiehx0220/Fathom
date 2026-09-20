@@ -25,7 +25,7 @@ internal class BilibiliUserSpace(
     private val videoApiMode = AtomicInteger(MODE_WEB)
 
     suspend fun info(mid: Long): BilibiliChannelInfo {
-        val body = request(mid) { headers -> session.getLenient("$CARD_URL$mid", headers) }
+        val body = request(mid, "$CARD_URL$mid")
         val data = decode<CardResponse>(body).data ?: throw BilibiliContentNotAvailableException("Channel $mid not found")
         return BilibiliChannelInfo(
             mid = mid,
@@ -64,7 +64,7 @@ internal class BilibiliUserSpace(
         page: Int,
     ): BilibiliPlaylistPage {
         val url = "$SEASONS_SERIES_URL?mid=$mid&page_num=$page&page_size=10"
-        val body = request(mid) { headers -> session.getLenient(url, headers) }
+        val body = request(mid, url)
         val lists = decode<PlaylistListResponse>(body).data?.itemsLists ?: PlaylistListResponse.Lists()
         val refs =
             lists.seasons.orEmpty().map { toRef(BilibiliPlaylistKind.SEASON, it.meta) } +
@@ -85,7 +85,7 @@ internal class BilibiliUserSpace(
                 BilibiliPlaylistKind.SERIES ->
                     "$SERIES_ARCHIVES_URL?mid=$mid&series_id=$id&only_normal=true&sort=desc&pn=$page&ps=30"
             }
-        val body = request(mid) { headers -> session.getLenient(url, headers) }
+        val body = request(mid, url)
         val data = decode<PlaylistArchivesResponse>(body).data ?: return BilibiliPlaylistVideos(emptyList(), 0)
         return BilibiliPlaylistVideos(
             videos = toVideos(data.archives.orEmpty()),
@@ -98,7 +98,7 @@ internal class BilibiliUserSpace(
         url: String,
         items: (UserVideosResponse) -> List<UserVideosResponse.Item>?,
     ): BilibiliChannelVideosPage {
-        val body = request(mid) { headers -> session.getLenient(url, headers) }
+        val body = request(mid, url)
         val videos = toVideos(items(decode<UserVideosResponse>(body)).orEmpty())
         return BilibiliChannelVideosPage(videos, hasMore = videos.isNotEmpty(), lastAid = videos.lastOrNull()?.aid ?: 0L)
     }
@@ -175,27 +175,10 @@ internal class BilibiliUserSpace(
         return "$APP_VIDEOS_URL?${BilibiliSigning.signApp(params)}"
     }
 
-    /**
-     * Up to two tries. An HTML page or code -352 means risk control, so the next try uses a fresh
-     * device and cookies. The body is read whatever the HTTP status, since a block is a 412.
-     */
     private suspend fun request(
         mid: Long,
-        fetch: suspend (Map<String, String>) -> String,
-    ): String {
-        var last = ""
-        repeat(2) {
-            last = fetch(session.headers("https://space.bilibili.com/$mid"))
-            if (!last.trimStart().startsWith("{")) {
-                session.reset()
-                return@repeat
-            }
-            val code = runCatching { json.decodeFromString<CodeOnly>(last).code }.getOrDefault(-1)
-            if (code == 0) return last
-            if (code == -352) session.reset()
-        }
-        throw BilibiliContentNotAvailableException("Bilibili blocked the request: ${last.take(120)}")
-    }
+        url: String,
+    ): String = session.guardedGet(json, "https://space.bilibili.com/$mid") { url }
 
     private inline fun <reified T> decode(body: String): T =
         try {

@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui.screens.channel
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -154,10 +155,9 @@ class ChannelViewModel
 
         private val tabController = ChannelTabController(viewModelScope)
 
-        // Non-YouTube channels (e.g. Bilibili) don't go through tabController at all - it's built
-        // entirely on YouTube's private InnerTube API. This holds their tab content instead, in the
-        // same shape, so the screen doesn't need to know which source a tab's data came from.
-        private val bilibiliTabs = BilibiliChannelTabController(viewModelScope)
+        // Bilibili channels don't go through tabController, which is built on YouTube's InnerTube.
+        // This holds their tab content in the same shape, so the screen never needs to know which
+        // source a tab's data came from.
         private val bilibiliNative =
             BilibiliNativeChannelController(viewModelScope, bilibiliApi(appContext))
 
@@ -165,14 +165,9 @@ class ChannelViewModel
             combine(
                 _uiState,
                 tabController.states,
-                bilibiliTabs.states,
                 bilibiliNative.states,
-            ) { state, youTubeStates, otherStates, bilibiliStates ->
-                when {
-                    state.serviceId.isYouTubeServiceId -> youTubeStates
-                    state.serviceId == ServiceList.BiliBili.serviceId -> bilibiliStates
-                    else -> otherStates
-                }
+            ) { state, youTubeStates, bilibiliStates ->
+                if (state.serviceId == BILIBILI_SERVICE_ID) bilibiliStates else youTubeStates
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(GROUPS_SUBSCRIPTION_TIMEOUT_MS), emptyMap())
 
         private fun channelOwner(): FeedItemOwner {
@@ -217,12 +212,6 @@ class ChannelViewModel
                 loadBilibiliChannel(mid)
                 return
             }
-            val service = runCatching { NewPipe.getServiceByUrl(channelUrl) }.getOrNull()
-            if (service != null && !service.isYouTube) {
-                loadNonYouTubeChannel(channelUrl, service)
-                return
-            }
-
             val browseId = youtubeChannelBrowseId(channelUrl)
             if (browseId == null) {
                 _uiState.update { it.copy(error = appContext.getString(R.string.error_invalid_channel_url), isLoading = false) }
@@ -265,64 +254,6 @@ class ChannelViewModel
             }
         }
 
-        /**
-         * Loads a channel from a service other than YouTube (e.g. Bilibili) through the generic
-         * extractor rather than Flow's own InnerTube client, which has no notion of any other
-         * service. Feeds the same [ChannelUiState]/[ChannelTabState] shapes the YouTube path does,
-         * so the screen itself needs no per-service branching.
-         */
-        private fun loadNonYouTubeChannel(
-            channelUrl: String,
-            service: StreamingService,
-        ) {
-            viewModelScope.launch(PerformanceDispatcher.networkIO) {
-                _uiState.update { it.copy(isLoading = true, error = null) }
-
-                val channelInfo =
-                    try {
-                        withTimeoutOrNull(20_000L) {
-                            withContext(PerformanceDispatcher.networkIO) {
-                                ChannelInfo.getInfo(service, channelUrl)
-                            }
-                        }
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to load non-YouTube channel", e)
-                        null
-                    }
-
-                if (channelInfo == null) {
-                    _uiState.update {
-                        it.copy(error = appContext.getString(R.string.error_failed_to_load_channel), isLoading = false)
-                    }
-                    return@launch
-                }
-
-                val (header, tabs) =
-                    bilibiliTabs.reset(
-                        channelInfo,
-                        appContext.getString(R.string.tab_videos),
-                        appContext.getString(R.string.tab_playlists),
-                    )
-
-                _uiState.update {
-                    it.copy(
-                        channelId = channelInfo.id,
-                        serviceId = channelInfo.serviceId,
-                        header = header,
-                        tabs = tabs,
-                        selectedTab = tabs.firstOrNull()?.kind,
-                        isLoading = false,
-                    )
-                }
-                communityController.reset(channelInfo.id, channelInfo.name, header.avatarUrl, channelInfo.serviceId)
-                loadSubscriptionState(channelInfo.id)
-                observeNote(channelInfo.id)
-                tabs.firstOrNull()?.kind?.let(::ensureTabLoaded)
-            }
-        }
-
         private fun loadBilibiliChannel(mid: Long) {
             viewModelScope.launch(PerformanceDispatcher.networkIO) {
                 _uiState.update { it.copy(isLoading = true, error = null) }
@@ -351,14 +282,14 @@ class ChannelViewModel
                 _uiState.update {
                     it.copy(
                         channelId = channelId,
-                        serviceId = ServiceList.BiliBili.serviceId,
+                        serviceId = BILIBILI_SERVICE_ID,
                         header = header,
                         tabs = tabs,
                         selectedTab = tabs.firstOrNull()?.kind,
                         isLoading = false,
                     )
                 }
-                communityController.reset(channelId, info.name, header.avatarUrl, ServiceList.BiliBili.serviceId)
+                communityController.reset(channelId, info.name, header.avatarUrl, BILIBILI_SERVICE_ID)
                 loadSubscriptionState(channelId)
                 observeNote(channelId)
                 tabs.firstOrNull()?.kind?.let(::ensureTabLoaded)
@@ -380,12 +311,8 @@ class ChannelViewModel
                 return
             }
             if (kind == ChannelTabKind.Shorts && !shortsEnabled) return
-            if (_uiState.value.serviceId == ServiceList.BiliBili.serviceId) {
+            if (_uiState.value.serviceId == BILIBILI_SERVICE_ID) {
                 bilibiliNative.ensureLoaded(kind)
-                return
-            }
-            if (!_uiState.value.serviceId.isYouTubeServiceId) {
-                bilibiliTabs.ensureLoaded(kind)
                 return
             }
             tabController.ensureLoaded(kind, _uiState.value.tabParams(kind))

@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import androidx.navigation.NavHostController
 import io.github.aedev.flow.bilibili.BilibiliChannelId
 import org.schabi.newpipe.extractor.ServiceList
@@ -11,7 +12,7 @@ internal fun effectiveServiceId(
     serviceId: Int,
 ): Int =
     if (serviceId == ServiceList.YouTube.serviceId && BilibiliChannelId.isMid(channelIdOrHandle.trim())) {
-        ServiceList.BiliBili.serviceId
+        BILIBILI_SERVICE_ID
     } else {
         serviceId
     }

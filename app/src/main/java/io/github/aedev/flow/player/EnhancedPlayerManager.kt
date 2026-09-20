@@ -2730,20 +2730,6 @@ class EnhancedPlayerManager private constructor() {
     val sbCategoryActions: Map<String, SponsorBlockAction>
         get() = sponsorBlockHandler?.categoryActions ?: emptyMap()
 
-    /**
-     * Loads Bilibili danmaku for the video currently being prepared. [videoUrl] must be the exact
-     * URL its own StreamInfo was just extracted with - see [DanmakuHandler.loadComments] for why.
-     * A no-op (empty result) for every service other than Bilibili, so callers don't need to gate
-     * this themselves.
-     */
-    fun loadDanmaku(
-        serviceId: Int,
-        videoUrl: String,
-    ) {
-        danmakuHandler?.reset()
-        danmakuHandler?.loadComments(serviceId, videoUrl)
-    }
-
     fun loadDanmaku(
         api: BilibiliApi,
         info: BilibiliVideoInfo,

@@ -1,13 +1,9 @@
 package io.github.aedev.flow.data.video
 
 import io.github.aedev.flow.player.stream.VideoCodecUtils
-import io.github.aedev.flow.player.stream.isOriginalAudioTrack
 import org.schabi.newpipe.extractor.stream.AudioStream
+import org.schabi.newpipe.extractor.stream.AudioTrackType
 import org.schabi.newpipe.extractor.stream.VideoStream
-import java.util.Locale
-
-/** PipePipeExtractor's audioLocale is a plain language-tag string, not a java.util.Locale. */
-private fun String.toDisplayLanguage(): String = Locale.forLanguageTag(replace('_', '-')).displayLanguage
 
 /**
  * Which streams a download offers and which audio track it pairs with a video track. Pure policy:
@@ -96,18 +92,34 @@ object DownloadStreamPolicy {
 
     fun audioLanguageLabel(stream: AudioStream): String? =
         stream.audioTrackName?.takeIf { it.isNotBlank() }
-            ?: stream.audioLocale?.toDisplayLanguage()?.takeIf { it.isNotBlank() }
+            ?: stream.audioLocale?.displayLanguage?.takeIf { it.isNotBlank() }
             ?: stream.audioTrackId?.takeIf { it.isNotBlank() }
 
-    /**
-     * PipePipeExtractor dropped AudioTrackType (ORIGINAL/DUBBED/SECONDARY/DESCRIPTIVE) - only
-     * original-vs-not is knowable now, see [io.github.aedev.flow.player.stream.isOriginalAudioTrack].
-     */
     fun audioTrackTypeLabel(
         stream: AudioStream,
         originalLabel: String,
         dubbedLabel: String,
-    ): String = if (stream.isOriginalAudioTrack()) originalLabel else dubbedLabel
+    ): String? =
+        when (stream.audioTrackType) {
+            AudioTrackType.ORIGINAL -> {
+                originalLabel
+            }
+
+            AudioTrackType.DUBBED -> {
+                dubbedLabel
+            }
+
+            null -> {
+                null
+            }
+
+            else -> {
+                stream.audioTrackType
+                    ?.name
+                    ?.lowercase()
+                    ?.replaceFirstChar { it.uppercase() }
+            }
+        }
 
     private fun audioFormatSortRank(stream: AudioStream): Int =
         when (audioFormatLabel(stream)) {
@@ -128,13 +140,13 @@ object DownloadStreamPolicy {
                     audioFormatLabel(stream),
                     audioBitrateKbps(stream).toString(),
                     stream.audioTrackId.orEmpty(),
-                    stream.audioLocale.orEmpty(),
-                    stream.isOriginalAudioTrack().toString(),
+                    stream.audioLocale?.toLanguageTag().orEmpty(),
+                    stream.audioTrackType?.name.orEmpty(),
                 ).joinToString("|")
             }.sortedWith(
                 compareBy<AudioStream> { audioFormatSortRank(it) }
                     .thenByDescending { audioBitrateKbps(it) }
-                    .thenBy { it.audioLocale?.toDisplayLanguage().orEmpty() },
+                    .thenBy { it.audioLocale?.displayLanguage.orEmpty() },
             )
 
     fun pickCompatibleAudioForVideo(
@@ -157,13 +169,18 @@ object DownloadStreamPolicy {
             if (!preferredLang.isNullOrEmpty() && preferredLang != "original") {
                 val langMatches =
                     allAudio.filter {
-                        it.audioLocale.equals(preferredLang, ignoreCase = true) ||
-                            it.audioLocale?.startsWith(preferredLang, ignoreCase = true) == true
+                        it.audioLocale?.language.equals(preferredLang, ignoreCase = true) ||
+                            it.audioLocale?.toLanguageTag().equals(preferredLang, ignoreCase = true)
                     }
                 if (langMatches.isNotEmpty()) langMatches else allAudio
             } else {
-                val originals = allAudio.filter { it.isOriginalAudioTrack() }
-                if (originals.isNotEmpty()) originals else allAudio
+                val originals = allAudio.filter { it.audioTrackType == AudioTrackType.ORIGINAL }
+                if (originals.isNotEmpty()) {
+                    originals
+                } else {
+                    val nonDubbed = allAudio.filter { it.audioTrackType != AudioTrackType.DUBBED }
+                    if (nonDubbed.isNotEmpty()) nonDubbed else allAudio
+                }
             }
 
         return if (isMp4Container) {

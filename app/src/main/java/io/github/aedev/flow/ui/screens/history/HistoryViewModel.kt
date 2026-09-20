@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui.screens.history
 
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -269,6 +270,8 @@ class HistoryViewModel
                     stubs.chunked(ENRICHMENT_CHUNK_SIZE).forEach { chunk ->
                         chunk.forEach { stub ->
                             try {
+                                // YouTube's lookup cannot fill in a Bilibili row.
+                                if (BilibiliVideoId.isBilibili(stub.videoId)) return@forEach
                                 val video = youTubeRepository.getVideo(stub.videoId) ?: return@forEach
                                 val entity = VideoEntity.fromDomain(video)
                                 videoDao.insertVideoOrIgnore(entity)

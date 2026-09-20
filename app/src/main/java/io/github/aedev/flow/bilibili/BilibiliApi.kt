@@ -22,6 +22,7 @@ class BilibiliApi(
     private val json: Json = Json { ignoreUnknownKeys = true; isLenient = true },
 ) {
     private val userSpace = BilibiliUserSpace(session, json)
+    private val comments = BilibiliComments(session, json)
 
     // region Video
 
@@ -52,6 +53,7 @@ class BilibiliApi(
             uploadTimeSec = data.pubdate,
             pages = data.pages.map { BilibiliPage(it.cid, it.page, it.part, it.duration) },
             isPaid = data.rights.pay == 1,
+            category = data.tname,
         )
     }
 
@@ -132,18 +134,29 @@ class BilibiliApi(
         val headers = session.headers("https://www.bilibili.com/video/$bvid")
         val response = json.decodeFromString<RelatedResponse>(session.get("$RELATED_URL$bvid", headers))
         if (response.code != 0) return emptyList()
-        return response.data.orEmpty().mapNotNull { item ->
-            val id = BilibiliSigning.bvidOf(item.bvid, item.aid) ?: return@mapNotNull null
-            BilibiliRelated(
-                bvid = id,
-                title = item.title,
-                thumbnailUrl = item.pic.toHttps(),
-                durationSec = item.duration,
-                viewCount = item.stat.view,
-                uploader = BilibiliUploader(item.owner.mid, item.owner.name, item.owner.face.toHttps()),
-                uploadTimeSec = item.pubdate,
-            )
-        }
+        return response.data.orEmpty().mapNotNull { it.toRelated() }
+    }
+
+    /** The site's popular list, one page (1-based, 20 per page); empty on any error code. */
+    suspend fun popular(page: Int = 1): List<BilibiliRelated> {
+        val headers = session.headers("https://www.bilibili.com/v/popular/all")
+        val response = json.decodeFromString<PopularResponse>(session.get("$POPULAR_URL?ps=20&pn=$page", headers))
+        if (response.code != 0) return emptyList()
+        return response.data?.list.orEmpty().mapNotNull { it.toRelated() }
+    }
+
+    private fun RelatedResponse.Item.toRelated(): BilibiliRelated? {
+        val id = BilibiliSigning.bvidOf(bvid, aid) ?: return null
+        return BilibiliRelated(
+            bvid = id,
+            title = title,
+            thumbnailUrl = pic.toHttps(),
+            durationSec = duration,
+            viewCount = stat.view,
+            uploader = BilibiliUploader(owner.mid, owner.name, owner.face.toHttps()),
+            uploadTimeSec = pubdate,
+            category = tname,
+        )
     }
 
     private fun PlayUrlResponse.DashItem.toFormat(): BilibiliStreamFormat? {
@@ -169,6 +182,23 @@ class BilibiliApi(
         val end = parts[1].toLongOrNull() ?: return null
         return start..end
     }
+
+    // endregion
+
+    // region Comments
+
+    /** [offset] is empty for the first page, else the previous page's `nextOffset`. */
+    suspend fun comments(
+        bvid: String,
+        offset: String = "",
+    ): BilibiliCommentsPage = comments.page(bvid, offset)
+
+    /** One page (1-based, 10 per page) of the replies under the comment [rpid]. */
+    suspend fun commentReplies(
+        bvid: String,
+        rpid: String,
+        page: Int,
+    ): BilibiliRepliesPage = comments.replies(bvid, rpid, page)
 
     // endregion
 
@@ -222,6 +252,7 @@ class BilibiliApi(
         const val PLAYER_V2_URL = "https://api.bilibili.com/x/player/wbi/v2"
         const val DANMAKU_URL = "https://api.bilibili.com/x/v1/dm/list.so?oid="
         const val RELATED_URL = "https://api.bilibili.com/x/web-interface/archive/related?bvid="
+        const val POPULAR_URL = "https://api.bilibili.com/x/web-interface/popular"
         const val SEARCH_URL = "https://api.bilibili.com/x/web-interface/search/type"
     }
 }

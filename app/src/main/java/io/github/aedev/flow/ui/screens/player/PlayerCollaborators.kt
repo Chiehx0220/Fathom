@@ -1,6 +1,7 @@
 package io.github.aedev.flow.ui.screens.player
 
 import android.content.Context
+import io.github.aedev.flow.data.comments.BilibiliCommentSource
 import io.github.aedev.flow.data.comments.CommentsPager
 import io.github.aedev.flow.data.comments.CommentsPlaybackState
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
@@ -14,6 +15,7 @@ import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.transcript.TranscriptRepository
 import io.github.aedev.flow.data.video.OfflineSubtitleStore
 import io.github.aedev.flow.data.video.VideoDownloadManager
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.stream.UpcomingPremiereProbe
 import io.github.aedev.flow.ui.screens.player.state.VideoPlayerUiState
@@ -66,6 +68,7 @@ internal class PlayerCollaborators(
                     )
                 },
             isCurrentVideo = { videoId -> uiState.value.cachedVideo?.id == videoId },
+            bilibili = BilibiliCommentSource(bilibiliApi(context)),
         )
 
     val transcripts =

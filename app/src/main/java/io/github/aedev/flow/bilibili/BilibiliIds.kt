@@ -43,7 +43,7 @@ object BilibiliPlaylistId {
     ): String = "$PREFIX:${kind.name.lowercase()}:$mid:$id:${URLEncoder.encode(name, "UTF-8")}"
 
     fun parse(raw: String): Parsed? {
-        val parts = raw.split(':')
+        val parts = raw.split(':', limit = 5)
         if (parts.size != 5 || parts[0] != PREFIX) return null
         val kind = BilibiliPlaylistKind.entries.firstOrNull { it.name.equals(parts[1], ignoreCase = true) } ?: return null
         val mid = parts[2].toLongOrNull() ?: return null
@@ -51,4 +51,49 @@ object BilibiliPlaylistId {
         val name = runCatching { URLDecoder.decode(parts[4], "UTF-8") }.getOrDefault("")
         return Parsed(kind, mid, id, name)
     }
+}
+
+/**
+ * How a video is named inside Flow: "BV1xx?p=2", the bvid and the 1-based part. Everything that has
+ * to read or build such an id does it here.
+ */
+object BilibiliVideoId {
+    private val PATTERN = Regex("""^BV[0-9A-Za-z]{10}(\?p=\d+)?$""")
+
+    /**
+     * True for an id in that shape. Older saved rows can carry the wrong service id, so the id
+     * itself is the surer test: no YouTube id looks like this (they are eleven characters and never
+     * contain "?").
+     */
+    fun isBilibili(videoId: String): Boolean = PATTERN.matches(videoId)
+
+    /** "BV1xx?p=3" -> ("BV1xx", 3). A missing or unreadable part number means the first part. */
+    fun parse(videoId: String): Pair<String, Int> {
+        val bvid = videoId.substringBefore('?')
+        val page =
+            videoId
+                .substringAfter('?', "")
+                .split('&')
+                .firstOrNull { it.startsWith("p=") }
+                ?.removePrefix("p=")
+                ?.toIntOrNull()
+                ?.takeIf { it >= 1 }
+                ?: 1
+        return bvid to page
+    }
+
+    /** "https://www.bilibili.com/video/BV1xx?p=2" -> "BV1xx?p=2"; null when [url] is not a video link. */
+    fun fromUrl(url: String): String? =
+        if (url.contains(VIDEO_PATH)) url.substringAfter(VIDEO_PATH).trimEnd('/').ifEmpty { null } else null
+
+    fun toUrl(videoId: String): String = "https://www.bilibili.com$VIDEO_PATH$videoId"
+
+    private const val VIDEO_PATH = "/video/"
+}
+
+/** Whether a link points at Bilibili, of any kind (video, uploader space). */
+object BilibiliLink {
+    private val HOST = Regex("""^https?://(?:[\w-]+\.)*bilibili\.com(?:[/?#:]|$)""", RegexOption.IGNORE_CASE)
+
+    fun isBilibili(url: String): Boolean = HOST.containsMatchIn(url.trim())
 }

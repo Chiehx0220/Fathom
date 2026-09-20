@@ -1,36 +1,34 @@
 package io.github.aedev.flow.utils
 
-import org.schabi.newpipe.extractor.StreamingService
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliChannelId
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 
 /**
- * A non-YouTube service's channel ids and URLs don't fit any YouTube-shaped pattern - every caller
- * that branches on service ends up hand-rolling
- * `runCatching { service.channelLHFactory.getX(...) }.getOrElse { ... }`. Written once so each
- * caller only supplies its own fallback for when the link handler can't parse this one.
+ * Ids and links of a service other than YouTube, which fit none of YouTube's URL shapes. Bilibili
+ * is the only one; every caller supplies its own fallback for what this cannot read.
  */
 fun resolveNonYouTubeChannelId(
     url: String,
-    service: StreamingService,
+    serviceId: Int,
     fallback: () -> String,
-): String = runCatching { service.channelLHFactory.getId(url) }.getOrElse { fallback() }
+): String =
+    if (serviceId == BILIBILI_SERVICE_ID) BilibiliChannelId.midOf(url)?.toString() ?: fallback() else fallback()
 
 /** @see resolveNonYouTubeChannelId */
 fun resolveNonYouTubeChannelUrl(
     channelId: String,
-    service: StreamingService,
+    serviceId: Int,
     fallback: () -> String,
-): String = runCatching { service.channelLHFactory.getUrl(channelId) }.getOrElse { fallback() }
+): String =
+    if (serviceId == BILIBILI_SERVICE_ID && BilibiliChannelId.isMid(channelId)) "https://space.bilibili.com/$channelId" else fallback()
 
-/** Same idea as [resolveNonYouTubeChannelId], for a stream (video) id instead of a channel id. */
+/** "BV1xx?p=2" out of a video link, [fallback] when the link is not a Bilibili video. */
 fun resolveNonYouTubeStreamId(
     url: String,
-    service: StreamingService,
+    serviceId: Int,
     fallback: () -> String,
-): String = runCatching { service.streamLHFactory.getId(url) }.getOrElse { fallback() }
-
-/** Same idea as [resolveNonYouTubeChannelId], for a playlist id instead of a channel id. */
-fun resolveNonYouTubePlaylistId(
-    url: String,
-    service: StreamingService,
-    fallback: () -> String,
-): String = runCatching { service.playlistLHFactory.getId(url) }.getOrElse { fallback() }
+): String {
+    if (serviceId != BILIBILI_SERVICE_ID) return fallback()
+    return BilibiliVideoId.fromUrl(url) ?: fallback()
+}

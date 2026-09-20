@@ -7,6 +7,7 @@ import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTube
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.renderer.FeedItem
 import io.github.aedev.flow.innertube.pages.renderer.FeedShelf
@@ -14,7 +15,6 @@ import io.github.aedev.flow.innertube.pages.renderer.FeedShelfStyle
 import io.github.aedev.flow.innertube.pages.search.SearchHeader
 import io.github.aedev.flow.innertube.pages.search.SearchResultsPage
 import io.github.aedev.flow.innertube.pages.search.SearchSection
-import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 
 /**
@@ -36,18 +36,15 @@ class SearchPagingSource(
 ) : PagingSource<String, SearchResultItem>() {
     override fun getRefreshKey(state: PagingState<String, SearchResultItem>): String? = null
 
-    private val service = runCatching { NewPipe.getService(serviceId) }.getOrDefault(ServiceList.YouTube)
-    private val isYouTube = service.isYouTube
+    private val isYouTube = serviceId.isYouTubeServiceId
     private val loadedItemKeys = DistinctKeyTracker()
 
     override suspend fun load(params: LoadParams<String>): LoadResult<String, SearchResultItem> {
         val continuation = params.key
         return try {
             if (!isYouTube) {
-                if (bilibiliApi != null && serviceId == ServiceList.BiliBili.serviceId) {
-                    return BilibiliNativeSearch.load(bilibiliApi, query, filter, continuation, loadedItemKeys)
-                }
-                return BilibiliSearchLoader.load(service, query, filter, shortsEnabled, continuation, loadedItemKeys)
+                val api = checkNotNull(bilibiliApi) { "Searching service $serviceId needs a BilibiliApi" }
+                return BilibiliNativeSearch.load(api, query, filter, continuation, loadedItemKeys)
             }
 
             val page = loadPage(query, filter.toSearchParams(), continuation)

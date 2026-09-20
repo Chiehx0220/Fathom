@@ -1,5 +1,6 @@
 package io.github.aedev.flow.data.paging
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
@@ -33,7 +34,7 @@ class BilibiliChannelPlaylistsPagingSource(
                         thumbnailUrl = ref.coverUrl,
                         videoCount = ref.videoCount,
                         isLocal = false,
-                        serviceId = ServiceList.BiliBili.serviceId,
+                        serviceId = BILIBILI_SERVICE_ID,
                     )
                 }
             LoadResult.Page(

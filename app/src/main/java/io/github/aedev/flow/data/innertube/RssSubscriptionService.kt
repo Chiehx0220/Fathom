@@ -1,16 +1,18 @@
 package io.github.aedev.flow.data.innertube
 
 import android.util.Log
+import io.github.aedev.flow.bilibili.BilibiliApi
+import io.github.aedev.flow.bilibili.BilibiliChannelPageKey
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
 import io.github.aedev.flow.data.shorts.ShortsClassifier
 import io.github.aedev.flow.data.subscriptions.ChannelRssClient
 import io.github.aedev.flow.data.subscriptions.ChannelRssEntry
+import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.formatYouTubeRelativeTime
 import io.github.aedev.flow.utils.parsePremiereTimestamp
-import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -19,17 +21,15 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.channel.ChannelInfo
-import org.schabi.newpipe.extractor.channel.ChannelTabInfo
-import org.schabi.newpipe.extractor.linkhandler.ChannelTabs
+import org.schabi.newpipe.extractor.channel.tabs.ChannelTabInfo
+import org.schabi.newpipe.extractor.channel.tabs.ChannelTabs
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
+import org.schabi.newpipe.extractor.stream.ContentAvailability
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
-import org.schabi.newpipe.localserver.channelIdToUrl
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicInteger
@@ -64,7 +64,12 @@ class RssSubscriptionService
     constructor(
         private val rssClient: ChannelRssClient,
         private val channelReelIndex: ChannelReelIndex,
+        private val bilibiliApi: BilibiliApi,
     ) {
+        /**
+         * @param serviceIdByChannel a channel missing from here is YouTube's. Bilibili has no RSS feed and
+         * no channel tabs: its channels are read from its own API once the YouTube phases are done.
+         */
         fun fetchSubscriptionVideos(
             channelIds: List<String>,
             serviceIdByChannel: Map<String, Int> = emptyMap(),
@@ -73,9 +78,11 @@ class RssSubscriptionService
             onProgress: ((processedChannels: Int, totalChannels: Int) -> Unit)? = null,
         ): Flow<SubscriptionFeedChunk> =
             flow {
-                val uniqueChannelIds = channelIds.distinct()
-                Log.i(TAG, "======== FEED FETCH START: ${uniqueChannelIds.size} channels ========")
-                if (uniqueChannelIds.isEmpty()) {
+                val allChannelIds = channelIds.distinct()
+                val bilibiliChannelIds = allChannelIds.filter { serviceIdByChannel[it]?.isYouTubeServiceId == false }
+                val uniqueChannelIds = allChannelIds - bilibiliChannelIds.toSet()
+                Log.i(TAG, "======== FEED FETCH START: ${allChannelIds.size} channels ========")
+                if (allChannelIds.isEmpty()) {
                     Log.w(TAG, "No channel IDs provided — emitting empty list")
                     emit(SubscriptionFeedChunk(emptyList(), emptySet()))
                     return@flow
@@ -103,21 +110,7 @@ class RssSubscriptionService
                             chunk
                                 .map { channelId ->
                                     async(Dispatchers.IO) {
-                                        val serviceId = serviceIdByChannel[channelId] ?: ServiceList.YouTube.serviceId
-                                        // Flow's RSS client only speaks YouTube's feed format - a service with
-                                        // no such shortcut (e.g. Bilibili) goes straight to Phase 2, same as the
-                                        // reference client treats StreamingService.getFeedExtractor() == null.
-                                        val result =
-                                            if (serviceId.isYouTubeServiceId) {
-                                                fetchRssVideos(channelId, minimumDateMillis, knownVideoIds)
-                                            } else {
-                                                RssResult(
-                                                    hasRecent = true,
-                                                    videoTimestamps = emptyMap(),
-                                                    videos = emptyList(),
-                                                    needsChannelFallback = true,
-                                                )
-                                            }
+                                        val result = fetchRssVideos(channelId, minimumDateMillis, knownVideoIds)
                                         channelId to result.copy(videos = channelReelIndex.markReels(channelId, result.videos))
                                     }
                                 }.awaitAll()
@@ -174,15 +167,7 @@ class RssSubscriptionService
                             chunk
                                 .map { channelId ->
                                     async(Dispatchers.IO) {
-                                        val serviceId = serviceIdByChannel[channelId] ?: ServiceList.YouTube.serviceId
-                                        channelId to
-                                            runChannelTabFetch(
-                                                channelId,
-                                                serviceId,
-                                                minimumDateMillis,
-                                                rssDateMap,
-                                                channelExtractionCount,
-                                            )
+                                        channelId to runChannelTabFetch(channelId, minimumDateMillis, rssDateMap, channelExtractionCount)
                                     }
                                 }.awaitAll()
                         }
@@ -213,6 +198,28 @@ class RssSubscriptionService
                     )
                 }
 
+                for (chunk in bilibiliChannelIds.chunked(BILIBILI_CHUNK_SIZE)) {
+                    val results =
+                        coroutineScope {
+                            chunk.map { channelId -> async(Dispatchers.IO) { channelId to fetchBilibiliVideos(channelId, minimumDateMillis) } }.awaitAll()
+                        }
+                    for ((channelId, result) in results) {
+                        if (result.failed) {
+                            unreachableChannelIds += channelId
+                            result.failureReason?.let { failureReasons[channelId] = it }
+                        }
+                        allRegular.addAll(result.videos)
+                    }
+                    compactAccumulator(allRegular, MAX_REGULAR_VIDEOS)
+                    emit(
+                        SubscriptionFeedChunk(
+                            videos = buildFeed(allRegular, allShorts, maxTotal),
+                            failedChannelIds = unreachableChannelIds.toSet(),
+                            failedChannelReasons = failureReasons.toMap(),
+                        ),
+                    )
+                }
+
                 emit(
                     SubscriptionFeedChunk(
                         videos = buildFeed(allRegular, allShorts, maxTotal),
@@ -227,64 +234,41 @@ class RssSubscriptionService
                 )
             }
 
-        /**
-         * A single channel's most recent uploads via the full channel-tabs path, for services with
-         * no lightweight feed at all (e.g. Bilibili) - used by the background new-upload check,
-         * which for those services has no RSS shortcut to fall back on in the first place.
-         */
+        /** The latest uploads of one Bilibili uploader, [channelId] being their numeric id. */
         suspend fun fetchLatestChannelVideos(
             channelId: String,
-            serviceId: Int,
             limit: Int = 5,
-        ): List<Video> =
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    val service = NewPipe.getService(serviceId)
-                    val channelUrl = channelIdToUrl(channelId, serviceId)
-                    val channelInfo = ChannelInfo.getInfo(service, channelUrl)
-                    val channelAvatar =
-                        channelInfo.avatars
-                            .maxByOrNull { it.height }
-                            ?.url
-                            ?.let { ThumbnailUrlResolver.resolveChannelAvatar(it) }
-                    val videosTab =
-                        channelInfo.tabs.find { tab -> tab.contentFilters.any { it.name == ChannelTabs.VIDEOS } }
-                            ?: return@runCatching emptyList()
+        ): List<Video> {
+            val mid = channelId.toLongOrNull() ?: return emptyList()
+            return bilibiliApi
+                .channelVideos(mid, BilibiliChannelPageKey(page = 1, lastAid = 0L))
+                .videos
+                .take(limit)
+                .map { BilibiliVideoMapper.videoFromChannel(it, mid, channelName = "", channelAvatarUrl = "") }
+        }
 
-                    var items = fetchTabItems(videosTab, limit, serviceId)
-                    // See the matching comment in getChannelVideos - a clean empty page can mean the
-                    // channel-tabs extractor's global API-mode selector rotated out from under it,
-                    // not that there truly are no uploads.
-                    if (items.isEmpty()) {
-                        delay(EMPTY_RESULT_RETRY_DELAY_MS)
-                        items = fetchTabItems(videosTab, limit, serviceId)
-                    }
-
-                    items
-                        .filterNot { it.isPaidOrMembersOnly() }
-                        .map { item ->
-                            streamInfoItemToVideo(
-                                item = item,
-                                channelId = channelId,
-                                channelAvatar = channelAvatar,
-                                serviceId = serviceId,
-                            )
-                        }
-                }.getOrElse {
-                    Log.w(TAG, "[$channelId] fetchLatestChannelVideos failed: ${it::class.simpleName}: ${it.message}")
-                    emptyList()
-                }
+        private suspend fun fetchBilibiliVideos(
+            channelId: String,
+            minimumDateMillis: Long,
+        ): ChannelFetchResult =
+            try {
+                val videos = fetchLatestChannelVideos(channelId, MAX_VIDEOS_PER_CHANNEL).filter { it.timestamp > minimumDateMillis }
+                ChannelFetchResult(videos, failed = false)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "[$channelId] Bilibili channel failed (${e::class.simpleName}): ${e.message}")
+                ChannelFetchResult(emptyList(), failed = true, failureReason = "${e::class.simpleName}: ${e.message}")
             }
 
         private suspend fun runChannelTabFetch(
             channelId: String,
-            serviceId: Int,
             minimumDateMillis: Long,
             rssDateMap: Map<String, Long>,
             channelExtractionCount: AtomicInteger,
         ): ChannelFetchResult =
             try {
-                getChannelVideos(channelId, serviceId, minimumDateMillis, rssDateMap).also {
+                getChannelVideos(channelId, minimumDateMillis, rssDateMap).also {
                     if (it.videos.isNotEmpty()) channelExtractionCount.incrementAndGet()
                 }
             } catch (e: CancellationException) {
@@ -470,120 +454,92 @@ class RssSubscriptionService
          */
         private suspend fun getChannelVideos(
             channelId: String,
-            serviceId: Int,
             minimumDateMillis: Long,
             rssDateMap: Map<String, Long>,
         ): ChannelFetchResult {
-            val service = NewPipe.getService(serviceId)
-            val channelUrl = channelIdToUrl(channelId, serviceId)
+            val channelUrl = "$YOUTUBE_URL/channel/$channelId"
+            val service = NewPipe.getService(0)
 
-            var lastFailure: ChannelFetchResult? = null
-            for (attempt in 1..EMPTY_RESULT_MAX_ATTEMPTS) {
-                try {
-                    val channelInfo = ChannelInfo.getInfo(service, channelUrl)
-                    val channelAvatar =
-                        channelInfo.avatars
-                            .maxByOrNull { it.height }
-                            ?.url
-                            ?.let { ThumbnailUrlResolver.resolveChannelAvatar(it) }
+            try {
+                val channelInfo = ChannelInfo.getInfo(service, channelUrl)
+                val channelAvatar =
+                    channelInfo.avatars
+                        .maxByOrNull { it.height }
+                        ?.url
+                        ?.let { ThumbnailUrlResolver.resolveChannelAvatar(it) }
 
-                    val videosTab = channelInfo.tabs.find { tab -> tab.contentFilters.any { it.name == ChannelTabs.VIDEOS } }
-                    val shortsTab = channelInfo.tabs.find { tab -> tab.contentFilters.any { it.name == ChannelTabs.SHORTS } }
-                    val liveTab = channelInfo.tabs.find { tab -> tab.contentFilters.any { it.name == ChannelTabs.LIVESTREAMS } }
+                val videosTab = channelInfo.tabs.find { it.contentFilters.contains(ChannelTabs.VIDEOS) }
+                val shortsTab = channelInfo.tabs.find { it.contentFilters.contains(ChannelTabs.SHORTS) }
+                val liveTab = channelInfo.tabs.find { it.contentFilters.contains(ChannelTabs.LIVESTREAMS) }
 
-                    if (videosTab == null && shortsTab == null && liveTab == null) {
-                        Log.w(TAG, "[$channelId] No VIDEOS/SHORTS/LIVE tab found")
-                        return ChannelFetchResult(emptyList(), failed = false)
+                if (videosTab == null && shortsTab == null && liveTab == null) {
+                    Log.w(TAG, "[$channelId] No VIDEOS/SHORTS/LIVE tab found")
+                    return ChannelFetchResult(emptyList(), failed = false)
+                }
+
+                val (videoItems, shortsItems, liveItems) =
+                    coroutineScope {
+                        val videoDeferred = videosTab?.let { async(Dispatchers.IO) { fetchTabItems(it, MAX_VIDEOS_PER_CHANNEL) } }
+                        val shortsDeferred = shortsTab?.let { async(Dispatchers.IO) { fetchTabItems(it, MAX_SHORTS_PER_CHANNEL) } }
+                        val liveDeferred = liveTab?.let { async(Dispatchers.IO) { fetchTabItems(it, MAX_LIVE_PER_CHANNEL) } }
+                        Triple(
+                            videoDeferred?.await() ?: emptyList(),
+                            shortsDeferred?.await() ?: emptyList(),
+                            liveDeferred?.await() ?: emptyList(),
+                        )
                     }
 
-                    val (videoItems, shortsItems, liveItems) =
-                        coroutineScope {
-                            val videoDeferred =
-                                videosTab?.let { async(Dispatchers.IO) { fetchTabItems(it, MAX_VIDEOS_PER_CHANNEL, serviceId) } }
-                            val shortsDeferred =
-                                shortsTab?.let { async(Dispatchers.IO) { fetchTabItems(it, MAX_SHORTS_PER_CHANNEL, serviceId) } }
-                            val liveDeferred =
-                                liveTab?.let { async(Dispatchers.IO) { fetchTabItems(it, MAX_LIVE_PER_CHANNEL, serviceId) } }
-                            Triple(
-                                videoDeferred?.await() ?: emptyList(),
-                                shortsDeferred?.await() ?: emptyList(),
-                                liveDeferred?.await() ?: emptyList(),
-                            )
-                        }
+                val shortsUrls = shortsItems.map { it.url }.toHashSet()
+                val liveUrls = liveItems.map { it.url }.toHashSet()
+                val combined = (videoItems + shortsItems + liveItems).distinctBy { it.url }
 
-                    if (videoItems.isEmpty() && shortsItems.isEmpty() && liveItems.isEmpty() && attempt < EMPTY_RESULT_MAX_ATTEMPTS) {
-                        // Bilibili's channel-tab extractor picks which internal API to read from a
-                        // single process-global mutable field (BilibiliService.userVideoApiMode) that
-                        // any concurrent request can rotate - including the risk-control retry inside
-                        // this very fetch, since getting a channel's info and its Videos tab each spin
-                        // up a separate extractor instance under the hood. When the field rotates
-                        // between the instance that fetched data and the one asked to read it back,
-                        // the read comes back a clean, error-free empty page instead of throwing - so a
-                        // short retry is the only way to tell that apart from a channel with no uploads.
-                        Log.w(TAG, "[$channelId] Empty channel-tabs result on attempt $attempt/$EMPTY_RESULT_MAX_ATTEMPTS, retrying")
-                        delay(EMPTY_RESULT_RETRY_DELAY_MS)
-                        continue
-                    }
+                val videos =
+                    combined.mapNotNull { item ->
+                        val videoId = extractVideoId(item.url)
+                        if (item.isPaidOrMembersOnly()) return@mapNotNull null
 
-                    val shortsUrls = shortsItems.map { it.url }.toHashSet()
-                    val liveUrls = liveItems.map { it.url }.toHashSet()
-                    val combined = (videoItems + shortsItems + liveItems).distinctBy { it.url }
+                        val uploadTimeMillis = rssDateMap[videoId] ?: resolveUploadTimestamp(item)
+                        when {
+                            uploadTimeMillis == null -> {
+                                null
+                            }
 
-                    val videos =
-                        combined.mapNotNull { item ->
-                            val videoId = extractVideoId(item.url, serviceId)
-                            if (item.isPaidOrMembersOnly()) return@mapNotNull null
+                            uploadTimeMillis <= minimumDateMillis -> {
+                                null
+                            }
 
-                            val uploadTimeMillis = rssDateMap[videoId] ?: resolveUploadTimestamp(item)
-                            when {
-                                uploadTimeMillis == null -> {
-                                    null
-                                }
-
-                                uploadTimeMillis <= minimumDateMillis -> {
-                                    null
-                                }
-
-                                else -> {
-                                    streamInfoItemToVideo(
-                                        item = item,
-                                        channelId = channelId,
-                                        channelAvatar = channelAvatar,
-                                        serviceId = serviceId,
-                                        forceShort = item.url in shortsUrls,
-                                        forceLive = item.url in liveUrls,
-                                        overrideTimestamp = uploadTimeMillis,
-                                    )
-                                }
+                            else -> {
+                                streamInfoItemToVideo(
+                                    item = item,
+                                    channelId = channelId,
+                                    channelAvatar = channelAvatar,
+                                    forceShort = item.url in shortsUrls,
+                                    forceLive = item.url in liveUrls,
+                                    overrideTimestamp = uploadTimeMillis,
+                                )
                             }
                         }
-
-                    Log.i(TAG, "[$channelId] RESULT: ${videos.size} videos (${videos.count { it.isShort }} shorts)")
-                    return ChannelFetchResult(videos, failed = false)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Log.e(TAG, "[$channelId] ChannelInfo FAILED (${e::class.simpleName}): ${e.message}")
-                    lastFailure =
-                        ChannelFetchResult(
-                            videos = emptyList(),
-                            failed = true,
-                            failureReason = "Channel: ${e::class.simpleName}: ${e.message}",
-                        )
-                    if (attempt < EMPTY_RESULT_MAX_ATTEMPTS) {
-                        delay(EMPTY_RESULT_RETRY_DELAY_MS)
                     }
-                }
+
+                Log.i(TAG, "[$channelId] RESULT: ${videos.size} videos (${videos.count { it.isShort }} shorts)")
+                return ChannelFetchResult(videos, failed = false)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "[$channelId] ChannelInfo FAILED (${e::class.simpleName}): ${e.message}")
+                return ChannelFetchResult(
+                    videos = emptyList(),
+                    failed = true,
+                    failureReason = "Channel: ${e::class.simpleName}: ${e.message}",
+                )
             }
-            return lastFailure ?: ChannelFetchResult(emptyList(), failed = false)
         }
 
         private fun fetchTabItems(
             tab: ListLinkHandler,
             limit: Int,
-            serviceId: Int,
         ): List<StreamInfoItem> {
-            val service = NewPipe.getService(serviceId)
+            val service = NewPipe.getService(0)
             val items = mutableListOf<StreamInfoItem>()
             var nextPage: Page? = null
 
@@ -623,13 +579,16 @@ class RssSubscriptionService
             item: StreamInfoItem,
             channelId: String,
             channelAvatar: String?,
-            serviceId: Int = ServiceList.YouTube.serviceId,
             forceShort: Boolean = false,
             forceLive: Boolean = false,
             overrideTimestamp: Long? = null,
         ): Video {
-            val videoId = extractVideoId(item.url, serviceId)
-            val thumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, item.thumbnailUrl)
+            val videoId = extractVideoId(item.url)
+            val thumbnail =
+                ThumbnailUrlResolver.normalizeVideoThumbnail(
+                    videoId,
+                    item.thumbnails.maxByOrNull { it.width }?.url,
+                )
 
             val uploadTimeMillis = overrideTimestamp ?: resolveUploadTimestamp(item) ?: 0L
 
@@ -678,13 +637,14 @@ class RssSubscriptionService
                 timestamp = uploadTimeMillis,
                 channelThumbnailUrl =
                     channelAvatar?.takeIf { it.isNotBlank() }
-                        ?: item.uploaderAvatarUrl
+                        ?: item.uploaderAvatars
+                            .maxByOrNull { it.height }
+                            ?.url
                             ?.let { ThumbnailUrlResolver.resolveChannelAvatar(it) }
                         ?: "",
                 isShort = forceShort || item.isLikelyShort(),
                 isLive = forceLive || item.isActiveLiveStream(),
                 isUpcoming = isUpcoming,
-                serviceId = serviceId,
             )
         }
 
@@ -695,25 +655,13 @@ class RssSubscriptionService
 
         private fun formatRelativeTime(timestampMillis: Long): String = formatYouTubeRelativeTime(timestampMillis)
 
-        private fun extractVideoId(
-            url: String,
-            serviceId: Int = ServiceList.YouTube.serviceId,
-        ): String {
-            if (!serviceId.isYouTubeServiceId) {
-                // Bilibili ids (e.g. "BV1jJ411a7Rk?p=1") don't fit any YouTube-shaped pattern below,
-                // and naively stripping the query string would drop the page-part suffix the rest of
-                // the app keeps embedded in the id - resolve through the service's own link handler.
-                return resolveNonYouTubeStreamId(url, NewPipe.getService(serviceId)) {
-                    url.substringAfterLast("/").substringBefore("?")
-                }
-            }
-            return when {
+        private fun extractVideoId(url: String): String =
+            when {
                 url.contains("v=") -> url.substringAfter("v=").substringBefore("&")
                 url.contains("/watch/") -> url.substringAfter("/watch/").substringBefore("?")
                 url.contains("/shorts/") -> url.substringAfter("/shorts/").substringBefore("?").substringBefore("/")
                 else -> url.substringAfterLast("/").substringBefore("?")
             }
-        }
 
         private fun resolveUploadTimestamp(item: StreamInfoItem): Long? {
             val absolute =
@@ -730,7 +678,9 @@ class RssSubscriptionService
         }
 
         private fun StreamInfoItem.isPaidOrMembersOnly(): Boolean {
-            if (requiresMembership()) {
+            if (contentAvailability == ContentAvailability.PAID ||
+                contentAvailability == ContentAvailability.MEMBERSHIP
+            ) {
                 return true
             }
             return containsRestrictionMarker(listOfNotNull(name, shortDescription).joinToString(" "))
@@ -781,6 +731,9 @@ class RssSubscriptionService
 
         private companion object {
             const val TAG = "InnertubeSubs"
+            const val YOUTUBE_URL = "https://www.youtube.com"
+            /** Bilibili blocks bursts, so its uploaders are read a few at a time. */
+            const val BILIBILI_CHUNK_SIZE = 3
             const val UNKNOWN_LABEL = "Unknown"
 
             const val RSS_CHUNK_SIZE = 20
@@ -794,11 +747,6 @@ class RssSubscriptionService
             const val MAX_VIDEOS_PER_CHANNEL = 60
             const val MAX_SHORTS_PER_CHANNEL = 20
             const val MAX_LIVE_PER_CHANNEL = 20
-
-            /** Bounded retry for a channel-tabs fetch that came back empty with no error - see the
-             *  comment at its call site in [getChannelVideos] for why that happens. */
-            const val EMPTY_RESULT_MAX_ATTEMPTS = 2
-            const val EMPTY_RESULT_RETRY_DELAY_MS = 1500L
 
             val RESTRICTION_MARKERS =
                 listOf(

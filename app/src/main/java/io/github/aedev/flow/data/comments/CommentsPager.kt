@@ -1,14 +1,13 @@
 package io.github.aedev.flow.data.comments
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import android.util.Log
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.distinctByNonBlankKey
-import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.data.model.mergeDistinctByNonBlankKey
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.innertube.pages.VideoCommentSort
 import io.github.aedev.flow.player.PlaybackStartupPolicy
-import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -66,6 +65,7 @@ internal class CommentsPager(
     private val isCurrentVideo: (String) -> Boolean = { true },
     private val fetchTimeoutMs: Long? = null,
     private val prefetchPages: Int = DEFAULT_PREFETCH_PAGES,
+    private val bilibili: BilibiliCommentSource? = null,
 ) {
     private val _comments = MutableStateFlow<List<Comment>>(emptyList())
     val comments: StateFlow<List<Comment>> = _comments.asStateFlow()
@@ -95,6 +95,8 @@ internal class CommentsPager(
     private var activeSortToken: String? = null
     private var serviceId: Int = ServiceList.YouTube.serviceId
     private val repliesInFlight = mutableSetOf<String>()
+
+    private fun isBilibili(): Boolean = bilibili != null && serviceId == BILIBILI_SERVICE_ID
 
     /** Empties the list, for a video with no comments to fetch and for a player being torn down. */
     fun clear() {
@@ -159,7 +161,10 @@ internal class CommentsPager(
                         }
                     }
                     if (!isCurrentVideo(videoId)) return@launch
-                    val page = fetch { repository.getVideoComments(videoId, sortToken, serviceId) } ?: return@launch
+                    val page =
+                        fetch {
+                            if (isBilibili()) bilibili!!.first(videoId) else repository.getVideoComments(videoId, sortToken)
+                        } ?: return@launch
                     if (!isCurrentVideo(videoId)) return@launch
                     _comments.value = page.comments.distinctByNonBlankKey(Comment::id)
                     next = page
@@ -224,13 +229,16 @@ internal class CommentsPager(
         val legacyPage = next.legacyPage
         val page =
             when {
+                continuation != null && isBilibili() -> {
+                    bilibili!!.more(videoId, continuation)
+                }
+
                 continuation != null -> {
-                    repository.getMoreVideoComments(videoId, continuation, serviceId)
+                    repository.getMoreVideoComments(videoId, continuation)
                 }
 
                 legacyPage != null -> {
-                    val (comments, nextLegacy) =
-                        repository.getMoreComments(videoId, legacyPage, NewPipe.getService(serviceId))
+                    val (comments, nextLegacy) = repository.getMoreComments(videoId, legacyPage)
                     CommentsPageResult(comments = comments, legacyPage = nextLegacy)
                 }
 
@@ -267,17 +275,16 @@ internal class CommentsPager(
             try {
                 val (replies, nextContinuation, nextLegacyPage) =
                     if (continuation != null) {
-                        val page = repository.getVideoCommentReplies(videoId, continuation, serviceId)
+                        val page =
+                            if (isBilibili()) {
+                                bilibili!!.replies(videoId, comment.id, continuation)
+                            } else {
+                                repository.getVideoCommentReplies(videoId, continuation)
+                            }
                         Triple(page.comments, page.continuation, null)
                     } else {
-                        val service = NewPipe.getService(serviceId)
-                        val url =
-                            if (service.isYouTube) {
-                                "https://www.youtube.com/watch?v=$videoId"
-                            } else {
-                                service.streamLHFactory.getUrl(videoId)
-                            }
-                        val (items, nextPage) = repository.getCommentReplies(url, requireNotNull(repliesPage), service)
+                        val url = "https://www.youtube.com/watch?v=$videoId"
+                        val (items, nextPage) = repository.getCommentReplies(url, requireNotNull(repliesPage))
                         Triple(items, null, nextPage)
                     }
                 _comments.value =

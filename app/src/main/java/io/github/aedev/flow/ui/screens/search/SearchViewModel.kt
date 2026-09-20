@@ -3,6 +3,7 @@
 package io.github.aedev.flow.ui.screens.search
 
 import android.content.Context
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -36,7 +37,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
 
@@ -124,17 +124,21 @@ class SearchViewModel
                 )
             }
             if (video.isYouTube) return null
-            val resolved =
+            // Only Bilibili is left: its video knows its uploader.
+            val uploader =
                 runCatching {
-                    repository.getVideo(video.id, NewPipe.getService(video.serviceId))
+                    io.github.aedev.flow.di.bilibiliApi(context)
+                        .videoInfo(BilibiliVideoId.parse(video.id).first)
+                        .uploader
                 }.getOrNull() ?: return null
-            if (resolved.channelId.isBlank()) return null
+            if (uploader.mid <= 0) return null
+            val channelId = uploader.mid.toString()
             return Channel(
-                id = resolved.channelId,
-                name = resolved.channelName,
-                thumbnailUrl = resolved.channelThumbnailUrl,
+                id = channelId,
+                name = uploader.name,
+                thumbnailUrl = uploader.avatarUrl,
                 subscriberCount = 0,
-                url = youtubeChannelUrl(resolved.channelId, video.serviceId).orEmpty(),
+                url = youtubeChannelUrl(channelId, video.serviceId).orEmpty(),
                 serviceId = video.serviceId,
             )
         }

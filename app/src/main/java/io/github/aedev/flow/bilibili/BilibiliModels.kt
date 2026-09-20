@@ -36,6 +36,8 @@ data class BilibiliVideoInfo(
     val pages: List<BilibiliPage>,
     /** True when the video needs payment; its [BilibiliPlayback] may come back empty. */
     val isPaid: Boolean,
+    /** The partition the uploader filed it under, "" when unknown. */
+    val category: String = "",
 )
 
 /** One DASH stream. [initRange] and [indexRange] are inclusive byte ranges into [url]. */
@@ -75,6 +77,7 @@ data class BilibiliRelated(
     val viewCount: Long,
     val uploader: BilibiliUploader,
     val uploadTimeSec: Long,
+    val category: String = "",
 )
 
 // endregion
@@ -92,6 +95,9 @@ sealed interface BilibiliSearchItem {
         val viewCount: Long,
         val uploader: BilibiliUploader,
         val uploadTimeSec: Long,
+        val category: String = "",
+        /** The tags the uploader gave it. */
+        val tags: List<String> = emptyList(),
     ) : BilibiliSearchItem
 
     data class User(
@@ -166,6 +172,35 @@ data class BilibiliPlaylistPage(
 data class BilibiliPlaylistVideos(
     val videos: List<BilibiliChannelVideo>,
     val total: Int,
+)
+
+// endregion
+
+// region Comments
+
+data class BilibiliComment(
+    val id: String,
+    val authorMid: Long,
+    val authorName: String,
+    val authorAvatarUrl: String,
+    val text: String,
+    val likeCount: Long,
+    val postedSec: Long,
+    val replyCount: Int,
+    val isPinned: Boolean,
+    val isLikedByUploader: Boolean,
+)
+
+/** [nextOffset] is null on the last page. */
+data class BilibiliCommentsPage(
+    val comments: List<BilibiliComment>,
+    val nextOffset: String?,
+)
+
+/** [nextPage] is null on the last page. */
+data class BilibiliRepliesPage(
+    val replies: List<BilibiliComment>,
+    val nextPage: Int?,
 )
 
 // endregion

@@ -5,16 +5,12 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliChannelPageKey
-import io.github.aedev.flow.bilibili.BilibiliChannelVideo
 import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.schabi.newpipe.extractor.ServiceList
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 /** A Bilibili uploader's Videos tab through the native client; the key is the 1-based page. */
 class BilibiliChannelVideosPagingSource(
@@ -32,7 +28,7 @@ class BilibiliChannelVideosPagingSource(
         return try {
             val result = withContext(Dispatchers.IO) { api.channelVideos(mid, key) }
             LoadResult.Page(
-                data = loadedKeys.filter(result.videos.map { it.toVideo() }, Video::id),
+                data = loadedKeys.filter(result.videos.map { BilibiliVideoMapper.videoFromChannel(it, mid, channelName, channelAvatarUrl) }, Video::id),
                 prevKey = null,
                 nextKey = if (result.hasMore) BilibiliChannelPageKey(key.page + 1, result.lastAid) else null,
             )
@@ -44,23 +40,7 @@ class BilibiliChannelVideosPagingSource(
         }
     }
 
-    private fun BilibiliChannelVideo.toVideo(): Video =
-        Video(
-            id = "$bvid?p=1",
-            title = title,
-            thumbnailUrl = thumbnailUrl,
-            channelName = authorName.ifBlank { channelName },
-            channelId = mid.toString(),
-            channelThumbnailUrl = channelAvatarUrl,
-            viewCount = viewCount,
-            duration = durationSec,
-            uploadDate = uploadTimeSec.takeIf { it > 0 }?.let { DATE.format(Instant.ofEpochSecond(it)) } ?: "",
-            timestamp = uploadTimeSec * 1000,
-            serviceId = ServiceList.BiliBili.serviceId,
-        )
-
     private companion object {
         const val TAG = "BilibiliChannelVideos"
-        val DATE: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneOffset.UTC)
     }
 }

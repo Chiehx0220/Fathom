@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui.components.search
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.FilterChip
@@ -19,7 +20,7 @@ fun SearchServiceSwitcher(
     val options =
         listOf(
             ServiceList.YouTube.serviceId to "YouTube",
-            ServiceList.BiliBili.serviceId to "Bilibili",
+            BILIBILI_SERVICE_ID to "Bilibili",
         )
     Row(
         modifier = modifier,

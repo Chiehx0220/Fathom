@@ -20,7 +20,6 @@ import io.github.aedev.flow.player.quality.QualityManager
 import io.github.aedev.flow.player.shorts.ShortsStartupTrace
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
 import io.github.aedev.flow.player.stream.VideoCodecUtils
-import io.github.aedev.flow.player.stream.isOriginalAudioTrack
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -693,16 +692,18 @@ class ShortsRepository private constructor(
             when (preferredAudioLanguage) {
                 "original", "" -> {
                     audioCandidates.firstOrNull { stream ->
-                        stream.isOriginalAudioTrack()
+                        stream.audioTrackType == org.schabi.newpipe.extractor.stream.AudioTrackType.ORIGINAL
+                    } ?: audioCandidates.firstOrNull { stream ->
+                        stream.audioTrackType != org.schabi.newpipe.extractor.stream.AudioTrackType.DUBBED
                     } ?: audioCandidates.firstOrNull()
                 }
 
                 else -> {
                     audioCandidates.firstOrNull { a ->
-                        val lang = a.audioLocale ?: ""
+                        val lang = a.audioLocale?.language ?: ""
                         lang.startsWith(preferredAudioLanguage, true)
                     } ?: audioCandidates.firstOrNull { stream ->
-                        stream.isOriginalAudioTrack()
+                        stream.audioTrackType == org.schabi.newpipe.extractor.stream.AudioTrackType.ORIGINAL
                     } ?: audioCandidates.firstOrNull()
                 }
             }

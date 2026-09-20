@@ -26,6 +26,8 @@ internal object BilibiliSearchParser {
             viewCount = item.play,
             uploader = BilibiliUploader(item.mid, item.author, absolute(item.upic)),
             uploadTimeSec = item.pubdate,
+            category = item.typename,
+            tags = item.tag.split(',').map { it.trim() }.filter { it.isNotEmpty() },
         )
     }
 

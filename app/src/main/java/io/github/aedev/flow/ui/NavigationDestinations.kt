@@ -64,7 +64,7 @@ internal fun youtubeChannelUrl(
     if (!serviceId.isYouTubeServiceId) {
         // Bare id for a non-YouTube service (e.g. Bilibili's numeric "mid") - resolve through that
         // service's own link handler instead of assuming a YouTube URL shape.
-        return resolveNonYouTubeChannelUrl(value, NewPipe.getService(serviceId)) { "" }.ifEmpty { null }
+        return resolveNonYouTubeChannelUrl(value, serviceId) { "" }.ifEmpty { null }
     }
     return when {
         value.startsWith("UC") -> "https://www.youtube.com/channel/$value"

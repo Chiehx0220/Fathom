@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui.screens.playlists
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliChannelVideo
 import io.github.aedev.flow.bilibili.BilibiliPlaylistId
@@ -44,7 +45,7 @@ internal object BilibiliPlaylistLoader {
                     viewCount = video.viewCount,
                     uploadDate = video.uploadTimeSec.takeIf { it > 0 }?.let { DATE.format(Instant.ofEpochSecond(it)) } ?: "",
                     channelThumbnailUrl = uploader?.avatarUrl.orEmpty(),
-                    serviceId = ServiceList.BiliBili.serviceId,
+                    serviceId = BILIBILI_SERVICE_ID,
                 )
             }
         return Playlist(
@@ -54,7 +55,7 @@ internal object BilibiliPlaylistLoader {
             videoCount = mapped.size,
             videos = mapped,
             isLocal = false,
-            serviceId = ServiceList.BiliBili.serviceId,
+            serviceId = BILIBILI_SERVICE_ID,
         )
     }
 }

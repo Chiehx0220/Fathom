@@ -1,5 +1,6 @@
 package io.github.aedev.flow.player.stream
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import org.schabi.newpipe.extractor.ServiceList
 
 /**
@@ -15,4 +16,4 @@ import org.schabi.newpipe.extractor.ServiceList
  * YouTube live chat (`LiveChatRepository`) that doesn't go through this at all. Gating on the
  * capability would silently show a Danmaku toggle on YouTube videos that can never show anything.
  */
-fun serviceSupportsBulletComments(serviceId: Int): Boolean = serviceId == ServiceList.BiliBili.serviceId
+fun serviceSupportsBulletComments(serviceId: Int): Boolean = serviceId == BILIBILI_SERVICE_ID

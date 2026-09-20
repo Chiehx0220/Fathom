@@ -19,9 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.aedev.flow.R
-import io.github.aedev.flow.data.model.isYouTube
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.player.error.PlayerDiagnostics
-import org.schabi.newpipe.extractor.NewPipe
 
 @Composable
 internal fun PlayerErrorPanel(
@@ -31,8 +30,7 @@ internal fun PlayerErrorPanel(
     context: Context,
     onRetryClick: () -> Unit,
 ) {
-    val service = remember(serviceId) { NewPipe.getService(serviceId) }
-    val isYouTube = service.isYouTube
+    val isYouTube = serviceId.isYouTubeServiceId
     Surface(
         modifier =
             Modifier
@@ -106,7 +104,7 @@ internal fun PlayerErrorPanel(
                     val intent =
                         Intent(
                             Intent.ACTION_VIEW,
-                            Uri.parse(service.streamLHFactory.getUrl(videoId)),
+                            Uri.parse(if (isYouTube) "https://www.youtube.com/watch?v=$videoId" else "https://www.bilibili.com/video/$videoId"),
                         )
                     context.startActivity(intent)
                 },
@@ -125,7 +123,7 @@ internal fun PlayerErrorPanel(
                         if (isYouTube) {
                             stringResource(R.string.ui_open_in_youtube)
                         } else {
-                            stringResource(R.string.ui_open_in_service, service.serviceInfo.name)
+                            stringResource(R.string.ui_open_in_service, "Bilibili")
                         },
                     fontSize = 13.sp,
                 )

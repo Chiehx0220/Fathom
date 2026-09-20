@@ -29,7 +29,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import io.github.aedev.flow.player.stream.isOriginalAudioTrack
 import org.schabi.newpipe.extractor.stream.VideoStream
 
 @OptIn(ExperimentalMaterial3Api::class)

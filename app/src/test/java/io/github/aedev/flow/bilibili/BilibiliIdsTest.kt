@@ -34,4 +34,45 @@ class BilibiliIdsTest {
         assertThat(BilibiliSigning.bvidOf("", 0)).isNull()
         assertThat(BilibiliSigning.bvidOf("", 170001)).isEqualTo(BilibiliSigning.av2bv(170001))
     }
+
+    @Test
+    fun aPlainBvidIsTheFirstPart() {
+        assertThat(BilibiliVideoId.parse("BV1V1em62ECa")).isEqualTo("BV1V1em62ECa" to 1)
+    }
+
+    @Test
+    fun thePParameterPicksThePart() {
+        assertThat(BilibiliVideoId.parse("BV1jWej6hEnK?p=3")).isEqualTo("BV1jWej6hEnK" to 3)
+        assertThat(BilibiliVideoId.parse("BV1x?t=10&p=2")).isEqualTo("BV1x" to 2)
+    }
+
+    @Test
+    fun aMissingZeroOrUnreadablePMeansTheFirstPart() {
+        assertThat(BilibiliVideoId.parse("BV1x?p=0").second).isEqualTo(1)
+        assertThat(BilibiliVideoId.parse("BV1x?p=abc").second).isEqualTo(1)
+        assertThat(BilibiliVideoId.parse("BV1x?t=10").second).isEqualTo(1)
+    }
+
+    @Test
+    fun aVideoLinkGivesItsIdBack() {
+        assertThat(BilibiliVideoId.fromUrl("https://www.bilibili.com/video/BV1SHM36KE6Y?p=2")).isEqualTo("BV1SHM36KE6Y?p=2")
+        assertThat(BilibiliVideoId.fromUrl("https://www.bilibili.com/video/BV1SHM36KE6Y/")).isEqualTo("BV1SHM36KE6Y")
+        assertThat(BilibiliVideoId.fromUrl("https://space.bilibili.com/455557356")).isNull()
+        assertThat(BilibiliVideoId.toUrl("BV1SHM36KE6Y?p=1")).isEqualTo("https://www.bilibili.com/video/BV1SHM36KE6Y?p=1")
+    }
+
+    @Test
+    fun onlyTheBvShapeCountsAsBilibili() {
+        assertThat(BilibiliVideoId.isBilibili("BV1SHM36KE6Y?p=1")).isTrue()
+        assertThat(BilibiliVideoId.isBilibili("BV1SHM36KE6Y")).isTrue()
+        assertThat(BilibiliVideoId.isBilibili("dQw4w9WgXcQ")).isFalse()
+    }
+
+    @Test
+    fun aLinkIsBilibiliByItsHostNotByItsText() {
+        assertThat(BilibiliLink.isBilibili("https://space.bilibili.com/455557356")).isTrue()
+        assertThat(BilibiliLink.isBilibili("https://www.bilibili.com/video/BV1x")).isTrue()
+        assertThat(BilibiliLink.isBilibili("https://www.youtube.com/watch?v=bilibili.com")).isFalse()
+        assertThat(BilibiliLink.isBilibili("https://notbilibili.com/x")).isFalse()
+    }
 }

@@ -291,7 +291,7 @@ class SubscriptionCheckWorker(
         val videos =
             dependencies
                 .rssSubscriptionService()
-                .fetchLatestChannelVideos(subscription.channelId, subscription.serviceId)
+                .fetchLatestChannelVideos(subscription.channelId)
         val latestVideo = videos.firstOrNull() ?: return emptyList()
 
         // Shorts have no Bilibili equivalent - nothing here needs a reel verdict, unlike the RSS

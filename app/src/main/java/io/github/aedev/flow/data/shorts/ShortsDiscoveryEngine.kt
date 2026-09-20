@@ -14,7 +14,7 @@ import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.FlowPersona
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.utils.RelativeUploadDateParser
-import io.github.aedev.flow.utils.SearchFilterResolver
+import io.github.aedev.flow.utils.distinctBestImageUrls
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -459,12 +459,7 @@ class ShortsDiscoveryEngine private constructor(
         withContext(Dispatchers.IO) {
             try {
                 val service = NewPipe.getService(0)
-                val extractor =
-                    service.getSearchExtractor(
-                        query,
-                        SearchFilterResolver.resolveSearchContentFilters(service, emptyList()),
-                        emptyList(),
-                    )
+                val extractor = service.getSearchExtractor(query)
                 extractor.fetchPage()
 
                 extractor.initialPage
@@ -510,7 +505,7 @@ class ShortsDiscoveryEngine private constructor(
 
         val isShort = ShortsClassifier.isReel(item)
         val timestamp = resolveUploadTimestamp(item) ?: System.currentTimeMillis()
-        val avatarUrls = listOfNotNull(item.uploaderAvatarUrl)
+        val avatarUrls = item.uploaderAvatars.distinctBestImageUrls()
 
         return Video(
             id = videoId,
@@ -520,7 +515,7 @@ class ShortsDiscoveryEngine private constructor(
             thumbnailUrl =
                 io.github.aedev.flow.utils.ThumbnailUrlResolver.normalizeVideoThumbnail(
                     videoId,
-                    item.thumbnailUrl,
+                    item.thumbnails?.maxByOrNull { it.height }?.url,
                 ),
             duration = item.duration.toInt().coerceAtLeast(0),
             viewCount = if (item.viewCount >= 0) item.viewCount else 0L,

@@ -5,12 +5,9 @@ import io.github.aedev.flow.innertube.models.YouTubeClient
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
 import io.ktor.http.URLBuilder
 import io.ktor.http.parseQueryString
-import okhttp3.Call
-import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.downloader.CancellableCall
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
@@ -25,11 +22,6 @@ class NewPipeDownloaderImpl(
     proxy: Proxy?,
     proxyAuth: String? = null,
 ) : Downloader() {
-    companion object {
-        // Verbs OkHttp's Request.Builder.method() refuses to send without a body.
-        private val BODY_REQUIRED_METHODS = setOf("POST", "PUT", "PATCH", "PROPPATCH", "REPORT")
-    }
-
     private val client =
         OkHttpClient
             .Builder()
@@ -43,23 +35,17 @@ class NewPipeDownloaderImpl(
             }
             .build()
 
-    private fun buildOkHttpRequest(request: Request): okhttp3.Request {
+    @Throws(IOException::class, ReCaptchaException::class)
+    override fun execute(request: Request): Response {
         val httpMethod = request.httpMethod()
         val url = request.url()
         val headers = request.headers()
         val dataToSend = request.dataToSend()
 
-        // OkHttp's method(name, body) throws "method POST must have a request body" for any
-        // body-requiring verb (POST/PUT/PATCH/...) given a null body - dataToSend is null
-        // whenever the extractor issues a bodyless POST, so fall back to an empty body instead
-        // of passing the null straight through.
-        val requestBody =
-            dataToSend?.toRequestBody()
-                ?: if (httpMethod in BODY_REQUIRED_METHODS) ByteArray(0).toRequestBody() else null
         val requestBuilder =
             okhttp3.Request
                 .Builder()
-                .method(httpMethod, requestBody)
+                .method(httpMethod, dataToSend?.toRequestBody())
                 .url(url)
                 .addHeader("User-Agent", YouTubeClient.USER_AGENT_WEB)
 
@@ -74,53 +60,16 @@ class NewPipeDownloaderImpl(
             }
         }
 
-        return requestBuilder.build()
-    }
+        val response = client.newCall(requestBuilder.build()).execute()
 
-    @Throws(IOException::class, ReCaptchaException::class)
-    private fun toNewPipeResponse(response: okhttp3.Response, url: String): Response {
         if (response.code == 429) {
             response.close()
             throw ReCaptchaException("reCaptcha Challenge requested", url)
         }
 
-        val rawBody = response.body?.bytes() ?: ByteArray(0)
-        val responseBodyToReturn = String(rawBody, Charsets.UTF_8)
+        val responseBodyToReturn = response.body?.string()
         val latestUrl = response.request.url.toString()
-        return Response(response.code, response.message, response.headers.toMultimap(), responseBodyToReturn, rawBody, latestUrl)
-    }
-
-    @Throws(IOException::class, ReCaptchaException::class)
-    override fun execute(request: Request): Response {
-        val response = client.newCall(buildOkHttpRequest(request)).execute()
-        return toNewPipeResponse(response, request.url())
-    }
-
-    override fun executeAsync(request: Request, callback: Downloader.AsyncCallback): CancellableCall {
-        val call = client.newCall(buildOkHttpRequest(request))
-        val cancellableCall = CancellableCall(call)
-        call.enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                try {
-                    callback.onError(e)
-                } finally {
-                    cancellableCall.setFinished()
-                }
-            }
-
-            override fun onResponse(call: Call, response: okhttp3.Response) {
-                try {
-                    response.use {
-                        callback.onSuccess(toNewPipeResponse(response, request.url()))
-                    }
-                } catch (e: Exception) {
-                    callback.onError(e)
-                } finally {
-                    cancellableCall.setFinished()
-                }
-            }
-        })
-        return cancellableCall
+        return Response(response.code, response.message, response.headers.toMultimap(), responseBodyToReturn, latestUrl)
     }
 }
 

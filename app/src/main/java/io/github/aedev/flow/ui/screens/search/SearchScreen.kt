@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import io.github.aedev.flow.R
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.local.ContentType
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Playlist
@@ -61,6 +62,7 @@ import io.github.aedev.flow.ui.components.search.SearchTopBarActions
 import io.github.aedev.flow.ui.components.shared.FlowEmptyState
 import io.github.aedev.flow.ui.components.shared.FlowErrorState
 import io.github.aedev.flow.utils.videoIdFromUrl
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.ServiceList
 
@@ -288,11 +290,8 @@ private fun launchVoiceSearch(
 private fun resolvePastedVideoLink(url: String): Pair<String, Int>? {
     videoIdFromUrl(url)?.let { return it to ServiceList.YouTube.serviceId }
     if (!url.startsWith("http")) return null
-    return runCatching {
-        val service = NewPipe.getServiceByUrl(url)
-        val id = service.streamLHFactory.getId(url)
-        id to service.serviceId
-    }.getOrNull()
+    val id = BilibiliVideoId.fromUrl(url) ?: return null
+    return id to BILIBILI_SERVICE_ID
 }
 
 private fun sharedVideo(

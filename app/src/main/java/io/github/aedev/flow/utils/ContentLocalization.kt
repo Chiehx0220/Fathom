@@ -17,7 +17,11 @@ private val FALLBACK_LOCALIZATION = Localization("en", "US")
  * way `StreamingService.getTimeAgoParser` does before giving up on the user's language.
  */
 fun newPipeLocalization(languageTag: String): Localization {
-    val requested = Localization.fromLocalizationCode(normalizeYouTubeHostLanguage(languageTag))
+    val requested =
+        Localization
+            .fromLocalizationCode(normalizeYouTubeHostLanguage(languageTag))
+            .orElse(null)
+            ?: return FALLBACK_LOCALIZATION
 
     return requested.takeIf { it.hasTimeAgoPatterns() }
         ?: Localization(requested.languageCode).takeIf { it.hasTimeAgoPatterns() }

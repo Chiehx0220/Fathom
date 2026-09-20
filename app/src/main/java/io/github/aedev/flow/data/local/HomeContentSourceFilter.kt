@@ -1,5 +1,6 @@
 package io.github.aedev.flow.data.local
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import org.schabi.newpipe.extractor.ServiceList
 
 /**
@@ -18,7 +19,7 @@ enum class HomeContentSourceFilter {
             when (this) {
                 MIX -> null
                 YOUTUBE -> ServiceList.YouTube.serviceId
-                BILIBILI -> ServiceList.BiliBili.serviceId
+                BILIBILI -> BILIBILI_SERVICE_ID
             }
 
     companion object {

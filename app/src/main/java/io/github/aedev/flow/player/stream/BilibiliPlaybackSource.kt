@@ -2,6 +2,7 @@ package io.github.aedev.flow.player.stream
 
 import android.util.Log
 import io.github.aedev.flow.bilibili.BilibiliApi
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.model.Video
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -21,7 +22,7 @@ internal class BilibiliPlaybackSource(
         preferences: StreamPreferences,
     ): ResolvedPlayback.VodFromBilibili =
         coroutineScope {
-            val (bvid, page) = parseVideoId(request.videoId)
+            val (bvid, page) = BilibiliVideoId.parse(request.videoId)
             // Started first so the two requests overlap; a failure here only costs the related lane.
             val related =
                 async {
@@ -60,20 +61,5 @@ internal class BilibiliPlaybackSource(
                 .filter { it.bvid != bvid }
                 .map { BilibiliVideoMapper.videoFromRelated(it) }
                 .distinctBy { it.id }
-
-        /** "BV1xx?p=3" -> ("BV1xx", 3). A missing or unreadable part number means the first part. */
-        internal fun parseVideoId(videoId: String): Pair<String, Int> {
-            val bvid = videoId.substringBefore('?')
-            val page =
-                videoId
-                    .substringAfter('?', "")
-                    .split('&')
-                    .firstOrNull { it.startsWith("p=") }
-                    ?.removePrefix("p=")
-                    ?.toIntOrNull()
-                    ?.takeIf { it >= 1 }
-                    ?: 1
-            return bvid to page
-        }
     }
 }
