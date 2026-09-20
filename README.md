@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Chiehx0220/Flow/Btest/Assets/logo.png" alt="Flow" width="112" height="112">
+  <img src="Assets/fathom-icon.png" alt="Fathom" width="112" height="112">
 </p>
 
-<h1 align="center">Flow + Bilibili</h1>
+<h1 align="center">Fathom</h1>
 
 <p align="center">
-  A fork of <a href="https://github.com/A-EDev/Flow">Flow</a> that watches YouTube and Bilibili from one library,<br>
-  with recommendations that never leave the phone.
+  A YouTube and Bilibili player for Android, forked from <a href="https://github.com/A-EDev/Flow">Flow</a>,<br>
+  with one library and recommendations that never leave the phone.
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
 
 ## The short version
 
-Flow is a YouTube client with an on-device recommendation engine (FlowNeuro). This fork teaches it a second service. Bilibili videos, channels, comments, and danmaku sit next to YouTube's in search, the home feed, subscriptions, history, and playlists, and both feed the same local recommender.
+Fathom is a fork of Flow, a YouTube client with an on-device recommendation engine (FlowNeuro), that adds a second service. Bilibili videos, channels, comments, and danmaku sit next to YouTube's in search, the home feed, subscriptions, history, and playlists, and both feed the same local recommender.
 
 Two things are added on top of upstream:
 
