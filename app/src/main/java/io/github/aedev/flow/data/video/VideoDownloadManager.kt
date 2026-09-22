@@ -109,9 +109,22 @@ class VideoDownloadManager
         private val _progressUpdates = MutableSharedFlow<DownloadProgressUpdate>(extraBufferCapacity = 64)
         val progressUpdates: SharedFlow<DownloadProgressUpdate> = _progressUpdates.asSharedFlow()
 
+        // Room's byte counts are only persisted at pause/finish, not per tick; in-app UI reads
+        // progressUpdates directly, but a DB-only poller (the local server) would see 0/0 for a
+        // download's entire runtime. This mirrors the latest tick per video for that case, cleared
+        // once terminal (Room is authoritative again by then).
+        private val latestProgressByVideo = ConcurrentHashMap<String, DownloadProgressUpdate>()
+
         fun emitProgress(update: DownloadProgressUpdate) {
+            when (update.status) {
+                DownloadItemStatus.COMPLETED, DownloadItemStatus.FAILED, DownloadItemStatus.CANCELLED -> latestProgressByVideo.remove(update.videoId)
+                else -> latestProgressByVideo[update.videoId] = update
+            }
             _progressUpdates.tryEmit(update)
         }
+
+        /** Latest progress tick for a running download, null once finished/failed/cancelled. */
+        fun latestProgress(videoId: String): DownloadProgressUpdate? = latestProgressByVideo[videoId]
 
         // ===== Directory Management =====
 

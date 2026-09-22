@@ -38,7 +38,11 @@ private fun HistoryDbHelper.downloadStateFor(videoId: String): String {
     val manager = localServerEntryPoint(appContext).videoDownloadManager()
     val download = runBlocking { manager.getDownloadWithItems(videoId) } ?: return downloadStateJson("none", 0)
     val state = download.overallStatus.webState()
-    return downloadStateJson(state, (download.progress * 100).toInt().coerceIn(0, 100))
+    // Room's byte counts are stale mid-download (see VideoDownloadManager.latestProgress); use the
+    // live cache while active, else fall back to the persisted (and by then correct) progress.
+    val live = if (state == "downloading" || state == "pending") manager.latestProgress(videoId) else null
+    val progress = ((live?.progress ?: download.progress) * 100).toInt().coerceIn(0, 100)
+    return downloadStateJson(state, progress)
 }
 
 // Mirrors QuickActionsViewModel.downloadVideo()'s NewPipe-StreamInfo fallback branch (best MP4
