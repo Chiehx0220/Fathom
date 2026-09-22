@@ -59,6 +59,7 @@ import io.github.aedev.flow.ui.components.shorts.rememberShortsSheetInsetState
 import io.github.aedev.flow.ui.theme.PlayerScrim
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import org.schabi.newpipe.extractor.ServiceList
 
 private val SnackbarBottomPadding = 80.dp
 
@@ -206,7 +207,8 @@ fun ShortsScreen(
                                     viewModel.loadShortDescription(short.id)
                                     showDescriptionSheet = true
                                 },
-                                onShareClick = { shareVideo(short.id, short.title) },
+                                // Shorts are a YouTube-only feed (ShortVideo carries no serviceId).
+                                onShareClick = { shareVideo(short.id, short.title, ServiceList.YouTube.serviceId) },
                                 onMoreClick = { settingsSheet.open(page, short.id) },
                                 onVideoEnded = {
                                     scope.launch {
