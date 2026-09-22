@@ -130,4 +130,16 @@ class SubscriptionRefreshPlannerTest {
         assertEquals(listOf("a", "b"), plan.channelIds)
         assertTrue(plan.isFullRefresh)
     }
+
+    @Test
+    fun `a Bilibili channel carries its subscribed name and avatar`() {
+        val bilibili = subscription("455557356", lastFeedFetchAt = 0L).copy(channelThumbnail = "https://i0.hdslb.com/a.jpg", serviceId = 5)
+        val youtube = subscription("UCabc", lastFeedFetchAt = 0L)
+
+        val plan = SubscriptionRefreshPlanner.plan(listOf(bilibili, youtube), now)
+
+        assertEquals(setOf("455557356"), plan.labelByChannel.keys)
+        assertEquals("https://i0.hdslb.com/a.jpg", plan.labelByChannel.getValue("455557356").avatarUrl)
+        assertEquals("Channel 455557356", plan.labelByChannel.getValue("455557356").name)
+    }
 }

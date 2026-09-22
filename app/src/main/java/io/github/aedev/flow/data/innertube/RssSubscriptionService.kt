@@ -73,6 +73,7 @@ class RssSubscriptionService
         fun fetchSubscriptionVideos(
             channelIds: List<String>,
             serviceIdByChannel: Map<String, Int> = emptyMap(),
+            labelByChannel: Map<String, ChannelLabel> = emptyMap(),
             maxTotal: Int = 1500,
             knownVideoIds: Set<String> = emptySet(),
             onProgress: ((processedChannels: Int, totalChannels: Int) -> Unit)? = null,
@@ -201,7 +202,7 @@ class RssSubscriptionService
                 for (chunk in bilibiliChannelIds.chunked(BILIBILI_CHUNK_SIZE)) {
                     val results =
                         coroutineScope {
-                            chunk.map { channelId -> async(Dispatchers.IO) { channelId to fetchBilibiliVideos(channelId, minimumDateMillis) } }.awaitAll()
+                            chunk.map { channelId -> async(Dispatchers.IO) { channelId to fetchBilibiliVideos(channelId, minimumDateMillis, labelByChannel[channelId]) } }.awaitAll()
                         }
                     for ((channelId, result) in results) {
                         if (result.failed) {
@@ -234,25 +235,27 @@ class RssSubscriptionService
                 )
             }
 
-        /** The latest uploads of one Bilibili uploader, [channelId] being their numeric id. */
+        /** The latest uploads of one Bilibili uploader, [channelId] being their numeric id; [label] is the subscribed name and avatar. */
         suspend fun fetchLatestChannelVideos(
             channelId: String,
             limit: Int = 5,
+            label: ChannelLabel? = null,
         ): List<Video> {
             val mid = channelId.toLongOrNull() ?: return emptyList()
             return bilibiliApi
                 .channelVideos(mid, BilibiliChannelPageKey(page = 1, lastAid = 0L))
                 .videos
                 .take(limit)
-                .map { BilibiliVideoMapper.videoFromChannel(it, mid, channelName = "", channelAvatarUrl = "") }
+                .map { BilibiliVideoMapper.videoFromChannel(it, mid, channelName = label?.name.orEmpty(), channelAvatarUrl = label?.avatarUrl.orEmpty()) }
         }
 
         private suspend fun fetchBilibiliVideos(
             channelId: String,
             minimumDateMillis: Long,
+            label: ChannelLabel?,
         ): ChannelFetchResult =
             try {
-                val videos = fetchLatestChannelVideos(channelId, MAX_VIDEOS_PER_CHANNEL).filter { it.timestamp > minimumDateMillis }
+                val videos = fetchLatestChannelVideos(channelId, MAX_VIDEOS_PER_CHANNEL, label).filter { it.timestamp > minimumDateMillis }
                 ChannelFetchResult(videos, failed = false)
             } catch (e: CancellationException) {
                 throw e

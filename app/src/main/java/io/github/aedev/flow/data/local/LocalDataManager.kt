@@ -95,7 +95,7 @@ class LocalDataManager
         // Theme Settings
         val themeMode: Flow<ThemeMode> =
             context.dataStore.data.map { prefs ->
-                parseThemeMode(prefs[THEME_MODE], ThemeMode.SYSTEM)
+                parseThemeMode(prefs[THEME_MODE], ThemeMode.MATERIAL_YOU)
             }
 
         suspend fun setThemeMode(mode: ThemeMode) {
@@ -108,7 +108,7 @@ class LocalDataManager
             context.dataStore.data.map { prefs ->
                 parseThemeVariant(
                     raw = prefs[THEME_VARIANT],
-                    fallback = parseLegacyThemeMode(prefs[THEME_MODE], ThemeMode.SYSTEM).defaultVariant(),
+                    fallback = parseLegacyThemeMode(prefs[THEME_MODE], ThemeMode.MATERIAL_YOU).defaultVariant(),
                 )
             }
 
@@ -447,7 +447,7 @@ class LocalDataManager
                 }
             }
 
-            val storedThemeMode = parseLegacyThemeMode(prefs[THEME_MODE], ThemeMode.SYSTEM)
+            val storedThemeMode = parseLegacyThemeMode(prefs[THEME_MODE], ThemeMode.MATERIAL_YOU)
             strings[THEME_MODE.name] = storedThemeMode.canonicalFamily().name
             strings[THEME_VARIANT.name] =
                 parseThemeVariant(

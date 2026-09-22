@@ -98,6 +98,7 @@ class SubscriptionFeedRepository
                         .fetchSubscriptionVideos(
                             channelIds = plan.channelIds,
                             serviceIdByChannel = plan.serviceIdByChannel,
+                            labelByChannel = plan.labelByChannel,
                             maxTotal = MAX_SUBSCRIPTION_CACHE_ITEMS,
                             knownVideoIds = if (plan.isFullRefresh) emptySet() else allCached.mapTo(HashSet()) { it.id },
                             onProgress = { done, _ -> processed = done },

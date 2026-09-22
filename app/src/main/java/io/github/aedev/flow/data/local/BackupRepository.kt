@@ -20,13 +20,18 @@ import io.github.aedev.flow.data.local.entity.SubscriptionGroupEntity
 import io.github.aedev.flow.data.local.entity.VideoEntity
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTube
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliChannelId
+import io.github.aedev.flow.bilibili.serviceIdOfChannel
 import io.github.aedev.flow.data.model.isYouTubeServiceId
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.util.AppIcons
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
 import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -2364,23 +2369,28 @@ class BackupRepository(
             }
         }
 
-    // Helper to fetch channel avatar using NewPipe
-    private fun fetchChannelAvatar(
+    /** A channel's avatar, from YouTube through NewPipe or from Bilibili's own API; "" when it cannot be read. */
+    private suspend fun fetchChannelAvatar(
         channelId: String,
         serviceId: Int = ServiceList.YouTube.serviceId,
     ): String =
         try {
-            // Only YouTube is looked up here; another service's avatar comes with its next refresh.
-            if (!serviceId.isYouTubeServiceId) return ""
-            val service = NewPipe.getService(serviceId)
-            val url =
-                if (channelId.startsWith("UC") && channelId.length > 20) {
-                    "https://www.youtube.com/channel/$channelId"
-                } else {
-                    "https://www.youtube.com/@$channelId"
-                }
-            val info = ChannelInfo.getInfo(service, url)
-            info.avatars.maxByOrNull { it.height }?.url ?: ""
+            val owner = serviceIdOfChannel(channelId, serviceId)
+            if (owner == BILIBILI_SERVICE_ID) {
+                BilibiliChannelId.midOf(channelId)?.let { bilibiliApi(context).channelInfo(it).avatarUrl }.orEmpty()
+            } else if (!owner.isYouTubeServiceId) {
+                ""
+            } else {
+                val url =
+                    if (channelId.startsWith("UC") && channelId.length > 20) {
+                        "https://www.youtube.com/channel/$channelId"
+                    } else {
+                        "https://www.youtube.com/@$channelId"
+                    }
+                ChannelInfo.getInfo(NewPipe.getService(owner), url).avatars.maxByOrNull { it.height }?.url.orEmpty()
+            }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             ""
         }

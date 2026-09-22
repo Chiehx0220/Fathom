@@ -1,6 +1,8 @@
 package io.github.aedev.flow.data.subscriptions
 
+import io.github.aedev.flow.data.innertube.ChannelLabel
 import io.github.aedev.flow.data.local.ChannelSubscription
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 
 /**
  * Which channels the next subscription-feed refresh should actually hit.
@@ -13,6 +15,8 @@ data class SubscriptionRefreshPlan(
     val isFullRefresh: Boolean,
     /** Which service each planned channel belongs to — a Bilibili channel has no YouTube RSS feed. */
     val serviceIdByChannel: Map<String, Int> = emptyMap(),
+    /** Name and avatar of the planned non-YouTube channels, whose videos come back without them. */
+    val labelByChannel: Map<String, ChannelLabel> = emptyMap(),
 ) {
     val isEmpty: Boolean get() = channelIds.isEmpty()
 
@@ -40,11 +44,16 @@ object SubscriptionRefreshPlanner {
     ): SubscriptionRefreshPlan {
         if (subscriptions.isEmpty()) return SubscriptionRefreshPlan.NOTHING_TO_DO
         val serviceIdByChannel = subscriptions.associate { it.channelId to it.serviceId }
+        val labelByChannel =
+            subscriptions
+                .filter { !it.serviceId.isYouTubeServiceId }
+                .associate { it.channelId to ChannelLabel(it.channelName, it.channelThumbnail) }
         if (force) {
             return SubscriptionRefreshPlan(
                 channelIds = subscriptions.map { it.channelId },
                 isFullRefresh = true,
                 serviceIdByChannel = serviceIdByChannel,
+                labelByChannel = labelByChannel,
             )
         }
 
@@ -53,6 +62,7 @@ object SubscriptionRefreshPlanner {
             channelIds = stale.map { it.channelId },
             isFullRefresh = stale.size == subscriptions.size,
             serviceIdByChannel = serviceIdByChannel,
+            labelByChannel = labelByChannel,
         )
     }
 
