@@ -1,125 +1,79 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
-// Settings page rendering, split out of the former monolithic HtmlRenderer.java.
+/** The settings page. The first three preferences are saved on the phone; the rest are kept in this browser (see js/settings.js). */
 object HtmlRendererSettings {
+    private fun row(
+        id: String?,
+        label: String,
+        description: String,
+        control: String,
+    ): String {
+        val idAttr = if (id == null) "" else " id=\"$id\""
+        return "<div class=\"setting-row\"$idAttr>\n" +
+            "  <div class=\"setting-text\"><span class=\"setting-label\">${WebUi.esc(label)}</span><span class=\"setting-desc\">${WebUi.esc(description)}</span></div>\n" +
+            "  $control\n</div>\n"
+    }
+
+    private fun switch(
+        id: String,
+        name: String? = null,
+        checked: Boolean = false,
+    ): String {
+        val nameAttr = if (name == null) "" else " name=\"$name\" value=\"on\""
+        return "<label class=\"switch\"><input type=\"checkbox\" id=\"$id\"$nameAttr${if (checked) " checked" else ""}><span class=\"switch-track\"></span></label>"
+    }
+
+    private fun select(
+        id: String,
+        name: String?,
+        options: List<Pair<String, String>>,
+        selected: String?,
+    ): String {
+        val nameAttr = if (name == null) "" else " name=\"$name\""
+        val items = options.joinToString("") { (value, label) -> "<option value=\"$value\"${if (value == selected) " selected" else ""}>${WebUi.esc(label)}</option>" }
+        return "<select class=\"select\" id=\"$id\"$nameAttr>$items</select>"
+    }
 
     @JvmStatic
-    fun renderSettings(serviceId: Int, currentQuality: String, hideWatched: Boolean, hideShorts: Boolean, homeFeedMode: String, saved: Boolean, isTv: Boolean): String {
-        val sb = StringBuilder()
-        sb.append(HtmlRendererCommon.getHeaderHtml(serviceId, "", "settings"))
-        sb.append("<div class=\"container\">\n")
-          .append("  <div class=\"settings-card\">\n")
-          .append("    <h1 class=\"settings-title\"><span class=\"material-symbols-rounded\" style=\"font-size:22px; vertical-align:-4px; margin-right:6px;\">settings</span>Preferences</h1>\n")
-          .append("      <div class=\"settings-section\">\n")
-          .append("        <h3 class=\"settings-section-title\">Filter Settings</h3>\n")
-          .append("        <div class=\"setting-row\">\n")
-          .append("          <div class=\"setting-label-group\">\n")
-          .append("            <span class=\"setting-label\">Preferred Video Quality</span>\n")
-          .append("            <span class=\"setting-desc\">Default playback resolution for streams.</span>\n")
-          .append("          </div>\n")
-          .append("          <select id=\"setting-video-quality\" name=\"video_quality\" style=\"padding: 8px 16px; border-radius: 8px; border: 1px solid var(--search-input-border); background-color: var(--bg-color); color: var(--text-color); font-family: inherit; font-size: 14px; outline: none; cursor: pointer; width: 100%; max-width: 280px;\">\n")
+    fun renderSettings(
+        serviceId: Int,
+        hideWatched: Boolean,
+        hideShorts: Boolean,
+        homeFeedMode: String,
+        saved: Boolean,
+        isTv: Boolean,
+    ): String {
+        val feedModes =
+            listOf(
+                "mix" to "Mix (Recommendations & Subscriptions)",
+                "subs" to "Subscriptions Only",
+                "recs" to "Recommendations Only",
+            )
+        val accents =
+            listOf(
+                "system" to "System (Material You)",
+                "purple" to "Classic Purple",
+                "green" to "Forest Green",
+                "blue" to "Ocean Blue",
+                "orange" to "Sunset Orange",
+                "red" to "Crimson Red",
+            )
 
-        val qualities = arrayOf("Auto", "144p", "240p", "360p", "480p", "720p", "1080p", "1440p", "2160p")
-        for (q in qualities) {
-            val selected = if (q == currentQuality) "selected" else ""
-            sb.append("            <option value=\"$q\" $selected>$q</option>\n")
-        }
-
-        sb.append("          </select>\n")
-          .append("        </div>\n")
-          .append("        <div class=\"setting-row\">\n")
-          .append("          <div class=\"setting-label-group\">\n")
-          .append("            <span class=\"setting-label\">Home Feed Content</span>\n")
-          .append("            <span class=\"setting-desc\">Choose what content appears on your Home feed.</span>\n")
-          .append("          </div>\n")
-          .append("          <select id=\"setting-home-feed-mode\" name=\"home_feed_mode\" style=\"padding: 8px 16px; border-radius: 8px; border: 1px solid var(--search-input-border); background-color: var(--bg-color); color: var(--text-color); font-family: inherit; font-size: 14px; outline: none; cursor: pointer; width: 100%; max-width: 280px;\">\n")
-
-        val modes = arrayOf(
-            arrayOf("mix", "Mix (Recommendations & Subscriptions)"),
-            arrayOf("subs", "Subscriptions Only"),
-            arrayOf("recs", "Recommendations Only")
-        )
-        for (m in modes) {
-            val selected = if (m[0] == homeFeedMode) "selected" else ""
-            sb.append("            <option value=\"${m[0]}\" $selected>${m[1]}</option>\n")
-        }
-
-        sb.append("          </select>\n")
-          .append("        </div>\n")
-          .append("        <div class=\"setting-row\">\n")
-          .append("          <div class=\"setting-label-group\">\n")
-          .append("            <span class=\"setting-label\">Hide Watched Videos</span>\n")
-          .append("            <span class=\"setting-desc\">Hide videos you have already watched from lists.</span>\n")
-          .append("          </div>\n")
-          .append("          <label class=\"switch\">\n")
-          .append("            <input type=\"checkbox\" id=\"setting-hide-watched\" name=\"hide_watched\" value=\"on\" ${if (hideWatched) "checked" else ""}>\n")
-          .append("            <span class=\"slider\"></span>\n")
-          .append("          </label>\n")
-          .append("        </div>\n")
-          .append("        <div class=\"setting-row\">\n")
-          .append("          <div class=\"setting-label-group\">\n")
-          .append("            <span class=\"setting-label\">Hide Reels</span>\n")
-          .append("            <span class=\"setting-desc\">Hide vertical videos shorter than 2 minutes.</span>\n")
-          .append("          </div>\n")
-          .append("          <label class=\"switch\">\n")
-          .append("            <input type=\"checkbox\" id=\"setting-hide-shorts\" name=\"hide_shorts\" value=\"on\" ${if (hideShorts) "checked" else ""}>\n")
-          .append("            <span class=\"slider\"></span>\n")
-          .append("          </label>\n")
-          .append("        </div>\n")
-          .append("        <div class=\"setting-row\" id=\"mobile-theme-row\">\n")
-          .append("          <div class=\"setting-label-group\">\n")
-          .append("            <span class=\"setting-label\">Dark Theme</span>\n")
-          .append("            <span class=\"setting-desc\">Toggle between dark and light appearance.</span>\n")
-          .append("          </div>\n")
-          .append("          <label class=\"switch\">\n")
-          .append("            <input type=\"checkbox\" id=\"settings-theme-toggle\">\n")
-          .append("            <span class=\"slider\"></span>\n")
-          .append("          </label>\n")
-          .append("        </div>\n")
-          .append("        <div class=\"setting-row\" id=\"settings-accent-row\">\n")
-          .append("          <div class=\"setting-label-group\">\n")
-          .append("            <span class=\"setting-label\">Theme Accent Color</span>\n")
-          .append("            <span class=\"setting-desc\">Select the primary accent color of the interface.</span>\n")
-          .append("          </div>\n")
-          .append("          <select id=\"settings-accent-select\" style=\"padding: 8px 16px; border-radius: 8px; border: 1px solid var(--search-input-border); background-color: var(--bg-color); color: var(--text-color); font-family: inherit; font-size: 14px; outline: none; cursor: pointer;\">\n")
-          .append("            <option value=\"system\">System (Material You)</option>\n")
-          .append("            <option value=\"purple\">Classic Purple</option>\n")
-          .append("            <option value=\"green\">Forest Green</option>\n")
-          .append("            <option value=\"blue\">Ocean Blue</option>\n")
-          .append("            <option value=\"orange\">Sunset Orange</option>\n")
-          .append("            <option value=\"red\">Crimson Red</option>\n")
-          .append("          </select>\n")
-          .append("        </div>\n")
-          .append("        <div class=\"setting-row\" id=\"settings-pureblack-row\">\n")
-          .append("          <div class=\"setting-label-group\">\n")
-          .append("            <span class=\"setting-label\">AMOLED Black</span>\n")
-          .append("            <span class=\"setting-desc\">Use pure black background in dark theme.</span>\n")
-          .append("          </div>\n")
-          .append("          <label class=\"switch\">\n")
-          .append("            <input type=\"checkbox\" id=\"settings-pureblack-toggle\">\n")
-          .append("            <span class=\"slider\"></span>\n")
-          .append("          </label>\n")
-          .append("        </div>\n")
-          .append("        <div class=\"setting-row\" id=\"settings-audio-only-row\">\n")
-          .append("          <div class=\"setting-label-group\">\n")
-          .append("            <span class=\"setting-label\">Default to Audio Only</span>\n")
-          .append("            <span class=\"setting-desc\">Always play the audio-only version of videos (Reels are excluded).</span>\n")
-          .append("          </div>\n")
-          .append("          <label class=\"switch\">\n")
-          .append("            <input type=\"checkbox\" id=\"settings-audio-only-toggle\">\n")
-          .append("            <span class=\"slider\"></span>\n")
-          .append("          </label>\n")
-          .append("        </div>\n")
-          .append("        <div class=\"setting-row\" id=\"mobile-history-row\">\n")
-          .append("          <div class=\"setting-label-group\">\n")
-          .append("            <span class=\"setting-label\">Watch History</span>\n")
-          .append("            <span class=\"setting-desc\">View your local watch history.</span>\n")
-          .append("          </div>\n")
-          .append("          <a href=\"/history\" class=\"subscribe-btn\" style=\"background-color: var(--logo-color); padding: 8px 20px; font-size: 14px; text-decoration: none; border-radius: 100px; display: inline-flex; align-items: center; justify-content: center; height: 36px;\">View</a>\n")
-          .append("      </div>\n")
-          .append("  </div>\n")
-          .append("</div>\n")
-
-        return HtmlRendererCommon.wrapInTemplate("Settings - Fathom", sb.toString(), isTv)
+        val sb = StringBuilder(WebShell.header(serviceId, "", "settings"))
+        sb.append("<main class=\"container\">\n<section class=\"settings-card\">\n")
+          .append(WebUi.pageTitle("settings", "Preferences"))
+          .append("<div class=\"settings-section\">\n<h2 class=\"settings-section-title\">Filter Settings</h2>\n")
+          .append(row(null, "Home Feed Content", "Choose what content appears on your Home feed.", select("setting-home-feed-mode", "home_feed_mode", feedModes, homeFeedMode)))
+          .append(row(null, "Hide Watched Videos", "Hide videos you have already watched from lists.", switch("setting-hide-watched", "hide_watched", hideWatched)))
+          .append(row(null, "Hide Reels", "Hide vertical videos shorter than 2 minutes.", switch("setting-hide-shorts", "hide_shorts", hideShorts)))
+          .append("</div>\n<div class=\"settings-section\">\n<h2 class=\"settings-section-title\">This browser</h2>\n")
+          .append(row("mobile-theme-row", "Dark Theme", "Toggle between dark and light appearance.", switch("settings-theme-toggle")))
+          .append(row("settings-accent-row", "Theme Accent Color", "Select the primary accent color of the interface.", select("settings-accent-select", null, accents, null)))
+          .append(row("settings-pureblack-row", "AMOLED Black", "Use pure black background in dark theme.", switch("settings-pureblack-toggle")))
+          .append(row("settings-audio-only-row", "Default to Audio Only", "Always play the audio-only version of videos (Reels are excluded).", switch("settings-audio-only-toggle")))
+          .append(row("mobile-history-row", "Watch History", "View your local watch history.", WebUi.button("View", variant = "filled", href = "/history")))
+          .append(row(null, "New interface", "Shelves, a persistent player, phone-remote navigation and selectable themes.", WebUi.button("Open", "open_in_new", variant = "filled", href = "/app")))
+          .append("</div>\n</section>\n</main>\n")
+        return WebShell.page("Settings - Fathom", sb.toString(), isTv)
     }
 }

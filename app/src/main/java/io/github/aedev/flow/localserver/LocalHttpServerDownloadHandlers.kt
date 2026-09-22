@@ -1,4 +1,4 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.entity.DownloadItemStatus
@@ -11,7 +11,7 @@ import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
-import org.schabi.newpipe.localserver.LocalHttpServer.ClientHandler
+import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
 
 // Web "Download" button -> Flow's own FlowDownloadService/VideoDownloadManager (the same pipeline

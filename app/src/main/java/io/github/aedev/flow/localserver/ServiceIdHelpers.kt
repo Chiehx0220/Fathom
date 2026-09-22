@@ -1,4 +1,4 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliChannelId
 import io.github.aedev.flow.data.model.isYouTubeServiceId

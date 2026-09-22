@@ -1,233 +1,153 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 
-// Listing-style pages (home feed, search results, history, watch-later, subscriptions/bookmarked
-// playlists library), split out of the former monolithic HtmlRenderer.java.
+/** Listing pages: the home feed, search results, history, watch later, and the library (subscriptions, playlists). */
 object HtmlRendererListings {
+    /** The home page frame; its feed is fetched as a fragment (see [renderHomeFeed]) so the page appears at once. */
+    @JvmStatic
+    fun renderHomeSkeleton(
+        serviceId: Int,
+        isTv: Boolean,
+    ): String {
+        val body =
+            WebShell.header(serviceId, "") +
+                "<main class=\"container\">\n" +
+                WebUi.asyncRegion("/?feed=ajax&serviceId=$serviceId", "Loading Home Feed...") +
+                "</main>\n"
+        return WebShell.page("${HtmlRendererCommon.getServiceName(serviceId)} - Fathom", body, isTv)
+    }
+
+    /** One batch of the home feed, ending with a "Load more" that fetches the next batch when there is one. */
+    @JvmStatic
+    fun renderHomeFeed(
+        serviceId: Int,
+        items: List<InfoItem>,
+        nextToken: String?,
+    ): String =
+        WebUi.grid(serviceId, items) +
+            WebUi.loadMore(nextToken?.takeIf { it.isNotEmpty() }?.let { "/?feed=ajax&serviceId=$serviceId&nextPage=${WebUi.enc(it)}" })
 
     @JvmStatic
-    fun renderHomeSkeleton(serviceId: Int, isTv: Boolean): String {
-        val sb = StringBuilder()
-        sb.append(HtmlRendererCommon.getHeaderHtml(serviceId, ""))
-        sb.append("<div class=\"container\">\n")
-          .append("  <div id=\"home-feed-loader\" style=\"text-align: center; padding: 100px 0;\">\n")
-          .append("    <div style=\"display: inline-block; width: 50px; height: 50px; border: 4px solid var(--search-input-bg); border-top: 4px solid var(--logo-color); border-radius: 50%; animation: spin 0.8s linear infinite;\"></div>\n")
-          .append("    <div style=\"margin-top: 24px; font-size: 16px; font-weight: 500; color: var(--text-color);\">Loading Home Feed...</div>\n")
-          .append("  </div>\n")
-          // padding-top set once here, not per-batch, so "Load More" appends don't each add a gap.
-          .append("  <div id=\"home-feed-content\" style=\"display: none; padding-top: 20px;\"></div>\n")
+    fun renderHistory(
+        serviceId: Int,
+        items: List<InfoItem>?,
+        isTv: Boolean,
+    ): String {
+        val sb = StringBuilder(WebShell.header(serviceId, "", "history"))
+        sb.append("<main class=\"container\">\n")
+        if (items.isNullOrEmpty()) {
+            sb.append(WebUi.pageTitle("history", "Watch History"))
+              .append(WebUi.notice("Your watch history is empty. Start watching videos to see them here!"))
+        } else {
+            sb.append(WebUi.pageTitle("history", "Watch History", WebUi.button("Select", attrs = "data-action=\"history-select-mode\"")))
+              .append("<div id=\"history-select-bar\" class=\"select-bar\" hidden>\n")
+              .append("  <label class=\"select-all\"><input type=\"checkbox\" id=\"history-select-all\"> Select all</label>\n")
+              .append("  <span id=\"history-select-count\" class=\"select-count\">0 selected</span>\n")
+              .append("  <div class=\"select-actions\">")
+              .append(WebUi.button("Delete selected", attrs = "data-action=\"history-delete-selected\" data-service=\"$serviceId\""))
+              .append(WebUi.button("Cancel", attrs = "data-action=\"history-select-mode\""))
+              .append("</div>\n</div>\n")
+              .append(WebUi.grid(serviceId, items, removable = true))
+        }
+        sb.append("</main>\n")
+        return WebShell.page("Watch History - Fathom", sb.toString(), isTv)
+    }
+
+    @JvmStatic
+    fun renderWatchLater(
+        serviceId: Int,
+        items: List<InfoItem>?,
+        isTv: Boolean,
+    ): String {
+        val sb = StringBuilder(WebShell.header(serviceId, "", "watch-later"))
+        sb.append("<main class=\"container\">\n").append(WebUi.pageTitle("schedule", "Watch Later"))
+        if (items.isNullOrEmpty()) {
+            sb.append(WebUi.notice("No videos in Watch Later. Browse videos and press \"Watch Later\" to add them."))
+        } else {
+            sb.append(WebUi.grid(serviceId, items))
+        }
+        sb.append("</main>\n")
+        return WebShell.page("Watch Later - Fathom", sb.toString(), isTv)
+    }
+
+    @JvmStatic
+    fun renderSearch(
+        serviceId: Int,
+        query: String,
+        items: List<InfoItem>,
+        nextPage: Page?,
+        isTv: Boolean,
+    ): String {
+        val body =
+            WebShell.header(serviceId, query) +
+                "<main class=\"container\">\n" +
+                WebUi.pageTitle("search", "Results for: $query") +
+                renderSearchResultsFragment(serviceId, query, items, nextPage) +
+                "</main>\n"
+        return WebShell.page("Search: $query", body, isTv)
+    }
+
+    /** A batch of search results with its "Load more"; the same fragment the first page and every follow-up use. */
+    @JvmStatic
+    fun renderSearchResultsFragment(
+        serviceId: Int,
+        query: String,
+        items: List<InfoItem>,
+        nextPage: Page?,
+    ): String {
+        val next =
+            HtmlRendererCommon.serializePage(nextPage)?.let {
+                "/search?ajax=1&serviceId=$serviceId&q=${WebUi.enc(query)}&nextPage=${WebUi.enc(it)}"
+            }
+        return WebUi.grid(serviceId, items) + WebUi.loadMore(next)
+    }
+
+    /** The library: feed of subscribed channels, the channels themselves, saved playlists, watch later. */
+    @JvmStatic
+    fun renderSubscriptions(
+        serviceId: Int,
+        channels: List<InfoItem>?,
+        playlists: List<InfoItem>?,
+        watchLater: List<InfoItem>?,
+        activeTab: String,
+        isTv: Boolean,
+    ): String {
+        val tab = if (activeTab in setOf("channels", "playlists", "watch_later")) activeTab else "feed"
+        fun tabLink(
+            key: String,
+            iconName: String,
+            label: String,
+            count: Int?,
+        ): String {
+            val text = if (count == null) label else "$label ($count)"
+            val active = if (key == tab) " active" else ""
+            return "<a class=\"subs-tab$active\" href=\"/subscriptions?serviceId=$serviceId&tab=$key\">${WebUi.icon(iconName)}$text</a>\n"
+        }
+
+        val sb = StringBuilder(WebShell.header(serviceId, "", "subscriptions"))
+        sb.append("<main class=\"container\">\n<div class=\"subs-tabbar\" role=\"tablist\">\n")
+          .append(tabLink("feed", "dynamic_feed", "Feed", null))
+          .append(tabLink("channels", "person", "Channels", channels?.size ?: 0))
+          .append(tabLink("playlists", "star", "Playlists", playlists?.size ?: 0))
+          .append(tabLink("watch_later", "schedule", "Watch Later", watchLater?.size ?: 0))
           .append("</div>\n")
-          .append("<style>\n")
-          .append("  @keyframes spin {\n")
-          .append("    0% { transform: rotate(0deg); }\n")
-          .append("    100% { transform: rotate(360deg); }\n")
-          .append("  }\n")
-          .append("</style>\n")
-          .append("<script>\n")
-          // Replaces the trailing .pagination wrapper with {new grid + new wrapper}, in place -
-          // same technique as loadMoreComments(). fetchText routes a failed batch to .catch()
-          // below instead of rendering it as the next page.
-          .append("  window.loadMoreHome = function(btn, token, svcId) {\n")
-          .append("      const wrapper = btn.parentElement;\n")
-          .append("      btn.textContent = 'Loading...';\n")
-          .append("      btn.style.pointerEvents = 'none';\n")
-          .append("      fetchText('/?feed=ajax&serviceId=' + svcId + '&nextPage=' + encodeURIComponent(token),\n")
-          .append("          html => { if (wrapper) wrapper.outerHTML = html; },\n")
-          .append("          () => { btn.textContent = 'Failed to load. Tap to retry'; btn.style.pointerEvents = 'auto'; });\n")
-          .append("  };\n")
-          .append("  document.addEventListener('DOMContentLoaded', () => {\n")
-          .append("      const loader = document.getElementById('home-feed-loader');\n")
-          .append("      const content = document.getElementById('home-feed-content');\n")
-          .append("      fetchText('/?feed=ajax&serviceId=' + $serviceId,\n")
-          .append("          html => {\n")
-          .append("              if (content) {\n")
-          .append("                  content.innerHTML = html;\n")
-          .append("                  content.style.display = 'block';\n")
-          .append("              }\n")
-          .append("              if (loader) loader.style.display = 'none';\n")
-          .append("          },\n")
-          .append("          err => {\n")
-          .append("              if (loader) loader.innerHTML = '<div class=\"loading-placeholder\" style=\"color: #ff4b5c; border-color: rgba(255, 75, 92, 0.2);\">Failed to load home feed: ' + err.message + '</div>';\n")
-          .append("          });\n")
-          .append("  });\n")
-          .append("</script>\n")
-        return HtmlRendererCommon.wrapInTemplate(HtmlRendererCommon.getServiceName(serviceId) + " - Fathom", sb.toString(), isTv)
-    }
 
-    @JvmStatic
-    fun renderHomeFeed(serviceId: Int, items: List<InfoItem>, nextToken: String?): String {
-        val sb = StringBuilder()
-        HtmlRendererCommon.renderGrid(sb, serviceId, items)
-
-        // Always emits the .pagination wrapper (populated or empty) - loadMoreHome() needs it
-        // present in every response to stay replaceable.
-        sb.append("  <div class=\"pagination\">\n")
-        if (!nextToken.isNullOrEmpty()) {
-            val tokenJs = HtmlRendererCommon.escapeJs(nextToken)
-            sb.append("    <a href=\"#\" class=\"btn-page\" onclick=\"loadMoreHome(this, '$tokenJs', $serviceId); return false;\">Load More</a>\n")
-        }
-        sb.append("  </div>\n")
-        return sb.toString()
-    }
-
-    @JvmStatic
-    fun renderHistory(serviceId: Int, items: List<InfoItem>?, isTv: Boolean): String {
-        val sb = StringBuilder()
-        sb.append(HtmlRendererCommon.getHeaderHtml(serviceId, "", "history"))
-        sb.append("<div class=\"container\">\n")
-
-        if (items == null || items.isEmpty()) {
-            sb.append("  <h2 style=\"margin-bottom: 20px; font-weight: 700;\"><span class=\"material-symbols-rounded\" style=\"font-size:22px; vertical-align:-4px; margin-right:6px;\">history</span>Watch History</h2>\n")
-              .append("<div class=\"loading-placeholder\">Your watch history is empty. Start watching videos to see them here!</div>\n")
-        } else {
-            sb.append("  <div class=\"page-header-row\">\n")
-              .append("    <h2 style=\"font-weight: 700;\"><span class=\"material-symbols-rounded\" style=\"font-size:22px; vertical-align:-4px; margin-right:6px;\">history</span>Watch History</h2>\n")
-              .append("    <button type=\"button\" class=\"btn-page\" onclick=\"toggleHistorySelectMode()\">Select</button>\n")
-              .append("  </div>\n")
-              .append("  <div id=\"history-select-bar\" class=\"history-select-bar\" style=\"display:none;\">\n")
-              .append("    <div class=\"history-select-info\">\n")
-              .append("      <label class=\"history-select-all-label\"><input type=\"checkbox\" id=\"history-select-all\" onchange=\"toggleSelectAllHistory(this)\"> Select All</label>\n")
-              .append("      <span id=\"history-select-count\" class=\"history-select-count\">0 selected</span>\n")
-              .append("    </div>\n")
-              .append("    <div class=\"history-select-actions\">\n")
-              .append("      <button type=\"button\" class=\"btn-page\" onclick=\"deleteSelectedHistory($serviceId)\">Delete Selected</button>\n")
-              .append("      <button type=\"button\" class=\"btn-page\" onclick=\"toggleHistorySelectMode()\">Cancel</button>\n")
-              .append("    </div>\n")
-              .append("  </div>\n")
-            HtmlRendererCommon.renderGrid(sb, serviceId, items, true)
-        }
-
-        sb.append("</div>\n")
-        return HtmlRendererCommon.wrapInTemplate("Watch History - Fathom", sb.toString(), isTv)
-    }
-
-    @JvmStatic
-    fun renderWatchLater(serviceId: Int, items: List<InfoItem>?, isTv: Boolean): String {
-        val sb = StringBuilder()
-        sb.append(HtmlRendererCommon.getHeaderHtml(serviceId, "", "watch-later"))
-        sb.append("<div class=\"container\">\n")
-          .append("  <h2 style=\"margin-bottom: 20px; font-weight: 700;\">⭐ Watch Later</h2>\n")
-
-        if (items == null || items.isEmpty()) {
-            sb.append("<div class=\"loading-placeholder\">No videos in Watch Later list. Browse videos and click \"Watch Later\" to add them!</div>\n")
-        } else {
-            HtmlRendererCommon.renderGrid(sb, serviceId, items)
-        }
-
-        sb.append("</div>\n")
-        return HtmlRendererCommon.wrapInTemplate("Watch Later - Fathom", sb.toString(), isTv)
-    }
-
-    @JvmStatic
-    fun renderSearch(serviceId: Int, query: String, items: List<InfoItem>, nextPage: Page?, isTv: Boolean): String {
-        val sb = StringBuilder()
-        sb.append(HtmlRendererCommon.getHeaderHtml(serviceId, query))
-        val queryEscaped = HtmlRendererCommon.escapeHtml(query)
-        sb.append("<div class=\"container\">\n")
-          .append("  <h2 style=\"margin-bottom: 20px; font-weight: 700;\">🔍 Search Results for: $queryEscaped</h2>\n")
-          .append(renderSearchResultsFragment(serviceId, query, items, nextPage))
-          .append("</div>\n")
-        return HtmlRendererCommon.wrapInTemplate("Search: $query", sb.toString(), isTv)
-    }
-
-    // Grid + "Load More" for a search-results batch - shared by renderSearch() and loadMoreSearch()'s
-    // ajax=1 follow-ups, same split as renderHomeFeed()/renderHomeSkeleton().
-    @JvmStatic
-    fun renderSearchResultsFragment(serviceId: Int, query: String, items: List<InfoItem>, nextPage: Page?): String {
-        val sb = StringBuilder()
-        HtmlRendererCommon.renderGrid(sb, serviceId, items)
-
-        val nextPageJs = HtmlRendererCommon.serializePageJs(nextPage)
-        if (nextPageJs != null) {
-            val queryJs = HtmlRendererCommon.escapeJs(query)
-            sb.append("  <div class=\"pagination\">\n")
-              .append("    <a href=\"#\" class=\"btn-page\" onclick=\"loadMoreSearch(this, '$nextPageJs', $serviceId, '$queryJs'); return false;\">Load More</a>\n")
-              .append("  </div>\n")
-        }
-        return sb.toString()
-    }
-
-    @JvmStatic
-    fun renderSubscriptions(serviceId: Int, channels: List<InfoItem>?, playlists: List<InfoItem>?, watchLater: List<InfoItem>?, activeTab: String, isTv: Boolean): String {
-        val sb = StringBuilder()
-        sb.append(HtmlRendererCommon.getHeaderHtml(serviceId, "", "subscriptions"))
-        sb.append("<div class=\"container\">\n")
-
-        val isPlaylists = activeTab == "playlists"
-        val isWatchLater = activeTab == "watch_later"
-        val isChannels = activeTab == "channels"
-        val isFeed = !isPlaylists && !isWatchLater && !isChannels
-
-        val feedClass = if (isFeed) "active" else ""
-        val channelsClass = if (isChannels) "active" else ""
-        val playlistsClass = if (isPlaylists) "active" else ""
-        val watchLaterClass = if (isWatchLater) "active" else ""
-
-        val channelsCount = channels?.size ?: 0
-        val playlistsCount = playlists?.size ?: 0
-        val watchLaterCount = watchLater?.size ?: 0
-
-        sb.append("  <div class=\"subs-tabbar\">\n")
-          .append("    <a href=\"/subscriptions?serviceId=$serviceId&tab=feed\" class=\"subs-tab $feedClass\"><span class=\"material-symbols-rounded\">dynamic_feed</span>Feed</a>\n")
-          .append("    <a href=\"/subscriptions?serviceId=$serviceId&tab=channels\" class=\"subs-tab $channelsClass\"><span class=\"material-symbols-rounded\">person</span>Channels ($channelsCount)</a>\n")
-          .append("    <a href=\"/subscriptions?serviceId=$serviceId&tab=playlists\" class=\"subs-tab $playlistsClass\"><span class=\"material-symbols-rounded\">star</span>Playlists ($playlistsCount)</a>\n")
-          .append("    <a href=\"/subscriptions?serviceId=$serviceId&tab=watch_later\" class=\"subs-tab $watchLaterClass\"><span class=\"material-symbols-rounded\">schedule</span>Watch Later ($watchLaterCount)</a>\n")
-          .append("  </div>\n")
-
-        if (isFeed) {
-            if (channels == null || channels.isEmpty()) {
-                sb.append("<div class=\"loading-placeholder\">You haven't subscribed to any channels yet.</div>\n")
-            } else {
-                // fetchSubscriptionFeed() is network-bound and can take seconds - loaded async
-                // after the tab bar renders, mirroring renderHomeSkeleton.
-                sb.append("  <div id=\"subs-feed-loader\" style=\"text-align: center; padding: 100px 0;\">\n")
-                  .append("    <div style=\"display: inline-block; width: 50px; height: 50px; border: 4px solid var(--search-input-bg); border-top: 4px solid var(--logo-color); border-radius: 50%; animation: subs-feed-spin 0.8s linear infinite;\"></div>\n")
-                  .append("    <div style=\"margin-top: 24px; font-size: 16px; font-weight: 500; color: var(--text-color);\">Loading latest uploads...</div>\n")
-                  .append("  </div>\n")
-                  .append("  <div id=\"subs-feed-content\" style=\"display: none;\"></div>\n")
-                  .append("  <style>\n")
-                  .append("    @keyframes subs-feed-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }\n")
-                  .append("  </style>\n")
-                  .append("  <script>\n")
-                  // fetchText lives in /static/script.js, which loads after this tag.
-                  .append("  document.addEventListener('DOMContentLoaded', () => {\n")
-                  .append("    fetchText('/subscriptions?tab=feed&feed=ajax&serviceId=$serviceId',\n")
-                  .append("        html => {\n")
-                  .append("            const loader = document.getElementById('subs-feed-loader');\n")
-                  .append("            const content = document.getElementById('subs-feed-content');\n")
-                  .append("            if (content) { content.innerHTML = html; content.style.display = 'block'; }\n")
-                  .append("            if (loader) loader.style.display = 'none';\n")
-                  .append("        },\n")
-                  .append("        err => {\n")
-                  .append("            const loader = document.getElementById('subs-feed-loader');\n")
-                  .append("            if (loader) loader.innerHTML = '<div class=\"loading-placeholder\" style=\"color: #ff4b5c;\">Failed to load feed: ' + err.message + '</div>';\n")
-                  .append("        });\n")
-                  .append("  });\n")
-                  .append("  </script>\n")
+        val (list, empty) =
+            when (tab) {
+                "playlists" -> playlists to "You haven't saved any playlists yet."
+                "watch_later" -> watchLater to "Your Watch Later list is empty."
+                else -> channels to "You haven't subscribed to any channels yet."
             }
-        } else if (isPlaylists) {
-            if (playlists == null || playlists.isEmpty()) {
-                sb.append("<div class=\"loading-placeholder\">You haven't saved any playlists yet.</div>\n")
-            } else {
-                HtmlRendererCommon.renderGrid(sb, serviceId, playlists)
-            }
-        } else if (isWatchLater) {
-            if (watchLater == null || watchLater.isEmpty()) {
-                sb.append("<div class=\"loading-placeholder\">Your Watch Later list is empty.</div>\n")
-            } else {
-                HtmlRendererCommon.renderGrid(sb, serviceId, watchLater)
-            }
-        } else {
-            if (channels == null || channels.isEmpty()) {
-                sb.append("<div class=\"loading-placeholder\">You haven't subscribed to any channels yet.</div>\n")
-            } else {
-                HtmlRendererCommon.renderGrid(sb, serviceId, channels)
-            }
+        when {
+            // The feed asks every subscribed channel for its latest uploads, which can take seconds, so it loads after the frame.
+            tab == "feed" && !channels.isNullOrEmpty() ->
+                sb.append(WebUi.asyncRegion("/subscriptions?tab=feed&feed=ajax&serviceId=$serviceId", "Loading latest uploads..."))
+            list.isNullOrEmpty() -> sb.append(WebUi.notice(empty))
+            else -> sb.append(WebUi.grid(serviceId, list))
         }
-
-        sb.append("</div>\n")
-        return HtmlRendererCommon.wrapInTemplate("Library - Fathom", sb.toString(), isTv)
+        sb.append("</main>\n")
+        return WebShell.page("Library - Fathom", sb.toString(), isTv)
     }
 }

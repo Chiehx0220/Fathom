@@ -1,4 +1,4 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -91,7 +91,6 @@ class ServerService : Service() {
             LocalHttpServer.log("Local server running at: $localAddress")
         } catch (e: Exception) {
             e.printStackTrace()
-            LocalHttpServer.setLogListener(null)
             stopSelf()
         }
     }

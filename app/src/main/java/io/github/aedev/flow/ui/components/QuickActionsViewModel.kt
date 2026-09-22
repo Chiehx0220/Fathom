@@ -381,6 +381,18 @@ class QuickActionsViewModel
 
                     Toast.makeText(context, context.getString(R.string.toast_fetching_download_links), Toast.LENGTH_SHORT).show()
 
+                    if (io.github.aedev.flow.bilibili.BilibiliVideoId.isBilibili(video.id)) {
+                        val message =
+                            runCatching {
+                                io.github.aedev.flow.data.video.BilibiliDownload.start(context, video, targetHeight)
+                            }.fold(
+                                onSuccess = { context.getString(R.string.toast_download_started, video.title) },
+                                onFailure = { context.getString(R.string.ui_download_start_failed, it.message.orEmpty()) },
+                            )
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+
                     // Try innertube extraction first (HD+ quality, direct URLs)
                     val innerTubeResult =
                         withContext(Dispatchers.IO) {

@@ -1,4 +1,4 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import org.schabi.newpipe.extractor.Image
 import org.schabi.newpipe.extractor.InfoItem
@@ -59,8 +59,8 @@ object HtmlRenderer {
     fun renderWatchSkeleton(serviceId: Int, mediaUrl: String?, isTv: Boolean): String = HtmlRendererWatch.renderWatchSkeleton(serviceId, mediaUrl, isTv)
 
     @JvmStatic
-    fun renderWatchContent(serviceId: Int, info: StreamInfo, isSubscribed: Boolean, isWatchLater: Boolean, likeState: String?, isTv: Boolean, targetQuality: String?, duration: Long): String =
-        HtmlRendererWatch.renderWatchContent(serviceId, info, isSubscribed, isWatchLater, likeState, isTv, targetQuality, duration)
+    fun renderWatchContent(serviceId: Int, info: StreamInfo, isSubscribed: Boolean, isWatchLater: Boolean, likeState: String?, isTv: Boolean, duration: Long): String =
+        HtmlRendererWatch.renderWatchContent(serviceId, info, isSubscribed, isWatchLater, likeState, isTv, duration)
 
     @JvmStatic
     fun renderAudioWatch(serviceId: Int, info: StreamInfo, isSubscribed: Boolean, isWatchLater: Boolean, likeState: String?, isTv: Boolean): String =
@@ -90,6 +90,6 @@ object HtmlRenderer {
         HtmlRendererChannel.renderPlaylistItemsFragment(serviceId, playlistUrl, items, nextPage)
 
     @JvmStatic
-    fun renderSettings(serviceId: Int, currentQuality: String, hideWatched: Boolean, hideShorts: Boolean, homeFeedMode: String, saved: Boolean, isTv: Boolean): String =
-        HtmlRendererSettings.renderSettings(serviceId, currentQuality, hideWatched, hideShorts, homeFeedMode, saved, isTv)
+    fun renderSettings(serviceId: Int, hideWatched: Boolean, hideShorts: Boolean, homeFeedMode: String, saved: Boolean, isTv: Boolean): String =
+        HtmlRendererSettings.renderSettings(serviceId, hideWatched, hideShorts, homeFeedMode, saved, isTv)
 }

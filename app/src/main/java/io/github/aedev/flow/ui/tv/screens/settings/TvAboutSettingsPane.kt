@@ -32,11 +32,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.BuildConfig
 import io.github.aedev.flow.R
+import io.github.aedev.flow.ui.screens.settings.CREDITS
 import io.github.aedev.flow.ui.tv.components.TvNavRow
 import io.github.aedev.flow.ui.tv.components.TvSectionHeader
 import io.github.aedev.flow.ui.tv.focus.ProvideTvColumnPivot
@@ -44,8 +46,8 @@ import io.github.aedev.flow.ui.tv.focus.ProvideTvColumnPivot
 private const val FLOW_WEBSITE_URL = "https://flow.aedev.me"
 private const val FLOW_RELEASES_URL = "https://github.com/A-EDev/Flow/releases"
 private const val FLOW_GITHUB_URL = "https://github.com/A-EDev/Flow"
+private const val FORK_GITHUB_URL = "https://github.com/Chiehx0220/Flow"
 private const val FLOW_REDDIT_URL = "https://www.reddit.com/r/Flow_Official/"
-private const val FLOW_CREATOR_URL = "https://github.com/A-EDev"
 private const val FLOW_DONATION_URL = "https://patreon.com/A_EDev"
 private const val FLOW_LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
 private const val NEWPIPE_EXTRACTOR_URL = "https://github.com/TeamNewPipe/NewPipeExtractor"
@@ -65,8 +67,38 @@ fun TvAboutSettingsPane(modifier: Modifier = Modifier) {
                 TvAboutIdentity()
             }
 
-            item(key = "app-header") {
-                TvAboutSectionHeader(stringResource(R.string.section_app))
+            item(key = "fathom-header") {
+                TvAboutSectionHeader(stringResource(R.string.about_section_fathom))
+            }
+            item(key = "github") {
+                TvNavRow(
+                    label = stringResource(R.string.github_label),
+                    supportingText = stringResource(R.string.github_subtitle),
+                    leadingIcon = Icons.Outlined.Code,
+                    onClick = { context.openUrl(FORK_GITHUB_URL) },
+                )
+            }
+            CREDITS.forEach { credit ->
+                item(key = "credit-${credit.name}") {
+                    TvNavRow(
+                        label = credit.name,
+                        supportingText = stringResource(credit.roleRes),
+                        leadingIcon = Icons.Outlined.Extension,
+                        onClick = { context.openUrl(credit.url) },
+                    )
+                }
+            }
+
+            item(key = "upstream-header") {
+                TvAboutSectionHeader(stringResource(R.string.about_section_upstream))
+            }
+            item(key = "creator") {
+                TvNavRow(
+                    label = stringResource(R.string.about_based_on),
+                    value = "Flow, " + stringResource(R.string.about_creator_name),
+                    leadingIcon = Icons.Outlined.Person,
+                    onClick = { context.openUrl(FLOW_GITHUB_URL) },
+                )
             }
             item(key = "changelog") {
                 TvNavRow(
@@ -76,32 +108,12 @@ fun TvAboutSettingsPane(modifier: Modifier = Modifier) {
                     onClick = { context.openUrl(FLOW_RELEASES_URL) },
                 )
             }
-            item(key = "donate") {
-                TvNavRow(
-                    label = stringResource(R.string.donate_item_title),
-                    supportingText = stringResource(R.string.support_dev_subtitle),
-                    leadingIcon = Icons.Outlined.VolunteerActivism,
-                    onClick = { context.openUrl(FLOW_DONATION_URL) },
-                )
-            }
-
-            item(key = "contact-header") {
-                TvAboutSectionHeader(stringResource(R.string.section_contact))
-            }
             item(key = "website") {
                 TvNavRow(
                     label = stringResource(R.string.about_website),
                     value = stringResource(R.string.about_website_address),
                     leadingIcon = Icons.Outlined.Public,
                     onClick = { context.openUrl(FLOW_WEBSITE_URL) },
-                )
-            }
-            item(key = "github") {
-                TvNavRow(
-                    label = stringResource(R.string.github_label),
-                    supportingText = stringResource(R.string.github_subtitle),
-                    leadingIcon = Icons.Outlined.Code,
-                    onClick = { context.openUrl(FLOW_GITHUB_URL) },
                 )
             }
             item(key = "reddit") {
@@ -112,12 +124,12 @@ fun TvAboutSettingsPane(modifier: Modifier = Modifier) {
                     onClick = { context.openUrl(FLOW_REDDIT_URL) },
                 )
             }
-            item(key = "creator") {
+            item(key = "donate") {
                 TvNavRow(
-                    label = stringResource(R.string.about_creator),
-                    value = stringResource(R.string.about_creator_name),
-                    leadingIcon = Icons.Outlined.Person,
-                    onClick = { context.openUrl(FLOW_CREATOR_URL) },
+                    label = stringResource(R.string.donate_item_title),
+                    supportingText = stringResource(R.string.support_dev_subtitle),
+                    leadingIcon = Icons.Outlined.VolunteerActivism,
+                    onClick = { context.openUrl(FLOW_DONATION_URL) },
                 )
             }
 
@@ -169,11 +181,10 @@ private fun TvAboutIdentity() {
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_notification_logo),
+            Image(
+                painter = painterResource(R.drawable.ic_fathom_logo),
                 contentDescription = stringResource(R.string.app_logo_desc),
                 modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurface,
             )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(

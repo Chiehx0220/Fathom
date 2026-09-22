@@ -110,13 +110,13 @@ fun TvNavRail(
                         painter = painterResource(R.drawable.ic_flow_badge_shape),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(width = 48.dp, height = 36.dp),
+                        modifier = Modifier.size(36.dp),
                     )
                     Icon(
                         painter = painterResource(R.drawable.ic_flow_badge_glyph),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(width = 48.dp, height = 36.dp),
+                        modifier = Modifier.size(36.dp),
                     )
                 }
                 AnimatedVisibility(

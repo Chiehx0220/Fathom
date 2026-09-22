@@ -5,7 +5,7 @@ const isNew=p=>{try{sh(`git cat-file -e upstream/main:${p}`);return false}catch(
 const rows=num.map(r=>({...r,isNew:isNew(r.p)}));
 const area=p=>{
  if(/\/bilibili\//.test(p)||/Bilibili/.test(p)) return "Bilibili (native client, mappers, player/paging glue)";
- if(/org\/schabi\/newpipe\/localserver\//.test(p)) return "Local server (fork-only feature)";
+ if(/io\/github\/aedev\/flow\/localserver\//.test(p)) return "Local server (fork-only feature)";
  if(/data\/recommendation\//.test(p)) return "FlowNeuro (Chinese text handling)";
  if(/^app\/src\/test\//.test(p)) return "Tests";
  if(/\.(xml)$/.test(p)) return "Resources / strings";

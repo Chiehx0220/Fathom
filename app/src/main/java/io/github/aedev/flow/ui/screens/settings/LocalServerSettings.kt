@@ -54,18 +54,15 @@ internal fun LazyListScope.localServerSettingsItems(
         val localServerAddress =
             remember(running) {
                 if (running) {
-                    org.schabi.newpipe.localserver.ServerService.getLocalIpAddress()?.let { ip ->
-                        "http://$ip:${org.schabi.newpipe.localserver.ServerService.PORT}"
+                    io.github.aedev.flow.localserver.ServerService.getLocalIpAddress()?.let { ip ->
+                        "http://$ip:${io.github.aedev.flow.localserver.ServerService.PORT}"
                     }
                 } else {
                     null
                 }
             }
-        val openLocalServer: () -> Unit = {
-            val ip = org.schabi.newpipe.localserver.ServerService.getLocalIpAddress() ?: "127.0.0.1"
-            val url = "http://$ip:${org.schabi.newpipe.localserver.ServerService.PORT}"
-            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
-            context.startActivity(intent)
+        val openRemote: () -> Unit = {
+            context.startActivity(android.content.Intent(context, io.github.aedev.flow.localserver.RemoteActivity::class.java))
         }
         // "Smoky" here is a finish, not a fixed hue: take the ACTIVE theme's own
         // primary/primaryContainer (the same pair Flow Engine's card uses) and mute
@@ -83,7 +80,7 @@ internal fun LazyListScope.localServerSettingsItems(
                 Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .clickable(enabled = running, onClick = openLocalServer),
+                    .clickable(enabled = running, onClick = openRemote),
             shape = RoundedCornerShape(24.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         ) {
@@ -190,9 +187,9 @@ internal fun LazyListScope.localServerSettingsItems(
                                     playerPreferences.setLocalServerEnabled(enabled)
                                 }
                                 if (enabled) {
-                                    org.schabi.newpipe.localserver.ServerService.start(context)
+                                    io.github.aedev.flow.localserver.ServerService.start(context)
                                 } else {
-                                    org.schabi.newpipe.localserver.ServerService.stop(context)
+                                    io.github.aedev.flow.localserver.ServerService.stop(context)
                                 }
                             },
                             colors =
@@ -224,7 +221,7 @@ internal fun LazyListScope.localServerSettingsItems(
                     if (running) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = stringResource(R.string.settings_local_server_open_browser),
+                                text = stringResource(R.string.settings_local_server_open_remote),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = onLocalServerAccent,
                                 fontWeight = FontWeight.Bold,

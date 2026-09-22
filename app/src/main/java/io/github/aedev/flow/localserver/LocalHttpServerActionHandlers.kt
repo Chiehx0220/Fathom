@@ -1,6 +1,6 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.localserver.LocalHttpServer.ClientHandler
+import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
 import java.util.UUID
 
@@ -216,6 +216,37 @@ internal fun ClientHandler.handleSendCommand(os: OutputStream, params: Map<Strin
             sendResponse(os, 200, "{\"status\":\"error\",\"message\":\"Not authorized / lock expired\"}", "application/json; charset=UTF-8")
         }
     }
+}
+
+// The paired page reports how it is playing (about once a second) so the phone remote can show progress and pick a mode.
+internal fun ClientHandler.handleRemoteState(os: OutputStream, params: Map<String, String>) {
+    val code = LocalHttpServer.getActiveLockCode()
+    if (code == null || code != params["release_code"]) {
+        sendResponse(os, 200, "{\"status\":\"error\"}", "application/json; charset=UTF-8")
+        return
+    }
+    val watching = params["watching"] == "1"
+    LocalHttpServer.updateRemoteState(
+        LocalHttpServer.RemoteState(
+            watching = watching,
+            title = params["title"]?.takeIf { it.isNotEmpty() },
+            positionSec = params["t"]?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: 0.0,
+            durationSec = params["d"]?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: 0.0,
+            paused = params["paused"] != "0",
+            volume = params["vol"]?.toFloatOrNull()?.coerceIn(0f, 1f) ?: 1f,
+            muted = params["muted"] == "1",
+            fullscreen = params["fs"] == "1",
+            chapter = params["chap"]?.takeIf { it.isNotEmpty() },
+            chapterCount = params["chapn"]?.toIntOrNull() ?: 0,
+            services =
+                params["svcs"].orEmpty().split(',').mapNotNull { entry ->
+                    val colon = entry.indexOf(':')
+                    if (colon <= 0) null else entry.substring(0, colon).toIntOrNull()?.let { it to entry.substring(colon + 1) }
+                },
+            activeService = params["svc"]?.toIntOrNull(),
+        ),
+    )
+    sendResponse(os, 200, "{\"status\":\"success\"}", "application/json; charset=UTF-8")
 }
 
 internal fun ClientHandler.handlePollCommands(os: OutputStream) {

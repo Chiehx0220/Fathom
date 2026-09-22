@@ -37,7 +37,12 @@ internal fun PlayerDialogsContainer(
     val coroutineScope = rememberCoroutineScope()
 
     // Download Quality Dialog
-    if (screenState.activeSheet == PlayerSheet.Download) {
+    if (screenState.activeSheet == PlayerSheet.Download && io.github.aedev.flow.bilibili.BilibiliVideoId.isBilibili(video.id)) {
+        io.github.aedev.flow.ui.components.shared.BilibiliDownloadDialog(
+            video = video,
+            onDismiss = { screenState.closeSheet() },
+        )
+    } else if (screenState.activeSheet == PlayerSheet.Download) {
         when (prefs.downloadDialogStyle) {
             io.github.aedev.flow.data.local.DownloadDialogStyle.COMPACT -> {
                 MediaDownloadDialogCompact(

@@ -1,11 +1,10 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.SubtitlesStream
 import org.schabi.newpipe.extractor.stream.VideoStream
-import org.schabi.newpipe.localserver.LocalHttpServer.ClientHandler
+import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import java.io.IOException
 import java.io.OutputStream
 
@@ -533,10 +532,26 @@ private fun String.withoutCueSettings(): String =
 // The ?v= cache-busting parameter is ignored (see STATIC_ASSET_VERSION): a content change changes the URL, so max-age=31536000 immutable is safe.
 @Throws(Exception::class)
 internal fun ClientHandler.handleStaticCss(os: OutputStream) {
-    sendResponse(os, 200, HtmlStyles.CSS, "text/css; charset=UTF-8", "public, max-age=31536000, immutable")
+    sendResponse(os, 200, WebAssets.css, "text/css; charset=UTF-8", "public, max-age=31536000, immutable")
 }
 
 @Throws(Exception::class)
 internal fun ClientHandler.handleStaticJs(os: OutputStream) {
-    sendResponse(os, 200, HtmlScripts.RAW_JS, "application/javascript; charset=UTF-8", "public, max-age=31536000, immutable")
+    sendResponse(os, 200, WebAssets.js, "application/javascript; charset=UTF-8", "public, max-age=31536000, immutable")
+}
+
+// The single-page app: its HTML shell, and its stylesheet and script (cached for good; ?v= changes with the content).
+@Throws(Exception::class)
+internal fun ClientHandler.handleAppShell(os: OutputStream) {
+    sendResponse(os, 200, WebShell.appPage(), "text/html; charset=UTF-8")
+}
+
+@Throws(Exception::class)
+internal fun ClientHandler.handleAppCss(os: OutputStream) {
+    sendResponse(os, 200, WebAssets.appCss, "text/css; charset=UTF-8", "public, max-age=31536000, immutable")
+}
+
+@Throws(Exception::class)
+internal fun ClientHandler.handleAppJs(os: OutputStream) {
+    sendResponse(os, 200, WebAssets.appJs, "application/javascript; charset=UTF-8", "public, max-age=31536000, immutable")
 }

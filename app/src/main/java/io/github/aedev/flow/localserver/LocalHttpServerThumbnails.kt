@@ -1,11 +1,11 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import java.io.OutputStream
 import java.net.URI
 import java.net.URLEncoder
 import java.util.Locale
 import org.schabi.newpipe.extractor.stream.Frameset
-import org.schabi.newpipe.localserver.LocalHttpServer.ClientHandler
+import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 
 /*
  * The seek bar's preview thumbnails. YouTube publishes a video's frames as storyboards: sprite

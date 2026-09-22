@@ -1,140 +1,133 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 
-// Channel page and playlist page rendering, split out of the former monolithic HtmlRenderer.java.
+/** The channel page and the playlist page. */
 object HtmlRendererChannel {
-
     @JvmStatic
     @Throws(Exception::class)
-    fun renderChannel(serviceId: Int, channel: ChannelHeader, activeTab: String, items: List<InfoItem>?, nextPage: Page?, isSubscribed: Boolean, isBlocked: Boolean, isTv: Boolean): String {
-        val sb = StringBuilder()
-        sb.append(HtmlRendererCommon.getHeaderHtml(serviceId, ""))
+    fun renderChannel(
+        serviceId: Int,
+        channel: ChannelHeader,
+        activeTab: String,
+        items: List<InfoItem>?,
+        nextPage: Page?,
+        isSubscribed: Boolean,
+        isBlocked: Boolean,
+        isTv: Boolean,
+    ): String {
+        val banner = HtmlRendererCommon.getThumbnailUrl(channel.bannerUrl)
+        val avatar = HtmlRendererCommon.getThumbnailUrl(channel.avatarUrl)
+        val subscribers = if (channel.subscriberCount >= 0) "${channel.subscriberCount} subscribers" else ""
+        val back = WebUi.enc("/channel?serviceId=$serviceId&id=${channel.url}")
 
-        val channelBanner = HtmlRendererCommon.getThumbnailUrl(channel.bannerUrl)
-        val channelAvatar = HtmlRendererCommon.getThumbnailUrl(channel.avatarUrl)
-        val channelAvatarFallback = channel.avatarUrl?.let { channelAvatar }
-        val channelName = HtmlRendererCommon.escapeHtml(channel.name)
-        val subscriberText = if (channel.subscriberCount >= 0) "${channel.subscriberCount} subscribers" else ""
-        val channelDesc = channel.description
-
-        sb.append("<div class=\"container\">\n")
-          .append("  <div class=\"channel-header\">\n")
-          .append("    <img class=\"channel-banner\" src=\"$channelBanner\">\n")
-          .append("    <div class=\"channel-details\">\n")
-          .append("      <img class=\"channel-avatar\" src=\"$channelAvatar\">\n")
-          .append("      <div class=\"channel-info-block\">\n")
-          .append("        <h1 class=\"channel-name\">$channelName</h1>\n")
-          .append("        <span class=\"uploader-subs\">$subscriberText</span>\n")
-          .append("        <p class=\"channel-desc\">$channelDesc</p>\n")
-          .append("      </div>\n")
-
-        val channelUrlEncoded = HtmlRendererCommon.encodeUrl(channel.url)
-        val channelBackUrl = HtmlRendererCommon.encodeUrl("/channel?serviceId=$serviceId&id=${channel.url}")
-        val channelUrlJs = HtmlRendererCommon.escapeJs(channel.url)
-
-        sb.append(HtmlRendererCommon.renderSubscribeButton(channel.url, channel.name, channelAvatar, channelBackUrl, isSubscribed))
-
-        // Backed by Flow's native FlowNeuroEngine block list - see nativeBlockChannel() in
-        // LocalServerFlowData.kt.
-        if (isBlocked) {
-            sb.append("      <a href=\"/block_channel?action=unblock&id=$channelUrlEncoded&back=$channelBackUrl\" onclick=\"toggleBlock(event, this, '$channelUrlJs')\" class=\"subscribe-btn blocked\">Blocked</a>\n")
-        } else {
-            sb.append("      <a href=\"/block_channel?action=block&id=$channelUrlEncoded&back=$channelBackUrl\" onclick=\"toggleBlock(event, this, '$channelUrlJs')\" class=\"subscribe-btn danger\">Block</a>\n")
+        fun tab(
+            key: String,
+            label: String,
+        ): String {
+            val active = if (key == activeTab) " active" else ""
+            return "<a class=\"channel-tab$active\" href=\"/channel?serviceId=$serviceId&id=${WebUi.esc(channel.url)}&tab=$key\">$label</a>\n"
         }
 
-        val videosActive = if (activeTab == "videos") "active" else ""
-        val playlistsActive = if (activeTab == "playlists") "active" else ""
-
-        sb.append("    </div>\n")
-          .append("    <div class=\"channel-tabs-selector\">\n")
-          .append("      <a href=\"/channel?serviceId=$serviceId&id=${channel.url}&tab=videos\" class=\"channel-tab-btn $videosActive\">Uploads</a>\n")
-          .append("      <a href=\"/channel?serviceId=$serviceId&id=${channel.url}&tab=playlists\" class=\"channel-tab-btn $playlistsActive\">Playlists</a>\n")
+        val sb = StringBuilder(WebShell.header(serviceId, ""))
+        sb.append("<main class=\"container\">\n")
+          .append("<section class=\"channel-header\">\n")
+          .append("  <img class=\"channel-banner\" src=\"${WebUi.esc(banner)}\" alt=\"\">\n")
+          .append("  <div class=\"channel-details\">\n")
+          .append("    ${WebUi.avatar(channel.name, avatar, "xl")}\n")
+          .append("    <div class=\"channel-info\">\n")
+          .append("      <h1 class=\"channel-name\">${WebUi.esc(channel.name)}</h1>\n")
+          .append("      <span class=\"channel-subs\">${WebUi.esc(subscribers)}</span>\n")
+          .append("      <p class=\"channel-desc\">${WebUi.esc(channel.description)}</p>\n")
+          .append("    </div>\n")
+          .append("    <div class=\"channel-actions\">\n")
+          .append(WebUi.subscribeButton(channel.url, channel.name, avatar, back, isSubscribed))
+          .append(WebUi.blockButton(channel.url, back, isBlocked))
           .append("    </div>\n")
           .append("  </div>\n")
+          .append("  <div class=\"channel-tabs\">\n")
+          .append(tab("videos", "Uploads"))
+          .append(tab("playlists", "Playlists"))
+          .append("  </div>\n")
+          .append("</section>\n")
 
-        if (items != null && items.isNotEmpty()) {
-            sb.append(renderChannelItemsFragment(serviceId, channel.url, activeTab, items, nextPage, channelAvatarFallback))
+        if (items.isNullOrEmpty()) {
+            sb.append(WebUi.notice("No items found under this tab."))
         } else {
-            sb.append("<div class=\"loading-placeholder\">No items found under this tab.</div>\n")
+            sb.append(renderChannelItemsFragment(serviceId, channel.url, activeTab, items, nextPage, avatar.takeIf { channel.avatarUrl != null }))
         }
-
-        sb.append("</div>\n")
-        return HtmlRendererCommon.wrapInTemplate(channel.name, sb.toString(), isTv)
+        sb.append("</main>\n")
+        return WebShell.page(channel.name, sb.toString(), isTv)
     }
 
-    // Grid + "Load More" for a channel-tab batch - shared by renderChannel() and loadMoreChannel()'s
-    // ajax=1 follow-ups.
+    /** A batch of a channel's uploads or playlists with its "Load more". */
     @JvmStatic
-    fun renderChannelItemsFragment(serviceId: Int, channelUrl: String, activeTab: String, items: List<InfoItem>, nextPage: Page?, fallbackAvatarUrl: String?): String {
-        val sb = StringBuilder()
-        HtmlRendererCommon.renderGrid(sb, serviceId, items, fallbackAvatarUrl = fallbackAvatarUrl)
-
-        val nextPageJs = HtmlRendererCommon.serializePageJs(nextPage)
-        if (nextPageJs != null) {
-            val channelUrlJs = HtmlRendererCommon.escapeJs(channelUrl)
-            val tabJs = HtmlRendererCommon.escapeJs(activeTab)
-            sb.append("  <div class=\"pagination\">\n")
-              .append("    <a href=\"#\" class=\"btn-page\" onclick=\"loadMoreChannel(this, '$nextPageJs', $serviceId, '$channelUrlJs', '$tabJs'); return false;\">Load More</a>\n")
-              .append("  </div>\n")
-        }
-        return sb.toString()
+    fun renderChannelItemsFragment(
+        serviceId: Int,
+        channelUrl: String,
+        activeTab: String,
+        items: List<InfoItem>,
+        nextPage: Page?,
+        fallbackAvatarUrl: String?,
+    ): String {
+        val next =
+            HtmlRendererCommon.serializePage(nextPage)?.let {
+                "/channel?ajax=1&serviceId=$serviceId&id=${WebUi.enc(channelUrl)}&tab=${WebUi.enc(activeTab)}&nextPage=${WebUi.enc(it)}"
+            }
+        return WebUi.grid(serviceId, items, fallbackAvatarUrl = fallbackAvatarUrl) + WebUi.loadMore(next)
     }
 
     @JvmStatic
     @Throws(Exception::class)
-    fun renderPlaylist(serviceId: Int, playlist: PlaylistHeader, items: List<InfoItem>?, nextPage: Page?, isBookmarked: Boolean, isTv: Boolean): String {
-        val sb = StringBuilder()
-        sb.append(HtmlRendererCommon.getHeaderHtml(serviceId, ""))
+    fun renderPlaylist(
+        serviceId: Int,
+        playlist: PlaylistHeader,
+        items: List<InfoItem>?,
+        nextPage: Page?,
+        isBookmarked: Boolean,
+        isTv: Boolean,
+    ): String {
+        val count = if (playlist.streamCount >= 0) "${playlist.streamCount} items" else ""
+        val back = WebUi.enc("/playlist?serviceId=$serviceId&id=${playlist.url}")
+        val id = WebUi.enc(playlist.url)
+        val bookmark =
+            if (isBookmarked) {
+                WebUi.button("Bookmarked", "star", "tonal", href = "/bookmark_playlist?action=unbookmark&id=$id&back=$back")
+            } else {
+                WebUi.button("Bookmark playlist", "star", "filled", href = "/bookmark_playlist?action=bookmark&id=$id&name=${WebUi.enc(playlist.name)}&back=$back")
+            }
 
-        val playlistName = HtmlRendererCommon.escapeHtml(playlist.name)
-        val playlistUploader = HtmlRendererCommon.escapeHtml(playlist.uploaderName)
-        val playlistItemCount = if (playlist.streamCount >= 0) "${playlist.streamCount} items" else ""
-
-        sb.append("<div class=\"container\">\n")
-          .append("  <div class=\"channel-header\" style=\"padding:28px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;\">\n")
-          .append("    <div style=\"display:flex; flex-direction:column; gap:6px;\">\n")
-          .append("      <h1 class=\"channel-name\">$playlistName</h1>\n")
-          .append("      <span class=\"uploader-subs\">Playlist by $playlistUploader • $playlistItemCount</span>\n")
-          .append("    </div>\n")
-
-        val playlistUrlEncoded = HtmlRendererCommon.encodeUrl(playlist.url)
-        val playlistBackUrl = HtmlRendererCommon.encodeUrl("/playlist?serviceId=$serviceId&id=${playlist.url}")
-
-        if (isBookmarked) {
-            sb.append("    <a href=\"/bookmark_playlist?action=unbookmark&id=$playlistUrlEncoded&back=$playlistBackUrl\" class=\"subscribe-btn subscribed\" style=\"text-decoration:none;\">⭐ Bookmarked</a>\n")
+        val sb = StringBuilder(WebShell.header(serviceId, ""))
+        sb.append("<main class=\"container\">\n")
+          .append("<section class=\"channel-header playlist-header\">\n")
+          .append("  <div class=\"channel-info\">\n")
+          .append("    <h1 class=\"channel-name\">${WebUi.esc(playlist.name)}</h1>\n")
+          .append("    <span class=\"channel-subs\">Playlist by ${WebUi.esc(playlist.uploaderName)} • $count</span>\n")
+          .append("  </div>\n")
+          .append("  <div class=\"channel-actions\">$bookmark</div>\n")
+          .append("</section>\n")
+        if (items.isNullOrEmpty()) {
+            sb.append(WebUi.notice("No streams in this playlist."))
         } else {
-            val playlistNameEncoded = HtmlRendererCommon.encodeUrl(playlist.name)
-            sb.append("    <a href=\"/bookmark_playlist?action=bookmark&id=$playlistUrlEncoded&name=$playlistNameEncoded&back=$playlistBackUrl\" class=\"subscribe-btn\" style=\"text-decoration:none;\">⭐ Bookmark Playlist</a>\n")
-        }
-
-        sb.append("  </div>\n")
-
-        if (items != null && items.isNotEmpty()) {
             sb.append(renderPlaylistItemsFragment(serviceId, playlist.url, items, nextPage))
-        } else {
-            sb.append("<div class=\"loading-placeholder\">No streams in this playlist.</div>\n")
         }
-
-        sb.append("</div>\n")
-        return HtmlRendererCommon.wrapInTemplate("Playlist: " + playlist.name, sb.toString(), isTv)
+        sb.append("</main>\n")
+        return WebShell.page("Playlist: ${playlist.name}", sb.toString(), isTv)
     }
 
-    // Grid + "Load More" for a playlist batch - shared by renderPlaylist() and loadMorePlaylist()'s
-    // ajax=1 follow-ups.
+    /** A batch of a playlist's videos with its "Load more". */
     @JvmStatic
-    fun renderPlaylistItemsFragment(serviceId: Int, playlistUrl: String, items: List<InfoItem>, nextPage: Page?): String {
-        val sb = StringBuilder()
-        HtmlRendererCommon.renderGrid(sb, serviceId, items)
-
-        val nextPageJs = HtmlRendererCommon.serializePageJs(nextPage)
-        if (nextPageJs != null) {
-            val playlistUrlJs = HtmlRendererCommon.escapeJs(playlistUrl)
-            sb.append("  <div class=\"pagination\">\n")
-              .append("    <a href=\"#\" class=\"btn-page\" onclick=\"loadMorePlaylist(this, '$nextPageJs', $serviceId, '$playlistUrlJs'); return false;\">Load More</a>\n")
-              .append("  </div>\n")
-        }
-        return sb.toString()
+    fun renderPlaylistItemsFragment(
+        serviceId: Int,
+        playlistUrl: String,
+        items: List<InfoItem>,
+        nextPage: Page?,
+    ): String {
+        val next =
+            HtmlRendererCommon.serializePage(nextPage)?.let {
+                "/playlist?ajax=1&serviceId=$serviceId&id=${WebUi.enc(playlistUrl)}&nextPage=${WebUi.enc(it)}"
+            }
+        return WebUi.grid(serviceId, items) + WebUi.loadMore(next)
     }
 }

@@ -1,4 +1,4 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import org.schabi.newpipe.extractor.Image
 import org.schabi.newpipe.extractor.InfoItem

@@ -1,4 +1,4 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliLink
@@ -8,23 +8,22 @@ import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.ListExtractor.InfoItemsPage
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelExtractor
 import org.schabi.newpipe.extractor.exceptions.ExtractionException
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
-import org.schabi.newpipe.extractor.playlist.PlaylistExtractor
 import org.schabi.newpipe.extractor.search.SearchExtractor
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.VideoStream
-import org.schabi.newpipe.extractor.stream.SubtitlesStream
-import org.schabi.newpipe.extractor.stream.StreamType
 
 import io.github.aedev.flow.data.recommendation.InteractionType
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -33,7 +32,6 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.URLDecoder
 import java.util.Locale
-import java.util.UUID
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -42,61 +40,56 @@ import java.util.concurrent.TimeUnit
 
 class LocalHttpServer(private val context: android.content.Context, private val port: Int) {
 
-    interface LogListener {
-        fun onLog(message: String)
+    init {
+        WebAssets.init(context)
     }
 
-    fun interface LockStatusListener {
-        fun onLockStatusChanged()
-    }
+    /** Which page, if any, has paired with the server to be remote-controlled. */
+    data class RemoteLock(
+        val locked: Boolean,
+        val clientIp: String?,
+        val title: String?,
+    )
 
-    class ClientInfo(val name: String, val connection: org.java_websocket.WebSocket)
+    /** What the paired page last reported: whether a video is open and how it is playing. */
+    data class RemoteState(
+        val watching: Boolean = false,
+        val title: String? = null,
+        val positionSec: Double = 0.0,
+        val durationSec: Double = 0.0,
+        val paused: Boolean = true,
+        val volume: Float = 1f,
+        val muted: Boolean = false,
+        val fullscreen: Boolean = false,
+        /** Name of the chapter being played and how many the video has (0 when it has none). */
+        val chapter: String? = null,
+        val chapterCount: Int = 0,
+        /** The sources the page can switch between (id to name) and which one it is on. */
+        val services: List<Pair<Int, String>> = emptyList(),
+        val activeService: Int? = null,
+    )
 
     companion object {
+        private val remoteLockState = MutableStateFlow(RemoteLock(false, null, null))
+        val remoteLock: StateFlow<RemoteLock> = remoteLockState.asStateFlow()
+
+        private val remoteStateFlow = MutableStateFlow(RemoteState())
+        val remoteState: StateFlow<RemoteState> = remoteStateFlow.asStateFlow()
+
+        @JvmStatic
+        fun updateRemoteState(state: RemoteState) {
+            remoteStateFlow.value = state
+        }
+
         @Volatile
         private var activeLockCode: String? = null
         @Volatile
         private var activeClientIp: String? = null
         @Volatile
         private var activeVideoTitle: String? = null
-        private var lockStatusListener: LockStatusListener? = null
         @Volatile
         private var wsServer: RemoteWebSocketServer? = null
         private val pendingCommands = java.util.concurrent.LinkedBlockingQueue<String>()
-
-        @JvmStatic
-        fun getConnectedClients(): List<ClientInfo> {
-            val list = ArrayList<ClientInfo>()
-            val server = wsServer
-            if (server != null) {
-                for (conn in server.getConnections()) {
-                    if (conn.isOpen) {
-                        var name = conn.getAttachment<String>()
-                        if (name == null || name.isEmpty()) {
-                            name = try {
-                                "Client (" + conn.remoteSocketAddress.address.hostAddress + ")"
-                            } catch (e: Exception) {
-                                "Client (Unknown)"
-                            }
-                        }
-                        list.add(ClientInfo(name, conn))
-                    }
-                }
-            }
-            return list
-        }
-
-        @JvmStatic
-        fun castToClient(conn: org.java_websocket.WebSocket?, videoUrl: String) {
-            if (conn != null && conn.isOpen) {
-                try {
-                    conn.send("play_video:$videoUrl")
-                    log("Casted play_video command to client connection.")
-                } catch (e: Exception) {
-                    log("Failed to send command to specific client: " + e.message)
-                }
-            }
-        }
 
         @JvmStatic
         fun getAndClearPendingCommands(): List<String> {
@@ -119,16 +112,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @JvmStatic
-        fun setLockStatusListener(listener: LockStatusListener?) {
-            lockStatusListener = listener
-        }
-
-        @JvmStatic
-        fun isLocked(): Boolean {
-            return activeLockCode != null
-        }
-
-        @JvmStatic
         fun getActiveClientIp(): String? {
             return activeClientIp
         }
@@ -148,7 +131,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             activeLockCode = null
             activeClientIp = null
             activeVideoTitle = null
-            lockStatusListener?.onLockStatusChanged()
+            remoteLockState.value = RemoteLock(false, null, null)
+            remoteStateFlow.value = RemoteState()
         }
 
         @JvmStatic
@@ -158,17 +142,16 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 activeLockCode = code
                 activeClientIp = clientIp
                 activeVideoTitle = title
-                lockStatusListener?.onLockStatusChanged()
+                remoteLockState.value = RemoteLock(true, clientIp, title)
                 return true
             } else if (currentLockCode == code) {
                 activeVideoTitle = title
-                lockStatusListener?.onLockStatusChanged()
+                remoteLockState.value = RemoteLock(true, activeClientIp, title)
                 return true
             }
             return false
         }
 
-        private var logListener: LogListener? = null
         internal val streamUrlCache = StreamUrlCache()
 
         // One extraction per video, shared by the watch and manifest handlers. Smaller than streamUrlCache: entries hold parsed extractor state.
@@ -179,13 +162,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             .build()
 
         @JvmStatic
-        fun setLogListener(listener: LogListener?) {
-            logListener = listener
-        }
-
-        @JvmStatic
         fun log(message: String) {
-            logListener?.onLog(message)
+            android.util.Log.d("LocalServer", message)
         }
 
         @JvmStatic
@@ -525,6 +503,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                                 "/play" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
                                 "/send-command" to { handleSendCommand(os, params) },
                                 "/poll-commands" to { handlePollCommands(os) },
+                                "/remote-state" to { handleRemoteState(os, params) },
                                 "/release-lock" to { handleReleaseLock(os, params) },
                                 "/history" to { handleHistory(os, params, isTv) },
                                 "/history_action" to { handleHistoryAction(os, params) },
@@ -561,6 +540,16 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                                 "/api/v1/bilibili_probe" to { handleApiBilibiliProbe(os, params) },
                                 "/api/v1/recommendations" to { handleApiRecommendations(os, params) },
                                 "/api/v1/ping" to { handleApiPing(os) },
+                                "/api/v1/history" to { handleApiHistory(os) },
+                                "/api/v1/library" to { handleApiLibrary(os, params) },
+                                "/api/v1/feed" to { handleApiFeed(os, params) },
+                                "/api/v1/playlist" to { handleApiPlaylist(os, params) },
+                                "/api/v1/state" to { handleApiState(os, params) },
+                                "/api/v1/sponsor" to { handleApiSponsor(os, params) },
+                                "/api/v1/settings" to { handleApiSettings(os, params) },
+                                "/app" to { handleAppShell(os) },
+                                "/app.css" to { handleAppCss(os) },
+                                "/app.js" to { handleAppJs(os) },
                             )
                             val route = routes[path]
                             if (route != null) {
@@ -637,7 +626,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         // Merges subscribed channels' uploads into one newest-first feed (capped at 60). Each channel is resolved by its own URL, since subscriptions mix services.
-        private fun fetchSubscriptionFeed(channels: List<InfoItem>?): List<InfoItem> {
+        internal fun fetchSubscriptionFeed(channels: List<InfoItem>?): List<InfoItem> {
             var feed = ArrayList<InfoItem>()
             if (channels == null || channels.isEmpty()) {
                 return feed
@@ -766,9 +755,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         private fun handleSettings(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
             val action = params["action"]
             if ("save" == action) {
-                if (params.containsKey("video_quality")) {
-                    dbHelper.nativeSetVideoQuality(params["video_quality"] ?: "Auto")
-                }
                 if (params.containsKey("hide_watched")) {
                     dbHelper.nativeSetHideWatched("true" == params["hide_watched"] || "on" == params["hide_watched"])
                 }
@@ -792,13 +778,12 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 return
             }
 
-            val currentQuality = dbHelper.nativeVideoQuality()
             val hideWatched = dbHelper.nativeHideWatched()
             val hideShorts = dbHelper.nativeHideShorts()
             val homeFeedMode = dbHelper.homeFeedMode
             val saved = "true" == params["saved"]
 
-            val html = HtmlRenderer.renderSettings(0, currentQuality, hideWatched, hideShorts, homeFeedMode, saved, isTv)
+            val html = HtmlRenderer.renderSettings(getServiceId(params), hideWatched, hideShorts, homeFeedMode, saved, isTv)
             sendResponse(os, 200, html, "text/html; charset=UTF-8")
         }
 

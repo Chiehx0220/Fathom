@@ -135,7 +135,7 @@ fun SettingsScreen(
     // Actual socket state, not the saved on/off preference - the preference stays true after the
     // system stops the service or the process dies, which made the card claim "online" for a
     // dead server. Everything below (switch, badge, address, tap-to-open) follows this.
-    val localServerRunning by org.schabi.newpipe.localserver.ServerService.runningState.collectAsState()
+    val localServerRunning by io.github.aedev.flow.localserver.ServerService.runningState.collectAsState()
     val currentAppLanguage by playerPreferences.appLanguage.collectAsState(initial = AppLanguageManager.SYSTEM_DEFAULT)
     val discordSettingsState by DiscordPresenceRuntime.settingsState.collectAsStateWithLifecycle()
     val discordSettingsSummary = discordSettingsSummaryText(discordSettingsState)

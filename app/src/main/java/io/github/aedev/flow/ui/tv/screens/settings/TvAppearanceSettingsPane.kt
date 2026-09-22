@@ -44,7 +44,7 @@ fun TvAppearanceSettingsPane(
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
-    val themeMode by localDataManager.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+    val themeMode by localDataManager.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.MATERIAL_YOU)
     val themeVariant by localDataManager.themeVariant.collectAsStateWithLifecycle(initialValue = ThemeVariant.DARK)
 
     LazyColumn(

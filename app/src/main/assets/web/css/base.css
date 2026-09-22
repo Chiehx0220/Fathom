@@ -1,0 +1,36 @@
+/* Reset, page defaults, icons, focus, and the small pieces every page shares: page heading, notice, spinner, toast. */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+body { font-family: 'Roboto', sans-serif; background-color: var(--md-surface); color: var(--md-on-surface); -webkit-font-smoothing: antialiased; transition: background-color 0.2s, color 0.2s; overflow-x: hidden; overflow-wrap: break-word; }
+a { color: inherit; text-decoration: none; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+.material-symbols-rounded { display: inline-block; font-family: 'Material Symbols Rounded'; font-size: 24px; font-style: normal; font-weight: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; -webkit-font-feature-settings: 'liga'; -webkit-font-smoothing: antialiased; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; transition: font-variation-settings 0.2s var(--md-easing); }
+.sidebar-item.active .material-symbols-rounded, .bottom-nav-item.active .material-symbols-rounded { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.sidebar-icon, .bottom-nav-icon { display: inline-flex; align-items: center; justify-content: center; font-size: 0; }
+
+/* Focus. The browser's own ring is off; a ring is drawn for keyboard use and for the element a remote has selected
+ * (`.nav-focus`, set by script: a phone remote's synthetic keys never trigger :focus-visible). */
+:focus, :focus-visible { outline: none; }
+body.using-keyboard :focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; }
+.nav-focus, body.using-keyboard :focus-visible.nav-focus { outline: 3px solid var(--md-primary); outline-offset: 3px; }
+
+/* Heading row at the top of a page. */
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.page-title { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 700; }
+.page-title .material-symbols-rounded { font-size: 24px; }
+.page-actions { display: flex; align-items: center; gap: 8px; }
+
+/* A message in place of content. */
+.notice, .loading-placeholder { margin: 16px 0; padding: 48px 16px; border-radius: 16px; background: var(--md-surface-container-high); color: var(--md-on-surface-variant); font-size: 15px; text-align: center; }
+.notice-error, .loading-placeholder[style*="ff4b5c"] { background: var(--md-error-container); color: var(--md-on-error-container); }
+
+/* Waiting for a region to fill in. */
+.loading { padding: 96px 0; text-align: center; }
+.loading-text { margin-top: 24px; font-size: 16px; font-weight: 500; }
+.spinner { display: inline-block; width: 48px; height: 48px; border: 4px solid var(--md-surface-container-high); border-top-color: var(--md-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast { position: fixed; bottom: 80px; left: 50%; z-index: 999999; padding: 10px 20px; border-radius: 24px; background: var(--md-on-surface); color: var(--md-surface); font-size: 14px; font-weight: 500; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); opacity: 0; transform: translate(-50%, 10px); transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }

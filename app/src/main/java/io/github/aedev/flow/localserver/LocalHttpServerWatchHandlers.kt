@@ -1,7 +1,7 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.localserver.LocalHttpServer.ClientHandler
+import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
 
 // Watch-page content, comments, and danmaku handlers - split from LocalHttpServer.kt, no behavior
@@ -58,8 +58,7 @@ internal fun ClientHandler.handleWatchContent(os: OutputStream, params: Map<Stri
 
     try {
         val page = loadWatchPageInfo(serviceId, mediaUrl)
-        val targetQuality = dbHelper.nativeVideoQuality()
-        val html = HtmlRenderer.renderWatchContent(serviceId, page.info, page.isSubscribed, page.isWatchLater, page.likeState, isTv, targetQuality, page.info.duration)
+        val html = HtmlRenderer.renderWatchContent(serviceId, page.info, page.isSubscribed, page.isWatchLater, page.likeState, isTv, page.info.duration)
         sendResponse(os, 200, html, "text/html; charset=UTF-8")
     } catch (e: Exception) {
         sendResponse(os, 500, "Error: " + e.message, "text/plain; charset=UTF-8")

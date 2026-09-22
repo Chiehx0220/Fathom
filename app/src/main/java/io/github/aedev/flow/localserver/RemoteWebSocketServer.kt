@@ -1,4 +1,4 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
@@ -11,6 +11,11 @@ import java.util.concurrent.ConcurrentHashMap
 class RemoteWebSocketServer(port: Int) : WebSocketServer(InetSocketAddress(port)) {
 
     private val connections: MutableSet<WebSocket> = Collections.newSetFromMap(ConcurrentHashMap())
+
+    init {
+        // Restarting the server (or the app) soon after a stop would otherwise fail to bind while the old sockets linger.
+        isReuseAddr = true
+    }
 
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
         connections.add(conn)
@@ -40,7 +45,8 @@ class RemoteWebSocketServer(port: Int) : WebSocketServer(InetSocketAddress(port)
     override fun getConnections(): Set<WebSocket> = connections
 
     override fun onError(conn: WebSocket?, ex: Exception) {
-        LocalHttpServer.log("WebSocket error: " + ex.message)
+        // conn == null means the server itself failed (typically it could not bind its port), so nothing can connect.
+        LocalHttpServer.log(if (conn == null) "WebSocket server failed on port $port: $ex" else "WebSocket error: " + ex.message)
         if (conn != null) {
             connections.remove(conn)
         }

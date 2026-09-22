@@ -1,4 +1,4 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import kotlinx.coroutines.runBlocking
