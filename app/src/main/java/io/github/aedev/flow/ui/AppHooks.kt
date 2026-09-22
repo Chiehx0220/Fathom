@@ -1,7 +1,6 @@
 package io.github.aedev.flow.ui
 
 import android.content.Context
-import android.net.Uri
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -34,8 +33,7 @@ fun HandleDeepLinks(
                 try {
                     if (navController.currentDestination != null) {
                         if (isShort) {
-                            val src = Uri.encode(ShortsQueueSource.SeededFeed(videoId).encode())
-                            navController.navigate("shorts?src=$src") {
+                            navController.openShorts(ShortsQueueSource.SeededFeed(videoId)) {
                                 launchSingleTop = true
                             }
                         } else {
