@@ -12,13 +12,73 @@ let nextTimer = 0;
 let lastReported = -1;
 let hudTimer = 0;
 
+// ---- Mini player: drag-to-reposition, tap-to-expand, and its own controls (media-video-layout
+// is hidden at this size, so close/play/expand are the only interactive surface it has). Every
+// control shares the .mini-ctrl class, so drag suppression and click dispatch use one selector
+// each rather than one-off wiring per button. ----
+const MINI_CTRL = '.mini-ctrl';
+
+let miniPos = null; // {x, y} pixel override past the CSS corner default; session-lived, not persisted
+let drag = null; // {pointerId, startX, startY, originX, originY, moved}
+
+const clampMiniPos = (x, y) => {
+    const stage = stageEl();
+    return {
+        x: Math.max(8, Math.min(innerWidth - stage.offsetWidth - 8, x)),
+        y: Math.max(8, Math.min(innerHeight - stage.offsetHeight - 8, y)),
+    };
+};
+
+const placeMini = () => {
+    const stage = stageEl();
+    if (!stage.classList.contains('mini') || !miniPos) { stage.style.left = stage.style.top = stage.style.right = stage.style.bottom = ''; return; }
+    stage.style.right = stage.style.bottom = 'auto';
+    stage.style.left = miniPos.x + 'px';
+    stage.style.top = miniPos.y + 'px';
+};
+
+const openFull = () => { if (current) location.hash = FT.link.watch({ url: current.url, serviceId: current.service }); };
+
+const onMiniPointerDown = (e) => {
+    const stage = stageEl();
+    if (!stage.classList.contains('mini') || e.target.closest(MINI_CTRL)) return;
+    const rect = stage.getBoundingClientRect();
+    drag = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, originX: rect.left, originY: rect.top, moved: false };
+    try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+};
+const onMiniPointerMove = (e) => {
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+    if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+    if (!drag.moved) { drag.moved = true; stageEl().classList.add('dragging'); }
+    e.preventDefault();
+    miniPos = clampMiniPos(drag.originX + dx, drag.originY + dy);
+    placeMini();
+};
+const onMiniPointerUp = (e) => {
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    const stage = stageEl();
+    try { stage.releasePointerCapture(e.pointerId); } catch (err) {}
+    stage.classList.remove('dragging');
+    if (!drag.moved) drag = null; // else left set, for onMiniClick to swallow the trailing click
+};
+// Single dispatch point for taps on the mini player: a completed drag is swallowed, #mini-play
+// toggles playback, #mini-close closes, everything else (including #mini-expand) opens the full page.
+const onMiniClick = (e) => {
+    if (drag && drag.moved) { drag = null; return; }
+    if (!stageEl().classList.contains('mini')) return;
+    if (e.target.closest('#mini-play')) FT.player.toggle();
+    else if (e.target.closest('#mini-close')) FT.player.close();
+    else openFull();
+};
+
 const sizeStage = () => {
     // The picture is as wide as the window, but never taller than most of it.
     const height = Math.min(innerHeight * 0.64, (innerWidth * 9) / 16);
     document.documentElement.style.setProperty('--stage-h', Math.round(height) + 'px');
 };
 sizeStage();
-addEventListener('resize', FT.frame(sizeStage));
+addEventListener('resize', FT.frame(() => { sizeStage(); if (miniPos) { miniPos = clampMiniPos(miniPos.x, miniPos.y); placeMini(); } }));
 
 const hud = (icon, text) => {
     const box = FT.$('#hud');
@@ -27,6 +87,14 @@ const hud = (icon, text) => {
     box.hidden = false;
     clearTimeout(hudTimer);
     hudTimer = setTimeout(() => { box.hidden = true; }, 1100);
+};
+
+const paintMiniPlay = () => {
+    const btn = FT.$('#mini-play');
+    if (!btn) return;
+    const paused = playerEl().paused;
+    btn.replaceChildren(FT.icon(paused ? 'play_arrow' : 'pause'));
+    btn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
 };
 
 const isFullscreen = () => {
@@ -228,7 +296,9 @@ FT.player = {
         const stage = stageEl();
         stage.hidden = dockMode === 'off';
         stage.classList.toggle('mini', dockMode === 'mini');
-        FT.$('#mini-close').hidden = dockMode !== 'mini';
+        FT.$$(MINI_CTRL).forEach((btn) => { btn.hidden = dockMode !== 'mini'; });
+        if (dockMode === 'mini') paintMiniPlay();
+        placeMini();
     },
 
     close() {
@@ -306,15 +376,23 @@ FT.player = {
         else if (i > 0 && p.currentTime - list[i].s <= 3) p.currentTime = list[i - 1].s;
         else p.currentTime = list[i].s;
     },
+    // Direct jump by chapter index, for the remote's chapter picker (stepChapter only moves ±1).
+    jumpChapter(index) {
+        const p = playerEl();
+        const list = current ? current.chapters : [];
+        const target = list[index];
+        if (target) p.currentTime = target.s;
+    },
 
-    // What the phone remote shows.
+    // Remote-control state snapshot: title/time/transport plus chapters (titles + active index)
+    // and the active SponsorBlock label, if any.
     snapshot() {
         const p = playerEl();
-        const i = chapterIndex();
         return {
             open: !!current, title: current ? current.info.title : '', t: p.currentTime || 0, d: p.duration || 0, paused: !!p.paused,
             vol: p.volume == null ? 1 : p.volume, muted: !!p.muted, fs: isFullscreen(),
-            chap: i >= 0 ? current.chapters[i].t : '', chapn: current ? current.chapters.length : 0,
+            chapters: current ? current.chapters.map((c) => c.t) : [], chapi: chapterIndex(),
+            skip: skipTarget ? skipTarget.l : '',
         };
     },
     skip() {
@@ -338,6 +416,8 @@ const wire = () => {
     p.addEventListener('time-update', watchSegments);
     p.addEventListener('pause', reportProgress);
     p.addEventListener('ended', scheduleNext);
+    p.addEventListener('play', paintMiniPlay);
+    p.addEventListener('pause', paintMiniPlay);
     p.addEventListener('fullscreen-change', (e) => {
         if (!screen.orientation) return;
         if (e.detail) { if (screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }
@@ -351,8 +431,11 @@ const wire = () => {
         }
     });
     FT.$('#skip-btn').addEventListener('click', () => FT.player.skip());
-    FT.$('#mini-close').addEventListener('click', () => FT.player.close());
-    FT.$('#stage').addEventListener('click', (e) => { if (stageEl().classList.contains('mini') && !e.target.closest('#mini-close') && current) location.hash = FT.link.watch({ url: current.url, serviceId: current.service }); });
+    FT.$('#stage').addEventListener('pointerdown', onMiniPointerDown);
+    FT.$('#stage').addEventListener('pointermove', onMiniPointerMove);
+    FT.$('#stage').addEventListener('pointerup', onMiniPointerUp);
+    FT.$('#stage').addEventListener('pointercancel', onMiniPointerUp);
+    FT.$('#stage').addEventListener('click', onMiniClick);
 };
 wire();
 })();
