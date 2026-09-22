@@ -21,6 +21,12 @@ body[data-input="keys"] .card.sel .opt { display: flex; }
 .shelf-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
 .shelf-head h2 { font-size: 20px; font-weight: 500; }
 .shelf-head span { color: var(--mute); font-size: 13px; }
+/* Header as a link into the shelf's full list (home.js `expand` option): keyboard/mouse equivalent
+ * of dragging a row. Padding/margin offset keeps the title's position unchanged from a plain shelf-head. */
+a.shelf-head.expand { padding: 6px 12px 6px 0; margin: -6px 0 6px; border-radius: 14px; outline: none; }
+a.shelf-head.expand:hover { background: var(--s1); }
+a.shelf-head.expand .shelf-more { display: flex; align-items: center; gap: 2px; margin-left: auto; color: var(--mute); font-size: 13px; font-weight: 500; }
+a.shelf-head.expand .shelf-more .i { font-size: 20px; }
 .row { display: flex; gap: clamp(14px, 1.4vw, 24px); margin-left: -8px; padding: 10px var(--pad-x) 14px 8px; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
 .row::-webkit-scrollbar { display: none; }
 .row .card { flex: none; width: var(--card-w); }

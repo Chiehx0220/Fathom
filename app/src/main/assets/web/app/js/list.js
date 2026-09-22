@@ -152,12 +152,43 @@ FT.register('search', {
 FT.register('history', {
     leave: cleanup,
     async render(root, params, isCurrent) {
-        const head = h('div', { class: 'head' }, h('h1', {}, 'History'));
+        // ?filter=continuing: Home's "Continue watching" shelf, same source and filter, as a full list.
+        const continuing = params.filter === 'continuing';
+        const service = FT.store.service;
+        const head = h('div', { class: 'head' }, h('h1', {}, continuing ? 'Continue watching' : 'History'));
         await FT.listView(root, {
             before: [head],
-            empty: { icon: 'history', title: 'Nothing watched yet', text: 'Videos you watch show up here.' },
+            empty: continuing
+                ? { icon: 'play_circle', title: 'Nothing in progress', text: "Videos you start but don't finish show up here." }
+                : { icon: 'history', title: 'Nothing watched yet', text: 'Videos you watch show up here.' },
             decorate: (row) => { row.fromHistory = true; },
-            fetch: async () => ({ items: (await FT.api.history()).videos || [], next: null }),
+            fetch: async () => {
+                const items = (await FT.api.history()).videos || [];
+                return { items: continuing ? items.filter((v) => v.serviceId === service && v.progress > 2 && v.progress < 95) : items, next: null };
+            },
+        }, isCurrent);
+    },
+});
+
+// ---- Recommended (Home's "Recommended" shelf, opened out into a full list) ----
+
+FT.register('recommended', {
+    leave: cleanup,
+    async render(root, params, isCurrent) {
+        const service = FT.store.service;
+        const known = new Set();
+        const head = h('div', { class: 'head' }, h('h1', {}, 'Recommended'));
+        let served = false;
+        await FT.listView(root, {
+            before: [head],
+            empty: { icon: 'video_library', title: 'Nothing to show yet', text: 'Search for something to get started.' },
+            async fetch(cursor) {
+                const body = !cursor && !served ? await FT.api.recommendations(service) : await FT.api.recommendations(service, true);
+                served = true;
+                const items = (body.videos || []).filter((v) => !v.isShort && !known.has(v.url));
+                items.forEach((v) => known.add(v.url));
+                return { items, next: body.hasMore !== false ? '1' : null };
+            },
         }, isCurrent);
     },
 });
