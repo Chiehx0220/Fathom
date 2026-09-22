@@ -213,6 +213,8 @@ object ApiRenderer {
             if (HtmlRendererCommon.hasThumbnail(item.uploaderAvatarUrl)) HtmlRendererCommon.getThumbnailUrl(item.uploaderAvatarUrl) else "",
         )
         json.put("text", item.commentText.content ?: "")
+        // Mirrors videoDetailJson's descriptionType - comment text can be HTML too.
+        json.put("textType", if (item.commentText.type == org.schabi.newpipe.extractor.stream.Description.HTML) "html" else "text")
         json.put("likeCount", item.likeCount.coerceAtLeast(0))
         json.put("publishedTime", item.textualUploadDate ?: "")
         json.put("isPinned", item.isPinned)

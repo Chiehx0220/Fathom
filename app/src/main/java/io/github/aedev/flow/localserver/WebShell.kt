@@ -22,17 +22,20 @@ object WebShell {
             NavItem("settings", "settings", "Settings", true) { "/settings?serviceId=$it" },
         )
 
-    // The mark as drawn in the app icon: badge, depth ruler, gold buoy. Colours come from CSS variables so it follows light/dark.
+    // App-icon mark: badge, wave, depth ruler, buoy. Colours follow theme via CSS variables; the
+    // wave tint is fixed, matching the launcher icon.
     private const val LOGO_SVG =
-        "<svg class=\"logo-mark\" viewBox=\"0 0 100 100\" width=\"28\" height=\"28\" aria-hidden=\"true\"><rect width=\"100\" height=\"100\" rx=\"18\" fill=\"var(--logo-badge-bg)\"/>" +
+        "<svg class=\"logo-mark\" viewBox=\"0 0 100 100\" width=\"28\" height=\"28\" aria-hidden=\"true\"><defs><clipPath id=\"logo-fw\"><rect width=\"100\" height=\"100\" rx=\"18\"/></clipPath></defs>" +
+            "<rect width=\"100\" height=\"100\" rx=\"18\" fill=\"var(--logo-badge-bg)\"/>" +
+            "<path clip-path=\"url(#logo-fw)\" fill=\"#5B8DEF\" fill-opacity=\"0.4\" d=\"M0,58 Q6.25,53 12.5,58 T25,58 T37.5,58 T50,58 T62.5,58 T75,58 T87.5,58 T100,58 L100,100 L0,100 Z\"/>" +
             "<g stroke=\"var(--logo-badge-fg)\" stroke-width=\"5\" stroke-linecap=\"round\"><line x1=\"37\" y1=\"18\" x2=\"37\" y2=\"78\"/><line x1=\"37\" y1=\"22\" x2=\"76\" y2=\"22\"/>" +
             "<line x1=\"37\" y1=\"42\" x2=\"50\" y2=\"42\"/><line x1=\"37\" y1=\"62\" x2=\"50\" y2=\"62\"/></g><polygon points=\"58,42 58,62 75,52\" fill=\"var(--logo-badge-accent)\"/></svg>"
 
     // Light/dark favicon variants: a favicon cannot read the page's CSS variables.
     private const val FAVICON_LIGHT =
-        "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjRjJFREUwIi8+PGcgc3Ryb2tlPSIjMEYxRDMzIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PGxpbmUgeDE9IjM3IiB5MT0iMTgiIHgyPSIzNyIgeTI9Ijc4Ii8+PGxpbmUgeDE9IjM3IiB5MT0iMjIiIHgyPSI3NiIgeTI9IjIyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNDIiIHgyPSI1MCIgeTI9IjQyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNjIiIHgyPSI1MCIgeTI9IjYyIi8+PC9nPjxwb2x5Z29uIHBvaW50cz0iNTgsNDIgNTgsNjIgNzUsNTIiIGZpbGw9IiNDOTlBMzQiLz48L3N2Zz4K"
+        "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48Y2xpcFBhdGggaWQ9ImZ3Ij48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4Ii8+PC9jbGlwUGF0aD48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxOCIgZmlsbD0iI0YyRURFMCIvPjxwYXRoIGNsaXAtcGF0aD0idXJsKCNmdykiIGZpbGw9IiM1QjhERUYiIGZpbGwtb3BhY2l0eT0iMC40IiBkPSJNMCw1OCBRNi4yNSw1MyAxMi41LDU4IFQyNSw1OCBUMzcuNSw1OCBUNTAsNTggVDYyLjUsNTggVDc1LDU4IFQ4Ny41LDU4IFQxMDAsNTggTDEwMCwxMDAgTDAsMTAwIFoiLz48ZyBzdHJva2U9IiMwRjFEMzMiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48bGluZSB4MT0iMzciIHkxPSIxOCIgeDI9IjM3IiB5Mj0iNzgiLz48bGluZSB4MT0iMzciIHkxPSIyMiIgeDI9Ijc2IiB5Mj0iMjIiLz48bGluZSB4MT0iMzciIHkxPSI0MiIgeDI9IjUwIiB5Mj0iNDIiLz48bGluZSB4MT0iMzciIHkxPSI2MiIgeDI9IjUwIiB5Mj0iNjIiLz48L2c+PHBvbHlnb24gcG9pbnRzPSI1OCw0MiA1OCw2MiA3NSw1MiIgZmlsbD0iI0M5OUEzNCIvPjwvc3ZnPg=="
     private const val FAVICON_DARK =
-        "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjMEYxRDMzIi8+PGcgc3Ryb2tlPSIjRjJFREUwIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PGxpbmUgeDE9IjM3IiB5MT0iMTgiIHgyPSIzNyIgeTI9Ijc4Ii8+PGxpbmUgeDE9IjM3IiB5MT0iMjIiIHgyPSI3NiIgeTI9IjIyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNDIiIHgyPSI1MCIgeTI9IjQyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNjIiIHgyPSI1MCIgeTI9IjYyIi8+PC9nPjxwb2x5Z29uIHBvaW50cz0iNTgsNDIgNTgsNjIgNzUsNTIiIGZpbGw9IiNFOEM0NjgiLz48L3N2Zz4K"
+        "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48Y2xpcFBhdGggaWQ9ImZ3Ij48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4Ii8+PC9jbGlwUGF0aD48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxOCIgZmlsbD0iIzBGMUQzMyIvPjxwYXRoIGNsaXAtcGF0aD0idXJsKCNmdykiIGZpbGw9IiM1QjhERUYiIGZpbGwtb3BhY2l0eT0iMC40IiBkPSJNMCw1OCBRNi4yNSw1MyAxMi41LDU4IFQyNSw1OCBUMzcuNSw1OCBUNTAsNTggVDYyLjUsNTggVDc1LDU4IFQ4Ny41LDU4IFQxMDAsNTggTDEwMCwxMDAgTDAsMTAwIFoiLz48ZyBzdHJva2U9IiNGMkVERTAiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48bGluZSB4MT0iMzciIHkxPSIxOCIgeDI9IjM3IiB5Mj0iNzgiLz48bGluZSB4MT0iMzciIHkxPSIyMiIgeDI9Ijc2IiB5Mj0iMjIiLz48bGluZSB4MT0iMzciIHkxPSI0MiIgeDI9IjUwIiB5Mj0iNDIiLz48bGluZSB4MT0iMzciIHkxPSI2MiIgeDI9IjUwIiB5Mj0iNjIiLz48L2c+PHBvbHlnb24gcG9pbnRzPSI1OCw0MiA1OCw2MiA3NSw1MiIgZmlsbD0iI0U4QzQ2OCIvPjwvc3ZnPg=="
 
     // Sets the theme before the page paints, so a dark viewer never sees a light flash. Everything else runs from /static/script.js.
     private const val THEME_BOOT =

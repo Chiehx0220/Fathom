@@ -36,7 +36,7 @@ const renderTop = () => {
     const top = FT.$('#top');
     const searching = route === 'search';
     top.replaceChildren(
-        h('a', { class: 'brand', href: '#/home', 'aria-label': 'Fathom home' }, h('span', { class: 'brand-mark' }, FT.icon('straighten')), h('span', {}, 'Fathom')),
+        h('a', { class: 'brand', href: '#/home', 'aria-label': 'Fathom home' }, FT.brandMark(), h('span', {}, 'Fathom')),
         h('nav', { class: 'tabs' }, TABS.map((tab) => h('a', {
             class: 'tab' + (tab.match.includes(route) ? ' on' : ''), href: '#/' + tab.name, data: { f: '', key: 'tab-' + tab.name },
         }, FT.icon(tab.icon, tab.match.includes(route) ? 'fill' : ''), h('span', {}, tab.label)))),

@@ -25,6 +25,19 @@ FT.h = (tag, props, ...kids) => {
 // A Material icon by name; the glyph comes from the bundled font.
 FT.icon = (name, extra = '') => FT.h('span', { class: ('i ' + extra).trim(), 'aria-hidden': 'true' }, name);
 
+// Fathom mark (badge, wave, depth ruler, buoy) - matches the launcher icon and WebShell.kt's
+// LOGO_SVG. Badge/ruler use theme tokens; the wave tint is fixed across themes.
+FT.brandMark = () => {
+    const span = FT.h('span', { class: 'brand-mark', 'aria-hidden': 'true' });
+    span.innerHTML = '<svg viewBox="0 0 100 100" width="32" height="32">' +
+        '<defs><clipPath id="brand-fw"><rect width="100" height="100" rx="18"/></clipPath></defs>' +
+        '<rect width="100" height="100" rx="18" fill="var(--fg)"/>' +
+        '<path clip-path="url(#brand-fw)" fill="#5B8DEF" fill-opacity="0.4" d="M0,58 Q6.25,53 12.5,58 T25,58 T37.5,58 T50,58 T62.5,58 T75,58 T87.5,58 T100,58 L100,100 L0,100 Z"/>' +
+        '<g stroke="var(--bg)" stroke-width="5" stroke-linecap="round"><line x1="37" y1="18" x2="37" y2="78"/><line x1="37" y1="22" x2="76" y2="22"/><line x1="37" y1="42" x2="50" y2="42"/><line x1="37" y1="62" x2="50" y2="62"/></g>' +
+        '<polygon points="58,42 58,62 75,52" fill="var(--acc)"/></svg>';
+    return span;
+};
+
 FT.enc = encodeURIComponent;
 
 FT.duration = (seconds) => {
@@ -69,10 +82,33 @@ FT.frame = (fn) => {
     };
 };
 
-// A video description. The extractor gives YouTube's as HTML (links, line breaks) but Bilibili's
-// as plain text (see ApiRenderer.kt's descriptionType) - only the HTML one is set as markup, so a
-// plain description containing '<' is never mistaken for a tag. External links open in a new tab
-// so following one doesn't navigate this remote-controlled app away from itself.
+// Copies text to the clipboard, true on success. navigator.clipboard requires a secure context
+// (this app is plain HTTP) and a trusted user gesture; execCommand needs only the latter, so it
+// stays as a real fallback rather than dead code.
+FT.copyText = async (text) => {
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch (e) { /* fall through */ }
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px';
+        document.body.append(ta);
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        const ok = document.execCommand('copy');
+        ta.remove();
+        if (ok) return true;
+    } catch (e) { /* fall through */ }
+    return false;
+};
+
+// Description/comment text: HTML (YouTube) vs plain text (Bilibili) per ApiRenderer.kt's type
+// field, so a plain-text '<' is never rendered as markup. Links open in a new tab.
 FT.description = (text, type) => {
     const box = FT.h('div');
     if (type === 'html' && text) {

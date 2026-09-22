@@ -13,7 +13,7 @@ const comment = (c, service, url) => {
         FT.avatar(c.author, c.authorThumbnail),
         h('div', { class: 'comment-body' },
             h('div', { class: 'comment-head' }, h('b', {}, c.author), h('span', {}, c.publishedTime), c.isPinned ? FT.icon('push_pin') : null),
-            h('div', { class: 'comment-text' }, c.text),
+            h('div', { class: 'comment-text' }, FT.description(c.text, c.textType)),
             h('div', { class: 'comment-foot' },
                 c.likeCount > 0 ? h('span', {}, FT.icon('thumb_up'), ' ' + FT.count(c.likeCount)) : null,
                 c.replyCount > 0 && c.continuationToken ? h('span', {}, FT.icon('expand_more'), ' ' + c.replyCount + (c.replyCount === 1 ? ' reply' : ' replies')) : null)));
@@ -120,11 +120,14 @@ const actionRow = (service, info) => {
     like.onclick = () => rate('like');
     dislike.onclick = () => rate('dislike');
 
-    const share = FT.button('Share', 'share', () => {
+    // navigator.share() rejects without a trusted user gesture (a phone-remote press is a WebSocket
+    // message, not a click); falls through to FT.copyText so that press still does something.
+    const share = FT.button('Share', 'share', async () => {
         const link = info.url;
-        if (navigator.share) navigator.share({ title: info.title, url: link }).catch(() => {});
-        else if (navigator.clipboard) navigator.clipboard.writeText(link).then(() => FT.toast('Link copied')).catch(() => FT.toast(link));
-        else FT.toast(link);
+        if (navigator.share) {
+            try { await navigator.share({ title: info.title, url: link }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+        }
+        FT.toast(await FT.copyText(link) ? 'Link copied' : link);
     }, '', 'share');
     const audio = FT.button('Audio only', 'music_note', () => { location.href = `/audio?serviceId=${service}&id=${FT.enc(info.url)}`; }, '', 'audio');
     const buttons = [subscribe, like, dislike, later, share, audio];
