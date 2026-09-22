@@ -21,15 +21,15 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **100** (2365 changed lines). New files: **64** (6053 lines).
+- Modified upstream files: **101** (2332 changed lines). New files: **42** (3864 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | data/local/BackupRepository.kt | 122 | 34 |
-| player/datasource/YouTubeHttpDataSource.kt | 148 | 7 |
 | player/EnhancedPlayerManager.kt | 120 | 30 |
 | ui/screens/player/PlaybackSessionApplier.kt | 144 | 0 |
 | ui/components/FlowSplashScreen.kt | 28 | 97 |
+| player/datasource/YouTubeHttpDataSource.kt | 102 | 7 |
 | ui/screens/channel/ChannelViewModel.kt | 83 | 2 |
 | notification/SubscriptionCheckWorker.kt | 76 | 0 |
 | ui/tv/screens/settings/TvAboutSettingsPane.kt | 42 | 31 |
@@ -46,8 +46,8 @@ in it). **New files** never conflict; they are ours alone.
 | data/comments/CommentsPager.kt | 28 | 5 |
 | ui/screens/home/FlowHeaderLogoIcon.kt | 25 | 7 |
 | ui/screens/home/HomeFeedSources.kt | 28 | 4 |
-| player/resolver/VideoPlaybackResolver.kt | 28 | 3 |
 | data/local/SubscriptionRepository.kt | 29 | 1 |
+| player/resolver/VideoPlaybackResolver.kt | 24 | 3 |
 | ui/components/VideoCard.kt | 16 | 11 |
 | ui/AppHooks.kt | 14 | 12 |
 | ui/NavigationDestinations.kt | 20 | 5 |
@@ -61,6 +61,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/FlowApp.kt | 13 | 5 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 15 | 3 |
 | player/stream/ResolvedPlayback.kt | 17 | 0 |
+| data/video/VideoDownloadManager.kt | 16 | 0 |
 | ui/PlayerNavigation.kt | 12 | 4 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
 | ui/ChannelNavigation.kt | 13 | 2 |
@@ -84,8 +85,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/content/VideoInfoContent.kt | 4 | 3 |
 | ui/screens/settings/SettingsScreen.kt | 7 | 0 |
 | data/engagement/VideoEngagementUseCase.kt | 6 | 0 |
-| data/local/LikedVideosRepository.kt | 5 | 1 |
-| ... 40 more, each small | | |
+| ... 41 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -103,11 +103,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **45** (4662 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **46** (4746 lines).
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **29** (6914 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **24** (5276 lines).
 
 ## Build
 
@@ -119,11 +119,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Resources / strings
 
-- Modified upstream files: **45** (645 changed lines). New files: **3** (62 lines).
+- Modified upstream files: **45** (648 changed lines). New files: **3** (62 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/main/res/values/strings.xml | 64 | 11 |
+| app/src/main/res/values/strings.xml | 67 | 11 |
 | app/src/main/AndroidManifest.xml | 41 | 1 |
 | app/src/main/res/drawable/ic_splash_logo.xml | 32 | 10 |
 | app/src/main/res/drawable-xhdpi/tv_banner.xml | 8 | 18 |
