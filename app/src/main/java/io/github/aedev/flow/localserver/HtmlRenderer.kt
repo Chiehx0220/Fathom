@@ -1,7 +1,6 @@
 package io.github.aedev.flow.localserver
 
 import org.schabi.newpipe.extractor.Image
-import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 
 // Thin facade over HtmlRendererCommon - preserves every existing "HtmlRenderer.xxx(...)" call
@@ -17,11 +16,6 @@ object HtmlRenderer {
 
     @JvmStatic
     fun deserializePage(b64: String?): Page? = HtmlRendererCommon.deserializePage(b64)
-
-    @JvmStatic
-    fun renderGrid(sb: StringBuilder, serviceId: Int, items: List<InfoItem>) {
-        HtmlRendererCommon.renderGrid(sb, serviceId, items)
-    }
 
     @JvmStatic
     fun getThumbnailUrl(thumbnails: List<Image>?): String = HtmlRendererCommon.getThumbnailUrl(thumbnails)
