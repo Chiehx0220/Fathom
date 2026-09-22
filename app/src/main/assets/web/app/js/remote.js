@@ -5,6 +5,7 @@ const KEY = 'server_play_release_code';
 let socket = null;
 let reportTimer = 0;
 let idleTimer = 0;
+let pointerIdleTimer = 0;
 let pointerX = innerWidth / 2;
 let pointerY = innerHeight / 2;
 
@@ -27,19 +28,30 @@ const paintState = () => {
         hints.replaceChildren(...HINTS.map(([key, label]) => FT.h('span', {},
             FT.h('span', { class: 'k' }, key.length > 2 ? FT.icon(key) : key), label)));
     }
-    if (!on) FT.$('#vptr').hidden = true;
+    if (!on) { clearTimeout(pointerIdleTimer); FT.$('#vptr').hidden = true; }
     if (FT.renderTop) FT.renderTop();
 };
 
-// The hints are for whoever is holding the remote: they fade a few seconds after the last command and return with the next.
+// Idle-fade for the key hints and connection banner; any command resets the timer.
 const wake = () => {
     const hints = FT.$('#keyhints');
+    const banner = FT.$('#remote-banner');
     hints.classList.remove('idle');
+    banner.classList.remove('idle');
     clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => hints.classList.add('idle'), 4000);
+    idleTimer = setTimeout(() => { hints.classList.add('idle'); banner.classList.add('idle'); }, 4000);
 };
 
-const showPointer = () => { const p = FT.$('#vptr'); p.hidden = false; p.style.left = pointerX + 'px'; p.style.top = pointerY + 'px'; };
+// Idle-fade for the pointer dot; any pointer activity resets the timer.
+const showPointer = () => {
+    const p = FT.$('#vptr');
+    p.hidden = false;
+    p.classList.remove('idle');
+    p.style.left = pointerX + 'px';
+    p.style.top = pointerY + 'px';
+    clearTimeout(pointerIdleTimer);
+    pointerIdleTimer = setTimeout(() => p.classList.add('idle'), 2500);
+};
 const movePointer = (dx, dy) => {
     pointerX = Math.max(0, Math.min(innerWidth, pointerX + dx));
     pointerY = Math.max(0, Math.min(innerHeight, pointerY + dy));
@@ -85,6 +97,11 @@ const handle = (cmd) => {
         if (name) FT.command(name);
     } else if (cmd === 'chapter:next' || cmd === 'chapter:prev') {
         FT.player.stepChapter(cmd === 'chapter:next' ? 1 : -1);
+    } else if (cmd.startsWith('chapter:jump:')) {
+        const index = parseInt(cmd.slice('chapter:jump:'.length), 10);
+        if (!isNaN(index)) FT.player.jumpChapter(index);
+    } else if (cmd === 'skip') {
+        FT.player.skip();
     } else if (cmd.startsWith('search:')) {
         const query = cmd.slice('search:'.length).trim();
         if (query) location.hash = '#/search?q=' + FT.enc(query);
@@ -123,7 +140,8 @@ const report = () => {
         q.set('paused', snap.paused ? 1 : 0);
         q.set('vol', snap.vol);
         q.set('muted', snap.muted ? 1 : 0);
-        if (snap.chapn) { q.set('chap', snap.chap); q.set('chapn', snap.chapn); }
+        if (snap.chapters.length) { q.set('chapters', JSON.stringify(snap.chapters)); q.set('chapi', snap.chapi); }
+        if (snap.skip) q.set('skip', snap.skip);
     }
     fetch('/remote-state?' + q).then((res) => res.json()).then((body) => {
         // The phone no longer recognises this lock (released there): behave as if disconnected here too.

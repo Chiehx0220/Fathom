@@ -12,15 +12,19 @@
 .menu-item.danger { color: var(--danger); }
 .menu-item.sel { background: var(--acc); color: var(--on-acc); }
 
-/* The remote pointer: a tonal disc with a dark core in the accent colour. Pressing shrinks it and lights a halo. */
-.vptr { position: fixed; z-index: 3300; width: 44px; height: 44px; margin: -22px 0 0 -22px; pointer-events: none; transition: left 0.04s linear, top 0.04s linear; }
-.vptr-disc { position: absolute; left: 5px; top: 5px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--acc) 28%, #fff); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.15); transition: transform 0.12s; }
-.vptr-disc i { width: 10px; height: 10px; border-radius: 50%; background: color-mix(in srgb, var(--acc) 70%, #000); }
+/* Remote pointer: tonal disc with a dark core. Press shrinks it and lights a halo; .idle fades it
+ * out on inactivity (see remote.js). */
+.vptr { position: fixed; z-index: 3300; width: 32px; height: 32px; margin: -16px 0 0 -16px; pointer-events: none; transition: left 0.04s linear, top 0.04s linear, opacity 0.3s ease; }
+.vptr.idle { opacity: 0; }
+.vptr-disc { position: absolute; left: 4px; top: 4px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--acc) 28%, #fff); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.15); transition: transform 0.12s; }
+.vptr-disc i { width: 7px; height: 7px; border-radius: 50%; background: color-mix(in srgb, var(--acc) 70%, #000); }
 .vptr-halo { position: absolute; inset: 0; border-radius: 50%; background: color-mix(in srgb, var(--acc) 22%, transparent); opacity: 0; transform: scale(0.7); transition: opacity 0.12s, transform 0.12s; }
 .vptr.press .vptr-disc { transform: scale(0.8); }
 .vptr.press .vptr-halo { opacity: 1; transform: scale(1); }
 
-.remote-banner { position: fixed; left: 24px; bottom: 18px; z-index: 3050; display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 8px 0 16px; border-radius: 20px; background: var(--acc); color: var(--on-acc); font-size: 13px; font-weight: 500; }
+/* Idle-fades alongside #keyhints (see remote.js's wake()). */
+.remote-banner { position: fixed; left: 24px; bottom: 18px; z-index: 3050; display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 8px 0 16px; border-radius: 20px; background: var(--acc); color: var(--on-acc); font-size: 13px; font-weight: 500; transition: opacity 0.4s; }
+.remote-banner.idle { opacity: 0; pointer-events: none; }
 .remote-banner .i { font-size: 16px; }
 .remote-banner button { height: 28px; padding: 0 14px; border: 0; border-radius: 14px; background: color-mix(in srgb, var(--on-acc) 16%, transparent); color: inherit; font-weight: 500; }
 .remote-banner button:hover { background: color-mix(in srgb, var(--on-acc) 26%, transparent); }

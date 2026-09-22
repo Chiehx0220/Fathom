@@ -61,9 +61,11 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         val volume: Float = 1f,
         val muted: Boolean = false,
         val fullscreen: Boolean = false,
-        /** Name of the chapter being played and how many the video has (0 when it has none). */
-        val chapter: String? = null,
-        val chapterCount: Int = 0,
+        /** Chapter titles in order; chapterIndex is the one playing now, -1 if none/chapterless. */
+        val chapters: List<String> = emptyList(),
+        val chapterIndex: Int = -1,
+        /** Active SponsorBlock category (e.g. "sponsor"), null between segments. */
+        val skipLabel: String? = null,
         /** The sources the page can switch between (id to name) and which one it is on. */
         val services: List<Pair<Int, String>> = emptyList(),
         val activeService: Int? = null,

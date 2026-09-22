@@ -676,6 +676,9 @@
     <string name="remote_volume_up">Volume up</string>
     <string name="remote_mute">Mute</string>
     <string name="remote_fullscreen">Full screen</string>
+    <string name="remote_skip_segment">Skip %1$s</string>
+    <string name="remote_chapters">Chapters</string>
+    <string name="remote_chapter_list">See all chapters</string>
     <string name="settings_item_local_server">Local Web Server</string>
     <string name="settings_item_local_server_subtitle">Browse and watch over the local network from any browser</string>
     <string name="settings_item_open_local_server">Open Local Server</string>

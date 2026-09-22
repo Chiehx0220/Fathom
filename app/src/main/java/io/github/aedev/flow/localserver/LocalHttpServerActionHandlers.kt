@@ -218,6 +218,17 @@ internal fun ClientHandler.handleSendCommand(os: OutputStream, params: Map<Strin
     }
 }
 
+// Chapter titles arrive as a JSON array (a title is arbitrary text, so no delimiter is safe).
+private fun parseChapterTitles(raw: String?): List<String> {
+    if (raw.isNullOrEmpty()) return emptyList()
+    return try {
+        val arr = org.json.JSONArray(raw)
+        (0 until arr.length()).map { arr.optString(it, "") }
+    } catch (e: Exception) {
+        emptyList()
+    }
+}
+
 // The paired page reports how it is playing (about once a second) so the phone remote can show progress and pick a mode.
 internal fun ClientHandler.handleRemoteState(os: OutputStream, params: Map<String, String>) {
     val code = LocalHttpServer.getActiveLockCode()
@@ -236,8 +247,9 @@ internal fun ClientHandler.handleRemoteState(os: OutputStream, params: Map<Strin
             volume = params["vol"]?.toFloatOrNull()?.coerceIn(0f, 1f) ?: 1f,
             muted = params["muted"] == "1",
             fullscreen = params["fs"] == "1",
-            chapter = params["chap"]?.takeIf { it.isNotEmpty() },
-            chapterCount = params["chapn"]?.toIntOrNull() ?: 0,
+            chapters = parseChapterTitles(params["chapters"]),
+            chapterIndex = params["chapi"]?.toIntOrNull() ?: -1,
+            skipLabel = params["skip"]?.takeIf { it.isNotEmpty() },
             services =
                 params["svcs"].orEmpty().split(',').mapNotNull { entry ->
                     val colon = entry.indexOf(':')

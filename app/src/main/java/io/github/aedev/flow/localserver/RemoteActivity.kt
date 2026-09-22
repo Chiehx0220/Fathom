@@ -18,9 +18,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -38,7 +41,8 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LinkOff
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RadioButtonChecked
@@ -51,6 +55,7 @@ import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VolumeDown
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
@@ -222,9 +227,9 @@ private fun DirectionsMode(state: LocalHttpServer.RemoteState, send: (String) ->
         // The wheel takes what room is left, up to a comfortable size, so a small phone does not push the shortcut keys off screen.
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             DirectionWheel(send, minOf(280.dp, maxHeight, maxWidth))
-            // The card's options menu (also a long press on OK).
+            // Menu, not MoreVert: matches the web key-hints overlay's glyph for "key:menu".
             FilledTonalIconButton(onClick = { send("key:menu") }, modifier = Modifier.align(Alignment.TopEnd).size(52.dp)) {
-                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.remote_options))
+                Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.remote_options))
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -389,7 +394,7 @@ private fun PlaybackMode(state: LocalHttpServer.RemoteState, send: (String) -> U
             horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (state.chapterCount > 0) {
+            if (state.chapters.isNotEmpty()) {
                 FilledIconButton(onClick = { send("chapter:prev") }, modifier = Modifier.size(44.dp)) {
                     Icon(Icons.Default.SkipPrevious, contentDescription = stringResource(R.string.remote_chapter_previous))
                 }
@@ -411,7 +416,7 @@ private fun PlaybackMode(state: LocalHttpServer.RemoteState, send: (String) -> U
             FilledTonalIconButton(onClick = { send("forward") }, modifier = Modifier.size(52.dp)) {
                 Icon(Icons.Default.Forward10, contentDescription = stringResource(R.string.remote_forward), modifier = Modifier.size(26.dp))
             }
-            if (state.chapterCount > 0) {
+            if (state.chapters.isNotEmpty()) {
                 FilledIconButton(onClick = { send("chapter:next") }, modifier = Modifier.size(44.dp)) {
                     Icon(Icons.Default.SkipNext, contentDescription = stringResource(R.string.remote_chapter_next))
                 }
@@ -436,6 +441,7 @@ private fun PlaybackMode(state: LocalHttpServer.RemoteState, send: (String) -> U
 
 @Composable
 private fun NowPlaying(state: LocalHttpServer.RemoteState, send: (String) -> Unit) {
+    var showChapters by remember { mutableStateOf(false) }
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -446,8 +452,36 @@ private fun NowPlaying(state: LocalHttpServer.RemoteState, send: (String) -> Uni
         }
         Text(stringResource(R.string.remote_now_playing), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(state.title.orEmpty(), style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        state.chapter?.let {
-            Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        state.chapters.getOrNull(state.chapterIndex)?.let { chapterTitle ->
+            Row(
+                Modifier.clip(RoundedCornerShape(8.dp)).clickable { showChapters = true },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(chapterTitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                Icon(
+                    Icons.Default.List,
+                    contentDescription = stringResource(R.string.remote_chapter_list),
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+        if (showChapters) {
+            ChapterListDialog(
+                chapters = state.chapters,
+                activeIndex = state.chapterIndex,
+                onDismiss = { showChapters = false },
+                onJump = { index -> send("chapter:jump:$index"); showChapters = false },
+            )
+        }
+        // Mirrors watch.js's skip button: visible only while inside a SponsorBlock segment.
+        state.skipLabel?.let { label ->
+            FilledTonalButton(onClick = { send("skip") }, modifier = Modifier.padding(top = 4.dp)) {
+                Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.remote_skip_segment, label))
+            }
         }
 
         // While the thumb is held the slider shows the finger, not the (still moving) page; the jump is sent on release.
@@ -473,6 +507,52 @@ private fun NowPlaying(state: LocalHttpServer.RemoteState, send: (String) -> Uni
             Text(formatTime(duration), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+@Composable
+private fun ChapterListDialog(
+    chapters: List<String>,
+    activeIndex: Int,
+    onDismiss: () -> Unit,
+    onJump: (Int) -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.remote_chapters)) },
+        text = {
+            LazyColumn(Modifier.heightIn(max = 420.dp)) {
+                itemsIndexed(chapters) { index, title ->
+                    val active = index == activeIndex
+                    Row(
+                        Modifier.fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (active) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
+                            .clickable { onJump(index) }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        if (active) {
+                            Icon(
+                                Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            )
+                        }
+                        Text(
+                            title,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (active) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+    )
 }
 
 private fun formatTime(seconds: Float): String {
