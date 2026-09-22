@@ -4,6 +4,11 @@
  */
 package io.github.aedev.flow.player.stream
 
+import android.net.Uri
+import androidx.media3.common.MediaItem
+import androidx.media3.datasource.DataSource
+import androidx.media3.exoplayer.source.MediaSource
+import io.github.aedev.flow.player.resolver.MediaSourceBuilder
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.VideoStream
@@ -14,6 +19,28 @@ import org.schabi.newpipe.extractor.stream.VideoStream
  * CDN; through DASH the player asks for short ranges, which the CDN serves fast.
  */
 object BilibiliDashManifest {
+    /** [forVideo] plus building the actual [MediaSource]; null under the same conditions as [forVideo]. */
+    fun buildVideoSource(
+        dataSourceFactory: DataSource.Factory,
+        stream: VideoStream,
+        durationSeconds: Long,
+        mediaItem: MediaItem,
+    ): MediaSource? {
+        val manifest = forVideo(stream, durationSeconds) ?: return null
+        return MediaSourceBuilder.buildDashSource(dataSourceFactory, manifest, Uri.parse(stream.content), mediaItem)
+    }
+
+    /** [forAudio] plus building the actual [MediaSource]; null under the same conditions as [forAudio]. */
+    fun buildAudioSource(
+        dataSourceFactory: DataSource.Factory,
+        stream: AudioStream,
+        durationSeconds: Long,
+        mediaItem: MediaItem,
+    ): MediaSource? {
+        val manifest = forAudio(stream, durationSeconds) ?: return null
+        return MediaSourceBuilder.buildDashSource(dataSourceFactory, manifest, Uri.parse(stream.content), mediaItem)
+    }
+
     fun forVideo(
         stream: VideoStream,
         durationSeconds: Long,
