@@ -41,7 +41,7 @@ private class ActiveDanmaku(val comment: DanmakuComment, val spawnMs: Long, val 
 
 /**
  * Bilibili danmaku overlay - the native-player counterpart of Local Server's own JS-driven version
- * (HtmlRendererWatch.kt's danmakuJs). Every comment's on-screen progress is a function of playback
+ * (app/js/player.js's danmaku layer). Every comment's on-screen progress is a function of playback
  * position, not wall-clock time, so pausing the video freezes comments for free.
  *
  * [currentPositionMs] itself only updates on a ~250ms cadence (see PlayerPositionEffects.kt), which

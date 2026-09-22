@@ -27,8 +27,6 @@ internal fun ClientHandler.handleApiSearch(os: OutputStream, params: Map<String,
     }
 }
 
-// Mirrors handleHome()'s homeFeedMode handling, minus the offline cached-video fallback - a JSON
-// client handles a 500 itself.
 internal fun ClientHandler.handleApiHome(os: OutputStream, params: Map<String, String>) {
     val serviceId = getServiceId(params)
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
@@ -37,7 +35,7 @@ internal fun ClientHandler.handleApiHome(os: OutputStream, params: Map<String, S
         var next: Page?
         val feedMode = dbHelper.homeFeedMode
         if (serviceId != LocalHttpServer.SERVICE_YOUTUBE) {
-            // homeFeedMode is YouTube-only, see handleHome().
+            // homeFeedMode is YouTube-only.
             val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
             items = page.items
             next = page.next

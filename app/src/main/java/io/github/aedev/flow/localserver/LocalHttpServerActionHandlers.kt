@@ -5,9 +5,8 @@ import java.io.OutputStream
 import java.util.UUID
 
 // Toggle-style DB action endpoints (subscribe/block/bookmark/history/watch-later/like-dislike) and
-// TV remote-control endpoints (send-link/release-lock/send-command/poll-commands) - split from
-// LocalHttpServer.kt, no behavior change. Requires ClientHandler/dbHelper/sendResponse/
-// sendRedirect/getServiceId internal, not private.
+// TV remote-control endpoints (send-link/release-lock/send-command/poll-commands). Requires
+// ClientHandler/dbHelper/sendResponse/getServiceId internal, not private.
 
 // Shared "share this video" field set/fallback defaults for handleWatchLaterAction and
 // handleRateVideoAction - server never saw this video before, only client-page metadata.
@@ -21,23 +20,15 @@ private fun parseSharedVideoParams(params: Map<String, String>): SharedVideoPara
     return SharedVideoParams(title, uploader, thumbnail, uploaderUrl)
 }
 
-// Shared response-decision logic for toggle-style action handlers: ajax -> JSON ack, a real page
-// path -> redirect to it, a bare video id (legacy `back=<videoId>` shape) -> /watch redirect.
-// [fallbackPath] applies when `back` is absent.
-private fun ClientHandler.sendActionResult(os: OutputStream, serviceId: Int, back: String?, fallbackPath: String) {
-    when {
-        "ajax" == back -> sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
-        back.isNullOrEmpty() -> sendRedirect(os, fallbackPath)
-        back.startsWith("/") -> sendRedirect(os, back)
-        else -> sendRedirect(os, "/watch?serviceId=" + serviceId + "&id=" + java.net.URLEncoder.encode(back, "UTF-8"))
-    }
+// Every caller is the web app's fetch-based FT.api (see app/js/api.js's act()), which only cares
+// whether the request went through - so every toggle-style action handler below answers the same way.
+private fun ClientHandler.sendActionResult(os: OutputStream) {
+    sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
 }
 
 internal fun ClientHandler.handleSubscribeAction(os: OutputStream, params: Map<String, String>) {
-    val serviceId = getServiceId(params)
     val action = params["action"]
     val channelUrl = params["id"]
-    val back = params["back"]
 
     if ("subscribe" == action && !channelUrl.isNullOrEmpty()) {
         val name = params["name"]
@@ -47,14 +38,12 @@ internal fun ClientHandler.handleSubscribeAction(os: OutputStream, params: Map<S
         dbHelper.nativeRemoveSubscription(channelUrl)
     }
 
-    sendActionResult(os, serviceId, back, "/subscriptions?serviceId=$serviceId")
+    sendActionResult(os)
 }
 
 internal fun ClientHandler.handleBlockChannelAction(os: OutputStream, params: Map<String, String>) {
-    val serviceId = getServiceId(params)
     val action = params["action"]
     val channelUrl = params["id"]
-    val back = params["back"]
 
     if ("block" == action && !channelUrl.isNullOrEmpty()) {
         dbHelper.nativeBlockChannel(channelUrl)
@@ -62,14 +51,12 @@ internal fun ClientHandler.handleBlockChannelAction(os: OutputStream, params: Ma
         dbHelper.nativeUnblockChannel(channelUrl)
     }
 
-    sendActionResult(os, serviceId, back, "/?serviceId=$serviceId")
+    sendActionResult(os)
 }
 
 internal fun ClientHandler.handlePlaylistBookmarkAction(os: OutputStream, params: Map<String, String>) {
-    val serviceId = getServiceId(params)
     val action = params["action"]
     val playlistUrl = params["id"]
-    val back = params["back"]
 
     if ("bookmark" == action && !playlistUrl.isNullOrEmpty()) {
         val name = params["name"]
@@ -78,14 +65,12 @@ internal fun ClientHandler.handlePlaylistBookmarkAction(os: OutputStream, params
         dbHelper.nativeUnbookmarkPlaylist(playlistUrl)
     }
 
-    sendActionResult(os, serviceId, back, "/subscriptions?serviceId=$serviceId&tab=playlists")
+    sendActionResult(os)
 }
 
 internal fun ClientHandler.handleHistoryAction(os: OutputStream, params: Map<String, String>) {
-    val serviceId = getServiceId(params)
     val action = params["action"]
     val url = params["url"]
-    val back = params["back"]
 
     if ("remove" == action && !url.isNullOrEmpty()) {
         dbHelper.nativeRemoveFromHistory(url)
@@ -93,14 +78,12 @@ internal fun ClientHandler.handleHistoryAction(os: OutputStream, params: Map<Str
         dbHelper.nativeClearHistory()
     }
 
-    sendActionResult(os, serviceId, back, "/history?serviceId=$serviceId")
+    sendActionResult(os)
 }
 
 internal fun ClientHandler.handleWatchLaterAction(os: OutputStream, params: Map<String, String>) {
-    val serviceId = getServiceId(params)
     val action = params["action"]
     val url = params["url"]
-    val back = params["back"]
 
     if ("add" == action && !url.isNullOrEmpty()) {
         val meta = parseSharedVideoParams(params)
@@ -109,17 +92,16 @@ internal fun ClientHandler.handleWatchLaterAction(os: OutputStream, params: Map<
         dbHelper.nativeRemoveWatchLater(url)
     }
 
-    sendActionResult(os, serviceId, back, "/watch-later?serviceId=$serviceId")
+    sendActionResult(os)
 }
 
 internal fun ClientHandler.handleRateVideoAction(os: OutputStream, params: Map<String, String>) {
-    val serviceId = getServiceId(params)
     val action = params["action"]
     val url = params["url"]
-    val back = params["back"]
 
     if (!url.isNullOrEmpty()) {
         val meta = parseSharedVideoParams(params)
+        val serviceId = getServiceId(params)
         when (action) {
             "like" -> dbHelper.nativeLikeVideo(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl, serviceId)
             "dislike" -> dbHelper.nativeDislikeVideo(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl)
@@ -127,7 +109,7 @@ internal fun ClientHandler.handleRateVideoAction(os: OutputStream, params: Map<S
         }
     }
 
-    sendActionResult(os, serviceId, back, "/?serviceId=$serviceId")
+    sendActionResult(os)
 }
 
 internal fun ClientHandler.handleSendLink(os: OutputStream, params: Map<String, String>, clientIp: String?) {

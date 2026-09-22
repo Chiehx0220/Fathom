@@ -242,9 +242,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         const val SERVICE_YOUTUBE = 0
         val SUPPORTED_SERVICE_IDS = intArrayOf(SERVICE_YOUTUBE, BILIBILI_SERVICE_ID)
 
-        // Sentinel nextPage for the home feed's "Load More": not a real Page (see continueDiscoveryFeed()).
-        const val HOME_DISCOVERY_LOAD_MORE_TOKEN = "discovery-more"
-
         @JvmStatic
         fun isSupportedService(serviceId: Int): Boolean {
             for (id in SUPPORTED_SERVICE_IDS) {
@@ -494,12 +491,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                         try {
                             // Route table rebuilt per request: each lambda captures this request's state.
                             val routes: Map<String, () -> Unit> = mapOf(
-                                "/" to { handleHome(os, params, isTv) },
-                                "/search" to { handleSearch(os, params, isTv) },
-                                "/watch" to { handleWatch(os, params, isTv) },
-                                "/audio" to { handleAudioWatch(os, params, isTv) },
-                                "/watch-content" to { handleWatchContent(os, params, isTv) },
-                                "/comments" to { handleComments(os, params, isTv) },
+                                "/" to { sendRedirect(os, "/app") },
                                 "/danmaku" to { handleDanmaku(os, params) },
                                 "/send-link" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
                                 "/play" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
@@ -507,29 +499,20 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                                 "/poll-commands" to { handlePollCommands(os) },
                                 "/remote-state" to { handleRemoteState(os, params) },
                                 "/release-lock" to { handleReleaseLock(os, params) },
-                                "/history" to { handleHistory(os, params, isTv) },
                                 "/history_action" to { handleHistoryAction(os, params) },
-                                "/channel" to { handleChannel(os, params, isTv) },
-                                "/playlist" to { handlePlaylist(os, params, isTv) },
                                 "/stream" to { handleStreamProxy(os, params, requestHeaders) },
                                 "/manifest" to { handleManifestProxy(os, params) },
                                 "/subtitles" to { handleSubtitlesProxy(os, params) },
                                 "/thumbnails" to { handleThumbnailsProxy(os, params) },
                                 "/thumbnail-sheet" to { handleThumbnailSheetProxy(os, params) },
-                                "/log_client_capabilities" to { handleLogClientCapabilities(os, params, requestHeaders) },
                                 "/api/player/play" to { handleApiPlayerPlay(os, params) },
                                 "/api/player/pause" to { handleApiPlayerPause(os) },
                                 "/api/player/resume" to { handleApiPlayerResume(os) },
                                 "/api/player/stop" to { handleApiPlayerStop(os) },
                                 "/search-history" to { handleSearchHistory(os, params) },
-                                "/subscriptions" to { handleSubscriptions(os, params, isTv) },
                                 "/subscribe" to { handleSubscribeAction(os, params) },
                                 "/block_channel" to { handleBlockChannelAction(os, params) },
                                 "/bookmark_playlist" to { handlePlaylistBookmarkAction(os, params) },
-                                "/static/style.css" to { handleStaticCss(os) },
-                                "/static/script.js" to { handleStaticJs(os) },
-                                "/settings" to { handleSettings(os, params, isTv) },
-                                "/watch-later" to { handleWatchLater(os, params, isTv) },
                                 "/watch_later_action" to { handleWatchLaterAction(os, params) },
                                 "/rate_video" to { handleRateVideoAction(os, params) },
                                 "/api/v1/search" to { handleApiSearch(os, params) },
@@ -572,58 +555,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     socket.close()
                 } catch (ignored: IOException) {
                 }
-            }
-        }
-
-        @Throws(Exception::class)
-        private fun handleHome(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val nextPageStr = params["nextPage"]
-
-            if ("ajax" != params["feed"]) {
-                val html = HtmlRenderer.renderHomeSkeleton(serviceId, isTv)
-                sendResponse(os, 200, html, "text/html; charset=UTF-8")
-                return
-            }
-
-            try {
-                var items: List<InfoItem>
-                // Ready-to-embed "Load More" value: a serialized Page, or HOME_DISCOVERY_LOAD_MORE_TOKEN for the personalized feed.
-                var nextToken: String?
-
-                val feedMode = dbHelper.homeFeedMode
-                if (serviceId != SERVICE_YOUTUBE) {
-                    // homeFeedMode ("subs"/"mix") is YouTube-only; other services get their kiosk feed.
-                    val nextPage = HtmlRenderer.deserializePage(nextPageStr)
-                    val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
-                    items = page.items
-                    nextToken = HtmlRendererCommon.serializePage(page.next)
-                } else if ("subs" == feedMode) {
-                    items = dbHelper.buildSubsOnlyFeed(serviceId)
-                    nextToken = null
-                } else if (nextPageStr == HOME_DISCOVERY_LOAD_MORE_TOKEN) {
-                    val (moreItems, hasMore) = dbHelper.continueDiscoveryFeed(serviceId)
-                    items = moreItems
-                    nextToken = if (hasMore) HOME_DISCOVERY_LOAD_MORE_TOKEN else null
-                } else {
-                    val (feedItems, hasMore) = dbHelper.buildAndRankHomeFeed(serviceId, feedMode)
-                    items = feedItems
-                    nextToken = if (hasMore) HOME_DISCOVERY_LOAD_MORE_TOKEN else null
-                }
-
-                val filtered = filterItems(items)
-                val html = HtmlRenderer.renderHomeFeed(serviceId, filtered, nextToken)
-                sendResponse(os, 200, html, "text/html; charset=UTF-8")
-            } catch (e: Exception) {
-                // Any feed failure, not just connectivity: report the actual exception.
-                log("Home feed failed: $e")
-                val feedSb = StringBuilder()
-                feedSb.append("  <div style=\"background-color:#fce8e6; color:#c5221f; padding:16px; border-radius:12px; margin-bottom:24px; font-size:14px; font-weight:500; border: 1px solid #fad2cf;\">\n")
-                    .append("    📶 Couldn't load the feed (").append(e.javaClass.simpleName)
-                    .append(": ").append(e.message)
-                    .append("). You may be offline.\n")
-                    .append("  </div>\n")
-                sendResponse(os, 200, feedSb.toString(), "text/html; charset=UTF-8")
             }
         }
 
@@ -692,166 +623,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return null
         }
 
-        @Throws(Exception::class)
-        private fun handleSearch(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val query = params["q"]
-            if (query.isNullOrEmpty()) {
-                sendRedirect(os, "/?serviceId=$serviceId")
-                return
-            }
-            // Only the initial page load adds a search-history entry; ajax follow-ups continue the same search.
-            val isAjax = params["ajax"] == "1"
-            if (!isAjax) {
-                dbHelper.nativeAddSearchQuery(query)
-            }
-
-            val nextPageStr = params["nextPage"]
-            val nextPage = HtmlRenderer.deserializePage(nextPageStr)
-
-            try {
-                val page = LocalServerSource.search(dbHelper.appContext, serviceId, query, nextPage)
-                val items = page.items
-                val next = page.next
-
-                val filtered = filterItems(items)
-                val html =
-                    if (isAjax) {
-                        HtmlRenderer.renderSearchResultsFragment(serviceId, query, filtered, next)
-                    } else {
-                        HtmlRenderer.renderSearch(serviceId, query, filtered, next, isTv)
-                    }
-                sendResponse(os, 200, html, "text/html; charset=UTF-8")
-            } catch (e: Exception) {
-                sendResponse(os, 500, "Search failed: ${e.message}", "text/plain; charset=UTF-8")
-            }
-        }
-
-
-
-        @Throws(Exception::class)
-        private fun handleHistory(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val items = dbHelper.nativeHistory()
-            val html = HtmlRenderer.renderHistory(serviceId, items, isTv)
-            sendResponse(os, 200, html, "text/html; charset=UTF-8")
-        }
-
-
-        private fun handleLogClientCapabilities(os: OutputStream, params: Map<String, String>, requestHeaders: Map<String, String>) {
-            val supported = params["supported"]
-            val error = params["error"]
-            val playingQuality = params["playing_quality"]
-            val userAgent = requestHeaders["user-agent"]
-            if (error != null) {
-                log("Client player error: $error | User-Agent: $userAgent")
-            } else if (playingQuality != null) {
-                log("Client is playing quality: $playingQuality | User-Agent: $userAgent")
-            } else {
-                log("Client connection capability check: DASH supported = $supported | User-Agent: $userAgent")
-            }
-            sendResponse(os, 200, "OK", "text/plain; charset=UTF-8")
-        }
-
-        @Throws(Exception::class)
-        private fun handleSettings(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val action = params["action"]
-            if ("save" == action) {
-                if (params.containsKey("hide_watched")) {
-                    dbHelper.nativeSetHideWatched("true" == params["hide_watched"] || "on" == params["hide_watched"])
-                }
-                if (params.containsKey("hide_shorts")) {
-                    dbHelper.nativeSetHideShorts("true" == params["hide_shorts"] || "on" == params["hide_shorts"])
-                }
-                if (params.containsKey("home_feed_mode")) {
-                    dbHelper.homeFeedMode = params["home_feed_mode"] ?: "mix"
-                }
-
-                if ("ajax" == params["format"]) {
-                    sendResponse(os, 200, "OK", "text/plain; charset=UTF-8")
-                    return
-                }
-
-                val redirectHeader = "HTTP/1.1 303 See Other\r\n" +
-                        "Location: /settings?saved=true\r\n" +
-                        "Connection: close\r\n\r\n"
-                os.write(redirectHeader.toByteArray(Charsets.UTF_8))
-                os.flush()
-                return
-            }
-
-            val hideWatched = dbHelper.nativeHideWatched()
-            val hideShorts = dbHelper.nativeHideShorts()
-            val homeFeedMode = dbHelper.homeFeedMode
-            val saved = "true" == params["saved"]
-
-            val html = HtmlRenderer.renderSettings(getServiceId(params), hideWatched, hideShorts, homeFeedMode, saved, isTv)
-            sendResponse(os, 200, html, "text/html; charset=UTF-8")
-        }
-
-        private fun handleChannel(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val channelUrl = params["id"]!!
-            val tab = params.getOrDefault("tab", "videos")
-            // ajax=1 follow-ups only need the next grid batch, not the header chrome.
-            val isAjax = params["ajax"] == "1"
-
-            val nextPageStr = params["nextPage"]
-            val nextPage = HtmlRenderer.deserializePage(nextPageStr)
-
-            try {
-                val channelTab = if ("playlists" == tab) "playlists" else "videos"
-                val channel = LocalServerSource.channel(dbHelper.appContext, serviceId, channelUrl, channelTab, null, nextPage)
-                val next = channel.next
-                val filtered = filterItems(channel.items)
-                val header = channel.header
-
-                if (isAjax) {
-                    val html = HtmlRenderer.renderChannelItemsFragment(serviceId, channelUrl, tab, filtered, next, header.avatarUrl)
-                    sendResponse(os, 200, html, "text/html; charset=UTF-8")
-                    return
-                }
-
-                val isSubscribed = dbHelper.nativeIsSubscribed(header.url)
-                if (isSubscribed) {
-                    header.avatarUrl?.let { dbHelper.nativeAddSubscription(header.url, header.name, HtmlRenderer.getThumbnailUrl(it)) }
-                }
-                val isBlocked = dbHelper.nativeIsChannelBlocked(header.url)
-                val html = HtmlRenderer.renderChannel(serviceId, header, tab, filtered, next, isSubscribed, isBlocked, isTv)
-                sendResponse(os, 200, html, "text/html; charset=UTF-8")
-            } catch (e: Exception) {
-                sendResponse(os, 500, "Channel failed: ${e.message}", "text/plain; charset=UTF-8")
-            }
-        }
-
-        private fun handlePlaylist(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val playlistUrl = params["id"]!!
-            // ajax=1 follow-ups only need the next grid batch, not the header chrome.
-            val isAjax = params["ajax"] == "1"
-
-            val nextPageStr = params["nextPage"]
-            val nextPage = HtmlRenderer.deserializePage(nextPageStr)
-
-            try {
-                val playlist = LocalServerSource.playlist(dbHelper.appContext, serviceId, playlistUrl, nextPage)
-                val next = playlist.next
-                val filtered = filterItems(playlist.items)
-
-                if (isAjax) {
-                    val html = HtmlRenderer.renderPlaylistItemsFragment(serviceId, playlistUrl, filtered, next)
-                    sendResponse(os, 200, html, "text/html; charset=UTF-8")
-                    return
-                }
-
-                val isBookmarked = dbHelper.nativeIsPlaylistBookmarked(playlistUrl)
-                val html = HtmlRenderer.renderPlaylist(serviceId, playlist.header, filtered, next, isBookmarked, isTv)
-                sendResponse(os, 200, html, "text/html; charset=UTF-8")
-            } catch (e: Exception) {
-                sendResponse(os, 500, "Playlist failed: ${e.message}", "text/plain; charset=UTF-8")
-            }
-        }
-
         internal fun getServiceId(params: Map<String, String>): Int {
             val raw = params["serviceId"]
             if (raw != null) {
@@ -893,7 +664,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             var bytes = content.toByteArray(Charsets.UTF_8)
             val status = if (code == 200) "OK" else (if (code == 404) "Not Found" else "Internal Server Error")
 
-            // gzip for HTML and /static files; not for media (already compressed) or bodies under 512 bytes.
+            // gzip for HTML/CSS/JS responses; not for media (already compressed) or bodies under 512 bytes.
             var contentEncodingHeader = ""
             val currentRequestHeaders = requestHeaders
             if (bytes.size > 512 && currentRequestHeaders != null) {
@@ -950,34 +721,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             sendResponse(os, 200, json.toString(), "application/json")
         }
 
-        @Throws(Exception::class)
-        private fun handleSubscriptions(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val activeTab = params.getOrDefault("tab", "feed")
-
-            if ("feed" == activeTab && "ajax" == params["feed"]) {
-                try {
-                    val feedItems = fetchSubscriptionFeed(dbHelper.nativeSubscriptions())
-                    val feedSb = StringBuilder()
-                    if (feedItems.isEmpty()) {
-                        feedSb.append("<div class=\"loading-placeholder\">No recent uploads found from your subscribed channels.</div>\n")
-                    } else {
-                        HtmlRenderer.renderGrid(feedSb, serviceId, feedItems)
-                    }
-                    sendResponse(os, 200, feedSb.toString(), "text/html; charset=UTF-8")
-                } catch (e: Exception) {
-                    sendResponse(os, 500, "Subscription feed failed: ${e.message}", "text/plain; charset=UTF-8")
-                }
-                return
-            }
-
-            val channels = dbHelper.nativeSubscriptions()
-            val playlists = dbHelper.nativeBookmarkedPlaylists()
-            val watchLater = dbHelper.nativeWatchLaterItems()
-            val html = HtmlRenderer.renderSubscriptions(serviceId, channels, playlists, watchLater, activeTab, isTv)
-            sendResponse(os, 200, html, "text/html; charset=UTF-8")
-        }
-
         internal fun filterItems(items: List<InfoItem>): List<InfoItem> {
             val hideWatched = dbHelper.nativeHideWatched()
             val hideShorts = dbHelper.nativeHideShorts()
@@ -1007,28 +750,14 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return filtered
         }
 
-        // FlowNeuro signals: reported from handleWatchContent/handleApiVideo and the progress endpoint. Best-effort: failures never affect playback or the DB write.
+        // FlowNeuro signals: reported from handleApiVideo and the progress endpoint. Best-effort: failures never affect playback or the DB write.
         internal fun reportFlowNeuroClick(info: StreamInfo, serviceId: Int) {
             dbHelper.reportFlowNeuroInteraction(info, serviceId, InteractionType.CLICK)
         }
 
-        // Ranking delegates to the native FlowNeuroEngine (rankWithFlowNeuro()); used by the home mix branch and handleApiRecommendations(), not handleApiHome().
+        // Ranking delegates to the native FlowNeuroEngine (rankWithFlowNeuro()); used by handleApiRecommendations(), not handleApiHome().
         internal fun applyFlowNeuroRanking(items: List<InfoItem>, serviceId: Int): List<InfoItem> =
             dbHelper.rankWithFlowNeuro(items, serviceId)
-
-        @Throws(Exception::class)
-        private fun handleWatchLater(os: OutputStream, params: Map<String, String>, isTv: Boolean) {
-            val serviceId = getServiceId(params)
-            val items = dbHelper.nativeWatchLaterItems()
-            val html = HtmlRenderer.renderWatchLater(serviceId, items, isTv)
-            sendResponse(os, 200, html, "text/html; charset=UTF-8")
-        }
-
-        private fun escapeJson(input: String?): String {
-            if (input == null) return ""
-            return input.replace("\\", "\\\\").replace("\"", "\\\"")
-                .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
-        }
     }
 
     private class CacheData(val value: String?, timeoutMillis: Long) {

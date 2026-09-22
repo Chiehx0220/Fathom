@@ -11,6 +11,7 @@ let danmaku = null;
 let nextTimer = 0;
 let lastReported = -1;
 let hudTimer = 0;
+let audioOnly = false;
 
 // ---- Mini player: drag-to-reposition, tap-to-expand, and its own controls (media-video-layout
 // is hidden at this size, so close/play/expand are the only interactive surface it has). Every
@@ -271,6 +272,8 @@ FT.player = {
         reportProgress();
         lastReported = -1;
         current = { service, url: info.url, info, chapters: info.chapters || [], segments: [], chapterTrack: false };
+        audioOnly = false;
+        stageEl().classList.remove('audio-only');
         skipTarget = null;
         FT.$('#skip-btn').hidden = true;
         FT.$$('.sb-mark', p).forEach((m) => m.remove());
@@ -309,8 +312,20 @@ FT.player = {
         try { p.pause(); } catch (e) {}
         p.src = '';
         current = null;
+        audioOnly = false;
+        stageEl().classList.remove('audio-only');
         document.body.classList.remove('remote-fs');
         FT.player.dock('off');
+    },
+
+    // Visual-only: hides the video surface behind an artwork card while the same stream keeps
+    // playing, for audio-focused listening without a separate audio-only fetch.
+    toggleAudioOnly() {
+        if (!current) return false;
+        audioOnly = !audioOnly;
+        stageEl().classList.toggle('audio-only', audioOnly);
+        FT.$('#audio-art-title').textContent = audioOnly ? current.info.title : '';
+        return audioOnly;
     },
 
     get danmaku() { return danmaku; },

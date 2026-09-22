@@ -18,7 +18,7 @@ import java.io.OutputStream
 // the app's Quick Actions download uses), so files land in the same place, show up in the app's
 // Downloads screen, and the same progress/notification machinery applies. Nothing here downloads
 // anything itself. YouTube only: Flow's downloader has no Referer/header plumbing for other
-// services' CDNs, so the button is not rendered for them (HtmlRendererWatch.kt).
+// services' CDNs, so the button is not rendered for them (app/js/watch.js).
 
 // Web-facing state names for the button. "none" also covers CANCELLED (nothing left to show).
 private fun DownloadItemStatus.webState(): String =

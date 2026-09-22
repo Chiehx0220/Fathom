@@ -13,7 +13,7 @@ object SponsorBlockClient {
         val startMs: Long,
         val endMs: Long,
         // SponsorBlock's own category id (e.g. "sponsor", "selfpromo", "interaction") - matches
-        // what HtmlRendererWatch's marker-color CSS classes and category labels key off of.
+        // what the web app's marker-color CSS classes and category labels key off of.
         val category: String,
     )
 

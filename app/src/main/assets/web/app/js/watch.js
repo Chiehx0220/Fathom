@@ -129,7 +129,7 @@ const actionRow = (service, info) => {
         }
         FT.toast(await FT.copyText(link) ? 'Link copied' : link);
     }, '', 'share');
-    const audio = FT.button('Audio only', 'music_note', () => { location.href = `/audio?serviceId=${service}&id=${FT.enc(info.url)}`; }, '', 'audio');
+    const audio = FT.button('Audio only', 'music_note', () => audio.classList.toggle('on', FT.player.toggleAudioOnly()), '', 'audio');
     const buttons = [subscribe, like, dislike, later, share, audio];
     if (service === 0) buttons.push(downloadButton(service, info));
     if (FT.player.danmaku) {

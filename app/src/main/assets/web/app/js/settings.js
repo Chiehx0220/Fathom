@@ -60,9 +60,6 @@ FT.register('settings', {
                 FT.button(FT.remote.active ? 'Disconnect' : 'Connect phone remote', FT.remote.active ? 'cast_connected' : 'cast', () => { FT.remote.toggle(); setTimeout(() => FT.reload(), 600); }, 'primary', 'remote'))));
         sections.push(h('section', {}, h('h2', {}, 'Full screen'),
             h('p', { class: 'hint' }, 'A remote cannot start real full screen: the browser only allows it from a click on the page. Press F11 once in your browser (or use its full screen option) and it stays on as you move between videos.')));
-        sections.push(h('section', {}, h('h2', {}, 'Classic interface'),
-            h('p', { class: 'hint' }, 'The previous pages are still available.'),
-            h('div', { class: 'btns', style: 'margin-top:12px' }, FT.button('Open classic interface', 'open_in_new', () => { location.href = '/'; }, '', 'classic'))));
 
         root.replaceChildren(h('div', { class: 'head' }, h('h1', {}, 'Settings')), h('div', { class: 'settings' }, sections));
     },

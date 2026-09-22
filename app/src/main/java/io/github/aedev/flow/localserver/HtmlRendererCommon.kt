@@ -7,7 +7,6 @@ import org.schabi.newpipe.extractor.Image
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.localization.DateWrapper
-import org.schabi.newpipe.extractor.stream.StreamInfo
 
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -15,7 +14,7 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.util.Locale
 
-// Shared page toolbox: formatting, escaping, thumbnails, and page (de)serialization. The markup lives in WebUi and WebShell.
+// Shared page toolbox: formatting, escaping, thumbnails, and page (de)serialization.
 object HtmlRendererCommon {
 
     // Fallback avatar palette, picked by name hash (avatarColorFor()).
@@ -31,9 +30,6 @@ object HtmlRendererCommon {
 
     @JvmStatic
     fun avatarColorFor(name: String): String = AVATAR_COLORS[Math.abs(name.hashCode()) % AVATAR_COLORS.size]
-
-    // Cache-busting tag derived from the content of the files under assets/web.
-    val STATIC_ASSET_VERSION: String get() = WebAssets.version
 
     /** Service display name: Bilibili's is fixed, everything else comes from the registered extractor service. */
     @JvmStatic
@@ -85,17 +81,6 @@ object HtmlRendererCommon {
         }
     }
 
-    // ---- Kept for existing call sites; the markup itself is built by WebShell and WebUi. ----
-
-    @JvmStatic
-    @JvmOverloads
-    fun getHeaderHtml(activeServiceId: Int, query: String?, activeTab: String = "youtube"): String = WebShell.header(activeServiceId, query, activeTab)
-
-    @JvmStatic
-    @JvmOverloads
-    fun wrapInTemplate(title: String?, bodyContent: String, isTv: Boolean, needsPlayer: Boolean = false): String =
-        WebShell.page(title, bodyContent, isTv, needsPlayer)
-
     /**
      * Subscriptions, bookmarked playlists and watch-later can mix items from several services, but the page-level serviceId only
      * reflects the active tab. Linking every item with it sent a Bilibili channel to "/channel?serviceId=0&id=...", which the
@@ -110,22 +95,6 @@ object HtmlRendererCommon {
             fallback
         }
     }
-
-    @JvmStatic
-    fun renderGrid(sb: StringBuilder, serviceId: Int, items: List<InfoItem>, showDeleteButton: Boolean = false, fallbackAvatarUrl: String? = null) {
-        sb.append(WebUi.grid(serviceId, items, showDeleteButton, fallbackAvatarUrl))
-    }
-
-    @JvmStatic
-    fun renderSubscribeButton(uploaderUrl: String, uploaderName: String, uploaderAvatarUrl: String, backUrlEncoded: String, isSubscribed: Boolean): String =
-        WebUi.subscribeButton(uploaderUrl, uploaderName, uploaderAvatarUrl, backUrlEncoded, isSubscribed)
-
-    @JvmStatic
-    fun renderWatchLaterButton(info: StreamInfo, serviceId: Int, isWatchLater: Boolean): String = WebUi.watchLaterButton(info, serviceId, isWatchLater)
-
-    @JvmStatic
-    @JvmOverloads
-    fun renderLikeDislikePill(info: StreamInfo, likeState: String?, includeDislike: Boolean = true): String = WebUi.likeDislike(info, likeState, includeDislike)
 
     // getThumbnailUrl() overloads always return a non-empty fallback: check the raw field for null/empty to test for an image.
     private const val NO_THUMBNAIL_PLACEHOLDER =
@@ -221,10 +190,28 @@ object HtmlRendererCommon {
             .replace("\r", "\\r")
     }
 
-    // For raw titles and names used as HTML text (outside wrapInTemplate's title). Also escapes '"' for attributes. Not for getDescription(), which is already HTML.
+    // For raw titles and names used as HTML text. Also escapes '"' for attributes. Not for getDescription(), which is already HTML.
     @JvmStatic
     fun escapeHtml(str: String?): String {
         if (str == null) return ""
         return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+    }
+
+    /** A JSON string literal. `<`, `>` and `&` are escaped so the text can sit inside a <script> without ending it. */
+    @JvmStatic
+    fun jsonString(text: String?): String {
+        val sb = StringBuilder("\"")
+        for (c in text.orEmpty()) {
+            when {
+                c == '"' -> sb.append("\\\"")
+                c == '\\' -> sb.append("\\\\")
+                c == '\n' -> sb.append("\\n")
+                c == '\r' -> sb.append("\\r")
+                c == '\t' -> sb.append("\\t")
+                c == '<' || c == '>' || c == '&' || c == ' ' || c == ' ' || c < ' ' -> sb.append("\\u%04x".format(c.code))
+                else -> sb.append(c)
+            }
+        }
+        return sb.append('"').toString()
     }
 }

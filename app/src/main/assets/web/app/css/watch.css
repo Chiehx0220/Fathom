@@ -3,6 +3,13 @@
 .stage-player { width: 100%; height: 100%; --media-brand: var(--acc); }
 .stage-player video { object-fit: contain; }
 
+/* Audio-only mode: the same stream keeps playing behind this, just not rendered. */
+.audio-art { position: absolute; inset: 0; z-index: 2; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #000; color: #fff; text-align: center; padding: 0 32px; }
+.audio-art .i { font-size: 64px; opacity: 0.8; }
+.audio-art strong { font-size: 15px; font-weight: 500; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage.audio-only .audio-art { display: flex; }
+.stage.audio-only.mini .audio-art { display: none; }
+
 /* Docked small in a corner while another screen is open (or the picture has scrolled away).
  * Starts in the corner set here; player.js can then drag it anywhere by switching left/top
  * to real pixel values, which is why right/bottom (not left/top) are what CSS resets on undock. */

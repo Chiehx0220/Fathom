@@ -529,18 +529,9 @@ internal fun ClientHandler.handleSubtitlesProxy(os: OutputStream, params: Map<St
 private fun String.withoutCueSettings(): String =
     replace(Regex("""^(\S+ --> \S+)[ \t]+\S.*$""", RegexOption.MULTILINE), "$1")
 
-// The ?v= cache-busting parameter is ignored (see STATIC_ASSET_VERSION): a content change changes the URL, so max-age=31536000 immutable is safe.
-@Throws(Exception::class)
-internal fun ClientHandler.handleStaticCss(os: OutputStream) {
-    sendResponse(os, 200, WebAssets.css, "text/css; charset=UTF-8", "public, max-age=31536000, immutable")
-}
-
-@Throws(Exception::class)
-internal fun ClientHandler.handleStaticJs(os: OutputStream) {
-    sendResponse(os, 200, WebAssets.js, "application/javascript; charset=UTF-8", "public, max-age=31536000, immutable")
-}
-
-// The single-page app: its HTML shell, and its stylesheet and script (cached for good; ?v= changes with the content).
+// The single-page app: its HTML shell, and its stylesheet and script. The ?v= cache-busting
+// parameter is ignored: a content change changes WebAssets.appVersion and so the URL itself,
+// making max-age=31536000 immutable safe.
 @Throws(Exception::class)
 internal fun ClientHandler.handleAppShell(os: OutputStream) {
     sendResponse(os, 200, WebShell.appPage(), "text/html; charset=UTF-8")

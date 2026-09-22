@@ -92,8 +92,7 @@ object ApiRenderer {
         }
         json.put("relatedVideos", related)
 
-        // Not part of Flow's Video model - points ExoPlayer at this server's proxy routes. isDash
-        // matches HtmlRendererWatch.kt's own progressive-vs-DASH decision for the <video> tag.
+        // Not part of Flow's Video model - points ExoPlayer at this server's proxy routes.
         val playback = JSONObject()
         val hasVideo = info.videoStreams.isNotEmpty() || info.videoOnlyStreams.isNotEmpty() || !info.hlsUrl.isNullOrEmpty()
         playback.put("isDash", hasVideo)
