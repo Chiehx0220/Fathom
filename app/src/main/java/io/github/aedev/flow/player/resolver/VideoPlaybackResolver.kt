@@ -346,10 +346,19 @@ class VideoPlaybackResolver(
         stream: VideoStream,
         durationSeconds: Long,
     ): MediaSource {
-        val itagItem = stream.itagItem
+        // Bilibili streams carry their own init/index ranges instead of an ItagItem, so they need
+        // their own manifest maker rather than YouTube's throttling-avoidance path below.
+        if (BilibiliStreamBridge.isBilibili(stream)) {
+            return bilibiliDashSource(stream, BilibiliDashManifest.forVideo(stream, durationSeconds)) {
+                Log.d(TAG, "Generating Bilibili DASH manifest for ${VideoCodecUtils.qualityHeightFromStream(stream)}p")
+            } ?: run {
+                Log.w(TAG, "Progressive DASH manifest generation failed, using raw progressive (may throttle)")
+                createProgressiveSource(stream)
+            }
+        }
 
-        // A Bilibili stream has an ItagItem for its ranges, but nothing YouTube's manifest makers know.
-        if (itagItem != null && !BilibiliStreamBridge.isBilibili(stream) && durationSeconds > 0) {
+        val itagItem = stream.itagItem
+        if (itagItem != null && durationSeconds > 0) {
             Log.d(TAG, "Generating progressive DASH manifest for ${VideoCodecUtils.qualityHeightFromStream(stream)}p to avoid throttling")
             val manifestString = ManifestGenerator.generateProgressiveManifest(stream, itagItem, durationSeconds)
 
@@ -363,19 +372,23 @@ class VideoPlaybackResolver(
             }
         }
 
-        // Bilibili streams carry their own init/index ranges instead of an ItagItem.
-        BilibiliDashManifest.forVideo(stream, durationSeconds)?.let { manifest ->
-            Log.d(TAG, "Generating Bilibili DASH manifest for ${VideoCodecUtils.qualityHeightFromStream(stream)}p")
-            return MediaSourceBuilder.buildDashSource(
-                dashDataSourceFactory,
-                manifest,
-                Uri.parse(stream.content),
-                playbackItem(stream.content).build(),
-            )
-        }
-
         Log.w(TAG, "Progressive DASH manifest generation failed, using raw progressive (may throttle)")
         return createProgressiveSource(stream)
+    }
+
+    private fun bilibiliDashSource(
+        stream: VideoStream,
+        manifest: String?,
+        onGenerated: () -> Unit,
+    ): MediaSource? {
+        manifest ?: return null
+        onGenerated()
+        return MediaSourceBuilder.buildDashSource(
+            dashDataSourceFactory,
+            manifest,
+            Uri.parse(stream.content),
+            playbackItem(stream.content).build(),
+        )
     }
 
     /**
@@ -411,10 +424,14 @@ class VideoPlaybackResolver(
         stream: AudioStream,
         durationSeconds: Long,
     ): MediaSource {
-        val itagItem = stream.itagItem
+        if (BilibiliStreamBridge.isBilibili(stream)) {
+            return bilibiliDashSourceForAudio(stream, BilibiliDashManifest.forAudio(stream, durationSeconds)) {
+                Log.d(TAG, "Generating Bilibili DASH manifest for audio")
+            } ?: createProgressiveSourceForAudio(stream)
+        }
 
-        // A Bilibili stream has an ItagItem for its ranges, but nothing YouTube's manifest makers know.
-        if (itagItem != null && !BilibiliStreamBridge.isBilibili(stream) && durationSeconds > 0) {
+        val itagItem = stream.itagItem
+        if (itagItem != null && durationSeconds > 0) {
             Log.d(TAG, "Generating progressive DASH manifest for audio to avoid throttling")
             val manifestString = ManifestGenerator.generateProgressiveManifest(stream, itagItem, durationSeconds)
 
@@ -428,17 +445,22 @@ class VideoPlaybackResolver(
             }
         }
 
-        BilibiliDashManifest.forAudio(stream, durationSeconds)?.let { manifest ->
-            Log.d(TAG, "Generating Bilibili DASH manifest for audio")
-            return MediaSourceBuilder.buildDashSource(
-                dashDataSourceFactory,
-                manifest,
-                Uri.parse(stream.content),
-                playbackItem(stream.content).build(),
-            )
-        }
-
         return createProgressiveSourceForAudio(stream)
+    }
+
+    private fun bilibiliDashSourceForAudio(
+        stream: AudioStream,
+        manifest: String?,
+        onGenerated: () -> Unit,
+    ): MediaSource? {
+        manifest ?: return null
+        onGenerated()
+        return MediaSourceBuilder.buildDashSource(
+            dashDataSourceFactory,
+            manifest,
+            Uri.parse(stream.content),
+            playbackItem(stream.content).build(),
+        )
     }
 
     /**

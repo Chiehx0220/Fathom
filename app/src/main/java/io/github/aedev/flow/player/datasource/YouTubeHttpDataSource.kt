@@ -57,28 +57,6 @@ class YouTubeHttpDataSource private constructor(
     companion object {
         private const val TAG = "YouTubeHttpDataSource"
 
-        // A mirror that has not answered in this long is raced against the next one. Measured
-        // requests answered in ~0.2s at the median and 2-7s in the slow tail, so this leaves the
-        // normal case alone and cuts the tail short.
-        private const val BILIBILI_HEDGE_DELAY_MS = 600L
-
-        // Bilibili opens that answered no faster than this are logged (see BiliCdn in open()).
-        private const val SLOW_OPEN_LOG_MS = 1_000L
-
-        private val warnedNoMirrors = java.util.concurrent.atomic.AtomicBoolean(false)
-
-        private val HEDGE_EXECUTOR: java.util.concurrent.ExecutorService =
-            java.util.concurrent.Executors.newCachedThreadPool { runnable ->
-                Thread(runnable, "bili-hedge").apply { isDaemon = true }
-            }
-
-        // Matches the desktop UA the already-verified-working localserver Bilibili CDN proxy uses
-        // (see LocalHttpServer.kt) — kept identical rather than reusing the mobile default below,
-        // since it's unconfirmed whether Bilibili's Akamai edges care about the UA shape.
-        private const val BILIBILI_USER_AGENT =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-
         private val clientLock = Any()
 
         @Volatile
@@ -122,12 +100,12 @@ class YouTubeHttpDataSource private constructor(
         readBytes = 0L
         readNanos = 0L
 
-        val isBili = isBilibiliCdnUri(dataSpec.uri)
+        val isBili = BilibiliHttpSupport.isBilibiliCdnUri(dataSpec.uri)
         val requestUserAgent =
             if (isYouTubeUri(dataSpec.uri)) {
                 resolveYouTubeUserAgent(dataSpec.uri)
             } else if (isBili) {
-                BILIBILI_USER_AGENT
+                BilibiliHttpSupport.USER_AGENT
             } else {
                 userAgent
             }
@@ -141,7 +119,7 @@ class YouTubeHttpDataSource private constructor(
         if (isYouTubeUri(dataSpec.uri)) {
             requestHeaders.putAll(youtubeHeaders())
         } else if (isBili) {
-            requestHeaders.putAll(bilibiliHeaders())
+            requestHeaders.putAll(BilibiliHttpSupport.headers())
         }
         if (requestHeaders.isNotEmpty()) {
             factory.setDefaultRequestProperties(requestHeaders)
@@ -151,9 +129,7 @@ class YouTubeHttpDataSource private constructor(
         // Bilibili lists two mirrors per file; when this request has one to fall back to, both may be
         // tried (see HedgedOpen) so a stalled mirror costs one short delay rather than seconds.
         val mirrors = if (isBili) BilibiliMirrors.groupFor(dataSpec.uri.toString()) else null
-        if (isBili && mirrors == null && warnedNoMirrors.compareAndSet(false, true)) {
-            Log.w("BiliCdn", "no mirror group registered for host=${dataSpec.uri.host}; requests are not hedged")
-        }
+        if (isBili && mirrors == null) BilibiliHttpSupport.warnIfNoMirrors(dataSpec.uri.host)
         return try {
             val length: Long
             var openedUri = dataSpec.uri
@@ -162,8 +138,8 @@ class YouTubeHttpDataSource private constructor(
                 val winner =
                     HedgedOpen.race(
                         urls = mirrors.order(),
-                        hedgeDelayMs = BILIBILI_HEDGE_DELAY_MS,
-                        executor = HEDGE_EXECUTOR,
+                        hedgeDelayMs = BilibiliHttpSupport.HEDGE_DELAY_MS,
+                        executor = BilibiliHttpSupport.hedgeExecutor,
                         open = { url ->
                             val source = factory.createDataSource()
                             try {
@@ -190,7 +166,7 @@ class YouTubeHttpDataSource private constructor(
                 // Only the requests worth a look: one that needed its other mirror, or that took long
                 // to answer. The rest is the normal case and would bury these.
                 val answeredMs = SystemClock.elapsedRealtime() - startedMs
-                if (hedged || answeredMs >= SLOW_OPEN_LOG_MS) {
+                if (hedged || answeredMs >= BilibiliHttpSupport.SLOW_OPEN_LOG_MS) {
                     Log.w(
                         "BiliCdn",
                         "open host=${openedUri.host} pos=${dataSpec.position} reqLen=${dataSpec.length} " +
@@ -289,16 +265,6 @@ class YouTubeHttpDataSource private constructor(
             host.contains("ytimg.com")
     }
 
-    // Broader than BilibiliService.isBiliBiliDownloadUrl() in the extractor (which only checks
-    // "bilivideo.com"/"akamaized.net"): Bilibili also serves from *.mcdn.bilivideo.cn edge/P2P
-    // mirrors (note the .cn, not .com), so match on "bilivideo" generally to catch those too.
-    // These CDN edges hotlink-check Referer (and, for some streams, the session cookie) and 403
-    // without them — unrelated to (and not covered by) isYouTubeUri above.
-    private fun isBilibiliCdnUri(uri: Uri): Boolean {
-        val host = uri.host ?: return false
-        return host.contains("bilivideo") || host.contains("akamaized.net")
-    }
-
     // The fetching UA must match the client that minted the URL (`c=` param) — a mismatch is a
     // known cause of mid-stream 403s on googlevideo CDNs.
     private fun resolveYouTubeUserAgent(uri: Uri): String =
@@ -328,17 +294,5 @@ class YouTubeHttpDataSource private constructor(
             "Accept-Encoding" to "identity",
             // Accept header for video content
             "Accept" to "*/*",
-        )
-
-    /**
-     * Bilibili's CDN 403s without a same-site Referer (see [isBilibiliCdnUri]). Deliberately no
-     * Cookie header — matches the already-verified-working localserver Bilibili CDN proxy (see
-     * LocalHttpServer.kt), which sends only User-Agent/Referer/Origin; an earlier attempt that
-     * added a Cookie here still 403'd, so it's left out.
-     */
-    private fun bilibiliHeaders(): Map<String, String> =
-        mapOf(
-            "Origin" to "https://www.bilibili.com",
-            "Referer" to "https://www.bilibili.com/",
         )
 }
