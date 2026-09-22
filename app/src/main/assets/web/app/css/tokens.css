@@ -1,0 +1,43 @@
+/* Colour and size tokens. Every colour in the app is one of these roles, so a theme is only a set of values for them:
+ *   --bg      the page          --s1..--s3  surfaces, one step lighter each
+ *   --fg      text              --mute      secondary text
+ *   --acc     the accent        --on-acc    text and icons on the accent
+ * The theme is the `data-theme` on <html>; the browser's light/dark preference (`data-scheme`) only matters to "device". */
+
+:root {
+  --bg: #0B1524; --s1: #101E33; --s2: #16273F; --s3: #1F3454;
+  --fg: #EDE8DB; --mute: #93A3BA; --acc: #E8C468; --on-acc: #1A1405;
+  --danger: #FF8A80; --scrim: rgba(5, 10, 18, 0.86);
+
+  --bar-h: 72px;
+  --pad-x: clamp(20px, 3vw, 48px);
+  --card-w: clamp(240px, 19vw, 340px);
+  --radius: 16px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  color-scheme: dark;
+}
+
+/* Dark themes */
+:root[data-theme="fathom"] { --bg: #0B1524; --s1: #101E33; --s2: #16273F; --s3: #1F3454; --fg: #EDE8DB; --mute: #93A3BA; --acc: #E8C468; --on-acc: #1A1405; --scrim: rgba(5, 10, 18, 0.86); }
+:root[data-theme="graphite"] { --bg: #121316; --s1: #1A1C20; --s2: #23262B; --s3: #2E3238; --fg: #E8EAED; --mute: #9AA0A8; --acc: #8AB4F8; --on-acc: #0B1B36; --scrim: rgba(8, 9, 11, 0.86); }
+:root[data-theme="oled"] { --bg: #000000; --s1: #0D0D0F; --s2: #17181B; --s3: #232428; --fg: #F2F2F2; --mute: #8E9096; --acc: #4DD6C1; --on-acc: #00201B; --scrim: rgba(0, 0, 0, 0.88); }
+:root[data-theme="ember"] { --bg: #17110D; --s1: #1F1610; --s2: #2B1F16; --s3: #3A2A1D; --fg: #F4E9DC; --mute: #B39A85; --acc: #FF9E5E; --on-acc: #2A1200; --scrim: rgba(12, 8, 5, 0.86); }
+:root[data-theme="forest"] { --bg: #0C1611; --s1: #12211A; --s2: #1A2E24; --s3: #253F32; --fg: #E4EEE6; --mute: #8FA99A; --acc: #A8D86E; --on-acc: #142200; --scrim: rgba(5, 12, 8, 0.86); }
+:root[data-theme="orchid"] { --bg: #150F1F; --s1: #1E1630; --s2: #2A1F42; --s3: #3A2C5A; --fg: #EEE6F7; --mute: #A797C2; --acc: #F08BC0; --on-acc: #38001E; --scrim: rgba(10, 6, 16, 0.86); }
+
+/* Light themes */
+:root[data-theme="paper"] { --bg: #F6F1E6; --s1: #EDE6D6; --s2: #E3DAC6; --s3: #D6CBB2; --fg: #241E12; --mute: #5E543E; --acc: #8F6200; --on-acc: #FFFFFF; --danger: #B3261E; --scrim: rgba(246, 241, 230, 0.9); color-scheme: light; }
+:root[data-theme="daylight"] { --bg: #F3F6FB; --s1: #E8EEF7; --s2: #DCE5F2; --s3: #CBD8EC; --fg: #10203A; --mute: #56647E; --acc: #1B62D6; --on-acc: #FFFFFF; --danger: #B3261E; --scrim: rgba(243, 246, 251, 0.9); color-scheme: light; }
+
+/* The phone's own Material You colours (the server fills the --md-* roles for this phone; the two selectors it uses are in index.html). */
+:root[data-theme="device"] {
+  --bg: var(--md-surface, #10131A); --s1: var(--md-surface-container-low, #181B22); --s2: var(--md-surface-container, #1D2027);
+  --s3: var(--md-surface-container-high, #272A32); --fg: var(--md-on-surface, #E1E2EB); --mute: var(--md-on-surface-variant, #C1C6D4);
+  --acc: var(--md-primary, #A8C8FF); --on-acc: var(--md-on-primary, #00315C); --danger: var(--md-error, #FFB4AB);
+  --scrim: color-mix(in srgb, var(--md-surface, #10131A) 88%, transparent);
+}
+:root[data-theme="device"][data-scheme="light"] { color-scheme: light; }
+
+@media (max-width: 768px) {
+  :root { --bar-h: 60px; }
+}

@@ -1,4 +1,4 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.local.LikedVideoInfo
@@ -7,7 +7,6 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.local.SearchHistoryRepository
 import io.github.aedev.flow.data.local.SubscriptionRepository
-import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.model.Video as FlowVideo
 import io.github.aedev.flow.innertube.YouTube
@@ -294,10 +293,6 @@ fun HistoryDbHelper.nativeSetHideShorts(hide: Boolean) {
 }
 
 fun HistoryDbHelper.nativeVideoQuality(): String = runBlocking { playerPreferences().defaultQualityWifi.first().label }
-
-fun HistoryDbHelper.nativeSetVideoQuality(quality: String) {
-    runBlocking { playerPreferences().setDefaultQualityWifi(VideoQuality.fromString(quality)) }
-}
 
 /**
  * Create-or-touch a history entry's metadata without disturbing a saved playback position.
@@ -749,4 +744,28 @@ fun HistoryDbHelper.nativeRelatedVideos(info: StreamInfo, serviceId: Int): List<
         PlayerRelatedVideosPolicy.select(videoId, primary, fallback, current = emptyList(), shortsEnabled = shortsEnabled)
     }
     return selected.map { it.toStreamInfoItem(serviceId) }
+}
+
+/** History rows for the JSON API: the fields of a video, plus how far the viewer got (0-100). */
+fun HistoryDbHelper.nativeHistoryJson(): org.json.JSONArray = runBlocking {
+    val array = org.json.JSONArray()
+    for (entry in viewHistory().getAllHistory().first()) {
+        val json = org.json.JSONObject()
+        json.put("id", entry.videoId)
+        json.put("url", videoIdToUrl(entry.videoId, entry.serviceId))
+        json.put("serviceId", entry.serviceId)
+        json.put("title", entry.title)
+        json.put("channelName", entry.channelName)
+        json.put("channelId", if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId, entry.serviceId) else "")
+        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(entry.thumbnailUrl))
+        json.put("channelThumbnailUrl", "")
+        json.put("duration", (entry.duration / 1000).toInt())
+        json.put("viewCount", -1)
+        json.put("uploadDate", "")
+        json.put("isLive", false)
+        json.put("isShort", entry.isShort)
+        json.put("progress", entry.progressPercentage.toInt().coerceIn(0, 100))
+        array.put(json)
+    }
+    array
 }

@@ -76,7 +76,9 @@ cd Flow && git checkout Btest
 | `bilibili/` | 用戶端本體:API、請求簽章、工作階段、留言、彈幕、id、深層連結 |
 | `data/paging/`、`player/stream/`、`ui/screens/playlists/`(`Bilibili*`) | 把它接進搜尋、播放和播放清單的轉換與銜接程式碼 |
 | `di/BilibiliModule.kt` | 整個 App 共用一個工作階段 |
-| `localserver/` | 網頁伺服器、它的 Bilibili 轉接層,以及 Vidstack 頁面 |
+| `localserver/` | 網頁伺服器、它的 Bilibili 轉接層,以及手機遙控 |
+| `assets/web/` | 傳統網頁的樣式與腳本,都是一般檔案 |
+| `assets/web/app/` | 新的單頁網頁介面(`/app`):畫面、焦點引擎、常駐播放器、主題、內建字型 |
 | 約 90 個上游檔案 | 小型掛鉤,多半是傳遞服務代碼 |
 
 原則:新程式碼放新檔案,上游檔案只加一個呼叫。這樣從上游合併時衝突才會少。[FORK-DIFF.md](FORK-DIFF.md) 列出動過的每個上游檔案(`node scripts/fork-diff.js` 產生),`bilibili/PPE-REFERENCE.md` 記錄用戶端移植自 PipePipeExtractor 的哪個版本。

@@ -1,0 +1,76 @@
+/* The frame around every screen: page basics, the top bar, focus, and small shared pieces. */
+* { box-sizing: border-box; margin: 0; }
+html { background: var(--bg); scroll-behavior: smooth; }
+body { min-height: 100vh; background: var(--bg); color: var(--fg); font: 400 15px/1.4 Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
+button, a, input { font: inherit; color: inherit; }
+a { text-decoration: none; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+#screen { min-height: calc(100vh - var(--bar-h)); outline: none; padding-bottom: 96px; }
+body[data-input="pointer"] { cursor: auto; }
+.row [data-f] { scroll-margin-top: calc(var(--bar-h) + 84px); }
+body[data-input="keys"] { cursor: none; }
+
+/* Icons: the bundled Material Symbols font. Without the font the ligature text would show, so the box is clipped to one glyph. */
+.i { display: inline-block; width: 1em; height: 1em; overflow: hidden; font-family: 'Material Symbols Rounded'; font-size: 22px; line-height: 1; font-weight: 400; font-style: normal; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; font-feature-settings: 'liga'; -webkit-font-feature-settings: 'liga'; vertical-align: middle; flex: none; user-select: none; }
+.i.fill { font-variation-settings: 'FILL' 1; }
+
+/* Top bar */
+#top { position: sticky; top: 0; z-index: 30; height: var(--bar-h); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 0 var(--pad-x); background: var(--scrim); }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 500; color: var(--fg); }
+.brand-mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: var(--fg); color: var(--bg); }
+.brand-mark .i { font-size: 20px; }
+.tabs { display: flex; gap: 6px; padding: 5px; border-radius: 28px; background: var(--s1); }
+.tab { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 20px; border: 0; border-radius: 22px; background: none; color: var(--mute); font-weight: 500; white-space: nowrap; transition: background 0.15s, color 0.15s; }
+.tab:hover { background: var(--s2); color: var(--fg); }
+.tab.on { background: var(--fg); color: var(--bg); }
+.tools { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.chip { display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px 0 18px; border: 0; border-radius: 22px; background: var(--s1); font-weight: 500; }
+.chip:hover { background: var(--s2); }
+.rbtn { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--s1); color: var(--mute); }
+.rbtn:hover { background: var(--s2); color: var(--fg); }
+.rbtn.on { background: var(--acc); color: var(--on-acc); }
+
+/* Selection. The engine puts .sel on the stop the keys or the remote are on. It only shows while keys or a remote are in use; the
+ * mouse gets hover instead. */
+[data-f] { outline: none; scroll-margin: calc(var(--bar-h) + 24px) var(--pad-x) 120px var(--pad-x); }
+body[data-input="keys"] .tab.sel, body[data-input="keys"] .chip.sel, body[data-input="keys"] .rbtn.sel, body[data-input="keys"] .btn.sel,
+body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[data-input="keys"] .row-item.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 22px 0 18px; border: 0; border-radius: 23px; background: var(--s3); color: var(--fg); font-weight: 500; white-space: nowrap; transition: background 0.15s; }
+.btn:hover { background: color-mix(in srgb, var(--s3) 82%, var(--fg)); }
+.btn.primary { background: var(--acc); color: var(--on-acc); }
+.btn.primary:hover { background: color-mix(in srgb, var(--acc) 88%, var(--fg)); }
+.btn.on { background: var(--s2); color: var(--acc); }
+.btn.round { width: 46px; padding: 0; justify-content: center; }
+.btn .i { font-size: 22px; }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.field { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 18px; border-radius: 26px; background: var(--s1); color: var(--mute); }
+.field input { flex: 1; min-width: 0; height: 100%; border: 0; outline: none; background: none; color: var(--fg); font-size: 17px; }
+.field input::placeholder { color: var(--mute); }
+
+.empty { display: grid; place-items: center; gap: 10px; padding: 12vh 24px; color: var(--mute); text-align: center; }
+.empty .i { font-size: 56px; opacity: 0.6; }
+.empty h2 { color: var(--fg); font-size: 20px; font-weight: 500; }
+.spinner { width: 34px; height: 34px; border: 3px solid var(--s3); border-top-color: var(--acc); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading { display: grid; place-items: center; padding: 14vh 0; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+
+@media (max-width: 1100px) {
+  .tab span:not(.i) { display: none; }
+  .tab { padding: 0 14px; }
+}
+@media (max-width: 720px) {
+  /* Phone width: the tabs become a bar along the bottom, the top bar keeps the brand and the tools. */
+  #top { grid-template-columns: 1fr auto; gap: 10px; padding: 0 16px; }
+  #screen { padding-bottom: 120px; }
+  .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 35; justify-content: space-around; gap: 0; padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)); border-radius: 0; background: var(--s1); }
+  .tab { flex: 1; flex-direction: column; justify-content: center; gap: 2px; height: 56px; padding: 0; border-radius: 16px; font-size: 11px; }
+  .tab span:not(.i) { display: inline; }
+  .tab.on { background: none; color: var(--acc); }
+  .chip { padding: 0 8px 0 14px; }
+}

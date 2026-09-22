@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="fathom" data-scheme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fathom</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%230F1D33'/%3E%3Cg stroke='%23F2EDE0' stroke-width='5' stroke-linecap='round'%3E%3Cline x1='37' y1='18' x2='37' y2='78'/%3E%3Cline x1='37' y1='22' x2='76' y2='22'/%3E%3C/g%3E%3Cpolygon points='58,42 58,62 75,52' fill='%23E8C468'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/app.css?v={{version}}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vidstack@1.15.6/player/styles/default/theme.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vidstack@1.15.6/player/styles/default/layouts/video.css">
+  <script type="module" src="https://cdn.jsdelivr.net/npm/vidstack@1.15.6/cdn/with-layouts/vidstack.js"></script>
+  <style>
+{{deviceColors}}
+  </style>
+  <script>
+    // Applied before anything paints, so the chosen theme never flashes the default one.
+    window.FT_CONFIG = { services: {{services}} };
+    try {
+      var root = document.documentElement;
+      var theme = localStorage.getItem('fathom-theme');
+      if (theme) root.dataset.theme = theme;
+      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.dataset.scheme = dark ? 'dark' : 'light';
+    } catch (e) {}
+  </script>
+</head>
+<body data-route="" data-input="pointer">
+  <header id="top"></header>
+  <main id="screen" tabindex="-1"></main>
+  <div id="stage" class="stage" hidden>
+    <media-player id="player" class="stage-player" storage="fathom-player" crossorigin playsinline>
+      <media-provider></media-provider>
+      <media-video-layout></media-video-layout>
+      <button type="button" id="skip-btn" class="skip-btn" hidden></button>
+      <div id="hud" class="hud" hidden></div>
+    </media-player>
+    <button type="button" id="mini-close" class="mini-close" aria-label="Close mini player" hidden><span class="i">close</span></button>
+  </div>
+  <div id="layer">
+    <div id="vptr" class="vptr" hidden><div class="vptr-halo"></div><div class="vptr-disc"><i></i></div></div>
+    <div id="remote-banner" class="remote-banner" hidden></div>
+    <div id="keyhints" class="keyhints" hidden></div>
+    <div id="toast" class="toast" role="status"></div>
+    <div id="menu" class="menu-root" hidden></div>
+  </div>
+  <script src="/app.js?v={{version}}"></script>
+</body>
+</html>

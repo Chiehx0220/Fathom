@@ -1,4 +1,4 @@
-package org.schabi.newpipe.localserver
+package io.github.aedev.flow.localserver
 
 import org.json.JSONArray
 import org.json.JSONObject
@@ -27,11 +27,17 @@ object ApiRenderer {
         val json = JSONObject()
         val streamItem = item as? StreamInfoItem
         json.put("id", LocalHttpServer.getVideoId(item.url))
+        json.put("url", item.url ?: "")
+        json.put("serviceId", item.serviceId)
         json.put("title", item.name ?: "")
         json.put("channelName", streamItem?.uploaderName ?: item.name ?: "")
         json.put("channelId", streamItem?.uploaderUrl ?: "")
         json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(item.thumbnailUrl))
-        json.put("channelThumbnailUrl", HtmlRendererCommon.getThumbnailUrl(streamItem?.uploaderAvatarUrl))
+        // Empty, not the placeholder URL, when there's no real avatar - same as commentJson's
+        // authorThumbnail. A missing video thumbnail is fine as a generic placeholder photo; a
+        // missing channel avatar should fall back to FT.avatar()'s own initial-letter circle
+        // instead of an unrelated stock photo standing in for someone's face.
+        json.put("channelThumbnailUrl", if (HtmlRendererCommon.hasThumbnail(streamItem?.uploaderAvatarUrl)) HtmlRendererCommon.getThumbnailUrl(streamItem?.uploaderAvatarUrl) else "")
         if (streamItem != null) {
             json.put("duration", streamItem.duration.coerceAtLeast(0).toInt())
             json.put("viewCount", streamItem.viewCount.coerceAtLeast(-1))
@@ -56,16 +62,23 @@ object ApiRenderer {
         val json = JSONObject()
         val infoUrlEncoded = HtmlRendererCommon.encodeUrl(info.url)
         json.put("id", LocalHttpServer.getVideoId(info.url))
+        json.put("url", info.url ?: "")
+        json.put("serviceId", serviceId)
         json.put("title", info.name ?: "")
         json.put("channelName", info.uploaderName ?: "")
         json.put("channelId", info.uploaderUrl ?: "")
         json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(info.thumbnails))
-        json.put("channelThumbnailUrl", HtmlRendererCommon.getThumbnailUrl(info.uploaderAvatars))
+        // See videoJson()'s channelThumbnailUrl: empty, not the placeholder, when there's no real avatar.
+        json.put("channelThumbnailUrl", if (HtmlRendererCommon.hasThumbnail(info.uploaderAvatars)) HtmlRendererCommon.getThumbnailUrl(info.uploaderAvatars) else "")
         json.put("duration", info.duration.coerceAtLeast(0).toInt())
         json.put("viewCount", info.viewCount.coerceAtLeast(-1))
         json.put("likeCount", info.likeCount.coerceAtLeast(0))
         json.put("uploadDate", info.textualUploadDate ?: "")
         json.put("description", info.description?.content ?: "")
+        // Tells the client whether "description" is markup to render or plain text to escape.
+        // YouTube gives HTML (links, line breaks); Bilibili's description is built as PLAIN_TEXT
+        // (see LocalServerBilibiliStreams.kt).
+        json.put("descriptionType", if (info.description?.type == org.schabi.newpipe.extractor.stream.Description.HTML) "html" else "text")
         json.put("isLive", info.streamType == StreamType.LIVE_STREAM || info.streamType == StreamType.AUDIO_LIVE_STREAM)
         json.put("isShort", info.duration in 1..120)
 
@@ -137,6 +150,18 @@ object ApiRenderer {
         }
         json.put("subtitles", subtitles)
 
+        // Chapters with their preview pictures, for a client's chapter strip and seek-bar marks.
+        val chapters = JSONArray()
+        for (segment in info.streamSegments.orEmpty()) {
+            val chapter = JSONObject()
+            chapter.put("s", segment.startTimeSeconds)
+            chapter.put("t", segment.title ?: "")
+            val preview = segment.previewUrl
+            chapter.put("thumb", if (preview.isNullOrBlank()) "" else HtmlRendererCommon.getThumbnailUrl(preview))
+            chapters.put(chapter)
+        }
+        json.put("chapters", chapters)
+
         return json
     }
 
@@ -157,6 +182,7 @@ object ApiRenderer {
     fun channelInfoItemJson(item: ChannelInfoItem): JSONObject {
         val json = JSONObject()
         json.put("id", item.url)
+        json.put("serviceId", item.serviceId)
         json.put("name", item.name ?: "")
         json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(item.thumbnailUrl))
         json.put("subscriberCount", item.subscriberCount.coerceAtLeast(-1))
@@ -168,6 +194,7 @@ object ApiRenderer {
     fun playlistInfoItemJson(item: PlaylistInfoItem): JSONObject {
         val json = JSONObject()
         json.put("id", item.url)
+        json.put("serviceId", item.serviceId)
         json.put("name", item.name ?: "")
         json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(item.thumbnailUrl))
         json.put("videoCount", item.streamCount.coerceAtLeast(0).toInt())

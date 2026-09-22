@@ -1,0 +1,67 @@
+/* The stage (the one player, kept for the whole visit) and the watch screen around it. */
+.stage { position: absolute; z-index: 5; top: var(--bar-h); left: 0; right: 0; height: var(--stage-h, 56vw); background: #000; overflow: hidden; }
+.stage-player { width: 100%; height: 100%; --media-brand: var(--acc); }
+.stage-player video { object-fit: contain; }
+
+/* Docked small in a corner while another screen is open (or the picture has scrolled away). */
+.stage.mini { position: fixed; top: auto; left: auto; right: 24px; bottom: 24px; width: clamp(280px, 24vw, 420px); height: auto; aspect-ratio: 16 / 9; border-radius: 16px; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5); }
+.stage.mini media-video-layout { display: none; }
+.mini-close { position: absolute; top: 8px; right: 8px; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.65); color: #fff; }
+.mini-close .i { font-size: 20px; }
+.stage:not(.mini) .mini-close { display: none; }
+
+/* Fullscreen the browser refused (it wants a tap on the page itself): the stage fills the window instead. */
+body.remote-fs { overflow: hidden; }
+body.remote-fs .stage { position: fixed; inset: 0; z-index: 2000; width: auto; height: auto; border-radius: 0; box-shadow: none; }
+body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
+
+.skip-btn { position: absolute; right: 24px; bottom: 96px; z-index: 12; height: 44px; padding: 0 22px; border: 0; border-radius: 22px; background: var(--acc); color: var(--on-acc); font-weight: 500; }
+.hud { position: absolute; top: 24px; left: 50%; z-index: 12; display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 22px; background: rgba(0, 0, 0, 0.8); color: #fff; transform: translateX(-50%); font-weight: 500; }
+
+/* Seek-bar marks: SponsorBlock segments over the time slider. */
+.sb-mark { position: absolute; top: 0; height: 100%; min-width: 3px; border-radius: 2px; pointer-events: none; background: #00D400; opacity: 0.85; }
+.sb-mark.intro, .sb-mark.outro { background: #00FFFF; }
+.sb-mark.interaction { background: #CC00FF; }
+.sb-mark.selfpromo { background: #FFFF00; }
+.sb-mark.music_offtopic { background: #FF9900; }
+
+/* The watch screen: room for the stage, then the details. */
+.watch-slot { height: var(--stage-h, 56vw); }
+.watch-info { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 20px var(--pad-x) 0; }
+.watch-info h1 { flex: 1 1 100%; font-size: clamp(22px, 2vw, 28px); font-weight: 500; }
+.watch-info .grow { margin-right: auto; min-width: 0; }
+.watch-info .who { font-weight: 500; }
+.about { max-width: 980px; margin: 18px var(--pad-x) 0; padding: 18px 22px; border-radius: 20px; background: var(--s1); color: var(--mute); white-space: pre-wrap; overflow-wrap: anywhere; }
+.about b { display: block; margin-bottom: 8px; color: var(--fg); font-weight: 500; }
+
+.comments { max-width: 980px; padding: 26px var(--pad-x) 0; }
+.comments h2 { margin-bottom: 12px; font-size: 20px; font-weight: 500; }
+.comment { display: flex; gap: 14px; padding: 12px 14px; border-radius: 18px; outline: none; }
+.comment:hover { background: var(--s1); }
+body[data-input="keys"] .comment.sel { background: var(--s2); box-shadow: 0 0 0 3px var(--acc); }
+.comment .avatar { width: 40px; height: 40px; font-size: 15px; }
+.comment-head { display: flex; gap: 10px; align-items: baseline; }
+.comment-head b { font-weight: 500; }
+.comment-head span { color: var(--mute); font-size: 13px; }
+.comment-text { margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.comment-foot { margin-top: 6px; display: flex; gap: 14px; color: var(--mute); font-size: 13px; align-items: center; }
+.comment-foot .i { font-size: 16px; }
+.replies { margin: 6px 0 0 24px; }
+
+@media (max-width: 720px) {
+  .stage.mini { right: 12px; bottom: 80px; width: 60vw; }
+}
+
+/* Comments flying over the picture (Bilibili). */
+.danmaku-layer { position: absolute; inset: 0; z-index: 6; overflow: hidden; pointer-events: none; }
+.danmaku-item { position: absolute; white-space: nowrap; font-weight: 600; line-height: 1; text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 0 6px rgba(0, 0, 0, 0.6); will-change: transform; }
+.danmaku-item.scroll { left: 0; animation: danmaku-scroll var(--dur, 8s) linear forwards; }
+.danmaku-item.top, .danmaku-item.bottom { left: 50%; transform: translateX(-50%); animation: danmaku-fade 4s linear forwards; }
+.danmaku-layer.paused .danmaku-item { animation-play-state: paused; }
+@keyframes danmaku-scroll { from { transform: translateX(var(--from)); } to { transform: translateX(var(--to)); } }
+@keyframes danmaku-fade { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
+
+.who-link { display: flex; align-items: center; gap: 12px; padding: 4px 16px 4px 4px; border-radius: 28px; color: inherit; }
+.who-link:hover { background: var(--s1); }
+body[data-input="keys"] .who-link.sel, body[data-input="keys"] .card.sel .thumb { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc); }
+body[data-input="keys"].player-mode .stage:not(.mini) { box-shadow: inset 0 0 0 5px var(--acc); }
