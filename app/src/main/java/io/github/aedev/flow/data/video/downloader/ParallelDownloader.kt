@@ -74,6 +74,22 @@ class ParallelDownloader @Inject constructor(
      * For parallel block downloads we must strip that cap and append `&range=X-Y` per-block,
      * matching how YouTube's official clients (and MusicPlayerUtils) do it.
      */
+    private fun isBilibiliCdnUrl(url: String): Boolean =
+        try {
+            val host = Uri.parse(url).host.orEmpty()
+            host.contains("bilivideo") || host.contains("akamaized.net")
+        } catch (_: Exception) {
+            false
+        }
+
+    /** Bilibili's CDN answers 403 unless the request looks like it came from bilibili.com. */
+    private fun Request.Builder.withSiteHeaders(url: String): Request.Builder =
+        if (isBilibiliCdnUrl(url)) {
+            header("Referer", "https://www.bilibili.com/").header("Origin", "https://www.bilibili.com")
+        } else {
+            this
+        }
+
     private fun isYouTubeStreamUrl(url: String): Boolean {
         return try {
             val host = Uri.parse(url).host ?: return false
@@ -445,6 +461,7 @@ class ParallelDownloader @Inject constructor(
                 .url(url)
                 .header("Range", "bytes=$resumeFrom-$endByte")
                 .header("User-Agent", effectiveUserAgent)
+                .withSiteHeaders(url)
                 .build()
         }
 
@@ -515,6 +532,7 @@ class ParallelDownloader @Inject constructor(
                     .url(url)
                     .head()
                     .header("User-Agent", effectiveUserAgent)
+                    .withSiteHeaders(url)
                     .build()
                 val response = client.newCall(request).execute()
                 val length = response.header("Content-Length")?.toLongOrNull() ?: -1L
@@ -535,6 +553,7 @@ class ParallelDownloader @Inject constructor(
                     .url(url)
                     .header("Range", "bytes=0-0")
                     .header("User-Agent", effectiveUserAgent)
+                    .withSiteHeaders(url)
                     .build()
             }
             val rangeResponse = client.newCall(rangeRequest).execute()

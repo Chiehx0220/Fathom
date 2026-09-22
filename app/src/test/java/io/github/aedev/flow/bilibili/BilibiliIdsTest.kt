@@ -62,6 +62,20 @@ class BilibiliIdsTest {
     }
 
     @Test
+    fun shareTrackingParametersAreNotPartOfTheId() {
+        assertThat(BilibiliVideoId.fromUrl("https://www.bilibili.com/video/BV1SHM36KE6Y/?share_source=copy_web&vd_source=abc"))
+            .isEqualTo("BV1SHM36KE6Y")
+        assertThat(BilibiliVideoId.fromUrl("https://www.bilibili.com/video/BV1SHM36KE6Y?spm_id_from=1&p=3&t=20"))
+            .isEqualTo("BV1SHM36KE6Y?p=3")
+        assertThat(BilibiliVideoId.of("BV1SHM36KE6Y")).isEqualTo("BV1SHM36KE6Y?p=1")
+    }
+
+    @Test
+    fun aMobileSpaceLinkGivesTheUploaderId() {
+        assertThat(BilibiliChannelId.midOf("https://m.bilibili.com/space/455557356")).isEqualTo(455557356L)
+    }
+
+    @Test
     fun onlyTheBvShapeCountsAsBilibili() {
         assertThat(BilibiliVideoId.isBilibili("BV1SHM36KE6Y?p=1")).isTrue()
         assertThat(BilibiliVideoId.isBilibili("BV1SHM36KE6Y")).isTrue()

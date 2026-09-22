@@ -41,6 +41,9 @@ import io.github.aedev.flow.player.LifecyclePlaybackPreferences
 import io.github.aedev.flow.player.MemoryPressurePolicy
 import io.github.aedev.flow.player.PictureInPictureHelper
 import io.github.aedev.flow.ui.FlowApp
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliDeepLink
+import io.github.aedev.flow.bilibili.BilibiliLinkTarget
 import io.github.aedev.flow.ui.PendingDeeplink
 import io.github.aedev.flow.ui.components.ProvideVideoCardState
 import io.github.aedev.flow.ui.components.UpdateDialog
@@ -54,6 +57,7 @@ import io.github.aedev.flow.ui.theme.ThemeVariant
 import io.github.aedev.flow.ui.tv.FlowTvApp
 import io.github.aedev.flow.ui.utils.ProvideWindowSizeClass
 import io.github.aedev.flow.ui.youtubeChannelDeepLinkRoute
+import io.github.aedev.flow.ui.youtubeChannelRoute
 import io.github.aedev.flow.updater.ApkUpdateHelper
 import io.github.aedev.flow.utils.AppLanguageManager
 import io.github.aedev.flow.utils.FlowCrashHandler
@@ -183,7 +187,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val scope = rememberCoroutineScope()
-            var themeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }
+            var themeMode by remember { mutableStateOf(ThemeMode.MATERIAL_YOU) }
             var themeVariant by remember { mutableStateOf(ThemeVariant.DARK) }
             var customThemePalettes by remember { mutableStateOf(CustomThemePalettes()) }
             var systemLightThemeMode by remember { mutableStateOf(ThemeMode.DARK) }
@@ -501,6 +505,7 @@ class MainActivity : ComponentActivity() {
                 intent.action == Intent.ACTION_SEND && intent.type == "text/plain" -> intent.getStringExtra(Intent.EXTRA_TEXT)
                 else -> null
             }
+        if (linkedText != null && openBilibiliLink(linkedText)) return
         val channelRoute = linkedText?.let(::youtubeChannelDeepLinkRoute)
         if (channelRoute != null) {
             _pendingRoute.value = channelRoute
@@ -564,6 +569,23 @@ class MainActivity : ComponentActivity() {
             val url = intent.getStringExtra("EXTRA_UPDATE_URL") ?: ""
             _pendingUpdateInfo.value = UpdateInfo(version, changelog, url, true)
         }
+    }
+
+    /** Opens a Bilibili video or uploader link, also inside a shared text or behind a b23.tv short link; false when [text] has none. */
+    private fun openBilibiliLink(text: String): Boolean {
+        fun open(target: BilibiliLinkTarget) {
+            when (target) {
+                is BilibiliLinkTarget.Video -> _pendingDeeplink.value = PendingDeeplink(videoId = target.videoId, serviceId = BILIBILI_SERVICE_ID)
+                is BilibiliLinkTarget.Uploader -> _pendingRoute.value = youtubeChannelRoute(target.mid.toString(), BILIBILI_SERVICE_ID)
+            }
+        }
+        BilibiliDeepLink.parse(text)?.let {
+            open(it)
+            return true
+        }
+        if (!BilibiliDeepLink.isShortLink(text)) return false
+        lifecycleScope.launch { BilibiliDeepLink.resolve(text)?.let { open(it) } }
+        return true
     }
 
     fun consumeDeeplink() {

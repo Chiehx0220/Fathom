@@ -32,6 +32,54 @@ class BilibiliMirrorsTest {
         assertThat(group.order()).containsExactly(backup, primary).inOrder()
     }
 
+    private val bytes = 4L * 1024 * 1024
+
+    @Test
+    fun `the faster measured host is tried first`() {
+        BilibiliMirrors.register(primary, listOf(backup))
+        BilibiliMirrors.recordSpeed(primary, bytes, 40_000_000_000L, nowMs = 1_000)
+        BilibiliMirrors.recordSpeed(backup, bytes, 4_000_000_000L, nowMs = 1_000)
+
+        assertThat(BilibiliMirrors.groupFor(primary)!!.order(nowMs = 2_000)).containsExactly(backup, primary).inOrder()
+    }
+
+    @Test
+    fun `a host with no measurement is tried before measured ones`() {
+        BilibiliMirrors.register(primary, listOf(backup))
+        BilibiliMirrors.recordSpeed(primary, bytes, 4_000_000_000L, nowMs = 1_000)
+
+        assertThat(BilibiliMirrors.groupFor(primary)!!.order(nowMs = 2_000)).containsExactly(backup, primary).inOrder()
+    }
+
+    @Test
+    fun `a measurement goes stale and the host is measured again`() {
+        BilibiliMirrors.register(primary, listOf(backup))
+        BilibiliMirrors.recordSpeed(primary, bytes, 40_000_000_000L, nowMs = 1_000)
+        BilibiliMirrors.recordSpeed(backup, bytes, 4_000_000_000L, nowMs = 100_000)
+
+        assertThat(BilibiliMirrors.speedOf(primary, nowMs = 100_000)).isNull()
+        assertThat(BilibiliMirrors.groupFor(primary)!!.order(nowMs = 100_000)).containsExactly(primary, backup).inOrder()
+    }
+
+    @Test
+    fun `short transfers do not count as a measurement`() {
+        BilibiliMirrors.recordSpeed(primary, 10_000L, 1_000_000_000L, nowMs = 1_000)
+        BilibiliMirrors.recordSpeed(primary, bytes, 10_000_000L, nowMs = 1_000)
+
+        assertThat(BilibiliMirrors.speedOf(primary, nowMs = 1_500)).isNull()
+    }
+
+    @Test
+    fun `the speed is per host and smoothed over transfers`() {
+        BilibiliMirrors.recordSpeed(primary, bytes, 4_000_000_000L, nowMs = 1_000)
+        BilibiliMirrors.recordSpeed("https://upos-sz-mirrorcosov.bilivideo.com/other/2.m4s", bytes, 2_000_000_000L, nowMs = 2_000)
+
+        val speed = BilibiliMirrors.speedOf(primary, nowMs = 3_000)!!
+        val first = bytes * 1e9 / 4_000_000_000L
+        val second = bytes * 1e9 / 2_000_000_000L
+        assertThat(speed).isWithin(1.0).of((first + second) / 2)
+    }
+
     @Test
     fun `a stream with no backup has no group and is never hedged`() {
         BilibiliMirrors.register(primary, emptyList())

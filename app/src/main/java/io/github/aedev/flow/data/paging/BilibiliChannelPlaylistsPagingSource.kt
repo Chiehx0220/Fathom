@@ -11,7 +11,6 @@ import io.github.aedev.flow.data.model.Playlist
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.schabi.newpipe.extractor.ServiceList
 
 /** A Bilibili uploader's Playlists tab (series and seasons) through the native client; the key is the 1-based page. */
 class BilibiliChannelPlaylistsPagingSource(

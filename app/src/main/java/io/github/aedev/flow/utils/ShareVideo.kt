@@ -5,7 +5,7 @@ import android.content.Intent
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import org.schabi.newpipe.extractor.ServiceList
-import org.schabi.newpipe.localserver.videoIdToUrl
+import io.github.aedev.flow.localserver.videoIdToUrl
 
 /**
  * The canonical watch link for a video, optionally seeked to [positionSeconds]. The timestamp

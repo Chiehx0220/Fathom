@@ -110,9 +110,17 @@ class YouTubeHttpDataSource private constructor(
         }
     }
 
+    // The Bilibili transfer in progress: which URL, and what its reads have moved so far (see BilibiliMirrors.recordSpeed).
+    private var speedUrl: String? = null
+    private var readBytes = 0L
+    private var readNanos = 0L
+
     @UnstableApi
     override fun open(dataSpec: DataSpec): Long {
         currentUri = dataSpec.uri
+        speedUrl = null
+        readBytes = 0L
+        readNanos = 0L
 
         val isBili = isBilibiliCdnUri(dataSpec.uri)
         val requestUserAgent =
@@ -177,6 +185,7 @@ class YouTubeHttpDataSource private constructor(
                 length = dataSource!!.open(dataSpec)
             }
             currentUri = openedUri
+            if (isBili) speedUrl = openedUri.toString()
             if (isBili) {
                 // Only the requests worth a look: one that needed its other mirror, or that took long
                 // to answer. The rest is the normal case and would bury these.
@@ -241,9 +250,19 @@ class YouTubeHttpDataSource private constructor(
         buffer: ByteArray,
         offset: Int,
         length: Int,
-    ): Int = dataSource?.read(buffer, offset, length) ?: C.RESULT_END_OF_INPUT
+    ): Int {
+        val source = dataSource ?: return C.RESULT_END_OF_INPUT
+        if (speedUrl == null) return source.read(buffer, offset, length)
+        val startedNanos = System.nanoTime()
+        val count = source.read(buffer, offset, length)
+        readNanos += System.nanoTime() - startedNanos
+        if (count > 0) readBytes += count
+        return count
+    }
 
     override fun close() {
+        speedUrl?.let { BilibiliMirrors.recordSpeed(it, readBytes, readNanos) }
+        speedUrl = null
         dataSource?.close()
         dataSource = null
     }

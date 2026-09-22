@@ -8,7 +8,7 @@ import java.net.URLEncoder
  * string, and a YouTube channel is never all digits, so this is how the two are told apart.
  */
 object BilibiliChannelId {
-    private val SPACE_URL = Regex("""space\.bilibili\.com/(\d+)""")
+    private val SPACE_URL = Regex("""(?:space\.bilibili\.com|bilibili\.com/space)/(\d+)""")
 
     fun isMid(value: String): Boolean = value.isNotEmpty() && value.all(Char::isDigit)
 
@@ -59,6 +59,8 @@ object BilibiliPlaylistId {
  */
 object BilibiliVideoId {
     private val PATTERN = Regex("""^BV[0-9A-Za-z]{10}(\?p=\d+)?$""")
+    private val LINK = Regex("""/video/(BV[0-9A-Za-z]{10})""")
+    private val PART = Regex("""[?&]p=(\d+)""")
 
     /**
      * True for an id in that shape. Older saved rows can carry the wrong service id, so the id
@@ -82,9 +84,21 @@ object BilibiliVideoId {
         return bvid to page
     }
 
-    /** "https://www.bilibili.com/video/BV1xx?p=2" -> "BV1xx?p=2"; null when [url] is not a video link. */
-    fun fromUrl(url: String): String? =
-        if (url.contains(VIDEO_PATH)) url.substringAfter(VIDEO_PATH).trimEnd('/').ifEmpty { null } else null
+    /**
+     * The id in a video link, ignoring share-tracking parameters: "https://www.bilibili.com/video/BV1xx/?p=2&spm=1"
+     * -> "BV1xx?p=2", and "BV1xx" when the link names no part. Null when [url] is not a video link.
+     */
+    fun fromUrl(url: String): String? {
+        val bvid = LINK.find(url)?.groupValues?.get(1) ?: return null
+        val page = PART.find(url)?.groupValues?.get(1)?.toIntOrNull()?.takeIf { it >= 1 }
+        return if (page != null) "$bvid?p=$page" else bvid
+    }
+
+    /** The id of one part in its canonical "BV1xx?p=N" form, which is how Flow stores and compares video ids. */
+    fun of(
+        bvid: String,
+        page: Int = 1,
+    ): String = "$bvid?p=$page"
 
     fun toUrl(videoId: String): String = "https://www.bilibili.com$VIDEO_PATH$videoId"
 

@@ -144,6 +144,32 @@
                 <data android:host="youtu.be" />
             </intent-filter>
 
+            <!-- Bilibili videos and uploader pages, and b23.tv short links. No autoVerify: the domains are not ours. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="www.bilibili.com" />
+                <data android:host="bilibili.com" />
+                <data android:host="m.bilibili.com" />
+                <data android:pathPrefix="/video/BV" />
+                <data android:pathPrefix="/space" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="space.bilibili.com" />
+                <data android:host="b23.tv" />
+            </intent-filter>
+
             <!-- Piped frontend links (same video IDs as YouTube) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -217,9 +243,15 @@
             android:foregroundServiceType="dataSync">
         </service>
 
+        <!-- The phone as a remote for the page paired with the local server. -->
+        <activity
+            android:name="io.github.aedev.flow.localserver.RemoteActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Flow" />
+
         <!-- Local Server foreground service: serves the local web UI on port 8080. -->
         <service
-            android:name="org.schabi.newpipe.localserver.ServerService"
+            android:name="io.github.aedev.flow.localserver.ServerService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync">
