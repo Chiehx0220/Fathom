@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Fathom logo in colour, as on the launcher icon: badge, water, ruler and the play mark floating beside it.
+     For places that show the logo itself (About). Notifications keep the single-colour ic_notification_logo. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#F2EDE0"
+        android:pathData="M7,2 L17,2 C20,2 22,4 22,7 L22,17 C22,20 20,22 17,22 L7,22 C4,22 2,20 2,17 L2,7 C2,4 4,2 7,2 Z" />
+    <group>
+        <clip-path android:pathData="M7,2 L17,2 C20,2 22,4 22,7 L22,17 C22,20 20,22 17,22 L7,22 C4,22 2,20 2,17 L2,7 C2,4 4,2 7,2 Z" />
+        <path
+            android:fillColor="#595B8DEF"
+            android:pathData="M0.00,13.76 L0.50,13.98 L1.00,14.04 L1.50,13.93 L2.00,13.68 L2.50,13.35 L3.00,13.04 L3.50,12.82 L4.00,12.76 L4.50,12.87 L5.00,13.12 L5.50,13.45 L6.00,13.76 L6.50,13.98 L7.00,14.04 L7.50,13.93 L8.00,13.68 L8.50,13.35 L9.00,13.04 L9.50,12.82 L10.00,12.76 L10.50,12.87 L11.00,13.12 L11.50,13.45 L12.00,13.76 L12.50,13.98 L13.00,14.04 L13.50,13.93 L14.00,13.68 L14.50,13.35 L15.00,13.04 L15.50,12.82 L16.00,12.76 L16.50,12.87 L17.00,13.12 L17.50,13.45 L18.00,13.76 L18.50,13.98 L19.00,14.04 L19.50,13.93 L20.00,13.68 L20.50,13.35 L21.00,13.04 L21.50,12.82 L22.00,12.76 L22.50,12.87 L23.00,13.12 L23.50,13.45 L24.00,13.76 L24,24 L0,24 Z" />
+        <path
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="#D95B8DEF"
+            android:strokeWidth="0.9"
+            android:strokeLineCap="round"
+            android:pathData="M0.00,13.76 L0.50,13.98 L1.00,14.04 L1.50,13.93 L2.00,13.68 L2.50,13.35 L3.00,13.04 L3.50,12.82 L4.00,12.76 L4.50,12.87 L5.00,13.12 L5.50,13.45 L6.00,13.76 L6.50,13.98 L7.00,14.04 L7.50,13.93 L8.00,13.68 L8.50,13.35 L9.00,13.04 L9.50,12.82 L10.00,12.76 L10.50,12.87 L11.00,13.12 L11.50,13.45 L12.00,13.76 L12.50,13.98 L13.00,14.04 L13.50,13.93 L14.00,13.68 L14.50,13.35 L15.00,13.04 L15.50,12.82 L16.00,12.76 L16.50,12.87 L17.00,13.12 L17.50,13.45 L18.00,13.76 L18.50,13.98 L19.00,14.04 L19.50,13.93 L20.00,13.68 L20.50,13.35 L21.00,13.04 L21.50,12.82 L22.00,12.76 L22.50,12.87 L23.00,13.12 L23.50,13.45 L24.00,13.76" />
+    </group>
+    <group
+        android:translateX="-1.56"
+        android:translateY="0.48">
+        <path
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="#0F1D33"
+            android:strokeWidth="1.2"
+            android:strokeLineCap="round"
+            android:pathData="M8.88,4.32 L8.88,18.72 M8.88,5.28 L18.24,5.28 M8.88,10.08 L12,10.08 M8.88,14.88 L12,14.88" />
+    </group>
+    <path
+        android:fillColor="#C99A34"
+        android:pathData="M16.44,12.96 L12.36,10.56 L12.36,15.36 Z" />
+</vector>

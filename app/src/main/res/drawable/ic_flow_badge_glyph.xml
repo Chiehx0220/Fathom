@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The "F" glyph of the Flow badge (same tight-crop viewport as
-     ic_flow_badge_shape) so the two layers can be tinted independently. -->
+<!-- The Fathom ruler mark (same viewport as ic_flow_badge_shape) so the two layers can be tinted independently. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp"
+    android:width="36dp"
     android:height="36dp"
-    android:viewportWidth="20.08"
-    android:viewportHeight="15.22">
-    <group
-        android:translateX="-1.96"
-        android:translateY="-4.77">
-        <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M10 7L18 7L17.2 9.5H12.8L12.2 11.5H16L15.2 14H11.5L10.5 17H7.5L10 7Z" />
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group android:pivotX="12" android:pivotY="12" android:scaleX="0.7" android:scaleY="0.7">
+    <group android:translateX="-1.56" android:translateY="0.48">
+        <path android:fillColor="@android:color/transparent" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.6" android:strokeLineCap="round" android:pathData="M8.88,4.32 L8.88,18.72 M8.88,5.28 L18.24,5.28 M8.88,10.08 L12,10.08 M8.88,14.88 L12,14.88" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M13.92,10.08 L13.92,14.88 L18,12.48 Z" />
+    </group>
     </group>
 </vector>

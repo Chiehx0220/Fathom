@@ -1,21 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Splash icon: the Flow badge sized to fit inside the API 31+ circular
-     splash mask (content diagonal ~50 of the 66-unit inner circle). -->
+<!-- System splash icon (Android 12+): the launcher icon, water and all. Scaled so the badge is the size of the
+     in-app splash logo, and raised by half the height of the in-app logo and its name so the two line up. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <group
-        android:scaleX="2.0"
-        android:scaleY="2.0"
-        android:translateX="30"
-        android:translateY="29.6">
+        android:scaleX="1.4"
+        android:scaleY="1.4"
+        android:translateX="37.2"
+        android:translateY="26.7">
         <path
-            android:fillColor="#FF0000"
-            android:pathData="M21.58 7.16C21.33 6.22 20.59 5.48 19.65 5.23C17.96 4.77 12 4.77 12 4.77C12 4.77 6.04 4.77 4.35 5.23C3.41 5.48 2.67 6.22 2.42 7.16C1.96 8.85 1.96 12.38 1.96 12.38C1.96 12.38 1.96 15.91 2.42 17.6C2.67 18.54 3.41 19.28 4.35 19.53C6.04 19.99 12 19.99 12 19.99C12 19.99 17.96 19.99 19.65 19.53C20.59 19.28 21.33 18.54 21.58 17.6C22.04 15.91 22.04 12.38 22.04 12.38C22.04 12.38 22.04 8.85 21.58 7.16Z" />
+            android:fillColor="#F2EDE0"
+            android:pathData="M7,2 L17,2 C20,2 22,4 22,7 L22,17 C22,20 20,22 17,22 L7,22 C4,22 2,20 2,17 L2,7 C2,4 4,2 7,2 Z" />
+        <group>
+            <clip-path android:pathData="M7,2 L17,2 C20,2 22,4 22,7 L22,17 C22,20 20,22 17,22 L7,22 C4,22 2,20 2,17 L2,7 C2,4 4,2 7,2 Z" />
+            <path
+                android:fillColor="#595B8DEF"
+                android:pathData="M0.00,13.76 L0.50,13.98 L1.00,14.04 L1.50,13.93 L2.00,13.68 L2.50,13.35 L3.00,13.04 L3.50,12.82 L4.00,12.76 L4.50,12.87 L5.00,13.12 L5.50,13.45 L6.00,13.76 L6.50,13.98 L7.00,14.04 L7.50,13.93 L8.00,13.68 L8.50,13.35 L9.00,13.04 L9.50,12.82 L10.00,12.76 L10.50,12.87 L11.00,13.12 L11.50,13.45 L12.00,13.76 L12.50,13.98 L13.00,14.04 L13.50,13.93 L14.00,13.68 L14.50,13.35 L15.00,13.04 L15.50,12.82 L16.00,12.76 L16.50,12.87 L17.00,13.12 L17.50,13.45 L18.00,13.76 L18.50,13.98 L19.00,14.04 L19.50,13.93 L20.00,13.68 L20.50,13.35 L21.00,13.04 L21.50,12.82 L22.00,12.76 L22.50,12.87 L23.00,13.12 L23.50,13.45 L24.00,13.76 L24,24 L0,24 Z" />
+            <path
+                android:fillColor="@android:color/transparent"
+                android:strokeColor="#D95B8DEF"
+                android:strokeWidth="0.9"
+                android:strokeLineCap="round"
+                android:pathData="M0.00,13.76 L0.50,13.98 L1.00,14.04 L1.50,13.93 L2.00,13.68 L2.50,13.35 L3.00,13.04 L3.50,12.82 L4.00,12.76 L4.50,12.87 L5.00,13.12 L5.50,13.45 L6.00,13.76 L6.50,13.98 L7.00,14.04 L7.50,13.93 L8.00,13.68 L8.50,13.35 L9.00,13.04 L9.50,12.82 L10.00,12.76 L10.50,12.87 L11.00,13.12 L11.50,13.45 L12.00,13.76 L12.50,13.98 L13.00,14.04 L13.50,13.93 L14.00,13.68 L14.50,13.35 L15.00,13.04 L15.50,12.82 L16.00,12.76 L16.50,12.87 L17.00,13.12 L17.50,13.45 L18.00,13.76 L18.50,13.98 L19.00,14.04 L19.50,13.93 L20.00,13.68 L20.50,13.35 L21.00,13.04 L21.50,12.82 L22.00,12.76 L22.50,12.87 L23.00,13.12 L23.50,13.45 L24.00,13.76" />
+        </group>
+        <group
+            android:translateX="-1.56"
+            android:translateY="0.48">
+            <path
+                android:fillColor="@android:color/transparent"
+                android:strokeColor="#0F1D33"
+                android:strokeWidth="1.2"
+                android:strokeLineCap="round"
+                android:pathData="M8.88,4.32 L8.88,18.72 M8.88,5.28 L18.24,5.28 M8.88,10.08 L12,10.08 M8.88,14.88 L12,14.88" />
+        </group>
         <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M10 7L18 7L17.2 9.5H12.8L12.2 11.5H16L15.2 14H11.5L10.5 17H7.5L10 7Z" />
+            android:fillColor="#C99A34"
+            android:pathData="M16.44,12.96 L12.36,10.56 L12.36,15.36 Z" />
     </group>
 </vector>

@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.aedev.flow.ui.theme.BilibiliPink
 import io.github.aedev.flow.ui.theme.YouTubeRed
-import org.schabi.newpipe.extractor.ServiceList
 
 private val PlatformBadgeHorizontalPadding = 5.dp
 private val PlatformBadgeVerticalPadding = 2.dp

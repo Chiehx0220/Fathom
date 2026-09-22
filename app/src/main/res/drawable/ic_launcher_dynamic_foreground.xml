@@ -1,16 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group
-        android:scaleX="2.5"
-        android:scaleY="2.5"
-        android:translateX="24"
-        android:translateY="24">
-        <path
-            android:fillColor="#FFFFFFFF"
-            android:fillType="evenOdd"
-            android:pathData="M21.58 7.16C21.33 6.22 20.59 5.48 19.65 5.23C17.96 4.77 12 4.77 12 4.77C12 4.77 6.04 4.77 4.35 5.23C3.41 5.48 2.67 6.22 2.42 7.16C1.96 8.85 1.96 12.38 1.96 12.38C1.96 12.38 1.96 15.91 2.42 17.6C2.67 18.54 3.41 19.28 4.35 19.53C6.04 19.99 12 19.99 12 19.99C12 19.99 17.96 19.99 19.65 19.53C20.59 19.28 21.33 18.54 21.58 17.6C22.04 15.91 22.04 12.38 22.04 12.38C22.04 12.38 22.04 8.85 21.58 7.16Z M10 7L18 7L17.2 9.5H12.8L12.2 11.5H16L15.2 14H11.5L10.5 17H7.5L10 7Z" />
+    <path android:fillColor="#59FFFFFF" android:pathData="M0.0,57.9 L2.0,58.5 L4.0,57.9 L6.0,56.6 L8.0,55.7 L10.0,56.0 L12.0,57.1 L14.0,58.2 L16.0,58.4 L18.0,57.4 L20.0,56.2 L22.0,55.7 L24.0,56.4 L26.0,57.6 L28.0,58.4 L30.0,58.1 L32.0,56.9 L34.0,55.8 L36.0,55.8 L38.0,56.9 L40.0,58.1 L42.0,58.5 L44.0,57.7 L46.0,56.4 L48.0,55.7 L50.0,56.1 L52.0,57.4 L54.0,58.4 L56.0,58.3 L58.0,57.2 L60.0,56.0 L62.0,55.7 L64.0,56.6 L66.0,57.9 L68.0,58.5 L70.0,57.9 L72.0,56.6 L74.0,55.7 L76.0,56.0 L78.0,57.1 L80.0,58.2 L82.0,58.4 L84.0,57.4 L86.0,56.2 L88.0,55.7 L90.0,56.4 L92.0,57.6 L94.0,58.4 L96.0,58.1 L98.0,56.9 L100.0,55.8 L102.0,55.8 L104.0,56.9 L106.0,58.1 L108.0,58.5 L108,108 L0,108 Z"/>
+    <path android:fillColor="@android:color/transparent" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.9" android:strokeLineCap="round" android:pathData="M0.0,57.9 L2.0,58.5 L4.0,57.9 L6.0,56.6 L8.0,55.7 L10.0,56.0 L12.0,57.1 L14.0,58.2 L16.0,58.4 L18.0,57.4 L20.0,56.2 L22.0,55.7 L24.0,56.4 L26.0,57.6 L28.0,58.4 L30.0,58.1 L32.0,56.9 L34.0,55.8 L36.0,55.8 L38.0,56.9 L40.0,58.1 L42.0,58.5 L44.0,57.7 L46.0,56.4 L48.0,55.7 L50.0,56.1 L52.0,57.4 L54.0,58.4 L56.0,58.3 L58.0,57.2 L60.0,56.0 L62.0,55.7 L64.0,56.6 L66.0,57.9 L68.0,58.5 L70.0,57.9 L72.0,56.6 L74.0,55.7 L76.0,56.0 L78.0,57.1 L80.0,58.2 L82.0,58.4 L84.0,57.4 L86.0,56.2 L88.0,55.7 L90.0,56.4 L92.0,57.6 L94.0,58.4 L96.0,58.1 L98.0,56.9 L100.0,55.8 L102.0,55.8 L104.0,56.9 L106.0,58.1 L108.0,58.5"/>
+    <group android:scaleX="2.2" android:scaleY="2.2" android:translateX="27.6" android:translateY="27.6">
+        <group android:translateX="-1.56" android:translateY="0.48">
+            <path android:fillColor="@android:color/transparent" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.2" android:strokeLineCap="round" android:pathData="M8.88,4.32 L8.88,18.72 M8.88,5.28 L18.24,5.28 M8.88,10.08 L12,10.08 M8.88,14.88 L12,14.88"/>
+            <path android:fillColor="#FFFFFFFF" android:pathData="M13.92,10.08 L13.92,14.88 L18,12.48 Z"/>
+        </group>
     </group>
 </vector>
