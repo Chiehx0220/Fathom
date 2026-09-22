@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="subscriptions_search_placeholder">Rechercher des abonnements...</string>
     <string name="top_bar_subscriptions_title">Abonnements</string>
     <string name="view_all_button_label">Tout voir</string>
@@ -192,7 +192,7 @@
     <string name="chapters">Chapitres</string>
     <string name="artist">Artiste</string>
     <string name="playlist">Playlist</string>
-    <string name="app_name_uppercase">FLOW</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">Votre fil personnalisé</string>
     <string name="import_newpipe_backup">Importer la sauvegarde NewPipe</string>
@@ -1051,7 +1051,6 @@
     <string name="settings_language_dialog_title">Sélectionner la langue de l\'application</string>
     <string name="settings_language_system_default">Paramètres par défaut du système</string>
     <string name="app_icon_apply_toast">L\'icône a été mise à jour – votre lanceur va s\'actualiser</string>
-    <string name="icon_name_flow_red">Flow Rouge</string>
     <string name="icon_name_monochrome">Monochrome</string>
     <string name="icon_name_ghost">Fantôme</string>
     <string name="icon_name_dynamic">Material You</string>
@@ -1488,7 +1487,6 @@
     <string name="appearance_system_defaults_subtitle">Choisissez le thème à utiliser lorsque votre appareil passe du mode clair au mode sombre.</string>
     <string name="appearance_system_light_theme">Thème en mode clair</string>
     <string name="appearance_system_dark_theme">Thème en mode sombre</string>
-    <string name="icon_name_flow_light">Flow clair</string>
     <string name="icon_name_material_sky">Material Sky</string>
     <string name="icon_name_material_mint">Material Mint</string>
     <string name="theme_name_material_you">Material You</string>
@@ -1672,7 +1670,6 @@
     <string name="share_link_only_template">%1$s</string>
     <string name="content_settings_share_without_text_title">Partager des liens sans texte</string>
     <string name="content_settings_share_without_text_subtitle">Partagez uniquement le lien vers la vidéo, sans le message « Regardez cette vidéo »</string>
-    <string name="icon_name_flow_play">Flow Lecture</string>
     <string name="player_appearance_controls_while_loading_title">Commandes pendant le chargement</string>
     <string name="player_appearance_controls_while_loading_subtitle">Affichez les commandes de lecture avant la fin du chargement de la vidéo afin de pouvoir régler le volume immédiatement</string>
     <string name="player_settings_autoplay_countdown_title">Délai de lecture automatique</string>

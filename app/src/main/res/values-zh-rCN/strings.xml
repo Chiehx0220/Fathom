@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="subscriptions_search_placeholder">搜索订阅...</string>
     <string name="subscriptions_sort_label">频道排序</string>
     <string name="subscriptions_sort_default">默认</string>
@@ -290,7 +290,7 @@
     <string name="artist">艺术家</string>
     <string name="playlist">播放列表</string>
     <string name="playlist_visibility_metadata">%1$s • %2$s</string>
-    <string name="app_name_uppercase">FLOW</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">您的个性化信息流</string>
     <string name="import_newpipe_backup">导入NewPipe备份</string>
@@ -555,9 +555,6 @@
     <string name="app_icon_picker_subtitle">选择启动器图标样式。更改立即生效，启动器将短暂刷新。</string>
     <string name="app_icon_picker_warning">注意：切换图标使用 Android 系统机制，可能会暂时从主屏幕上删除应用程序快捷方式。如果需要，长按启动器可将其添加回来。</string>
     <string name="app_icon_apply_toast">图标已更新 - 您的启动器将刷新</string>
-    <string name="icon_name_flow_red">Flow 红色</string>
-    <string name="icon_name_flow_light">Flow Light</string>
-    <string name="icon_name_flow_play">Flow Play</string>
     <string name="icon_name_amoled">AMOLED 深色</string>
     <string name="icon_name_monochrome">单色</string>
     <string name="icon_name_ghost">幽灵</string>

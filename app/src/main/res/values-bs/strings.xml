@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="subscriptions_search_placeholder">Pretraži pretplate…</string>
     <string name="top_bar_subscriptions_title">Pretplate</string>
     <string name="view_all_button_label">Svi</string>
@@ -199,7 +199,7 @@
     <string name="chapters">Poglavlja</string>
     <string name="artist">Izvođač</string>
     <string name="playlist">Lista za reprodukciju</string>
-    <string name="app_name_uppercase">FLOW</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">Vaš personalizirani feed</string>
     <string name="import_newpipe_backup">Uvezi sigurnosnu kopiju iz NewPipe-a</string>
@@ -404,7 +404,6 @@
     <string name="app_icon_picker_subtitle">Odaberite stil ikone pokretača. Promjena stupa na snagu odmah i pokretač će se nakratko osvježiti.</string>
     <string name="app_icon_picker_warning">⚠ Oprez: promjena ikona koristi mehanizam Android sistema koji može nakratko ukloniti prečac aplikacije s početnog ekrana. Dugo pritisnite launcher da ga vratite ako je potrebno.</string>
     <string name="app_icon_apply_toast">Ikona je ažurirana — vaš launcher će se osvježiti</string>
-    <string name="icon_name_flow_red">Flow Crvena</string>
     <string name="icon_name_amoled">AMOLED Tamna</string>
     <string name="icon_name_monochrome">Monochrome</string>
     <string name="icon_name_ghost">Duh</string>

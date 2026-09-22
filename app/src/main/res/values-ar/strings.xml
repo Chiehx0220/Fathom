@@ -992,7 +992,7 @@
     <string name="add_all_to_playlist">أضف إلى قائمة التشغيل الخاصة بي</string>
     <string name="merge_playlist_dialog_title">أضف جميع الأغاني إلى…</string>
     <string name="merge_playlist_no_playlists">لا توجد قوائم تشغيل حتى الآن. أنشئ واحدة أولاً!</string>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="library_music_playlists_label">قوائم تشغيل الموسيقى</string>
     <string name="library_music_playlists_subtitle">مجموعات الموسيقى الخاصة بك</string>
     <string name="library_manage_data_subtitle">مسح ذاكرة التخزين المؤقت و التاريخ</string>
@@ -1052,7 +1052,7 @@
     <string name="ago">منذ</string>
     <string name="since">منذ</string>
     <string name="play_next_desc">أضف إلى بداية قائمة الانتظار</string>
-    <string name="app_name_uppercase">FLOW</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="explicit">صريحة</string>
     <string name="filter_hd">HD</string>
@@ -1066,7 +1066,6 @@
     <string name="settings_item_time_management">إدارة الوقت</string>
     <string name="settings_item_time_management_subtitle">إحصائيات الاستخدام، تذكيرات وقت النوم</string>
     <string name="app_icon_apply_toast">تم تحديث الأيقونة - سيتم تحديث مشغل التطبيقات الخاص بك</string>
-    <string name="icon_name_flow_red">Flow أحمر</string>
     <string name="icon_name_dynamic">نمط Material You</string>
     <string name="player_nav_btn_subtitle">إظهار أزرار الفيديو التالي و السابق في المشغل المصغر</string>
     <string name="lyrics_provider_title">مُقدّم كلمات الأغاني</string>
@@ -1429,7 +1428,6 @@
     <string name="appearance_system_defaults_subtitle">إختر السمة التي سيتم استخدامها عند تبديل جهازك بين الوضع الفاتح والوضع الداكن.</string>
     <string name="appearance_system_light_theme">الوضع الفاتح</string>
     <string name="appearance_system_dark_theme">الوضع الداكن</string>
-    <string name="icon_name_flow_light">Flow فاتح</string>
     <string name="icon_name_material_sky">سماوي Material</string>
     <string name="icon_name_material_mint">نعناع Material</string>
     <string name="theme_name_material_you">الألوان الديناميكية</string>
@@ -1635,7 +1633,6 @@
     <string name="content_settings_share_without_text_subtitle">شارك فقط رابط الفيديو، بدون رسالة \"شاهد هذا الفيديو\"</string>
     <string name="deep_flow_save_history_title">حفظ إلي سجل المشاهدة</string>
     <string name="deep_flow_save_history_subtitle">إحتفظ بالفيديوهات التي شاهدتها في سجل المشاهدة (مع مؤشر التقدم في الفيديو). لن يتعلم محرك الإقتراحات منها. إيقاف = عدم حفظ أي شيء.</string>
-    <string name="icon_name_flow_play">تشغيل Flow</string>
     <string name="player_appearance_controls_while_loading_subtitle">إعرض عناصر التحكم في المشغل قبل اكتمال تحميل الفيديو حتى تتمكن من ضبط مستوى الصوت على الفور</string>
     <string name="content_settings_watched_threshold_90">تم تشغيل 90%</string>
     <string name="content_settings_watched_threshold_95">تم تشغيل 95%</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="subscriptions_search_placeholder">Abunəliklərdə axtar...</string>
     <string name="subscriptions_sort_label">Kanalları sırala</string>
     <string name="subscriptions_sort_default">Defolt</string>
@@ -290,7 +290,7 @@
     <string name="artist">İfaçı</string>
     <string name="playlist">Pleylist</string>
     <string name="playlist_visibility_metadata">%1$s • %2$s</string>
-    <string name="app_name_uppercase">FLOW</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">Fərdiləşdirilmiş lentiniz</string>
     <string name="import_newpipe_backup">NewPipe ehtiyat nüsxəsini idxal et</string>
@@ -555,9 +555,6 @@
     <string name="app_icon_picker_subtitle">Başladıcı nişanının üslubunu seçin. Dəyişiklik dərhal qüvvəyə minəcək və başladıcı qısa müddətə yenilənəcək.</string>
     <string name="app_icon_picker_warning">Diqqət: nişan dəyişdirilərkən Android sistem mexanizmi tətbiq qısayolunu əsas ekrandan qısa müddətə silə bilər. Lazım gələrsə, başladıcıya basıb saxlayaraq onu yenidən əlavə edin.</string>
     <string name="app_icon_apply_toast">Nişan yeniləndi — başladıcı yenilənəcək</string>
-    <string name="icon_name_flow_red">Flow qırmızısı</string>
-    <string name="icon_name_flow_light">Flow açıq</string>
-    <string name="icon_name_flow_play">Flow Play</string>
     <string name="icon_name_amoled">AMOLED tünd</string>
     <string name="icon_name_monochrome">Monoxrom</string>
     <string name="icon_name_ghost">Ruh</string>

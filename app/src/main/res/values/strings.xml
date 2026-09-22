@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="subscriptions_search_placeholder">Search subscriptions ...</string>
     <string name="subscriptions_sort_label">Sort channels</string>
     <string name="subscriptions_sort_default">Default</string>
@@ -373,7 +373,7 @@
     <string name="channel_links">Links</string>
     <string name="artist">Artist</string>
     <string name="playlist">Playlist</string>
-    <string name="app_name_uppercase">FLOW</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">Your personalized feed</string>
     <plurals name="videos_curated_template">
@@ -642,6 +642,40 @@
     <string name="settings_local_server_status_online">SERVER ONLINE</string>
     <string name="settings_local_server_status_offline">OFFLINE</string>
     <string name="settings_local_server_open_browser">Open in Browser</string>
+    <string name="settings_local_server_open_remote">Remote Control</string>
+    <string name="remote_title">Remote Control</string>
+    <string name="remote_connected_to">Connected to %1$s</string>
+    <string name="remote_disconnect">Disconnect</string>
+    <string name="remote_not_connected">Not connected</string>
+    <string name="remote_how_to_connect">On the TV or computer, open the local server in a browser and press the cast button at the top.</string>
+    <string name="remote_tab_directions">Directions</string>
+    <string name="remote_tab_playback">Playback</string>
+    <string name="remote_tab_touchpad">Touchpad</string>
+    <string name="remote_search_hint">Search on the screen</string>
+    <string name="remote_search_clear">Clear</string>
+    <string name="remote_touchpad_hint">Drag to move the pointer, tap to click</string>
+    <string name="remote_ok">OK</string>
+    <string name="remote_up">Up</string>
+    <string name="remote_down">Down</string>
+    <string name="remote_left">Left</string>
+    <string name="remote_right">Right</string>
+    <string name="remote_scroll">Scroll</string>
+    <string name="remote_options">Options</string>
+    <string name="remote_chapter_previous">Previous chapter</string>
+    <string name="remote_chapter_next">Next chapter</string>
+    <string name="remote_home">Home</string>
+    <string name="remote_subscriptions">Subs</string>
+    <string name="remote_history">History</string>
+    <string name="remote_back">Back</string>
+    <string name="remote_now_playing">Now playing</string>
+    <string name="remote_no_video">No video is open. Pick one on the screen, then use these keys to control it.</string>
+    <string name="remote_rewind">Back 10 seconds</string>
+    <string name="remote_forward">Forward 10 seconds</string>
+    <string name="remote_play_pause">Play or pause</string>
+    <string name="remote_volume_down">Volume down</string>
+    <string name="remote_volume_up">Volume up</string>
+    <string name="remote_mute">Mute</string>
+    <string name="remote_fullscreen">Full screen</string>
     <string name="settings_item_local_server">Local Web Server</string>
     <string name="settings_item_local_server_subtitle">Browse and watch over the local network from any browser</string>
     <string name="settings_item_open_local_server">Open Local Server</string>
@@ -739,9 +773,9 @@
     <string name="app_icon_picker_subtitle">Choose a launcher icon style. The change takes effect immediately and the launcher will briefly refresh.</string>
     <string name="app_icon_picker_warning">Heads up: switching icons uses an Android system mechanism that may briefly remove the app shortcut from your home screen. Long-press the launcher to add it back if needed.</string>
     <string name="app_icon_apply_toast">Icon updated - your launcher will refresh</string>
-    <string name="icon_name_flow_red">Flow Red</string>
-    <string name="icon_name_flow_light">Flow Light</string>
-    <string name="icon_name_flow_play">Flow Play</string>
+    <string name="icon_name_flow_red">Fathom</string>
+    <string name="icon_name_flow_light">Fathom Light</string>
+    <string name="icon_name_flow_play">Fathom Navy</string>
     <string name="icon_name_amoled">AMOLED Dark</string>
     <string name="icon_name_monochrome">Monochrome</string>
     <string name="icon_name_ghost">Ghost</string>
@@ -951,7 +985,7 @@
     <string name="content_settings_video_card_mark_watched_title">Video card mark as watched button</string>
     <string name="content_settings_video_card_mark_watched_subtitle">Show an eye button on full and compact video cards to quickly mark videos as watched</string>
     <string name="content_settings_show_app_logo_title">Show app logo icon</string>
-    <string name="content_settings_show_app_logo_subtitle">Display the Flow logo icon next to the app name in the home screen top bar</string>
+    <string name="content_settings_show_app_logo_subtitle">Display the Fathom logo icon next to the app name in the home screen top bar</string>
     <string name="content_settings_header_shorts">Shorts</string>
     <string name="content_settings_shorts_content_title">Show Shorts</string>
     <string name="content_settings_shorts_content_subtitle">Hide every Short across the app. Saved Shorts and watch history are kept, not deleted.</string>
@@ -1548,6 +1582,13 @@
     <string name="donation_prompt_never">Don\'t show again</string>
     <!-- About Screen -->
     <string name="about_creator">Creator</string>
+    <string name="about_based_on">Based on</string>
+    <string name="about_section_fathom">Fathom</string>
+    <string name="about_section_upstream">Upstream Flow</string>
+    <string name="about_credit_pipepipe">Origin of the Bilibili client</string>
+    <string name="about_credit_localtube">Origin of the local web server</string>
+    <string name="about_credit_vidstack">Web player of the local server</string>
+    <string name="about_credit_dashjs">Streaming engine of the web player</string>
     <string name="about_creator_name">A-EDev</string>
     <string name="about_website">Website</string>
     <string name="about_website_address">flow.aedev.me</string>
@@ -2681,7 +2722,7 @@
     <string name="ui_navigate">Navigate</string>
     <string name="ui_options">Options</string>
     <string name="ui_selected">Selected</string>
-    <string name="ui_flow_logo">Flow logo</string>
+    <string name="ui_flow_logo">Fathom logo</string>
     <string name="ui_list_view">List view</string>
     <string name="ui_grid_view">Grid view</string>
     <string name="ui_back">Back</string>

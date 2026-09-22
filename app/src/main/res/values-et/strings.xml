@@ -51,7 +51,7 @@
     <string name="kbps">kbps</string>
     <string name="filter_discover">Otsi ja avasta</string>
     <string name="filter_popular">Populaarsed</string>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="library_manage_data_subtitle">Kustuta puhverdatud andmed ja ajalugu</string>
     <string name="empty_description">Kirjeldust pole saadaval</string>
     <string name="clear_all">Eemalda kõik</string>
@@ -113,7 +113,7 @@
     <string name="chapters">Peatükid</string>
     <string name="artist">Esitaja</string>
     <string name="playlist">Esitusloend</string>
-    <string name="app_name_uppercase">FLOW</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="liked_music">Meeldivaks märgitud muusika</string>
     <string name="liked_videos">Meeldivaks märgitud videod</string>

@@ -36,7 +36,7 @@
     <string name="views_template">%1$s回視聴</string>
     <string name="views_count_short_template">%1$s回視聴</string>
     <string name="artist_views_template">%1$s • %2$s回視聴</string>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="history_tab_shorts">ショート</string>
     <string name="library_liked_videos_label">高く評価した動画</string>
     <string name="liked">高評価</string>

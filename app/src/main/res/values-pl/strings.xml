@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="subscribers_count_template">%1$s subskrybentów</string>
     <string name="error_yt_music_premium_hint">Ten utwór jest dostępny tylko dla subskrybentów YouTube Music Premium.</string>
     <string name="support_flow_dev_desc">Jeśli uważasz, że Flow jest przydatny i chcesz wesprzeć jego rozwój, możesz wesprzeć go na Patreonie lub przekazać darowiznę za pośrednictwem poniższych adresów. Twoje wsparcie pomoże utrzymać projekt przy życiu!</string>
@@ -247,7 +247,7 @@
     <string name="chapters">Sekcje</string>
     <string name="artist">Artysta</string>
     <string name="playlist">Playlista</string>
-    <string name="app_name_uppercase">FLOW</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">Twoja spersonalizowana zawartość</string>
     <string name="import_newpipe_backup">Importuj kopię zapasową z NewPipe</string>
@@ -462,8 +462,6 @@
     <string name="app_icon_picker_subtitle">Wybierz styl ikony aplikacji. Po zmianie aplikacja uruchomi się ponownie.</string>
     <string name="app_icon_picker_warning">Uwaga: Zmiana ikony wykorzystuje mechanizm systemu Android, który może tymczasowo usunąć skrót z ekranu głównego. Jeśli tak się stanie, wystarczy dodać go ponownie z listy aplikacji.</string>
     <string name="app_icon_apply_toast">Ikona zaktualizowana - aplikacja się włączy ponownie</string>
-    <string name="icon_name_flow_red">Flow Czerwony</string>
-    <string name="icon_name_flow_light">Flow Jasny</string>
     <string name="icon_name_amoled">Czarny AMOLED</string>
     <string name="icon_name_monochrome">Monochromatyczny</string>
     <string name="icon_name_ghost">Duch</string>
@@ -1547,7 +1545,6 @@
     <string name="appearance_color_alpha">Alfa</string>
     <string name="appearance_navigate_back">Nawiguj wstecz</string>
     <string name="appearance_selected">Zaznaczono</string>
-    <string name="icon_name_flow_play">Flow Play</string>
     <string name="shorts_saved">Short został zapisany</string>
     <string name="shorts_unsaved">Short nie został zapisany</string>
     <string name="autoplay_countdown_up_next">Następny</string>

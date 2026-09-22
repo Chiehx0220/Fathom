@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="subscriptions_search_placeholder">Abonnements durchsuchen ...</string>
     <string name="top_bar_subscriptions_title">Abonnements</string>
     <string name="view_all_button_label">Alle</string>
@@ -197,7 +197,7 @@
     <string name="chapters">Kapitel</string>
     <string name="artist">Künstler</string>
     <string name="playlist">Playlist</string>
-    <string name="app_name_uppercase">FLOW</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">Dein persönlicher Feed</string>
     <string name="import_newpipe_backup">NewPipe-Backup importieren</string>
@@ -425,7 +425,6 @@
     <string name="app_icon_picker_subtitle">Wählen Sie einen Launcher-Symbol-Stil. Die Änderung wird sofort wirksam und der Launcher wird kurz aktualisiert.</string>
     <string name="app_icon_picker_warning">Achtung: Beim Wechseln der Symbole wird ein Android-Systemmechanismus verwendet, der die App-Verknüpfung möglicherweise kurzzeitig von deinem Startbildschirm entfernt. Halte den Launcher bei Bedarf lange gedrückt, um sie wieder hinzuzufügen.</string>
     <string name="app_icon_apply_toast">Symbol aktualisiert - Ihr Launcher wird neu geladen</string>
-    <string name="icon_name_flow_red">Flow Rot</string>
     <string name="icon_name_amoled">AMOLED Dunkel</string>
     <string name="icon_name_monochrome">Monochrom</string>
     <string name="icon_name_ghost">Geist</string>
@@ -640,7 +639,6 @@
     <string name="categories_switch_to_list">Zur Listenansicht wechseln</string>
     <string name="category_all">Alle</string>
     <string name="category_trending">Im Trend</string>
-    <string name="icon_name_flow_light">Flow hell</string>
     <string name="lyrics_provider_lyrics_plus">LyricsPlus</string>
     <string name="content_settings_subs_show_shorts_subtitle">„Shorts“ im Abonnement-Feed anzeigen</string>
     <string name="content_settings_subs_show_live_title">Live-Streams im Abonnement</string>

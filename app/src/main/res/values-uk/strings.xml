@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="subscriptions_search_placeholder">Пошук підписок...</string>
     <string name="top_bar_subscriptions_title">Підписки</string>
     <string name="view_all_button_label">Всі</string>
@@ -196,7 +196,6 @@
     <string name="time_today">Сьогодні</string>
     <string name="time_yesterday">Вчора</string>
     <string name="time_earlier">Раніше</string>
-    <string name="icon_name_flow_red">Червоний Flow</string>
     <string name="icon_name_amoled">Темний AMOLED</string>
     <string name="icon_name_monochrome">Монохром</string>
     <string name="icon_name_ghost">Привид</string>
@@ -324,7 +323,7 @@
     <string name="notifications">Сповіщення</string>
     <string name="since">З</string>
     <string name="chapters">Частини</string>
-    <string name="app_name_uppercase">FLOW</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="unsubscribed_from_template">Відписано від %1$s</string>
     <string name="recent_searches">Нещодавні пошуки</string>
     <string name="end_of_results">Кінець результатів</string>
@@ -1243,7 +1242,6 @@
     <string name="appearance_system_defaults_subtitle">Виберіть тему, яка використовуватиметься під час перемикання пристрою між світлим і темним режимами.</string>
     <string name="appearance_system_light_theme">Світла тема</string>
     <string name="appearance_system_dark_theme">Темна тема</string>
-    <string name="icon_name_flow_light">Світлий Flow</string>
     <string name="icon_name_material_sky">Material Sky</string>
     <string name="icon_name_material_mint">Material Mint</string>
     <string name="player_adaptive_size_subtitle">Підлаштовувати висоту програвача під формат відео. Вимкніть для фіксованого співвідношення 16:9.</string>
@@ -1633,7 +1631,6 @@
     <string name="content_settings_share_without_text_subtitle">Поділіться лише посиланням на відео, без повідомлення «Подивись це відео»</string>
     <string name="deep_flow_save_history_title">Зберегти в історію переглядів</string>
     <string name="deep_flow_save_history_subtitle">Зберігати переглянуті відео в історії (разом із прогресом). Алгоритм все одно не використовуватиме їх для рекомендацій. Вимк = нічого не зберігається.</string>
-    <string name="icon_name_flow_play">Flow Play</string>
     <string name="player_appearance_controls_while_loading_title">Керування під час завантаження</string>
     <string name="player_appearance_controls_while_loading_subtitle">Показувати елементи керування програвачем до завершення завантаження відео, аби ви мали змогу відразу налаштувати гучність</string>
     <string name="player_settings_autoplay_countdown_title">Затримка автовідтворення</string>

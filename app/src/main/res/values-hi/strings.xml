@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Flow</string>
+    <string name="app_name">Fathom</string>
     <string name="subscriptions_search_placeholder">सब्सक्रिप्शनस में से खोजें..।</string>
     <string name="top_bar_subscriptions_title">सब्सक्रिप्शनें</string>
     <string name="view_all_button_label">सभी</string>
@@ -198,7 +198,7 @@
     <string name="chapters">अध्याय</string>
     <string name="artist">कलाकार</string>
     <string name="playlist">प्लेलिस्ट</string>
-    <string name="app_name_uppercase">FLOW</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">आपकी व्यक्तिगत फ़ीड</string>
     <string name="import_newpipe_backup">न्यूपाइप बैकअप आयात करें</string>
@@ -349,7 +349,6 @@
     <string name="app_icon_picker_subtitle">लॉन्चर आइकन शैली चुनें। परिवर्तन तुरंत प्रभावी होगा और लॉन्चर संक्षेप में ताज़ा होगा।</string>
     <string name="app_icon_picker_warning">⚠ ध्यान दें: आइकन बदलने पर Android सिस्टम तंत्र का उपयोग होता है जो होम स्क्रीन से ऐप शॉर्टकट को अस्थायी रूप से हटा सकता है। यदि आवश्यक हो तो इसे वापस जोड़ने के लिए लॉन्चर को लंबे समय तक दबाएँ।</string>
     <string name="app_icon_apply_toast">आइकन अपडेट किया गया — आपका लॉन्चर ताज़ा होगा</string>
-    <string name="icon_name_flow_red">फ्लो लाल</string>
     <string name="icon_name_amoled">AMOLED गहरा</string>
     <string name="icon_name_monochrome">एकवर्णी</string>
     <string name="icon_name_ghost">प्रेत</string>
