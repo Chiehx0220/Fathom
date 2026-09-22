@@ -28,9 +28,9 @@
 body[data-input="keys"] .pill.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc); }
 .more { display: flex; justify-content: center; padding: 24px 0 8px; }
 
-/* Search */
-.searchbar { padding: 14px var(--pad-x) 4px; max-width: 900px; }
-.suggest { display: flex; flex-direction: column; gap: 4px; margin: 10px var(--pad-x) 0; max-width: 900px; }
+/* Search: capped and centered, rather than left-anchored, on a wide screen. */
+.searchbar { max-width: 900px; margin: 14px auto 4px; padding: 0 var(--pad-x); }
+.suggest { display: flex; flex-direction: column; gap: 4px; max-width: 900px; margin: 10px auto 0; padding: 0 var(--pad-x); }
 .suggest-row { display: flex; align-items: center; gap: 4px; }
 .suggest-del { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--mute); }
 .suggest-del:hover { background: var(--s2); color: var(--fg); }
