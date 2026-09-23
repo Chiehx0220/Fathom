@@ -29,7 +29,6 @@ import io.github.aedev.flow.player.EnhancedMusicPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.ui.components.musicplayer.MusicPlayerSheetState
 import io.github.aedev.flow.ui.components.videoplayer.PlayerDraggableState
-import io.github.aedev.flow.ui.components.videoplayer.PlayerSheetValue
 import io.github.aedev.flow.ui.screens.channel.ChannelScreen
 import io.github.aedev.flow.ui.screens.history.HistoryScreen
 import io.github.aedev.flow.ui.screens.home.HomeScreen
@@ -60,8 +59,6 @@ import io.github.aedev.flow.ui.theme.ThemeVariant
 fun NavGraphBuilder.flowAppGraph(
     navController: NavHostController,
     currentRoute: MutableState<String>,
-    showBottomNav: MutableState<Boolean>,
-    selectedBottomNavIndex: MutableIntState,
     playerSheetState: PlayerDraggableState,
     musicPlayerSheetState: MusicPlayerSheetState,
     homeViewModel: HomeViewModel,
@@ -94,7 +91,6 @@ fun NavGraphBuilder.flowAppGraph(
     // =============================================
     composable("onboarding") {
         currentRoute.value = "onboarding"
-        showBottomNav.value = false
         OnboardingScreen(
             onComplete = {
                 // Navigate to the selected default tab and clear the backstack so user can't go back to onboarding
@@ -107,8 +103,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("home") {
         currentRoute.value = "home"
-        showBottomNav.value = playerSheetState.currentValue != PlayerSheetValue.Expanded
-        selectedBottomNavIndex.intValue = 0
         HomeScreen(
             onVideoClick = { video ->
                 navController.openVideoOrShorts(video, disableShortsPlayer) {
@@ -138,7 +132,6 @@ fun NavGraphBuilder.flowAppGraph(
     // Notifications Screen
     composable("notifications") {
         currentRoute.value = "notifications"
-        showBottomNav.value = false
         NotificationScreen(
             onBackClick = { navController.popBackStack() },
             onNotificationClick = { videoId ->
@@ -161,8 +154,6 @@ fun NavGraphBuilder.flowAppGraph(
         currentRoute.value = SHORTS_ROUTE_KEY
         val source = ShortsQueueSource.decode(backStackEntry.arguments?.getString(SHORTS_ROUTE_ARG))
         val isRootTab = source == ShortsQueueSource.Feed
-        showBottomNav.value = isRootTab
-        if (isRootTab) selectedBottomNavIndex.intValue = 1
         ShortsScreen(
             source = source,
             bottomNavOverlayPadding = if (isRootTab) bottomNavOverlayPadding() else 0.dp,
@@ -177,8 +168,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("subscriptions") {
         currentRoute.value = "subscriptions"
-        showBottomNav.value = true
-        selectedBottomNavIndex.intValue = 3
         SubscriptionsScreen(
             onVideoClick = { video ->
                 navController.openVideoOrShorts(video, disableShortsPlayer) {
@@ -201,8 +190,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("library") {
         currentRoute.value = "library"
-        showBottomNav.value = true
-        selectedBottomNavIndex.intValue = 4
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
         val downloadsSourceName =
             androidx.compose.ui.res.stringResource(
@@ -278,8 +265,6 @@ fun NavGraphBuilder.flowAppGraph(
     composable("search") {
         currentRoute.value = "search"
         // Search owns the whole screen, the way YouTube's does.
-        showBottomNav.value = false
-        selectedBottomNavIndex.intValue = 5
         SearchScreen(
             onVideoClick = { video ->
                 navController.openVideoOrShorts(video, disableShortsPlayer) { navController.navigateToPlayer(it.id, it.serviceId) }
@@ -301,8 +286,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("categories") {
         currentRoute.value = "categories"
-        showBottomNav.value = true
-        selectedBottomNavIndex.intValue = 6
         io.github.aedev.flow.ui.screens.categories.CategoriesScreen(
             onVideoClick = { video ->
                 navController.openVideoOrShorts(video, disableShortsPlayer) { navController.navigateToPlayer(it.id, it.serviceId) }
@@ -321,7 +304,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings") {
         currentRoute.value = "settings"
-        showBottomNav.value = false
         SettingsScreen(
             currentTheme = currentTheme,
             onNavigateBack = { navController.popBackStack() },
@@ -355,7 +337,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/discord") {
         currentRoute.value = "settings/discord"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.DiscordSettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -363,7 +344,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/auto_backup") {
         currentRoute.value = "settings/auto_backup"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.AutoBackupSettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -371,7 +351,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/sync_devices") {
         currentRoute.value = "settings/sync_devices"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.sync.SyncScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -379,7 +358,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/export") {
         currentRoute.value = "settings/export"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.ExportDataScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -387,7 +365,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/user_preferences") {
         currentRoute.value = "settings/user_preferences"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.UserPreferencesScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -395,7 +372,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/player") {
         currentRoute.value = "settings/player"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.PlayerSettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -403,7 +379,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/proxy") {
         currentRoute.value = "settings/proxy"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.ProxySettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -411,7 +386,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/sponsorblock") {
         currentRoute.value = "settings/sponsorblock"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.SponsorBlockSettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -419,7 +393,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/buffer") {
         currentRoute.value = "settings/buffer"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.BufferSettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -427,7 +400,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/search_history") {
         currentRoute.value = "settings/search_history"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.SearchHistorySettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -435,7 +407,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/video_quality") {
         currentRoute.value = "settings/video_quality"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.VideoQualitySettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -443,7 +414,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/shorts_quality") {
         currentRoute.value = "settings/shorts_quality"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.ShortsVideoQualitySettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -451,7 +421,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/content") {
         currentRoute.value = "settings/content"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.ContentSettingsScreen(
             onBackClick = { navController.popBackStack() },
         )
@@ -459,7 +428,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/datetime") {
         currentRoute.value = "settings/datetime"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.DateTimeSettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -474,7 +442,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/time_management") {
         currentRoute.value = "settings/time_management"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.TimeManagementScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -482,7 +449,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/about") {
         currentRoute.value = "settings/about"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.AboutScreen(
             onNavigateBack = { navController.popBackStack() },
             onNavigateToDonations = { navController.navigate("donations") },
@@ -491,7 +457,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/appearance") {
         currentRoute.value = "settings/appearance"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.AppearanceScreen(
             currentTheme = currentTheme,
             themeVariant = themeVariant,
@@ -511,7 +476,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/player_appearance") {
         currentRoute.value = "settings/player_appearance"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.PlayerAppearanceScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -519,7 +483,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/downloads") {
         currentRoute.value = "settings/downloads"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.DownloadSettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -527,7 +490,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/notifications") {
         currentRoute.value = "settings/notifications"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.NotificationSettingsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -535,7 +497,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/app_icon") {
         currentRoute.value = "settings/app_icon"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.AppIconPickerScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -543,7 +504,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/diagnostics") {
         currentRoute.value = "settings/diagnostics"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.DiagnosticsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -551,7 +511,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("donations") {
         currentRoute.value = "donations"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.settings.DonationsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -559,7 +518,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("personality") {
         currentRoute.value = "personality"
-        showBottomNav.value = false
         FlowPersonalityScreen(
             onNavigateBack = { navController.popBackStack() },
         )
@@ -570,7 +528,6 @@ fun NavGraphBuilder.flowAppGraph(
         arguments = listOf(navArgument("channelUrl") { type = NavType.StringType }),
     ) { backStackEntry ->
         currentRoute.value = "channel"
-        showBottomNav.value = false
         val channelUrl =
             backStackEntry.arguments?.getString("channelUrl")?.let {
                 java.net.URLDecoder.decode(it, "UTF-8")
@@ -600,7 +557,6 @@ fun NavGraphBuilder.flowAppGraph(
     // History Screen
     composable("history") {
         currentRoute.value = "history"
-        showBottomNav.value = false
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
         HistoryScreen(
             onVideoClick = { track ->
@@ -663,7 +619,6 @@ fun NavGraphBuilder.flowAppGraph(
     // Likes Screen
     composable("likes") {
         currentRoute.value = "likes"
-        showBottomNav.value = false
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
         LikesScreen(
             onVideoClick = { track ->
@@ -683,7 +638,6 @@ fun NavGraphBuilder.flowAppGraph(
     // Playlists Screen
     composable("playlists") {
         currentRoute.value = "playlists"
-        showBottomNav.value = false
         PlaylistsScreen(
             onBackClick = { navController.popBackStack() },
             onVideoPlaylistClick = { playlist ->
@@ -698,7 +652,6 @@ fun NavGraphBuilder.flowAppGraph(
     // Playlist Detail Screen
     composable("playlist/{playlistId}") { _ ->
         currentRoute.value = "playlist"
-        showBottomNav.value = false
         PlaylistDetailScreen(
             // playlistId is handled by ViewModel via SavedStateHandle
             // playlistRepository is injected by Hilt
@@ -722,7 +675,6 @@ fun NavGraphBuilder.flowAppGraph(
     // Saved Shorts Grid
     composable("savedShorts") {
         currentRoute.value = "savedShorts"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.library.SavedShortsGridScreen(
             onBackClick = { navController.popBackStack() },
             onVideoClick = { videoId ->
@@ -733,7 +685,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("downloads") {
         currentRoute.value = "downloads"
-        showBottomNav.value = false
 
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
 
@@ -766,7 +717,6 @@ fun NavGraphBuilder.flowAppGraph(
     }
     composable("localMedia") {
         currentRoute.value = "localMedia"
-        showBottomNav.value = false
 
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
 
@@ -821,8 +771,6 @@ fun NavGraphBuilder.flowAppGraph(
     }
     composable("music") {
         currentRoute.value = "music"
-        showBottomNav.value = true
-        selectedBottomNavIndex.intValue = 2
 
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
 
@@ -866,7 +814,6 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("moodsAndGenres") {
         currentRoute.value = "moodsAndGenres"
-        showBottomNav.value = false
         io.github.aedev.flow.ui.screens.music.MoodsAndGenresScreen(
             onBackClick = { navController.popBackStack() },
             onGenreClick = { item ->
@@ -889,7 +836,6 @@ fun NavGraphBuilder.flowAppGraph(
             ),
     ) { backStackEntry ->
         currentRoute.value = "musicSearch"
-        showBottomNav.value = false
 
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
         val initialQuery = backStackEntry.arguments?.getString("query")
@@ -919,7 +865,6 @@ fun NavGraphBuilder.flowAppGraph(
     // Music Recognition (Shazam) Screen
     composable("musicRecognize") {
         currentRoute.value = "musicRecognize"
-        showBottomNav.value = false
 
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
 
@@ -955,7 +900,6 @@ fun NavGraphBuilder.flowAppGraph(
     // Music Recognition History Screen
     composable("recognitionHistory") {
         currentRoute.value = "recognitionHistory"
-        showBottomNav.value = false
 
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
 
@@ -1004,7 +948,6 @@ fun NavGraphBuilder.flowAppGraph(
             ),
     ) {
         currentRoute.value = "youtube_browse"
-        showBottomNav.value = false
 
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
 
@@ -1237,7 +1180,6 @@ fun NavGraphBuilder.flowAppGraph(
             ),
     ) { backStackEntry ->
         currentRoute.value = "musicPlayer"
-        showBottomNav.value = false
 
         LaunchedEffect(Unit) {
             musicPlayerSheetState.expand()

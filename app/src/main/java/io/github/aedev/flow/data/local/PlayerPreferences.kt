@@ -133,6 +133,7 @@ class PlayerPreferences(
         val CHANNEL_NOTES_ENABLED = booleanPreferencesKey("channel_notes_enabled")
         val VIDEO_NOTES_ENABLED = booleanPreferencesKey("video_notes_enabled")
         val SHORTS_SHELF_ENABLED = booleanPreferencesKey("shorts_shelf_enabled")
+        val LIBRARY_SHELF_PREVIEWS_ENABLED = booleanPreferencesKey("library_shelf_previews_enabled")
         val HOME_SHORTS_SHELF_ENABLED = booleanPreferencesKey("home_shorts_shelf_enabled")
         val HOME_NAVIGATION_ENABLED = booleanPreferencesKey("home_navigation_enabled")
         val HOME_CONTENT_SOURCE_FILTER = stringPreferencesKey("home_content_source_filter")
@@ -827,6 +828,22 @@ class PlayerPreferences(
     suspend fun setShortsContentEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.SHORTS_CONTENT_ENABLED] = enabled
+        }
+    }
+
+    /**
+     * When OFF the Library screen drops the horizontal preview shelves and lists each section as a
+     * single navigation row with its item count.
+     */
+    val libraryShelfPreviewsEnabled: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.LIBRARY_SHELF_PREVIEWS_ENABLED] ?: true
+            }
+
+    suspend fun setLibraryShelfPreviewsEnabled(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.LIBRARY_SHELF_PREVIEWS_ENABLED] = enabled
         }
     }
 

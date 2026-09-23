@@ -46,8 +46,10 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.paging.SearchResultItem
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
+import io.github.aedev.flow.ui.OnTabReselected
 import io.github.aedev.flow.ui.components.FEED_MAX_AUTO_COLUMNS
 import io.github.aedev.flow.ui.components.QuickActionsViewModel
+import io.github.aedev.flow.ui.components.layout.navigation.FlowTab
 import io.github.aedev.flow.ui.components.rememberFeedGridLayout
 import io.github.aedev.flow.ui.components.search.SearchFilterBar
 import io.github.aedev.flow.ui.components.search.SearchFilterDialog
@@ -90,6 +92,7 @@ fun SearchScreen(
     val subscribedIds by quickActions.subscribedChannelIds.collectAsStateWithLifecycle()
     val pagingItems = viewModel.searchResults.collectAsLazyPagingItems()
     val gridState = rememberLazyGridState()
+    OnTabReselected(FlowTab.Search.route) { gridState.animateScrollToItem(0) }
     var showFilters by rememberSaveable { mutableStateOf(false) }
 
     val submit: (String) -> Unit = { raw ->

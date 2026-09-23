@@ -189,12 +189,13 @@ class MusicPlayerViewModel
 
             viewModelScope.launch {
                 EnhancedMusicPlayerManager.automixItems.collect { automix ->
-                    _uiState.update {
-                        it.copy(
-                            autoplaySuggestions = automix,
-                            isRelatedLoading = false,
-                        )
-                    }
+                    _uiState.update { it.copy(autoplaySuggestions = automix) }
+                }
+            }
+
+            viewModelScope.launch {
+                EnhancedMusicPlayerManager.radioLoading.collect { loading ->
+                    _uiState.update { it.copy(isRadioLoading = loading) }
                 }
             }
 
@@ -275,6 +276,7 @@ class MusicPlayerViewModel
             track: MusicTrack,
             queue: List<MusicTrack> = emptyList(),
             sourceName: String? = null,
+            asRadio: Boolean = false,
         ) {
             loadTrackJob?.cancel()
             // Genre-scoped surfaces tag their source; the genre becomes listen
@@ -317,6 +319,11 @@ class MusicPlayerViewModel
                             playingFrom = finalSourceName,
                         )
                     }
+
+                    // Flagged as late as possible: the service consumes the seed on the next
+                    // playlist change, and an unrelated advance during the lookup above would
+                    // otherwise eat it.
+                    EnhancedMusicPlayerManager.pendingRadioSeedId = track.videoId.takeIf { asRadio }
 
                     withContext(kotlinx.coroutines.Dispatchers.Main) {
                         EnhancedMusicPlayerManager.playTrack(
@@ -361,6 +368,18 @@ class MusicPlayerViewModel
                     }
                 }
         }
+
+        /**
+         * Starts a station seeded from this track alone. The seed is flagged for the service,
+         * which would otherwise read a track taken from the playing queue as an in-queue skip
+         * and leave the previous station running.
+         */
+        fun startRadio(track: MusicTrack) {
+            loadAndPlayTrack(track, asRadio = true)
+        }
+
+        /** Local files have no InnerTube seed, so no station can be built from one. */
+        fun canStartRadio(track: MusicTrack): Boolean = !isLocalMediaId(track.videoId)
 
         private fun resolveSourceName(
             sourceName: String?,
@@ -459,6 +478,17 @@ class MusicPlayerViewModel
         fun addRadioTrackToQueue(track: MusicTrack) {
             EnhancedMusicPlayerManager.addToQueue(track)
             EnhancedMusicPlayerManager.removeAutomixItem(track.videoId)
+        }
+
+        /**
+         * Plays a suggestion by taking it into the queue and jumping to it. Loading it as a track
+         * would replace the whole queue with that one song — the sheet is showing what comes next,
+         * not an invitation to throw away what the user lined up.
+         */
+        fun playRadioTrack(track: MusicTrack) {
+            addRadioTrackToQueue(track)
+            val index = EnhancedMusicPlayerManager.queue.value.indexOfFirst { it.videoId == track.videoId }
+            if (index >= 0) EnhancedMusicPlayerManager.playFromQueue(index) else loadAndPlayTrack(track)
         }
 
         fun setEndlessRadioEnabled(enabled: Boolean) {
@@ -920,6 +950,7 @@ data class MusicPlayerUiState(
     val endlessRadioEnabled: Boolean = true,
     val relatedContent: List<MusicTrack> = emptyList(),
     val isRelatedLoading: Boolean = false,
+    val isRadioLoading: Boolean = false,
     val downloadedTrackIds: Set<String> = emptySet(),
     val lyricsProviderName: String = "",
     val lyricsSyncOffsetMs: Long = 0L,
