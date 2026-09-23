@@ -21,13 +21,8 @@ internal var StreamInfoItem.uploaderAvatarUrl: String?
         setUploaderAvatars(value.asImages())
     }
 
-// NewPipeExtractor v0.26.5's YoutubeCommentsInfoItemExtractor never overrides getUploaderAvatars()
-// (fixed upstream in a later release, not yet pulled in here), so YouTube comments always collect
-// it empty. The same picture is separately - and correctly - collected into the generic
-// InfoItem.thumbnails field (its getThumbnails() does return the author's avatar), so that is the
-// fallback until this dependency is updated past the fix.
 internal var CommentsInfoItem.uploaderAvatarUrl: String?
-    get() = uploaderAvatars.bestUrl() ?: thumbnails.bestUrl()
+    get() = uploaderAvatars.bestUrl()
     set(value) {
         setUploaderAvatars(value.asImages())
     }
