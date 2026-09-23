@@ -18,6 +18,7 @@ internal fun ClientHandler.handleApiSearch(os: OutputStream, params: Map<String,
         return
     }
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
+    if (nextPage == null) dbHelper.nativeAddSearchQuery(query)
     try {
         val page = LocalServerSource.search(dbHelper.appContext, serviceId, query, nextPage)
         val filtered = filterItems(page.items)
