@@ -123,7 +123,9 @@ FT.description = (text, type) => {
 // An avatar: the picture over a coloured initial, so a missing or broken picture still looks intentional.
 FT.avatar = (name, src, extra = '') => {
     const img = src ? FT.h('img', { src, alt: '', loading: 'lazy' }) : null;
-    const box = FT.h('span', { class: ('avatar ' + extra).trim() }, (name || '?').trim().charAt(0).toUpperCase(), img);
+    // A comment author's name is often a "@handle" - the initial is the first letter of the handle, not "@".
+    const initial = (name || '?').trim().replace(/^@/, '').charAt(0).toUpperCase() || '?';
+    const box = FT.h('span', { class: ('avatar ' + extra).trim() }, initial, img);
     if (img) img.addEventListener('error', () => box.classList.add('failed'));
     return box;
 };
