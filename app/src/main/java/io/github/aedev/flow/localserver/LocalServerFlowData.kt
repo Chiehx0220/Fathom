@@ -146,7 +146,7 @@ fun HistoryDbHelper.nativeUnbookmarkPlaylist(playlistUrl: String) {
 }
 
 /** Bookmarked playlists as [InfoItem]s. No uploader field (`PlaylistEntity` has none) -
- * `renderGrid()` uses `typeBadge` for that slot on playlist cards regardless. */
+ * the SPA's card subtitle just drops that part for these. */
 fun HistoryDbHelper.nativeBookmarkedPlaylists(): List<InfoItem> = runBlocking {
     playlistRepository().getSavedVideoPlaylistsFlow().first().map { info ->
         val item = PlaylistInfoItem(0, playlistIdToUrl(info.id), info.name)
