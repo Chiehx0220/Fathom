@@ -60,7 +60,7 @@ Flow 的電腦端是 [Flow-Desktop](https://github.com/Flow-Tube/Flow-Desktop)�
 ## 🛠 建置
 
 ```bash
-git clone https://github.com/Chiehx0220/Flow.git
+git clone https://github.com/Chiehx0220/Fathom.git
 cd Flow && git checkout Btest
 ./gradlew assembleGithubDebug
 ```

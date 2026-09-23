@@ -60,7 +60,7 @@ Turn it on and the phone serves a web app on port 8080.
 ## 🛠 Build
 
 ```bash
-git clone https://github.com/Chiehx0220/Flow.git
+git clone https://github.com/Chiehx0220/Fathom.git
 cd Flow && git checkout Btest
 ./gradlew assembleGithubDebug
 ```
