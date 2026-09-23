@@ -30,7 +30,7 @@ import io.github.aedev.flow.data.local.AppUiModePreferences
 import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.ui.tv.components.TvScreenScaffold
-import io.github.aedev.flow.ui.tv.screens.settings.TvAboutSettingsPane
+import io.github.aedev.flow.ui.tv.screens.settings.TvFathomAboutPane
 import io.github.aedev.flow.ui.tv.screens.settings.TvAppearanceSettingsPane
 import io.github.aedev.flow.ui.tv.screens.settings.TvContentSettingsPane
 import io.github.aedev.flow.ui.tv.screens.settings.TvFlowEngineSettingsPane
@@ -105,7 +105,7 @@ fun TvSettingsScreen(
                     TvSettingsCategory.APPEARANCE -> TvAppearanceSettingsPane(localDataManager)
                     TvSettingsCategory.FLOW_ENGINE -> TvFlowEngineSettingsPane(playerPreferences)
                     TvSettingsCategory.INTERFACE -> TvInterfaceSettingsPane(modePreferences)
-                    TvSettingsCategory.ABOUT -> TvAboutSettingsPane()
+                    TvSettingsCategory.ABOUT -> TvFathomAboutPane()
                     TvSettingsCategory.REMOTE_GUIDE,
                     TvSettingsCategory.SYNC,
                     -> Unit

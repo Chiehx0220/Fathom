@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -151,10 +150,11 @@ fun AboutScreen(
                             .padding(top = 32.dp, bottom = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_fathom_logo),
-                        contentDescription = stringResource(R.string.app_logo_desc),
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_notification_logo),
+                        contentDescription = null,
                         modifier = Modifier.size(72.dp),
+                        tint = MaterialTheme.colorScheme.onBackground,
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
@@ -176,28 +176,7 @@ fun AboutScreen(
             }
             item { HorizontalDivider() }
 
-            item { AboutSectionLabel(stringResource(R.string.about_section_fathom)) }
-            item {
-                AboutRowWithPainter(
-                    iconPainter = painterResource(id = R.drawable.ic_github),
-                    title = stringResource(R.string.github_label),
-                    subtitle = stringResource(R.string.github_subtitle),
-                    onClick = { openUrl(context, "https://github.com/Chiehx0220/Flow") },
-                )
-            }
-            aboutCreditItems(context)
-            item { HorizontalDivider(modifier = Modifier.padding(top = 8.dp)) }
-
-            item { AboutSectionLabel(stringResource(R.string.about_section_upstream)) }
-            item {
-                AboutRow(
-                    icon = Icons.Outlined.Person,
-                    title = stringResource(R.string.about_based_on),
-                    subtitle = "Flow, A-EDev",
-                    onClick = { openUrl(context, "https://github.com/A-EDev/Flow") },
-                )
-            }
-            item { AboutRowDivider() }
+            item { AboutSectionLabel(stringResource(R.string.section_app)) }
             item {
                 AboutRow(
                     icon = Icons.Outlined.History,
@@ -209,10 +188,30 @@ fun AboutScreen(
             item { AboutRowDivider() }
             item {
                 AboutRow(
+                    icon = Icons.Outlined.VolunteerActivism,
+                    title = stringResource(R.string.donate_item_title),
+                    subtitle = stringResource(R.string.support_dev_subtitle),
+                    onClick = onNavigateToDonations,
+                )
+            }
+            item { HorizontalDivider(modifier = Modifier.padding(top = 8.dp)) }
+
+            item { AboutSectionLabel(stringResource(R.string.section_contact)) }
+            item {
+                AboutRow(
                     icon = Icons.Outlined.Public,
                     title = stringResource(R.string.about_website),
                     subtitle = "flow.aedev.me",
                     onClick = { openUrl(context, "https://flow.aedev.me") },
+                )
+            }
+            item { AboutRowDivider() }
+            item {
+                AboutRowWithPainter(
+                    iconPainter = painterResource(id = R.drawable.ic_github),
+                    title = stringResource(R.string.github_label),
+                    subtitle = stringResource(R.string.github_subtitle),
+                    onClick = { openUrl(context, "https://github.com/A-EDev/flow") },
                 )
             }
             item { AboutRowDivider() }
@@ -227,10 +226,10 @@ fun AboutScreen(
             item { AboutRowDivider() }
             item {
                 AboutRow(
-                    icon = Icons.Outlined.VolunteerActivism,
-                    title = stringResource(R.string.donate_item_title),
-                    subtitle = stringResource(R.string.support_dev_subtitle),
-                    onClick = onNavigateToDonations,
+                    icon = Icons.Outlined.Person,
+                    title = stringResource(R.string.about_creator),
+                    subtitle = "A-EDev",
+                    onClick = { openUrl(context, "https://github.com/A-EDev") },
                 )
             }
             item { HorizontalDivider(modifier = Modifier.padding(top = 8.dp)) }
@@ -283,7 +282,7 @@ private fun AboutSectionLabel(text: String) {
 }
 
 @Composable
-internal fun AboutRow(
+private fun AboutRow(
     icon: ImageVector,
     title: String,
     subtitle: String,
@@ -382,7 +381,7 @@ private fun AboutRowWithVector(
 }
 
 @Composable
-internal fun AboutRowDivider() {
+private fun AboutRowDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(start = 62.dp),
         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
@@ -526,7 +525,7 @@ fun ChangelogDialog(onDismiss: () -> Unit) {
     )
 }
 
-internal fun openUrl(
+private fun openUrl(
     context: Context,
     url: String,
 ) {

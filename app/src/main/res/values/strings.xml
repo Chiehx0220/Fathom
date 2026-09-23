@@ -1606,7 +1606,12 @@
     <string name="about_creator">Creator</string>
     <string name="about_based_on">Based on</string>
     <string name="about_section_fathom">Fathom</string>
-    <string name="about_section_upstream">Upstream Flow</string>
+    <string name="support_fathom_title">Support Fathom</string>
+    <string name="support_fathom_desc">Fathom is a fork of Flow, built and maintained independently. If you find it useful, you can help keep it going.</string>
+    <string name="support_fathom_kofi">Support on Ko-fi</string>
+    <string name="support_fathom_sponsors">Sponsor on GitHub</string>
+    <string name="about_upstream_title">Upstream Flow</string>
+    <string name="about_upstream_subtitle">A-EDev</string>
     <string name="about_credit_pipepipe">Origin of the Bilibili client</string>
     <string name="about_credit_localtube">Origin of the local web server</string>
     <string name="about_credit_vidstack">Web player of the local server</string>

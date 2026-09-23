@@ -449,9 +449,10 @@ fun NavGraphBuilder.flowAppGraph(
 
     composable("settings/about") {
         currentRoute.value = "settings/about"
-        io.github.aedev.flow.ui.screens.settings.AboutScreen(
+        io.github.aedev.flow.ui.screens.settings.FathomAboutScreen(
             onNavigateBack = { navController.popBackStack() },
             onNavigateToDonations = { navController.navigate("donations") },
+            onNavigateToFathomDonations = { navController.navigate("fathom-donations") },
         )
     }
 
@@ -512,6 +513,13 @@ fun NavGraphBuilder.flowAppGraph(
     composable("donations") {
         currentRoute.value = "donations"
         io.github.aedev.flow.ui.screens.settings.DonationsScreen(
+            onNavigateBack = { navController.popBackStack() },
+        )
+    }
+
+    composable("fathom-donations") {
+        currentRoute.value = "fathom-donations"
+        io.github.aedev.flow.ui.screens.settings.FathomDonationsScreen(
             onNavigateBack = { navController.popBackStack() },
         )
     }

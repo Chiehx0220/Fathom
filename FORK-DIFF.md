@@ -21,7 +21,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **101** (2328 changed lines). New files: **42** (3875 lines).
+- Modified upstream files: **100** (2204 changed lines). New files: **42** (3881 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -32,14 +32,12 @@ in it). **New files** never conflict; they are ours alone.
 | player/datasource/YouTubeHttpDataSource.kt | 97 | 7 |
 | ui/screens/channel/ChannelViewModel.kt | 83 | 2 |
 | notification/SubscriptionCheckWorker.kt | 76 | 0 |
-| ui/tv/screens/settings/TvAboutSettingsPane.kt | 42 | 31 |
 | data/innertube/RssSubscriptionService.kt | 69 | 3 |
 | ui/screens/search/SearchViewModel.kt | 65 | 4 |
 | MainActivity.kt | 41 | 27 |
-| ui/screens/settings/AboutScreen.kt | 33 | 32 |
 | player/stream/PlaybackLoadResolver.kt | 62 | 1 |
 | ui/screens/home/HomeViewModel.kt | 42 | 19 |
-| ui/FlowNavigation.kt | 30 | 16 |
+| ui/FlowNavigation.kt | 39 | 17 |
 | ui/screens/search/SearchScreen.kt | 39 | 4 |
 | ui/screens/player/VideoPlayerViewModel.kt | 32 | 7 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 36 | 0 |
@@ -85,7 +83,9 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/content/VideoInfoContent.kt | 4 | 3 |
 | ui/screens/settings/SettingsScreen.kt | 7 | 0 |
 | data/engagement/VideoEngagementUseCase.kt | 6 | 0 |
-| ... 41 more, each small | | |
+| data/local/LikedVideosRepository.kt | 5 | 1 |
+| data/local/LocalDataManager.kt | 3 | 3 |
+| ... 40 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -107,7 +107,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **24** (5290 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **25** (5443 lines).
 
 ## Build
 
@@ -119,11 +119,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Resources / strings
 
-- Modified upstream files: **45** (648 changed lines). New files: **3** (62 lines).
+- Modified upstream files: **45** (653 changed lines). New files: **3** (62 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/main/res/values/strings.xml | 67 | 11 |
+| app/src/main/res/values/strings.xml | 72 | 11 |
 | app/src/main/AndroidManifest.xml | 41 | 1 |
 | app/src/main/res/drawable/ic_splash_logo.xml | 32 | 10 |
 | app/src/main/res/drawable-xhdpi/tv_banner.xml | 8 | 18 |

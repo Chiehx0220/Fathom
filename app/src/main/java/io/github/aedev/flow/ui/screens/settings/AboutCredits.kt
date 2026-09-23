@@ -25,13 +25,13 @@ internal val CREDITS =
 /** One row per project the Bilibili client and the local web server were built from, each linking to it. */
 internal fun LazyListScope.aboutCreditItems(context: Context) {
     CREDITS.forEach { credit ->
-        item { AboutRowDivider() }
+        item { FathomAboutDivider() }
         item {
-            AboutRow(
+            FathomAboutRow(
                 icon = Icons.Outlined.Extension,
                 title = credit.name,
                 subtitle = stringResource(credit.roleRes),
-                onClick = { openUrl(context, credit.url) },
+                onClick = { openExternalUrl(context, credit.url) },
             )
         }
     }

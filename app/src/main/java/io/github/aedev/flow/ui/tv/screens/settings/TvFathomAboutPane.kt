@@ -18,10 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Extension
-import androidx.compose.material.icons.outlined.Forum
-import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Tv
 import androidx.compose.material.icons.outlined.VolunteerActivism
 import androidx.compose.material3.Icon
@@ -29,31 +26,33 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.BuildConfig
 import io.github.aedev.flow.R
+import io.github.aedev.flow.ui.screens.settings.AboutLinks
+import io.github.aedev.flow.ui.screens.settings.CREDITS
+import io.github.aedev.flow.ui.screens.settings.FATHOM_DONATIONS
 import io.github.aedev.flow.ui.tv.components.TvNavRow
 import io.github.aedev.flow.ui.tv.components.TvSectionHeader
 import io.github.aedev.flow.ui.tv.focus.ProvideTvColumnPivot
 
-private const val FLOW_WEBSITE_URL = "https://flow.aedev.me"
-private const val FLOW_RELEASES_URL = "https://github.com/A-EDev/Flow/releases"
-private const val FLOW_GITHUB_URL = "https://github.com/A-EDev/Flow"
-private const val FLOW_REDDIT_URL = "https://www.reddit.com/r/Flow_Official/"
-private const val FLOW_CREATOR_URL = "https://github.com/A-EDev"
-private const val FLOW_DONATION_URL = "https://patreon.com/A_EDev"
-private const val FLOW_LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
-private const val NEWPIPE_EXTRACTOR_URL = "https://github.com/TeamNewPipe/NewPipeExtractor"
 
 /** TV counterpart of the mobile About screen, adapted for remote focus and scrolling. */
 @Composable
-fun TvAboutSettingsPane(modifier: Modifier = Modifier) {
+fun TvFathomAboutPane(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    var upstreamOpen by rememberSaveable { mutableStateOf(false) }
+    var fathomDonateOpen by rememberSaveable { mutableStateOf(false) }
 
     ProvideTvColumnPivot {
         LazyColumn(
@@ -65,60 +64,47 @@ fun TvAboutSettingsPane(modifier: Modifier = Modifier) {
                 TvAboutIdentity()
             }
 
-            item(key = "app-header") {
-                TvAboutSectionHeader(stringResource(R.string.section_app))
-            }
-            item(key = "changelog") {
-                TvNavRow(
-                    label = stringResource(R.string.about_changelog),
-                    supportingText = stringResource(R.string.whats_new_in_flow),
-                    leadingIcon = Icons.Outlined.History,
-                    onClick = { context.openUrl(FLOW_RELEASES_URL) },
-                )
-            }
-            item(key = "donate") {
-                TvNavRow(
-                    label = stringResource(R.string.donate_item_title),
-                    supportingText = stringResource(R.string.support_dev_subtitle),
-                    leadingIcon = Icons.Outlined.VolunteerActivism,
-                    onClick = { context.openUrl(FLOW_DONATION_URL) },
-                )
-            }
-
-            item(key = "contact-header") {
-                TvAboutSectionHeader(stringResource(R.string.section_contact))
-            }
-            item(key = "website") {
-                TvNavRow(
-                    label = stringResource(R.string.about_website),
-                    value = stringResource(R.string.about_website_address),
-                    leadingIcon = Icons.Outlined.Public,
-                    onClick = { context.openUrl(FLOW_WEBSITE_URL) },
-                )
+            item(key = "fathom-header") {
+                TvAboutSectionHeader(stringResource(R.string.about_section_fathom))
             }
             item(key = "github") {
                 TvNavRow(
                     label = stringResource(R.string.github_label),
                     supportingText = stringResource(R.string.github_subtitle),
                     leadingIcon = Icons.Outlined.Code,
-                    onClick = { context.openUrl(FLOW_GITHUB_URL) },
+                    onClick = { context.openUrl(AboutLinks.FATHOM_GITHUB) },
                 )
             }
-            item(key = "reddit") {
+            item(key = "fathom-donate") {
                 TvNavRow(
-                    label = stringResource(R.string.about_reddit),
-                    value = stringResource(R.string.about_reddit_subtitle),
-                    leadingIcon = Icons.Outlined.Forum,
-                    onClick = { context.openUrl(FLOW_REDDIT_URL) },
+                    label = stringResource(R.string.donate_item_title),
+                    supportingText = stringResource(R.string.support_dev_subtitle),
+                    value = if (fathomDonateOpen) "▴" else "▾",
+                    leadingIcon = Icons.Outlined.VolunteerActivism,
+                    onClick = { fathomDonateOpen = !fathomDonateOpen },
                 )
             }
-            item(key = "creator") {
+            if (fathomDonateOpen) {
+                FATHOM_DONATIONS.forEach { link ->
+                    item(key = "fathom-donate-${link.name}") { TvChildRow(link.name, link.address) { context.openUrl(link.url) } }
+                }
+            }
+
+            item(key = "upstream") {
                 TvNavRow(
-                    label = stringResource(R.string.about_creator),
-                    value = stringResource(R.string.about_creator_name),
+                    label = stringResource(R.string.about_upstream_title),
+                    supportingText = stringResource(R.string.about_upstream_subtitle),
+                    value = if (upstreamOpen) "▴" else "▾",
                     leadingIcon = Icons.Outlined.Person,
-                    onClick = { context.openUrl(FLOW_CREATOR_URL) },
+                    onClick = { upstreamOpen = !upstreamOpen },
                 )
+            }
+            if (upstreamOpen) {
+                item(key = "creator") { TvChildRow(stringResource(R.string.about_based_on), "github.com/A-EDev/Flow") { context.openUrl(AboutLinks.FLOW_GITHUB) } }
+                item(key = "changelog") { TvChildRow(stringResource(R.string.about_changelog), stringResource(R.string.whats_new_in_flow)) { context.openUrl(AboutLinks.FLOW_RELEASES) } }
+                item(key = "website") { TvChildRow(stringResource(R.string.about_website), stringResource(R.string.about_website_address)) { context.openUrl(AboutLinks.FLOW_WEBSITE) } }
+                item(key = "reddit") { TvChildRow(stringResource(R.string.about_reddit), stringResource(R.string.about_reddit_subtitle)) { context.openUrl(AboutLinks.FLOW_REDDIT) } }
+                item(key = "donate") { TvChildRow(stringResource(R.string.donate_item_title), stringResource(R.string.support_dev_subtitle)) { context.openUrl(AboutLinks.FLOW_DONATION) } }
             }
 
             item(key = "legal-header") {
@@ -129,7 +115,7 @@ fun TvAboutSettingsPane(modifier: Modifier = Modifier) {
                     label = stringResource(R.string.about_license),
                     value = stringResource(R.string.about_license_name),
                     leadingIcon = Icons.Outlined.Description,
-                    onClick = { context.openUrl(FLOW_LICENSE_URL) },
+                    onClick = { context.openUrl(AboutLinks.LICENSE) },
                 )
             }
             item(key = "newpipe") {
@@ -137,8 +123,18 @@ fun TvAboutSettingsPane(modifier: Modifier = Modifier) {
                     label = stringResource(R.string.newpipe_extractor_title),
                     supportingText = stringResource(R.string.newpipe_extractor_subtitle),
                     leadingIcon = Icons.Outlined.Extension,
-                    onClick = { context.openUrl(NEWPIPE_EXTRACTOR_URL) },
+                    onClick = { context.openUrl(AboutLinks.NEWPIPE_EXTRACTOR) },
                 )
+            }
+            CREDITS.forEach { credit ->
+                item(key = "credit-${credit.name}") {
+                    TvNavRow(
+                        label = credit.name,
+                        supportingText = stringResource(credit.roleRes),
+                        leadingIcon = Icons.Outlined.Extension,
+                        onClick = { context.openUrl(credit.url) },
+                    )
+                }
             }
 
             item(key = "device-header") {
@@ -157,6 +153,16 @@ fun TvAboutSettingsPane(modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun TvChildRow(label: String, value: String, onClick: () -> Unit) {
+    TvNavRow(
+        label = label,
+        value = value,
+        modifier = Modifier.padding(start = 32.dp),
+        onClick = onClick,
+    )
+}
+
+@Composable
 private fun TvAboutIdentity() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -169,11 +175,10 @@ private fun TvAboutIdentity() {
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_notification_logo),
+            Image(
+                painter = painterResource(R.drawable.ic_fathom_logo),
                 contentDescription = stringResource(R.string.app_logo_desc),
                 modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurface,
             )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
