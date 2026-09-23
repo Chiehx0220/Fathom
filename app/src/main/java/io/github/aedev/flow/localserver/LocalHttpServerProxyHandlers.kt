@@ -316,6 +316,25 @@ private fun fetchFromCdn(
     return LocalHttpServer.httpClient.newCall(reqBuilder.build()).execute()
 }
 
+/**
+ * A Representation's `bandwidth`, in bps.
+ *
+ * NewPipe's static itag table - its fallback when a format carries no live bitrate - reports audio
+ * bitrate in kbps, at most 256 (see its `ItagItem.ITAG_LIST`). A live bitrate, from InnerTube or from
+ * NewPipe's own extraction, is never anywhere near that low: even the quietest 32kbps audio itag
+ * reports as ~32000 bps. A raw value under the gap between those two ranges is the kbps leftover, not
+ * a genuine bitrate, and gets rescaled; anything at or above it is already bps.
+ */
+private fun normalizedBandwidthBps(
+    rawBitrate: Long,
+    fallbackBps: Long,
+): Long {
+    var bitrate = rawBitrate
+    if (bitrate <= 0) bitrate = fallbackBps
+    if (bitrate < 5000) bitrate *= 1000
+    return bitrate
+}
+
 @Throws(Exception::class)
 internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<String, String>) {
     val serviceId = getServiceId(params)
@@ -350,23 +369,19 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
         for (vs in videoStreams) {
             val itag = vs.itag
 
-            var bitrate = vs.bitrate.toLong()
-            if (bitrate <= 0) {
-                bitrate = 1000000L
-            }
-            // Threshold 5000: the old 100000 scaled 360p to 83 Mbps and left 1080p at 0.5 Mbps.
-            if (bitrate < 5000) {
-                bitrate *= 1000
-            }
-            val codec = vs.codec
-            val width = vs.width
-            val height = vs.height
-            val fps = vs.fps
-
             val initStart = vs.initStart
             val initEnd = vs.initEnd
             val indexStart = vs.indexStart
             val indexEnd = vs.indexEnd
+            if (initStart < 0 || initEnd < 0 || indexStart < 0 || indexEnd < 0) {
+                continue // Skip formats without index range markers - same guard the audio loop uses below.
+            }
+
+            val bitrate = normalizedBandwidthBps(vs.bitrate.toLong(), fallbackBps = 1000000L)
+            val codec = vs.codec
+            val width = vs.width
+            val height = vs.height
+            val fps = vs.fps
 
             // mtype keeps video and audio Representations apart when itag=-1 gives them the same BaseURL.
             val proxyUrl = "/stream?serviceId=" + serviceId + "&amp;id=" + java.net.URLEncoder.encode(mediaUrl, "UTF-8") + "&amp;itag=" + itag + "&amp;mtype=video"
@@ -444,16 +459,9 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
                     }
                     seenAudioItags.add(itag)
 
-                    var bitrate = asStream.averageBitrate.toLong()
-                    if (bitrate <= 0) {
-                        bitrate = asStream.bitrate.toLong()
-                    }
-                    if (bitrate <= 0) {
-                        bitrate = 128000L
-                    }
-                    if (bitrate < 1000) {
-                        bitrate *= 1000
-                    }
+                    var rawBitrate = asStream.averageBitrate.toLong()
+                    if (rawBitrate <= 0) rawBitrate = asStream.bitrate.toLong()
+                    val bitrate = normalizedBandwidthBps(rawBitrate, fallbackBps = 128000L)
                     val codec = LocalHttpServer.normalizeAudioCodec(asStream.codec)
 
                     val initStart = asStream.initStart
