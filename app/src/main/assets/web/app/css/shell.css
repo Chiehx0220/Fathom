@@ -34,8 +34,9 @@ body[data-input="keys"] { cursor: none; }
  * mouse gets hover instead. */
 [data-f] { outline: none; scroll-margin: calc(var(--bar-h) + 24px) var(--pad-x) 120px var(--pad-x); }
 body[data-input="keys"] .tab.sel, body[data-input="keys"] .chip.sel, body[data-input="keys"] .rbtn.sel, body[data-input="keys"] .btn.sel,
-body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[data-input="keys"] .row-item.sel,
-body[data-input="keys"] .shelf-head.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc); }
+body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[data-input="keys"] .row-item.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc); }
+/* .shelf-head.expand is full-width (see cards.css) - ringing the whole bar reads as one big
+ * box, so it gets the same title+pill treatment as its own hover state instead. */
 
 /* Buttons */
 .btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 22px 0 18px; border: 0; border-radius: 23px; background: var(--s3); color: var(--fg); font-weight: 500; white-space: nowrap; transition: background 0.15s; }
