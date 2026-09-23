@@ -21,7 +21,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **101** (2332 changed lines). New files: **42** (3864 lines).
+- Modified upstream files: **101** (2328 changed lines). New files: **42** (3875 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -29,7 +29,7 @@ in it). **New files** never conflict; they are ours alone.
 | player/EnhancedPlayerManager.kt | 120 | 30 |
 | ui/screens/player/PlaybackSessionApplier.kt | 144 | 0 |
 | ui/components/FlowSplashScreen.kt | 28 | 97 |
-| player/datasource/YouTubeHttpDataSource.kt | 102 | 7 |
+| player/datasource/YouTubeHttpDataSource.kt | 97 | 7 |
 | ui/screens/channel/ChannelViewModel.kt | 83 | 2 |
 | notification/SubscriptionCheckWorker.kt | 76 | 0 |
 | ui/tv/screens/settings/TvAboutSettingsPane.kt | 42 | 31 |
@@ -50,7 +50,7 @@ in it). **New files** never conflict; they are ours alone.
 | player/resolver/VideoPlaybackResolver.kt | 24 | 3 |
 | ui/components/VideoCard.kt | 16 | 11 |
 | ui/AppHooks.kt | 14 | 12 |
-| ui/NavigationDestinations.kt | 20 | 5 |
+| ui/NavigationDestinations.kt | 21 | 5 |
 | data/local/PlayerPreferences.kt | 24 | 0 |
 | data/local/ViewHistory.kt | 24 | 0 |
 | ui/screens/home/HomeFeedGrid.kt | 23 | 1 |
@@ -107,7 +107,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **24** (5270 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **24** (5290 lines).
 
 ## Build
 
