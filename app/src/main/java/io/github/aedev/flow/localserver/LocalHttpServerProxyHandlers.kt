@@ -5,10 +5,153 @@ import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.SubtitlesStream
 import org.schabi.newpipe.extractor.stream.VideoStream
 import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
+import io.github.aedev.flow.player.error.StreamDenialClassifier
+import io.github.aedev.flow.player.error.StreamDenialKind
+import io.github.aedev.flow.player.stream.ClientGateTracker
+import io.github.aedev.flow.utils.videoIdFromUrl
 import java.io.IOException
 import java.io.OutputStream
 
 // Stream, manifest and subtitle proxying plus static assets, split from LocalHttpServer.kt. Companion members are referenced with the LocalHttpServer. qualifier.
+
+/** Picks the stream URL a `/stream` request wants out of [extractor]'s lists. */
+private fun ClientHandler.resolveDirectUrl(
+    extractor: StreamLists,
+    requestedItag: Int,
+    requestedTrackId: String?,
+    mediaType: String?,
+    params: Map<String, String>,
+): String? {
+    // Bilibili reports itag=-1 for everything; the manifest tags each Representation with mtype instead.
+    if (requestedItag == -1 && mediaType != null) {
+        if ("audio" == mediaType) {
+            val audioOnly = extractor.audioStreams
+            if (audioOnly.isNotEmpty()) {
+                var best = audioOnly[0]
+                for (candidate in audioOnly) {
+                    if (candidate.averageBitrate > best.averageBitrate) {
+                        best = candidate
+                    }
+                }
+                return best.content
+            }
+        } else if ("video" == mediaType) {
+            val videoOnly = extractor.videoOnlyStreams.ifEmpty { extractor.videoStreams }
+            if (videoOnly.isNotEmpty()) {
+                return videoOnly[0].content
+            }
+        }
+        return null
+    }
+
+    if (requestedItag != -1) {
+        for (stream in extractor.videoStreams) {
+            if (stream.itag == requestedItag) return stream.content
+        }
+        for (stream in extractor.videoOnlyStreams) {
+            if (stream.itag == requestedItag) return stream.content
+        }
+        for (stream in extractor.audioStreams) {
+            if (stream.itag == requestedItag) {
+                val streamTrackId = stream.audioTrackId ?: ""
+                val reqTrackId = requestedTrackId ?: ""
+                if (streamTrackId == reqTrackId) return stream.content
+            }
+        }
+    }
+
+    val targetQuality = params["quality"] ?: dbHelper.nativeVideoQuality()
+    val targetHeight = LocalHttpServer.getResolutionHeight(targetQuality)
+
+    val progressiveStreams = extractor.videoStreams
+    if (progressiveStreams.isNotEmpty()) {
+        var selectedStream: VideoStream? = null
+        var bestHeight = -1
+        for (stream in progressiveStreams) {
+            val height = LocalHttpServer.getResolutionHeight(stream.resolution)
+            if (height <= targetHeight && height > bestHeight) {
+                bestHeight = height
+                selectedStream = stream
+            }
+        }
+        if (selectedStream == null) {
+            for (stream in progressiveStreams) {
+                val height = LocalHttpServer.getResolutionHeight(stream.resolution)
+                if (height > bestHeight) {
+                    bestHeight = height
+                    selectedStream = stream
+                }
+            }
+        }
+        return (selectedStream ?: progressiveStreams[0]).content
+    }
+
+    try {
+        val hlsUrl = extractor.hlsUrl
+        if (!hlsUrl.isNullOrEmpty()) return hlsUrl
+    } catch (e: Exception) {
+    }
+
+    val rawAudioStreams = extractor.audioStreams
+    if (rawAudioStreams.isNotEmpty()) {
+        // Best track first; "original" is marked by an "(original)" suffix in audioTrackName.
+        var audioStreams: MutableList<AudioStream> = ArrayList(rawAudioStreams)
+        audioStreams.sortWith(LocalHttpServer.audioTrackPriorityComparator())
+        val bestTrackId = audioStreams[0].audioTrackId
+        val filteredStreams = audioStreams.filter { it.audioTrackId == bestTrackId }
+        if (filteredStreams.isNotEmpty()) {
+            audioStreams = filteredStreams.toMutableList()
+        }
+        return audioStreams[0].content
+    }
+    return null
+}
+
+/** The User-Agent to fetch [directUrl] with: the client that minted it, matched exactly. */
+private fun cdnUserAgent(
+    directUrl: String,
+    cacheKey: String,
+): String {
+    val default = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    if (!directUrl.contains("googlevideo.com")) return default
+    LocalHttpServer.streamUaCache.get(cacheKey)?.let { return it }
+    // No InnerTube-sourced User-Agent cached (older cache entry, or extraction fell back to NewPipe) -
+    // guess it back out of the URL's own client marker.
+    return try {
+        when {
+            directUrl.contains("c=IOS") || directUrl.contains("c=ios") ->
+                org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getIosUserAgent(null)
+            directUrl.contains("c=VISIONOS") || directUrl.contains("c=visionos") ->
+                org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getVisionOsUserAgent(null)
+            else -> org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getAndroidUserAgent(null)
+        }
+    } catch (e: Exception) {
+        default
+    }
+}
+
+/**
+ * GVS refused [directUrl] (403/404/410). Reads why from the URL itself, remembers it so the ladder
+ * skips a gated/refused client next time, and drops every cache tied to this video so the retry
+ * re-extracts instead of handing back the same denied URL.
+ */
+private fun reportStreamDenial(
+    directUrl: String,
+    cacheKey: String,
+    videoId: String?,
+) {
+    val kind = StreamDenialClassifier.classify(directUrl)
+    val client = StreamDenialClassifier.clientOf(directUrl)
+    LocalHttpServer.log("CDN denial kind=$kind client=$client url=$directUrl")
+    when (kind) {
+        StreamDenialKind.ATTESTATION_GATED -> ClientGateTracker.reportGated(client)
+        StreamDenialKind.TOKEN_REJECTED -> ClientGateTracker.reportRefused(client)
+        else -> {}
+    }
+    videoId?.let { LocalServerYouTubeStreams.invalidate(it) }
+    LocalHttpServer.streamUrlCache.remove(cacheKey)
+    LocalHttpServer.streamUaCache.remove(cacheKey)
+}
 
 @Throws(Exception::class)
 internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<String, String>, requestHeaders: Map<String, String>) {
@@ -37,243 +180,140 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
     val requestedTrackId = params["trackId"]
     // mtype is part of the cache key: itag-less services (Bilibili) share itag=-1 between video and audio.
     val mediaType = params["mtype"]
+    val resolvedMediaUrl = requireNotNull(mediaUrl) { "Missing 'id' parameter" }
+    val videoId = videoIdFromUrl(resolvedMediaUrl)
     val cacheKey = serviceId.toString() + "_" + mediaUrl + "_" + requestedItag +
             (if (requestedTrackId != null) "_$requestedTrackId" else "") +
             (if (mediaType != null) "_$mediaType" else "")
-    var directUrl = LocalHttpServer.streamUrlCache.get(cacheKey)
 
+    // LocalServerSource.streams is always asked fresh here: a stream request wants its own extractor
+    // fetch, not the one the manifest/watch page's cache is sharing.
+    fun resolve(useCache: Boolean): String? {
+        if (useCache) LocalHttpServer.streamUrlCache.get(cacheKey)?.let { return it }
+        val extractor = LocalServerSource.streams(dbHelper.appContext, serviceId, resolvedMediaUrl, fresh = true)
+        val url = resolveDirectUrl(extractor, requestedItag, requestedTrackId, mediaType, params) ?: return null
+        LocalHttpServer.streamUrlCache.put(cacheKey, url, 3600000)
+        if (videoId != null) {
+            LocalServerYouTubeStreams.extractionFor(videoId)?.usedClient?.userAgent?.let {
+                LocalHttpServer.streamUaCache.put(cacheKey, it, 3600000)
+            }
+        }
+        return url
+    }
+
+    var directUrl = resolve(useCache = true)
     if (directUrl == null) {
-        val extractor = LocalServerSource.streams(dbHelper.appContext, serviceId, requireNotNull(mediaUrl) { "Missing 'id' parameter" }, fresh = true)
-
-        // Bilibili reports itag=-1 for everything; the manifest tags each Representation with mtype instead.
-        if (requestedItag == -1 && mediaType != null) {
-            if ("audio" == mediaType) {
-                val audioOnly = extractor.audioStreams
-                if (audioOnly != null && !audioOnly.isEmpty()) {
-                    var best = audioOnly[0]
-                    for (candidate in audioOnly) {
-                        if (candidate.averageBitrate > best.averageBitrate) {
-                            best = candidate
-                        }
-                    }
-                    directUrl = best.content
-                }
-            } else if ("video" == mediaType) {
-                var videoOnly = extractor.videoOnlyStreams
-                if (videoOnly == null || videoOnly.isEmpty()) {
-                    videoOnly = extractor.videoStreams
-                }
-                if (videoOnly != null && !videoOnly.isEmpty()) {
-                    directUrl = videoOnly[0].content
-                }
-            }
-        }
-
-        if (directUrl == null && requestedItag != -1) {
-            for (stream in extractor.videoStreams) {
-                if (stream.itag == requestedItag) {
-                    directUrl = stream.content
-                    break
-                }
-            }
-            if (directUrl == null) {
-                for (stream in extractor.videoOnlyStreams) {
-                    if (stream.itag == requestedItag) {
-                        directUrl = stream.content
-                        break
-                    }
-                }
-            }
-            if (directUrl == null) {
-                for (stream in extractor.audioStreams) {
-                    if (stream.itag == requestedItag) {
-                        val streamTrackId = stream.audioTrackId ?: ""
-                        val reqTrackId = requestedTrackId ?: ""
-                        if (streamTrackId == reqTrackId) {
-                            directUrl = stream.content
-                            break
-                        }
-                    }
-                }
-            }
-        }
-
-        if (directUrl == null) {
-            val qualityParam = params["quality"]
-            val startTimeParam = params["start_time"]
-            var startTime = 0.0
-            if (startTimeParam != null) {
-                try {
-                    startTime = startTimeParam.toDouble()
-                } catch (e: Exception) {
-                }
-            }
-
-            val targetQuality = qualityParam ?: dbHelper.nativeVideoQuality()
-            val targetHeight = LocalHttpServer.getResolutionHeight(targetQuality)
-
-            val progressiveStreams = extractor.videoStreams
-            if (progressiveStreams != null && !progressiveStreams.isEmpty()) {
-                var selectedStream: VideoStream? = null
-                var bestHeight = -1
-                for (stream in progressiveStreams) {
-                    val height = LocalHttpServer.getResolutionHeight(stream.resolution)
-                    if (height <= targetHeight) {
-                        if (height > bestHeight) {
-                            bestHeight = height
-                            selectedStream = stream
-                        }
-                    }
-                }
-                if (selectedStream == null) {
-                    for (stream in progressiveStreams) {
-                        val height = LocalHttpServer.getResolutionHeight(stream.resolution)
-                        if (height > bestHeight) {
-                            bestHeight = height
-                            selectedStream = stream
-                        }
-                    }
-                }
-                if (selectedStream == null) {
-                    selectedStream = progressiveStreams[0]
-                }
-                directUrl = selectedStream.content
-            } else {
-                try {
-                    val hlsUrl = extractor.hlsUrl
-                    if (!hlsUrl.isNullOrEmpty()) {
-                        directUrl = hlsUrl
-                    }
-                } catch (e: Exception) {
-                }
-                if (directUrl == null) {
-                    val rawAudioStreams = extractor.audioStreams
-                    if (rawAudioStreams != null && !rawAudioStreams.isEmpty()) {
-                        // Best track first; "original" is marked by an "(original)" suffix in audioTrackName.
-                        var audioStreams: MutableList<AudioStream> = ArrayList(rawAudioStreams)
-                        audioStreams.sortWith(LocalHttpServer.audioTrackPriorityComparator())
-                        val bestTrackId = audioStreams[0].audioTrackId
-                        val filteredStreams = audioStreams.filter { it.audioTrackId == bestTrackId }
-                        if (filteredStreams.isNotEmpty()) {
-                            audioStreams = filteredStreams.toMutableList()
-                        }
-                        directUrl = audioStreams[0].content
-                    }
-                }
-            }
-        }
-
-        if (directUrl != null) {
-            LocalHttpServer.streamUrlCache.put(cacheKey, directUrl, 3600000)
-        }
-    }
-
-    if (directUrl != null) {
-        LocalHttpServer.log("Proxying stream from: $directUrl")
-
-        // User-Agent matching the YouTube client (c param) avoids 403.
-        var ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        if (directUrl.contains("googlevideo.com")) {
-            try {
-                ua = if (directUrl.contains("c=IOS") || directUrl.contains("c=ios")) {
-                    org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getIosUserAgent(null)
-                } else if (directUrl.contains("c=VISIONOS") || directUrl.contains("c=visionos")) {
-                    org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getVisionOsUserAgent(null)
-                } else {
-                    org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getAndroidUserAgent(null)
-                }
-            } catch (e: Exception) {
-            }
-        }
-
-        val reqBuilder = okhttp3.Request.Builder()
-            .url(directUrl)
-            .header("User-Agent", ua)
-
-        // Bilibili's CDN answers 403 without a matching Referer.
-        if (directUrl.contains("bilivideo.com") || directUrl.contains("bilibili.com") ||
-            directUrl.contains("akamaized.net")) {
-            reqBuilder.header("Referer", "https://www.bilibili.com/")
-            reqBuilder.header("Origin", "https://www.bilibili.com")
-        }
-
-        if (rangeHeader != null) {
-            reqBuilder.removeHeader("Range")
-            reqBuilder.addHeader("Range", rangeHeader)
-            LocalHttpServer.log("Forwarding Range to CDN: $rangeHeader")
-        }
-
-        LocalHttpServer.httpClient.newCall(reqBuilder.build()).execute().use { response ->
-            val code = response.code
-            LocalHttpServer.log("Incoming Range = $rangeHeader CDN status=$code itag=$requestedItag")
-
-            if (rangeHeader != null && code != 206) {
-                LocalHttpServer.log("WARNING: Range requested ($rangeHeader) but CDN returned $code")
-            }
-
-            val headBuilder = StringBuilder()
-            val statusText = if (code == 206) "Partial Content" else "OK"
-            headBuilder.append("HTTP/1.1 ").append(code).append(" ").append(statusText).append("\r\n")
-
-            val headersToForward = arrayOf(
-                "Content-Type",
-                "Content-Length",
-                "Content-Range",
-                "Accept-Ranges"
-            )
-
-            for (h in headersToForward) {
-                val v = response.header(h)
-                if (v != null) {
-                    headBuilder.append(h).append(": ").append(v).append("\r\n")
-                }
-            }
-
-            if (response.header("Content-Type") == null) {
-                var defaultType = if (requestedItag == 140) "audio/mp4" else "video/mp4"
-                if (requestedItag == -1) {
-                    // Itag-less services: the manifest's mtype decides.
-                    defaultType = if ("audio" == mediaType) "audio/mp4"
-                    else if ("video" == mediaType) "video/mp4"
-                    else "application/octet-stream"
-                }
-                headBuilder.append("Content-Type: ").append(defaultType).append("\r\n")
-            }
-
-            if (response.header("Accept-Ranges") == null) {
-                headBuilder.append("Accept-Ranges: bytes\r\n")
-            }
-
-            headBuilder.append("Access-Control-Allow-Origin: *\r\n")
-            headBuilder.append("Access-Control-Allow-Headers: *\r\n")
-            headBuilder.append("Access-Control-Expose-Headers: *\r\n")
-            headBuilder.append("\r\n")
-
-            if (code == 206) LocalHttpServer.log("Successfully returning 206 Partial Content to client")
-
-            os.write(headBuilder.toString().toByteArray(Charsets.UTF_8))
-            os.flush()
-
-            val responseBody = response.body
-            if (responseBody != null) {
-                try {
-                    responseBody.byteStream().use { inputStream ->
-                        val buffer = ByteArray(65536)
-                        var read: Int
-                        while (inputStream.read(buffer).also { read = it } != -1) {
-                            os.write(buffer, 0, read)
-                        }
-                    }
-                } catch (e: IOException) {
-                    // Client disconnected (pause/seek).
-                    LocalHttpServer.log("Stream proxy: Client connection closed.")
-                }
-            }
-            os.flush()
-        }
-    } else {
         sendResponse(os, 404, "Stream URL not found.", "text/plain; charset=UTF-8")
+        return
     }
+
+    LocalHttpServer.log("Proxying stream from: $directUrl")
+
+    var response = fetchFromCdn(directUrl, cacheKey, rangeHeader)
+    if (response.code !in 200..299 && directUrl.contains("googlevideo.com")) {
+        LocalHttpServer.log("CDN status=${response.code} on first attempt, re-extracting and retrying once")
+        response.close()
+        reportStreamDenial(directUrl, cacheKey, videoId)
+        // A fresh URL to retry, or - when re-extraction found nothing better - the same one again, so
+        // the response forwarded below is always a live, unconsumed one rather than the closed one above.
+        directUrl = resolve(useCache = false) ?: directUrl
+        LocalHttpServer.log("Retrying stream from: $directUrl")
+        response = fetchFromCdn(directUrl, cacheKey, rangeHeader)
+    }
+
+    response.use { r ->
+        val code = r.code
+        LocalHttpServer.log("Incoming Range = $rangeHeader CDN status=$code itag=$requestedItag")
+
+        if (rangeHeader != null && code != 206) {
+            LocalHttpServer.log("WARNING: Range requested ($rangeHeader) but CDN returned $code")
+        }
+
+        val headBuilder = StringBuilder()
+        val statusText = if (code == 206) "Partial Content" else "OK"
+        headBuilder.append("HTTP/1.1 ").append(code).append(" ").append(statusText).append("\r\n")
+
+        val headersToForward = arrayOf(
+            "Content-Type",
+            "Content-Length",
+            "Content-Range",
+            "Accept-Ranges"
+        )
+
+        for (h in headersToForward) {
+            val v = r.header(h)
+            if (v != null) {
+                headBuilder.append(h).append(": ").append(v).append("\r\n")
+            }
+        }
+
+        if (r.header("Content-Type") == null) {
+            var defaultType = if (requestedItag == 140) "audio/mp4" else "video/mp4"
+            if (requestedItag == -1) {
+                // Itag-less services: the manifest's mtype decides.
+                defaultType = if ("audio" == mediaType) "audio/mp4"
+                else if ("video" == mediaType) "video/mp4"
+                else "application/octet-stream"
+            }
+            headBuilder.append("Content-Type: ").append(defaultType).append("\r\n")
+        }
+
+        if (r.header("Accept-Ranges") == null) {
+            headBuilder.append("Accept-Ranges: bytes\r\n")
+        }
+
+        headBuilder.append("Access-Control-Allow-Origin: *\r\n")
+        headBuilder.append("Access-Control-Allow-Headers: *\r\n")
+        headBuilder.append("Access-Control-Expose-Headers: *\r\n")
+        headBuilder.append("\r\n")
+
+        if (code == 206) LocalHttpServer.log("Successfully returning 206 Partial Content to client")
+
+        os.write(headBuilder.toString().toByteArray(Charsets.UTF_8))
+        os.flush()
+
+        val responseBody = r.body
+        if (responseBody != null) {
+            try {
+                responseBody.byteStream().use { inputStream ->
+                    val buffer = ByteArray(65536)
+                    var read: Int
+                    while (inputStream.read(buffer).also { read = it } != -1) {
+                        os.write(buffer, 0, read)
+                    }
+                }
+            } catch (e: IOException) {
+                // Client disconnected (pause/seek).
+                LocalHttpServer.log("Stream proxy: Client connection closed.")
+            }
+        }
+        os.flush()
+    }
+}
+
+private fun fetchFromCdn(
+    directUrl: String,
+    cacheKey: String,
+    rangeHeader: String?,
+): okhttp3.Response {
+    val reqBuilder = okhttp3.Request.Builder()
+        .url(directUrl)
+        .header("User-Agent", cdnUserAgent(directUrl, cacheKey))
+
+    // Bilibili's CDN answers 403 without a matching Referer.
+    if (directUrl.contains("bilivideo.com") || directUrl.contains("bilibili.com") ||
+        directUrl.contains("akamaized.net")) {
+        reqBuilder.header("Referer", "https://www.bilibili.com/")
+        reqBuilder.header("Origin", "https://www.bilibili.com")
+    }
+
+    if (rangeHeader != null) {
+        reqBuilder.removeHeader("Range")
+        reqBuilder.addHeader("Range", rangeHeader)
+        LocalHttpServer.log("Forwarding Range to CDN: $rangeHeader")
+    }
+
+    return LocalHttpServer.httpClient.newCall(reqBuilder.build()).execute()
 }
 
 @Throws(Exception::class)

@@ -1,6 +1,8 @@
 package io.github.aedev.flow.localserver
 
 import android.content.Context
+import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
+import io.github.aedev.flow.utils.videoIdFromUrl
 import org.json.JSONArray
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.NewPipe
@@ -199,10 +201,17 @@ internal fun LocalServerSource.streams(
 ): StreamLists {
     if (LocalServerBilibili.isBilibili(serviceId)) return InfoStreams(LocalServerBilibiliStreams.streamInfo(context, mediaUrl))
     val service = NewPipe.getService(serviceId)
-    if (!fresh) return ExtractorStreams(LocalHttpServer.getCachedExtractor(service, serviceId, mediaUrl))
-    val extractor = service.getStreamExtractor(mediaUrl)
-    extractor.fetchPage()
-    return ExtractorStreams(extractor)
+    val extractorStreams =
+        if (!fresh) {
+            ExtractorStreams(LocalHttpServer.getCachedExtractor(service, serviceId, mediaUrl))
+        } else {
+            val extractor = service.getStreamExtractor(mediaUrl)
+            extractor.fetchPage()
+            ExtractorStreams(extractor)
+        }
+    if (!InnerTubeVideoStreamExtractor.supportsService(serviceId)) return extractorStreams
+    val videoId = videoIdFromUrl(mediaUrl) ?: return extractorStreams
+    return MergedYouTubeStreams(extractorStreams, videoId)
 }
 
 /** Everything about one video that the watch page, downloads and subtitles read. */
@@ -213,7 +222,11 @@ internal fun LocalServerSource.streamInfo(
 ): StreamInfo {
     if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibiliStreams.streamInfo(context, mediaUrl)
     val extractor = LocalHttpServer.getCachedExtractor(NewPipe.getService(serviceId), serviceId, mediaUrl)
-    return synchronized(extractor) { StreamInfo.getInfo(extractor) }
+    val info = synchronized(extractor) { StreamInfo.getInfo(extractor) }
+    if (InnerTubeVideoStreamExtractor.supportsService(serviceId)) {
+        videoIdFromUrl(mediaUrl)?.let { LocalServerYouTubeStreams.overlay(info, it) }
+    }
+    return info
 }
 
 /** [streamInfo] with the related list a watch page shows: Bilibili's own, or YouTube's ranked one. */

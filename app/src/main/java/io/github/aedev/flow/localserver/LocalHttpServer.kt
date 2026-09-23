@@ -156,6 +156,11 @@ class LocalHttpServer(private val context: android.content.Context, private val 
 
         internal val streamUrlCache = StreamUrlCache()
 
+        // The InnerTube client that minted each cached URL, keyed the same way - a googlevideo CDN
+        // 403s if the fetching User-Agent does not match the client, so this replaces guessing it
+        // back out of the URL's own query string.
+        internal val streamUaCache = StreamUrlCache()
+
         // One extraction per video, shared by the watch and manifest handlers. Smaller than streamUrlCache: entries hold parsed extractor state.
         private val extractorCache = ExtractorCache()
         internal val httpClient: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder()
@@ -796,6 +801,11 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         fun put(key: String, value: String?, timeoutMillis: Long) {
             removeStale()
             map[key] = CacheData(value, timeoutMillis)
+        }
+
+        @Synchronized
+        fun remove(key: String) {
+            map.remove(key)
         }
 
         private fun removeStale() {
