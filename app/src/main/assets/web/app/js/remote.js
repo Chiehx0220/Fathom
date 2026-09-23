@@ -32,15 +32,22 @@ const paintState = () => {
     if (FT.renderTop) FT.renderTop();
 };
 
-// Idle-fade for the key hints and connection banner; any command resets the timer.
+// Idle-fade for the key hints; any command resets the timer.
 const wake = () => {
     const hints = FT.$('#keyhints');
-    const banner = FT.$('#remote-banner');
     hints.classList.remove('idle');
-    banner.classList.remove('idle');
     clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => { hints.classList.add('idle'); banner.classList.add('idle'); }, 4000);
+    idleTimer = setTimeout(() => hints.classList.add('idle'), 4000);
 };
+
+// The connection banner hides for fullscreen video instead of idle-fading - that is exactly when
+// it would sit on top of the picture. isFullscreen() also covers the manual "remote-fs" fallback
+// for a browser that refused real fullscreen (see player.js's fullscreen()).
+const updateBannerFullscreen = () => {
+    FT.$('#remote-banner').classList.toggle('fs-hidden', FT.player.isFullscreen());
+};
+document.addEventListener('fullscreenchange', updateBannerFullscreen);
+new MutationObserver(updateBannerFullscreen).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
 // Idle-fade for the pointer dot; any pointer activity resets the timer.
 const showPointer = () => {

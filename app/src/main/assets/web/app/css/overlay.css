@@ -24,7 +24,7 @@
 
 /* Idle-fades alongside #keyhints (see remote.js's wake()). */
 .remote-banner { position: fixed; left: 24px; bottom: 18px; z-index: 3050; display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 8px 0 16px; border-radius: 20px; background: var(--acc); color: var(--on-acc); font-size: 13px; font-weight: 500; transition: opacity 0.4s; }
-.remote-banner.idle { opacity: 0; pointer-events: none; }
+.remote-banner.fs-hidden { opacity: 0; pointer-events: none; }
 .remote-banner .i { font-size: 16px; }
 .remote-banner button { height: 28px; padding: 0 14px; border: 0; border-radius: 14px; background: color-mix(in srgb, var(--on-acc) 16%, transparent); color: inherit; font-weight: 500; }
 .remote-banner button:hover { background: color-mix(in srgb, var(--on-acc) 26%, transparent); }
