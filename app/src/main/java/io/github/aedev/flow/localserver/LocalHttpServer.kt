@@ -504,7 +504,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                                 "/manifest" to { handleManifestProxy(os, params) },
                                 "/subtitles" to { handleSubtitlesProxy(os, params) },
                                 "/thumbnails" to { handleThumbnailsProxy(os, params) },
-                                "/thumbnail-sheet" to { handleThumbnailSheetProxy(os, params) },
+                                "/image-proxy" to { handleImageProxy(os, params) },
                                 "/api/player/play" to { handleApiPlayerPlay(os, params) },
                                 "/api/player/pause" to { handleApiPlayerPause(os) },
                                 "/api/player/resume" to { handleApiPlayerResume(os) },

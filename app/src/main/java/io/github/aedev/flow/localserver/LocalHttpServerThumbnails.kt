@@ -30,7 +30,7 @@ internal fun Frameset.toWebVtt(): String {
         val x = (slot % framesPerPageX) * frameWidth
         val y = (slot / framesPerPageX) * frameHeight
         vtt.append(vttTime(frame.toLong() * durationPerFrame)).append(" --> ").append(vttTime((frame + 1L) * durationPerFrame)).append('\n')
-            .append(SHEET_ROUTE).append(URLEncoder.encode(urls[sheet], "UTF-8")).append("#xywh=").append(x).append(',').append(y).append(',').append(frameWidth).append(',').append(frameHeight)
+            .append(IMAGE_ROUTE).append(URLEncoder.encode(urls[sheet], "UTF-8")).append("#xywh=").append(x).append(',').append(y).append(',').append(frameWidth).append(',').append(frameHeight)
             .append("\n\n")
     }
     return vtt.toString()
@@ -42,15 +42,22 @@ private fun vttTime(millis: Long): String =
 private const val MAX_PREVIEW_WIDTH = 320
 
 /*
- * The player asks for these images in CORS mode, and YouTube's image host does not allow that, so the
- * browser would refuse them (black previews). Fetching them here makes them same-origin.
+ * Images from a host the browser cannot fetch directly - YouTube's refuses the player's CORS mode
+ * (black previews); Bilibili's hotlink-checks the Referer and 403s without it. Both are fixed the
+ * same way: fetched here, with whatever header that host needs, and served back same-origin.
  */
-private const val SHEET_ROUTE = "/thumbnail-sheet?u="
+private const val IMAGE_ROUTE = "/image-proxy?u="
 
-private fun isYouTubeImageUrl(url: String): Boolean {
-    val uri = runCatching { URI(url) }.getOrNull() ?: return false
-    val host = uri.host?.lowercase() ?: return false
-    return uri.scheme == "https" && (host == "ytimg.com" || host.endsWith(".ytimg.com"))
+/** The extra request headers [url]'s host needs to answer, or null when it needs no proxying. */
+private fun proxiedImageHeaders(url: String): Map<String, String>? {
+    val uri = runCatching { URI(url) }.getOrNull() ?: return null
+    val host = uri.host?.lowercase() ?: return null
+    if (uri.scheme != "https") return null
+    return when {
+        host == "ytimg.com" || host.endsWith(".ytimg.com") -> emptyMap()
+        host.endsWith("hdslb.com") -> mapOf("Referer" to "https://www.bilibili.com/", "Origin" to "https://www.bilibili.com")
+        else -> null
+    }
 }
 
 @Throws(Exception::class)
@@ -66,17 +73,19 @@ internal fun ClientHandler.handleThumbnailsProxy(os: OutputStream, params: Map<S
 }
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleThumbnailSheetProxy(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleImageProxy(os: OutputStream, params: Map<String, String>) {
     val url = params["u"]
-    if (url == null || !isYouTubeImageUrl(url)) {
-        sendResponse(os, 400, "Not a thumbnail sheet.", "text/plain; charset=UTF-8")
+    val extraHeaders = url?.let { proxiedImageHeaders(it) }
+    if (url == null || extraHeaders == null) {
+        sendResponse(os, 400, "Not a proxiable image.", "text/plain; charset=UTF-8")
         return
     }
-    val request = okhttp3.Request.Builder().url(url).header("User-Agent", "Mozilla/5.0").build()
-    LocalHttpServer.httpClient.newCall(request).execute().use { response ->
+    val reqBuilder = okhttp3.Request.Builder().url(url).header("User-Agent", "Mozilla/5.0")
+    extraHeaders.forEach { (name, value) -> reqBuilder.header(name, value) }
+    LocalHttpServer.httpClient.newCall(reqBuilder.build()).execute().use { response ->
         val body = response.body?.bytes() ?: ByteArray(0)
         if (!response.isSuccessful) {
-            sendResponse(os, 502, "Thumbnail sheet unavailable.", "text/plain; charset=UTF-8")
+            sendResponse(os, 502, "Image unavailable.", "text/plain; charset=UTF-8")
             return
         }
         val contentType = response.header("Content-Type") ?: "image/jpeg"
@@ -94,6 +103,6 @@ internal fun ClientHandler.handleThumbnailSheetProxy(os: OutputStream, params: M
     }
 }
 
-/** A same-origin URL for a YouTube image the player draws in CORS mode (poster, artwork); null for other hosts. */
-internal fun sameOriginImageUrl(url: String): String? =
-    if (isYouTubeImageUrl(url)) SHEET_ROUTE + URLEncoder.encode(url, "UTF-8") else null
+/** A same-origin URL for an image the browser cannot fetch directly; the original URL for any other host. */
+internal fun sameOriginImageUrl(url: String): String =
+    if (proxiedImageHeaders(url) != null) IMAGE_ROUTE + URLEncoder.encode(url, "UTF-8") else url

@@ -37,7 +37,10 @@ object ApiRenderer {
         // authorThumbnail. A missing video thumbnail is fine as a generic placeholder photo; a
         // missing channel avatar should fall back to FT.avatar()'s own initial-letter circle
         // instead of an unrelated stock photo standing in for someone's face.
-        json.put("channelThumbnailUrl", if (HtmlRendererCommon.hasThumbnail(streamItem?.uploaderAvatarUrl)) HtmlRendererCommon.getThumbnailUrl(streamItem?.uploaderAvatarUrl) else "")
+        json.put(
+            "channelThumbnailUrl",
+            if (HtmlRendererCommon.hasThumbnail(streamItem?.uploaderAvatarUrl)) sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(streamItem?.uploaderAvatarUrl)) else "",
+        )
         if (streamItem != null) {
             json.put("duration", streamItem.duration.coerceAtLeast(0).toInt())
             json.put("viewCount", streamItem.viewCount.coerceAtLeast(-1))
@@ -69,7 +72,10 @@ object ApiRenderer {
         json.put("channelId", info.uploaderUrl ?: "")
         json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(info.thumbnails))
         // See videoJson()'s channelThumbnailUrl: empty, not the placeholder, when there's no real avatar.
-        json.put("channelThumbnailUrl", if (HtmlRendererCommon.hasThumbnail(info.uploaderAvatars)) HtmlRendererCommon.getThumbnailUrl(info.uploaderAvatars) else "")
+        json.put(
+            "channelThumbnailUrl",
+            if (HtmlRendererCommon.hasThumbnail(info.uploaderAvatars)) sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(info.uploaderAvatars)) else "",
+        )
         json.put("duration", info.duration.coerceAtLeast(0).toInt())
         json.put("viewCount", info.viewCount.coerceAtLeast(-1))
         json.put("likeCount", info.likeCount.coerceAtLeast(0))
@@ -169,7 +175,7 @@ object ApiRenderer {
         val json = JSONObject()
         json.put("id", channel.url)
         json.put("name", channel.name)
-        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(channel.avatarUrl))
+        json.put("thumbnailUrl", sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(channel.avatarUrl)))
         json.put("subscriberCount", channel.subscriberCount.coerceAtLeast(-1))
         json.put("description", channel.description)
         json.put("isSubscribed", isSubscribed)
@@ -183,7 +189,7 @@ object ApiRenderer {
         json.put("id", item.url)
         json.put("serviceId", item.serviceId)
         json.put("name", item.name ?: "")
-        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(item.thumbnailUrl))
+        json.put("thumbnailUrl", sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(item.thumbnailUrl)))
         json.put("subscriberCount", item.subscriberCount.coerceAtLeast(-1))
         json.put("url", item.url)
         return json
@@ -209,7 +215,7 @@ object ApiRenderer {
         // Empty, not the placeholder URL, when there's no real avatar.
         json.put(
             "authorThumbnail",
-            if (HtmlRendererCommon.hasThumbnail(item.uploaderAvatarUrl)) HtmlRendererCommon.getThumbnailUrl(item.uploaderAvatarUrl) else "",
+            if (HtmlRendererCommon.hasThumbnail(item.uploaderAvatarUrl)) sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(item.uploaderAvatarUrl)) else "",
         )
         json.put("text", item.commentText.content ?: "")
         // Mirrors videoDetailJson's descriptionType - comment text can be HTML too.
