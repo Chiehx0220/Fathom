@@ -21,7 +21,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **100** (2204 changed lines). New files: **42** (3881 lines).
+- Modified upstream files: **100** (2186 changed lines). New files: **46** (4578 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -37,7 +37,7 @@ in it). **New files** never conflict; they are ours alone.
 | MainActivity.kt | 41 | 27 |
 | player/stream/PlaybackLoadResolver.kt | 62 | 1 |
 | ui/screens/home/HomeViewModel.kt | 42 | 19 |
-| ui/FlowNavigation.kt | 39 | 17 |
+| ui/FlowNavigation.kt | 30 | 16 |
 | ui/screens/search/SearchScreen.kt | 39 | 4 |
 | ui/screens/player/VideoPlayerViewModel.kt | 32 | 7 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 36 | 0 |
@@ -81,10 +81,10 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/stage/VideoStage.kt | 8 | 0 |
 | ui/components/shared/VideoShareAction.kt | 5 | 2 |
 | ui/screens/player/content/VideoInfoContent.kt | 4 | 3 |
-| ui/screens/settings/SettingsScreen.kt | 7 | 0 |
 | data/engagement/VideoEngagementUseCase.kt | 6 | 0 |
 | data/local/LikedVideosRepository.kt | 5 | 1 |
-| data/local/LocalDataManager.kt | 3 | 3 |
+| sync/canonical/Canonical.kt | 6 | 0 |
+| sync/mapping/SimpleMappers.kt | 6 | 0 |
 | ... 40 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.Image
@@ -29,18 +30,44 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
+import io.github.aedev.flow.ui.screens.settings.about.ChangelogSheet
+import io.github.aedev.flow.ui.screens.settings.about.DeviceInfoDialog
+import io.github.aedev.flow.ui.screens.settings.about.DonationsScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+private enum class FathomAboutPage { MAIN, FATHOM_DONATE, UPSTREAM_DONATE }
+
+/** Fathom's About page; the two donation pages open over it instead of being separate routes. */
+@Composable
+internal fun FathomAboutScreen(onBack: (() -> Unit)?) {
+    var page by rememberSaveable { mutableStateOf(FathomAboutPage.MAIN) }
+    when (page) {
+        FathomAboutPage.MAIN ->
+            FathomAboutMain(
+                onNavigateBack = onBack,
+                onNavigateToDonations = { page = FathomAboutPage.UPSTREAM_DONATE },
+                onNavigateToFathomDonations = { page = FathomAboutPage.FATHOM_DONATE },
+            )
+        FathomAboutPage.FATHOM_DONATE -> {
+            BackHandler { page = FathomAboutPage.MAIN }
+            FathomDonationsScreen(onNavigateBack = { page = FathomAboutPage.MAIN })
+        }
+        FathomAboutPage.UPSTREAM_DONATE -> {
+            BackHandler { page = FathomAboutPage.MAIN }
+            DonationsScreen(onNavigateBack = { page = FathomAboutPage.MAIN })
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FathomAboutScreen(
-    onNavigateBack: () -> Unit,
+private fun FathomAboutMain(
+    onNavigateBack: (() -> Unit)?,
     onNavigateToDonations: () -> Unit,
     onNavigateToFathomDonations: () -> Unit,
 ) {
     val context = LocalContext.current
-    var showLicenseDialog by remember { mutableStateOf(false) }
     var showDeviceInfoDialog by remember { mutableStateOf(false) }
     var showChangelogDialog by remember { mutableStateOf(false) }
     var upstreamOpen by rememberSaveable { mutableStateOf(false) }
@@ -156,7 +183,7 @@ fun FathomAboutScreen(
                     icon = Icons.Outlined.Description,
                     title = stringResource(R.string.about_license),
                     subtitle = stringResource(R.string.about_license_name),
-                    onClick = { showLicenseDialog = true },
+                    onClick = { openExternalUrl(context, AboutLinks.LICENSE) },
                 )
             }
             item { FathomAboutDivider() }
@@ -183,9 +210,8 @@ fun FathomAboutScreen(
         }
     }
 
-    if (showLicenseDialog) LicenseDialog(onDismiss = { showLicenseDialog = false })
     if (showDeviceInfoDialog) DeviceInfoDialog(onDismiss = { showDeviceInfoDialog = false })
-    if (showChangelogDialog) ChangelogDialog(onDismiss = { showChangelogDialog = false })
+    if (showChangelogDialog) ChangelogSheet(onDismiss = { showChangelogDialog = false })
 }
 
 @Composable

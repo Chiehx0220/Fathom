@@ -23,6 +23,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -33,16 +34,16 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-// The local server card of the settings list, kept out of SettingsScreen.kt so upstream edits to that
-// long file do not collide with it. [running] is the service's actual state, which the screen
-// collects because only a composable can.
-internal fun LazyListScope.localServerSettingsItems(
-    running: Boolean,
-    playerPreferences: PlayerPreferences,
-    coroutineScope: CoroutineScope,
-    context: Context,
-) {
-    item {
+// The local server card of the settings list, kept out of the upstream settings files so their edits
+// do not collide with it. It follows the service's actual state, not the saved on/off preference.
+@Composable
+internal fun LocalServerSettingsSection() {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val playerPreferences = remember { PlayerPreferences(context) }
+    val running by io.github.aedev.flow.localserver.ServerService.runningState.collectAsState()
+    Column {
+    run {
         Text(
             text = stringResource(R.string.settings_header_local_server),
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -50,7 +51,7 @@ internal fun LazyListScope.localServerSettingsItems(
             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp, top = 8.dp),
         )
     }
-    item {
+    run {
         val localServerAddress =
             remember(running) {
                 if (running) {
@@ -241,6 +242,7 @@ internal fun LazyListScope.localServerSettingsItems(
             }
         }
         Spacer(Modifier.height(8.dp))
+    }
     }
 }
 

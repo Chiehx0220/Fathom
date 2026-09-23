@@ -50,7 +50,7 @@ import io.github.aedev.flow.ui.components.UpdateDialog
 import io.github.aedev.flow.ui.components.shared.ProvideChannelGroupLabels
 import io.github.aedev.flow.ui.components.shared.ProvideDateDisplaySettings
 import io.github.aedev.flow.ui.screens.CrashReporterScreen
-import io.github.aedev.flow.ui.theme.CustomThemePalettes
+import io.github.aedev.flow.ui.theme.CustomTheme
 import io.github.aedev.flow.ui.theme.FlowTheme
 import io.github.aedev.flow.ui.theme.ThemeMode
 import io.github.aedev.flow.ui.theme.ThemeVariant
@@ -186,10 +186,9 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val scope = rememberCoroutineScope()
             var themeMode by remember { mutableStateOf(ThemeMode.MATERIAL_YOU) }
             var themeVariant by remember { mutableStateOf(ThemeVariant.DARK) }
-            var customThemePalettes by remember { mutableStateOf(CustomThemePalettes()) }
+            var customTheme by remember { mutableStateOf<CustomTheme?>(null) }
             var systemLightThemeMode by remember { mutableStateOf(ThemeMode.DARK) }
             var systemDarkThemeMode by remember { mutableStateOf(ThemeMode.DARK) }
             var systemDarkThemeVariant by remember { mutableStateOf(ThemeVariant.DARK) }
@@ -217,7 +216,7 @@ class MainActivity : ComponentActivity() {
                 FlowTheme(
                     themeMode = themeMode,
                     themeVariant = themeVariant,
-                    customThemePalettes = customThemePalettes,
+                    customTheme = customTheme,
                     systemLightThemeMode = systemLightThemeMode,
                     systemDarkThemeMode = systemDarkThemeMode,
                     systemDarkThemeVariant = systemDarkThemeVariant,
@@ -263,8 +262,8 @@ class MainActivity : ComponentActivity() {
             }
 
             LaunchedEffect(Unit) {
-                dataManager.customThemePalettes.collect { palettes ->
-                    customThemePalettes = palettes
+                dataManager.activeCustomTheme.collect { theme ->
+                    customTheme = theme
                 }
             }
 
@@ -295,7 +294,7 @@ class MainActivity : ComponentActivity() {
             FlowTheme(
                 themeMode = themeMode,
                 themeVariant = themeVariant,
-                customThemePalettes = customThemePalettes,
+                customTheme = customTheme,
                 systemLightThemeMode = systemLightThemeMode,
                 systemDarkThemeMode = systemDarkThemeMode,
                 systemDarkThemeVariant = systemDarkThemeVariant,
@@ -380,46 +379,8 @@ class MainActivity : ComponentActivity() {
                                         FlowApp(
                                             currentTheme = themeMode,
                                             themeVariant = themeVariant,
-                                            customThemePalettes = customThemePalettes,
                                             systemLightThemeMode = systemLightThemeMode,
                                             systemDarkThemeMode = systemDarkThemeMode,
-                                            systemDarkThemeVariant = systemDarkThemeVariant,
-                                            onThemeChange = { newTheme ->
-                                                themeMode = newTheme
-                                                scope.launch {
-                                                    dataManager.setThemeMode(newTheme)
-                                                }
-                                            },
-                                            onThemeVariantChange = { variant ->
-                                                themeVariant = variant
-                                                scope.launch {
-                                                    dataManager.setThemeVariant(variant)
-                                                }
-                                            },
-                                            onCustomThemePalettesChange = { palettes ->
-                                                customThemePalettes = palettes
-                                                scope.launch {
-                                                    dataManager.setCustomThemePalettes(palettes)
-                                                }
-                                            },
-                                            onSystemLightThemeChange = { newTheme ->
-                                                systemLightThemeMode = newTheme
-                                                scope.launch {
-                                                    dataManager.setSystemLightThemeMode(newTheme)
-                                                }
-                                            },
-                                            onSystemDarkThemeChange = { newTheme ->
-                                                systemDarkThemeMode = newTheme
-                                                scope.launch {
-                                                    dataManager.setSystemDarkThemeMode(newTheme)
-                                                }
-                                            },
-                                            onSystemDarkThemeVariantChange = { variant ->
-                                                systemDarkThemeVariant = variant
-                                                scope.launch {
-                                                    dataManager.setSystemDarkThemeVariant(variant)
-                                                }
-                                            },
                                             pendingDeeplink = pendingDeeplink,
                                             openMusicPlayerRequest = openMusicPlayerRequest,
                                             onDeeplinkConsumed = {
