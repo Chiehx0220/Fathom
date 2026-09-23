@@ -454,16 +454,18 @@ private fun NowPlaying(state: LocalHttpServer.RemoteState, send: (String) -> Uni
         Text(state.title.orEmpty(), style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
         state.chapters.getOrNull(state.chapterIndex)?.let { chapterTitle ->
             Row(
-                Modifier.clip(RoundedCornerShape(8.dp)).clickable { showChapters = true },
+                Modifier.padding(top = 2.dp).clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable { showChapters = true }.padding(start = 10.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text(chapterTitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                Icon(Icons.Default.List, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text(chapterTitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                 Icon(
-                    Icons.Default.List,
+                    Icons.Default.KeyboardArrowRight,
                     contentDescription = stringResource(R.string.remote_chapter_list),
                     modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
         }
