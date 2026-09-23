@@ -17,10 +17,12 @@
 .stage.mini.dragging { cursor: grabbing; transition: none; }
 .stage.mini media-video-layout { display: none; }
 /* Shared chrome for the mini player's controls (close/expand/play - see player.js's MINI_CTRL);
- * each subclass below only overrides position and icon size. */
-.mini-ctrl { position: absolute; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.65); color: #fff; }
+ * each subclass below only overrides position and icon size. Hidden until hovered, like YouTube's
+ * own mini player, so the picture itself is what shows the rest of the time. */
+.mini-ctrl { position: absolute; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.65); color: #fff; opacity: 0; pointer-events: none; transition: opacity 0.15s; }
 .mini-ctrl .i { font-size: 20px; }
 .stage:not(.mini) .mini-ctrl { display: none; }
+.stage.mini:hover .mini-ctrl { opacity: 1; pointer-events: auto; }
 .mini-close { top: 8px; right: 8px; }
 .mini-expand { top: 8px; left: 8px; }
 .mini-expand .i { font-size: 18px; }
