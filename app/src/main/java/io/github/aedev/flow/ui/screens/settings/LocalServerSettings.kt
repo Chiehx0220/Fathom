@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui.screens.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -22,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,6 +39,7 @@ import kotlinx.coroutines.launch
 private val CardPadding = 16.dp
 private val CardSpacing = 16.dp
 private val EmblemSize = 56.dp
+private val OnlineColor = Color(0xFF2E9E5B)
 
 /**
  * The local server card of the settings list, sitting beside the taste card in the same Material 3 Expressive form.
@@ -78,11 +82,18 @@ internal fun LocalServerSettingsSection() {
                 }
             }
             Column(Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.settings_item_local_server),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(8.dp)
+                            .background(if (running) OnlineColor else MaterialTheme.colorScheme.outline, CircleShape),
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_item_local_server),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
                 Text(
                     text = address ?: stringResource(R.string.settings_local_server_off),
                     style = MaterialTheme.typography.titleLarge,
