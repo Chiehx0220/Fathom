@@ -222,6 +222,7 @@ internal fun ClientHandler.handleRemoteState(os: OutputStream, params: Map<Strin
     LocalHttpServer.updateRemoteState(
         LocalHttpServer.RemoteState(
             watching = watching,
+            minimized = params["mini"] == "1",
             title = params["title"]?.takeIf { it.isNotEmpty() },
             positionSec = params["t"]?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: 0.0,
             durationSec = params["d"]?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: 0.0,

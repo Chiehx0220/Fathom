@@ -10,9 +10,10 @@ const visible = (el) => {
     return r.width > 0 && r.height > 0;
 };
 
-// The controls that can be selected right now: an open menu or dialog holds them all, otherwise the top bar and the screen.
+// The controls that can be selected right now: an open menu or dialog holds them all, otherwise the top bar and the
+// screen. With the phone paired the top bar is left out: its places are keys on the phone, and the arrows stay on the page.
 const stops = () => {
-    const scope = state.trap ? [state.trap] : [FT.$('#top'), FT.$('#screen')];
+    const scope = state.trap ? [state.trap] : FT.remote.active ? [FT.$('#screen')] : [FT.$('#top'), FT.$('#screen')];
     return scope.flatMap((root) => FT.$$('[data-f]', root)).filter(visible);
 };
 
@@ -56,7 +57,7 @@ FT.focus = {
         state.el = el || null;
         if (!el) return;
         el.classList.add('sel');
-        if (options.scroll !== false) el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        if (options.scroll !== false) el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
         if (FT.onSelect) FT.onSelect(el);
     },
 

@@ -90,7 +90,7 @@ const handle = (cmd) => {
         showPointer();
         clickPointer();
     } else if (cmd.startsWith('pointer_scroll:')) {
-        scrollBy({ top: parseFloat(cmd.slice('pointer_scroll:'.length)) || 0, behavior: 'smooth' });
+        scrollBy({ top: parseFloat(cmd.slice('pointer_scroll:'.length)) || 0, behavior: 'instant' });
     } else if (cmd === 'back') {
         FT.command('back');
     } else if (cmd === 'play_pause') {
@@ -126,7 +126,11 @@ const handle = (cmd) => {
         FT.player.mute();
     } else if (cmd === 'fullscreen') {
         FT.player.fullscreen();
+    } else if (cmd === 'expand') {
+        FT.player.expand();
     }
+    // Tell the phone how the page ended up now, not at the next once-a-second report.
+    if (!cmd.startsWith('pointer_')) setTimeout(report, 100);
 };
 
 // ---- Reporting back to the phone ----
@@ -136,11 +140,12 @@ const report = () => {
     if (!lock) return;
     const snap = FT.player.snapshot();
     const watching = FT.route.name === 'watch' && snap.open;
+    // A video shrunk to the mini player is still playing and still needs its keys, even though the page has moved on.
     const q = new URLSearchParams({
-        release_code: lock, watching: watching ? 1 : 0, fs: snap.fs ? 1 : 0,
+        release_code: lock, watching: watching ? 1 : 0, mini: snap.open && !watching ? 1 : 0, fs: snap.fs ? 1 : 0,
         svc: FT.store.service, svcs: FT.services.map((s) => s.id + ':' + s.name).join(','),
     });
-    if (watching) {
+    if (snap.open) {
         q.set('title', snap.title);
         q.set('t', snap.t);
         q.set('d', snap.d);

@@ -54,6 +54,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
     /** What the paired page last reported: whether a video is open and how it is playing. */
     data class RemoteState(
         val watching: Boolean = false,
+        /** A video is open but shrunk to the mini player while the page shows something else. */
+        val minimized: Boolean = false,
         val title: String? = null,
         val positionSec: Double = 0.0,
         val durationSec: Double = 0.0,
@@ -69,7 +71,10 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         /** The sources the page can switch between (id to name) and which one it is on. */
         val services: List<Pair<Int, String>> = emptyList(),
         val activeService: Int? = null,
-    )
+    ) {
+        /** Whether there is a video to control, on its own page or in the mini player. */
+        val hasVideo: Boolean get() = watching || minimized
+    }
 
     companion object {
         private val remoteLockState = MutableStateFlow(RemoteLock(false, null, null))
@@ -328,18 +333,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return 0
         }
 
-        // The manifest's video AdaptationSet only contains video-only MPEG_4 streams with valid SegmentBase ranges; the quality list must offer exactly that set, or a selection matches nothing.
-        @JvmStatic
-        fun dashPlayableVideoOnlyStreams(videoOnlyStreams: List<VideoStream>?): List<VideoStream> {
-            if (videoOnlyStreams.isNullOrEmpty()) return emptyList()
-            val seenItags = HashSet<Int>()
-            return videoOnlyStreams.filter { vs ->
-                vs.format == MediaFormat.MPEG_4 &&
-                    vs.initStart >= 0 && vs.initEnd >= 0 && vs.indexStart >= 0 && vs.indexEnd >= 0 &&
-                    seenItags.add(vs.itag)
-            }
-        }
-
         // One extractor and page fetch per video, whichever handler runs first.
         @JvmStatic
         @Throws(Exception::class)
@@ -496,7 +489,7 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                         try {
                             // Route table rebuilt per request: each lambda captures this request's state.
                             val routes: Map<String, () -> Unit> = mapOf(
-                                "/" to { sendRedirect(os, "/app") },
+                                "/" to { handleAppShell(os) },
                                 "/danmaku" to { handleDanmaku(os, params) },
                                 "/send-link" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
                                 "/play" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
@@ -537,7 +530,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                                 "/api/v1/state" to { handleApiState(os, params) },
                                 "/api/v1/sponsor" to { handleApiSponsor(os, params) },
                                 "/api/v1/settings" to { handleApiSettings(os, params) },
-                                "/app" to { handleAppShell(os) },
                                 "/app.css" to { handleAppCss(os) },
                                 "/app.js" to { handleAppJs(os) },
                             )

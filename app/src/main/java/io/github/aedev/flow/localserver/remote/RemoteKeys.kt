@@ -2,6 +2,12 @@
 
 package io.github.aedev.flow.localserver.remote
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -48,6 +54,26 @@ internal fun rememberKeyTick(): () -> Unit {
     return remember(haptic) { { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) } }
 }
 
+/** A key's icon. When the key's meaning changes (play becomes pause) the old icon shrinks away as the new one grows in. */
+@Composable
+internal fun KeyIcon(
+    icon: ImageVector,
+    size: Dp,
+    description: String? = null,
+) {
+    val motion = MaterialTheme.motionScheme
+    AnimatedContent(
+        targetState = icon,
+        transitionSpec = {
+            (fadeIn(motion.defaultEffectsSpec<Float>()) + scaleIn(motion.fastSpatialSpec<Float>(), initialScale = 0.4f)) togetherWith
+                (fadeOut(motion.defaultEffectsSpec<Float>()) + scaleOut(motion.fastSpatialSpec<Float>(), targetScale = 0.4f))
+        },
+        label = "keyIcon",
+    ) { shown ->
+        Icon(shown, contentDescription = description, modifier = Modifier.size(size))
+    }
+}
+
 internal val KeyHeight = 52.dp
 internal val ShortcutHeight = 60.dp
 internal val TransportHeight = 80.dp
@@ -66,7 +92,7 @@ internal fun ButtonGroupScope.wideKey(
         interactionSource = interaction,
         modifier = Modifier.weight(1f).height(KeyHeight).animateWidth(interaction),
     ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+        KeyIcon(icon, 20.dp)
         Spacer(Modifier.width(8.dp))
         Text(stringResource(label))
     }
@@ -88,7 +114,7 @@ internal fun ButtonGroupScope.shortcutKey(
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(22.dp))
+            KeyIcon(icon, 22.dp)
             Text(stringResource(label), style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
@@ -106,7 +132,7 @@ internal fun ButtonGroupScope.toolKey(
     val modifier = Modifier.weight(1f).height(KeyHeight).animateWidth(interaction)
     if (toggled == null) {
         FilledTonalIconButton(onClick = { tick(); onClick() }, shapes = IconButtonDefaults.shapes(), interactionSource = interaction, modifier = modifier) {
-            Icon(icon, contentDescription = stringResource(description), modifier = Modifier.size(24.dp))
+            KeyIcon(icon, 24.dp, stringResource(description))
         }
     } else {
         FilledIconToggleButton(
@@ -123,7 +149,7 @@ internal fun ButtonGroupScope.toolKey(
             interactionSource = interaction,
             modifier = modifier,
         ) {
-            Icon(icon, contentDescription = stringResource(description), modifier = Modifier.size(24.dp))
+            KeyIcon(icon, 24.dp, stringResource(description))
         }
     }
 }) {}
@@ -141,7 +167,7 @@ internal fun ButtonGroupScope.transportKey(
     val tick = rememberKeyTick()
     val modifier = Modifier.weight(weight).height(TransportHeight).animateWidth(interaction)
     val content: @Composable () -> Unit = {
-        Icon(icon, contentDescription = stringResource(description), modifier = Modifier.size(iconSize))
+        KeyIcon(icon, iconSize, stringResource(description))
     }
     if (strong) {
         FilledIconButton(onClick = { tick(); onClick() }, shapes = IconButtonDefaults.shapes(), interactionSource = interaction, modifier = modifier, content = content)
