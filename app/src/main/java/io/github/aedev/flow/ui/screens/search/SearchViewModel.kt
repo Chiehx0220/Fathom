@@ -14,6 +14,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.model.Channel
+import io.github.aedev.flow.data.local.SearchHistoryRepository
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.data.paging.SearchPagingSource
@@ -24,6 +25,7 @@ import io.github.aedev.flow.data.search.SearchSuggestionsRepository
 import io.github.aedev.flow.data.shorts.ShortsContentFilter
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueHandoff
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
+import io.github.aedev.flow.data.stats.VideoStatsRecorder
 import io.github.aedev.flow.innertube.pages.search.SearchHeader
 import io.github.aedev.flow.innertube.pages.search.SearchSuggestion
 import io.github.aedev.flow.ui.youtubeChannelUrl
@@ -57,6 +59,8 @@ class SearchViewModel
         private val suggestionsRepository: SearchSuggestionsRepository,
         private val shortsContentFilter: ShortsContentFilter,
         private val shortsQueueHandoff: ShortsQueueHandoff,
+        private val searchHistory: SearchHistoryRepository,
+        private val videoStats: VideoStatsRecorder,
     ) : ViewModel() {
         // Signal each distinct submitted query once — typing and filter churn stay silent.
         private var lastSignaledQuery: String? = null
@@ -161,9 +165,12 @@ class SearchViewModel
                 lastSignaledQuery = normalized
                 viewModelScope.launch {
                     runCatching { FlowNeuroEngine.onSearchQuery(context, query) }
+                    videoStats.onSearch(query.takeIf { searchHistory.isSearchHistoryEnabled() })
                 }
             }
         }
+
+        fun onSearchHistoryCleared() = videoStats.onSearchHistoryCleared()
 
         fun updateFilters(filters: SearchFilter) {
             val currentQuery = _uiState.value.query

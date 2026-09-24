@@ -12,6 +12,7 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.repository.LiveChatRepository
 import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import io.github.aedev.flow.data.repository.YouTubeRepository
+import io.github.aedev.flow.data.stats.VideoStatsRecorder
 import io.github.aedev.flow.data.transcript.TranscriptRepository
 import io.github.aedev.flow.data.video.OfflineSubtitleStore
 import io.github.aedev.flow.data.video.VideoDownloadManager
@@ -47,6 +48,7 @@ internal class PlayerCollaborators(
     homeFeedCacheRepository: HomeFeedCacheRepository,
     playerManager: EnhancedPlayerManager,
     upcomingPremiereProbe: UpcomingPremiereProbe,
+    private val videoStats: VideoStatsRecorder,
     private val uiState: MutableStateFlow<VideoPlayerUiState>,
     scope: CoroutineScope,
     networkDispatcher: CoroutineDispatcher,
@@ -114,6 +116,7 @@ internal class PlayerCollaborators(
             viewHistory = viewHistory,
             repository = repository,
             homeFeedCacheRepository = homeFeedCacheRepository,
+            videoStats = videoStats,
             scope = scope,
             networkDispatcher = networkDispatcher,
             shortsEnabled = shortsEnabled,

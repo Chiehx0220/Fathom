@@ -69,6 +69,7 @@ class VideoPlayerViewModel
         private val upcomingPremiereProbe: UpcomingPremiereProbe,
         private val playbackResolver: PlaybackLoadResolver,
         notesRepository: io.github.aedev.flow.data.notes.NotesRepository,
+        private val videoStats: io.github.aedev.flow.data.stats.VideoStatsRecorder,
         @NetworkIoDispatcher private val networkDispatcher: CoroutineDispatcher,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : ViewModel() {
@@ -100,6 +101,7 @@ class VideoPlayerViewModel
                 homeFeedCacheRepository = homeFeedCacheRepository,
                 playerManager = playerManager,
                 upcomingPremiereProbe = upcomingPremiereProbe,
+                videoStats = videoStats,
                 uiState = _uiState,
                 scope = viewModelScope,
                 networkDispatcher = networkDispatcher,
@@ -605,6 +607,20 @@ class VideoPlayerViewModel
             serviceId = serviceId,
         )
 
+        /** The app is going to the background: the recap gets the open session's progress so far. */
+        fun checkpointWatchSession() = watchSessions.checkpoint()
+
+        /** Live streams keep no history row; their watching time goes to the recap only. */
+        fun trackLivePlayback(
+            video: Video,
+            position: Long,
+        ) = watchSessions.trackLive(video, position)
+
+        /** A SponsorBlock segment the player just skipped, for the recap's time-saved total. */
+        fun onSponsorSegmentSkipped(
+            category: String,
+            skippedMs: Long,
+        ) = videoStats.onSponsorSkip(category, skippedMs)
 
         fun toggleSubscription(
             channelId: String,

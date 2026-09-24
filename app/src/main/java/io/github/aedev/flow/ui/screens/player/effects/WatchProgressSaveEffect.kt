@@ -80,6 +80,10 @@ internal fun saveWatchProgress(
     position: Long,
     duration: Long,
 ) {
+    if (uiState.isCurrentLiveStream()) {
+        viewModel.trackLivePlayback(video, position)
+        return
+    }
     val entry = buildWatchHistoryEntry(video, uiState, position, duration) ?: return
     viewModel.savePlaybackPosition(
         videoId = entry.videoId,
