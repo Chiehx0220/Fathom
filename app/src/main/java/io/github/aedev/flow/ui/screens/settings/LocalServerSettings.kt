@@ -1,6 +1,8 @@
 package io.github.aedev.flow.ui.screens.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,12 +13,14 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Cast
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,7 +40,7 @@ import kotlinx.coroutines.launch
 
 private val CardPadding = 16.dp
 private val CardSpacing = 16.dp
-private val IconSize = 40.dp
+private val EmblemSize = 56.dp
 
 /**
  * The local server card of the settings list, sitting beside the taste card in the same Material 3 Expressive form.
@@ -61,16 +65,26 @@ internal fun LocalServerSettingsSection() {
         enabled = running,
         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
         shape = MaterialTheme.shapes.extraLarge,
-        color = if (running) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Column(Modifier.padding(CardPadding), verticalArrangement = Arrangement.spacedBy(CardSpacing)) {
             Row(horizontalArrangement = Arrangement.spacedBy(CardSpacing), verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Outlined.Cast,
-                    contentDescription = null,
-                    modifier = Modifier.size(IconSize),
-                    tint = if (running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Box(
+                    modifier =
+                        Modifier
+                            .size(EmblemSize)
+                            .background(
+                                if (running) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
+                                MaterialShapes.Cookie9Sided.toShape(),
+                            ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Outlined.Cast,
+                        contentDescription = null,
+                        tint = if (running) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Column(Modifier.weight(1f)) {
                     Text(
                         text =
@@ -103,7 +117,7 @@ internal fun LocalServerSettingsSection() {
                 )
             }
             if (running) {
-                FilledTonalButton(onClick = openRemote, shapes = ButtonDefaults.shapes()) {
+                Button(onClick = openRemote, shapes = ButtonDefaults.shapes()) {
                     Text(stringResource(R.string.settings_local_server_open_remote))
                     Icon(
                         Icons.AutoMirrored.Outlined.KeyboardArrowRight,
