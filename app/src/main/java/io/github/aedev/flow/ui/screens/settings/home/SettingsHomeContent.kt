@@ -42,6 +42,7 @@ internal fun SettingsListScope.homeContent(
     state: SettingsHomeState,
     actions: SettingsHomeActions,
 ) {
+    item("home.localserver") { LocalServerSettingsSection() }
     item(HomeIndex.persona.key) {
         PersonaEntryCard(persona = state.persona, onOpen = actions.onOpenPersona, onReset = actions.onResetPersona)
     }
@@ -83,7 +84,6 @@ internal fun SettingsListScope.homeContent(
         )
         page(SettingsDestination.TOPICS)
     }
-    item("home.localserver") { LocalServerSettingsSection() }
     group(key = "home.look", header = R.string.settings_group_look) {
         page(SettingsDestination.APPEARANCE)
         page(SettingsDestination.LANGUAGE_REGION)
