@@ -9,11 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Cast
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -67,71 +64,57 @@ internal fun LocalServerSettingsSection() {
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
-        Column(Modifier.padding(CardPadding), verticalArrangement = Arrangement.spacedBy(CardSpacing)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(CardSpacing), verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier =
-                        Modifier
-                            .size(EmblemSize)
-                            .background(
-                                if (running) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                                MaterialShapes.Cookie9Sided.toShape(),
-                            ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        Icons.Outlined.Cast,
-                        contentDescription = null,
-                        tint = if (running) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text =
-                            stringResource(
-                                if (running) R.string.settings_local_server_status_online else R.string.settings_local_server_status_offline,
-                            ),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_item_local_server),
-                        style = MaterialTheme.typography.titleLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = address ?: stringResource(R.string.settings_item_local_server_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Switch(
-                    checked = running,
-                    onCheckedChange = { enabled ->
-                        scope.launch { preferences.setLocalServerEnabled(enabled) }
-                        if (enabled) ServerService.start(context) else ServerService.stop(context)
-                    },
+        Row(
+            modifier = Modifier.padding(CardPadding),
+            horizontalArrangement = Arrangement.spacedBy(CardSpacing),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(EmblemSize)
+                        .background(
+                            if (running) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
+                            MaterialShapes.Cookie9Sided.toShape(),
+                        ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Outlined.Cast,
+                    contentDescription = null,
+                    tint = if (running) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (running) {
-                Button(onClick = openRemote, shapes = ButtonDefaults.shapes()) {
-                    Text(stringResource(R.string.settings_local_server_open_remote))
-                    Icon(
-                        Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                        contentDescription = null,
-                        modifier = Modifier.padding(start = 8.dp).size(18.dp),
-                    )
-                }
-            } else {
+            Column(Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.settings_local_server_hint_off),
+                    text =
+                        stringResource(
+                            if (running) R.string.settings_local_server_status_online else R.string.settings_local_server_status_offline,
+                        ),
                     style = MaterialTheme.typography.labelLarge,
+                    color = if (running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = stringResource(R.string.settings_item_local_server),
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = address ?: stringResource(R.string.settings_local_server_hint_off),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
+            Switch(
+                checked = running,
+                onCheckedChange = { enabled ->
+                    scope.launch { preferences.setLocalServerEnabled(enabled) }
+                    if (enabled) ServerService.start(context) else ServerService.stop(context)
+                },
+            )
         }
     }
 }
