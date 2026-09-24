@@ -76,21 +76,18 @@ internal fun LocalServerSettingsSection() {
             }
             Column(Modifier.weight(1f)) {
                 Text(
-                    text =
-                        stringResource(
-                            if (running) R.string.settings_local_server_status_online else R.string.settings_local_server_status_offline,
-                        ),
+                    text = stringResource(R.string.settings_item_local_server),
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (running) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = stringResource(R.string.settings_item_local_server),
+                    text = address ?: stringResource(R.string.settings_item_local_server_subtitle),
                     style = MaterialTheme.typography.titleLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = address ?: stringResource(R.string.settings_local_server_hint_off),
+                    text = stringResource(if (running) R.string.settings_local_server_open_remote else R.string.settings_local_server_hint_off),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
