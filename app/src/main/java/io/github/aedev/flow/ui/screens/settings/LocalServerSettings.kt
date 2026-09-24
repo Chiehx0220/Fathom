@@ -84,7 +84,7 @@ internal fun LocalServerSettingsSection() {
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = address ?: stringResource(R.string.settings_item_local_server_subtitle),
+                    text = address ?: stringResource(R.string.settings_local_server_off),
                     style = MaterialTheme.typography.titleLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -103,14 +103,6 @@ internal fun LocalServerSettingsSection() {
                             tint = MaterialTheme.colorScheme.primary,
                         )
                     }
-                } else {
-                    Text(
-                        text = stringResource(R.string.settings_local_server_hint_off),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
                 }
             }
             Switch(
