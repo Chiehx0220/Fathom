@@ -1,6 +1,5 @@
 package io.github.aedev.flow.ui.screens.settings
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,16 +7,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Cast
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,6 +27,7 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.localserver.RemoteActivity
 import io.github.aedev.flow.localserver.ServerService
+import io.github.aedev.flow.ui.components.shared.flowArtistShape
 import kotlinx.coroutines.launch
 
 private val CardPadding = 16.dp
@@ -69,21 +64,15 @@ internal fun LocalServerSettingsSection() {
             horizontalArrangement = Arrangement.spacedBy(CardSpacing),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(EmblemSize)
-                        .background(
-                            if (running) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                            MaterialShapes.Cookie9Sided.toShape(),
-                        ),
-                contentAlignment = Alignment.Center,
+            Surface(
+                modifier = Modifier.size(EmblemSize),
+                shape = flowArtistShape(),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ) {
-                Icon(
-                    Icons.Outlined.Cast,
-                    contentDescription = null,
-                    tint = if (running) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Text(text = "📡", style = MaterialTheme.typography.headlineMedium)
+                }
             }
             Column(Modifier.weight(1f)) {
                 Text(
