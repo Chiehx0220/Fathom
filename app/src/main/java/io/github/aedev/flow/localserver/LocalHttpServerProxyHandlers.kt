@@ -178,20 +178,29 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
     }
 
     val requestedTrackId = params["trackId"]
+    // A representation of the manifest is asked for by its own id; itag and mtype are for the other callers (downloads, the plain player URL).
+    val repId = params["rep"]
     // mtype is part of the cache key: itag-less services (Bilibili) share itag=-1 between video and audio.
-    val mediaType = params["mtype"]
+    val mediaType = params["mtype"] ?: repId?.let { if (it.startsWith("a")) "audio" else "video" }
     val resolvedMediaUrl = requireNotNull(mediaUrl) { "Missing 'id' parameter" }
     val videoId = videoIdFromUrl(resolvedMediaUrl)
-    val cacheKey = serviceId.toString() + "_" + mediaUrl + "_" + requestedItag +
-            (if (requestedTrackId != null) "_$requestedTrackId" else "") +
-            (if (mediaType != null) "_$mediaType" else "")
+    val cacheKey =
+        if (repId != null) {
+            repCacheKey(serviceId, resolvedMediaUrl, repId)
+        } else {
+            serviceId.toString() + "_" + mediaUrl + "_" + requestedItag +
+                (if (requestedTrackId != null) "_$requestedTrackId" else "") +
+                (if (mediaType != null) "_$mediaType" else "")
+        }
 
     // LocalServerSource.streams is always asked fresh here: a stream request wants its own extractor
     // fetch, not the one the manifest/watch page's cache is sharing.
     fun resolve(useCache: Boolean): String? {
         if (useCache) LocalHttpServer.streamUrlCache.get(cacheKey)?.let { return it }
         val extractor = LocalServerSource.streams(dbHelper.appContext, serviceId, resolvedMediaUrl, fresh = true)
-        val url = resolveDirectUrl(extractor, requestedItag, requestedTrackId, mediaType, params) ?: return null
+        val url =
+            (if (repId != null) DashCatalog.urlOf(extractor, repId) else resolveDirectUrl(extractor, requestedItag, requestedTrackId, mediaType, params))
+                ?: return null
         LocalHttpServer.streamUrlCache.put(cacheKey, url, 3600000)
         if (videoId != null) {
             LocalServerYouTubeStreams.extractionFor(videoId)?.usedClient?.userAgent?.let {
@@ -316,25 +325,6 @@ private fun fetchFromCdn(
     return LocalHttpServer.httpClient.newCall(reqBuilder.build()).execute()
 }
 
-/**
- * A Representation's `bandwidth`, in bps.
- *
- * NewPipe's static itag table - its fallback when a format carries no live bitrate - reports audio
- * bitrate in kbps, at most 256 (see its `ItagItem.ITAG_LIST`). A live bitrate, from InnerTube or from
- * NewPipe's own extraction, is never anywhere near that low: even the quietest 32kbps audio itag
- * reports as ~32000 bps. A raw value under the gap between those two ranges is the kbps leftover, not
- * a genuine bitrate, and gets rescaled; anything at or above it is already bps.
- */
-private fun normalizedBandwidthBps(
-    rawBitrate: Long,
-    fallbackBps: Long,
-): Long {
-    var bitrate = rawBitrate
-    if (bitrate <= 0) bitrate = fallbackBps
-    if (bitrate < 5000) bitrate *= 1000
-    return bitrate
-}
-
 @Throws(Exception::class)
 internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<String, String>) {
     val serviceId = getServiceId(params)
@@ -342,161 +332,18 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
 
     // Cached: shares its extraction with the watch handlers.
     val extractor = LocalServerSource.streams(dbHelper.appContext, serviceId, mediaUrl, fresh = false)
-
     // Synchronized: extractor getters are not thread-safe.
-    var durationSec: Double
-    synchronized(extractor) {
-        durationSec = extractor.length.toDouble()
+    val durationSec = synchronized(extractor) { extractor.length.toDouble() }
+    val catalog = DashCatalog.of(extractor, preferredTrack = params["audio_track"], highest = params["prefer"] == "hd")
+
+    // The player asks /stream for each representation by id, and the address it was given is already good for an hour.
+    fun warm(repId: String) {
+        catalog.urlOf(repId)?.let { LocalHttpServer.streamUrlCache.put(repCacheKey(serviceId, mediaUrl, repId), it, 3600000) }
     }
-    if (durationSec <= 0) {
-        durationSec = 1800.0 // fallback 30 mins if length not available
-    }
+    catalog.videos.forEach { warm(it.id) }
+    catalog.audioTracks.forEach { track -> track.audios.forEach { warm(it.id) } }
 
-    val sb = StringBuilder()
-    sb.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
-    sb.append("<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\" type=\"static\" mediaPresentationDuration=\"PT").append(durationSec).append("S\" minBufferTime=\"PT1.5S\">\n")
-    sb.append("  <Period duration=\"PT").append(durationSec).append("S\">\n")
-
-    val rawVideoStreams: List<VideoStream>?
-    synchronized(extractor) {
-        rawVideoStreams = extractor.videoOnlyStreams
-    }
-    // Shared with the quality list via dashPlayableVideoOnlyStreams(): it must offer exactly what this manifest serves.
-    val videoStreams = LocalHttpServer.dashPlayableVideoOnlyStreams(rawVideoStreams)
-
-    if (videoStreams.isNotEmpty()) {
-        sb.append("    <AdaptationSet id=\"0\" mimeType=\"video/mp4\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\">\n")
-        for (vs in videoStreams) {
-            val itag = vs.itag
-
-            val initStart = vs.initStart
-            val initEnd = vs.initEnd
-            val indexStart = vs.indexStart
-            val indexEnd = vs.indexEnd
-            if (initStart < 0 || initEnd < 0 || indexStart < 0 || indexEnd < 0) {
-                continue // Skip formats without index range markers - same guard the audio loop uses below.
-            }
-
-            val bitrate = normalizedBandwidthBps(vs.bitrate.toLong(), fallbackBps = 1000000L)
-            val codec = vs.codec
-            val width = vs.width
-            val height = vs.height
-            val fps = vs.fps
-
-            // mtype keeps video and audio Representations apart when itag=-1 gives them the same BaseURL.
-            val proxyUrl = "/stream?serviceId=" + serviceId + "&amp;id=" + java.net.URLEncoder.encode(mediaUrl, "UTF-8") + "&amp;itag=" + itag + "&amp;mtype=video"
-            // Pre-warms handleStreamProxy's cache with this Representation's key.
-            if (vs.content != null) {
-                LocalHttpServer.streamUrlCache.put(serviceId.toString() + "_" + mediaUrl + "_" + itag + "_video", vs.content, 3600000)
-            }
-            sb.append("      <Representation id=\"").append(itag).append("\" bandwidth=\"").append(bitrate).append("\" codecs=\"").append(codec).append("\" width=\"").append(width).append("\" height=\"").append(height).append("\" frameRate=\"").append(fps).append("\" sar=\"1:1\">\n")
-            sb.append("        <BaseURL>").append(proxyUrl).append("</BaseURL>\n")
-            sb.append("        <SegmentBase indexRange=\"").append(indexStart).append("-").append(indexEnd).append("\" indexRangeExact=\"true\">\n")
-            sb.append("          <Initialization range=\"").append(initStart).append("-").append(initEnd).append("\"/>\n")
-            sb.append("        </SegmentBase>\n")
-            sb.append("      </Representation>\n")
-        }
-        sb.append("    </AdaptationSet>\n")
-    }
-
-    val rawAudioStreams: List<AudioStream>?
-    synchronized(extractor) {
-        rawAudioStreams = extractor.audioStreams
-    }
-    val allM4aStreams = (rawAudioStreams ?: emptyList()).filter { it.format == org.schabi.newpipe.extractor.MediaFormat.M4A }
-    if (allM4aStreams.isNotEmpty()) {
-        // Each language/dub is its own audio AdaptationSet, so dash.js exposes them as player.audioTracks. The starting track goes first (dash.js picks the first): ?audio_track= if given, else NewPipe's best-track priority.
-        val prioritySorted = allM4aStreams.sortedWith(LocalHttpServer.audioTrackPriorityComparator())
-        val preferredTrackId = params["audio_track"] ?: (prioritySorted[0].audioTrackId ?: "")
-        val orderedTrackIds = LinkedHashSet<String>()
-        orderedTrackIds.add(preferredTrackId)
-        for (s in prioritySorted) orderedTrackIds.add(s.audioTrackId ?: "")
-
-        var audioAdaptationId = 1
-        for (finalTrackId in orderedTrackIds) {
-            var audioStreams = allM4aStreams.filter { (it.audioTrackId ?: "") == finalTrackId }
-
-            if (audioStreams.isNotEmpty()) {
-                audioStreams = audioStreams.sortedWith(Comparator { a, b ->
-                    val brA = if (a.averageBitrate > 0) a.averageBitrate else a.bitrate
-                    val brB = if (b.averageBitrate > 0) b.averageBitrate else b.bitrate
-                    brB.toLong().compareTo(brA.toLong())
-                })
-
-                val firstStream = audioStreams[0]
-                val locale = firstStream.audioLocale
-                var langStr = ""
-                if (locale != null) {
-                    langStr = " lang=\"" + locale + "\""
-                } else if (finalTrackId.isNotEmpty()) {
-                    val dotIdx = finalTrackId.indexOf(".")
-                    langStr = if (dotIdx != -1) {
-                        " lang=\"" + finalTrackId.substring(0, dotIdx) + "\""
-                    } else {
-                        " lang=\"$finalTrackId\""
-                    }
-                }
-
-                var labelStr = ""
-                val trackName = firstStream.audioTrackName
-                if (!trackName.isNullOrEmpty()) {
-                    labelStr = " label=\"" + trackName.replace("\"", "&quot;") + "\""
-                }
-
-                sb.append("    <AdaptationSet id=\"").append(audioAdaptationId++).append("\" mimeType=\"audio/mp4\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\"").append(langStr).append(labelStr).append(">\n")
-
-                // Any non-original track is "dub".
-                if (firstStream.audioTrackId != null) {
-                    val roleVal = if (LocalHttpServer.isOriginalAudioTrack(firstStream)) "main" else "dub"
-                    sb.append("      <Role schemeIdUri=\"urn:mpeg:dash:role:2011\" value=\"").append(roleVal).append("\"/>\n")
-                }
-
-                val seenAudioItags = HashSet<Int>()
-                for (asStream in audioStreams) {
-                    val itag = asStream.itag
-                    if (seenAudioItags.contains(itag)) {
-                        continue
-                    }
-                    seenAudioItags.add(itag)
-
-                    var rawBitrate = asStream.averageBitrate.toLong()
-                    if (rawBitrate <= 0) rawBitrate = asStream.bitrate.toLong()
-                    val bitrate = normalizedBandwidthBps(rawBitrate, fallbackBps = 128000L)
-                    val codec = LocalHttpServer.normalizeAudioCodec(asStream.codec)
-
-                    val initStart = asStream.initStart
-                    val initEnd = asStream.initEnd
-                    val indexStart = asStream.indexStart
-                    val indexEnd = asStream.indexEnd
-
-                    if (initStart < 0 || initEnd < 0 || indexStart < 0 || indexEnd < 0) {
-                        continue  // Skip streams without index range markers
-                    }
-
-                    val proxyUrl = "/stream?serviceId=" + serviceId + "&amp;id=" + java.net.URLEncoder.encode(mediaUrl, "UTF-8") + "&amp;itag=" + itag + "&amp;mtype=audio" + (if (finalTrackId.isNotEmpty()) "&amp;trackId=" + java.net.URLEncoder.encode(finalTrackId, "UTF-8") else "")
-                    // Cache key must match handleStreamProxy's (itag, then trackId).
-                    if (asStream.content != null) {
-                        val audioCacheKey = serviceId.toString() + "_" + mediaUrl + "_" + itag +
-                                (if (finalTrackId.isNotEmpty()) "_$finalTrackId" else "") + "_audio"
-                        LocalHttpServer.streamUrlCache.put(audioCacheKey, asStream.content, 3600000)
-                    }
-                    sb.append("      <Representation id=\"").append(itag).append("\" bandwidth=\"").append(bitrate).append("\" codecs=\"").append(codec).append("\" audioSamplingRate=\"44100\">\n")
-                    sb.append("        <AudioChannelConfiguration schemeIdUri=\"urn:mpeg:dash:23003:3:audio_channel_configuration:2011\" value=\"2\"/>\n")
-                    sb.append("        <BaseURL>").append(proxyUrl).append("</BaseURL>\n")
-                    sb.append("        <SegmentBase indexRange=\"").append(indexStart).append("-").append(indexEnd).append("\" indexRangeExact=\"true\">\n")
-                    sb.append("          <Initialization range=\"").append(initStart).append("-").append(initEnd).append("\"/>\n")
-                    sb.append("        </SegmentBase>\n")
-                    sb.append("      </Representation>\n")
-                }
-                sb.append("    </AdaptationSet>\n")
-            }
-        }
-    }
-
-    sb.append("  </Period>\n")
-    sb.append("</MPD>\n")
-
-    val manifestXml = sb.toString()
+    val manifestXml = DashManifest.write(catalog, durationSec) { repId -> DashManifest.streamPath(serviceId, mediaUrl, repId) }
     LocalHttpServer.log("Generated local DASH manifest:\n$manifestXml")
 
     val bodyBytes = manifestXml.toByteArray(Charsets.UTF_8)
@@ -510,6 +357,8 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
     os.write(bodyBytes)
     os.flush()
 }
+
+private fun repCacheKey(serviceId: Int, mediaUrl: String, repId: String) = "${serviceId}_${mediaUrl}_rep_$repId"
 
 @Throws(Exception::class)
 internal fun ClientHandler.handleSubtitlesProxy(os: OutputStream, params: Map<String, String>) {
