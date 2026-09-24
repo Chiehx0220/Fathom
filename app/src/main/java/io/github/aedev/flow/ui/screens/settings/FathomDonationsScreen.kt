@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui.screens.settings
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,14 +15,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.VolunteerActivism
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
@@ -32,13 +38,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
+import io.github.aedev.flow.ui.screens.settings.about.DonationsScreen
 
-/** Fathom's own donation page, laid out like the upstream Flow one. */
+/** The support page: Fathom first, then the Flow project it is built on, each with its own way to give. */
 @Composable
 fun FathomDonationsScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showFlow by rememberSaveable { mutableStateOf(false) }
+    if (showFlow) {
+        BackHandler { showFlow = false }
+        DonationsScreen(onNavigateBack = { showFlow = false })
+        return
+    }
+
     val uriHandler = LocalUriHandler.current
 
     Scaffold(
@@ -112,7 +126,39 @@ fun FathomDonationsScreen(
                 }
             }
 
+            item { HorizontalDivider() }
+
             item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = 28.dp, start = 24.dp, end = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = stringResource(R.string.support_upstream_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.support_upstream_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedButton(
+                        onClick = { showFlow = true },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(8.dp),
+                    ) {
+                        Text(text = stringResource(R.string.support_upstream_button), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(28.dp))
                 Text(
                     text = stringResource(R.string.thank_you_support_message),
                     style = MaterialTheme.typography.bodyMedium,

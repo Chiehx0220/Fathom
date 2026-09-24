@@ -18,18 +18,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.Forum
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Tv
-import androidx.compose.material.icons.outlined.VolunteerActivism
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -41,7 +38,6 @@ import io.github.aedev.flow.BuildConfig
 import io.github.aedev.flow.R
 import io.github.aedev.flow.ui.screens.settings.AboutLinks
 import io.github.aedev.flow.ui.screens.settings.CREDITS
-import io.github.aedev.flow.ui.screens.settings.FATHOM_DONATIONS
 import io.github.aedev.flow.ui.tv.components.TvNavRow
 import io.github.aedev.flow.ui.tv.components.TvSectionHeader
 import io.github.aedev.flow.ui.tv.focus.ProvideTvColumnPivot
@@ -51,8 +47,6 @@ import io.github.aedev.flow.ui.tv.focus.ProvideTvColumnPivot
 @Composable
 fun TvFathomAboutPane(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    var upstreamOpen by rememberSaveable { mutableStateOf(false) }
-    var fathomDonateOpen by rememberSaveable { mutableStateOf(false) }
 
     ProvideTvColumnPivot {
         LazyColumn(
@@ -75,36 +69,40 @@ fun TvFathomAboutPane(modifier: Modifier = Modifier) {
                     onClick = { context.openUrl(AboutLinks.FATHOM_GITHUB) },
                 )
             }
-            item(key = "fathom-donate") {
-                TvNavRow(
-                    label = stringResource(R.string.donate_item_title),
-                    supportingText = stringResource(R.string.support_dev_subtitle),
-                    value = if (fathomDonateOpen) "▴" else "▾",
-                    leadingIcon = Icons.Outlined.VolunteerActivism,
-                    onClick = { fathomDonateOpen = !fathomDonateOpen },
-                )
+            item(key = "upstream-header") {
+                TvAboutSectionHeader(stringResource(R.string.about_upstream_title))
             }
-            if (fathomDonateOpen) {
-                FATHOM_DONATIONS.forEach { link ->
-                    item(key = "fathom-donate-${link.name}") { TvChildRow(link.name, link.address) { context.openUrl(link.url) } }
-                }
-            }
-
-            item(key = "upstream") {
+            item(key = "creator") {
                 TvNavRow(
-                    label = stringResource(R.string.about_upstream_title),
-                    supportingText = stringResource(R.string.about_upstream_subtitle),
-                    value = if (upstreamOpen) "▴" else "▾",
+                    label = stringResource(R.string.about_based_on),
+                    value = "Flow, " + stringResource(R.string.about_creator_name),
                     leadingIcon = Icons.Outlined.Person,
-                    onClick = { upstreamOpen = !upstreamOpen },
+                    onClick = { context.openUrl(AboutLinks.FLOW_GITHUB) },
                 )
             }
-            if (upstreamOpen) {
-                item(key = "creator") { TvChildRow(stringResource(R.string.about_based_on), "github.com/A-EDev/Flow") { context.openUrl(AboutLinks.FLOW_GITHUB) } }
-                item(key = "changelog") { TvChildRow(stringResource(R.string.about_changelog), stringResource(R.string.whats_new_in_flow)) { context.openUrl(AboutLinks.FLOW_RELEASES) } }
-                item(key = "website") { TvChildRow(stringResource(R.string.about_website), stringResource(R.string.about_website_address)) { context.openUrl(AboutLinks.FLOW_WEBSITE) } }
-                item(key = "reddit") { TvChildRow(stringResource(R.string.about_reddit), stringResource(R.string.about_reddit_subtitle)) { context.openUrl(AboutLinks.FLOW_REDDIT) } }
-                item(key = "donate") { TvChildRow(stringResource(R.string.donate_item_title), stringResource(R.string.support_dev_subtitle)) { context.openUrl(AboutLinks.FLOW_DONATION) } }
+            item(key = "changelog") {
+                TvNavRow(
+                    label = stringResource(R.string.about_changelog),
+                    supportingText = stringResource(R.string.whats_new_in_flow),
+                    leadingIcon = Icons.Outlined.History,
+                    onClick = { context.openUrl(AboutLinks.FLOW_RELEASES) },
+                )
+            }
+            item(key = "website") {
+                TvNavRow(
+                    label = stringResource(R.string.about_website),
+                    value = stringResource(R.string.about_website_address),
+                    leadingIcon = Icons.Outlined.Public,
+                    onClick = { context.openUrl(AboutLinks.FLOW_WEBSITE) },
+                )
+            }
+            item(key = "reddit") {
+                TvNavRow(
+                    label = stringResource(R.string.about_reddit),
+                    value = stringResource(R.string.about_reddit_subtitle),
+                    leadingIcon = Icons.Outlined.Forum,
+                    onClick = { context.openUrl(AboutLinks.FLOW_REDDIT) },
+                )
             }
 
             item(key = "legal-header") {
@@ -150,16 +148,6 @@ fun TvFathomAboutPane(modifier: Modifier = Modifier) {
             }
         }
     }
-}
-
-@Composable
-private fun TvChildRow(label: String, value: String, onClick: () -> Unit) {
-    TvNavRow(
-        label = label,
-        value = value,
-        modifier = Modifier.padding(start = 32.dp),
-        onClick = onClick,
-    )
 }
 
 @Composable
