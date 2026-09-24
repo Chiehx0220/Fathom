@@ -16,9 +16,9 @@ body[data-input="keys"] { cursor: none; }
 .i.fill { font-variation-settings: 'FILL' 1; }
 
 /* Top bar */
-#top { position: sticky; top: 0; z-index: 30; height: var(--bar-h); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 0 var(--pad-x); background: var(--scrim); }
+#top { position: sticky; top: 0; z-index: 30; height: var(--bar-h); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 0 var(--pad-x); background: var(--scrim); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); }
 .brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 500; color: var(--fg); }
-.brand-mark { width: 32px; height: 32px; display: grid; place-items: center; flex: none; }
+.brand-mark { width: 32px; height: 32px; display: block; flex: none; }
 .tabs { display: flex; gap: 6px; padding: 5px; border-radius: 28px; background: var(--s1); }
 .tab { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 20px; border: 0; border-radius: 22px; background: none; color: var(--mute); font-weight: 500; white-space: nowrap; transition: background 0.15s, color 0.15s; }
 .tab:hover { background: var(--s2); color: var(--fg); }
@@ -34,7 +34,7 @@ body[data-input="keys"] { cursor: none; }
  * mouse gets hover instead. */
 [data-f] { outline: none; scroll-margin: calc(var(--bar-h) + 24px) var(--pad-x) 120px var(--pad-x); }
 body[data-input="keys"] .tab.sel, body[data-input="keys"] .chip.sel, body[data-input="keys"] .rbtn.sel, body[data-input="keys"] .btn.sel,
-body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[data-input="keys"] .row-item.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc); }
+body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[data-input="keys"] .row-item.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc2); }
 /* .shelf-head.expand is full-width (see cards.css) - ringing the whole bar reads as one big
  * box, so it gets the same title+pill treatment as its own hover state instead. */
 

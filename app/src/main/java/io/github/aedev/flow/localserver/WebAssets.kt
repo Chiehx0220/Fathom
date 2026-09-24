@@ -23,6 +23,7 @@ object WebAssets {
         listOf(
             "app/js/util.js",
             "app/js/store.js",
+            "app/js/theme.js",
             "app/js/api.js",
             "app/js/ui.js",
             "app/js/focus.js",

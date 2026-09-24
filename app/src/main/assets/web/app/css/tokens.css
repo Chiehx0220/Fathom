@@ -2,41 +2,97 @@
  *   --bg      the page          --s1..--s3  surfaces, one step lighter each
  *   --fg      text              --mute      secondary text
  *   --acc     the accent        --on-acc    text and icons on the accent
- * The theme is the `data-theme` on <html>; the browser's light/dark preference (`data-scheme`) only matters to "device". */
+ *   --acc2    the marker: where you are (the focus ring, the watched-so-far bar), the gold of the Fathom mark's play arrow
+ * A theme is two attributes on <html>: `data-palette` (which colours) and `data-scheme` (light or dark; `data-oled` also
+ * marks the true-black dark). A palette gives, for each scheme, a hue for its surfaces, its text and its accent; a scheme
+ * turns those into the surface steps. Nothing here is tied to <html>, so a swatch can carry both attributes and show its own
+ * colours. The choice is made in theme.js and set before paint by the script in index.html. */
 
 :root {
-  --bg: #0B1524; --s1: #101E33; --s2: #16273F; --s3: #1F3454;
-  --fg: #EDE8DB; --mute: #93A3BA; --acc: #E8C468; --on-acc: #1A1405;
-  --danger: #FF8A80; --scrim: rgba(5, 10, 18, 0.86);
-
   --bar-h: 72px;
   --pad-x: clamp(20px, 3vw, 48px);
   --card-w: clamp(240px, 19vw, 340px);
   --radius: 16px;
   --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Palettes. Light and dark are designed separately, because a light Fathom is ivory paper and a dark one is deep water:
+ *   --hl --sl   hue and saturation (0-100) of the light surfaces     --hd --sd   the same for the dark surfaces
+ *   --fg-l --mute-l   text on light      --fg-d --mute-d   text on dark
+ *   --acc-l --on-l    accent on light and what sits on it      --acc-d --on-d   the same on dark
+ *   --acc2-l --acc2-d   the marker colour on light and on dark */
+:root, [data-palette="fathom"] {
+  --hl: 44; --sl: 42; --fg-l: #0F1D33; --mute-l: #56627A; --acc-l: #3F73D6; --on-l: #FFFFFF; --acc2-l: #C99A34;
+  --hd: 214; --sd: 46; --fg-d: #E8EEF6; --mute-d: #92A4BC; --acc-d: #7FA8F0; --on-d: #0A1E45; --acc2-d: #E2B65A;
+}
+[data-palette="graphite"] {
+  --hl: 220; --sl: 8; --fg-l: #1A1C20; --mute-l: #5F646C; --acc-l: #2D3139; --on-l: #FFFFFF; --acc2-l: #2D3139;
+  --hd: 220; --sd: 8; --fg-d: #ECEEF1; --mute-d: #9BA0A9; --acc-d: #DCE0E6; --on-d: #16181C; --acc2-d: #DCE0E6;
+}
+[data-palette="ember"] {
+  --hl: 28; --sl: 40; --fg-l: #2B1A10; --mute-l: #7A6250; --acc-l: #B24A17; --on-l: #FFFFFF; --acc2-l: #C98A1E;
+  --hd: 20; --sd: 30; --fg-d: #F5E8DE; --mute-d: #B79C88; --acc-d: #FF9A5C; --on-d: #2E1200; --acc2-d: #FFC46B;
+}
+[data-palette="moss"] {
+  --hl: 120; --sl: 30; --fg-l: #16261A; --mute-l: #566A5B; --acc-l: #2E6B3F; --on-l: #FFFFFF; --acc2-l: #A88418;
+  --hd: 150; --sd: 30; --fg-d: #E3EFE6; --mute-d: #93AC9B; --acc-d: #8FD18A; --on-d: #0C2410; --acc2-d: #E5C76B;
+}
+[data-palette="lagoon"] {
+  --hl: 180; --sl: 38; --fg-l: #0F2A2C; --mute-l: #4E6E70; --acc-l: #0B7A7D; --on-l: #FFFFFF; --acc2-l: #D26A48;
+  --hd: 188; --sd: 40; --fg-d: #DDF1F2; --mute-d: #86AEB1; --acc-d: #4FD6D0; --on-d: #00302F; --acc2-d: #FF9E80;
+}
+[data-palette="orchid"] {
+  --hl: 290; --sl: 34; --fg-l: #2A1830; --mute-l: #75607B; --acc-l: #8A3592; --on-l: #FFFFFF; --acc2-l: #B98A2B;
+  --hd: 285; --sd: 32; --fg-d: #F3E6F6; --mute-d: #B39BBA; --acc-d: #E59CEB; --on-d: #3A0F42; --acc2-d: #F2C86B;
+}
+[data-palette="rose"] {
+  --hl: 350; --sl: 52; --fg-l: #2E141B; --mute-l: #7D5B64; --acc-l: #B3264E; --on-l: #FFFFFF; --acc2-l: #B8862E;
+  --hd: 345; --sd: 28; --fg-d: #F8E6EA; --mute-d: #BA9AA3; --acc-d: #FF8FA8; --on-d: #45091B; --acc2-d: #F0C070;
+}
+[data-palette="citrus"] {
+  --hl: 70; --sl: 48; --fg-l: #232A0B; --mute-l: #66703C; --acc-l: #56720A; --on-l: #FFFFFF; --acc2-l: #D0651A;
+  --hd: 75; --sd: 30; --fg-d: #EEF3D9; --mute-d: #A3AD7D; --acc-d: #C5E63F; --on-d: #222D00; --acc2-d: #FF9F55;
+}
+
+/* Schemes: hsl tints every surface with the palette's hue. Light is the default. */
+:root, [data-scheme="light"] {
+  --bg: hsl(var(--hl), calc(var(--sl) * 1%), 96%);
+  --s1: hsl(var(--hl), calc(var(--sl) * 1%), 93%);
+  --s2: hsl(var(--hl), calc(var(--sl) * 1%), 89%);
+  --s3: hsl(var(--hl), calc(var(--sl) * 1%), 83%);
+  --fg: var(--fg-l); --mute: var(--mute-l);
+  --acc: var(--acc-l); --on-acc: var(--on-l); --acc2: var(--acc2-l);
+  --danger: #B3261E;
+  --scrim: hsla(var(--hl), calc(var(--sl) * 1%), 96%, 0.9);
+  color-scheme: light;
+}
+[data-scheme="dark"] {
+  --bg: hsl(var(--hd), calc(var(--sd) * 1%), 9%);
+  --s1: hsl(var(--hd), calc(var(--sd) * 1%), 12%);
+  --s2: hsl(var(--hd), calc(var(--sd) * 1%), 16%);
+  --s3: hsl(var(--hd), calc(var(--sd) * 1%), 22%);
+  --fg: var(--fg-d); --mute: var(--mute-d);
+  --acc: var(--acc-d); --on-acc: var(--on-d); --acc2: var(--acc2-d);
+  --danger: #FF8A80;
+  --scrim: hsla(var(--hd), calc(var(--sd) * 1%), 5%, 0.86);
   color-scheme: dark;
 }
-
-/* Dark themes */
-:root[data-theme="fathom"] { --bg: #0B1524; --s1: #101E33; --s2: #16273F; --s3: #1F3454; --fg: #EDE8DB; --mute: #93A3BA; --acc: #E8C468; --on-acc: #1A1405; --scrim: rgba(5, 10, 18, 0.86); }
-:root[data-theme="graphite"] { --bg: #121316; --s1: #1A1C20; --s2: #23262B; --s3: #2E3238; --fg: #E8EAED; --mute: #9AA0A8; --acc: #8AB4F8; --on-acc: #0B1B36; --scrim: rgba(8, 9, 11, 0.86); }
-:root[data-theme="oled"] { --bg: #000000; --s1: #0D0D0F; --s2: #17181B; --s3: #232428; --fg: #F2F2F2; --mute: #8E9096; --acc: #4DD6C1; --on-acc: #00201B; --scrim: rgba(0, 0, 0, 0.88); }
-:root[data-theme="ember"] { --bg: #17110D; --s1: #1F1610; --s2: #2B1F16; --s3: #3A2A1D; --fg: #F4E9DC; --mute: #B39A85; --acc: #FF9E5E; --on-acc: #2A1200; --scrim: rgba(12, 8, 5, 0.86); }
-:root[data-theme="forest"] { --bg: #0C1611; --s1: #12211A; --s2: #1A2E24; --s3: #253F32; --fg: #E4EEE6; --mute: #8FA99A; --acc: #A8D86E; --on-acc: #142200; --scrim: rgba(5, 12, 8, 0.86); }
-:root[data-theme="orchid"] { --bg: #150F1F; --s1: #1E1630; --s2: #2A1F42; --s3: #3A2C5A; --fg: #EEE6F7; --mute: #A797C2; --acc: #F08BC0; --on-acc: #38001E; --scrim: rgba(10, 6, 16, 0.86); }
-
-/* Light themes */
-:root[data-theme="paper"] { --bg: #F6F1E6; --s1: #EDE6D6; --s2: #E3DAC6; --s3: #D6CBB2; --fg: #241E12; --mute: #5E543E; --acc: #8F6200; --on-acc: #FFFFFF; --danger: #B3261E; --scrim: rgba(246, 241, 230, 0.9); color-scheme: light; }
-:root[data-theme="daylight"] { --bg: #F3F6FB; --s1: #E8EEF7; --s2: #DCE5F2; --s3: #CBD8EC; --fg: #10203A; --mute: #56647E; --acc: #1B62D6; --on-acc: #FFFFFF; --danger: #B3261E; --scrim: rgba(243, 246, 251, 0.9); color-scheme: light; }
+[data-scheme="dark"][data-oled] {
+  --bg: #000000;
+  --s1: hsl(var(--hd), calc(var(--sd) * 0.4%), 5%);
+  --s2: hsl(var(--hd), calc(var(--sd) * 0.4%), 9%);
+  --s3: hsl(var(--hd), calc(var(--sd) * 0.4%), 14%);
+  --scrim: rgba(0, 0, 0, 0.88);
+}
 
 /* The phone's own Material You colours (the server fills the --md-* roles for this phone; the two selectors it uses are in index.html). */
-:root[data-theme="device"] {
+[data-palette="device"] {
   --bg: var(--md-surface, #10131A); --s1: var(--md-surface-container-low, #181B22); --s2: var(--md-surface-container, #1D2027);
   --s3: var(--md-surface-container-high, #272A32); --fg: var(--md-on-surface, #E1E2EB); --mute: var(--md-on-surface-variant, #C1C6D4);
-  --acc: var(--md-primary, #A8C8FF); --on-acc: var(--md-on-primary, #00315C); --danger: var(--md-error, #FFB4AB);
+  --acc: var(--md-primary, #A8C8FF); --acc2: var(--md-primary, #A8C8FF); --on-acc: var(--md-on-primary, #00315C); --danger: var(--md-error, #FFB4AB);
   --scrim: color-mix(in srgb, var(--md-surface, #10131A) 88%, transparent);
 }
-:root[data-theme="device"][data-scheme="light"] { color-scheme: light; }
+[data-palette="device"][data-oled] { --bg: #000000; }
 
 @media (max-width: 768px) {
   :root { --bar-h: 60px; }

@@ -4,19 +4,35 @@ const h = FT.h;
 
 const FEED_MODES = [['mix', 'Mix', 'Recommendations and subscriptions'], ['subs', 'Subscriptions', 'Only your channels'], ['recs', 'Recommendations', 'Only suggested videos']];
 
-const swatch = (theme) => {
-    const [bg, mid, acc] = theme.art;
-    const art = h('div', { class: 'swatch-art' }, h('i', {}), h('i', {}));
-    art.style.background = bg;
-    art.children[0].style.background = mid;
-    art.children[1].style.background = acc;
-    const el = h('button', { type: 'button', class: 'swatch' + (FT.theme.current() === theme.id ? ' on' : ''), data: { f: '', key: 'theme-' + theme.id },
+// A palette's swatch is drawn by the stylesheet itself: it carries the same attributes as <html>, so it shows the palette in the current mode.
+const syncArt = (art) => {
+    const root = document.documentElement;
+    art.dataset.scheme = root.dataset.scheme;
+    if (root.hasAttribute('data-oled')) art.setAttribute('data-oled', ''); else art.removeAttribute('data-oled');
+};
+
+const swatch = (palette) => {
+    const art = h('div', { class: 'swatch-art', data: { palette: palette.id } }, h('i', {}), h('i', {}));
+    syncArt(art);
+    const el = h('button', { type: 'button', class: 'swatch' + (FT.theme.palette() === palette.id ? ' on' : ''), data: { f: '', key: 'palette-' + palette.id },
         onclick: () => {
-            FT.theme.apply(theme.id);
+            FT.theme.setPalette(palette.id);
             FT.$$('.swatch').forEach((s) => s.classList.toggle('on', s === el));
         } },
-        art, h('b', {}, theme.name), h('span', {}, theme.note));
+        art, h('b', {}, palette.name), h('span', {}, palette.note));
     return el;
+};
+
+const modePills = () => {
+    const row = h('div', { class: 'seg' }, FT.modes.map(([id, label]) => {
+        const pill = FT.pill(label, null, FT.theme.mode() === id, () => {
+            FT.theme.setMode(id);
+            FT.$$('.pill', row).forEach((p) => p.classList.toggle('on', p === pill));
+            FT.$$('.swatch-art').forEach(syncArt);
+        }, 'mode-theme-' + id);
+        return pill;
+    }));
+    return row;
 };
 
 const toggle = (title, hint, on, save, key) => {
@@ -46,7 +62,8 @@ FT.register('settings', {
         }));
 
         const sections = [
-            h('section', {}, h('h2', {}, 'Theme'), h('p', { class: 'hint' }, 'Applies to this browser only.'), h('div', { class: 'swatches' }, FT.themes.map(swatch))),
+            h('section', {}, h('h2', {}, 'Theme'), h('p', { class: 'hint' }, 'Applies to this browser only.'),
+                h('div', { style: 'margin-top:12px' }, modePills()), h('div', { class: 'swatches' }, FT.palettes.map(swatch))),
         ];
         if (values) {
             sections.push(h('section', {}, h('h2', {}, 'Home feed'), h('p', { class: 'hint' }, 'What the recommendations shelf is made of.'), h('div', { style: 'margin-top:12px' }, modes)));

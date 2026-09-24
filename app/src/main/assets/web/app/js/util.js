@@ -25,18 +25,8 @@ FT.h = (tag, props, ...kids) => {
 // A Material icon by name; the glyph comes from the bundled font.
 FT.icon = (name, extra = '') => FT.h('span', { class: ('i ' + extra).trim(), 'aria-hidden': 'true' }, name);
 
-// Fathom mark (badge, wave, depth ruler, buoy) - matches the launcher icon and WebShell.kt's
-// LOGO_SVG. Badge/ruler use theme tokens; the wave tint is fixed across themes.
-FT.brandMark = () => {
-    const span = FT.h('span', { class: 'brand-mark', 'aria-hidden': 'true' });
-    span.innerHTML = '<svg viewBox="0 0 100 100" width="32" height="32">' +
-        '<defs><clipPath id="brand-fw"><rect width="100" height="100" rx="18"/></clipPath></defs>' +
-        '<rect width="100" height="100" rx="18" fill="var(--fg)"/>' +
-        '<path clip-path="url(#brand-fw)" fill="#5B8DEF" fill-opacity="0.4" d="M0,58 Q6.25,53 12.5,58 T25,58 T37.5,58 T50,58 T62.5,58 T75,58 T87.5,58 T100,58 L100,100 L0,100 Z"/>' +
-        '<g stroke="var(--bg)" stroke-width="5" stroke-linecap="round"><line x1="37" y1="18" x2="37" y2="78"/><line x1="37" y1="22" x2="76" y2="22"/><line x1="37" y1="42" x2="50" y2="42"/><line x1="37" y1="62" x2="50" y2="62"/></g>' +
-        '<polygon points="58,42 58,62 75,52" fill="var(--acc)"/></svg>';
-    return span;
-};
+// The Fathom mark: the page's own icon (the <link rel="icon"> in index.html), so the header and the browser tab always match.
+FT.brandMark = () => FT.h('img', { class: 'brand-mark', src: document.querySelector('link[rel="icon"]').href, alt: '', width: 32, height: 32 });
 
 FT.enc = encodeURIComponent;
 

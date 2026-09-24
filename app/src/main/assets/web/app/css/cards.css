@@ -3,11 +3,11 @@
 .thumb { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius); background: var(--s2); transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease); }
 .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .card:hover .thumb { transform: scale(1.02); }
-body[data-input="keys"] .card.sel .thumb, body[data-input="keys"] .row-item.sel .thumb { box-shadow: 0 0 0 4px var(--bg), 0 0 0 7px var(--acc); transform: scale(1.04); }
+body[data-input="keys"] .card.sel .thumb, body[data-input="keys"] .row-item.sel .thumb { box-shadow: 0 0 0 4px var(--bg), 0 0 0 7px var(--acc2); transform: scale(1.04); }
 .dur { position: absolute; right: 8px; bottom: 8px; padding: 2px 7px; border-radius: 7px; background: rgba(0, 0, 0, 0.75); color: #fff; font-size: 12px; font-weight: 500; }
 .dur.live { background: #D93025; }
 .prog { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: rgba(255, 255, 255, 0.28); }
-.prog i { display: block; height: 100%; background: var(--acc); }
+.prog i { display: block; height: 100%; background: var(--acc2); }
 .opt { position: absolute; top: 10px; right: 10px; display: none; align-items: center; gap: 4px; padding: 4px 10px 4px 6px; border-radius: 12px; background: var(--bg); color: var(--acc); font-size: 12px; font-weight: 500; }
 .opt .i { font-size: 16px; }
 body[data-input="keys"] .card.sel .opt { display: flex; }
@@ -30,7 +30,7 @@ a.shelf-head.expand:hover h2, a.shelf-head.expand:focus-visible h2,
 body[data-input="keys"] a.shelf-head.expand.sel h2 { color: var(--acc); }
 a.shelf-head.expand .shelf-more { display: flex; align-items: center; gap: 2px; margin-left: auto; padding: 5px 12px 5px 10px; border-radius: 999px; background: transparent; color: var(--mute); font-size: 13px; font-weight: 500; transition: background 0.15s, color 0.15s; }
 a.shelf-head.expand:hover .shelf-more, a.shelf-head.expand:focus-visible .shelf-more { background: var(--s2); color: var(--fg); }
-body[data-input="keys"] a.shelf-head.expand.sel .shelf-more { background: var(--s2); color: var(--fg); box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc); }
+body[data-input="keys"] a.shelf-head.expand.sel .shelf-more { background: var(--s2); color: var(--fg); box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc2); }
 a.shelf-head.expand .shelf-more .i { font-size: 20px; }
 .row { display: flex; gap: clamp(14px, 1.4vw, 24px); margin-left: -8px; padding: 10px var(--pad-x) 14px 8px; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
 .row::-webkit-scrollbar { display: none; }
@@ -50,7 +50,7 @@ a.shelf-head.expand .shelf-more .i { font-size: 20px; }
 .row-item .thumb { width: min(240px, 38%); flex: none; border-radius: 12px; }
 .row-item:hover, .row-item.sel { background: var(--s2); }
 body[data-input="pointer"] .row-item.sel:not(:hover) { background: none; }
-body[data-input="keys"] .row-item.sel .thumb { box-shadow: 0 0 0 3px var(--acc); }
+body[data-input="keys"] .row-item.sel .thumb { box-shadow: 0 0 0 3px var(--acc2); }
 .row-item .card-title { margin: 0; font-size: 16px; }
 .row-item .row-text { min-width: 0; flex: 1; }
 .pane { position: sticky; top: calc(var(--bar-h) + 12px); align-self: start; padding: 20px; border-radius: 26px; background: var(--s1); }

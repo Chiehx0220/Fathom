@@ -221,6 +221,7 @@ FT.command.hook = (name) => {
             const first = FT.$$('[data-first]', FT.$('#screen')).find((c) => c.getBoundingClientRect().width > 0) || FT.focus.below();
             if (first) FT.focus.select(first);
         } else if (name === 'up') {
+            if (FT.remote.active) return true;
             const tab = FT.$('#top .tab.on') || FT.$('#top [data-f]');
             mode.onPlayer = false;
             document.body.classList.remove('player-mode');

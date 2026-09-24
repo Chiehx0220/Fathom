@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="fathom" data-scheme="dark">
+<html lang="en" data-palette="fathom" data-scheme="light" data-mode="light">
 <head>
   <meta charset="UTF-8">
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fathom</title>
-  <!-- The Fathom mark: badge, water waves, depth ruler, gold buoy - matching the app's own launcher icon. -->
-  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48Y2xpcFBhdGggaWQ9ImZ3Ij48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4Ii8+PC9jbGlwUGF0aD48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxOCIgZmlsbD0iIzBGMUQzMyIvPjxwYXRoIGNsaXAtcGF0aD0idXJsKCNmdykiIGZpbGw9IiM1QjhERUYiIGZpbGwtb3BhY2l0eT0iMC40IiBkPSJNMCw1OCBRNi4yNSw1MyAxMi41LDU4IFQyNSw1OCBUMzcuNSw1OCBUNTAsNTggVDYyLjUsNTggVDc1LDU4IFQ4Ny41LDU4IFQxMDAsNTggTDEwMCwxMDAgTDAsMTAwIFoiLz48ZyBzdHJva2U9IiNGMkVERTAiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48bGluZSB4MT0iMzciIHkxPSIxOCIgeDI9IjM3IiB5Mj0iNzgiLz48bGluZSB4MT0iMzciIHkxPSIyMiIgeDI9Ijc2IiB5Mj0iMjIiLz48bGluZSB4MT0iMzciIHkxPSI0MiIgeDI9IjUwIiB5Mj0iNDIiLz48bGluZSB4MT0iMzciIHkxPSI2MiIgeDI9IjUwIiB5Mj0iNjIiLz48L2c+PHBvbHlnb24gcG9pbnRzPSI1OCw0MiA1OCw2MiA3NSw1MiIgZmlsbD0iI0U4QzQ2OCIvPjwvc3ZnPg==">
+  <!-- The Fathom mark: cream badge, water waves, navy depth ruler, gold play arrow - the app's own launcher icon. The page header draws the same image. -->
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48Y2xpcFBhdGggaWQ9ImZ3Ij48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4Ii8+PC9jbGlwUGF0aD48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxOCIgZmlsbD0iI0YyRURFMCIvPjxwYXRoIGNsaXAtcGF0aD0idXJsKCNmdykiIGZpbGw9IiM1QjhERUYiIGZpbGwtb3BhY2l0eT0iMC4zNSIgZD0iTTAsNTggUTYuMjUsNTMgMTIuNSw1OCBUMjUsNTggVDM3LjUsNTggVDUwLDU4IFQ2Mi41LDU4IFQ3NSw1OCBUODcuNSw1OCBUMTAwLDU4IEwxMDAsMTAwIEwwLDEwMCBaIi8+PGcgc3Ryb2tlPSIjMEYxRDMzIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PGxpbmUgeDE9IjM3IiB5MT0iMTgiIHgyPSIzNyIgeTI9Ijc4Ii8+PGxpbmUgeDE9IjM3IiB5MT0iMjIiIHgyPSI3NiIgeTI9IjIyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNDIiIHgyPSI1MCIgeTI9IjQyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNjIiIHgyPSI1MCIgeTI9IjYyIi8+PC9nPjxwb2x5Z29uIHBvaW50cz0iNTgsNDIgNTgsNjIgNzUsNTIiIGZpbGw9IiNDOTlBMzQiLz48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iOTgiIGhlaWdodD0iOTgiIHJ4PSIxNyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMEYxRDMzIiBzdHJva2Utb3BhY2l0eT0iMC4xNCIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+">
   <link rel="stylesheet" href="/app.css?v={{version}}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vidstack@1.15.6/player/styles/default/theme.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vidstack@1.15.6/player/styles/default/layouts/video.css">
@@ -15,14 +15,19 @@
 {{deviceColors}}
   </style>
   <script>
-    // Applied before anything paints, so the chosen theme never flashes the default one.
     window.FT_CONFIG = { services: {{services}} };
-    try {
+    // The theme is on <html> before anything paints, so the chosen one never flashes the default. theme.js changes it later
+    // through the same function.
+    window.FT_setTheme = function (palette, mode) {
       var root = document.documentElement;
-      var theme = localStorage.getItem('fathom-theme');
-      if (theme) root.dataset.theme = theme;
-      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var dark = mode === 'auto' ? !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) : mode !== 'light';
+      root.dataset.palette = palette;
+      root.dataset.mode = mode;
       root.dataset.scheme = dark ? 'dark' : 'light';
+      if (mode === 'oled') root.setAttribute('data-oled', ''); else root.removeAttribute('data-oled');
+    };
+    try {
+      window.FT_setTheme(localStorage.getItem('fathom-palette') || 'fathom', localStorage.getItem('fathom-mode') || 'light');
     } catch (e) {}
   </script>
 </head>
