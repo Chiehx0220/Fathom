@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aedev.flow.R
-import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
 import io.github.aedev.flow.data.engagement.VideoFeedbackUseCase
 import io.github.aedev.flow.data.local.PlaylistRepository
@@ -78,11 +77,6 @@ class QuickActionsViewModel
 
         /** The video whose download dialog is open, with its formats already loaded. */
         val pendingDownload: StateFlow<VideoDownloadOptions?> = _pendingDownload.asStateFlow()
-
-        private val _pendingBilibiliDownload = MutableStateFlow<Video?>(null)
-
-        /** The Bilibili video whose quality picker is open; Bilibili has its own stream lists, so it skips the format loader. */
-        val pendingBilibiliDownload: StateFlow<Video?> = _pendingBilibiliDownload.asStateFlow()
 
         private var downloadJob: Job? = null
 
@@ -207,10 +201,6 @@ class QuickActionsViewModel
         /** Loads [video]'s formats, then opens the download dialog; a second tap while loading is ignored. */
         fun requestDownload(video: Video) {
             if (downloadJob?.isActive == true) return
-            if (BilibiliVideoId.isBilibili(video.id)) {
-                _pendingBilibiliDownload.value = video
-                return
-            }
             emit(R.string.toast_fetching_download_links)
             downloadJob =
                 viewModelScope.launch {
@@ -227,7 +217,6 @@ class QuickActionsViewModel
 
         fun dismissDownload() {
             _pendingDownload.value = null
-            _pendingBilibiliDownload.value = null
         }
 
         fun undo(undo: QuickActionUndo) {

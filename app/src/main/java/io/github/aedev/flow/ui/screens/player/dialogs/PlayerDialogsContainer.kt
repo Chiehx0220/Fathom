@@ -38,10 +38,12 @@ internal fun PlayerDialogsContainer(
 
     // Download Quality Dialog
     if (screenState.activeSheet == PlayerSheet.Download && io.github.aedev.flow.bilibili.BilibiliVideoId.isBilibili(video.id)) {
-        io.github.aedev.flow.ui.components.shared.BilibiliDownloadDialog(
-            video = video,
-            onDismiss = { screenState.closeSheet() },
-        )
+        // Bilibili's streams are not in the player's InnerTube state, so the card menu's loader offers them.
+        val quickActions = io.github.aedev.flow.ui.components.shared.quickactions.sharedQuickActionsViewModel()
+        androidx.compose.runtime.LaunchedEffect(video.id) {
+            quickActions.requestDownload(video)
+            screenState.closeSheet()
+        }
     } else if (screenState.activeSheet == PlayerSheet.Download) {
         when (prefs.downloadDialogStyle) {
             io.github.aedev.flow.data.local.DownloadDialogStyle.COMPACT -> {

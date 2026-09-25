@@ -1,6 +1,10 @@
 package io.github.aedev.flow.data.video
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
 import io.github.aedev.flow.player.stream.StreamSizeEstimator
@@ -28,9 +32,12 @@ data class VideoDownloadOptions(
  */
 class VideoDownloadOptionsLoader
     @Inject
-    constructor() {
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) {
         suspend fun load(video: Video): VideoDownloadOptions? =
             withContext(PerformanceDispatcher.networkIO) {
+                if (BilibiliVideoId.isBilibili(video.id)) return@withContext loadBilibili(video)
                 val result =
                     withTimeoutOrNull(EXTRACT_TIMEOUT_MS) {
                         runCatching { InnerTubeVideoStreamExtractor.extract(video.id) }.getOrNull()
@@ -45,4 +52,17 @@ class VideoDownloadOptionsLoader
                     streamSizes = StreamSizeEstimator.fromInnerTubeFormats(videoFormats, audioFormats, result.durationMs() ?: 0L),
                 )
             }
+
+        private suspend fun loadBilibili(video: Video): VideoDownloadOptions? {
+            val (bvid, page) = BilibiliVideoId.parse(video.id)
+            val playback = withTimeoutOrNull(EXTRACT_TIMEOUT_MS) { runCatching { bilibiliApi(context).playback(bvid, page) }.getOrNull() } ?: return null
+            val (videoFormats, audioFormats) = playback.toDownloadFormats()
+            if (videoFormats.isEmpty()) return null
+            return VideoDownloadOptions(
+                video = video.filledFrom(playback),
+                videoFormats = videoFormats,
+                audioFormats = audioFormats,
+                streamSizes = emptyMap(),
+            )
+        }
     }
