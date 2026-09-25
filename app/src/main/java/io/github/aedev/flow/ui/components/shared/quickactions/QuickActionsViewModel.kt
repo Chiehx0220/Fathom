@@ -2,9 +2,7 @@ package io.github.aedev.flow.ui.components.shared.quickactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.content.Context
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
 import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
@@ -13,7 +11,6 @@ import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.local.entity.DownloadItemStatus
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.repository.YouTubeRepository
-import io.github.aedev.flow.data.video.BilibiliDownload
 import io.github.aedev.flow.data.video.VideoDownloadManager
 import io.github.aedev.flow.data.video.VideoDownloadOptions
 import io.github.aedev.flow.data.video.VideoDownloadOptionsLoader
@@ -50,7 +47,6 @@ private const val MAX_AVATARS = 3
 class QuickActionsViewModel
     @Inject
     constructor(
-        @ApplicationContext private val appContext: Context,
         private val repository: YouTubeRepository,
         playlistRepository: PlaylistRepository,
         videoDownloadManager: VideoDownloadManager,
@@ -82,6 +78,11 @@ class QuickActionsViewModel
 
         /** The video whose download dialog is open, with its formats already loaded. */
         val pendingDownload: StateFlow<VideoDownloadOptions?> = _pendingDownload.asStateFlow()
+
+        private val _pendingBilibiliDownload = MutableStateFlow<Video?>(null)
+
+        /** The Bilibili video whose quality picker is open; Bilibili has its own stream lists, so it skips the format loader. */
+        val pendingBilibiliDownload: StateFlow<Video?> = _pendingBilibiliDownload.asStateFlow()
 
         private var downloadJob: Job? = null
 
@@ -207,12 +208,7 @@ class QuickActionsViewModel
         fun requestDownload(video: Video) {
             if (downloadJob?.isActive == true) return
             if (BilibiliVideoId.isBilibili(video.id)) {
-                downloadJob =
-                    viewModelScope.launch {
-                        runCatching { BilibiliDownload.start(appContext, video, 0) }
-                            .onSuccess { emit(R.string.toast_download_started, video.title) }
-                            .onFailure { emit(R.string.ui_download_start_failed, it.message.orEmpty()) }
-                    }
+                _pendingBilibiliDownload.value = video
                 return
             }
             emit(R.string.toast_fetching_download_links)
@@ -231,6 +227,7 @@ class QuickActionsViewModel
 
         fun dismissDownload() {
             _pendingDownload.value = null
+            _pendingBilibiliDownload.value = null
         }
 
         fun undo(undo: QuickActionUndo) {

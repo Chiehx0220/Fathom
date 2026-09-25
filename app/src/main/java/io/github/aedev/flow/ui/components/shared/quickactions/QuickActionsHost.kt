@@ -12,6 +12,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.DownloadDialogStyle
 import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.ui.components.shared.BilibiliDownloadDialog
 import io.github.aedev.flow.ui.components.shared.MediaDownloadDialog
 import io.github.aedev.flow.ui.components.shared.MediaDownloadDialogCompact
 import kotlinx.coroutines.flow.collectLatest
@@ -29,6 +30,9 @@ fun QuickActionsHost(
     val preferences = remember(context) { PlayerPreferences(context) }
     val dialogStyle by preferences.downloadDialogStyle.collectAsStateWithLifecycle(DownloadDialogStyle.FULL)
     val pending by viewModel.pendingDownload.collectAsStateWithLifecycle()
+    val pendingBilibili by viewModel.pendingBilibiliDownload.collectAsStateWithLifecycle()
+
+    pendingBilibili?.let { video -> BilibiliDownloadDialog(video = video, onDismiss = viewModel::dismissDownload) }
 
     pending?.let { options ->
         when (dialogStyle) {
