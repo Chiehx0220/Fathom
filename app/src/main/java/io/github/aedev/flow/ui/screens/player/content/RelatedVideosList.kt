@@ -12,8 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.data.local.PlayerRelatedCardStyle
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.ui.components.CompactVideoCard
-import io.github.aedev.flow.ui.components.VideoCardFullWidth
+import io.github.aedev.flow.ui.components.shared.card.MediaVideoCard
+import io.github.aedev.flow.ui.components.shared.card.VideoCardLayout
 
 /**
  * Related videos content for LazyListScope.
@@ -21,7 +21,6 @@ import io.github.aedev.flow.ui.components.VideoCardFullWidth
 internal fun LazyListScope.relatedVideosContent(
     relatedVideos: List<Video>,
     onVideoClick: (Video) -> Unit,
-    onChannelClick: (String) -> Unit,
     cardStyle: PlayerRelatedCardStyle = PlayerRelatedCardStyle.FULL_WIDTH,
 ) {
     // Video items
@@ -32,18 +31,17 @@ internal fun LazyListScope.relatedVideosContent(
         val relatedVideo = relatedVideos[index]
         when (cardStyle) {
             PlayerRelatedCardStyle.COMPACT -> {
-                CompactVideoCard(
+                MediaVideoCard(
                     video = relatedVideo,
+                    layout = VideoCardLayout.Row,
                     onClick = { onVideoClick(relatedVideo) },
-                    onChannelClick = onChannelClick,
                 )
             }
 
             PlayerRelatedCardStyle.FULL_WIDTH -> {
-                VideoCardFullWidth(
+                MediaVideoCard(
                     video = relatedVideo,
                     onClick = { onVideoClick(relatedVideo) },
-                    onChannelClick = onChannelClick,
                 )
             }
         }
@@ -57,7 +55,6 @@ internal fun LazyListScope.relatedVideosGridContent(
     relatedVideos: List<Video>,
     columns: Int,
     onVideoClick: (Video) -> Unit,
-    onChannelClick: (String) -> Unit,
     cardStyle: PlayerRelatedCardStyle = PlayerRelatedCardStyle.FULL_WIDTH,
 ) {
     val chunkedVideos = relatedVideos.chunked(columns)
@@ -75,18 +72,17 @@ internal fun LazyListScope.relatedVideosGridContent(
                 Box(modifier = Modifier.weight(1f)) {
                     when (cardStyle) {
                         PlayerRelatedCardStyle.COMPACT -> {
-                            CompactVideoCard(
+                            MediaVideoCard(
                                 video = video,
+                                layout = VideoCardLayout.Row,
                                 onClick = { onVideoClick(video) },
-                                onChannelClick = onChannelClick,
                             )
                         }
 
                         PlayerRelatedCardStyle.FULL_WIDTH -> {
-                            VideoCardFullWidth(
+                            MediaVideoCard(
                                 video = video,
                                 onClick = { onVideoClick(video) },
-                                onChannelClick = onChannelClick,
                             )
                         }
                     }

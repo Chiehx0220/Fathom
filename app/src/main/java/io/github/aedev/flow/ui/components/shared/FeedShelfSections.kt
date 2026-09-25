@@ -49,21 +49,20 @@ import io.github.aedev.flow.innertube.pages.renderer.CommunityPost
 import io.github.aedev.flow.innertube.pages.renderer.FeedItem
 import io.github.aedev.flow.innertube.pages.renderer.FeedShelf
 import io.github.aedev.flow.innertube.pages.renderer.FeedShelfStyle
-import io.github.aedev.flow.ui.components.CompactVideoCard
 import io.github.aedev.flow.ui.components.FEED_MAX_AUTO_COLUMNS
 import io.github.aedev.flow.ui.components.PlaylistCard
 import io.github.aedev.flow.ui.components.PlaylistCardLayout
-import io.github.aedev.flow.ui.components.VideoCardFullWidth
 import io.github.aedev.flow.ui.components.feedCardsFormGrid
 import io.github.aedev.flow.ui.components.feedShelfPreviewCount
 import io.github.aedev.flow.ui.components.rememberFeedGridLayout
+import io.github.aedev.flow.ui.components.shared.card.MediaVideoCard
+import io.github.aedev.flow.ui.components.shared.card.VideoCardLayout
 
 /** Every callback a shelf page needs, threaded through one object rather than a dozen parameters. */
 data class FeedShelfActions(
     val onVideoClick: (Video) -> Unit,
     val onShortClick: (String) -> Unit = {},
     val onPlaylistClick: (String) -> Unit = {},
-    val onChannelClick: (String) -> Unit = {},
     val onSectionMore: (FeedShelf) -> Unit = {},
     val canOpenSection: (FeedShelf) -> Boolean = { false },
     val subscribedChannelIds: Set<String> = emptySet(),
@@ -164,16 +163,16 @@ private fun LazyGridScope.shelfSection(
         val trailer = section.items.filterIsInstance<FeedItem.VideoItem>().firstOrNull() ?: return
         fullSpanItem(key = section.id) {
             if (columns > 1) {
-                CompactVideoCard(
+                MediaVideoCard(
                     video = trailer.video,
-                    showChannelName = showChannelInfo,
+                    layout = VideoCardLayout.Row,
+                    showChannel = showChannelInfo,
                     onClick = { actions.onVideoClick(trailer.video) },
                 )
             } else {
-                VideoCardFullWidth(
+                MediaVideoCard(
                     video = trailer.video,
-                    showChannelAvatar = showChannelInfo,
-                    showChannelName = showChannelInfo,
+                    showChannel = showChannelInfo,
                     onClick = { actions.onVideoClick(trailer.video) },
                 )
             }
@@ -309,16 +308,16 @@ private fun ShelfVideoCard(
     onClick: () -> Unit,
 ) {
     if (gridCard) {
-        VideoCardFullWidth(
+        MediaVideoCard(
             video = video,
-            showChannelAvatar = showChannelInfo,
-            showChannelName = showChannelInfo,
+            showChannel = showChannelInfo,
             onClick = onClick,
         )
     } else {
-        CompactVideoCard(
+        MediaVideoCard(
             video = video,
-            showChannelName = showChannelInfo,
+            layout = VideoCardLayout.Row,
+            showChannel = showChannelInfo,
             onClick = onClick,
         )
     }

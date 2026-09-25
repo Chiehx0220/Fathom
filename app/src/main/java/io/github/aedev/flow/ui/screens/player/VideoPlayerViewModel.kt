@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.engagement.FeedInvalidationBus
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
 import io.github.aedev.flow.data.local.*
 import io.github.aedev.flow.data.model.Comment
@@ -27,7 +28,6 @@ import io.github.aedev.flow.player.state.EnhancedPlayerState
 import io.github.aedev.flow.player.stream.PlaybackLoadResolver
 import io.github.aedev.flow.player.stream.PlaybackResolutionRequest
 import io.github.aedev.flow.player.stream.UpcomingPremiereProbe
-import io.github.aedev.flow.ui.components.FeedInvalidationBus
 import io.github.aedev.flow.ui.screens.player.state.*
 import io.github.aedev.flow.utils.NetworkState
 import kotlinx.coroutines.CoroutineDispatcher
@@ -274,6 +274,10 @@ class VideoPlayerViewModel
 
             playerManager.playerState
                 .onEach(::onPlayerStateChanged)
+                .launchIn(viewModelScope)
+
+            playerManager.playbackCompletedEvent
+                .onEach(watchSessions::markCompleted)
                 .launchIn(viewModelScope)
 
             presence.restoreLastWatchedSession()
@@ -594,18 +598,21 @@ class VideoPlayerViewModel
             channelId: String = "",
             isShort: Boolean = false,
             serviceId: Int = currentServiceId,
-        ) = watchSessions.savePlaybackPosition(
-            videoId = videoId,
-            positionMs = position,
-            durationMs = duration,
-            title = title,
-            thumbnailUrl = thumbnailUrl,
-            channelName = channelName,
-            channelId = channelId,
-            isShort = isShort,
-            isLocal = isLocalMediaId(videoId),
-            serviceId = serviceId,
-        )
+        ) {
+            if (!positionBelongsTo(videoId, playerManager.playerState.value.currentVideoId)) return
+            watchSessions.savePlaybackPosition(
+                videoId = videoId,
+                positionMs = position,
+                durationMs = duration,
+                title = title,
+                thumbnailUrl = thumbnailUrl,
+                channelName = channelName,
+                channelId = channelId,
+                isShort = isShort,
+                isLocal = isLocalMediaId(videoId),
+                serviceId = serviceId,
+            )
+        }
 
         /** The app is going to the background: the recap gets the open session's progress so far. */
         fun checkpointWatchSession() = watchSessions.checkpoint()

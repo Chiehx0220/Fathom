@@ -22,11 +22,11 @@ import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.local.VideoHistoryEntry
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.ui.components.VideoCardFullWidth
-import io.github.aedev.flow.ui.components.VideoCardHorizontal
 import io.github.aedev.flow.ui.components.home.ContinueWatchingShelf
 import io.github.aedev.flow.ui.components.shared.FlowFeedProgress
 import io.github.aedev.flow.ui.components.shared.MediaShortsShelf
+import io.github.aedev.flow.ui.components.shared.card.MediaVideoCard
+import io.github.aedev.flow.ui.components.shared.card.VideoCardLayout
 
 private const val FEED_FOOTER_MIN_VIDEOS = 100
 
@@ -39,7 +39,6 @@ internal fun HomeFeedGrid(
     contentSourceFilter: HomeContentSourceFilter,
     onContentSourceFilterSelect: (HomeContentSourceFilter) -> Unit,
     onVideoClick: (Video) -> Unit,
-    onChannelClick: (String) -> Unit,
     onEnrichChannelMetadata: (Video) -> Unit,
     onContinueWatchingClick: (VideoHistoryEntry) -> Unit,
     onContinueWatchingRemove: (String) -> Unit,
@@ -89,7 +88,6 @@ internal fun HomeFeedGrid(
                 videos = videos.take(insertShortsAfter),
                 isListView = isListView,
                 onVideoClick = onVideoClick,
-                onChannelClick = onChannelClick,
                 onEnrichChannelMetadata = onEnrichChannelMetadata,
             )
 
@@ -130,7 +128,6 @@ internal fun HomeFeedGrid(
                 videos = videos.drop(insertShortsAfter),
                 isListView = isListView,
                 onVideoClick = onVideoClick,
-                onChannelClick = onChannelClick,
                 onEnrichChannelMetadata = onEnrichChannelMetadata,
             )
         }
@@ -162,7 +159,6 @@ private fun LazyGridScope.feedVideos(
     videos: List<Video>,
     isListView: Boolean,
     onVideoClick: (Video) -> Unit,
-    onChannelClick: (String) -> Unit,
     onEnrichChannelMetadata: (Video) -> Unit,
 ) {
     items(
@@ -173,7 +169,6 @@ private fun LazyGridScope.feedVideos(
             video = video,
             isListView = isListView,
             onVideoClick = onVideoClick,
-            onChannelClick = onChannelClick,
             onEnrichChannelMetadata = onEnrichChannelMetadata,
         )
     }
@@ -184,24 +179,22 @@ private fun LazyGridItemScope.HomeFeedVideoItem(
     video: Video,
     isListView: Boolean,
     onVideoClick: (Video) -> Unit,
-    onChannelClick: (String) -> Unit,
     onEnrichChannelMetadata: (Video) -> Unit,
 ) {
     LaunchedEffect(video.id, video.channelId, video.channelThumbnailUrl) {
         onEnrichChannelMetadata(video)
     }
     if (isListView) {
-        VideoCardHorizontal(
+        MediaVideoCard(
             video = video,
+            layout = VideoCardLayout.Row,
             onClick = { onVideoClick(video) },
-            onChannelClick = onChannelClick,
             modifier = Modifier.testTag("home_video_card"),
         )
     } else {
-        VideoCardFullWidth(
+        MediaVideoCard(
             video = video,
             onClick = { onVideoClick(video) },
-            onChannelClick = onChannelClick,
             useInternalPadding = false,
             modifier = Modifier.testTag("home_video_card"),
         )

@@ -58,6 +58,7 @@ import io.github.aedev.flow.player.danmaku.DanmakuComment
 import io.github.aedev.flow.player.danmaku.DanmakuHandler
 import io.github.aedev.flow.player.sponsorblock.SponsorBlockHandler
 import io.github.aedev.flow.player.state.EnhancedPlayerState
+import io.github.aedev.flow.player.state.PlaybackCompletion
 import io.github.aedev.flow.player.state.QualityOption
 import io.github.aedev.flow.player.state.SubtitleLoadFailure
 import io.github.aedev.flow.player.state.queuePresence
@@ -490,6 +491,10 @@ class EnhancedPlayerManager private constructor() {
     private val _queueAutoAdvanceEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val queueAutoAdvanceEvent: SharedFlow<Unit> = _queueAutoAdvanceEvent.asSharedFlow()
 
+    /** Emitted when a video plays to its end, before looping or autoplay replaces it. */
+    private val _playbackCompletedEvent = MutableSharedFlow<PlaybackCompletion>(extraBufferCapacity = 4)
+    val playbackCompletedEvent: SharedFlow<PlaybackCompletion> = _playbackCompletedEvent.asSharedFlow()
+
     private var audioFeaturesManager: AudioFeaturesManager? = null
     private var mediaLoader: MediaLoader? = null
 
@@ -822,6 +827,7 @@ class EnhancedPlayerManager private constructor() {
                     if (playbackState == Player.STATE_ENDED && !isRecoveringFromBackground) {
                         acquireAdvanceWakeLock()
                         autoNextLog("STATE_ENDED branch entered")
+                        emitPlaybackCompletion()
                         if (_playerState.value.isLooping) {
                             autoNextLog("STATE_ENDED loop replay")
                             player?.seekTo(0)
@@ -1659,6 +1665,15 @@ class EnhancedPlayerManager private constructor() {
             autoplayEnabled -> autoplayCandidates.firstOrNull()
             else -> null
         }
+
+    private fun emitPlaybackCompletion() {
+        val videoId = currentVideoId ?: return
+        val exoPlayer = player ?: return
+        val durationMs = exoPlayer.duration.takeIf { it > 0L && it != C.TIME_UNSET } ?: return
+        // A refocus glitch can report ENDED near the start; only a position at the end counts.
+        if (!PlaybackResumePolicy.shouldRestartCompletedPlayback(exoPlayer.currentPosition, durationMs)) return
+        _playbackCompletedEvent.tryEmit(PlaybackCompletion(videoId, durationMs))
+    }
 
     private fun maybeStartAutoplayCountdownOrAdvance() {
         val delaySeconds = autoplayCountdownSeconds

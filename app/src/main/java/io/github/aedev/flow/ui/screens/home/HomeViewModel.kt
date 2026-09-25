@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
+import io.github.aedev.flow.data.engagement.FeedInvalidationBus
 import io.github.aedev.flow.data.feed.FeedPrefetchQueue
 import io.github.aedev.flow.data.feed.FeedPrefetchRequest
 import io.github.aedev.flow.data.local.CachedHomeVideo
@@ -22,7 +23,6 @@ import io.github.aedev.flow.data.recommendation.UserBrain
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.data.shorts.ShortsFeedRepository
-import io.github.aedev.flow.ui.components.FeedInvalidationBus
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
