@@ -2,12 +2,12 @@ package io.github.aedev.flow.ui.screens.home
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliApi
-import io.github.aedev.flow.bilibili.BilibiliChannelPageKey
 import io.github.aedev.flow.bilibili.BilibiliSearchItem
 import io.github.aedev.flow.bilibili.BilibiliSearchType
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.recommendation.isCjk
+import io.github.aedev.flow.data.subscriptions.latestVideos
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -75,11 +75,7 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
                         .map { (sub, mid) ->
                             async {
                                 runCatching {
-                                    bilibili
-                                        .channelVideos(mid, BilibiliChannelPageKey(page = 1, lastAid = 0L))
-                                        .videos
-                                        .take(BILIBILI_VIDEOS_PER_CHANNEL)
-                                        .map { BilibiliVideoMapper.videoFromChannel(it, mid, sub.channelName, sub.channelThumbnail) }
+                                    bilibili.latestVideos(mid, BILIBILI_VIDEOS_PER_CHANNEL, sub.channelName, sub.channelThumbnail)
                                 }.getOrDefault(emptyList())
                             }
                         }.awaitAll()

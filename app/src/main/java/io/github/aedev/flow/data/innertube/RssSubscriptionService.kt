@@ -2,14 +2,13 @@ package io.github.aedev.flow.data.innertube
 
 import android.util.Log
 import io.github.aedev.flow.bilibili.BilibiliApi
-import io.github.aedev.flow.bilibili.BilibiliChannelPageKey
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
 import io.github.aedev.flow.data.shorts.ShortsClassifier
 import io.github.aedev.flow.data.subscriptions.ChannelRssClient
 import io.github.aedev.flow.data.subscriptions.ChannelRssEntry
-import io.github.aedev.flow.player.stream.BilibiliVideoMapper
+import io.github.aedev.flow.data.subscriptions.latestVideos
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.formatYouTubeRelativeTime
 import io.github.aedev.flow.utils.parsePremiereTimestamp
@@ -242,11 +241,7 @@ class RssSubscriptionService
             label: ChannelLabel? = null,
         ): List<Video> {
             val mid = channelId.toLongOrNull() ?: return emptyList()
-            return bilibiliApi
-                .channelVideos(mid, BilibiliChannelPageKey(page = 1, lastAid = 0L))
-                .videos
-                .take(limit)
-                .map { BilibiliVideoMapper.videoFromChannel(it, mid, channelName = label?.name.orEmpty(), channelAvatarUrl = label?.avatarUrl.orEmpty()) }
+            return bilibiliApi.latestVideos(mid, limit, channelName = label?.name.orEmpty(), channelAvatarUrl = label?.avatarUrl.orEmpty())
         }
 
         private suspend fun fetchBilibiliVideos(
