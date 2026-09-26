@@ -30,6 +30,16 @@ internal data class ChannelTabState(
     val loaded: Boolean = false,
 )
 
+/** What the channel screen reads tab content from; each service's controller fills it in the same shape. */
+internal interface ChannelTabSource {
+    val states: StateFlow<Map<ChannelTabKind, ChannelTabState>>
+
+    fun ensureLoaded(
+        kind: ChannelTabKind,
+        params: String?,
+    )
+}
+
 /**
  * Holds one lazily built pager per channel tab.
  *
@@ -40,9 +50,9 @@ internal data class ChannelTabState(
  */
 internal class ChannelTabController(
     private val scope: CoroutineScope,
-) {
+) : ChannelTabSource {
     private val _states = MutableStateFlow<Map<ChannelTabKind, ChannelTabState>>(emptyMap())
-    val states: StateFlow<Map<ChannelTabKind, ChannelTabState>> = _states.asStateFlow()
+    override val states: StateFlow<Map<ChannelTabKind, ChannelTabState>> = _states.asStateFlow()
 
     private var browseId: String = ""
     private var owner: FeedItemOwner = FeedItemOwner()
@@ -56,7 +66,7 @@ internal class ChannelTabController(
         _states.value = emptyMap()
     }
 
-    fun ensureLoaded(
+    override fun ensureLoaded(
         kind: ChannelTabKind,
         params: String?,
     ) {

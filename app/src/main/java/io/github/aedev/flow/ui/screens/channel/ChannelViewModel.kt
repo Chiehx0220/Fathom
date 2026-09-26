@@ -155,11 +155,13 @@ class ChannelViewModel
 
         private val tabController = ChannelTabController(viewModelScope)
 
-        // Bilibili channels don't go through tabController, which is built on YouTube's InnerTube.
-        // This holds their tab content in the same shape, so the screen never needs to know which
-        // source a tab's data came from.
+        // Bilibili's tabs come from the native client, not InnerTube, but arrive as the same
+        // ChannelTabState, so the screen never needs to know which service a tab's data came from.
         private val bilibiliNative =
             BilibiliNativeChannelController(viewModelScope, bilibiliApi(appContext))
+
+        private fun tabSource(): ChannelTabSource =
+            if (_uiState.value.serviceId == BILIBILI_SERVICE_ID) bilibiliNative else tabController
 
         internal val tabStates: StateFlow<Map<ChannelTabKind, ChannelTabState>> =
             combine(
@@ -311,11 +313,7 @@ class ChannelViewModel
                 return
             }
             if (kind == ChannelTabKind.Shorts && !shortsEnabled) return
-            if (_uiState.value.serviceId == BILIBILI_SERVICE_ID) {
-                bilibiliNative.ensureLoaded(kind)
-                return
-            }
-            tabController.ensureLoaded(kind, _uiState.value.tabParams(kind))
+            tabSource().ensureLoaded(kind, _uiState.value.tabParams(kind))
         }
 
         private fun loadSubscriptionState(channelId: String) {

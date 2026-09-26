@@ -25,9 +25,9 @@ import kotlinx.coroutines.flow.update
 internal class BilibiliNativeChannelController(
     private val scope: CoroutineScope,
     private val api: BilibiliApi,
-) {
+) : ChannelTabSource {
     private val _states = MutableStateFlow<Map<ChannelTabKind, ChannelTabState>>(emptyMap())
-    val states: StateFlow<Map<ChannelTabKind, ChannelTabState>> = _states.asStateFlow()
+    override val states: StateFlow<Map<ChannelTabKind, ChannelTabState>> = _states.asStateFlow()
 
     private var info: BilibiliChannelInfo? = null
 
@@ -55,7 +55,10 @@ internal class BilibiliNativeChannelController(
         return header to tabs
     }
 
-    fun ensureLoaded(kind: ChannelTabKind) {
+    override fun ensureLoaded(
+        kind: ChannelTabKind,
+        params: String?,
+    ) {
         if (_states.value[kind]?.loaded == true) return
         val channel = info ?: return
         val items =
