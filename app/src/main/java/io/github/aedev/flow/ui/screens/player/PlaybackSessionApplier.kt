@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import io.github.aedev.flow.bilibili.BilibiliVideoInfo
 import io.github.aedev.flow.data.local.PlayerPreferences
-import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.model.SponsorBlockSegment
 import io.github.aedev.flow.data.model.Video
@@ -19,15 +18,11 @@ import io.github.aedev.flow.innertube.models.response.VideoChapter
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.player.error.VideoErrorMapper
-import io.github.aedev.flow.player.stream.BilibiliStreamBridge
-import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
 import io.github.aedev.flow.player.stream.PlaybackFailure
 import io.github.aedev.flow.player.stream.ResolvedPlayback
-import io.github.aedev.flow.player.stream.ServicePlaybackStreamSelector
 import io.github.aedev.flow.player.stream.StoryboardSpec
 import io.github.aedev.flow.player.stream.UpcomingDetails
-import io.github.aedev.flow.player.stream.VideoQualityOptions
 import io.github.aedev.flow.ui.screens.player.state.*
 import io.github.aedev.flow.utils.NetworkState
 import kotlinx.coroutines.CancellationException
@@ -275,24 +270,12 @@ internal class PlaybackSessionApplier(
 
         val videoId = load.videoId
         val playback = step.playback
-        val bvid = playback.info.bvid
-        val videoStreams = BilibiliStreamBridge.convertVideoFormats(bvid, playback.videoFormats)
-        val audioStreams = BilibiliStreamBridge.convertAudioFormats(bvid, playback.audioFormats)
-        val selected =
-            ServicePlaybackStreamSelector.selectStreams(
-                videoCandidates = videoStreams,
-                audioCandidatesAll = audioStreams,
-                preferredQuality = step.preferredQuality,
-                preferredAudioLanguage = step.preferredAudioLanguage,
-                preferredCodecKey = step.preferredCodecKey,
-            )
-        val enrichedVideo = BilibiliVideoMapper.videoFromInfo(videoId, playback.info, uiState.value.cachedVideo)
-        val durationSeconds = playback.info.durationSec.toLong()
-        val isAdaptiveMode = step.preferredQuality == VideoQuality.AUTO
+        val streams = streamPreparer.assembleVod(videoId, uiState.value.cachedVideo, step)
+        val identity = streams.identity
 
-        GlobalPlayerState.setCurrentVideo(enrichedVideo)
-        recordWatchClick(enrichedVideo)
-        playbackPreparer.beginSession(videoId, enrichedVideo.title, enrichedVideo.channelName, enrichedVideo.thumbnailUrl)
+        GlobalPlayerState.setCurrentVideo(identity.enrichedVideo)
+        recordWatchClick(identity.enrichedVideo)
+        playbackPreparer.beginSession(videoId, identity.title, identity.channel, identity.thumbnail)
         val autoplay = playbackPreparer.applyAutoplayCandidates(videoId = videoId, videos = step.relatedVideos)
 
         val savedPositionMs =
@@ -302,23 +285,23 @@ internal class PlaybackSessionApplier(
 
         Log.w(
             TAG,
-            "VOD playing $videoId via native Bilibili client (video=${videoStreams.size}, audio=${audioStreams.size})",
+            "VOD playing $videoId via native Bilibili client (video=${streams.videoStreams.size}, audio=${streams.audioStreams.size})",
         )
 
         uiState.update {
             it.applyVodStreams(
-                cachedVideo = enrichedVideo,
+                cachedVideo = identity.enrichedVideo,
                 isArchivedLivestream = false,
                 relatedVideos = step.relatedVideos,
-                videoStream = selected.first,
-                audioStream = selected.second,
-                availableQualities = VideoQualityOptions.availableQualities(videoStreams),
+                videoStream = streams.videoStream,
+                audioStream = streams.audioStream,
+                availableQualities = streams.availableQualities,
                 savedPositionMs = savedPositionMs,
-                isAdaptiveMode = isAdaptiveMode,
+                isAdaptiveMode = streams.isAdaptiveMode,
                 autoplayEnabled = autoplay,
                 innerTubeVideoFormats = emptyList(),
                 innerTubeAudioFormats = emptyList(),
-                streamSizes = emptyMap(),
+                streamSizes = streams.streamSizes,
                 storyboard = emptyList(),
             )
         }
@@ -328,27 +311,16 @@ internal class PlaybackSessionApplier(
         secondaryMetadata.loadChannelMetadata(
             videoId = videoId,
             uploaderUrl = null,
-            channelId = enrichedVideo.channelId,
-            embeddedAvatarUrls = listOfNotNull(enrichedVideo.channelThumbnailUrl.takeIf { it.isNotBlank() }),
+            channelId = identity.channelId,
+            embeddedAvatarUrls = identity.embeddedAvatarUrls,
             loadToken = load.token,
         )
 
         playbackPreparer.prepareVodStreams(
             videoId = videoId,
-            videoStream = selected.first,
-            audioStream = selected.second,
-            videoStreams = videoStreams,
-            audioStreams = audioStreams,
-            subtitles = emptyList(),
-            durationSeconds = durationSeconds,
+            streams = streams,
+            step = step,
             savedPositionMs = savedPositionMs,
-            resumeOverrideRequested = step.resumePositionOverrideMs != null,
-            isAdaptiveMode = isAdaptiveMode,
-            sabrInfo = null,
-            itVideoFormats = emptyList(),
-            itAudioFormats = emptyList(),
-            preferredVideoCodec = step.preferredCodecKey,
-            preferredLiveQualityHeight = step.preferredQuality.height,
             isCurrent = { isLoadCurrent(load.token) },
         )
 

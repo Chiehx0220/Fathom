@@ -88,6 +88,32 @@ internal class PlaybackPreparer(
         isCurrent = isCurrent,
     )
 
+    /** The Bilibili VOD assembly on the same hand-off; it has no SABR session and no InnerTube formats. */
+    suspend fun prepareVodStreams(
+        videoId: String,
+        streams: PlaybackStreamPreparer.VodStreams,
+        step: ResolvedPlayback.VodFromBilibili,
+        savedPositionMs: Long,
+        isCurrent: () -> Boolean,
+    ) = prepareVodStreams(
+        videoId = videoId,
+        videoStream = streams.videoStream,
+        audioStream = streams.audioStream,
+        videoStreams = streams.videoStreams,
+        audioStreams = streams.audioStreams,
+        subtitles = streams.subtitles,
+        durationSeconds = streams.durationSeconds,
+        savedPositionMs = savedPositionMs,
+        resumeOverrideRequested = step.resumePositionOverrideMs != null,
+        isAdaptiveMode = streams.isAdaptiveMode,
+        sabrInfo = null,
+        itVideoFormats = emptyList(),
+        itAudioFormats = emptyList(),
+        preferredVideoCodec = step.preferredCodecKey,
+        preferredLiveQualityHeight = step.preferredQuality.height,
+        isCurrent = isCurrent,
+    )
+
     suspend fun prepareMergedStreams(
         videoId: String,
         streamInfo: StreamInfo,

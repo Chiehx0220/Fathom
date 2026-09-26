@@ -2,6 +2,8 @@ package io.github.aedev.flow.ui.screens.player
 
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.player.stream.BilibiliStreamBridge
+import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.player.stream.InnerTubeStreamBridge
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
@@ -93,6 +95,46 @@ internal class PlaybackStreamPreparer {
                     result.audioFormats,
                     durationSeconds * 1000L,
                 ),
+        )
+    }
+
+    /** Bilibili's counterpart: its streams and identity arrive without a watch response to read them from. */
+    fun assembleVod(
+        videoId: String,
+        cached: Video?,
+        step: ResolvedPlayback.VodFromBilibili,
+    ): VodStreams {
+        val info = step.playback.info
+        val videoStreams = BilibiliStreamBridge.convertVideoFormats(info.bvid, step.playback.videoFormats)
+        val audioStreams = BilibiliStreamBridge.convertAudioFormats(info.bvid, step.playback.audioFormats)
+        val selected =
+            ServicePlaybackStreamSelector.selectStreams(
+                videoCandidates = videoStreams,
+                audioCandidatesAll = audioStreams,
+                preferredQuality = step.preferredQuality,
+                preferredAudioLanguage = step.preferredAudioLanguage,
+                preferredCodecKey = step.preferredCodecKey,
+            )
+        val video = BilibiliVideoMapper.videoFromInfo(videoId, info, cached)
+        return VodStreams(
+            identity =
+                StreamIdentity(
+                    enrichedVideo = video,
+                    title = video.title,
+                    channel = video.channelName,
+                    thumbnail = video.thumbnailUrl,
+                    channelId = video.channelId,
+                    embeddedAvatarUrls = listOfNotNull(video.channelThumbnailUrl.takeIf { it.isNotBlank() }),
+                ),
+            durationSeconds = info.durationSec.toLong(),
+            videoStreams = videoStreams,
+            audioStreams = audioStreams,
+            availableQualities = VideoQualityOptions.availableQualities(videoStreams),
+            videoStream = selected.first,
+            audioStream = selected.second,
+            subtitles = emptyList(),
+            isAdaptiveMode = step.preferredQuality == VideoQuality.AUTO,
+            streamSizes = emptyMap(),
         )
     }
 
