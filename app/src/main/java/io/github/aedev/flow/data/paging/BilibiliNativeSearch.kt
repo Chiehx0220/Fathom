@@ -1,7 +1,6 @@
 package io.github.aedev.flow.data.paging
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import androidx.paging.PagingSource
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliSearchItem
 import io.github.aedev.flow.bilibili.BilibiliSearchType
@@ -10,13 +9,19 @@ import io.github.aedev.flow.data.local.Duration
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.local.UploadDate
 import io.github.aedev.flow.data.model.Channel
-import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+internal class BilibiliSearchPage(
+    val items: List<SearchResultItem>,
+    val nextKey: String?,
+)
+
 /**
  * Bilibili search through the native client. The paging key is the next page number as a string.
+ * It only produces the page; deduplication and blocked-channel filtering are [SearchPagingSource]'s,
+ * shared with YouTube.
  */
 internal object BilibiliNativeSearch {
     private const val SECONDS_PER_HOUR = 3_600L
@@ -26,14 +31,13 @@ internal object BilibiliNativeSearch {
         query: String,
         filter: SearchFilter,
         continuation: String?,
-        loadedItemKeys: DistinctKeyTracker,
-    ): PagingSource.LoadResult<String, SearchResultItem> {
+    ): BilibiliSearchPage {
         val type =
             when (filter.contentType) {
                 ContentType.ALL, ContentType.VIDEOS -> BilibiliSearchType.VIDEO
                 ContentType.CHANNELS -> BilibiliSearchType.USER
                 // Bilibili has no shorts, playlist or live tab in this client yet.
-                else -> return PagingSource.LoadResult.Page(data = emptyList(), prevKey = null, nextKey = null)
+                else -> return BilibiliSearchPage(emptyList(), nextKey = null)
             }
         val page = continuation?.toIntOrNull() ?: 1
         val result = withContext(Dispatchers.IO) { api.search(query, type, page) }
@@ -46,11 +50,7 @@ internal object BilibiliNativeSearch {
                     is BilibiliSearchItem.User -> SearchResultItem.ChannelResult(item.toChannel())
                 }
             }
-        return PagingSource.LoadResult.Page(
-            data = loadedItemKeys.filter(items) { it.identityKey() },
-            prevKey = null,
-            nextKey = if (result.hasMore) (page + 1).toString() else null,
-        )
+        return BilibiliSearchPage(items, nextKey = if (result.hasMore) (page + 1).toString() else null)
     }
 
     private fun matches(

@@ -42,18 +42,19 @@ class SearchPagingSource(
     override suspend fun load(params: LoadParams<String>): LoadResult<String, SearchResultItem> {
         val continuation = params.key
         return try {
-            if (!isYouTube) {
-                val api = checkNotNull(bilibiliApi) { "Searching service $serviceId needs a BilibiliApi" }
-                return BilibiliNativeSearch.load(api, query, filter, continuation, loadedItemKeys)
-            }
-
-            val page = loadPage(query, filter.toSearchParams(), continuation)
-            if (continuation == null) onHeader(page.header)
-            val results = page.toResultItems(shortsEnabled).withoutBlockedChannels(blockedChannelIds())
+            val (results, nextKey) =
+                if (isYouTube) {
+                    val page = loadPage(query, filter.toSearchParams(), continuation)
+                    if (continuation == null) onHeader(page.header)
+                    page.toResultItems(shortsEnabled) to page.continuation
+                } else {
+                    val api = checkNotNull(bilibiliApi) { "Searching service $serviceId needs a BilibiliApi" }
+                    BilibiliNativeSearch.load(api, query, filter, continuation).let { it.items to it.nextKey }
+                }
             LoadResult.Page(
-                data = loadedItemKeys.filter(results) { it.identityKey() },
+                data = loadedItemKeys.filter(results.withoutBlockedChannels(blockedChannelIds())) { it.identityKey() },
                 prevKey = null,
-                nextKey = page.continuation,
+                nextKey = nextKey,
             )
         } catch (e: Exception) {
             LoadResult.Error(e)

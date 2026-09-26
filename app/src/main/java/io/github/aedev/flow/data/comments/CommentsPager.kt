@@ -65,8 +65,10 @@ internal class CommentsPager(
     private val isCurrentVideo: (String) -> Boolean = { true },
     private val fetchTimeoutMs: Long? = null,
     private val prefetchPages: Int = DEFAULT_PREFETCH_PAGES,
-    private val bilibili: BilibiliCommentSource? = null,
+    private val bilibili: CommentsSource? = null,
 ) {
+    private val youtube: CommentsSource = YouTubeCommentsSource(repository)
+
     private val _comments = MutableStateFlow<List<Comment>>(emptyList())
     val comments: StateFlow<List<Comment>> = _comments.asStateFlow()
 
@@ -96,7 +98,7 @@ internal class CommentsPager(
     private var serviceId: Int = ServiceList.YouTube.serviceId
     private val repliesInFlight = mutableSetOf<String>()
 
-    private fun isBilibili(): Boolean = bilibili != null && serviceId == BILIBILI_SERVICE_ID
+    private fun source(): CommentsSource = if (serviceId == BILIBILI_SERVICE_ID) bilibili ?: youtube else youtube
 
     /** Empties the list, for a video with no comments to fetch and for a player being torn down. */
     fun clear() {
@@ -161,10 +163,7 @@ internal class CommentsPager(
                         }
                     }
                     if (!isCurrentVideo(videoId)) return@launch
-                    val page =
-                        fetch {
-                            if (isBilibili()) bilibili!!.first(videoId) else repository.getVideoComments(videoId, sortToken)
-                        } ?: return@launch
+                    val page = fetch { source().first(videoId, sortToken) } ?: return@launch
                     if (!isCurrentVideo(videoId)) return@launch
                     _comments.value = page.comments.distinctByNonBlankKey(Comment::id)
                     next = page
@@ -229,12 +228,8 @@ internal class CommentsPager(
         val legacyPage = next.legacyPage
         val page =
             when {
-                continuation != null && isBilibili() -> {
-                    bilibili!!.more(videoId, continuation)
-                }
-
                 continuation != null -> {
-                    repository.getMoreVideoComments(videoId, continuation)
+                    source().more(videoId, continuation)
                 }
 
                 legacyPage != null -> {
@@ -275,12 +270,7 @@ internal class CommentsPager(
             try {
                 val (replies, nextContinuation, nextLegacyPage) =
                     if (continuation != null) {
-                        val page =
-                            if (isBilibili()) {
-                                bilibili!!.replies(videoId, comment.id, continuation)
-                            } else {
-                                repository.getVideoCommentReplies(videoId, continuation)
-                            }
+                        val page = source().replies(videoId, comment.id, continuation)
                         Triple(page.comments, page.continuation, null)
                     } else {
                         val url = "https://www.youtube.com/watch?v=$videoId"

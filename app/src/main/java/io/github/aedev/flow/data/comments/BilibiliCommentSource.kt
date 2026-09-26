@@ -15,23 +15,26 @@ import java.util.TimeZone
  */
 internal class BilibiliCommentSource(
     private val api: BilibiliApi,
-) {
-    suspend fun first(videoId: String): CommentsPageResult = more(videoId, offset = "")
-
-    suspend fun more(
+) : CommentsSource {
+    override suspend fun first(
         videoId: String,
-        offset: String,
+        sortToken: String?,
+    ): CommentsPageResult = more(videoId, continuation = "")
+
+    override suspend fun more(
+        videoId: String,
+        continuation: String,
     ): CommentsPageResult {
-        val page = api.comments(bvidOf(videoId), offset)
+        val page = api.comments(bvidOf(videoId), continuation)
         return CommentsPageResult(comments = page.comments.map { it.toComment() }, continuation = page.nextOffset)
     }
 
-    suspend fun replies(
+    override suspend fun replies(
         videoId: String,
         commentId: String,
-        pageToken: String,
+        continuation: String,
     ): CommentsPageResult {
-        val page = api.commentReplies(bvidOf(videoId), commentId, pageToken.toIntOrNull() ?: 1)
+        val page = api.commentReplies(bvidOf(videoId), commentId, continuation.toIntOrNull() ?: 1)
         return CommentsPageResult(
             comments = page.replies.map { it.toComment(hasReplies = false) },
             continuation = page.nextPage?.toString(),
