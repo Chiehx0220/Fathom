@@ -33,6 +33,7 @@ class SearchViewModelTest {
     private fun viewModel() =
         SearchViewModel(
             context,
+            mockk(relaxed = true),
             suggestions,
             ShortsContentFilter(flowOf(true)),
             ShortsQueueHandoff(),

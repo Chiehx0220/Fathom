@@ -322,7 +322,7 @@ internal class PlaybackSessionApplier(
             loadToken = load.token,
         )
 
-        playbackPreparer.prepareVodStreams(
+        playbackPreparer.prepareBilibiliVodStreams(
             videoId = videoId,
             streams = streams,
             step = step,

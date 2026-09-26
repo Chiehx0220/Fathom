@@ -89,7 +89,7 @@ internal class PlaybackPreparer(
     )
 
     /** The Bilibili VOD assembly on the same hand-off; it has no SABR session and no InnerTube formats. */
-    suspend fun prepareVodStreams(
+    suspend fun prepareBilibiliVodStreams(
         videoId: String,
         streams: PlaybackStreamPreparer.VodStreams,
         step: ResolvedPlayback.VodFromBilibili,
