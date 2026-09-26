@@ -574,7 +574,12 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 futures.add(executorService.submit(Callable {
                     val uploads =
                         if (BilibiliLink.isBilibili(url)) {
-                            LocalServerBilibili.uploads(dbHelper.appContext, url, channel.name.orEmpty(), subscribedAvatarUrl.orEmpty())
+                            LocalServerBilibili.uploads(
+                                dbHelper.appContext,
+                                url,
+                                channel.name.orEmpty(),
+                                subscribedAvatarUrl.orEmpty(),
+                            )
                         } else {
                             fetchChannelUploads(NewPipe.getServiceByUrl(url), url)
                         }

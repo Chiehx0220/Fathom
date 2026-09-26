@@ -52,11 +52,11 @@ class ParallelDownloader @Inject constructor(
         }
     }
 
-    private var _client: OkHttpClient? = null
+    private var cachedClient: OkHttpClient? = null
 
     /** Lazily build client with a connection pool scaled to thread count. */
     private fun getClient(threads: Int): OkHttpClient {
-        val existing = _client
+        val existing = cachedClient
         if (existing != null) return existing
         return AppProxyManager.applyTo(OkHttpClient.Builder())
             .connectTimeout(30, TimeUnit.SECONDS)   
@@ -65,7 +65,7 @@ class ParallelDownloader @Inject constructor(
             .followRedirects(true)
             .retryOnConnectionFailure(true)
             .build()
-            .also { _client = it }
+            .also { cachedClient = it }
     }
 
     // ===== YouTube URL helpers =====
