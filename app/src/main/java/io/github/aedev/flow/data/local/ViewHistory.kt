@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.dao.WatchedVideoIdentity
 import io.github.aedev.flow.data.local.entity.WatchHistoryEntity
+import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -83,7 +84,9 @@ class ViewHistory private constructor(
         channelId: String = "",
         isMusic: Boolean = false,
         isShort: Boolean = false,
-        isLocal: Boolean = false,
+        // A device file's row stays local whichever caller writes it, or it would join the online
+        // history, the engine's signals and sync under an id that names no YouTube video.
+        isLocal: Boolean = LocalMediaIds.isLocal(videoId),
         serviceId: Int = 0,
     ) {
         val prefs = PlayerPreferences(context)
@@ -177,6 +180,7 @@ class ViewHistory private constructor(
                 isMusic = false,
                 isShort = isShort,
                 serviceId = serviceIdOfVideo(videoId, serviceId),
+                isLocal = LocalMediaIds.isLocal(videoId),
             ),
         )
     }
@@ -244,6 +248,9 @@ class ViewHistory private constructor(
 
     /** Music history, newest first. */
     fun getMusicHistoryFlow(): Flow<List<VideoHistoryEntry>> = dao.getMusicHistory().map { list -> list.map { it.toDomain() } }
+
+    /** Plays of files on the device, newest first: their progress and when they were last played. */
+    fun getLocalHistoryFlow(): Flow<List<VideoHistoryEntry>> = dao.getLocalHistory().map { list -> list.map { it.toDomain() } }
 
     suspend fun getWatchedShortIdsAboveThreshold(
         minPercent: Float = 99f,

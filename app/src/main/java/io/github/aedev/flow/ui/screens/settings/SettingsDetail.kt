@@ -3,6 +3,8 @@ package io.github.aedev.flow.ui.screens.settings
 import androidx.compose.runtime.Composable
 import io.github.aedev.flow.ui.components.settings.SettingsDestination
 import io.github.aedev.flow.ui.components.settings.SettingsTarget
+import io.github.aedev.flow.ui.screens.equalizer.EqualizerScreen
+import io.github.aedev.flow.ui.screens.settings.about.AboutScreen
 import io.github.aedev.flow.ui.screens.settings.appearance.AppearanceScreen
 import io.github.aedev.flow.ui.screens.settings.appearance.DateTimeScreen
 import io.github.aedev.flow.ui.screens.settings.appearance.NavigationBarScreen
@@ -16,6 +18,7 @@ import io.github.aedev.flow.ui.screens.settings.diagnostics.DiagnosticsScreen
 import io.github.aedev.flow.ui.screens.settings.downloads.DownloadSettingsScreen
 import io.github.aedev.flow.ui.screens.settings.history.HistorySettingsScreen
 import io.github.aedev.flow.ui.screens.settings.integrations.IntegrationsScreen
+import io.github.aedev.flow.ui.screens.settings.localmedia.LocalMediaSettingsScreen
 import io.github.aedev.flow.ui.screens.settings.network.NetworkSettingsScreen
 import io.github.aedev.flow.ui.screens.settings.notifications.NotificationSettingsScreen
 import io.github.aedev.flow.ui.screens.settings.playback.BufferSettingsScreen
@@ -98,6 +101,10 @@ internal fun SettingsDetail(
             BufferSettingsScreen(onBack = onBack, highlight = target.highlight)
         }
 
+        SettingsDestination.EQUALIZER -> {
+            EqualizerScreen(onBack = onBack, inSettings = true)
+        }
+
         SettingsDestination.QUALITY -> {
             QualitySettingsScreen(onBack = onBack, highlight = target.highlight, tab = target.tab)
         }
@@ -123,7 +130,11 @@ internal fun SettingsDetail(
         }
 
         SettingsDestination.DOWNLOADS -> {
-            DownloadSettingsScreen(onBack = onBack, highlight = target.highlight)
+            DownloadSettingsScreen(onBack = onBack, highlight = target.highlight, onNavigate = onNavigate)
+        }
+
+        SettingsDestination.LOCAL_MEDIA -> {
+            LocalMediaSettingsScreen(onBack = onBack, highlight = target.highlight)
         }
 
         SettingsDestination.NOTIFICATIONS -> {

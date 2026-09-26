@@ -15,12 +15,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.R
+import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.ui.components.shared.FlowNoteEditorDialog
 import io.github.aedev.flow.ui.components.shared.SaveVideoSheet
 import io.github.aedev.flow.ui.components.shared.rememberVideoShareAction
+import io.github.aedev.flow.ui.components.shared.shareMediaFiles
 import io.github.aedev.flow.ui.components.videoplayer.info.CommentsPreview
 import io.github.aedev.flow.ui.components.videoplayer.info.VideoInfoSection
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
@@ -171,7 +173,15 @@ internal fun VideoInfoContent(
         onNotificationChange = { enabled -> viewModel.setNotificationEnabled(video.channelId, enabled) },
         onChannelClick = { onChannelClick(video.channelId) },
         onSaveClick = { showAddToPlaylistDialog = true },
-        onShareClick = { shareVideoAction(video.id, resolvedVideoTitle, video.serviceId) },
+        onShareClick = {
+            val fileUri = LocalMediaIds.videoUri(video.id)
+            if (fileUri != null) {
+                context.shareMediaFiles(listOf(fileUri), mimeType = "video/*")
+            } else {
+                shareVideoAction(video.id, resolvedVideoTitle, video.serviceId)
+            }
+        },
+        isDeviceFile = LocalMediaIds.isLocal(video.id),
         onDownloadClick = { screenState.open(PlayerSheet.Download) },
         isSaved = isVideoSaved,
         isDownloaded = isVideoDownloaded,

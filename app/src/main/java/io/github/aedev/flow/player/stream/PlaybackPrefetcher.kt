@@ -1,6 +1,7 @@
 package io.github.aedev.flow.player.stream
 
 import android.util.Log
+import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +43,7 @@ object PlaybackPrefetcher {
         videoId: String,
         serviceId: Int = ServiceList.YouTube.serviceId,
     ) {
-        if (videoId.isBlank() || videoId.startsWith("local_")) return
+        if (videoId.isBlank() || LocalMediaIds.isLocal(videoId)) return
         if (!serviceId.isYouTubeServiceId) return
         synchronized(lock) {
             if (inFlightVideoId == videoId && inFlight?.isActive == true) return

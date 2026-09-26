@@ -118,9 +118,9 @@ internal fun String.isLibraryOrSettingsRouteForMusicMiniPlayer(): Boolean =
         this == "history" ||
         this == "playlists" ||
         this == "playlist" ||
-        this == "likes" ||
         this == "downloads" ||
         this == "savedShorts" ||
         this == "recap" ||
         this == "recap_story" ||
+        this == EQUALIZER_ROUTE ||
         startsWith("settings")

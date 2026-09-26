@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aedev.flow.R
+import io.github.aedev.flow.data.engagement.LikedMediaUseCase
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
 import io.github.aedev.flow.data.engagement.VideoFeedbackUseCase
 import io.github.aedev.flow.data.local.PlaylistRepository
@@ -47,11 +48,12 @@ class QuickActionsViewModel
     @Inject
     constructor(
         private val repository: YouTubeRepository,
-        playlistRepository: PlaylistRepository,
+        private val playlistRepository: PlaylistRepository,
         videoDownloadManager: VideoDownloadManager,
         private val engagement: VideoEngagementUseCase,
         private val feedback: VideoFeedbackUseCase,
         private val downloadOptions: VideoDownloadOptionsLoader,
+        private val likedMedia: LikedMediaUseCase,
     ) : ViewModel() {
         val watchLaterIds: StateFlow<Set<String>> =
             playlistRepository
@@ -215,6 +217,14 @@ class QuickActionsViewModel
             arg: String? = null,
         ) = emit(text, arg)
 
+        /** Shows a message a screen already resolved, for wording this menu doesn't own. */
+        fun announce(
+            text: String,
+            undo: QuickActionUndo? = null,
+        ) {
+            _messages.tryEmit(QuickActionMessage(plainText = text, undo = undo))
+        }
+
         fun dismissDownload() {
             _pendingDownload.value = null
         }
@@ -233,6 +243,18 @@ class QuickActionsViewModel
 
                         is QuickActionUndo.Subscription -> {
                             setSubscription(undo.channelId, undo.channelName, undo.channelThumbnail, undo.subscribed, announce = false, serviceId = undo.serviceId)
+                        }
+
+                        is QuickActionUndo.PlaylistRemoval -> {
+                            playlistRepository.restorePlaylistVideos(undo.entries)
+                        }
+
+                        is QuickActionUndo.Unlike -> {
+                            likedMedia.restore(undo.likes)
+                        }
+
+                        is QuickActionUndo.RestoreFromTrash -> {
+                            Unit
                         }
                     }
                 }

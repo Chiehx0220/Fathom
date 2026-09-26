@@ -820,7 +820,7 @@
     <string name="sleep_timer_will_close_app">L\'appli se fermera à l\'expiration de la minuterie</string>
     <string name="unsubscribe">Se désabonner</string>
     <string name="mark_as_watched">Marquer comme vu</string>
-    <string name="mark_as_watched_toast">Ajouté à la liste des vidéos visionnées — vos recommandations s\'amélioreront !</string>
+    <string name="mark_as_watched_toast">Ajouté à la liste des vidéos visionnées — vos recommandations s\'amélioreront !</string>
     <string name="i_like_this">Je veux plus de ça</string>
     <string name="i_like_this_toast">D\'accord ! Vous verrez davantage de contenu de ce genre.</string>
     <string name="go_to_channel">Aller sur la chaîne</string>
@@ -1648,7 +1648,7 @@
     <string name="content_settings_subs_show_checked_count_title">Nombre de vidéos vérifiées</string>
     <string name="content_settings_subs_show_checked_count_subtitle">Indiquer le nombre de vidéos visionnées à côté de la date de la dernière mise à jour</string>
     <string name="donation_prompt_title">Vous appréciez Flow ?</string>
-    <string name="donation_prompt_message">Flow est une application gratuite et open source, conçue sans publicité ni traqueurs. Si elle a trouvé sa place sur votre appareil, pensez à soutenir son développement : cela contribue réellement à assurer la pérennité du projet.</string>
+    <string name="donation_prompt_message">Flow est une application gratuite et open source, conçue sans publicité ni traqueurs. Si elle a trouvé sa place sur votre appareil, pensez à soutenir son développement : cela contribue réellement à assurer la pérennité du projet.</string>
     <string name="donation_prompt_methods">Patreon · Bitcoin · Ethereum · Solana · USDT · Monero</string>
     <string name="donation_prompt_support">Soutenir le développement</string>
     <string name="donation_prompt_later">Peut-être plus tard</string>

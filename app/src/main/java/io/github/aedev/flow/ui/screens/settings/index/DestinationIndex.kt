@@ -44,6 +44,7 @@ internal object DestinationIndex {
             SettingsDestination.LANGUAGE_REGION -> R.string.settings_language_region_summary
             SettingsDestination.PLAYBACK -> R.string.settings_playback_summary
             SettingsDestination.BUFFER -> R.string.settings_item_buffer_subtitle
+            SettingsDestination.EQUALIZER -> R.string.eq_settings_summary
             SettingsDestination.QUALITY -> R.string.settings_quality_summary
             SettingsDestination.CONTENT -> R.string.settings_content_summary
             SettingsDestination.TOPICS -> R.string.settings_topics_summary
@@ -52,6 +53,7 @@ internal object DestinationIndex {
             SettingsDestination.SYNC -> R.string.sync_devices_subtitle
             SettingsDestination.HISTORY -> R.string.settings_history_summary
             SettingsDestination.DOWNLOADS -> R.string.settings_downloads_summary
+            SettingsDestination.LOCAL_MEDIA -> R.string.settings_local_media_summary
             SettingsDestination.NOTIFICATIONS -> R.string.settings_item_notifications_subtitle
             SettingsDestination.NETWORK -> R.string.settings_network_summary
             SettingsDestination.WELLBEING -> R.string.settings_wellbeing_summary
