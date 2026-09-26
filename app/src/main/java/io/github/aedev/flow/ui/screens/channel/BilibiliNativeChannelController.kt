@@ -24,8 +24,10 @@ import kotlinx.coroutines.flow.update
  */
 internal class BilibiliNativeChannelController(
     private val scope: CoroutineScope,
-    private val api: BilibiliApi,
+    apiProvider: () -> BilibiliApi,
 ) : ChannelTabSource {
+    private val api by lazy(apiProvider)
+
     private val _states = MutableStateFlow<Map<ChannelTabKind, ChannelTabState>>(emptyMap())
     override val states: StateFlow<Map<ChannelTabKind, ChannelTabState>> = _states.asStateFlow()
 

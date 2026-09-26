@@ -20,7 +20,11 @@ object BilibiliVideoMapper {
             id = "${item.bvid}?p=1",
             title = item.title,
             channelName = item.uploader.name,
-            channelId = item.uploader.mid.takeIf { it > 0 }?.toString().orEmpty(),
+            channelId =
+                item.uploader.mid
+                    .takeIf { it > 0 }
+                    ?.toString()
+                    .orEmpty(),
             thumbnailUrl = item.thumbnailUrl,
             duration = item.durationSec,
             viewCount = item.viewCount,
@@ -56,7 +60,11 @@ object BilibiliVideoMapper {
             id = "${item.bvid}?p=1",
             title = item.title,
             channelName = item.uploader.name,
-            channelId = item.uploader.mid.takeIf { it > 0 }?.toString().orEmpty(),
+            channelId =
+                item.uploader.mid
+                    .takeIf { it > 0 }
+                    ?.toString()
+                    .orEmpty(),
             thumbnailUrl = item.thumbnailUrl,
             duration = item.durationSec,
             viewCount = item.viewCount,
@@ -82,7 +90,10 @@ object BilibiliVideoMapper {
             id = videoId,
             title = info.title.ifBlank { fallback?.title.orEmpty() },
             channelName = info.uploader.name.ifBlank { fallback?.channelName.orEmpty() },
-            channelId = info.uploader.mid.takeIf { it > 0 }?.toString() ?: fallback?.channelId.orEmpty(),
+            channelId =
+                info.uploader.mid
+                    .takeIf { it > 0 }
+                    ?.toString() ?: fallback?.channelId.orEmpty(),
             thumbnailUrl = info.thumbnailUrl.ifBlank { fallback?.thumbnailUrl.orEmpty() },
             duration = info.durationSec,
             viewCount = info.viewCount,

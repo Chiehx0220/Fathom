@@ -29,7 +29,11 @@ internal fun Video.filledFrom(playback: BilibiliPlayback): Video =
     copy(
         title = title.ifBlank { playback.info.title },
         channelName = channelName.ifBlank { playback.info.uploader.name },
-        channelId = channelId.ifBlank { playback.info.uploader.mid.toString() },
+        channelId =
+            channelId.ifBlank {
+                playback.info.uploader.mid
+                    .toString()
+            },
         thumbnailUrl = thumbnailUrl.ifBlank { playback.info.thumbnailUrl },
         duration = if (duration > 0) duration else playback.info.durationSec,
     )

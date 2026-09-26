@@ -15,7 +15,6 @@ import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -26,14 +25,17 @@ import java.net.NetworkInterface
  * pipeline (process-global state).
  */
 class ServerService : Service() {
-
     private var server: LocalHttpServer? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         if (!isRunning) {
             startServer()
         }
@@ -46,22 +48,27 @@ class ServerService : Service() {
 
         ensureChannel()
         val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-        val pendingIntent = launchIntent?.let {
-            PendingIntent.getActivity(
-                this, 0, it,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-        }
+        val pendingIntent =
+            launchIntent?.let {
+                PendingIntent.getActivity(
+                    this,
+                    0,
+                    it,
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                )
+            }
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(NOTIFICATION_TITLE)
-            .setContentText("Listening on: $localAddress")
-            .setSmallIcon(android.R.drawable.stat_sys_upload)
-            .setContentIntent(pendingIntent)
-            .setOnlyAlertOnce(true)
-            .setSilent(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
+        val notification =
+            NotificationCompat
+                .Builder(this, CHANNEL_ID)
+                .setContentTitle(NOTIFICATION_TITLE)
+                .setContentText("Listening on: $localAddress")
+                .setSmallIcon(android.R.drawable.stat_sys_upload)
+                .setContentIntent(pendingIntent)
+                .setOnlyAlertOnce(true)
+                .setSilent(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
@@ -110,7 +117,10 @@ class ServerService : Service() {
     // (the crash this fixes). stopSelf() -> onDestroy() -> stopServer() releases the locks and
     // the notification. Restarting from here isn't allowed (background FGS start restriction),
     // so the server stays down until the user re-enables it in Settings.
-    override fun onTimeout(startId: Int, fgsType: Int) {
+    override fun onTimeout(
+        startId: Int,
+        fgsType: Int,
+    ) {
         LocalHttpServer.log("Foreground service time limit reached, stopping local server")
         stopSelf(startId)
     }

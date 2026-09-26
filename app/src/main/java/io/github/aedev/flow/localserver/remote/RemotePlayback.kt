@@ -73,7 +73,10 @@ import io.github.aedev.flow.localserver.LocalHttpServer
  * rests, then the volume and screen switches, and the way back to the page last.
  */
 @Composable
-internal fun PlaybackMode(state: LocalHttpServer.RemoteState, send: (String) -> Unit) {
+internal fun PlaybackMode(
+    state: LocalHttpServer.RemoteState,
+    send: (String) -> Unit,
+) {
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         NowPlaying(state, send)
 
@@ -101,7 +104,10 @@ internal fun PlaybackMode(state: LocalHttpServer.RemoteState, send: (String) -> 
 
 // One row, one height: chapter keys only when the video has chapters, and play the widest.
 @Composable
-private fun TransportKeys(state: LocalHttpServer.RemoteState, send: (String) -> Unit) {
+private fun TransportKeys(
+    state: LocalHttpServer.RemoteState,
+    send: (String) -> Unit,
+) {
     val hasChapters = state.chapters.isNotEmpty()
     ButtonGroup(overflowIndicator = {}, modifier = Modifier.fillMaxWidth()) {
         if (hasChapters) {
@@ -137,7 +143,10 @@ private fun TransportKeys(state: LocalHttpServer.RemoteState, send: (String) -> 
 // The seek bar: a wavy line that ripples while the video plays and goes flat when it pauses. While the thumb is held it
 // shows the finger, not the (still moving) page; the jump is sent on release.
 @Composable
-private fun SeekBar(state: LocalHttpServer.RemoteState, send: (String) -> Unit) {
+private fun SeekBar(
+    state: LocalHttpServer.RemoteState,
+    send: (String) -> Unit,
+) {
     var dragging by remember { mutableStateOf(false) }
     var dragValue by remember { mutableFloatStateOf(0f) }
     val duration = state.durationSec.toFloat()
@@ -150,7 +159,11 @@ private fun SeekBar(state: LocalHttpServer.RemoteState, send: (String) -> Unit) 
         label = "seekWave",
     )
     val thumbWidth by animateFloatAsState(if (dragging) 2f else 4f, motion.fastSpatialSpec(), label = "seekThumb")
-    fun fractionAt(x: Float, width: Int) = if (width > 0) (x / width).coerceIn(0f, 1f) else 0f
+
+    fun fractionAt(
+        x: Float,
+        width: Int,
+    ) = if (width > 0) (x / width).coerceIn(0f, 1f) else 0f
 
     Column(Modifier.fillMaxWidth()) {
         Box(
@@ -198,7 +211,10 @@ private fun SeekBar(state: LocalHttpServer.RemoteState, send: (String) -> Unit) 
 }
 
 @Composable
-private fun NowPlaying(state: LocalHttpServer.RemoteState, send: (String) -> Unit) {
+private fun NowPlaying(
+    state: LocalHttpServer.RemoteState,
+    send: (String) -> Unit,
+) {
     var showChapters by remember { mutableStateOf(false) }
     Column(
         Modifier
@@ -258,7 +274,10 @@ private fun NowPlaying(state: LocalHttpServer.RemoteState, send: (String) -> Uni
                 chapters = state.chapters,
                 activeIndex = state.chapterIndex,
                 onDismiss = { showChapters = false },
-                onJump = { index -> send("chapter:jump:$index"); showChapters = false },
+                onJump = { index ->
+                    send("chapter:jump:$index")
+                    showChapters = false
+                },
             )
         }
         // Mirrors watch.js's skip button: visible only while inside a SponsorBlock segment.
@@ -288,7 +307,12 @@ private fun ChapterListDialog(
                     val active = index == activeIndex
                     ListItem(
                         headlineContent = { Text(title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                        leadingContent = if (active) { { Icon(Icons.Default.PlayArrow, contentDescription = null) } } else null,
+                        leadingContent =
+                            if (active) {
+                                { Icon(Icons.Default.PlayArrow, contentDescription = null) }
+                            } else {
+                                null
+                            },
                         colors =
                             ListItemDefaults.colors(
                                 containerColor = if (active) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,

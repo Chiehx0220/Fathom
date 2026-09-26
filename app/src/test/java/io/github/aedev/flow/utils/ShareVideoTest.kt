@@ -41,7 +41,7 @@ class ShareVideoTest {
         val sent = payload(shareVideoIntent(context, "abc123", "A title", linkOnly = true))
 
         assertThat(sent.getStringExtra(Intent.EXTRA_TEXT))
-            .isEqualTo(context.getString(R.string.share_link_only_template, "abc123"))
+            .isEqualTo(context.getString(R.string.share_link_only_template, youtubeWatchUrl("abc123")))
         assertThat(sent.getStringExtra(Intent.EXTRA_TEXT)).doesNotContain("A title")
     }
 
@@ -50,7 +50,7 @@ class ShareVideoTest {
         val sent = payload(shareVideoIntent(context, "abc123", "A title", linkOnly = false))
 
         assertThat(sent.getStringExtra(Intent.EXTRA_TEXT))
-            .isEqualTo(context.getString(R.string.check_out_video_template, "A title", "abc123"))
+            .isEqualTo(context.getString(R.string.check_out_video_template, "A title", youtubeWatchUrl("abc123")))
         assertThat(sent.getStringExtra(Intent.EXTRA_TEXT)).contains("A title")
     }
 

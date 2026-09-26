@@ -70,7 +70,7 @@ internal class PlayerCollaborators(
                     )
                 },
             isCurrentVideo = { videoId -> uiState.value.cachedVideo?.id == videoId },
-            bilibili = BilibiliCommentSource(bilibiliApi(context)),
+            bilibili = BilibiliCommentSource { bilibiliApi(context) },
         )
 
     val transcripts =

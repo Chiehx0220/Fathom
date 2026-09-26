@@ -158,7 +158,7 @@ class ChannelViewModel
         // Bilibili's tabs come from the native client, not InnerTube, but arrive as the same
         // ChannelTabState, so the screen never needs to know which service a tab's data came from.
         private val bilibiliNative =
-            BilibiliNativeChannelController(viewModelScope, bilibiliApi(appContext))
+            BilibiliNativeChannelController(viewModelScope) { bilibiliApi(appContext) }
 
         private fun tabSource(): ChannelTabSource = if (_uiState.value.serviceId == BILIBILI_SERVICE_ID) bilibiliNative else tabController
 

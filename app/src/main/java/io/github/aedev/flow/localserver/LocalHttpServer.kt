@@ -2,10 +2,14 @@ package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliLink
+import io.github.aedev.flow.data.recommendation.InteractionType
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.ListExtractor
-import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.ListExtractor.InfoItemsPage
+import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.StreamingService
@@ -18,12 +22,6 @@ import org.schabi.newpipe.extractor.stream.StreamExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.VideoStream
-
-import io.github.aedev.flow.data.recommendation.InteractionType
-
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -38,8 +36,10 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
-class LocalHttpServer(private val context: android.content.Context, private val port: Int) {
-
+class LocalHttpServer(
+    private val context: android.content.Context,
+    private val port: Int,
+) {
     init {
         WebAssets.init(context)
     }
@@ -90,10 +90,13 @@ class LocalHttpServer(private val context: android.content.Context, private val 
 
         @Volatile
         private var activeLockCode: String? = null
+
         @Volatile
         private var activeClientIp: String? = null
+
         @Volatile
         private var activeVideoTitle: String? = null
+
         @Volatile
         private var wsServer: RemoteWebSocketServer? = null
         private val pendingCommands = java.util.concurrent.LinkedBlockingQueue<String>()
@@ -119,19 +122,13 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @JvmStatic
-        fun getActiveClientIp(): String? {
-            return activeClientIp
-        }
+        fun getActiveClientIp(): String? = activeClientIp
 
         @JvmStatic
-        fun getActiveVideoTitle(): String? {
-            return activeVideoTitle
-        }
+        fun getActiveVideoTitle(): String? = activeVideoTitle
 
         @JvmStatic
-        fun getActiveLockCode(): String? {
-            return activeLockCode
-        }
+        fun getActiveLockCode(): String? = activeLockCode
 
         @JvmStatic
         fun releaseLock() {
@@ -143,7 +140,11 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @JvmStatic
-        fun tryLock(code: String, clientIp: String, title: String?): Boolean {
+        fun tryLock(
+            code: String,
+            clientIp: String,
+            title: String?,
+        ): Boolean {
             val currentLockCode = activeLockCode
             if (currentLockCode == null) {
                 activeLockCode = code
@@ -169,10 +170,12 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // One extraction per video, shared by the watch and manifest handlers.
         // Smaller than streamUrlCache: entries hold parsed extractor state.
         private val extractorCache = ExtractorCache()
-        internal val httpClient: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .build()
+        internal val httpClient: okhttp3.OkHttpClient =
+            okhttp3.OkHttpClient
+                .Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build()
 
         @JvmStatic
         fun log(message: String) {
@@ -200,7 +203,10 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return url
         }
 
-        private fun fetchChannelUploads(service: StreamingService, channelUrl: String): List<InfoItem> {
+        private fun fetchChannelUploads(
+            service: StreamingService,
+            channelUrl: String,
+        ): List<InfoItem> {
             try {
                 val channelExtractor = service.getChannelExtractor(channelUrl)
                 channelExtractor.fetchPage()
@@ -224,7 +230,10 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         // Backfill the uploader link: an empty one 404s the channel route, and every item here already belongs to channelUrl.
-        internal fun backfillUploaderUrl(items: List<InfoItem>, channelUrl: String) {
+        internal fun backfillUploaderUrl(
+            items: List<InfoItem>,
+            channelUrl: String,
+        ) {
             for (item in items) {
                 if (item is StreamInfoItem) {
                     val currentUploaderUrl = item.uploaderUrl
@@ -245,7 +254,10 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 ?: throw ExtractionException("Channel exposes no tabs: ${channelExtractor.url}")
 
         // Resume from the nextPage token, else fetch the first page. getPage() reads only the token, so a fresh extractor can resume.
-        internal fun <R : InfoItem> fetchInitialOrPage(extractor: ListExtractor<R>, nextPage: Page?): InfoItemsPage<R> {
+        internal fun <R : InfoItem> fetchInitialOrPage(
+            extractor: ListExtractor<R>,
+            nextPage: Page?,
+        ): InfoItemsPage<R> {
             extractor.fetchPage()
             return if (nextPage != null) extractor.getPage(nextPage) else extractor.initialPage
         }
@@ -265,8 +277,10 @@ class LocalHttpServer(private val context: android.content.Context, private val 
 
         @JvmStatic
         @Throws(ExtractionException::class)
-        fun getDefaultSearchExtractor(service: StreamingService, query: String): SearchExtractor =
-            service.getSearchExtractor(query)
+        fun getDefaultSearchExtractor(
+            service: StreamingService,
+            query: String,
+        ): SearchExtractor = service.getSearchExtractor(query)
 
         /**
          * Normalizes an audio codec string for a DASH manifest. Bilibili reports bare `"mp4a"`,
@@ -287,9 +301,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @JvmStatic
-        fun isOriginalAudioTrack(stream: AudioStream): Boolean {
-            return stream.audioTrackType == org.schabi.newpipe.extractor.stream.AudioTrackType.ORIGINAL
-        }
+        fun isOriginalAudioTrack(stream: AudioStream): Boolean =
+            stream.audioTrackType == org.schabi.newpipe.extractor.stream.AudioTrackType.ORIGINAL
 
         // Default audio-track priority: original, then device locale, then English, then highest bitrate.
         // Shared by the stream proxy, the manifest and the track picker.
@@ -338,7 +351,11 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // One extractor and page fetch per video, whichever handler runs first.
         @JvmStatic
         @Throws(Exception::class)
-        fun getCachedExtractor(service: StreamingService, serviceId: Int, mediaUrl: String): StreamExtractor {
+        fun getCachedExtractor(
+            service: StreamingService,
+            serviceId: Int,
+            mediaUrl: String,
+        ): StreamExtractor {
             val key = serviceId.toString() + "_" + mediaUrl
             val cached = extractorCache.get(key)
             if (cached != null) {
@@ -349,7 +366,6 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             extractorCache.put(key, extractor, 3600000)
             return extractor
         }
-
     }
 
     private var serverSocket: ServerSocket? = null
@@ -406,9 +422,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         private val socket: Socket,
         internal val dbHelper: HistoryDbHelper,
         private val context: android.content.Context,
-        private val executorService: ExecutorService
+        private val executorService: ExecutorService,
     ) : Runnable {
-
         // Set once at the top of run() so sendResponse() can check Accept-Encoding.
         private var requestHeaders: MutableMap<String, String>? = null
 
@@ -449,7 +464,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                         }
 
                         if ("OPTIONS".equals(method, ignoreCase = true)) {
-                            val sb = "HTTP/1.1 204 No Content\r\n" +
+                            val sb =
+                                "HTTP/1.1 204 No Content\r\n" +
                                     "Access-Control-Allow-Origin: *\r\n" +
                                     "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
                                     "Access-Control-Allow-Headers: *\r\n" +
@@ -492,51 +508,52 @@ class LocalHttpServer(private val context: android.content.Context, private val 
 
                         try {
                             // Route table rebuilt per request: each lambda captures this request's state.
-                            val routes: Map<String, () -> Unit> = mapOf(
-                                "/" to { handleAppShell(os) },
-                                "/danmaku" to { handleDanmaku(os, params) },
-                                "/send-link" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
-                                "/play" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
-                                "/send-command" to { handleSendCommand(os, params) },
-                                "/poll-commands" to { handlePollCommands(os) },
-                                "/remote-state" to { handleRemoteState(os, params) },
-                                "/release-lock" to { handleReleaseLock(os, params) },
-                                "/history_action" to { handleHistoryAction(os, params) },
-                                "/stream" to { handleStreamProxy(os, params, requestHeaders) },
-                                "/manifest" to { handleManifestProxy(os, params) },
-                                "/subtitles" to { handleSubtitlesProxy(os, params) },
-                                "/thumbnails" to { handleThumbnailsProxy(os, params) },
-                                "/image-proxy" to { handleImageProxy(os, params) },
-                                "/api/player/play" to { handleApiPlayerPlay(os, params) },
-                                "/api/player/pause" to { handleApiPlayerPause(os) },
-                                "/api/player/resume" to { handleApiPlayerResume(os) },
-                                "/api/player/stop" to { handleApiPlayerStop(os) },
-                                "/search-history" to { handleSearchHistory(os, params) },
-                                "/subscribe" to { handleSubscribeAction(os, params) },
-                                "/block_channel" to { handleBlockChannelAction(os, params) },
-                                "/bookmark_playlist" to { handlePlaylistBookmarkAction(os, params) },
-                                "/watch_later_action" to { handleWatchLaterAction(os, params) },
-                                "/rate_video" to { handleRateVideoAction(os, params) },
-                                "/api/v1/search" to { handleApiSearch(os, params) },
-                                "/api/v1/home" to { handleApiHome(os, params) },
-                                "/api/v1/channel" to { handleApiChannel(os, params) },
-                                "/api/v1/video" to { handleApiVideo(os, params) },
-                                "/api/v1/comments" to { handleApiComments(os, params) },
-                                "/api/v1/watch_progress" to { handleApiWatchProgress(os, params) },
-                                "/api/v1/download" to { handleApiDownload(os, params) },
-                                "/api/v1/bilibili_probe" to { handleApiBilibiliProbe(os, params) },
-                                "/api/v1/recommendations" to { handleApiRecommendations(os, params) },
-                                "/api/v1/ping" to { handleApiPing(os) },
-                                "/api/v1/history" to { handleApiHistory(os) },
-                                "/api/v1/library" to { handleApiLibrary(os, params) },
-                                "/api/v1/feed" to { handleApiFeed(os, params) },
-                                "/api/v1/playlist" to { handleApiPlaylist(os, params) },
-                                "/api/v1/state" to { handleApiState(os, params) },
-                                "/api/v1/sponsor" to { handleApiSponsor(os, params) },
-                                "/api/v1/settings" to { handleApiSettings(os, params) },
-                                "/app.css" to { handleAppCss(os) },
-                                "/app.js" to { handleAppJs(os) },
-                            )
+                            val routes: Map<String, () -> Unit> =
+                                mapOf(
+                                    "/" to { handleAppShell(os) },
+                                    "/danmaku" to { handleDanmaku(os, params) },
+                                    "/send-link" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
+                                    "/play" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
+                                    "/send-command" to { handleSendCommand(os, params) },
+                                    "/poll-commands" to { handlePollCommands(os) },
+                                    "/remote-state" to { handleRemoteState(os, params) },
+                                    "/release-lock" to { handleReleaseLock(os, params) },
+                                    "/history_action" to { handleHistoryAction(os, params) },
+                                    "/stream" to { handleStreamProxy(os, params, requestHeaders) },
+                                    "/manifest" to { handleManifestProxy(os, params) },
+                                    "/subtitles" to { handleSubtitlesProxy(os, params) },
+                                    "/thumbnails" to { handleThumbnailsProxy(os, params) },
+                                    "/image-proxy" to { handleImageProxy(os, params) },
+                                    "/api/player/play" to { handleApiPlayerPlay(os, params) },
+                                    "/api/player/pause" to { handleApiPlayerPause(os) },
+                                    "/api/player/resume" to { handleApiPlayerResume(os) },
+                                    "/api/player/stop" to { handleApiPlayerStop(os) },
+                                    "/search-history" to { handleSearchHistory(os, params) },
+                                    "/subscribe" to { handleSubscribeAction(os, params) },
+                                    "/block_channel" to { handleBlockChannelAction(os, params) },
+                                    "/bookmark_playlist" to { handlePlaylistBookmarkAction(os, params) },
+                                    "/watch_later_action" to { handleWatchLaterAction(os, params) },
+                                    "/rate_video" to { handleRateVideoAction(os, params) },
+                                    "/api/v1/search" to { handleApiSearch(os, params) },
+                                    "/api/v1/home" to { handleApiHome(os, params) },
+                                    "/api/v1/channel" to { handleApiChannel(os, params) },
+                                    "/api/v1/video" to { handleApiVideo(os, params) },
+                                    "/api/v1/comments" to { handleApiComments(os, params) },
+                                    "/api/v1/watch_progress" to { handleApiWatchProgress(os, params) },
+                                    "/api/v1/download" to { handleApiDownload(os, params) },
+                                    "/api/v1/bilibili_probe" to { handleApiBilibiliProbe(os, params) },
+                                    "/api/v1/recommendations" to { handleApiRecommendations(os, params) },
+                                    "/api/v1/ping" to { handleApiPing(os) },
+                                    "/api/v1/history" to { handleApiHistory(os) },
+                                    "/api/v1/library" to { handleApiLibrary(os, params) },
+                                    "/api/v1/feed" to { handleApiFeed(os, params) },
+                                    "/api/v1/playlist" to { handleApiPlaylist(os, params) },
+                                    "/api/v1/state" to { handleApiState(os, params) },
+                                    "/api/v1/sponsor" to { handleApiSponsor(os, params) },
+                                    "/api/v1/settings" to { handleApiSettings(os, params) },
+                                    "/app.css" to { handleAppCss(os) },
+                                    "/app.js" to { handleAppJs(os) },
+                                )
                             val route = routes[path]
                             if (route != null) {
                                 route()
@@ -571,27 +588,31 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 val url = channel.url
                 // Backfill the avatar from the subscription; upload listings carry none.
                 val subscribedAvatarUrl = channel.thumbnailUrl?.takeIf { it.isNotBlank() }
-                futures.add(executorService.submit(Callable {
-                    val uploads =
-                        if (BilibiliLink.isBilibili(url)) {
-                            LocalServerBilibili.uploads(
-                                dbHelper.appContext,
-                                url,
-                                channel.name.orEmpty(),
-                                subscribedAvatarUrl.orEmpty(),
-                            )
-                        } else {
-                            fetchChannelUploads(NewPipe.getServiceByUrl(url), url)
-                        }
-                    if (!subscribedAvatarUrl.isNullOrEmpty()) {
-                        for (upload in uploads) {
-                            if (upload is StreamInfoItem && upload.uploaderAvatarUrl.isNullOrBlank()) {
-                                upload.uploaderAvatarUrl = subscribedAvatarUrl
+                futures.add(
+                    executorService.submit(
+                        Callable {
+                            val uploads =
+                                if (BilibiliLink.isBilibili(url)) {
+                                    LocalServerBilibili.uploads(
+                                        dbHelper.appContext,
+                                        url,
+                                        channel.name.orEmpty(),
+                                        subscribedAvatarUrl.orEmpty(),
+                                    )
+                                } else {
+                                    fetchChannelUploads(NewPipe.getServiceByUrl(url), url)
+                                }
+                            if (!subscribedAvatarUrl.isNullOrEmpty()) {
+                                for (upload in uploads) {
+                                    if (upload is StreamInfoItem && upload.uploaderAvatarUrl.isNullOrBlank()) {
+                                        upload.uploaderAvatarUrl = subscribedAvatarUrl
+                                    }
+                                }
                             }
-                        }
-                    }
-                    uploads
-                }))
+                            uploads
+                        },
+                    ),
+                )
             }
             for ((index, future) in futures.withIndex()) {
                 try {
@@ -605,14 +626,21 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                     log("Future timeout/error fetching subscription feed: " + e.message)
                 }
             }
-            feed.sortWith(Comparator { a, b ->
-                val dateA = uploadDateOf(a)
-                val dateB = uploadDateOf(b)
-                if (dateA == null && dateB == null) 0
-                else if (dateA == null) 1
-                else if (dateB == null) -1
-                else dateB.compareTo(dateA)
-            })
+            feed.sortWith(
+                Comparator { a, b ->
+                    val dateA = uploadDateOf(a)
+                    val dateB = uploadDateOf(b)
+                    if (dateA == null && dateB == null) {
+                        0
+                    } else if (dateA == null) {
+                        1
+                    } else if (dateB == null) {
+                        -1
+                    } else {
+                        dateB.compareTo(dateA)
+                    }
+                },
+            )
             if (feed.size > 60) {
                 feed = ArrayList(feed.subList(0, 60))
             }
@@ -661,13 +689,24 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @Throws(IOException::class)
-        internal fun sendResponse(os: OutputStream, code: Int, content: String, contentType: String) {
+        internal fun sendResponse(
+            os: OutputStream,
+            code: Int,
+            content: String,
+            contentType: String,
+        ) {
             sendResponse(os, code, content, contentType, null)
         }
 
         // cacheControl: header value, or null to omit; only the static handlers pass one.
         @Throws(IOException::class)
-        internal fun sendResponse(os: OutputStream, code: Int, content: String, contentType: String, cacheControl: String?) {
+        internal fun sendResponse(
+            os: OutputStream,
+            code: Int,
+            content: String,
+            contentType: String,
+            cacheControl: String?,
+        ) {
             var bytes = content.toByteArray(Charsets.UTF_8)
             val status = if (code == 200) "OK" else (if (code == 404) "Not Found" else "Internal Server Error")
 
@@ -686,7 +725,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                 }
             }
 
-            val response = "HTTP/1.1 " + code + " " + status + "\r\n" +
+            val response =
+                "HTTP/1.1 " + code + " " + status + "\r\n" +
                     "Content-Type: " + contentType + "\r\n" +
                     contentEncodingHeader +
                     (if (cacheControl != null) "Cache-Control: $cacheControl\r\n" else "") +
@@ -698,8 +738,12 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @Throws(IOException::class)
-        internal fun sendRedirect(os: OutputStream, url: String) {
-            val response = "HTTP/1.1 302 Found\r\n" +
+        internal fun sendRedirect(
+            os: OutputStream,
+            url: String,
+        ) {
+            val response =
+                "HTTP/1.1 302 Found\r\n" +
                     "Location: $url\r\n" +
                     "Content-Length: 0\r\n" +
                     "Connection: close\r\n\r\n"
@@ -708,7 +752,10 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @Throws(Exception::class)
-        private fun handleSearchHistory(os: OutputStream, params: Map<String, String>) {
+        private fun handleSearchHistory(
+            os: OutputStream,
+            params: Map<String, String>,
+        ) {
             val deleteQuery = params["delete"]
             if (!deleteQuery.isNullOrEmpty()) {
                 dbHelper.nativeDeleteSearchQuery(deleteQuery)
@@ -759,21 +806,27 @@ class LocalHttpServer(private val context: android.content.Context, private val 
 
         // FlowNeuro signals: reported from handleApiVideo and the progress endpoint.
         // Best-effort: failures never affect playback or the DB write.
-        internal fun reportFlowNeuroClick(info: StreamInfo, serviceId: Int) {
+        internal fun reportFlowNeuroClick(
+            info: StreamInfo,
+            serviceId: Int,
+        ) {
             dbHelper.reportFlowNeuroInteraction(info, serviceId, InteractionType.CLICK)
         }
 
         // Ranking delegates to the native FlowNeuroEngine (rankWithFlowNeuro()); used by handleApiRecommendations(), not handleApiHome().
-        internal fun applyFlowNeuroRanking(items: List<InfoItem>, serviceId: Int): List<InfoItem> =
-            dbHelper.rankWithFlowNeuro(items, serviceId)
+        internal fun applyFlowNeuroRanking(
+            items: List<InfoItem>,
+            serviceId: Int,
+        ): List<InfoItem> = dbHelper.rankWithFlowNeuro(items, serviceId)
     }
 
-    private class CacheData(val value: String?, timeoutMillis: Long) {
+    private class CacheData(
+        val value: String?,
+        timeoutMillis: Long,
+    ) {
         val expireTimestamp: Long = System.currentTimeMillis() + timeoutMillis
 
-        fun isExpired(): Boolean {
-            return System.currentTimeMillis() > expireTimestamp
-        }
+        fun isExpired(): Boolean = System.currentTimeMillis() > expireTimestamp
     }
 
     internal class StreamUrlCache {
@@ -781,11 +834,10 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             private const val MAX_ITEMS = 60
         }
 
-        private val map = object : LinkedHashMap<String, CacheData>(16, 0.75f, true) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, CacheData>?): Boolean {
-                return size > MAX_ITEMS
+        private val map =
+            object : LinkedHashMap<String, CacheData>(16, 0.75f, true) {
+                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, CacheData>?): Boolean = size > MAX_ITEMS
             }
-        }
 
         @Synchronized
         fun get(key: String): String? {
@@ -801,7 +853,11 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @Synchronized
-        fun put(key: String, value: String?, timeoutMillis: Long) {
+        fun put(
+            key: String,
+            value: String?,
+            timeoutMillis: Long,
+        ) {
             removeStale()
             map[key] = CacheData(value, timeoutMillis)
         }
@@ -821,12 +877,13 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
     }
 
-    private class ExtractorCacheData(val value: StreamExtractor, timeoutMillis: Long) {
+    private class ExtractorCacheData(
+        val value: StreamExtractor,
+        timeoutMillis: Long,
+    ) {
         val expireTimestamp: Long = System.currentTimeMillis() + timeoutMillis
 
-        fun isExpired(): Boolean {
-            return System.currentTimeMillis() > expireTimestamp
-        }
+        fun isExpired(): Boolean = System.currentTimeMillis() > expireTimestamp
     }
 
     private class ExtractorCache {
@@ -834,11 +891,10 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             private const val MAX_ITEMS = 15
         }
 
-        private val map = object : LinkedHashMap<String, ExtractorCacheData>(16, 0.75f, true) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ExtractorCacheData>?): Boolean {
-                return size > MAX_ITEMS
+        private val map =
+            object : LinkedHashMap<String, ExtractorCacheData>(16, 0.75f, true) {
+                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ExtractorCacheData>?): Boolean = size > MAX_ITEMS
             }
-        }
 
         @Synchronized
         fun get(key: String): StreamExtractor? {
@@ -854,7 +910,11 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         }
 
         @Synchronized
-        fun put(key: String, value: StreamExtractor, timeoutMillis: Long) {
+        fun put(
+            key: String,
+            value: StreamExtractor,
+            timeoutMillis: Long,
+        ) {
             map.entries.removeIf { it.value.isExpired() }
             map[key] = ExtractorCacheData(value, timeoutMillis)
         }

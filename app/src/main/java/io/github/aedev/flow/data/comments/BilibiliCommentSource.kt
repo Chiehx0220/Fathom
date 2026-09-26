@@ -14,8 +14,10 @@ import java.util.TimeZone
  * is Bilibili's own offset string, and the one of a reply list is the next page number.
  */
 internal class BilibiliCommentSource(
-    private val api: BilibiliApi,
+    apiProvider: () -> BilibiliApi,
 ) : CommentsSource {
+    private val api by lazy(apiProvider)
+
     override suspend fun first(
         videoId: String,
         sortToken: String?,

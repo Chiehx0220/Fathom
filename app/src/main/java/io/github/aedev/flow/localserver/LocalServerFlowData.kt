@@ -1,5 +1,6 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.bilibili.BilibiliLink
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.local.LikedVideoInfo
 import io.github.aedev.flow.data.local.LikedVideosRepository
@@ -8,14 +9,13 @@ import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.local.SearchHistoryRepository
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.local.ViewHistory
-import io.github.aedev.flow.data.model.Video as FlowVideo
-import io.github.aedev.flow.innertube.YouTube
-import io.github.aedev.flow.innertube.pages.explore.chartsCountryOrFallback
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.InteractionType
 import io.github.aedev.flow.data.recommendation.UserBrain
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
+import io.github.aedev.flow.innertube.YouTube
+import io.github.aedev.flow.innertube.pages.explore.chartsCountryOrFallback
 import io.github.aedev.flow.player.PlayerRelatedVideosPolicy
 import io.github.aedev.flow.ui.screens.home.FeedTasteProfile
 import io.github.aedev.flow.ui.screens.home.GraphCandidate
@@ -36,13 +36,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import org.schabi.newpipe.extractor.InfoItem
-import io.github.aedev.flow.bilibili.BilibiliLink
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
+import io.github.aedev.flow.data.model.Video as FlowVideo
 
 /**
  * Reads/writes Flow's native storage directly - no bridge interface, no separate copy. Adapts
@@ -55,15 +55,16 @@ private fun HistoryDbHelper.subscriptionRepository() = SubscriptionRepository.ge
 private fun HistoryDbHelper.viewHistory() = ViewHistory.getInstance(appContext)
 
 /** Subscriptions as [InfoItem]s. */
-fun HistoryDbHelper.nativeSubscriptions(): List<InfoItem> = runBlocking {
-    subscriptionRepository().getAllSubscriptions().first().map { sub ->
-        val item = ChannelInfoItem(sub.serviceId, channelIdToUrl(sub.channelId, sub.serviceId), sub.channelName)
-        if (sub.channelThumbnail.isNotEmpty()) {
-            item.thumbnailUrl = sub.channelThumbnail
+fun HistoryDbHelper.nativeSubscriptions(): List<InfoItem> =
+    runBlocking {
+        subscriptionRepository().getAllSubscriptions().first().map { sub ->
+            val item = ChannelInfoItem(sub.serviceId, channelIdToUrl(sub.channelId, sub.serviceId), sub.channelName)
+            if (sub.channelThumbnail.isNotEmpty()) {
+                item.thumbnailUrl = sub.channelThumbnail
+            }
+            item
         }
-        item
     }
-}
 
 fun HistoryDbHelper.nativeIsSubscribed(channelUrl: String?): Boolean {
     val channelId = channelUrlToId(channelUrl) ?: return false
@@ -71,7 +72,11 @@ fun HistoryDbHelper.nativeIsSubscribed(channelUrl: String?): Boolean {
 }
 
 /** Subscribes, or refreshes name/avatar if already subscribed - never resets tracked state. */
-fun HistoryDbHelper.nativeAddSubscription(channelUrl: String, channelName: String?, channelAvatar: String?) {
+fun HistoryDbHelper.nativeAddSubscription(
+    channelUrl: String,
+    channelName: String?,
+    channelAvatar: String?,
+) {
     val channelId = channelUrlToId(channelUrl) ?: return
     val serviceId =
         if (BilibiliLink.isBilibili(channelUrl)) {
@@ -99,10 +104,11 @@ fun HistoryDbHelper.nativeIsChannelBlocked(channelUrl: String?): Boolean {
     }
 }
 
-fun HistoryDbHelper.nativeBlockedChannelIds(): Set<String> = runBlocking {
-    ensureFlowNeuroInitialized()
-    FlowNeuroEngine.getInstance(appContext).getBlockedChannels()
-}
+fun HistoryDbHelper.nativeBlockedChannelIds(): Set<String> =
+    runBlocking {
+        ensureFlowNeuroInitialized()
+        FlowNeuroEngine.getInstance(appContext).getBlockedChannels()
+    }
 
 fun HistoryDbHelper.nativeBlockChannel(channelUrl: String) {
     val channelId = channelUrlToId(channelUrl) ?: return
@@ -121,9 +127,10 @@ fun HistoryDbHelper.nativeUnblockChannel(channelUrl: String) {
 }
 
 /** Bare video IDs the user has watched, as full watch URLs - matches old `getWatchedUrls()` shape. */
-fun HistoryDbHelper.nativeWatchedUrls(): Set<String> = runBlocking {
-    viewHistory().getAllWatchedVideoIdentities().map { videoIdToUrl(it.videoId, it.serviceId) }.toSet()
-}
+fun HistoryDbHelper.nativeWatchedUrls(): Set<String> =
+    runBlocking {
+        viewHistory().getAllWatchedVideoIdentities().map { videoIdToUrl(it.videoId, it.serviceId) }.toSet()
+    }
 
 private fun HistoryDbHelper.playlistRepository() = PlaylistRepository(appContext)
 
@@ -135,7 +142,11 @@ fun HistoryDbHelper.nativeIsPlaylistBookmarked(playlistUrl: String?): Boolean {
     return runBlocking { playlistRepository().isExternalPlaylistSaved(playlistId) }
 }
 
-fun HistoryDbHelper.nativeBookmarkPlaylist(playlistUrl: String, name: String?, thumbnailUrl: String?) {
+fun HistoryDbHelper.nativeBookmarkPlaylist(
+    playlistUrl: String,
+    name: String?,
+    thumbnailUrl: String?,
+) {
     val playlistId = playlistUrlToId(playlistUrl) ?: return
     runBlocking { playlistRepository().saveExternalVideoPlaylist(playlistId, name ?: "", "", thumbnailUrl ?: "") }
 }
@@ -147,15 +158,16 @@ fun HistoryDbHelper.nativeUnbookmarkPlaylist(playlistUrl: String) {
 
 /** Bookmarked playlists as [InfoItem]s. No uploader field (`PlaylistEntity` has none) -
  * the SPA's card subtitle just drops that part for these. */
-fun HistoryDbHelper.nativeBookmarkedPlaylists(): List<InfoItem> = runBlocking {
-    playlistRepository().getSavedVideoPlaylistsFlow().first().map { info ->
-        val item = PlaylistInfoItem(0, playlistIdToUrl(info.id), info.name)
-        if (info.thumbnailUrl.isNotEmpty()) {
-            item.thumbnailUrl = info.thumbnailUrl
+fun HistoryDbHelper.nativeBookmarkedPlaylists(): List<InfoItem> =
+    runBlocking {
+        playlistRepository().getSavedVideoPlaylistsFlow().first().map { info ->
+            val item = PlaylistInfoItem(0, playlistIdToUrl(info.id), info.name)
+            if (info.thumbnailUrl.isNotEmpty()) {
+                item.thumbnailUrl = info.thumbnailUrl
+            }
+            item
         }
-        item
     }
-}
 
 fun HistoryDbHelper.nativeIsWatchLater(videoUrl: String): Boolean {
     val videoId = LocalHttpServer.getVideoId(videoUrl)
@@ -165,7 +177,13 @@ fun HistoryDbHelper.nativeIsWatchLater(videoUrl: String): Boolean {
 
 /** HTTP action params carry no duration/viewCount/uploadDate - only the triggering button's own
  * markup. Uses the same `-1`/empty convention as [StreamInfoItem.toFlowVideo] for missing data. */
-private fun buildFlowVideoFromParams(videoId: String, title: String, uploader: String, thumbnailUrl: String?, uploaderUrl: String?) = FlowVideo(
+private fun buildFlowVideoFromParams(
+    videoId: String,
+    title: String,
+    uploader: String,
+    thumbnailUrl: String?,
+    uploaderUrl: String?,
+) = FlowVideo(
     id = videoId,
     title = title,
     channelName = uploader,
@@ -178,7 +196,13 @@ private fun buildFlowVideoFromParams(videoId: String, title: String, uploader: S
 
 /** Also reports a SAVED signal to FlowNeuroEngine, mirroring native's
  * `QuickActionsViewModel.toggleWatchLater` - best-effort, same as [reportFlowNeuroInteraction]. */
-fun HistoryDbHelper.nativeAddWatchLater(url: String, title: String, uploader: String, thumbnailUrl: String?, uploaderUrl: String?) {
+fun HistoryDbHelper.nativeAddWatchLater(
+    url: String,
+    title: String,
+    uploader: String,
+    thumbnailUrl: String?,
+    uploaderUrl: String?,
+) {
     val videoId = LocalHttpServer.getVideoId(url)
     if (videoId.isEmpty()) return
     val video = buildFlowVideoFromParams(videoId, title, uploader, thumbnailUrl, uploaderUrl)
@@ -200,9 +224,10 @@ fun HistoryDbHelper.nativeRemoveWatchLater(url: String) {
 }
 
 /** Watch Later items as [InfoItem]s. Video-only, matching `renderWatchLaterButton()`'s call sites. */
-fun HistoryDbHelper.nativeWatchLaterItems(): List<InfoItem> = runBlocking {
-    playlistRepository().getVideoOnlyWatchLaterFlow().first().map { it.toStreamInfoItem(0) }
-}
+fun HistoryDbHelper.nativeWatchLaterItems(): List<InfoItem> =
+    runBlocking {
+        playlistRepository().getVideoOnlyWatchLaterFlow().first().map { it.toStreamInfoItem(0) }
+    }
 
 private fun HistoryDbHelper.likedVideosRepository() = LikedVideosRepository.getInstance(appContext)
 
@@ -215,7 +240,14 @@ fun HistoryDbHelper.nativeLikeState(videoUrl: String): String? {
     return runBlocking { likedVideosRepository().getLikeState(videoId).first() }
 }
 
-fun HistoryDbHelper.nativeLikeVideo(url: String, title: String, uploader: String, thumbnailUrl: String?, uploaderUrl: String?, serviceId: Int) {
+fun HistoryDbHelper.nativeLikeVideo(
+    url: String,
+    title: String,
+    uploader: String,
+    thumbnailUrl: String?,
+    uploaderUrl: String?,
+    serviceId: Int,
+) {
     val videoId = LocalHttpServer.getVideoId(url)
     if (videoId.isEmpty()) return
     runBlocking {
@@ -226,7 +258,13 @@ fun HistoryDbHelper.nativeLikeVideo(url: String, title: String, uploader: String
     }
 }
 
-fun HistoryDbHelper.nativeDislikeVideo(url: String, title: String, uploader: String, thumbnailUrl: String?, uploaderUrl: String?) {
+fun HistoryDbHelper.nativeDislikeVideo(
+    url: String,
+    title: String,
+    uploader: String,
+    thumbnailUrl: String?,
+    uploaderUrl: String?,
+) {
     val videoId = LocalHttpServer.getVideoId(url)
     if (videoId.isEmpty()) return
     runBlocking {
@@ -242,7 +280,12 @@ fun HistoryDbHelper.nativeRemoveLikeState(url: String) {
 }
 
 private suspend fun HistoryDbHelper.reportRatingSignal(
-    videoId: String, title: String, uploader: String, thumbnailUrl: String?, uploaderUrl: String?, type: InteractionType,
+    videoId: String,
+    title: String,
+    uploader: String,
+    thumbnailUrl: String?,
+    uploaderUrl: String?,
+    type: InteractionType,
 ) {
     ensureFlowNeuroInitialized()
     try {
@@ -262,9 +305,10 @@ fun HistoryDbHelper.nativeAddSearchQuery(query: String?) {
     runBlocking { searchHistoryRepository().saveSearchQuery(query.trim()) }
 }
 
-fun HistoryDbHelper.nativeSearchHistory(): List<String> = runBlocking {
-    searchHistoryRepository().getRecentSearches(10).map { it.query }
-}
+fun HistoryDbHelper.nativeSearchHistory(): List<String> =
+    runBlocking {
+        searchHistoryRepository().getRecentSearches(10).map { it.query }
+    }
 
 fun HistoryDbHelper.nativeDeleteSearchQuery(query: String?) {
     if (query.isNullOrBlank()) return
@@ -323,7 +367,11 @@ fun HistoryDbHelper.nativeSaveToHistory(
 }
 
 /** Updates only the progress columns (position/duration) - never clobbers title/thumbnail/channel. */
-fun HistoryDbHelper.nativeUpdateWatchProgress(videoUrl: String, percentWatched: Int, durationSeconds: Int) {
+fun HistoryDbHelper.nativeUpdateWatchProgress(
+    videoUrl: String,
+    percentWatched: Int,
+    durationSeconds: Int,
+) {
     val videoId = LocalHttpServer.getVideoId(videoUrl)
     if (videoId.isEmpty()) return
     val durationMs = durationSeconds.toLong() * 1000
@@ -332,17 +380,18 @@ fun HistoryDbHelper.nativeUpdateWatchProgress(videoUrl: String, percentWatched: 
 }
 
 /** History rows as [InfoItem]s. */
-fun HistoryDbHelper.nativeHistory(): List<InfoItem> = runBlocking {
-    viewHistory().getAllHistory().first().map { entry ->
-        val item = StreamInfoItem(entry.serviceId, videoIdToUrl(entry.videoId, entry.serviceId), entry.title, StreamType.VIDEO_STREAM)
-        item.setUploaderName(entry.channelName)
-        item.setUploaderUrl(if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId, entry.serviceId) else "")
-        if (entry.thumbnailUrl.isNotEmpty()) {
-            item.thumbnailUrl = entry.thumbnailUrl
+fun HistoryDbHelper.nativeHistory(): List<InfoItem> =
+    runBlocking {
+        viewHistory().getAllHistory().first().map { entry ->
+            val item = StreamInfoItem(entry.serviceId, videoIdToUrl(entry.videoId, entry.serviceId), entry.title, StreamType.VIDEO_STREAM)
+            item.setUploaderName(entry.channelName)
+            item.setUploaderUrl(if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId, entry.serviceId) else "")
+            if (entry.thumbnailUrl.isNotEmpty()) {
+                item.thumbnailUrl = entry.thumbnailUrl
+            }
+            item
         }
-        item
     }
-}
 
 fun HistoryDbHelper.nativeRemoveFromHistory(videoUrl: String) {
     val videoId = LocalHttpServer.getVideoId(videoUrl)
@@ -364,8 +413,7 @@ private fun HistoryDbHelper.youTubeRepository(): YouTubeRepository =
     YouTubeRepository.getInstance(PlayerPreferences(appContext), ChannelReelIndex())
 
 // Singleton reached through LocalServerEntryPoint, since this runs outside Hilt.
-private fun HistoryDbHelper.homeFeedSources(): HomeFeedSources =
-    localServerEntryPoint(appContext).homeFeedSources()
+private fun HistoryDbHelper.homeFeedSources(): HomeFeedSources = localServerEntryPoint(appContext).homeFeedSources()
 
 @Volatile
 private var flowNeuroInitialized = false
@@ -382,7 +430,9 @@ private suspend fun HistoryDbHelper.ensureFlowNeuroInitialized() {
  * Listing candidates (StreamInfoItem) carry no tags/description - only the watch-page StreamInfo
  * overload below has those.
  */
-fun StreamInfoItem.toFlowVideo(@Suppress("UNUSED_PARAMETER") serviceId: Int): FlowVideo {
+fun StreamInfoItem.toFlowVideo(
+    @Suppress("UNUSED_PARAMETER") serviceId: Int,
+): FlowVideo {
     val durationSeconds = this.duration.coerceAtLeast(0).toInt()
     return FlowVideo(
         id = LocalHttpServer.getVideoId(this.url),
@@ -404,7 +454,9 @@ fun StreamInfoItem.toFlowVideo(@Suppress("UNUSED_PARAMETER") serviceId: Int): Fl
 }
 
 /** Full watch-page detail (StreamInfo) - includes description/tags, unlike StreamInfoItem. */
-fun StreamInfo.toFlowVideo(@Suppress("UNUSED_PARAMETER") serviceId: Int): FlowVideo {
+fun StreamInfo.toFlowVideo(
+    @Suppress("UNUSED_PARAMETER") serviceId: Int,
+): FlowVideo {
     val durationSeconds = this.duration.coerceAtLeast(0).toInt()
     return FlowVideo(
         id = LocalHttpServer.getVideoId(this.url),
@@ -445,18 +497,29 @@ fun FlowVideo.toStreamInfoItem(serviceId: Int): StreamInfoItem {
 
 // 5-minute cache of the assembled home feed, keyed by serviceId + feedMode.
 private const val HOME_FEED_CACHE_TTL_MS = 5 * 60 * 1000L
-private data class HomeFeedCacheEntry(val items: List<InfoItem>, val timestampMs: Long)
+
+private data class HomeFeedCacheEntry(
+    val items: List<InfoItem>,
+    val timestampMs: Long,
+)
+
 private val homeFeedCache = java.util.concurrent.ConcurrentHashMap<String, HomeFeedCacheEntry>()
 
 /** One round of FlowNeuro discovery queries, fetched concurrently. `resetDepth`: fresh session
  * vs. load-more. Query count matches native's wave-1. Shared by [buildAndRankHomeFeed] and
  * [continueDiscoveryFeed]. */
-private suspend fun CoroutineScope.fetchDiscoveryVideos(repo: YouTubeRepository, resetDepth: Boolean): List<FlowVideo> =
+private suspend fun CoroutineScope.fetchDiscoveryVideos(
+    repo: YouTubeRepository,
+    resetDepth: Boolean,
+): List<FlowVideo> =
     runCatching {
         val queries = FlowNeuroEngine.generateDiscoveryQueries(resetDepth = resetDepth)
-        queries.take(3).map { query ->
-            async { runCatching { repo.searchVideos(query).first }.getOrDefault(emptyList()) }
-        }.awaitAll().flatten()
+        queries
+            .take(3)
+            .map { query ->
+                async { runCatching { repo.searchVideos(query).first }.getOrDefault(emptyList()) }
+            }.awaitAll()
+            .flatten()
     }.getOrDefault(emptyList())
 
 /** Shared inputs for the home-feed builders: watched-video gating (`hideWatchedVideosFromHome`),
@@ -476,25 +539,32 @@ private suspend fun HistoryDbHelper.buildHomeFeedContext(): HomeFeedContext {
     val excludedChannels = runCatching { FlowNeuroEngine.getExcludedChannelIds() }.getOrDefault(emptySet())
     val brain = runCatching { FlowNeuroEngine.getBrainSnapshot() }.getOrElse { UserBrain() }
     val taste = feedTasteProfile(brain, FlowNeuroEngine.getPersona(brain))
-    val subAvatarMap = runCatching {
-        subscriptionRepository().getAllSubscriptions().first()
-            .filter { it.channelThumbnail.isNotEmpty() }
-            .associate { it.channelId to it.channelThumbnail }
-    }.getOrDefault(emptyMap())
+    val subAvatarMap =
+        runCatching {
+            subscriptionRepository()
+                .getAllSubscriptions()
+                .first()
+                .filter { it.channelThumbnail.isNotEmpty() }
+                .associate { it.channelId to it.channelThumbnail }
+        }.getOrDefault(emptyMap())
     return HomeFeedContext(watched, excludedChannels, brain, taste, subAvatarMap)
 }
 
 /** Dedupes by video id, ranks via FlowNeuroEngine (falls back to unranked order on failure),
  * converts to [StreamInfoItem]. Used by [continueDiscoveryFeed]. */
-private suspend fun HistoryDbHelper.rankAndConvert(videos: List<FlowVideo>, serviceId: Int): List<StreamInfoItem> {
+private suspend fun HistoryDbHelper.rankAndConvert(
+    videos: List<FlowVideo>,
+    serviceId: Int,
+): List<StreamInfoItem> {
     val deduped = LinkedHashMap<String, FlowVideo>()
     // Only this page's serviceId: watch and channel links are built for one service.
     for (v in videos) if (v.id.isNotBlank() && v.serviceId == serviceId) deduped.putIfAbsent(v.id, v)
     if (deduped.isEmpty()) return emptyList()
 
     val subIds = subscriptionRepository().getAllSubscriptionIds()
-    val ranked = runCatching { FlowNeuroEngine.rank(deduped.values.toList(), subIds) }
-        .getOrDefault(deduped.values.toList())
+    val ranked =
+        runCatching { FlowNeuroEngine.rank(deduped.values.toList(), subIds) }
+            .getOrDefault(deduped.values.toList())
     return ranked.map { it.toStreamInfoItem(serviceId) }
 }
 
@@ -522,156 +592,176 @@ private suspend fun HistoryDbHelper.rankAndConvert(videos: List<FlowVideo>, serv
  * Page involved - `YoutubeTrendingExtractor` has no continuation, so "load more" is a deeper
  * discovery-query round.
  */
-fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int, feedMode: String): Pair<List<InfoItem>, Boolean> = runBlocking {
-    val cacheKey = "$serviceId:$feedMode"
-    val cached = homeFeedCache[cacheKey]
-    val now = System.currentTimeMillis()
-    if (cached != null && now - cached.timestampMs < HOME_FEED_CACHE_TTL_MS) {
-        return@runBlocking cached.items to cached.items.isNotEmpty()
-    }
-
-    ensureFlowNeuroInitialized()
-    val repo = youTubeRepository()
-    val sources = homeFeedSources()
-    val subIds = subscriptionRepository().getAllSubscriptionIds()
-    val context = buildHomeFeedContext()
-    val cacheFilters: suspend () -> HomeFeedCacheFilters = {
-        HomeFeedCacheFilters(
-            watchedVideoIds = context.watched,
-            suppressedVideoIds = context.brain.suppressedVideoIds.keys,
-            blockedChannelIds = context.brain.blockedChannels,
-            suppressedChannelIds = context.brain.suppressedChannels.keys,
-        )
-    }
-
-    lateinit var rawSubs: List<FlowVideo>
-    lateinit var rawDiscovery: List<FlowVideo>
-    lateinit var rawViral: List<FlowVideo>
-    lateinit var rawRelated: List<GraphCandidate>
-    lateinit var rssFeed: List<FlowVideo>
-    supervisorScope {
-        val subsDeferred = async {
-            if (feedMode != "mix" || subIds.isEmpty()) return@async emptyList()
-            runCatching { repo.getSubscriptionFeed(subIds.toList()) }.getOrDefault(emptyList())
-        }
-        val discoveryDeferred = async { fetchDiscoveryVideos(repo, resetDepth = true) }
-        val viralDeferred = async { runCatching { trendingVideos() }.getOrDefault(emptyList()) }
-        val relatedDeferred = async {
-            runCatching {
-                val seedInputs = sources.historySeedInputs()
-                val seedIds = FlowNeuroEngine.selectRelatedSeeds(seedInputs)
-                sources.fetchRelatedGraph(seedInputs, seedIds, cacheFilters).candidates
-            }.getOrDefault(emptyList())
-        }
-        // Cache read from the same SubscriptionFeedRepository as native; no network call.
-        val rssDeferred = async {
-            runCatching {
-                localServerEntryPoint(appContext).subscriptionFeedRepository().observeFeed().first()
-            }.getOrDefault(emptyList())
+fun HistoryDbHelper.buildAndRankHomeFeed(
+    serviceId: Int,
+    feedMode: String,
+): Pair<List<InfoItem>, Boolean> =
+    runBlocking {
+        val cacheKey = "$serviceId:$feedMode"
+        val cached = homeFeedCache[cacheKey]
+        val now = System.currentTimeMillis()
+        if (cached != null && now - cached.timestampMs < HOME_FEED_CACHE_TTL_MS) {
+            return@runBlocking cached.items to cached.items.isNotEmpty()
         }
 
-        rawSubs = subsDeferred.await()
-        rawDiscovery = discoveryDeferred.await()
-        rawViral = viralDeferred.await()
-        rawRelated = relatedDeferred.await()
-        rssFeed = rssDeferred.await()
+        ensureFlowNeuroInitialized()
+        val repo = youTubeRepository()
+        val sources = homeFeedSources()
+        val subIds = subscriptionRepository().getAllSubscriptionIds()
+        val context = buildHomeFeedContext()
+        val cacheFilters: suspend () -> HomeFeedCacheFilters = {
+            HomeFeedCacheFilters(
+                watchedVideoIds = context.watched,
+                suppressedVideoIds = context.brain.suppressedVideoIds.keys,
+                blockedChannelIds = context.brain.blockedChannels,
+                suppressedChannelIds = context.brain.suppressedChannels.keys,
+            )
+        }
+
+        lateinit var rawSubs: List<FlowVideo>
+        lateinit var rawDiscovery: List<FlowVideo>
+        lateinit var rawViral: List<FlowVideo>
+        lateinit var rawRelated: List<GraphCandidate>
+        lateinit var rssFeed: List<FlowVideo>
+        supervisorScope {
+            val subsDeferred =
+                async {
+                    if (feedMode != "mix" || subIds.isEmpty()) return@async emptyList()
+                    runCatching { repo.getSubscriptionFeed(subIds.toList()) }.getOrDefault(emptyList())
+                }
+            val discoveryDeferred = async { fetchDiscoveryVideos(repo, resetDepth = true) }
+            val viralDeferred = async { runCatching { trendingVideos() }.getOrDefault(emptyList()) }
+            val relatedDeferred =
+                async {
+                    runCatching {
+                        val seedInputs = sources.historySeedInputs()
+                        val seedIds = FlowNeuroEngine.selectRelatedSeeds(seedInputs)
+                        sources.fetchRelatedGraph(seedInputs, seedIds, cacheFilters).candidates
+                    }.getOrDefault(emptyList())
+                }
+            // Cache read from the same SubscriptionFeedRepository as native; no network call.
+            val rssDeferred =
+                async {
+                    runCatching {
+                        localServerEntryPoint(appContext).subscriptionFeedRepository().observeFeed().first()
+                    }.getOrDefault(emptyList())
+                }
+
+            rawSubs = subsDeferred.await()
+            rawDiscovery = discoveryDeferred.await()
+            rawViral = viralDeferred.await()
+            rawRelated = relatedDeferred.await()
+            rssFeed = rssDeferred.await()
+        }
+
+        val lanes =
+            buildHomeFeedLanes(
+                rawSubs = rawSubs,
+                rawDiscovery = rawDiscovery,
+                rawViral = rawViral,
+                rawRelated = rawRelated,
+                rssFeed = rssFeed,
+                watched = context.watched,
+                excludedChannels = context.excludedChannels,
+                taste = context.taste,
+                now = now,
+                freshSlotTarget = dynamicFreshSubSlots(subIds.size),
+                subAvatarMap = context.subAvatarMap,
+                rank = { pool -> runCatching { FlowNeuroEngine.rank(pool, subIds) }.getOrDefault(pool) },
+            )
+        val mix =
+            assembleHomeFeed(
+                lanes = lanes,
+                onScreenIds = emptySet(),
+                subCount = subIds.size,
+                totalInteractions = context.brain.totalInteractions,
+            )
+
+        // Subscriptions and history span all services; filter to this page's serviceId first (ServiceIdHelpers.kt).
+        val result = mix.videos.filter { it.serviceId == serviceId }.map { it.toStreamInfoItem(serviceId) }
+        if (result.isEmpty()) return@runBlocking emptyList<InfoItem>() to false
+
+        homeFeedCache[cacheKey] = HomeFeedCacheEntry(result, now)
+        result to true
     }
-
-    val lanes = buildHomeFeedLanes(
-        rawSubs = rawSubs,
-        rawDiscovery = rawDiscovery,
-        rawViral = rawViral,
-        rawRelated = rawRelated,
-        rssFeed = rssFeed,
-        watched = context.watched,
-        excludedChannels = context.excludedChannels,
-        taste = context.taste,
-        now = now,
-        freshSlotTarget = dynamicFreshSubSlots(subIds.size),
-        subAvatarMap = context.subAvatarMap,
-        rank = { pool -> runCatching { FlowNeuroEngine.rank(pool, subIds) }.getOrDefault(pool) },
-    )
-    val mix = assembleHomeFeed(
-        lanes = lanes,
-        onScreenIds = emptySet(),
-        subCount = subIds.size,
-        totalInteractions = context.brain.totalInteractions,
-    )
-
-    // Subscriptions and history span all services; filter to this page's serviceId first (ServiceIdHelpers.kt).
-    val result = mix.videos.filter { it.serviceId == serviceId }.map { it.toStreamInfoItem(serviceId) }
-    if (result.isEmpty()) return@runBlocking emptyList<InfoItem>() to false
-
-    homeFeedCache[cacheKey] = HomeFeedCacheEntry(result, now)
-    result to true
-}
 
 /** `feedMode == "subs"`: native subscription pool via `filterValid`/`filterWatched`/`demoteByFit`/
  * `spaceByChannel`, but NOT through [buildHomeFeedLanes]/[assembleHomeFeed] - that pipeline caps
  * the subs lane at 15 and the mix at 40 (`HOME_TARGET_SIZE`), which would truncate this mode's
  * uncapped "just my subscriptions" contract. Deliberate, not an oversight. */
-fun HistoryDbHelper.buildSubsOnlyFeed(serviceId: Int): List<InfoItem> = runBlocking {
-    val cacheKey = "$serviceId:subs"
-    val cached = homeFeedCache[cacheKey]
-    val now = System.currentTimeMillis()
-    if (cached != null && now - cached.timestampMs < HOME_FEED_CACHE_TTL_MS) {
-        return@runBlocking cached.items
+fun HistoryDbHelper.buildSubsOnlyFeed(serviceId: Int): List<InfoItem> =
+    runBlocking {
+        val cacheKey = "$serviceId:subs"
+        val cached = homeFeedCache[cacheKey]
+        val now = System.currentTimeMillis()
+        if (cached != null && now - cached.timestampMs < HOME_FEED_CACHE_TTL_MS) {
+            return@runBlocking cached.items
+        }
+
+        ensureFlowNeuroInitialized()
+        val subIds = subscriptionRepository().getAllSubscriptionIds()
+        if (subIds.isEmpty()) return@runBlocking emptyList()
+
+        val context = buildHomeFeedContext()
+        val rawSubs = runCatching { youTubeRepository().getSubscriptionFeed(subIds.toList()) }.getOrDefault(emptyList())
+        val pool =
+            rawSubs
+                .filter { it.serviceId == serviceId }
+                .filterValid()
+                .filterWatched(context.watched)
+                .filter { it.channelId.isBlank() || it.channelId !in context.excludedChannels }
+                .enrichAvatars(context.subAvatarMap)
+        if (pool.isEmpty()) return@runBlocking emptyList()
+
+        val ranked = runCatching { FlowNeuroEngine.rank(pool, subIds) }.getOrDefault(pool)
+        val spaced = spaceByChannel(demoteByFit(ranked, context.taste), gap = 1)
+
+        val result = spaced.map { it.toStreamInfoItem(serviceId) }
+        homeFeedCache[cacheKey] = HomeFeedCacheEntry(result, now)
+        result
     }
-
-    ensureFlowNeuroInitialized()
-    val subIds = subscriptionRepository().getAllSubscriptionIds()
-    if (subIds.isEmpty()) return@runBlocking emptyList()
-
-    val context = buildHomeFeedContext()
-    val rawSubs = runCatching { youTubeRepository().getSubscriptionFeed(subIds.toList()) }.getOrDefault(emptyList())
-    val pool = rawSubs
-        .filter { it.serviceId == serviceId }
-        .filterValid()
-        .filterWatched(context.watched)
-        .filter { it.channelId.isBlank() || it.channelId !in context.excludedChannels }
-        .enrichAvatars(context.subAvatarMap)
-    if (pool.isEmpty()) return@runBlocking emptyList()
-
-    val ranked = runCatching { FlowNeuroEngine.rank(pool, subIds) }.getOrDefault(pool)
-    val spaced = spaceByChannel(demoteByFit(ranked, context.taste), gap = 1)
-
-    val result = spaced.map { it.toStreamInfoItem(serviceId) }
-    homeFeedCache[cacheKey] = HomeFeedCacheEntry(result, now)
-    result
-}
 
 /** "Load more": deeper discovery-query round, ranked like [buildAndRankHomeFeed]. Uncached, no
  * subscription-feed re-pull (subs lane is first-load only, matching native). Shares
  * FlowNeuroEngine's discovery-depth counter with native. */
-fun HistoryDbHelper.continueDiscoveryFeed(serviceId: Int): Pair<List<InfoItem>, Boolean> = runBlocking {
-    ensureFlowNeuroInitialized()
-    val repo = youTubeRepository()
+fun HistoryDbHelper.continueDiscoveryFeed(serviceId: Int): Pair<List<InfoItem>, Boolean> =
+    runBlocking {
+        ensureFlowNeuroInitialized()
+        val repo = youTubeRepository()
 
-    val videos = fetchDiscoveryVideos(repo, resetDepth = false)
-    val result = rankAndConvert(videos, serviceId)
-    result to result.isNotEmpty()
-}
+        val videos = fetchDiscoveryVideos(repo, resetDepth = false)
+        val result = rankAndConvert(videos, serviceId)
+        result to result.isNotEmpty()
+    }
 
 // The Shorts feed is not served here. Native equivalents: ShortsRepository and ShortsDiscoveryEngine.
 
 /** Trending kiosk, unranked - `handleApiHome()`'s raw JSON feed (vs. `handleApiRecommendations()`,
  * which uses [buildAndRankHomeFeed]'s ranked pool). No pagination (`YoutubeTrendingExtractor`
  * has no next page). */
-fun HistoryDbHelper.fetchTrendingItems(serviceId: Int): List<StreamInfoItem> = runBlocking {
-    trendingVideos().map { it.toStreamInfoItem(serviceId) }
-}
+fun HistoryDbHelper.fetchTrendingItems(serviceId: Int): List<StreamInfoItem> =
+    runBlocking {
+        trendingVideos().map { it.toStreamInfoItem(serviceId) }
+    }
 
 /** YouTube's trending chart for the user's trending region. */
 private suspend fun HistoryDbHelper.trendingVideos(): List<FlowVideo> {
     val region = playerPreferences().trendingRegion.first()
-    return YouTube.videoCharts("TRENDING_VIDEOS", chartsCountryOrFallback(region)).getOrNull()?.entries.orEmpty()
+    return YouTube
+        .videoCharts("TRENDING_VIDEOS", chartsCountryOrFallback(region))
+        .getOrNull()
+        ?.entries
+        .orEmpty()
 }
 
 /**
  * Reorders `items` via FlowNeuroEngine - never changes composition, only order. Falls back to
  * original order on failure.
  */
-fun HistoryDbHelper.rankWithFlowNeuro(items: List<InfoItem>, serviceId: Int): List<InfoItem> {
+fun HistoryDbHelper.rankWithFlowNeuro(
+    items: List<InfoItem>,
+    serviceId: Int,
+): List<InfoItem> {
     val streamItems = items.filterIsInstance<StreamInfoItem>()
     if (streamItems.isEmpty()) return items
     return try {
@@ -727,43 +817,49 @@ fun HistoryDbHelper.reportFlowNeuroInteraction(
  * `StreamInfo.relatedItems`. `primary` is the extractor's own list (no network call); falls back
  * to `getRelatedCandidates()` (InnerTube `/next`) only if `primary` sanitizes to empty.
  */
-fun HistoryDbHelper.nativeRelatedVideos(info: StreamInfo, serviceId: Int): List<StreamInfoItem> {
+fun HistoryDbHelper.nativeRelatedVideos(
+    info: StreamInfo,
+    serviceId: Int,
+): List<StreamInfoItem> {
     val videoId = LocalHttpServer.getVideoId(info.url)
     val repo = youTubeRepository()
     val shortsEnabled = !nativeHideShorts()
     val primary = repo.getRelatedVideosFromStreamInfo(info)
     val sanitizedPrimary = PlayerRelatedVideosPolicy.sanitize(videoId, primary, shortsEnabled)
-    val selected = if (sanitizedPrimary.isNotEmpty()) {
-        sanitizedPrimary
-    } else {
-        val fallback = runBlocking {
-            runCatching { repo.getRelatedCandidates(videoId) }.getOrDefault(emptyList())
+    val selected =
+        if (sanitizedPrimary.isNotEmpty()) {
+            sanitizedPrimary
+        } else {
+            val fallback =
+                runBlocking {
+                    runCatching { repo.getRelatedCandidates(videoId) }.getOrDefault(emptyList())
+                }
+            PlayerRelatedVideosPolicy.select(videoId, primary, fallback, current = emptyList(), shortsEnabled = shortsEnabled)
         }
-        PlayerRelatedVideosPolicy.select(videoId, primary, fallback, current = emptyList(), shortsEnabled = shortsEnabled)
-    }
     return selected.map { it.toStreamInfoItem(serviceId) }
 }
 
 /** History rows for the JSON API: the fields of a video, plus how far the viewer got (0-100). */
-fun HistoryDbHelper.nativeHistoryJson(): org.json.JSONArray = runBlocking {
-    val array = org.json.JSONArray()
-    for (entry in viewHistory().getAllHistory().first()) {
-        val json = org.json.JSONObject()
-        json.put("id", entry.videoId)
-        json.put("url", videoIdToUrl(entry.videoId, entry.serviceId))
-        json.put("serviceId", entry.serviceId)
-        json.put("title", entry.title)
-        json.put("channelName", entry.channelName)
-        json.put("channelId", if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId, entry.serviceId) else "")
-        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(entry.thumbnailUrl))
-        json.put("channelThumbnailUrl", "")
-        json.put("duration", (entry.duration / 1000).toInt())
-        json.put("viewCount", -1)
-        json.put("uploadDate", "")
-        json.put("isLive", false)
-        json.put("isShort", entry.isShort)
-        json.put("progress", entry.progressPercentage.toInt().coerceIn(0, 100))
-        array.put(json)
+fun HistoryDbHelper.nativeHistoryJson(): org.json.JSONArray =
+    runBlocking {
+        val array = org.json.JSONArray()
+        for (entry in viewHistory().getAllHistory().first()) {
+            val json = org.json.JSONObject()
+            json.put("id", entry.videoId)
+            json.put("url", videoIdToUrl(entry.videoId, entry.serviceId))
+            json.put("serviceId", entry.serviceId)
+            json.put("title", entry.title)
+            json.put("channelName", entry.channelName)
+            json.put("channelId", if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId, entry.serviceId) else "")
+            json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(entry.thumbnailUrl))
+            json.put("channelThumbnailUrl", "")
+            json.put("duration", (entry.duration / 1000).toInt())
+            json.put("viewCount", -1)
+            json.put("uploadDate", "")
+            json.put("isLive", false)
+            json.put("isShort", entry.isShort)
+            json.put("progress", entry.progressPercentage.toInt().coerceIn(0, 100))
+            array.put(json)
+        }
+        array
     }
-    array
-}
