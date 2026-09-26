@@ -682,6 +682,7 @@
     <string name="remote_address_copied">Address copied</string>
     <string name="remote_server_off">The local server is off. Turn it on in Settings first.</string>
     <string name="settings_local_server_off">Off</string>
+    <string name="settings_local_server_on">On</string>
     <string name="remote_tab_directions">Directions</string>
     <string name="remote_tab_playback">Playback</string>
     <string name="remote_tab_touchpad">Touchpad</string>

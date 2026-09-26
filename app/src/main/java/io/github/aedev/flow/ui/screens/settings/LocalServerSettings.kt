@@ -5,13 +5,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.PlayerPreferences
@@ -55,74 +57,73 @@ internal fun LocalServerSettingsSection() {
     val running by ServerService.runningState.collectAsState()
     val address =
         remember(running) {
-            if (running) ServerService.getLocalIpAddress()?.let { "http://$it:${ServerService.PORT}" } else null
+            if (running) ServerService.getLocalIpAddress()?.let { "$it:${ServerService.PORT}" } else null
         }
     val openRemote = { context.startActivity(android.content.Intent(context, RemoteActivity::class.java)) }
 
     Surface(
-        onClick = openRemote,
-        enabled = running,
         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
-        Row(
+        Column(
             modifier = Modifier.padding(CardPadding),
-            horizontalArrangement = Arrangement.spacedBy(CardSpacing),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(CardSpacing),
         ) {
-            Surface(
-                modifier = Modifier.size(EmblemSize),
-                shape = flowArtistShape(),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(CardSpacing),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(text = "📡", style = MaterialTheme.typography.headlineMedium)
-                }
-            }
-            Column(Modifier.weight(1f)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier
-                            .size(8.dp)
-                            .background(if (running) OnlineColor else MaterialTheme.colorScheme.outline, CircleShape),
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_item_local_server),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-                Text(
-                    text = address ?: stringResource(R.string.settings_local_server_off),
-                    style = MaterialTheme.typography.titleLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (running) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = stringResource(R.string.settings_local_server_open_remote),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        Icon(
-                            Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
+                Surface(
+                    modifier = Modifier.size(EmblemSize),
+                    shape = flowArtistShape(),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(text = "📡", style = MaterialTheme.typography.headlineMedium)
                     }
                 }
+                Column(Modifier.weight(1f)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            Modifier
+                                .size(8.dp)
+                                .background(if (running) OnlineColor else MaterialTheme.colorScheme.outline, CircleShape),
+                        )
+                        Text(
+                            text = stringResource(R.string.settings_item_local_server),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    Text(
+                        text = stringResource(if (running) R.string.settings_local_server_on else R.string.settings_local_server_off),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                }
+                Switch(
+                    checked = running,
+                    onCheckedChange = { enabled ->
+                        scope.launch { preferences.setLocalServerEnabled(enabled) }
+                        if (enabled) ServerService.start(context) else ServerService.stop(context)
+                    },
+                )
             }
-            Switch(
-                checked = running,
-                onCheckedChange = { enabled ->
-                    scope.launch { preferences.setLocalServerEnabled(enabled) }
-                    if (enabled) ServerService.start(context) else ServerService.stop(context)
-                },
-            )
+            if (running) {
+                address?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                FilledTonalButton(onClick = openRemote, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.settings_local_server_open_remote))
+                    Spacer(Modifier.width(4.dp))
+                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, modifier = Modifier.size(18.dp))
+                }
+            }
         }
     }
 }
