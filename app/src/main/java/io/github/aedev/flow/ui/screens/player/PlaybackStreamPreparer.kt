@@ -2,7 +2,6 @@ package io.github.aedev.flow.ui.screens.player
 
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.player.stream.BilibiliStreamBridge
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.player.stream.InnerTubeStreamBridge
@@ -12,6 +11,7 @@ import io.github.aedev.flow.player.stream.ServicePlaybackStreamSelector
 import io.github.aedev.flow.player.stream.StreamProcessor
 import io.github.aedev.flow.player.stream.StreamSizeEstimator
 import io.github.aedev.flow.player.stream.VideoQualityOptions
+import io.github.aedev.flow.player.stream.buildStreams
 import io.github.aedev.flow.ui.screens.player.state.blankVideo
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import org.schabi.newpipe.extractor.stream.AudioStream
@@ -105,16 +105,9 @@ internal class PlaybackStreamPreparer {
         step: ResolvedPlayback.VodFromBilibili,
     ): VodStreams {
         val info = step.playback.info
-        val videoStreams = BilibiliStreamBridge.convertVideoFormats(info.bvid, step.playback.videoFormats)
-        val audioStreams = BilibiliStreamBridge.convertAudioFormats(info.bvid, step.playback.audioFormats)
-        val selected =
-            ServicePlaybackStreamSelector.selectStreams(
-                videoCandidates = videoStreams,
-                audioCandidatesAll = audioStreams,
-                preferredQuality = step.preferredQuality,
-                preferredAudioLanguage = step.preferredAudioLanguage,
-                preferredCodecKey = step.preferredCodecKey,
-            )
+        val streams = step.buildStreams()
+        val videoStreams = streams.videoStreams
+        val audioStreams = streams.audioStreams
         val video = BilibiliVideoMapper.videoFromInfo(videoId, info, cached)
         return VodStreams(
             identity =
@@ -130,8 +123,8 @@ internal class PlaybackStreamPreparer {
             videoStreams = videoStreams,
             audioStreams = audioStreams,
             availableQualities = VideoQualityOptions.availableQualities(videoStreams),
-            videoStream = selected.first,
-            audioStream = selected.second,
+            videoStream = streams.selectedVideo,
+            audioStream = streams.selectedAudio,
             subtitles = emptyList(),
             isAdaptiveMode = step.preferredQuality == VideoQuality.AUTO,
             streamSizes = emptyMap(),
