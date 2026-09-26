@@ -19,7 +19,11 @@ import java.net.URLEncoder
 class BilibiliApi(
     private val session: BilibiliSession,
     private val loggedInCookie: () -> String? = { null },
-    private val json: Json = Json { ignoreUnknownKeys = true; isLenient = true },
+    private val json: Json =
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+        },
 ) {
     private val userSpace = BilibiliUserSpace(session, json)
     private val comments = BilibiliComments(session, json)
@@ -117,7 +121,9 @@ class BilibiliApi(
         val headers = session.headers("https://www.bilibili.com/video/${info.bvid}")
         loggedInCookie()?.let { headers["Cookie"] = it }
         val response = json.decodeFromString<PlayerV2Response>(session.get(session.signedUrl(PLAYER_V2_URL, params), headers))
-        return response.data?.viewPoints.orEmpty()
+        return response.data
+            ?.viewPoints
+            .orEmpty()
             .filter { it.content.isNotBlank() }
             .map { BilibiliChapter(it.content, it.from.toInt(), it.imgUrl.takeIf { url -> url.isNotBlank() }) }
     }
@@ -142,7 +148,10 @@ class BilibiliApi(
         val headers = session.headers("https://www.bilibili.com/v/popular/all")
         val response = json.decodeFromString<PopularResponse>(session.get("$POPULAR_URL?ps=20&pn=$page", headers))
         if (response.code != 0) return emptyList()
-        return response.data?.list.orEmpty().mapNotNull { it.toRelated() }
+        return response.data
+            ?.list
+            .orEmpty()
+            .mapNotNull { it.toRelated() }
     }
 
     private fun RelatedResponse.Item.toRelated(): BilibiliRelated? {

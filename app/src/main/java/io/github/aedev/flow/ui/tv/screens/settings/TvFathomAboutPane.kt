@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,7 +31,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -41,7 +41,6 @@ import io.github.aedev.flow.ui.screens.settings.CREDITS
 import io.github.aedev.flow.ui.tv.components.TvNavRow
 import io.github.aedev.flow.ui.tv.components.TvSectionHeader
 import io.github.aedev.flow.ui.tv.focus.ProvideTvColumnPivot
-
 
 /** TV counterpart of the mobile About screen, adapted for remote focus and scrolling. */
 @Composable
@@ -174,11 +173,12 @@ private fun TvAboutIdentity() {
                     style = MaterialTheme.typography.headlineMedium,
                 )
                 Text(
-                    text = stringResource(
-                        R.string.v_version_template,
-                        BuildConfig.VERSION_NAME,
-                        BuildConfig.VERSION_CODE.toString(),
-                    ),
+                    text =
+                        stringResource(
+                            R.string.v_version_template,
+                            BuildConfig.VERSION_NAME,
+                            BuildConfig.VERSION_CODE.toString(),
+                        ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -196,13 +196,15 @@ private fun TvAboutSectionHeader(title: String) {
 }
 
 private fun Context.openUrl(url: String) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val intent =
+        Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     runCatching { startActivity(intent) }
 }
 
 private fun Context.openDeviceInfo() {
-    val intent = Intent(Settings.ACTION_DEVICE_INFO_SETTINGS)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val intent =
+        Intent(Settings.ACTION_DEVICE_INFO_SETTINGS)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     runCatching { startActivity(intent) }
 }

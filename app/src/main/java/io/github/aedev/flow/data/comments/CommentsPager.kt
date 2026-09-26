@@ -1,14 +1,13 @@
 package io.github.aedev.flow.data.comments
 
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import android.util.Log
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.distinctByNonBlankKey
 import io.github.aedev.flow.data.model.mergeDistinctByNonBlankKey
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.innertube.pages.VideoCommentSort
 import io.github.aedev.flow.player.PlaybackStartupPolicy
-import org.schabi.newpipe.extractor.ServiceList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -20,6 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.schabi.newpipe.extractor.ServiceList
 
 private const val TAG = "CommentsPager"
 

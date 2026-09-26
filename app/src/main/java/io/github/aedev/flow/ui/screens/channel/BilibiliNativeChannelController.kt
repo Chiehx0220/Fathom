@@ -63,21 +63,25 @@ internal class BilibiliNativeChannelController(
         val channel = info ?: return
         val items =
             when (kind) {
-                ChannelTabKind.Videos ->
+                ChannelTabKind.Videos -> {
                     Pager(
                         config = PagingConfig(pageSize = PAGE_SIZE, enablePlaceholders = false),
                         pagingSourceFactory = {
                             BilibiliChannelVideosPagingSource(api, channel.mid, channel.name, channel.avatarUrl)
                         },
                     ).flow.map { paging -> paging.map { video -> FeedItem.VideoItem(video) as FeedItem } }
+                }
 
-                ChannelTabKind.Playlists ->
+                ChannelTabKind.Playlists -> {
                     Pager(
                         config = PagingConfig(pageSize = PAGE_SIZE, enablePlaceholders = false),
                         pagingSourceFactory = { BilibiliChannelPlaylistsPagingSource(api, channel.mid) },
                     ).flow.map { paging -> paging.map { playlist -> FeedItem.PlaylistItem(playlist) as FeedItem } }
+                }
 
-                else -> return
+                else -> {
+                    return
+                }
             }
         _states.update { it + (kind to ChannelTabState(items = items.cachedIn(scope), isLoading = false, loaded = true)) }
     }

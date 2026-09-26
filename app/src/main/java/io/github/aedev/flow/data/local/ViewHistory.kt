@@ -132,7 +132,11 @@ class ViewHistory private constructor(
      * watch-progress ping that has no title/thumbnail/channel to report). No-ops if the
      * video has no history row yet - callers that might hit that should [touchHistoryEntry] first.
      */
-    suspend fun updatePlaybackProgress(videoId: String, position: Long, duration: Long) {
+    suspend fun updatePlaybackProgress(
+        videoId: String,
+        position: Long,
+        duration: Long,
+    ) {
         dao.updateProgress(videoId, position, duration, System.currentTimeMillis())
     }
 

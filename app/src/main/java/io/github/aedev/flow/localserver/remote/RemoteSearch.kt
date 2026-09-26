@@ -74,7 +74,10 @@ internal fun SearchField(send: (String) -> Unit) {
 
     // Read again whenever the field is entered, so what was just searched is in the list.
     LaunchedEffect(focused) {
-        if (focused) history = withContext(Dispatchers.IO) { HistoryDbHelper.getInstance(context).nativeSearchHistory().take(HISTORY_LOOKBACK) }
+        if (focused) {
+            history =
+                withContext(Dispatchers.IO) { HistoryDbHelper.getInstance(context).nativeSearchHistory().take(HISTORY_LOOKBACK) }
+        }
     }
 
     fun search(query: String) {
@@ -88,7 +91,10 @@ internal fun SearchField(send: (String) -> Unit) {
     val voice =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let(::search)
+                result.data
+                    ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    ?.firstOrNull()
+                    ?.let(::search)
             }
         }
     val startVoice = {

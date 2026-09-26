@@ -1,16 +1,19 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.data.recommendation.InteractionType
+import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
 
 // /api/v1/... JSON API handlers - split from LocalHttpServer.kt, no behavior change. Independent
 // of the HTML handlers (see ApiRenderer.kt's header). Companion calls (fetchInitialOrPage,
 // fetchKioskPage, etc.) need LocalHttpServer. qualification: outside lexical scope across files.
 
-internal fun ClientHandler.handleApiSearch(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiSearch(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val query = params["q"]
     if (query.isNullOrEmpty()) {
@@ -28,7 +31,10 @@ internal fun ClientHandler.handleApiSearch(os: OutputStream, params: Map<String,
     }
 }
 
-internal fun ClientHandler.handleApiHome(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiHome(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     try {
@@ -64,7 +70,10 @@ internal fun ClientHandler.handleApiHome(os: OutputStream, params: Map<String, S
 // Page behind that round (FlowNeuroEngine just goes one query-depth deeper), so it is reported
 // to the client as a plain "hasMore" boolean rather than through the searchResultJson nextPage
 // mechanism the Page-backed callers (search/channel/playlist) use.
-internal fun ClientHandler.handleApiRecommendations(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiRecommendations(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     val loadMore = params["more"] == "1"
@@ -107,7 +116,10 @@ internal fun ClientHandler.handleApiRecommendations(os: OutputStream, params: Ma
     }
 }
 
-internal fun ClientHandler.handleApiChannel(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiChannel(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val channelUrl = params["id"]
     if (channelUrl.isNullOrEmpty()) {
@@ -134,7 +146,10 @@ internal fun ClientHandler.handleApiChannel(os: OutputStream, params: Map<String
     }
 }
 
-internal fun ClientHandler.handleApiVideo(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiVideo(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val mediaUrl = params["id"]
     if (mediaUrl.isNullOrEmpty()) {
@@ -159,7 +174,10 @@ internal fun ClientHandler.handleApiVideo(os: OutputStream, params: Map<String, 
     }
 }
 
-internal fun ClientHandler.handleApiComments(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiComments(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val videoUrl = params["id"]
     if (videoUrl.isNullOrEmpty()) {
@@ -193,7 +211,10 @@ internal fun ClientHandler.handleApiPing(os: OutputStream) {
     sendResponse(os, 200, "{\"status\":\"ok\",\"service\":\"fathom\"}", "application/json")
 }
 
-internal fun ClientHandler.handleApiWatchProgress(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiWatchProgress(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val videoUrl = params["id"]
     if (videoUrl.isNullOrEmpty()) {
         sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
@@ -225,7 +246,10 @@ internal fun ClientHandler.handleApiWatchProgress(os: OutputStream, params: Map<
 
 // Native-audio-player control dropped with ServerService's ExoPlayer instance (duplicated the
 // host app's player). Kept as no-ops for older clients, not removed outright.
-internal fun ClientHandler.handleApiPlayerPlay(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiPlayerPlay(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     sendResponse(os, 200, "{\"status\":\"unsupported\"}", "application/json")
 }
 
@@ -254,7 +278,10 @@ internal fun ClientHandler.handleApiHistory(os: OutputStream) {
 }
 
 // Subscribed channels, bookmarked playlists and the watch-later list in one response (the Library screen shows all three).
-internal fun ClientHandler.handleApiLibrary(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiLibrary(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     try {
         val json = org.json.JSONObject()
@@ -268,7 +295,10 @@ internal fun ClientHandler.handleApiLibrary(os: OutputStream, params: Map<String
 }
 
 // Newest uploads of the subscribed channels; slow (one request per channel), so the app asks for it separately.
-internal fun ClientHandler.handleApiFeed(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiFeed(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     try {
         val items = filterItems(fetchSubscriptionFeed(dbHelper.nativeSubscriptions()))
@@ -278,7 +308,10 @@ internal fun ClientHandler.handleApiFeed(os: OutputStream, params: Map<String, S
     }
 }
 
-internal fun ClientHandler.handleApiPlaylist(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiPlaylist(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val playlistUrl = params["id"]
     if (playlistUrl.isNullOrEmpty()) {
@@ -305,7 +338,10 @@ internal fun ClientHandler.handleApiPlaylist(os: OutputStream, params: Map<Strin
 }
 
 // What the watch screen's buttons need to show: is the channel subscribed or blocked, is the video saved, liked or disliked.
-internal fun ClientHandler.handleApiState(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiState(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val videoUrl = params["id"].orEmpty()
     val channelUrl = params["channel"].orEmpty()
     val json = org.json.JSONObject()
@@ -318,7 +354,10 @@ internal fun ClientHandler.handleApiState(os: OutputStream, params: Map<String, 
 }
 
 // SponsorBlock segments (seconds) for the skip button and seek-bar marks; YouTube only.
-internal fun ClientHandler.handleApiSponsor(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiSponsor(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val videoUrl = params["id"].orEmpty()
     val array = org.json.JSONArray()
@@ -352,7 +391,10 @@ internal fun ClientHandler.handleApiSponsor(os: OutputStream, params: Map<String
 }
 
 // Reads the filter settings; any of hideWatched, hideShorts and homeFeedMode in the query are saved first.
-internal fun ClientHandler.handleApiSettings(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiSettings(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val hideWatched = params["hideWatched"]
     if (hideWatched != null) dbHelper.nativeSetHideWatched(hideWatched == "true")
     val hideShorts = params["hideShorts"]

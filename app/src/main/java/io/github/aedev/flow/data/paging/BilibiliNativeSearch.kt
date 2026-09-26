@@ -35,7 +35,9 @@ internal object BilibiliNativeSearch {
         val type =
             when (filter.contentType) {
                 ContentType.ALL, ContentType.VIDEOS -> BilibiliSearchType.VIDEO
+
                 ContentType.CHANNELS -> BilibiliSearchType.USER
+
                 // Bilibili has no shorts, playlist or live tab in this client yet.
                 else -> return BilibiliSearchPage(emptyList(), nextKey = null)
             }
@@ -45,9 +47,17 @@ internal object BilibiliNativeSearch {
         val items =
             result.items.mapNotNull { item ->
                 when (item) {
-                    is BilibiliSearchItem.Video ->
-                        BilibiliVideoMapper.videoFromSearch(item).takeIf { matches(item, filter, nowSec) }?.let { SearchResultItem.VideoResult(it) }
-                    is BilibiliSearchItem.User -> SearchResultItem.ChannelResult(item.toChannel())
+                    is BilibiliSearchItem.Video -> {
+                        BilibiliVideoMapper
+                            .videoFromSearch(
+                                item,
+                            ).takeIf { matches(item, filter, nowSec) }
+                            ?.let { SearchResultItem.VideoResult(it) }
+                    }
+
+                    is BilibiliSearchItem.User -> {
+                        SearchResultItem.ChannelResult(item.toChannel())
+                    }
                 }
             }
         return BilibiliSearchPage(items, nextKey = if (result.hasMore) (page + 1).toString() else null)

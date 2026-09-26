@@ -28,7 +28,11 @@ class BilibiliChannelVideosPagingSource(
         return try {
             val result = withContext(Dispatchers.IO) { api.channelVideos(mid, key) }
             LoadResult.Page(
-                data = loadedKeys.filter(result.videos.map { BilibiliVideoMapper.videoFromChannel(it, mid, channelName, channelAvatarUrl) }, Video::id),
+                data =
+                    loadedKeys.filter(
+                        result.videos.map { BilibiliVideoMapper.videoFromChannel(it, mid, channelName, channelAvatarUrl) },
+                        Video::id,
+                    ),
                 prevKey = null,
                 nextKey = if (result.hasMore) BilibiliChannelPageKey(key.page + 1, result.lastAid) else null,
             )

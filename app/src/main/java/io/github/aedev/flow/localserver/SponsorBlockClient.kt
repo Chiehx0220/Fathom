@@ -23,7 +23,8 @@ object SponsorBlockClient {
         if (videoId.isBlank()) return emptyList()
         return try {
             runBlocking {
-                SponsorBlockRepository().getSegments(videoId)
+                SponsorBlockRepository()
+                    .getSegments(videoId)
                     .filter { it.actionType == "skip" }
                     .map { Segment((it.startTime * 1000).toLong(), (it.endTime * 1000).toLong(), it.category) }
             }

@@ -3,13 +3,13 @@ package io.github.aedev.flow.localserver
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
-
 import java.net.InetSocketAddress
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
-class RemoteWebSocketServer(port: Int) : WebSocketServer(InetSocketAddress(port)) {
-
+class RemoteWebSocketServer(
+    port: Int,
+) : WebSocketServer(InetSocketAddress(port)) {
     private val connections: MutableSet<WebSocket> = Collections.newSetFromMap(ConcurrentHashMap())
 
     init {
@@ -17,17 +17,28 @@ class RemoteWebSocketServer(port: Int) : WebSocketServer(InetSocketAddress(port)
         isReuseAddr = true
     }
 
-    override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
+    override fun onOpen(
+        conn: WebSocket,
+        handshake: ClientHandshake,
+    ) {
         connections.add(conn)
         LocalHttpServer.log("WebSocket client connected: " + conn.remoteSocketAddress)
     }
 
-    override fun onClose(conn: WebSocket, code: Int, reason: String, remote: Boolean) {
+    override fun onClose(
+        conn: WebSocket,
+        code: Int,
+        reason: String,
+        remote: Boolean,
+    ) {
         connections.remove(conn)
         LocalHttpServer.log("WebSocket client disconnected: " + conn.remoteSocketAddress)
     }
 
-    override fun onMessage(conn: WebSocket, message: String?) {
+    override fun onMessage(
+        conn: WebSocket,
+        message: String?,
+    ) {
         if (message != null && message.startsWith("register_client:")) {
             val clientName = message.substring("register_client:".length)
             conn.setAttachment(clientName)
@@ -44,7 +55,10 @@ class RemoteWebSocketServer(port: Int) : WebSocketServer(InetSocketAddress(port)
 
     override fun getConnections(): Set<WebSocket> = connections
 
-    override fun onError(conn: WebSocket?, ex: Exception) {
+    override fun onError(
+        conn: WebSocket?,
+        ex: Exception,
+    ) {
         // conn == null means the server itself failed (typically it could not bind its port), so nothing can connect.
         LocalHttpServer.log(if (conn == null) "WebSocket server failed on port $port: $ex" else "WebSocket error: " + ex.message)
         if (conn != null) {
@@ -57,7 +71,10 @@ class RemoteWebSocketServer(port: Int) : WebSocketServer(InetSocketAddress(port)
     }
 
     @JvmOverloads
-    fun broadcastCommand(command: String?, excludeConn: WebSocket? = null) {
+    fun broadcastCommand(
+        command: String?,
+        excludeConn: WebSocket? = null,
+    ) {
         for (conn in connections) {
             if (conn !== excludeConn && conn.isOpen) {
                 try {

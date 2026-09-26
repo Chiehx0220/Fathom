@@ -34,7 +34,9 @@ class ParallelDownloader @Inject constructor(
         private const val INITIAL_RETRY_DELAY_MS = 2000L
         private const val UA_IOS = "com.google.ios.youtube/21.03.3 (iPad7,6; U; CPU iPadOS 17_7_10 like Mac OS X; en-US)"
         private const val UA_ANDROID = "com.google.android.youtube/21.03.38 (Linux; U; Android 14) gzip"
-        private const val UA_ANDROID_VR = "com.google.android.apps.youtube.vr.oculus/1.61.48 (Linux; U; Android 12; en_US; Quest 3; Build/SQ3A.220605.009.A1; Cronet/132.0.6808.3)"
+        private const val UA_ANDROID_VR =
+            "com.google.android.apps.youtube.vr.oculus/1.61.48 " +
+                "(Linux; U; Android 12; en_US; Quest 3; Build/SQ3A.220605.009.A1; Cronet/132.0.6808.3)"
     }
 
     private fun resolveUserAgent(url: String, fallback: String): String {
@@ -242,8 +244,13 @@ class ParallelDownloader @Inject constructor(
                 mission.downloadedBytesAtomic.set(restoredVideoBytes)
                 mission.audioDownloadedBytesAtomic.set(restoredAudioBytes)
 
-                Log.d(TAG, "start: video=${mission.totalBytes}B in $videoBlockCount blocks (${mission.completedVideoBlocks.size} already done), " +
-                    "audio=${mission.audioTotalBytes}B in $audioBlockCount blocks (${mission.completedAudioBlocks.size} already done), threads=${mission.threads}")
+                Log.d(
+                    TAG,
+                    "start: video=${mission.totalBytes}B in $videoBlockCount blocks " +
+                        "(${mission.completedVideoBlocks.size} already done), " +
+                        "audio=${mission.audioTotalBytes}B in $audioBlockCount blocks " +
+                        "(${mission.completedAudioBlocks.size} already done), threads=${mission.threads}",
+                )
 
                 coroutineScope {
                     // Launch worker threads for video

@@ -27,7 +27,11 @@ internal object BilibiliSearchParser {
             uploader = BilibiliUploader(item.mid, item.author, absolute(item.upic)),
             uploadTimeSec = item.pubdate,
             category = item.typename,
-            tags = item.tag.split(',').map { it.trim() }.filter { it.isNotEmpty() },
+            tags =
+                item.tag
+                    .split(',')
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() },
         )
     }
 
@@ -52,7 +56,8 @@ internal object BilibiliSearchParser {
     fun unescapeHtml(s: String): String {
         if (!s.contains('&')) return s
         val named =
-            s.replace("&lt;", "<")
+            s
+                .replace("&lt;", "<")
                 .replace("&gt;", ">")
                 .replace("&quot;", "\"")
                 .replace("&apos;", "'")

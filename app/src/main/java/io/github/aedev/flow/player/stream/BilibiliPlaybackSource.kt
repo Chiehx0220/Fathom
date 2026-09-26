@@ -59,7 +59,8 @@ internal class BilibiliPlaybackSource(
             api: BilibiliApi,
             bvid: String,
         ): List<Video> =
-            api.related(bvid)
+            api
+                .related(bvid)
                 .filter { it.bvid != bvid }
                 .map { BilibiliVideoMapper.videoFromRelated(it) }
                 .distinctBy { it.id }

@@ -49,7 +49,16 @@ internal object LocalServerBilibili {
         val videos = runBlocking { bilibiliApi(context).popular(page) }
         val items =
             videos.map {
-                bilibiliVideoItem("${it.bvid}?p=1", it.title, it.thumbnailUrl, it.durationSec, it.viewCount, it.uploader.name, it.uploader.mid, it.uploader.avatarUrl)
+                bilibiliVideoItem(
+                    "${it.bvid}?p=1",
+                    it.title,
+                    it.thumbnailUrl,
+                    it.durationSec,
+                    it.viewCount,
+                    it.uploader.name,
+                    it.uploader.mid,
+                    it.uploader.avatarUrl,
+                )
             }
         return ListPage(items, Page((page + 1).toString()).takeIf { videos.isNotEmpty() && page < POPULAR_PAGES })
     }
@@ -63,7 +72,16 @@ internal object LocalServerBilibili {
         val result = runBlocking { bilibiliApi(context).search(query, BilibiliSearchType.VIDEO, page) }
         val items =
             result.items.filterIsInstance<BilibiliSearchItem.Video>().map {
-                bilibiliVideoItem("${it.bvid}?p=1", it.title, it.thumbnailUrl, it.durationSec, it.viewCount, it.uploader.name, it.uploader.mid, it.uploader.avatarUrl)
+                bilibiliVideoItem(
+                    "${it.bvid}?p=1",
+                    it.title,
+                    it.thumbnailUrl,
+                    it.durationSec,
+                    it.viewCount,
+                    it.uploader.name,
+                    it.uploader.mid,
+                    it.uploader.avatarUrl,
+                )
             }
         return ListPage(items, Page((page + 1).toString()).takeIf { result.hasMore })
     }
@@ -109,8 +127,9 @@ internal object LocalServerBilibili {
             return ChannelPage(header, items, Page((page + 1).toString()).takeIf { lists.hasMore })
         }
 
-        val key = nextPage?.url?.split(':')?.let { BilibiliChannelPageKey(it[0].toIntOrNull() ?: 1, it.getOrNull(1)?.toLongOrNull() ?: 0L) }
-            ?: BilibiliChannelPageKey(1, 0L)
+        val key =
+            nextPage?.url?.split(':')?.let { BilibiliChannelPageKey(it[0].toIntOrNull() ?: 1, it.getOrNull(1)?.toLongOrNull() ?: 0L) }
+                ?: BilibiliChannelPageKey(1, 0L)
         val videos = runBlocking { api.channelVideos(mid, key) }
         val items = videos.videos.map { it.toStreamItem(info.name, info.avatarUrl, url) }
         val next = Page("${key.page + 1}:${videos.lastAid}").takeIf { videos.hasMore }

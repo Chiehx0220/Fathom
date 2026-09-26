@@ -1,6 +1,5 @@
 package io.github.aedev.flow.ui.components.search
 
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.FilterChip
@@ -8,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import org.schabi.newpipe.extractor.ServiceList
 
 /** Two pills to pick which streaming service search/paste-link resolution runs against. */

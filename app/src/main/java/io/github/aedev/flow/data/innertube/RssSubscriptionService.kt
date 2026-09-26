@@ -201,7 +201,13 @@ class RssSubscriptionService
                 for (chunk in bilibiliChannelIds.chunked(BILIBILI_CHUNK_SIZE)) {
                     val results =
                         coroutineScope {
-                            chunk.map { channelId -> async(Dispatchers.IO) { channelId to fetchBilibiliVideos(channelId, minimumDateMillis, labelByChannel[channelId]) } }.awaitAll()
+                            chunk
+                                .map { channelId ->
+                                    async(Dispatchers.IO) {
+                                        channelId to
+                                            fetchBilibiliVideos(channelId, minimumDateMillis, labelByChannel[channelId])
+                                    }
+                                }.awaitAll()
                         }
                     for ((channelId, result) in results) {
                         if (result.failed) {
@@ -730,6 +736,7 @@ class RssSubscriptionService
         private companion object {
             const val TAG = "InnertubeSubs"
             const val YOUTUBE_URL = "https://www.youtube.com"
+
             /** Bilibili blocks bursts, so its uploaders are read a few at a time. */
             const val BILIBILI_CHUNK_SIZE = 3
             const val UNKNOWN_LABEL = "Unknown"

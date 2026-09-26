@@ -38,8 +38,15 @@ import io.github.aedev.flow.localserver.LocalHttpServer
  * that are seldom needed, the direction wheel, and under the thumb the keys used all the time.
  */
 @Composable
-internal fun DirectionsMode(state: LocalHttpServer.RemoteState, send: (String) -> Unit) {
-    Column(Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+internal fun DirectionsMode(
+    state: LocalHttpServer.RemoteState,
+    send: (String) -> Unit,
+) {
+    Column(
+        Modifier.fillMaxSize().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
         if (state.services.size > 1) {
             ServiceSwitch(state.services, state.activeService) { send("service:$it") }
         }
@@ -75,7 +82,10 @@ private fun ServiceSwitch(
                 val tick = rememberKeyTick()
                 ToggleButton(
                     checked = id == active,
-                    onCheckedChange = { tick(); onSelect(id) },
+                    onCheckedChange = {
+                        tick()
+                        onSelect(id)
+                    },
                     shapes = ToggleButtonDefaults.shapesFor(ButtonDefaults.MinHeight),
                     interactionSource = interaction,
                     modifier = Modifier.weight(1f).animateWidth(interaction),

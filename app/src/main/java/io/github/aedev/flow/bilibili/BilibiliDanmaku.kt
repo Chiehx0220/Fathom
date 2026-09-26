@@ -102,7 +102,11 @@ internal object BilibiliDanmakuParser {
         if (!text.startsWith("[")) return text
         return try {
             val array: JsonArray = json.parseToJsonElement(text).jsonArray
-            array.getOrNull(4)?.jsonPrimitive?.content?.takeIf { it.isNotEmpty() } ?: text
+            array
+                .getOrNull(4)
+                ?.jsonPrimitive
+                ?.content
+                ?.takeIf { it.isNotEmpty() } ?: text
         } catch (e: Exception) {
             text
         }
@@ -112,7 +116,8 @@ internal object BilibiliDanmakuParser {
         if (!s.contains('&')) {
             s
         } else {
-            s.replace("&lt;", "<")
+            s
+                .replace("&lt;", "<")
                 .replace("&gt;", ">")
                 .replace("&quot;", "\"")
                 .replace("&apos;", "'")

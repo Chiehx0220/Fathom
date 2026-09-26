@@ -87,7 +87,10 @@ internal fun ButtonGroupScope.wideKey(
     val interaction = remember { MutableInteractionSource() }
     val tick = rememberKeyTick()
     FilledTonalButton(
-        onClick = { tick(); onClick() },
+        onClick = {
+            tick()
+            onClick()
+        },
         shapes = ButtonDefaults.shapes(),
         interactionSource = interaction,
         modifier = Modifier.weight(1f).height(KeyHeight).animateWidth(interaction),
@@ -107,7 +110,10 @@ internal fun ButtonGroupScope.shortcutKey(
     val interaction = remember { MutableInteractionSource() }
     val tick = rememberKeyTick()
     FilledTonalButton(
-        onClick = { tick(); onClick() },
+        onClick = {
+            tick()
+            onClick()
+        },
         shapes = ButtonDefaults.shapes(),
         interactionSource = interaction,
         modifier = Modifier.weight(1f).height(ShortcutHeight).animateWidth(interaction),
@@ -131,13 +137,19 @@ internal fun ButtonGroupScope.toolKey(
     val tick = rememberKeyTick()
     val modifier = Modifier.weight(1f).height(KeyHeight).animateWidth(interaction)
     if (toggled == null) {
-        FilledTonalIconButton(onClick = { tick(); onClick() }, shapes = IconButtonDefaults.shapes(), interactionSource = interaction, modifier = modifier) {
+        FilledTonalIconButton(onClick = {
+            tick()
+            onClick()
+        }, shapes = IconButtonDefaults.shapes(), interactionSource = interaction, modifier = modifier) {
             KeyIcon(icon, 24.dp, stringResource(description))
         }
     } else {
         FilledIconToggleButton(
             checked = toggled,
-            onCheckedChange = { tick(); onClick() },
+            onCheckedChange = {
+                tick()
+                onClick()
+            },
             shapes = IconButtonDefaults.toggleableShapes(),
             colors =
                 IconButtonDefaults.filledIconToggleButtonColors(
@@ -170,8 +182,14 @@ internal fun ButtonGroupScope.transportKey(
         KeyIcon(icon, iconSize, stringResource(description))
     }
     if (strong) {
-        FilledIconButton(onClick = { tick(); onClick() }, shapes = IconButtonDefaults.shapes(), interactionSource = interaction, modifier = modifier, content = content)
+        FilledIconButton(onClick = {
+            tick()
+            onClick()
+        }, shapes = IconButtonDefaults.shapes(), interactionSource = interaction, modifier = modifier, content = content)
     } else {
-        FilledTonalIconButton(onClick = { tick(); onClick() }, shapes = IconButtonDefaults.shapes(), interactionSource = interaction, modifier = modifier, content = content)
+        FilledTonalIconButton(onClick = {
+            tick()
+            onClick()
+        }, shapes = IconButtonDefaults.shapes(), interactionSource = interaction, modifier = modifier, content = content)
     }
 }) {}

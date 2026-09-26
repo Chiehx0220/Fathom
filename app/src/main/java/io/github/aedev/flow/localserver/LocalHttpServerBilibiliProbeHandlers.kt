@@ -4,6 +4,7 @@ import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliPlayback
 import io.github.aedev.flow.bilibili.BilibiliSession
 import io.github.aedev.flow.bilibili.BilibiliStreamFormat
+import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -13,7 +14,6 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
 
 // Manual probe for the native Bilibili client (io.github.aedev.flow.bilibili): hits the real
@@ -102,13 +102,18 @@ private fun probePlayback(
         // The CDN test is the part that matters for "does playback actually work": highest-quality
         // video and audio, primary URL and every backup, with the same headers playback would send.
         val cdn = mutableListOf<JsonElement>()
-        fun test(label: String, format: BilibiliStreamFormat?) {
+
+        fun test(
+            label: String,
+            format: BilibiliStreamFormat?,
+        ) {
             if (format == null) return
             (listOf(format.url) + format.backupUrls).forEachIndexed { i, url ->
-                cdn += buildJsonObject {
-                    put("what", "$label ${if (i == 0) "primary" else "backup#$i"} qn=${format.id}")
-                    probeCdn(http, url, playback.requestHeaders).forEach { (k, v) -> put(k, v) }
-                }
+                cdn +=
+                    buildJsonObject {
+                        put("what", "$label ${if (i == 0) "primary" else "backup#$i"} qn=${format.id}")
+                        probeCdn(http, url, playback.requestHeaders).forEach { (k, v) -> put(k, v) }
+                    }
             }
         }
         test("video", playback.videoFormats.maxByOrNull { it.height })
@@ -116,7 +121,10 @@ private fun probePlayback(
         put("cdn", JsonArray(cdn))
     }
 
-internal fun ClientHandler.handleApiBilibiliProbe(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiBilibiliProbe(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val bvid = params["bvid"]
     if (bvid.isNullOrEmpty()) {
         sendResponse(os, 400, ApiRenderer.errorJson("Missing 'bvid' parameter"), "application/json")

@@ -100,7 +100,10 @@ internal fun NotConnected() {
 }
 
 @Composable
-private fun ConnectStep(number: Int, text: String) {
+private fun ConnectStep(
+    number: Int,
+    text: String,
+) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Box(
             Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),

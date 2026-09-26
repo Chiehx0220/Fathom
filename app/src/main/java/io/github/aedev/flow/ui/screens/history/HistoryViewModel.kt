@@ -1,9 +1,9 @@
 package io.github.aedev.flow.ui.screens.history
 
-import io.github.aedev.flow.bilibili.BilibiliVideoId
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.local.VideoHistoryEntry
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.local.dao.VideoDao

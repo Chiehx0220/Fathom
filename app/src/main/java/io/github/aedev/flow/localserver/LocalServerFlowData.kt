@@ -354,12 +354,10 @@ fun HistoryDbHelper.nativeClearHistory() {
     runBlocking { viewHistory().clearAllHistory() }
 }
 
-/**
- * Home-feed candidates/ranking come from native `YouTubeRepository`/`FlowNeuroEngine` directly,
- * not a ported copy. `toFlowVideo()`/`toStreamInfoItem()` convert at the boundary between
- * NewPipeExtractor's [InfoItem] hierarchy (Local Server's native type across every page) and
- * Flow's video-only [FlowVideo] display model.
- */
+// Home-feed candidates/ranking come from native `YouTubeRepository`/`FlowNeuroEngine` directly,
+// not a ported copy. `toFlowVideo()`/`toStreamInfoItem()` convert at the boundary between
+// NewPipeExtractor's [InfoItem] hierarchy (Local Server's native type across every page) and
+// Flow's video-only [FlowVideo] display model.
 
 // Singleton shared with native (same instance as the Hilt provider).
 private fun HistoryDbHelper.youTubeRepository(): YouTubeRepository =

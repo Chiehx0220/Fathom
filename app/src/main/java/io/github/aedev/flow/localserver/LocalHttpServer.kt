@@ -166,7 +166,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
         // back out of the URL's own query string.
         internal val streamUaCache = StreamUrlCache()
 
-        // One extraction per video, shared by the watch and manifest handlers. Smaller than streamUrlCache: entries hold parsed extractor state.
+        // One extraction per video, shared by the watch and manifest handlers.
+        // Smaller than streamUrlCache: entries hold parsed extractor state.
         private val extractorCache = ExtractorCache()
         internal val httpClient: okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -290,7 +291,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return stream.audioTrackType == org.schabi.newpipe.extractor.stream.AudioTrackType.ORIGINAL
         }
 
-        // Default audio-track priority: original, then device locale, then English, then highest bitrate. Shared by the stream proxy, the manifest and the track picker.
+        // Default audio-track priority: original, then device locale, then English, then highest bitrate.
+        // Shared by the stream proxy, the manifest and the track picker.
         @JvmStatic
         fun audioTrackPriorityComparator(): Comparator<AudioStream> {
             val langCode = Locale.getDefault().language
@@ -483,7 +485,9 @@ class LocalHttpServer(private val context: android.content.Context, private val 
                         var isTv = false
                         if (ua != null) {
                             val uaLower = ua.lowercase(Locale.US)
-                            isTv = uaLower.contains("tv") || uaLower.contains("googletv") || uaLower.contains("androidtv") || uaLower.contains("smarttv") || uaLower.contains("appletv") || uaLower.contains("roku") || uaLower.contains("aftb") || uaLower.contains("aftt") || uaLower.contains("firetv")
+                            isTv =
+                                listOf("tv", "googletv", "androidtv", "smarttv", "appletv", "roku", "aftb", "aftt", "firetv")
+                                    .any(uaLower::contains)
                         }
 
                         try {
@@ -555,7 +559,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             }
         }
 
-        // Merges subscribed channels' uploads into one newest-first feed (capped at 60). Each channel is resolved by its own URL, since subscriptions mix services.
+        // Merges subscribed channels' uploads into one newest-first feed (capped at 60).
+        // Each channel is resolved by its own URL, since subscriptions mix services.
         internal fun fetchSubscriptionFeed(channels: List<InfoItem>?): List<InfoItem> {
             var feed = ArrayList<InfoItem>()
             if (channels == null || channels.isEmpty()) {
@@ -747,7 +752,8 @@ class LocalHttpServer(private val context: android.content.Context, private val 
             return filtered
         }
 
-        // FlowNeuro signals: reported from handleApiVideo and the progress endpoint. Best-effort: failures never affect playback or the DB write.
+        // FlowNeuro signals: reported from handleApiVideo and the progress endpoint.
+        // Best-effort: failures never affect playback or the DB write.
         internal fun reportFlowNeuroClick(info: StreamInfo, serviceId: Int) {
             dbHelper.reportFlowNeuroInteraction(info, serviceId, InteractionType.CLICK)
         }

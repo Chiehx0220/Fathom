@@ -3,13 +3,13 @@ package io.github.aedev.flow.ui.screens.settings
 import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Extension
@@ -67,7 +67,10 @@ private val HeaderSpacing = 8.dp
 internal fun FathomAboutScreen(onBack: (() -> Unit)?) {
     val uriHandler = LocalUriHandler.current
     var dialog by rememberSaveable { mutableStateOf<FathomAboutDialog?>(null) }
-    val open = { url: String -> runCatching { uriHandler.openUri(url) }; Unit }
+    val open = { url: String ->
+        runCatching { uriHandler.openUri(url) }
+        Unit
+    }
 
     SettingsPage(
         title = stringResource(R.string.settings_item_about_flow),

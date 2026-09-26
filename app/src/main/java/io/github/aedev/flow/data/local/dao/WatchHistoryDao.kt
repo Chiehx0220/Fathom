@@ -4,7 +4,10 @@ import androidx.room.*
 import io.github.aedev.flow.data.local.entity.WatchHistoryEntity
 import kotlinx.coroutines.flow.Flow
 
-data class WatchedVideoIdentity(val videoId: String, val serviceId: Int)
+data class WatchedVideoIdentity(
+    val videoId: String,
+    val serviceId: Int,
+)
 
 @Dao
 interface WatchHistoryDao {
@@ -34,7 +37,12 @@ interface WatchHistoryDao {
      * unlike [upsert] (full REPLACE), this can't clobber it.
      */
     @Query("UPDATE watch_history SET position = :position, duration = :duration, timestamp = :timestamp WHERE videoId = :videoId")
-    suspend fun updateProgress(videoId: String, position: Long, duration: Long, timestamp: Long)
+    suspend fun updateProgress(
+        videoId: String,
+        position: Long,
+        duration: Long,
+        timestamp: Long,
+    )
 
     @Query("DELETE FROM watch_history")
     suspend fun clearAll()

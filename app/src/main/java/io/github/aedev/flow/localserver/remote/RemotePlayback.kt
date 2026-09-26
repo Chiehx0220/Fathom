@@ -105,7 +105,13 @@ private fun TransportKeys(state: LocalHttpServer.RemoteState, send: (String) -> 
     val hasChapters = state.chapters.isNotEmpty()
     ButtonGroup(overflowIndicator = {}, modifier = Modifier.fillMaxWidth()) {
         if (hasChapters) {
-            transportKey(Icons.Default.SkipPrevious, R.string.remote_chapter_previous, weight = 0.8f, iconSize = 24.dp, strong = true) { send("chapter:prev") }
+            transportKey(
+                Icons.Default.SkipPrevious,
+                R.string.remote_chapter_previous,
+                weight = 0.8f,
+                iconSize = 24.dp,
+                strong = true,
+            ) { send("chapter:prev") }
         }
         transportKey(Icons.Default.Replay10, R.string.remote_rewind, weight = 1f, iconSize = 28.dp) { send("rewind") }
         transportKey(
@@ -117,7 +123,13 @@ private fun TransportKeys(state: LocalHttpServer.RemoteState, send: (String) -> 
         ) { send("play_pause") }
         transportKey(Icons.Default.Forward10, R.string.remote_forward, weight = 1f, iconSize = 28.dp) { send("forward") }
         if (hasChapters) {
-            transportKey(Icons.Default.SkipNext, R.string.remote_chapter_next, weight = 0.8f, iconSize = 24.dp, strong = true) { send("chapter:next") }
+            transportKey(
+                Icons.Default.SkipNext,
+                R.string.remote_chapter_next,
+                weight = 0.8f,
+                iconSize = 24.dp,
+                strong = true,
+            ) { send("chapter:next") }
         }
     }
 }
@@ -132,7 +144,11 @@ private fun SeekBar(state: LocalHttpServer.RemoteState, send: (String) -> Unit) 
     val position = if (dragging) dragValue else state.positionSec.toFloat()
     val fraction = if (duration > 0f) (position / duration).coerceIn(0f, 1f) else 0f
     val motion = MaterialTheme.motionScheme
-    val wave by animateFloatAsState(if (state.hasVideo && !state.paused && !dragging) 1f else 0f, motion.defaultEffectsSpec(), label = "seekWave")
+    val wave by animateFloatAsState(
+        if (state.hasVideo && !state.paused && !dragging) 1f else 0f,
+        motion.defaultEffectsSpec(),
+        label = "seekWave",
+    )
     val thumbWidth by animateFloatAsState(if (dragging) 2f else 4f, motion.fastSpatialSpec(), label = "seekThumb")
     fun fractionAt(x: Float, width: Int) = if (width > 0) (x / width).coerceIn(0f, 1f) else 0f
 
@@ -185,14 +201,26 @@ private fun SeekBar(state: LocalHttpServer.RemoteState, send: (String) -> Unit) 
 private fun NowPlaying(state: LocalHttpServer.RemoteState, send: (String) -> Unit) {
     var showChapters by remember { mutableStateOf(false) }
     Column(
-        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.extraLarge).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(20.dp),
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.extraLarge)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         if (!state.hasVideo) {
-            Text(stringResource(R.string.remote_no_video), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                stringResource(R.string.remote_no_video),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             return
         }
-        Text(stringResource(R.string.remote_now_playing), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            stringResource(R.string.remote_now_playing),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         Text(state.title.orEmpty(), style = MaterialTheme.typography.titleLarge, maxLines = 3, overflow = TextOverflow.Ellipsis)
         // In the mini player the video is off its page: one key brings the page back.
         if (state.minimized) {
@@ -211,7 +239,13 @@ private fun NowPlaying(state: LocalHttpServer.RemoteState, send: (String) -> Uni
             ) {
                 Icon(Icons.Default.List, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(chapterTitle, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                Text(
+                    chapterTitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
                 Icon(
                     Icons.Default.KeyboardArrowRight,
                     contentDescription = stringResource(R.string.remote_chapter_list),
@@ -258,7 +292,8 @@ private fun ChapterListDialog(
                         colors =
                             ListItemDefaults.colors(
                                 containerColor = if (active) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-                                headlineColor = if (active) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                                headlineColor =
+                                    if (active) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
                                 leadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
                             ),
                         modifier = Modifier.clip(MaterialTheme.shapes.large).clickable { onJump(index) },

@@ -116,7 +116,14 @@ internal fun ShortVideoPromptEffect(
     disableShortsPlayer: Boolean,
     showShortsPlayerPrompt: Boolean,
 ) {
-    LaunchedEffect(videoDuration, videoServiceId, screenState.hasShownShortsPrompt, isInQueue, disableShortsPlayer, showShortsPlayerPrompt) {
+    LaunchedEffect(
+        videoDuration,
+        videoServiceId,
+        screenState.hasShownShortsPrompt,
+        isInQueue,
+        disableShortsPlayer,
+        showShortsPlayerPrompt,
+    ) {
         if (disableShortsPlayer || !showShortsPlayerPrompt) {
             screenState.showShortsPrompt = false
             return@LaunchedEffect

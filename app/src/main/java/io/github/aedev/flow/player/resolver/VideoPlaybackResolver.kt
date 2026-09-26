@@ -349,7 +349,13 @@ class VideoPlaybackResolver(
         // Bilibili streams carry their own init/index ranges instead of an ItagItem, so they need
         // their own manifest maker rather than YouTube's throttling-avoidance path below.
         if (BilibiliStreamBridge.isBilibili(stream)) {
-            val source = BilibiliDashManifest.buildVideoSource(dashDataSourceFactory, stream, durationSeconds, playbackItem(stream.content).build())
+            val source =
+                BilibiliDashManifest.buildVideoSource(
+                    dashDataSourceFactory,
+                    stream,
+                    durationSeconds,
+                    playbackItem(stream.content).build(),
+                )
             if (source != null) {
                 Log.d(TAG, "Generating Bilibili DASH manifest for ${VideoCodecUtils.qualityHeightFromStream(stream)}p")
                 return source
@@ -411,7 +417,13 @@ class VideoPlaybackResolver(
         durationSeconds: Long,
     ): MediaSource {
         if (BilibiliStreamBridge.isBilibili(stream)) {
-            val source = BilibiliDashManifest.buildAudioSource(dashDataSourceFactory, stream, durationSeconds, playbackItem(stream.content).build())
+            val source =
+                BilibiliDashManifest.buildAudioSource(
+                    dashDataSourceFactory,
+                    stream,
+                    durationSeconds,
+                    playbackItem(stream.content).build(),
+                )
             if (source != null) {
                 Log.d(TAG, "Generating Bilibili DASH manifest for audio")
                 return source

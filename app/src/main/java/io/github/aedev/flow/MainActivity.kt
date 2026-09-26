@@ -29,6 +29,9 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliDeepLink
+import io.github.aedev.flow.bilibili.BilibiliLinkTarget
 import io.github.aedev.flow.data.local.AppUiModePreferences
 import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.data.playlist.PlaylistImport
@@ -46,9 +49,6 @@ import io.github.aedev.flow.player.LifecyclePlaybackPreferences
 import io.github.aedev.flow.player.MemoryPressurePolicy
 import io.github.aedev.flow.player.PictureInPictureHelper
 import io.github.aedev.flow.ui.FlowApp
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliDeepLink
-import io.github.aedev.flow.bilibili.BilibiliLinkTarget
 import io.github.aedev.flow.ui.PendingDeeplink
 import io.github.aedev.flow.ui.components.library.message
 import io.github.aedev.flow.ui.components.shared.ProvideChannelGroupLabels
@@ -448,8 +448,14 @@ class MainActivity : ComponentActivity() {
     private fun openBilibiliLink(text: String): Boolean {
         fun open(target: BilibiliLinkTarget) {
             when (target) {
-                is BilibiliLinkTarget.Video -> _pendingDeeplink.value = PendingDeeplink(videoId = target.videoId, serviceId = BILIBILI_SERVICE_ID)
-                is BilibiliLinkTarget.Uploader -> _pendingRoute.value = youtubeChannelRoute(target.mid.toString(), BILIBILI_SERVICE_ID)
+                is BilibiliLinkTarget.Video -> {
+                    _pendingDeeplink.value =
+                        PendingDeeplink(videoId = target.videoId, serviceId = BILIBILI_SERVICE_ID)
+                }
+
+                is BilibiliLinkTarget.Uploader -> {
+                    _pendingRoute.value = youtubeChannelRoute(target.mid.toString(), BILIBILI_SERVICE_ID)
+                }
             }
         }
         BilibiliDeepLink.parse(text)?.let {

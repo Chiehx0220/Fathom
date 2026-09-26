@@ -2,8 +2,8 @@ package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.entity.DownloadItemStatus
-import io.github.aedev.flow.data.model.Video as FlowVideo
 import io.github.aedev.flow.data.video.downloader.FlowDownloadService
+import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import io.github.aedev.flow.player.stream.AudioStreamSelector
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -11,8 +11,8 @@ import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
+import io.github.aedev.flow.data.model.Video as FlowVideo
 
 // Web "Download" button -> Flow's own FlowDownloadService/VideoDownloadManager (the same pipeline
 // the app's Quick Actions download uses), so files land in the same place, show up in the app's
@@ -31,8 +31,10 @@ private fun DownloadItemStatus.webState(): String =
         DownloadItemStatus.CANCELLED -> "none"
     }
 
-private fun downloadStateJson(state: String, progress: Int): String =
-    "{\"state\":\"$state\",\"progress\":$progress}"
+private fun downloadStateJson(
+    state: String,
+    progress: Int,
+): String = "{\"state\":\"$state\",\"progress\":$progress}"
 
 private fun HistoryDbHelper.downloadStateFor(videoId: String): String {
     val manager = localServerEntryPoint(appContext).videoDownloadManager()
@@ -50,7 +52,11 @@ private fun HistoryDbHelper.downloadStateFor(videoId: String): String {
 // progressive stream when that's taller/only option), minus its InnerTube/SABR/VP9 fallbacks - a
 // video that would need those fails here with a message rather than silently doing something
 // different from the app. Returns null on success, else a user-facing error.
-private fun HistoryDbHelper.startNativeDownload(serviceId: Int, mediaUrl: String, videoId: String): String? {
+private fun HistoryDbHelper.startNativeDownload(
+    serviceId: Int,
+    mediaUrl: String,
+    videoId: String,
+): String? {
     val info = LocalServerSource.streamInfo(appContext, serviceId, mediaUrl)
 
     val prefs = PlayerPreferences(appContext)
@@ -69,32 +75,35 @@ private fun HistoryDbHelper.startNativeDownload(serviceId: Int, mediaUrl: String
     val bestCombined = (info.videoStreams ?: emptyList()).bestForTarget()
 
     val useVideoOnly = bestMp4VideoOnly != null && (bestCombined == null || heightOf(bestMp4VideoOnly) > heightOf(bestCombined))
-    val selected = (if (useVideoOnly) bestMp4VideoOnly else bestCombined)
-        ?: return "No downloadable stream found for this video"
+    val selected =
+        (if (useVideoOnly) bestMp4VideoOnly else bestCombined)
+            ?: return "No downloadable stream found for this video"
     val videoUrl = selected.content?.takeIf { it.isNotBlank() } ?: return "No downloadable stream found for this video"
 
     var audioUrl: String? = null
     if (useVideoOnly) {
-        val audio = AudioStreamSelector.selectPreferredAudioStream(
-            streams = info.audioStreams ?: emptyList(),
-            preferredAudioLanguage = preferredAudioLanguage,
-            compatibilityFilter = { it.format == MediaFormat.M4A },
-        )
+        val audio =
+            AudioStreamSelector.selectPreferredAudioStream(
+                streams = info.audioStreams ?: emptyList(),
+                preferredAudioLanguage = preferredAudioLanguage,
+                compatibilityFilter = { it.format == MediaFormat.M4A },
+            )
         audioUrl = audio?.content?.takeIf { it.isNotBlank() } ?: return "No compatible audio stream found for this video"
     }
 
-    val video = FlowVideo(
-        id = videoId,
-        title = info.name?.ifBlank { null } ?: "Unknown",
-        channelName = info.uploaderName ?: "",
-        channelId = info.uploaderUrl?.substringAfterLast("/") ?: "local",
-        thumbnailUrl = info.thumbnails?.maxByOrNull { it.height }?.url ?: "",
-        duration = info.duration.toInt(),
-        viewCount = info.viewCount.coerceAtLeast(0),
-        uploadDate = "",
-        description = info.description?.content ?: "",
-        serviceId = serviceId,
-    )
+    val video =
+        FlowVideo(
+            id = videoId,
+            title = info.name?.ifBlank { null } ?: "Unknown",
+            channelName = info.uploaderName ?: "",
+            channelId = info.uploaderUrl?.substringAfterLast("/") ?: "local",
+            thumbnailUrl = info.thumbnails?.maxByOrNull { it.height }?.url ?: "",
+            duration = info.duration.toInt(),
+            viewCount = info.viewCount.coerceAtLeast(0),
+            uploadDate = "",
+            description = info.description?.content ?: "",
+            serviceId = serviceId,
+        )
 
     // startForegroundService can be refused while the app is in the background (Android 12+
     // background-start rules) - surfaced to the page instead of failing silently.
@@ -115,7 +124,10 @@ private fun HistoryDbHelper.startNativeDownload(serviceId: Int, mediaUrl: String
 
 // GET /api/v1/download?action=status|start|cancel|delete&id=<video url>&serviceId=<n>
 // Every action answers with the current {"state","progress"} so the button re-renders from one shape.
-internal fun ClientHandler.handleApiDownload(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleApiDownload(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val mediaUrl = params["id"]
     if (mediaUrl.isNullOrEmpty()) {
         sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
@@ -134,12 +146,13 @@ internal fun ClientHandler.handleApiDownload(os: OutputStream, params: Map<Strin
                 sendResponse(os, 400, ApiRenderer.errorJson("Downloads are only supported for YouTube videos"), "application/json")
                 return
             }
-            val error = try {
-                dbHelper.startNativeDownload(serviceId, mediaUrl, videoId)
-            } catch (e: Exception) {
-                LocalHttpServer.log("Download start failed: " + e.message)
-                "Could not start download: " + (e.message ?: "unknown error")
-            }
+            val error =
+                try {
+                    dbHelper.startNativeDownload(serviceId, mediaUrl, videoId)
+                } catch (e: Exception) {
+                    LocalHttpServer.log("Download start failed: " + e.message)
+                    "Could not start download: " + (e.message ?: "unknown error")
+                }
             if (error != null) {
                 sendResponse(os, 500, ApiRenderer.errorJson(error), "application/json")
                 return
@@ -148,15 +161,20 @@ internal fun ClientHandler.handleApiDownload(os: OutputStream, params: Map<Strin
             // the button flips immediately instead of waiting for the first poll.
             sendResponse(os, 200, downloadStateJson("pending", 0), "application/json")
         }
+
         "cancel" -> {
             FlowDownloadService.cancelDownload(dbHelper.appContext, videoId)
             sendResponse(os, 200, downloadStateJson("none", 0), "application/json")
         }
+
         "delete" -> {
             val manager = localServerEntryPoint(dbHelper.appContext).videoDownloadManager()
             runBlocking { manager.deleteDownload(videoId) }
             sendResponse(os, 200, downloadStateJson("none", 0), "application/json")
         }
-        else -> sendResponse(os, 200, dbHelper.downloadStateFor(videoId), "application/json")
+
+        else -> {
+            sendResponse(os, 200, dbHelper.downloadStateFor(videoId), "application/json")
+        }
     }
 }

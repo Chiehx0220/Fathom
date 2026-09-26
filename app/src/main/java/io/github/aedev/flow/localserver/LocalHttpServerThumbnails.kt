@@ -1,11 +1,11 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
+import org.schabi.newpipe.extractor.stream.Frameset
 import java.io.OutputStream
 import java.net.URI
 import java.net.URLEncoder
 import java.util.Locale
-import org.schabi.newpipe.extractor.stream.Frameset
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 
 /*
  * The seek bar's preview thumbnails. YouTube publishes a video's frames as storyboards: sprite
@@ -29,8 +29,23 @@ internal fun Frameset.toWebVtt(): String {
         val slot = frame % perSheet
         val x = (slot % framesPerPageX) * frameWidth
         val y = (slot / framesPerPageX) * frameHeight
-        vtt.append(vttTime(frame.toLong() * durationPerFrame)).append(" --> ").append(vttTime((frame + 1L) * durationPerFrame)).append('\n')
-            .append(IMAGE_ROUTE).append(URLEncoder.encode(urls[sheet], "UTF-8")).append("#xywh=").append(x).append(',').append(y).append(',').append(frameWidth).append(',').append(frameHeight)
+        vtt
+            .append(vttTime(frame.toLong() * durationPerFrame))
+            .append(" --> ")
+            .append(vttTime((frame + 1L) * durationPerFrame))
+            .append('\n')
+            .append(
+                IMAGE_ROUTE,
+            ).append(
+                URLEncoder.encode(urls[sheet], "UTF-8"),
+            ).append("#xywh=")
+            .append(x)
+            .append(',')
+            .append(y)
+            .append(',')
+            .append(frameWidth)
+            .append(',')
+            .append(frameHeight)
             .append("\n\n")
     }
     return vtt.toString()
@@ -61,7 +76,10 @@ private fun proxiedImageHeaders(url: String): Map<String, String>? {
 }
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleThumbnailsProxy(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleThumbnailsProxy(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val mediaUrl = requireNotNull(params["id"]) { "Missing 'id' parameter" }
     val frameset = LocalServerSource.streamInfo(dbHelper.appContext, serviceId, mediaUrl).previewFrames.bestForSeekBar()
@@ -73,14 +91,21 @@ internal fun ClientHandler.handleThumbnailsProxy(os: OutputStream, params: Map<S
 }
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleImageProxy(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleImageProxy(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val url = params["u"]
     val extraHeaders = url?.let { proxiedImageHeaders(it) }
     if (url == null || extraHeaders == null) {
         sendResponse(os, 400, "Not a proxiable image.", "text/plain; charset=UTF-8")
         return
     }
-    val reqBuilder = okhttp3.Request.Builder().url(url).header("User-Agent", "Mozilla/5.0")
+    val reqBuilder =
+        okhttp3.Request
+            .Builder()
+            .url(url)
+            .header("User-Agent", "Mozilla/5.0")
     extraHeaders.forEach { (name, value) -> reqBuilder.header(name, value) }
     LocalHttpServer.httpClient.newCall(reqBuilder.build()).execute().use { response ->
         val body = response.body?.bytes() ?: ByteArray(0)

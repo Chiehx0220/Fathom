@@ -10,7 +10,12 @@ import java.util.UUID
 
 // Shared "share this video" field set/fallback defaults for handleWatchLaterAction and
 // handleRateVideoAction - server never saw this video before, only client-page metadata.
-private data class SharedVideoParams(val title: String, val uploader: String, val thumbnail: String?, val uploaderUrl: String?)
+private data class SharedVideoParams(
+    val title: String,
+    val uploader: String,
+    val thumbnail: String?,
+    val uploaderUrl: String?,
+)
 
 private fun parseSharedVideoParams(params: Map<String, String>): SharedVideoParams {
     val title = params["title"].takeUnless { it.isNullOrEmpty() } ?: "Shared Item"
@@ -26,7 +31,10 @@ private fun ClientHandler.sendActionResult(os: OutputStream) {
     sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
 }
 
-internal fun ClientHandler.handleSubscribeAction(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleSubscribeAction(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val action = params["action"]
     val channelUrl = params["id"]
 
@@ -41,7 +49,10 @@ internal fun ClientHandler.handleSubscribeAction(os: OutputStream, params: Map<S
     sendActionResult(os)
 }
 
-internal fun ClientHandler.handleBlockChannelAction(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleBlockChannelAction(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val action = params["action"]
     val channelUrl = params["id"]
 
@@ -54,7 +65,10 @@ internal fun ClientHandler.handleBlockChannelAction(os: OutputStream, params: Ma
     sendActionResult(os)
 }
 
-internal fun ClientHandler.handlePlaylistBookmarkAction(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handlePlaylistBookmarkAction(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val action = params["action"]
     val playlistUrl = params["id"]
 
@@ -68,7 +82,10 @@ internal fun ClientHandler.handlePlaylistBookmarkAction(os: OutputStream, params
     sendActionResult(os)
 }
 
-internal fun ClientHandler.handleHistoryAction(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleHistoryAction(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val action = params["action"]
     val url = params["url"]
 
@@ -81,7 +98,10 @@ internal fun ClientHandler.handleHistoryAction(os: OutputStream, params: Map<Str
     sendActionResult(os)
 }
 
-internal fun ClientHandler.handleWatchLaterAction(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleWatchLaterAction(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val action = params["action"]
     val url = params["url"]
 
@@ -95,7 +115,10 @@ internal fun ClientHandler.handleWatchLaterAction(os: OutputStream, params: Map<
     sendActionResult(os)
 }
 
-internal fun ClientHandler.handleRateVideoAction(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleRateVideoAction(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val action = params["action"]
     val url = params["url"]
 
@@ -112,7 +135,11 @@ internal fun ClientHandler.handleRateVideoAction(os: OutputStream, params: Map<S
     sendActionResult(os)
 }
 
-internal fun ClientHandler.handleSendLink(os: OutputStream, params: Map<String, String>, clientIp: String?) {
+internal fun ClientHandler.handleSendLink(
+    os: OutputStream,
+    params: Map<String, String>,
+    clientIp: String?,
+) {
     val videoUrl = params["id"]
     val clientReleaseCode = params["release_code"]
     var videoTitle = params["title"]
@@ -162,7 +189,10 @@ internal fun ClientHandler.handleSendLink(os: OutputStream, params: Map<String, 
     }
 }
 
-internal fun ClientHandler.handleReleaseLock(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleReleaseLock(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val clientReleaseCode = params["release_code"]
     if (clientReleaseCode.isNullOrEmpty()) {
         sendResponse(os, 400, "{\"status\":\"error\",\"message\":\"Missing 'release_code' parameter\"}", "application/json; charset=UTF-8")
@@ -181,7 +211,10 @@ internal fun ClientHandler.handleReleaseLock(os: OutputStream, params: Map<Strin
     }
 }
 
-internal fun ClientHandler.handleSendCommand(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleSendCommand(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val cmd = params["command"]
     val clientReleaseCode = params["release_code"]
     if (cmd.isNullOrEmpty()) {
@@ -212,7 +245,10 @@ private fun parseChapterTitles(raw: String?): List<String> {
 }
 
 // The paired page reports how it is playing (about once a second) so the phone remote can show progress and pick a mode.
-internal fun ClientHandler.handleRemoteState(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleRemoteState(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val code = LocalHttpServer.getActiveLockCode()
     if (code == null || code != params["release_code"]) {
         sendResponse(os, 200, "{\"status\":\"error\"}", "application/json; charset=UTF-8")

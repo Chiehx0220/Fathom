@@ -44,7 +44,7 @@ data class Video(
     // on the video row — populated only by playlist-scoped queries.
     val addedAtInPlaylist: Long? = null,
     // org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube (default, keeps old data/call sites valid).
-    val serviceId: Int = 0
+    val serviceId: Int = 0,
 )
 
 data class Channel(
@@ -60,7 +60,7 @@ data class Channel(
     val isVerified: Boolean = false,
     // Full channel URL for navigation
     val url: String = "",
-    val serviceId: Int = 0
+    val serviceId: Int = 0,
 )
 
 data class Playlist(
@@ -71,7 +71,7 @@ data class Playlist(
     val description: String = "",
     val videos: List<Video> = emptyList(),
     val isLocal: Boolean = true,
-    val serviceId: Int = 0
+    val serviceId: Int = 0,
 )
 
 data class Comment(

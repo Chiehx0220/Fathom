@@ -9,9 +9,13 @@ import java.util.concurrent.TimeUnit
 /** What an external Bilibili link opens in Flow. */
 sealed interface BilibiliLinkTarget {
     /** [videoId] in Flow's form, "BV1xx?p=2". */
-    data class Video(val videoId: String) : BilibiliLinkTarget
+    data class Video(
+        val videoId: String,
+    ) : BilibiliLinkTarget
 
-    data class Uploader(val mid: Long) : BilibiliLinkTarget
+    data class Uploader(
+        val mid: Long,
+    ) : BilibiliLinkTarget
 }
 
 /**
@@ -53,7 +57,15 @@ object BilibiliDeepLink {
             repeat(MAX_REDIRECTS) {
                 val location =
                     runCatching {
-                        client.newCall(Request.Builder().url(url).header("User-Agent", "Mozilla/5.0").build()).execute().use { it.header("Location") }
+                        client
+                            .newCall(
+                                Request
+                                    .Builder()
+                                    .url(url)
+                                    .header("User-Agent", "Mozilla/5.0")
+                                    .build(),
+                            ).execute()
+                            .use { it.header("Location") }
                     }.getOrNull() ?: return@withContext null
                 url = location
                 parse(url)?.let { return@withContext it }

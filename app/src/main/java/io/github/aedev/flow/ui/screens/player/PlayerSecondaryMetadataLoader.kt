@@ -1,7 +1,7 @@
 package io.github.aedev.flow.ui.screens.player
 
-import io.github.aedev.flow.bilibili.BilibiliVideoId
 import android.util.Log
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.repository.YouTubeRepository

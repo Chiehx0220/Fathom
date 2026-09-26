@@ -14,11 +14,6 @@ import java.time.format.DateTimeFormatter
 object BilibiliVideoMapper {
     private val DATE = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneOffset.UTC)
 
-    /**
-     * [videoId] is the id the screen already uses for this video ("BV...?p=N"), kept as is so the
-     * queue, history and preload bookkeeping keep matching it; [fallback] supplies whatever the
-     * screen knew before this load (a search result's thumbnail, say) when Bilibili has nothing.
-     */
     /** A related-lane entry; ids carry "?p=1" like every other Bilibili id the screen holds. */
     fun videoFromRelated(item: BilibiliRelated): Video =
         Video(
@@ -73,6 +68,11 @@ object BilibiliVideoMapper {
             serviceId = BILIBILI_SERVICE_ID,
         )
 
+    /**
+     * [videoId] is the id the screen already uses for this video ("BV...?p=N"), kept as is so the
+     * queue, history and preload bookkeeping keep matching it; [fallback] supplies whatever the
+     * screen knew before this load (a search result's thumbnail, say) when Bilibili has nothing.
+     */
     fun videoFromInfo(
         videoId: String,
         info: BilibiliVideoInfo,

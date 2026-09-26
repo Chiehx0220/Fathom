@@ -26,6 +26,7 @@ internal fun isCjk(ch: Char): Boolean =
         Character.UnicodeScript.HIRAGANA,
         Character.UnicodeScript.KATAKANA,
         -> true
+
         else -> false
     }
 

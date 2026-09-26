@@ -60,13 +60,77 @@ object BilibiliSigning {
     // region WBI signature
     private val MIXIN_KEY_ORDER =
         intArrayOf(
-            46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35, 27, 43, 5, 49, 33, 9, 42, 19, 29, 28, 14, 39,
-            12, 38, 41, 13, 37, 48, 7, 16, 24, 55, 40, 61, 26, 17, 0, 1, 60, 51, 30, 4, 22, 25, 54, 21, 56, 59, 6, 63,
-            57, 62, 11, 36, 20, 34, 44, 52,
+            46,
+            47,
+            18,
+            2,
+            53,
+            8,
+            23,
+            32,
+            15,
+            50,
+            10,
+            31,
+            58,
+            3,
+            45,
+            35,
+            27,
+            43,
+            5,
+            49,
+            33,
+            9,
+            42,
+            19,
+            29,
+            28,
+            14,
+            39,
+            12,
+            38,
+            41,
+            13,
+            37,
+            48,
+            7,
+            16,
+            24,
+            55,
+            40,
+            61,
+            26,
+            17,
+            0,
+            1,
+            60,
+            51,
+            30,
+            4,
+            22,
+            25,
+            54,
+            21,
+            56,
+            59,
+            6,
+            63,
+            57,
+            62,
+            11,
+            36,
+            20,
+            34,
+            44,
+            52,
         )
 
     /** The 32-char mixin key, shuffled out of the two file-name stems in the nav API's wbi_img. */
-    fun mixinKey(imgValue: String, subValue: String): String {
+    fun mixinKey(
+        imgValue: String,
+        subValue: String,
+    ): String {
         val raw = imgValue + subValue
         return MIXIN_KEY_ORDER.map { raw[it] }.joinToString("").substring(0, 32)
     }
@@ -112,12 +176,20 @@ object BilibiliSigning {
     // endregion
 
     // region dm_img telemetry
-    private fun wh(width: Int, height: Int, random: Random): IntArray {
+    private fun wh(
+        width: Int,
+        height: Int,
+        random: Random,
+    ): IntArray {
         val rnd = random.nextInt(114)
         return intArrayOf(2 * width + 2 * height + 3 * rnd, 4 * width - height + rnd, rnd)
     }
 
-    private fun of(scrollTop: Int, scrollLeft: Int, random: Random): IntArray {
+    private fun of(
+        scrollTop: Int,
+        scrollLeft: Int,
+        random: Random,
+    ): IntArray {
         val rnd = random.nextInt(514)
         return intArrayOf(3 * scrollTop + 2 * scrollLeft + rnd, 4 * scrollTop - 4 * scrollLeft + 2 * rnd, rnd)
     }

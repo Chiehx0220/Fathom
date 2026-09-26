@@ -19,10 +19,10 @@ data class VideoEntity(
     val timestamp: Long = System.currentTimeMillis(),
     val savedAt: Long = System.currentTimeMillis(), // For ordering in generic lists
     val isMusic: Boolean = false,
-    val serviceId: Int = 0
+    val serviceId: Int = 0,
 ) {
-    fun toDomain(): Video {
-        return Video(
+    fun toDomain(): Video =
+        Video(
             id = id,
             title = title,
             channelName = channelName,
@@ -35,13 +35,12 @@ data class VideoEntity(
             channelThumbnailUrl = channelThumbnailUrl,
             timestamp = timestamp,
             isMusic = isMusic,
-            serviceId = serviceId
+            serviceId = serviceId,
         )
-    }
 
     companion object {
-        fun fromDomain(video: Video): VideoEntity {
-            return VideoEntity(
+        fun fromDomain(video: Video): VideoEntity =
+            VideoEntity(
                 id = video.id,
                 title = video.title,
                 channelName = video.channelName,
@@ -54,8 +53,7 @@ data class VideoEntity(
                 channelThumbnailUrl = video.channelThumbnailUrl,
                 timestamp = video.timestamp,
                 isMusic = video.isMusic,
-                serviceId = video.serviceId
+                serviceId = video.serviceId,
             )
-        }
     }
 }

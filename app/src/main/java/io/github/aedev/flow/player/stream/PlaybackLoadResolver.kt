@@ -10,9 +10,9 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.video.VideoDownloadManager
-import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.di.IoDispatcher
 import io.github.aedev.flow.di.NetworkIoDispatcher
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.player.error.PlayerDiagnostics
 import io.github.aedev.flow.utils.NetworkState
 import kotlinx.coroutines.CancellationException

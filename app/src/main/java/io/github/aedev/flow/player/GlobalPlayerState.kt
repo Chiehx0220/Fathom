@@ -109,7 +109,8 @@ object GlobalPlayerState {
                 .joinToString(" < ") { "${it.className.substringAfterLast('.')}.${it.methodName}" }
         val message = "setCurrentVideo id=${video?.id} title=${video?.title} serviceId=${video?.serviceId} from=$callers"
         Log.w(TAG, message)
-        io.github.aedev.flow.player.error.PlayerDiagnostics.logWarning("GlobalPlayerState", message)
+        io.github.aedev.flow.player.error.PlayerDiagnostics
+            .logWarning("GlobalPlayerState", message)
         _currentVideo.value = video
     }
 

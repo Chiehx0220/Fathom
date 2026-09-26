@@ -1,5 +1,9 @@
 package io.github.aedev.flow.ui.screens.home
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliApi
+import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
 import io.github.aedev.flow.data.local.LikedVideosRepository
@@ -9,13 +13,8 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.recommendation.GraphSeedInput
 import io.github.aedev.flow.data.recommendation.GraphSeedSelector
 import io.github.aedev.flow.data.recommendation.GraphSeedSource
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliApi
-import io.github.aedev.flow.bilibili.BilibiliVideoId
-import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
-import org.schabi.newpipe.extractor.ServiceList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeoutOrNull
+import org.schabi.newpipe.extractor.ServiceList
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton

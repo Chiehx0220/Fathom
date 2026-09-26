@@ -46,6 +46,8 @@ import io.github.aedev.flow.player.audio.AudioFeaturesManager
 import io.github.aedev.flow.player.audio.eq.EqualizerAudioProcessor
 import io.github.aedev.flow.player.cache.PlayerCacheManager
 import io.github.aedev.flow.player.config.PlayerConfig
+import io.github.aedev.flow.player.danmaku.DanmakuComment
+import io.github.aedev.flow.player.danmaku.DanmakuHandler
 import io.github.aedev.flow.player.error.PlayerDiagnostics
 import io.github.aedev.flow.player.error.PlayerErrorHandler
 import io.github.aedev.flow.player.factory.PlayerFactory
@@ -57,8 +59,6 @@ import io.github.aedev.flow.player.recovery.ClearedMediaRecoveryState
 import io.github.aedev.flow.player.sabr.integration.SabrStreamInfo
 import io.github.aedev.flow.player.sabr.integration.SabrUrlResolver
 import io.github.aedev.flow.player.service.BackgroundServiceManager
-import io.github.aedev.flow.player.danmaku.DanmakuComment
-import io.github.aedev.flow.player.danmaku.DanmakuHandler
 import io.github.aedev.flow.player.sponsorblock.SponsorBlockHandler
 import io.github.aedev.flow.player.state.EnhancedPlayerState
 import io.github.aedev.flow.player.state.PlaybackCompletion
@@ -364,7 +364,9 @@ class EnhancedPlayerManager private constructor() {
             // session's listener here too (still forwarded to the real player as before, so normal
             // playback events are untouched) lets notifyMediaMetadataChanged() push the corrected
             // value through it directly once GlobalPlayerState actually has it.
-            class VideoSessionPlayer(wrapped: Player) : ForwardingPlayer(wrapped) {
+            class VideoSessionPlayer(
+                wrapped: Player,
+            ) : ForwardingPlayer(wrapped) {
                 private val extraListeners = java.util.concurrent.CopyOnWriteArraySet<Player.Listener>()
 
                 override fun addListener(listener: Player.Listener) {

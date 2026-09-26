@@ -20,10 +20,12 @@ import org.schabi.newpipe.extractor.stream.StreamType
  * against the same stable extractor APIs.
  */
 object ApiRenderer {
-
     // channelId is the full channel URL, not a bare id.
     @JvmStatic
-    fun videoJson(item: InfoItem, serviceId: Int): JSONObject {
+    fun videoJson(
+        item: InfoItem,
+        serviceId: Int,
+    ): JSONObject {
         val json = JSONObject()
         val streamItem = item as? StreamInfoItem
         json.put("id", LocalHttpServer.getVideoId(item.url))
@@ -39,7 +41,14 @@ object ApiRenderer {
         // instead of an unrelated stock photo standing in for someone's face.
         json.put(
             "channelThumbnailUrl",
-            if (HtmlRendererCommon.hasThumbnail(streamItem?.uploaderAvatarUrl)) sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(streamItem?.uploaderAvatarUrl)) else "",
+            if (HtmlRendererCommon.hasThumbnail(
+                    streamItem?.uploaderAvatarUrl,
+                )
+            ) {
+                sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(streamItem?.uploaderAvatarUrl))
+            } else {
+                ""
+            },
         )
         if (streamItem != null) {
             json.put("duration", streamItem.duration.coerceAtLeast(0).toInt())
@@ -61,7 +70,10 @@ object ApiRenderer {
     // related videos, playback URLs). Points at the existing /stream, /manifest, /subtitles proxy
     // routes rather than re-resolving URLs itself.
     @JvmStatic
-    fun videoDetailJson(info: StreamInfo, serviceId: Int): JSONObject {
+    fun videoDetailJson(
+        info: StreamInfo,
+        serviceId: Int,
+    ): JSONObject {
         val json = JSONObject()
         val infoUrlEncoded = HtmlRendererCommon.encodeUrl(info.url)
         json.put("id", LocalHttpServer.getVideoId(info.url))
@@ -74,7 +86,14 @@ object ApiRenderer {
         // See videoJson()'s channelThumbnailUrl: empty, not the placeholder, when there's no real avatar.
         json.put(
             "channelThumbnailUrl",
-            if (HtmlRendererCommon.hasThumbnail(info.uploaderAvatars)) sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(info.uploaderAvatars)) else "",
+            if (HtmlRendererCommon.hasThumbnail(
+                    info.uploaderAvatars,
+                )
+            ) {
+                sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(info.uploaderAvatars))
+            } else {
+                ""
+            },
         )
         json.put("duration", info.duration.coerceAtLeast(0).toInt())
         json.put("viewCount", info.viewCount.coerceAtLeast(-1))
@@ -171,7 +190,10 @@ object ApiRenderer {
     }
 
     @JvmStatic
-    fun channelJson(channel: ChannelHeader, isSubscribed: Boolean): JSONObject {
+    fun channelJson(
+        channel: ChannelHeader,
+        isSubscribed: Boolean,
+    ): JSONObject {
         val json = JSONObject()
         json.put("id", channel.url)
         json.put("name", channel.name)
@@ -215,7 +237,14 @@ object ApiRenderer {
         // Empty, not the placeholder URL, when there's no real avatar.
         json.put(
             "authorThumbnail",
-            if (HtmlRendererCommon.hasThumbnail(item.uploaderAvatarUrl)) sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(item.uploaderAvatarUrl)) else "",
+            if (HtmlRendererCommon.hasThumbnail(
+                    item.uploaderAvatarUrl,
+                )
+            ) {
+                sameOriginImageUrl(HtmlRendererCommon.getThumbnailUrl(item.uploaderAvatarUrl))
+            } else {
+                ""
+            },
         )
         json.put("text", item.commentText.content ?: "")
         // Mirrors videoDetailJson's descriptionType - comment text can be HTML too.
@@ -235,7 +264,10 @@ object ApiRenderer {
     fun serializePageOrNull(page: Page?): String? = HtmlRendererCommon.serializePage(page)
 
     @JvmStatic
-    fun infoItemsToJson(items: List<InfoItem>, serviceId: Int): JSONArray {
+    fun infoItemsToJson(
+        items: List<InfoItem>,
+        serviceId: Int,
+    ): JSONArray {
         val array = JSONArray()
         for (item in items) {
             when (item) {
@@ -251,7 +283,11 @@ object ApiRenderer {
     // Mirrors Flow's SearchResult(videos, channels, playlists) shape - splits a mixed InfoItem
     // list into the three buckets by type rather than leaving the caller to do it.
     @JvmStatic
-    fun searchResultJson(items: List<InfoItem>, serviceId: Int, nextPage: Page?): JSONObject {
+    fun searchResultJson(
+        items: List<InfoItem>,
+        serviceId: Int,
+        nextPage: Page?,
+    ): JSONObject {
         val videos = JSONArray()
         val channels = JSONArray()
         val playlists = JSONArray()

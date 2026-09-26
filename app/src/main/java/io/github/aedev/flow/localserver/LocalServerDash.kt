@@ -102,8 +102,17 @@ internal class DashCatalog(
                 if (highest) {
                     families.entries
                         .filter { it.value.size >= MIN_LADDER }
-                        .maxWithOrNull(compareBy<Map.Entry<String, List<Video>>>({ e -> e.value.maxOf { it.height } }, { e -> if (e.key == "avc1") 1 else 0 }))
-                        ?.key
+                        .maxWithOrNull(
+                            compareBy<Map.Entry<String, List<Video>>>({ e -> e.value.maxOf { it.height } }, { e ->
+                                if (e.key ==
+                                    "avc1"
+                                ) {
+                                    1
+                                } else {
+                                    0
+                                }
+                            }),
+                        )?.key
                 } else {
                     null
                 }
@@ -125,8 +134,15 @@ internal class DashCatalog(
                     val id = if (vs.itag > 0) "v${vs.itag}" else "v${vs.height}p${vs.fps}_$bandwidth"
                     if (!ids.add(id)) return@mapNotNull null
                     Video(
-                        id, url, bandwidth, vs.codec.orEmpty(), vs.width.toInt(), vs.height.toInt(), vs.fps.toInt(),
-                        ByteRange(vs.initStart.toLong(), vs.initEnd.toLong()), ByteRange(vs.indexStart.toLong(), vs.indexEnd.toLong()),
+                        id,
+                        url,
+                        bandwidth,
+                        vs.codec.orEmpty(),
+                        vs.width.toInt(),
+                        vs.height.toInt(),
+                        vs.fps.toInt(),
+                        ByteRange(vs.initStart.toLong(), vs.initEnd.toLong()),
+                        ByteRange(vs.indexStart.toLong(), vs.indexEnd.toLong()),
                     )
                 }
         }
@@ -152,11 +168,16 @@ internal class DashCatalog(
                         val url = stream.content?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
                         val bandwidth = bandwidthBps(stream.bitrateOf().toLong(), fallbackBps = 128_000L)
                         // The same itag comes once per language, so the track is part of the id.
-                        val id = (if (stream.itag > 0) "a${stream.itag}" else "a_$bandwidth") + (if (trackId.isNotEmpty()) "_$trackId" else "")
+                        val id =
+                            (if (stream.itag > 0) "a${stream.itag}" else "a_$bandwidth") + (if (trackId.isNotEmpty()) "_$trackId" else "")
                         if (!ids.add(id)) return@mapNotNull null
                         Audio(
-                            id, url, bandwidth, LocalHttpServer.normalizeAudioCodec(stream.codec),
-                            ByteRange(stream.initStart.toLong(), stream.initEnd.toLong()), ByteRange(stream.indexStart.toLong(), stream.indexEnd.toLong()),
+                            id,
+                            url,
+                            bandwidth,
+                            LocalHttpServer.normalizeAudioCodec(stream.codec),
+                            ByteRange(stream.initStart.toLong(), stream.initEnd.toLong()),
+                            ByteRange(stream.indexStart.toLong(), stream.indexEnd.toLong()),
                         )
                     }
                 if (audios.isEmpty()) return@mapNotNull null
@@ -207,12 +228,16 @@ internal object DashManifest {
         val duration = "PT" + String.format(Locale.US, "%.3f", if (durationSec > 0) durationSec else UNKNOWN_DURATION_SEC) + "S"
         val xml = StringBuilder()
         xml.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
-        xml.append("<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\" type=\"static\" mediaPresentationDuration=\"$duration\" minBufferTime=\"PT1.5S\">\n")
+        xml.append(
+            "<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\" type=\"static\" mediaPresentationDuration=\"$duration\" minBufferTime=\"PT1.5S\">\n",
+        )
         xml.append("  <Period duration=\"$duration\">\n")
 
         var setId = 0
         if (catalog.videos.isNotEmpty()) {
-            xml.append("    <AdaptationSet id=\"${setId++}\" mimeType=\"video/mp4\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\">\n")
+            xml.append(
+                "    <AdaptationSet id=\"${setId++}\" mimeType=\"video/mp4\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\">\n",
+            )
             for (v in catalog.videos) {
                 xml.append("      <Representation id=\"${esc(v.id)}\" bandwidth=\"${v.bandwidth}\" codecs=\"${esc(v.codec)}\"")
                 if (v.width > 0 && v.height > 0) xml.append(" width=\"${v.width}\" height=\"${v.height}\"")
@@ -225,15 +250,27 @@ internal object DashManifest {
         }
 
         for (track in catalog.audioTracks) {
-            xml.append("    <AdaptationSet id=\"${setId++}\" mimeType=\"audio/mp4\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\"")
+            xml.append(
+                "    <AdaptationSet id=\"${setId++}\" mimeType=\"audio/mp4\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\"",
+            )
             track.language?.let { xml.append(" lang=\"${esc(it)}\"") }
             track.label?.let { xml.append(" label=\"${esc(it)}\"") }
             xml.append(">\n")
             // Any track that is not the original is a dub.
-            if (track.hasRole) xml.append("      <Role schemeIdUri=\"urn:mpeg:dash:role:2011\" value=\"${if (track.original) "main" else "dub"}\"/>\n")
+            if (track.hasRole) {
+                xml.append(
+                    "      <Role schemeIdUri=\"urn:mpeg:dash:role:2011\" value=\"${if (track.original) "main" else "dub"}\"/>\n",
+                )
+            }
             for (a in track.audios) {
-                xml.append("      <Representation id=\"${esc(a.id)}\" bandwidth=\"${a.bandwidth}\" codecs=\"${esc(a.codec)}\" audioSamplingRate=\"44100\">\n")
-                xml.append("        <AudioChannelConfiguration schemeIdUri=\"urn:mpeg:dash:23003:3:audio_channel_configuration:2011\" value=\"2\"/>\n")
+                xml.append(
+                    "      <Representation id=\"${esc(
+                        a.id,
+                    )}\" bandwidth=\"${a.bandwidth}\" codecs=\"${esc(a.codec)}\" audioSamplingRate=\"44100\">\n",
+                )
+                xml.append(
+                    "        <AudioChannelConfiguration schemeIdUri=\"urn:mpeg:dash:23003:3:audio_channel_configuration:2011\" value=\"2\"/>\n",
+                )
                 representationBody(xml, streamUrl(a.id), a.index, a.init)
                 xml.append("      </Representation>\n")
             }
@@ -257,7 +294,12 @@ internal object DashManifest {
         xml.append("        </SegmentBase>\n")
     }
 
-    private fun esc(text: String) = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+    private fun esc(text: String) =
+        text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
 
     /** The `/stream` address of a representation. */
     fun streamPath(

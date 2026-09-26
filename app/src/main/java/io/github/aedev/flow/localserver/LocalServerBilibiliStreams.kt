@@ -45,7 +45,16 @@ internal object LocalServerBilibiliStreams {
         val related = runCatching { runBlocking { api.related(bvid) } }.getOrDefault(emptyList())
         val video = playback.info
 
-        val info = StreamInfo(LocalServerBilibili.serviceId, LocalServerBilibili.videoUrl(key), LocalServerBilibili.videoUrl(key), StreamType.VIDEO_STREAM, key, video.title, 0)
+        val info =
+            StreamInfo(
+                LocalServerBilibili.serviceId,
+                LocalServerBilibili.videoUrl(key),
+                LocalServerBilibili.videoUrl(key),
+                StreamType.VIDEO_STREAM,
+                key,
+                video.title,
+                0,
+            )
         info.thumbnails = listOf(Image(video.thumbnailUrl, -1, -1, Image.ResolutionLevel.UNKNOWN))
         info.description = Description(video.description, Description.PLAIN_TEXT)
         info.duration = video.durationSec.toLong()
@@ -59,7 +68,16 @@ internal object LocalServerBilibiliStreams {
         info.audioStreams = BilibiliStreamBridge.convertAudioFormats(video.bvid, playback.audioFormats)
         info.relatedItems =
             related.map {
-                bilibiliVideoItem("${it.bvid}?p=1", it.title, it.thumbnailUrl, it.durationSec, it.viewCount, it.uploader.name, it.uploader.mid, it.uploader.avatarUrl)
+                bilibiliVideoItem(
+                    "${it.bvid}?p=1",
+                    it.title,
+                    it.thumbnailUrl,
+                    it.durationSec,
+                    it.viewCount,
+                    it.uploader.name,
+                    it.uploader.mid,
+                    it.uploader.avatarUrl,
+                )
             }
         infoCache[key] = CachedInfo(info, System.currentTimeMillis() + INFO_TTL_MS)
         infoCache.entries.removeIf { it.value.expiresAtMs < System.currentTimeMillis() }

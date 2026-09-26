@@ -108,8 +108,14 @@ internal object LocalServerSource {
         val page = LocalHttpServer.fetchInitialOrPage(tabExtractor, nextPage)
         LocalHttpServer.backfillUploaderUrl(page.items, channelUrl)
 
-        val avatar = HtmlRendererCommon.getThumbnailUrl(channelExtractor.avatars).takeIf { HtmlRendererCommon.hasThumbnail(channelExtractor.avatars) }
-        val banner = HtmlRendererCommon.getThumbnailUrl(channelExtractor.banners).takeIf { HtmlRendererCommon.hasThumbnail(channelExtractor.banners) }
+        val avatar =
+            HtmlRendererCommon.getThumbnailUrl(channelExtractor.avatars).takeIf {
+                HtmlRendererCommon.hasThumbnail(channelExtractor.avatars)
+            }
+        val banner =
+            HtmlRendererCommon.getThumbnailUrl(channelExtractor.banners).takeIf {
+                HtmlRendererCommon.hasThumbnail(channelExtractor.banners)
+            }
         val header =
             ChannelHeader(
                 name = channelExtractor.name ?: "",

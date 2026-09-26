@@ -7,7 +7,6 @@ import org.schabi.newpipe.extractor.Page
 // site. lightColors/darkColors stay here (not moved): ServerService sets them via
 // "HtmlRenderer.lightColors = ...", WebTheme reads them back qualified for the SPA shell.
 object HtmlRenderer {
-
     @JvmField
     var lightColors: MutableMap<String, String> = HashMap()
 

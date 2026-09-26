@@ -21,8 +21,8 @@ import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.GraphSeedInput
 import io.github.aedev.flow.data.recommendation.UserBrain
 import io.github.aedev.flow.data.repository.YouTubeRepository
-import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.data.shorts.ShortsFeedRepository
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -469,7 +469,8 @@ class HomeViewModel
                                     }
                                 }
 
-                            val deferredBilibili = launchBilibiliWave1Feeds(subscriptionRepository, bilibiliApi(appContext), discoveryQueries.toList())
+                            val deferredBilibili =
+                                launchBilibiliWave1Feeds(subscriptionRepository, bilibiliApi(appContext), discoveryQueries.toList())
 
                             val deferredDiscovery =
                                 async {

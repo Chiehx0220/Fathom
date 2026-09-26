@@ -51,7 +51,10 @@ private const val TAP_MAX_MS = 250L
 
 /** A touchpad for anything small on the page: one finger moves the pointer, a tap clicks, two fingers scroll. */
 @Composable
-internal fun TouchpadMode(state: LocalHttpServer.RemoteState, send: (String) -> Unit) {
+internal fun TouchpadMode(
+    state: LocalHttpServer.RemoteState,
+    send: (String) -> Unit,
+) {
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Touchpad(send, Modifier.weight(1f).fillMaxWidth())
         ButtonGroup(overflowIndicator = {}, modifier = Modifier.fillMaxWidth()) {
@@ -65,7 +68,10 @@ internal fun TouchpadMode(state: LocalHttpServer.RemoteState, send: (String) -> 
 }
 
 @Composable
-private fun Touchpad(send: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun Touchpad(
+    send: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val tick = rememberKeyTick()
     var touches by remember { mutableStateOf<List<Offset>>(emptyList()) }
     val glow = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
@@ -79,7 +85,12 @@ private fun Touchpad(send: (String) -> Unit, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(Icons.Default.TouchApp, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(40.dp))
+        Icon(
+            Icons.Default.TouchApp,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(40.dp),
+        )
         Spacer(Modifier.height(8.dp))
         Text(
             stringResource(R.string.remote_touchpad_hint),

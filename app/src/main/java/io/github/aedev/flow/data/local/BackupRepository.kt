@@ -14,6 +14,9 @@ import com.google.gson.stream.JsonReader
 import dagger.hilt.android.EntryPointAccessors
 import io.github.aedev.flow.BuildConfig
 import io.github.aedev.flow.R
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliChannelId
+import io.github.aedev.flow.bilibili.serviceIdOfChannel
 import io.github.aedev.flow.data.audio.eq.EqStateJson
 import io.github.aedev.flow.data.local.entity.NoteEntity
 import io.github.aedev.flow.data.local.entity.PlaylistEntity
@@ -22,12 +25,9 @@ import io.github.aedev.flow.data.local.entity.SubscriptionGroupEntity
 import io.github.aedev.flow.data.local.entity.VideoEntity
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTube
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliChannelId
-import io.github.aedev.flow.bilibili.serviceIdOfChannel
 import io.github.aedev.flow.data.model.isYouTubeServiceId
-import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.player.audio.AudioEffectsEntryPoint
 import io.github.aedev.flow.util.AppIcons
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
@@ -2399,7 +2399,12 @@ class BackupRepository(
                     } else {
                         "https://www.youtube.com/@$channelId"
                     }
-                ChannelInfo.getInfo(NewPipe.getService(owner), url).avatars.maxByOrNull { it.height }?.url.orEmpty()
+                ChannelInfo
+                    .getInfo(NewPipe.getService(owner), url)
+                    .avatars
+                    .maxByOrNull { it.height }
+                    ?.url
+                    .orEmpty()
             }
         } catch (e: CancellationException) {
             throw e

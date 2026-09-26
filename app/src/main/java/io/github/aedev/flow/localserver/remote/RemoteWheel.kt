@@ -38,14 +38,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
 import kotlin.math.max
-import kotlinx.coroutines.withTimeoutOrNull
 
 // Finger travel (dp) that counts as one press while swiping over the wheel.
 private const val SWIPE_STEP_DP = 40f
 
-private enum class WheelKey(val command: String) {
+private enum class WheelKey(
+    val command: String,
+) {
     UP("key:up"),
     DOWN("key:down"),
     LEFT("key:left"),
@@ -88,7 +90,14 @@ internal fun DirectionWheel(
                         var held = false
                         while (true) {
                             val wait = if (swiping || held) null else longPress - (lastTime - down.uptimeMillis)
-                            val event = if (wait == null) awaitPointerEvent() else withTimeoutOrNull(wait.coerceAtLeast(1)) { awaitPointerEvent() }
+                            val event =
+                                if (wait ==
+                                    null
+                                ) {
+                                    awaitPointerEvent()
+                                } else {
+                                    withTimeoutOrNull(wait.coerceAtLeast(1)) { awaitPointerEvent() }
+                                }
                             if (event == null) {
                                 held = true
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)

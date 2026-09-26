@@ -11,8 +11,8 @@ import androidx.room.PrimaryKey
         Index(value = ["bucket", "source"]),
         Index(value = ["relatedSeedId"]),
         Index(value = ["videoId"]),
-        Index(value = ["channelId"])
-    ]
+        Index(value = ["channelId"]),
+    ],
 )
 data class HomeFeedCacheEntity(
     @PrimaryKey val cacheKey: String,
@@ -40,5 +40,5 @@ data class HomeFeedCacheEntity(
     val cachedAt: Long,
     val expiresAt: Long,
     val orderIndex: Int,
-    val serviceId: Int = 0
+    val serviceId: Int = 0,
 )

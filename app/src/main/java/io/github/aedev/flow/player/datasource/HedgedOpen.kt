@@ -20,9 +20,14 @@ internal object HedgedOpen {
     )
 
     private sealed interface Outcome<T> {
-        class Opened<T>(val value: T, val url: String) : Outcome<T>
+        class Opened<T>(
+            val value: T,
+            val url: String,
+        ) : Outcome<T>
 
-        class Failed<T>(val error: Throwable) : Outcome<T>
+        class Failed<T>(
+            val error: Throwable,
+        ) : Outcome<T>
     }
 
     /**
@@ -80,7 +85,9 @@ internal object HedgedOpen {
             while (true) {
                 val waitMs = if (launched < urls.size) hedgeDelayMs else Long.MAX_VALUE
                 when (val outcome = outcomes.poll(waitMs, TimeUnit.MILLISECONDS)) {
-                    null -> launch(urls[launched++])
+                    null -> {
+                        launch(urls[launched++])
+                    }
 
                     is Outcome.Opened<T> -> {
                         futures.forEach { it.cancel(true) }

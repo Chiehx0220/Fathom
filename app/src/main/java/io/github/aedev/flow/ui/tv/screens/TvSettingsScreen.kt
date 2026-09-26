@@ -30,9 +30,9 @@ import io.github.aedev.flow.data.local.AppUiModePreferences
 import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.ui.tv.components.TvScreenScaffold
-import io.github.aedev.flow.ui.tv.screens.settings.TvFathomAboutPane
 import io.github.aedev.flow.ui.tv.screens.settings.TvAppearanceSettingsPane
 import io.github.aedev.flow.ui.tv.screens.settings.TvContentSettingsPane
+import io.github.aedev.flow.ui.tv.screens.settings.TvFathomAboutPane
 import io.github.aedev.flow.ui.tv.screens.settings.TvFlowEngineSettingsPane
 import io.github.aedev.flow.ui.tv.screens.settings.TvInterfaceSettingsPane
 import io.github.aedev.flow.ui.tv.screens.settings.TvPlaybackSettingsPane
@@ -62,16 +62,18 @@ fun TvSettingsScreen(
         modifier = modifier,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = dimens.overscanHorizontal),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = dimens.overscanHorizontal),
             horizontalArrangement = Arrangement.spacedBy(32.dp),
         ) {
             Column(
-                modifier = Modifier
-                    .width(300.dp)
-                    .verticalScroll(rememberScrollState())
-                    .focusGroup(),
+                modifier =
+                    Modifier
+                        .width(300.dp)
+                        .verticalScroll(rememberScrollState())
+                        .focusGroup(),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 TvSettingsCategory.entries.forEach { category ->
@@ -100,12 +102,19 @@ fun TvSettingsScreen(
             androidx.compose.foundation.layout.Box(modifier = Modifier.weight(1f)) {
                 when (selectedCategory) {
                     TvSettingsCategory.PLAYBACK -> TvPlaybackSettingsPane(playerPreferences)
+
                     TvSettingsCategory.QUALITY -> TvQualitySettingsPane(playerPreferences)
+
                     TvSettingsCategory.CONTENT -> TvContentSettingsPane(playerPreferences)
+
                     TvSettingsCategory.APPEARANCE -> TvAppearanceSettingsPane(localDataManager)
+
                     TvSettingsCategory.FLOW_ENGINE -> TvFlowEngineSettingsPane(playerPreferences)
+
                     TvSettingsCategory.INTERFACE -> TvInterfaceSettingsPane(modePreferences)
+
                     TvSettingsCategory.ABOUT -> TvFathomAboutPane()
+
                     TvSettingsCategory.REMOTE_GUIDE,
                     TvSettingsCategory.SYNC,
                     -> Unit
@@ -126,25 +135,29 @@ private fun TvSettingsCategoryItem(
 
     Surface(
         onClick = onClick,
-        modifier = Modifier.onFocusChanged { state ->
-            focused = state.isFocused
-            if (state.isFocused) onFocused()
-        },
+        modifier =
+            Modifier.onFocusChanged { state ->
+                focused = state.isFocused
+                if (state.isFocused) onFocused()
+            },
         shape = MaterialTheme.shapes.medium,
-        color = when {
-            focused -> MaterialTheme.colorScheme.inverseSurface
-            selected -> MaterialTheme.colorScheme.secondaryContainer
-            else -> MaterialTheme.colorScheme.surfaceContainer
-        },
-        contentColor = when {
-            focused -> MaterialTheme.colorScheme.inverseOnSurface
-            selected -> MaterialTheme.colorScheme.onSecondaryContainer
-            else -> MaterialTheme.colorScheme.onSurface
-        },
+        color =
+            when {
+                focused -> MaterialTheme.colorScheme.inverseSurface
+                selected -> MaterialTheme.colorScheme.secondaryContainer
+                else -> MaterialTheme.colorScheme.surfaceContainer
+            },
+        contentColor =
+            when {
+                focused -> MaterialTheme.colorScheme.inverseOnSurface
+                selected -> MaterialTheme.colorScheme.onSecondaryContainer
+                else -> MaterialTheme.colorScheme.onSurface
+            },
     ) {
         Row(
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier =
+                Modifier
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

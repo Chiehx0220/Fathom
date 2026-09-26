@@ -6,7 +6,10 @@ import java.io.OutputStream
 // Bilibili danmaku ("bullet comments"), fetched async by the watch page's player. Only Bilibili
 // exposes a BulletCommentsExtractor (null elsewhere) - other services get an empty result.
 @Throws(Exception::class)
-internal fun ClientHandler.handleDanmaku(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleDanmaku(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val mediaUrl = params["id"]
     if (mediaUrl.isNullOrEmpty()) {

@@ -16,7 +16,11 @@ object BilibiliChannelId {
     fun midOf(value: String): Long? {
         val trimmed = value.trim()
         if (isMid(trimmed)) return trimmed.toLongOrNull()
-        return SPACE_URL.find(trimmed)?.groupValues?.get(1)?.toLongOrNull()
+        return SPACE_URL
+            .find(trimmed)
+            ?.groupValues
+            ?.get(1)
+            ?.toLongOrNull()
     }
 }
 
@@ -90,7 +94,13 @@ object BilibiliVideoId {
      */
     fun fromUrl(url: String): String? {
         val bvid = LINK.find(url)?.groupValues?.get(1) ?: return null
-        val page = PART.find(url)?.groupValues?.get(1)?.toIntOrNull()?.takeIf { it >= 1 }
+        val page =
+            PART
+                .find(url)
+                ?.groupValues
+                ?.get(1)
+                ?.toIntOrNull()
+                ?.takeIf { it >= 1 }
         return if (page != null) "$bvid?p=$page" else bvid
     }
 

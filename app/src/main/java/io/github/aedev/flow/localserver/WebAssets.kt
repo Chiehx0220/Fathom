@@ -83,6 +83,9 @@ object WebAssets {
         files: List<String>,
     ): String =
         files.joinToString("\n") { name ->
-            context.assets.open("web/$name").bufferedReader(Charsets.UTF_8).use { it.readText() }
+            context.assets
+                .open("web/$name")
+                .bufferedReader(Charsets.UTF_8)
+                .use { it.readText() }
         }
 }

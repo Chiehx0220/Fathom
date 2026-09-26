@@ -104,7 +104,9 @@ internal fun PlayerErrorPanel(
                     val intent =
                         Intent(
                             Intent.ACTION_VIEW,
-                            Uri.parse(if (isYouTube) "https://www.youtube.com/watch?v=$videoId" else "https://www.bilibili.com/video/$videoId"),
+                            Uri.parse(
+                                if (isYouTube) "https://www.youtube.com/watch?v=$videoId" else "https://www.bilibili.com/video/$videoId",
+                            ),
                         )
                     context.startActivity(intent)
                 },

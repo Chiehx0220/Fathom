@@ -3,7 +3,6 @@
 package io.github.aedev.flow.ui.screens.search
 
 import android.content.Context
-import io.github.aedev.flow.bilibili.BilibiliVideoId
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -12,9 +11,10 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.local.SearchFilter
-import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.local.SearchHistoryRepository
+import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.data.paging.SearchPagingSource
@@ -97,7 +97,9 @@ class SearchViewModel
                                 serviceId = key.serviceId,
                                 onHeader = ::onHeader,
                                 blockedChannelIds = { FlowNeuroEngine.getInstance(context).getBlockedChannels() },
-                                bilibiliApi = io.github.aedev.flow.di.bilibiliApi(context),
+                                bilibiliApi =
+                                    io.github.aedev.flow.di
+                                        .bilibiliApi(context),
                             )
                         },
                     ).flow
@@ -131,7 +133,8 @@ class SearchViewModel
             // Only Bilibili is left: its video knows its uploader.
             val uploader =
                 runCatching {
-                    io.github.aedev.flow.di.bilibiliApi(context)
+                    io.github.aedev.flow.di
+                        .bilibiliApi(context)
                         .videoInfo(BilibiliVideoId.parse(video.id).first)
                         .uploader
                 }.getOrNull() ?: return null

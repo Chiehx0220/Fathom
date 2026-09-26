@@ -12,8 +12,7 @@ fun resolveNonYouTubeChannelId(
     url: String,
     serviceId: Int,
     fallback: () -> String,
-): String =
-    if (serviceId == BILIBILI_SERVICE_ID) BilibiliChannelId.midOf(url)?.toString() ?: fallback() else fallback()
+): String = if (serviceId == BILIBILI_SERVICE_ID) BilibiliChannelId.midOf(url)?.toString() ?: fallback() else fallback()
 
 /** @see resolveNonYouTubeChannelId */
 fun resolveNonYouTubeChannelUrl(

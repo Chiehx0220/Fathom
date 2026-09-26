@@ -55,7 +55,9 @@ class VideoDownloadOptionsLoader
 
         private suspend fun loadBilibili(video: Video): VideoDownloadOptions? {
             val (bvid, page) = BilibiliVideoId.parse(video.id)
-            val playback = withTimeoutOrNull(EXTRACT_TIMEOUT_MS) { runCatching { bilibiliApi(context).playback(bvid, page) }.getOrNull() } ?: return null
+            val playback =
+                withTimeoutOrNull(EXTRACT_TIMEOUT_MS) { runCatching { bilibiliApi(context).playback(bvid, page) }.getOrNull() }
+                    ?: return null
             val (videoFormats, audioFormats) = playback.toDownloadFormats()
             if (videoFormats.isEmpty()) return null
             return VideoDownloadOptions(

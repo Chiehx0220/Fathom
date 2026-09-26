@@ -1,14 +1,14 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.SubtitlesStream
-import org.schabi.newpipe.extractor.stream.VideoStream
 import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import io.github.aedev.flow.player.error.StreamDenialClassifier
 import io.github.aedev.flow.player.error.StreamDenialKind
 import io.github.aedev.flow.player.stream.ClientGateTracker
 import io.github.aedev.flow.utils.videoIdFromUrl
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.stream.AudioStream
+import org.schabi.newpipe.extractor.stream.SubtitlesStream
+import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.IOException
 import java.io.OutputStream
 
@@ -119,11 +119,20 @@ private fun cdnUserAgent(
     // guess it back out of the URL's own client marker.
     return try {
         when {
-            directUrl.contains("c=IOS") || directUrl.contains("c=ios") ->
-                org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getIosUserAgent(null)
-            directUrl.contains("c=VISIONOS") || directUrl.contains("c=visionos") ->
-                org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getVisionOsUserAgent(null)
-            else -> org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getAndroidUserAgent(null)
+            directUrl.contains("c=IOS") || directUrl.contains("c=ios") -> {
+                org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
+                    .getIosUserAgent(null)
+            }
+
+            directUrl.contains("c=VISIONOS") || directUrl.contains("c=visionos") -> {
+                org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
+                    .getVisionOsUserAgent(null)
+            }
+
+            else -> {
+                org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
+                    .getAndroidUserAgent(null)
+            }
         }
     } catch (e: Exception) {
         default
@@ -144,8 +153,14 @@ private fun reportStreamDenial(
     val client = StreamDenialClassifier.clientOf(directUrl)
     LocalHttpServer.log("CDN denial kind=$kind client=$client url=$directUrl")
     when (kind) {
-        StreamDenialKind.ATTESTATION_GATED -> ClientGateTracker.reportGated(client)
-        StreamDenialKind.TOKEN_REJECTED -> ClientGateTracker.reportRefused(client)
+        StreamDenialKind.ATTESTATION_GATED -> {
+            ClientGateTracker.reportGated(client)
+        }
+
+        StreamDenialKind.TOKEN_REJECTED -> {
+            ClientGateTracker.reportRefused(client)
+        }
+
         else -> {}
     }
     videoId?.let { LocalServerYouTubeStreams.invalidate(it) }
@@ -154,7 +169,11 @@ private fun reportStreamDenial(
 }
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<String, String>, requestHeaders: Map<String, String>) {
+internal fun ClientHandler.handleStreamProxy(
+    os: OutputStream,
+    params: Map<String, String>,
+    requestHeaders: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val mediaUrl = params["id"]
     val itagParam = params["itag"]
@@ -199,7 +218,15 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
         if (useCache) LocalHttpServer.streamUrlCache.get(cacheKey)?.let { return it }
         val extractor = LocalServerSource.streams(dbHelper.appContext, serviceId, resolvedMediaUrl, fresh = true)
         val url =
-            (if (repId != null) DashCatalog.urlOf(extractor, repId) else resolveDirectUrl(extractor, requestedItag, requestedTrackId, mediaType, params))
+            (
+                if (repId !=
+                    null
+                ) {
+                    DashCatalog.urlOf(extractor, repId)
+                } else {
+                    resolveDirectUrl(extractor, requestedItag, requestedTrackId, mediaType, params)
+                }
+            )
                 ?: return null
         LocalHttpServer.streamUrlCache.put(cacheKey, url, 3600000)
         if (videoId != null) {
@@ -240,19 +267,29 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
 
         val headBuilder = StringBuilder()
         val statusText = if (code == 206) "Partial Content" else "OK"
-        headBuilder.append("HTTP/1.1 ").append(code).append(" ").append(statusText).append("\r\n")
+        headBuilder
+            .append("HTTP/1.1 ")
+            .append(code)
+            .append(" ")
+            .append(statusText)
+            .append("\r\n")
 
-        val headersToForward = arrayOf(
-            "Content-Type",
-            "Content-Length",
-            "Content-Range",
-            "Accept-Ranges"
-        )
+        val headersToForward =
+            arrayOf(
+                "Content-Type",
+                "Content-Length",
+                "Content-Range",
+                "Accept-Ranges",
+            )
 
         for (h in headersToForward) {
             val v = r.header(h)
             if (v != null) {
-                headBuilder.append(h).append(": ").append(v).append("\r\n")
+                headBuilder
+                    .append(h)
+                    .append(": ")
+                    .append(v)
+                    .append("\r\n")
             }
         }
 
@@ -260,9 +297,14 @@ internal fun ClientHandler.handleStreamProxy(os: OutputStream, params: Map<Strin
             var defaultType = if (requestedItag == 140) "audio/mp4" else "video/mp4"
             if (requestedItag == -1) {
                 // Itag-less services: the manifest's mtype decides.
-                defaultType = if ("audio" == mediaType) "audio/mp4"
-                else if ("video" == mediaType) "video/mp4"
-                else "application/octet-stream"
+                defaultType =
+                    if ("audio" == mediaType) {
+                        "audio/mp4"
+                    } else if ("video" == mediaType) {
+                        "video/mp4"
+                    } else {
+                        "application/octet-stream"
+                    }
             }
             headBuilder.append("Content-Type: ").append(defaultType).append("\r\n")
         }
@@ -305,13 +347,16 @@ private fun fetchFromCdn(
     cacheKey: String,
     rangeHeader: String?,
 ): okhttp3.Response {
-    val reqBuilder = okhttp3.Request.Builder()
-        .url(directUrl)
-        .header("User-Agent", cdnUserAgent(directUrl, cacheKey))
+    val reqBuilder =
+        okhttp3.Request
+            .Builder()
+            .url(directUrl)
+            .header("User-Agent", cdnUserAgent(directUrl, cacheKey))
 
     // Bilibili's CDN answers 403 without a matching Referer.
     if (directUrl.contains("bilivideo.com") || directUrl.contains("bilibili.com") ||
-        directUrl.contains("akamaized.net")) {
+        directUrl.contains("akamaized.net")
+    ) {
         reqBuilder.header("Referer", "https://www.bilibili.com/")
         reqBuilder.header("Origin", "https://www.bilibili.com")
     }
@@ -326,7 +371,10 @@ private fun fetchFromCdn(
 }
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleManifestProxy(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val mediaUrl = params["id"]!!
 
@@ -348,7 +396,8 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
 
     val bodyBytes = manifestXml.toByteArray(Charsets.UTF_8)
 
-    val responseHeaders = "HTTP/1.1 200 OK\r\n" +
+    val responseHeaders =
+        "HTTP/1.1 200 OK\r\n" +
             "Content-Type: application/dash+xml; charset=UTF-8\r\n" +
             "Content-Length: " + bodyBytes.size + "\r\n" +
             "Access-Control-Allow-Origin: *\r\n" +
@@ -358,10 +407,17 @@ internal fun ClientHandler.handleManifestProxy(os: OutputStream, params: Map<Str
     os.flush()
 }
 
-private fun repCacheKey(serviceId: Int, mediaUrl: String, repId: String) = "${serviceId}_${mediaUrl}_rep_$repId"
+private fun repCacheKey(
+    serviceId: Int,
+    mediaUrl: String,
+    repId: String,
+) = "${serviceId}_${mediaUrl}_rep_$repId"
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleSubtitlesProxy(os: OutputStream, params: Map<String, String>) {
+internal fun ClientHandler.handleSubtitlesProxy(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
     val serviceId = getServiceId(params)
     val mediaUrl = params["id"]
     val lang = params["lang"]
@@ -398,14 +454,17 @@ internal fun ClientHandler.handleSubtitlesProxy(os: OutputStream, params: Map<St
         if (subUrl != null) {
             subUrl = subUrl.replace(Regex("&fmt=[^&]*"), "") + "&fmt=vtt"
         }
-        val req = okhttp3.Request.Builder()
-            .url(subUrl!!)
-            .header("User-Agent", "Mozilla/5.0")
-            .build()
+        val req =
+            okhttp3.Request
+                .Builder()
+                .url(subUrl!!)
+                .header("User-Agent", "Mozilla/5.0")
+                .build()
         LocalHttpServer.httpClient.newCall(req).execute().use { response ->
             val bodyBytes = (response.body?.string() ?: "").withoutCueSettings().toByteArray(Charsets.UTF_8)
             val contentType = "text/vtt"
-            val headers = "HTTP/1.1 200 OK\r\n" +
+            val headers =
+                "HTTP/1.1 200 OK\r\n" +
                     "Content-Type: " + contentType + "; charset=UTF-8\r\n" +
                     "Content-Length: " + bodyBytes.size + "\r\n" +
                     "Access-Control-Allow-Origin: *\r\n" +
@@ -423,8 +482,7 @@ internal fun ClientHandler.handleSubtitlesProxy(os: OutputStream, params: Map<St
  * YouTube's WebVTT puts placement on every cue's timing line ("align:start position:0%"), which the
  * player obeys, pinning captions to the left. Dropping it leaves them centred by the player.
  */
-private fun String.withoutCueSettings(): String =
-    replace(Regex("""^(\S+ --> \S+)[ \t]+\S.*$""", RegexOption.MULTILINE), "$1")
+private fun String.withoutCueSettings(): String = replace(Regex("""^(\S+ --> \S+)[ \t]+\S.*$""", RegexOption.MULTILINE), "$1")
 
 // The single-page app: its HTML shell, and its stylesheet and script. The ?v= cache-busting
 // parameter is ignored: a content change changes WebAssets.appVersion and so the URL itself,

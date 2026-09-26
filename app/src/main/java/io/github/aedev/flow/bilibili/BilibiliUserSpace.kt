@@ -31,7 +31,11 @@ internal class BilibiliUserSpace(
             mid = mid,
             name = data.card.name,
             avatarUrl = data.card.face.toHttps(),
-            bannerUrl = data.space?.banner?.takeIf { it.isNotBlank() }?.toHttps(),
+            bannerUrl =
+                data.space
+                    ?.banner
+                    ?.takeIf { it.isNotBlank() }
+                    ?.toHttps(),
             followerCount = data.card.fans,
             description = data.card.sign,
         )
@@ -80,10 +84,13 @@ internal class BilibiliUserSpace(
     ): BilibiliPlaylistVideos {
         val url =
             when (kind) {
-                BilibiliPlaylistKind.SEASON ->
+                BilibiliPlaylistKind.SEASON -> {
                     "$SEASON_ARCHIVES_URL?mid=$mid&season_id=$id&sort_reverse=false&page_num=$page&page_size=30"
-                BilibiliPlaylistKind.SERIES ->
+                }
+
+                BilibiliPlaylistKind.SERIES -> {
                     "$SERIES_ARCHIVES_URL?mid=$mid&series_id=$id&only_normal=true&sort=desc&pn=$page&ps=30"
+                }
             }
         val body = request(mid, url)
         val data = decode<PlaylistArchivesResponse>(body).data ?: return BilibiliPlaylistVideos(emptyList(), 0)

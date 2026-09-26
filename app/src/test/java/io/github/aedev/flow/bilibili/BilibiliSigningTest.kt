@@ -1,8 +1,8 @@
 package io.github.aedev.flow.bilibili
 
 import com.google.common.truth.Truth.assertThat
-import kotlin.random.Random
 import org.junit.Test
+import kotlin.random.Random
 
 /**
  * The av/bv codec and the mixin-key shuffle are pinned to the values documented in
@@ -36,6 +36,7 @@ class BilibiliSigningTest {
     @Test
     fun `signing adds a 32 hex w_rid and the wts and is stable for the same inputs`() {
         val key = "ea1db124af3c7062474693fa704f4ff8"
+
         fun sign(): String {
             val params = linkedMapOf("foo" to "114", "bar" to "514", "zab" to "1919810")
             return BilibiliSigning.signWbi(LinkedHashMap(params), key, 1684746387L)

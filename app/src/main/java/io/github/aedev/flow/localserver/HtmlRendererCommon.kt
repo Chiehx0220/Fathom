@@ -1,13 +1,11 @@
 package io.github.aedev.flow.localserver
 
 import android.util.Base64
-
 import io.github.aedev.flow.bilibili.BilibiliLink
 import org.schabi.newpipe.extractor.Image
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.localization.DateWrapper
-
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
@@ -16,10 +14,25 @@ import java.util.Locale
 
 // Shared page toolbox: formatting, escaping, thumbnails, and page (de)serialization.
 object HtmlRendererCommon {
-
     // Fallback avatar palette, picked by name hash (avatarColorFor()).
     @JvmField
-    val AVATAR_COLORS = arrayOf("#ff5722", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39", "#ffc107", "#ff9800")
+    val AVATAR_COLORS =
+        arrayOf(
+            "#ff5722",
+            "#e91e63",
+            "#9c27b0",
+            "#673ab7",
+            "#3f51b5",
+            "#2196f3",
+            "#03a9f4",
+            "#00bcd4",
+            "#009688",
+            "#4caf50",
+            "#8bc34a",
+            "#cddc39",
+            "#ffc107",
+            "#ff9800",
+        )
 
     // Leading "@" is trimmed: comment authors are often handles.
     @JvmStatic
@@ -36,7 +49,10 @@ object HtmlRendererCommon {
     fun getServiceName(serviceId: Int): String {
         if (LocalServerBilibili.isBilibili(serviceId)) return "Bilibili"
         return try {
-            val name = org.schabi.newpipe.extractor.NewPipe.getService(serviceId).serviceInfo.name
+            val name =
+                org.schabi.newpipe.extractor.NewPipe
+                    .getService(serviceId)
+                    .serviceInfo.name
             if (name.isNullOrEmpty()) "Fathom" else name
         } catch (e: Exception) {
             "Fathom"
@@ -87,10 +103,15 @@ object HtmlRendererCommon {
      * YouTube service rejects. So each item's real service is worked out from its own URL, falling back to the page's.
      */
     @JvmStatic
-    fun serviceOf(fallback: Int, url: String): Int {
+    fun serviceOf(
+        fallback: Int,
+        url: String,
+    ): Int {
         if (BilibiliLink.isBilibili(url)) return LocalServerBilibili.serviceId
         return try {
-            org.schabi.newpipe.extractor.NewPipe.getServiceByUrl(url).serviceId
+            org.schabi.newpipe.extractor.NewPipe
+                .getServiceByUrl(url)
+                .serviceId
         } catch (e: Exception) {
             fallback
         }
@@ -120,8 +141,7 @@ object HtmlRendererCommon {
 
     /** Raw presence check, unlike [getThumbnailUrl]'s placeholder-substituted output. */
     @JvmStatic
-    fun hasThumbnail(thumbnails: List<Image>?): Boolean =
-        thumbnails != null && thumbnails.any { it != null && !it.url.isNullOrBlank() }
+    fun hasThumbnail(thumbnails: List<Image>?): Boolean = thumbnails != null && thumbnails.any { it != null && !it.url.isNullOrBlank() }
 
     // Image shape differs by source: items carry a URL string, StreamInfo/ChannelExtractor a List<Image>. This overload takes the URL.
     @JvmStatic
@@ -138,7 +158,10 @@ object HtmlRendererCommon {
 
     // YoutubeService forces hl=zu, so the textual upload date is Zulu; DateWrapper is still reliable, so the date is formatted here.
     @JvmStatic
-    fun formatUploadDate(uploadDate: DateWrapper?, textualFallback: String?): String {
+    fun formatUploadDate(
+        uploadDate: DateWrapper?,
+        textualFallback: String?,
+    ): String {
         if (uploadDate != null) {
             return uploadDate.offsetDateTime().toLocalDate().toString()
         }
@@ -171,19 +194,19 @@ object HtmlRendererCommon {
     }
 
     @JvmStatic
-    fun encodeUrl(url: String?): String {
-        return try {
+    fun encodeUrl(url: String?): String =
+        try {
             java.net.URLEncoder.encode(url, "UTF-8")
         } catch (e: Exception) {
             url ?: ""
         }
-    }
 
     // Also escapes the apostrophe: most call sites wrap this in a single-quoted JS literal.
     @JvmStatic
     fun escapeJs(str: String?): String {
         if (str == null) return ""
-        return str.replace("\\", "\\\\")
+        return str
+            .replace("\\", "\\\\")
             .replace("\"", "\\\"")
             .replace("'", "\\'")
             .replace("\n", "\\n")
@@ -194,7 +217,11 @@ object HtmlRendererCommon {
     @JvmStatic
     fun escapeHtml(str: String?): String {
         if (str == null) return ""
-        return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+        return str
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
     }
 
     /** A JSON string literal. `<`, `>` and `&` are escaped so the text can sit inside a <script> without ending it. */

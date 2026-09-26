@@ -1,6 +1,5 @@
 package io.github.aedev.flow.ui.screens.channel
 
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -8,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliChannelId
 import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.local.PlayerPreferences
@@ -160,8 +160,7 @@ class ChannelViewModel
         private val bilibiliNative =
             BilibiliNativeChannelController(viewModelScope, bilibiliApi(appContext))
 
-        private fun tabSource(): ChannelTabSource =
-            if (_uiState.value.serviceId == BILIBILI_SERVICE_ID) bilibiliNative else tabController
+        private fun tabSource(): ChannelTabSource = if (_uiState.value.serviceId == BILIBILI_SERVICE_ID) bilibiliNative else tabController
 
         internal val tabStates: StateFlow<Map<ChannelTabKind, ChannelTabState>> =
             combine(

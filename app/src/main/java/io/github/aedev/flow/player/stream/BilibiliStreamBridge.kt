@@ -37,7 +37,8 @@ object BilibiliStreamBridge {
                 item.height = format.height
                 item.fps = parseFps(format.frameRate)
                 item.applyRanges(format)
-                VideoStream.Builder()
+                VideoStream
+                    .Builder()
                     .setId("bilibili-$bvid-video-${format.id}-$index")
                     .setContent(format.url, true)
                     .setMediaFormat(MediaFormat.MPEG_4)
@@ -69,7 +70,8 @@ object BilibiliStreamBridge {
                     item.codec = format.codecs
                     item.bitrate = format.bandwidth
                     item.applyRanges(format)
-                    AudioStream.Builder()
+                    AudioStream
+                        .Builder()
                         .setId("bilibili-$bvid-audio-${format.id}-$index")
                         .setContent(format.url, true)
                         .setMediaFormat(MediaFormat.M4A)
@@ -118,12 +120,19 @@ object BilibiliStreamBridge {
     private fun tierHeight(format: BilibiliStreamFormat): Int =
         when (format.id) {
             127 -> 4320
+
             126, 125, 120 -> 2160
+
             116, 112, 80 -> 1080
+
             74, 64 -> 720
+
             32 -> 480
+
             16 -> 360
+
             6 -> 240
+
             // An id this table does not know yet: fall back to the shorter side, which is the tier
             // for both landscape and portrait video.
             else -> minOf(format.width, format.height).takeIf { it > 0 } ?: format.height

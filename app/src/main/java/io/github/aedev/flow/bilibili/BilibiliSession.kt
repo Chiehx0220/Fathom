@@ -7,17 +7,6 @@
  */
 package io.github.aedev.flow.bilibili
 
-import java.io.IOException
-import java.net.URI
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
-import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -29,6 +18,17 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.IOException
+import java.net.URI
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
+import kotlin.random.Random
 
 /**
  * What makes a request look like a real logged-out browser to Bilibili: forged device headers, the
@@ -118,7 +118,17 @@ class BilibiliSession(
     private fun stem(url: String): String = url.substringAfterLast('/').substringBefore('.')
 
     private suspend fun fetchDefaultCookies(): LinkedHashMap<String, String> {
-        val spi = execute(Request.Builder().url(FETCH_COOKIE_URL).apply { userAgentHeaders(WWW_REFERER).forEach { (k, v) -> header(k, v) } }.build())
+        val spi =
+            execute(
+                Request
+                    .Builder()
+                    .url(FETCH_COOKIE_URL)
+                    .apply {
+                        userAgentHeaders(WWW_REFERER).forEach { (k, v) ->
+                            header(k, v)
+                        }
+                    }.build(),
+            )
         val data =
             json.parseToJsonElement(spi.body).jsonObject["data"]?.jsonObject
                 ?: throw IOException("finger/spi returned no data")
@@ -179,16 +189,21 @@ class BilibiliSession(
         return result.toString()
     }
 
-    private fun hmacSha256(key: String, message: String): String {
+    private fun hmacSha256(
+        key: String,
+        message: String,
+    ): String {
         val mac = Mac.getInstance("HmacSHA256")
         mac.init(SecretKeySpec(key.toByteArray(Charsets.UTF_8), "HmacSHA256"))
         return mac.doFinal(message.toByteArray(Charsets.UTF_8)).toHexLower()
     }
 
-    private fun cookieHeader(cookies: Map<String, String>): String =
-        cookies.entries.joinToString("; ") { it.key + "=" + it.value }
+    private fun cookieHeader(cookies: Map<String, String>): String = cookies.entries.joinToString("; ") { it.key + "=" + it.value }
 
-    private class Result(val body: String, val date: String?)
+    private class Result(
+        val body: String,
+        val date: String?,
+    )
 
     private suspend fun execute(request: Request): Result =
         withContext(Dispatchers.IO) {

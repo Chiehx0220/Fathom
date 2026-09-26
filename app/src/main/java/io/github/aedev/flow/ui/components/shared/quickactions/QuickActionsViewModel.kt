@@ -242,7 +242,14 @@ class QuickActionsViewModel
                         }
 
                         is QuickActionUndo.Subscription -> {
-                            setSubscription(undo.channelId, undo.channelName, undo.channelThumbnail, undo.subscribed, announce = false, serviceId = undo.serviceId)
+                            setSubscription(
+                                undo.channelId,
+                                undo.channelName,
+                                undo.channelThumbnail,
+                                undo.subscribed,
+                                announce = false,
+                                serviceId = undo.serviceId,
+                            )
                         }
 
                         is QuickActionUndo.PlaylistRemoval -> {

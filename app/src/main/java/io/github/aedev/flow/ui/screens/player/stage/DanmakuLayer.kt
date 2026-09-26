@@ -37,7 +37,11 @@ private const val SEEK_JUMP_THRESHOLD_MS = 1_500L
 private const val SCROLL_LANES = 14
 private const val FIXED_LANES = 4
 
-private class ActiveDanmaku(val comment: DanmakuComment, val spawnMs: Long, val lane: Int)
+private class ActiveDanmaku(
+    val comment: DanmakuComment,
+    val spawnMs: Long,
+    val lane: Int,
+)
 
 /**
  * Bilibili danmaku overlay - the native-player counterpart of Local Server's own JS-driven version
@@ -179,6 +183,7 @@ internal fun BoxScope.DanmakuLayer(
                     val x = startX + (endX - startX) * progress
                     drawText(layout, topLeft = Offset(x, entry.lane * laneHeightPx))
                 }
+
                 DanmakuPosition.TOP, DanmakuPosition.BOTTOM -> {
                     val progress = ((posMs - entry.spawnMs).toFloat() / FIXED_DURATION_MS).coerceIn(0f, 1f)
                     val alpha =

@@ -52,7 +52,12 @@ internal class BilibiliComments(
         // pn has to come last or nothing is returned.
         val url = "$REPLIES_URL$aid&root=$rpid&pn=$page"
         val body = session.guardedGet(json, videoUrl(bvid), COMMENTS_CLOSED_CODES) { url }
-        val replies = decode(body).data?.replies.orEmpty().map { it.toComment(isPinned = false) }
+        val replies =
+            decode(body)
+                .data
+                ?.replies
+                .orEmpty()
+                .map { it.toComment(isPinned = false) }
         return BilibiliRepliesPage(replies, (page + 1).takeIf { replies.size >= REPLIES_PAGE_SIZE })
     }
 
@@ -82,7 +87,12 @@ internal class BilibiliComments(
     private fun escapeJson(value: String) = value.replace("\\", "\\\\").replace("\"", "\\\"")
 
     private fun unescapeHtml(text: String) =
-        text.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&#39;", "'").replace("&amp;", "&")
+        text
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&quot;", "\"")
+            .replace("&#39;", "'")
+            .replace("&amp;", "&")
 
     private companion object {
         const val COMMENTS_URL = "https://api.bilibili.com/x/v2/reply/wbi/main"

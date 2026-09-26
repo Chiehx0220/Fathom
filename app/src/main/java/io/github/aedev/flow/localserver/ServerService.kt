@@ -73,7 +73,7 @@ class ServerService : Service() {
             val newServer = LocalHttpServer(this, PORT)
             server = newServer
             newServer.startServer()
-            _running.value = true
+            mutableRunning.value = true
 
             try {
                 val pm = getSystemService(POWER_SERVICE) as PowerManager?
@@ -100,7 +100,7 @@ class ServerService : Service() {
         wifiLock?.let { if (it.isHeld) runCatching { it.release() } }
         server?.stopServer()
         server = null
-        _running.value = false
+        mutableRunning.value = false
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -145,16 +145,16 @@ class ServerService : Service() {
         private const val NOTIFICATION_TITLE = "Local server running"
         const val PORT = 8080
 
-        private val _running = MutableStateFlow(false)
+        private val mutableRunning = MutableStateFlow(false)
 
         // True only while the socket is actually bound (set after startServer() succeeds, cleared
         // in stopServer()) - the Settings UI observes this instead of the saved "enabled"
         // preference, which stays true after the system stops the service (e.g. dataSync timeout)
         // or the process dies, so it used to keep showing "online" for a dead server.
-        val runningState: StateFlow<Boolean> = _running.asStateFlow()
+        val runningState: StateFlow<Boolean> = mutableRunning.asStateFlow()
 
         val isRunning: Boolean
-            get() = _running.value
+            get() = mutableRunning.value
 
         fun start(context: Context) {
             val intent = Intent(context, ServerService::class.java)

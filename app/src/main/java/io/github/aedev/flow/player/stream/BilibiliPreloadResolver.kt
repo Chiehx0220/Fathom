@@ -68,7 +68,9 @@ internal object BilibiliPreloadResolver {
             videoStreams = streams.videoStreams,
             audioStreams = streams.audioStreams,
             subtitles = emptyList(),
-            durationSeconds = step.playback.info.durationSec.toLong(),
+            durationSeconds =
+                step.playback.info.durationSec
+                    .toLong(),
             dashManifestUrl = null,
             streamType = StreamType.VIDEO_STREAM,
             relatedVideos = step.relatedVideos,

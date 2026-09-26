@@ -34,8 +34,12 @@ class RemoteActivity : ComponentActivity() {
             }
         }
     }
+
     // The phone's own volume keys turn the page's volume while the remote is paired.
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+    override fun onKeyDown(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
         val step =
             when (keyCode) {
                 KeyEvent.KEYCODE_VOLUME_UP -> VOLUME_STEP

@@ -5,11 +5,10 @@ import android.content.res.Configuration
 import android.util.TypedValue
 import androidx.annotation.AttrRes
 import com.google.android.material.color.DynamicColors
-import com.google.android.material.R as MaterialR
 import io.github.aedev.flow.R
+import com.google.android.material.R as MaterialR
 
 object DynamicColorHelper {
-
     // Single source of truth for the MD3 baseline palette: per-attr resolve fallback, and full
     // override when the resolved dynamic palette is internally inconsistent (see isColorDark).
     private fun baselinePalette(dark: Boolean): Map<String, String> {
@@ -42,7 +41,10 @@ object DynamicColorHelper {
     }
 
     @JvmStatic
-    fun getThemeColors(context: Context, dark: Boolean): MutableMap<String, String> {
+    fun getThemeColors(
+        context: Context,
+        dark: Boolean,
+    ): MutableMap<String, String> {
         val colors = HashMap<String, String>()
         val baseline = baselinePalette(dark)
         try {
@@ -55,7 +57,10 @@ object DynamicColorHelper {
             // Wrap context with dynamic colors if supported
             val wrappedContext = DynamicColors.wrapContextIfAvailable(themedContext)
 
-            fun resolve(name: String, @AttrRes attr: Int) {
+            fun resolve(
+                name: String,
+                @AttrRes attr: Int,
+            ) {
                 colors[name] = getHexColor(wrappedContext, attr, baseline.getValue(name))
             }
 
@@ -91,8 +96,8 @@ object DynamicColorHelper {
         return colors
     }
 
-    private fun isColorDark(hexColorIn: String): Boolean {
-        return try {
+    private fun isColorDark(hexColorIn: String): Boolean =
+        try {
             val hexColor = if (hexColorIn.startsWith("#")) hexColorIn.substring(1) else hexColorIn
             val rgb = hexColor.toInt(16)
             val r = (rgb shr 16) and 0xFF
@@ -103,9 +108,12 @@ object DynamicColorHelper {
         } catch (e: Exception) {
             false
         }
-    }
 
-    private fun getHexColor(context: Context, @AttrRes attr: Int, fallback: String): String {
+    private fun getHexColor(
+        context: Context,
+        @AttrRes attr: Int,
+        fallback: String,
+    ): String {
         try {
             val typedValue = TypedValue()
             if (context.theme.resolveAttribute(attr, typedValue, true)) {

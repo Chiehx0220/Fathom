@@ -10,14 +10,16 @@ private const val AUDIO_ITAG_BASE = 200_000
 private const val AUDIO_SAMPLE_RATE = 44_100
 private const val AUDIO_CHANNELS = 2
 
+internal typealias DownloadFormats = List<PlayerResponse.StreamingData.Format>
+
 /**
  * Bilibili's tracks in the shape the download dialogs already read, so a Bilibili video is offered the same quality,
  * codec and style choices as a YouTube one and downloads through the same pipeline. Bilibili's quality ids are not
  * unique per track, so each track gets its own number.
  */
-internal fun BilibiliPlayback.toDownloadFormats(): Pair<List<PlayerResponse.StreamingData.Format>, List<PlayerResponse.StreamingData.Format>> {
+internal fun BilibiliPlayback.toDownloadFormats(): Pair<DownloadFormats, DownloadFormats> {
     val durationMs = (info.durationSec * 1_000L).toString()
-    val video = videoFormats.mapIndexed { index, format -> format.toFormat(VIDEO_ITAG_BASE + index, isAudio = false, durationMs) }
+    val video = videoFormats.mapIndexed { index, format -> format.toFormat(VIDEO_ITAG_BASE + index, false, durationMs) }
     val audio = audioFormats.mapIndexed { index, format -> format.toFormat(AUDIO_ITAG_BASE + index, isAudio = true, durationMs) }
     return video to audio
 }

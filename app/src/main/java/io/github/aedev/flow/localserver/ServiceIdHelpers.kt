@@ -10,7 +10,10 @@ import org.schabi.newpipe.extractor.ServiceList
  */
 
 /** Bare channel id -> URL: YouTube's canonical form, or a Bilibili space page for its numeric id. */
-fun channelIdToUrl(channelId: String, serviceId: Int = ServiceList.YouTube.serviceId): String =
+fun channelIdToUrl(
+    channelId: String,
+    serviceId: Int = ServiceList.YouTube.serviceId,
+): String =
     if (LocalServerBilibili.isBilibili(serviceId)) {
         LocalServerBilibili.channelUrl(channelId)
     } else {
@@ -42,8 +45,10 @@ fun channelUrlToId(url: String?): String? {
  * Bare video id -> URL: YouTube's canonical form, or a Bilibili video link. Rendering keys
  * everything off `item.url`, so it must be a link the server can read the id back out of.
  */
-fun videoIdToUrl(videoId: String, serviceId: Int = ServiceList.YouTube.serviceId): String =
-    if (serviceId.isYouTubeServiceId) "https://www.youtube.com/watch?v=$videoId" else LocalServerBilibili.videoUrl(videoId)
+fun videoIdToUrl(
+    videoId: String,
+    serviceId: Int = ServiceList.YouTube.serviceId,
+): String = if (serviceId.isYouTubeServiceId) "https://www.youtube.com/watch?v=$videoId" else LocalServerBilibili.videoUrl(videoId)
 
 fun playlistIdToUrl(playlistId: String): String = "https://www.youtube.com/playlist?list=$playlistId"
 

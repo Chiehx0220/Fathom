@@ -23,8 +23,16 @@ class BilibiliSearchParserTest {
         val video =
             BilibiliSearchParser.toItem(
                 SearchResponse.Item(
-                    type = "video", bvid = "BV1x", title = "t", pic = "//i0.hdslb.com/a.jpg",
-                    duration = "1:00", play = 5, author = "a", mid = 7, upic = "//i0.hdslb.com/u.jpg", pubdate = 9,
+                    type = "video",
+                    bvid = "BV1x",
+                    title = "t",
+                    pic = "//i0.hdslb.com/a.jpg",
+                    duration = "1:00",
+                    play = 5,
+                    author = "a",
+                    mid = 7,
+                    upic = "//i0.hdslb.com/u.jpg",
+                    pubdate = 9,
                 ),
             ) as BilibiliSearchItem.Video
         assertThat(video.thumbnailUrl).isEqualTo("https://i0.hdslb.com/a.jpg")

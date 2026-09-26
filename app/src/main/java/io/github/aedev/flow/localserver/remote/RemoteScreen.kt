@@ -42,7 +42,10 @@ import androidx.compose.ui.unit.IntOffset
 import io.github.aedev.flow.R
 import io.github.aedev.flow.localserver.LocalHttpServer
 
-private enum class RemoteMode(val label: Int, val icon: ImageVector) {
+private enum class RemoteMode(
+    val label: Int,
+    val icon: ImageVector,
+) {
     DIRECTIONS(R.string.remote_tab_directions, Icons.Default.RadioButtonChecked),
     PLAYBACK(R.string.remote_tab_playback, Icons.Default.PlayArrow),
     TOUCHPAD(R.string.remote_tab_touchpad, Icons.Default.TouchApp),
@@ -67,7 +70,14 @@ internal fun RemoteScreen(onBack: () -> Unit) {
                     Column {
                         Text(stringResource(R.string.remote_title))
                         Text(
-                            if (lock.locked) stringResource(R.string.remote_connected_to, lock.clientIp ?: "") else stringResource(R.string.remote_not_connected),
+                            if (lock.locked) {
+                                stringResource(
+                                    R.string.remote_connected_to,
+                                    lock.clientIp ?: "",
+                                )
+                            } else {
+                                stringResource(R.string.remote_not_connected)
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -107,8 +117,14 @@ internal fun RemoteScreen(onBack: () -> Unit) {
                 targetState = if (lock.locked) mode else null,
                 transitionSpec = {
                     val direction = if ((targetState?.ordinal ?: -1) > (initialState?.ordinal ?: -1)) 1 else -1
-                    (slideInHorizontally(motion.fastSpatialSpec<IntOffset>()) { it / 5 * direction } + fadeIn(motion.defaultEffectsSpec<Float>())) togetherWith
-                        (slideOutHorizontally(motion.fastSpatialSpec<IntOffset>()) { -it / 5 * direction } + fadeOut(motion.defaultEffectsSpec<Float>()))
+                    (
+                        slideInHorizontally(motion.fastSpatialSpec<IntOffset>()) { it / 5 * direction } +
+                            fadeIn(motion.defaultEffectsSpec<Float>())
+                    ) togetherWith
+                        (
+                            slideOutHorizontally(motion.fastSpatialSpec<IntOffset>()) { -it / 5 * direction } +
+                                fadeOut(motion.defaultEffectsSpec<Float>())
+                        )
                 },
                 label = "remotePage",
             ) { page ->

@@ -84,7 +84,12 @@ data class BilibiliRelated(
 
 // region Search
 
-enum class BilibiliSearchType(val apiValue: String) { VIDEO("video"), USER("bili_user") }
+enum class BilibiliSearchType(
+    val apiValue: String,
+) {
+    VIDEO("video"),
+    USER("bili_user"),
+}
 
 sealed interface BilibiliSearchItem {
     data class Video(
@@ -208,13 +213,21 @@ data class BilibiliRepliesPage(
 // region Failures
 
 /** Lets callers tell a Bilibili failure from a plain network error. */
-sealed class BilibiliException(message: String) : Exception(message)
+sealed class BilibiliException(
+    message: String,
+) : Exception(message)
 
-class BilibiliContentNotAvailableException(message: String) : BilibiliException(message)
+class BilibiliContentNotAvailableException(
+    message: String,
+) : BilibiliException(message)
 
-class BilibiliGeoRestrictedException(message: String) : BilibiliException(message)
+class BilibiliGeoRestrictedException(
+    message: String,
+) : BilibiliException(message)
 
-class BilibiliPaidContentException(message: String) : BilibiliException(message)
+class BilibiliPaidContentException(
+    message: String,
+) : BilibiliException(message)
 
 // endregion
 

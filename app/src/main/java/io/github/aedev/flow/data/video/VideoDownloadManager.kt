@@ -118,8 +118,15 @@ class VideoDownloadManager
 
         fun emitProgress(update: DownloadProgressUpdate) {
             when (update.status) {
-                DownloadItemStatus.COMPLETED, DownloadItemStatus.FAILED, DownloadItemStatus.CANCELLED -> latestProgressByVideo.remove(update.videoId)
-                else -> latestProgressByVideo[update.videoId] = update
+                DownloadItemStatus.COMPLETED, DownloadItemStatus.FAILED, DownloadItemStatus.CANCELLED -> {
+                    latestProgressByVideo.remove(
+                        update.videoId,
+                    )
+                }
+
+                else -> {
+                    latestProgressByVideo[update.videoId] = update
+                }
             }
             _progressUpdates.tryEmit(update)
         }
