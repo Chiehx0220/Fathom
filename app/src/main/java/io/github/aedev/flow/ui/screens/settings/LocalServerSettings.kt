@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui.screens.settings
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,7 +60,7 @@ internal fun LocalServerSettingsSection() {
         remember(running) {
             if (running) ServerService.getLocalIpAddress()?.let { "$it:${ServerService.PORT}" } else null
         }
-    val openRemote = { context.startActivity(android.content.Intent(context, RemoteActivity::class.java)) }
+    val openRemote = { context.startActivity(Intent(context, RemoteActivity::class.java)) }
 
     Surface(
         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -84,7 +85,7 @@ internal fun LocalServerSettingsSection() {
                         Text(text = "📡", style = MaterialTheme.typography.headlineMedium)
                     }
                 }
-                Column(Modifier.weight(1f)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             Modifier
@@ -101,6 +102,13 @@ internal fun LocalServerSettingsSection() {
                         text = stringResource(if (running) R.string.settings_local_server_on else R.string.settings_local_server_off),
                         style = MaterialTheme.typography.titleLarge,
                     )
+                    address?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
                 Switch(
                     checked = running,
@@ -111,22 +119,10 @@ internal fun LocalServerSettingsSection() {
                 )
             }
             if (running) {
-                Column(
-                    modifier = Modifier.padding(start = EmblemSize + CardSpacing),
-                    verticalArrangement = Arrangement.spacedBy(CardSpacing),
-                ) {
-                    address?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    FilledTonalButton(onClick = openRemote, modifier = Modifier.fillMaxWidth()) {
-                        Text(stringResource(R.string.settings_local_server_open_remote))
-                        Spacer(Modifier.width(4.dp))
-                        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, modifier = Modifier.size(18.dp))
-                    }
+                FilledTonalButton(onClick = openRemote, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.settings_local_server_open_remote))
+                    Spacer(Modifier.width(4.dp))
+                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, modifier = Modifier.size(18.dp))
                 }
             }
         }
