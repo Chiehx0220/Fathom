@@ -111,17 +111,22 @@ internal fun LocalServerSettingsSection() {
                 )
             }
             if (running) {
-                address?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                FilledTonalButton(onClick = openRemote, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.settings_local_server_open_remote))
-                    Spacer(Modifier.width(4.dp))
-                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, modifier = Modifier.size(18.dp))
+                Column(
+                    modifier = Modifier.padding(start = EmblemSize + CardSpacing),
+                    verticalArrangement = Arrangement.spacedBy(CardSpacing),
+                ) {
+                    address?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    FilledTonalButton(onClick = openRemote, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.settings_local_server_open_remote))
+                        Spacer(Modifier.width(4.dp))
+                        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, modifier = Modifier.size(18.dp))
+                    }
                 }
             }
         }
