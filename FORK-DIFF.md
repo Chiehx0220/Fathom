@@ -21,75 +21,75 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **100** (2188 changed lines). New files: **46** (4538 lines).
+- Modified upstream files: **110** (2393 changed lines). New files: **47** (4410 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| data/local/BackupRepository.kt | 122 | 34 |
-| player/EnhancedPlayerManager.kt | 120 | 30 |
-| ui/screens/player/PlaybackSessionApplier.kt | 144 | 0 |
-| ui/components/FlowSplashScreen.kt | 28 | 97 |
+| player/EnhancedPlayerManager.kt | 121 | 30 |
+| data/local/BackupRepository.kt | 109 | 18 |
+| ui/screens/player/PlaybackSessionApplier.kt | 116 | 0 |
 | player/datasource/YouTubeHttpDataSource.kt | 97 | 7 |
-| ui/screens/channel/ChannelViewModel.kt | 83 | 2 |
-| notification/SubscriptionCheckWorker.kt | 76 | 0 |
-| data/innertube/RssSubscriptionService.kt | 69 | 3 |
-| ui/screens/search/SearchViewModel.kt | 65 | 4 |
-| MainActivity.kt | 41 | 27 |
-| player/stream/PlaybackLoadResolver.kt | 62 | 1 |
-| ui/screens/home/HomeViewModel.kt | 42 | 19 |
-| ui/FlowNavigation.kt | 31 | 17 |
-| ui/screens/search/SearchScreen.kt | 39 | 4 |
-| ui/screens/player/VideoPlayerViewModel.kt | 32 | 7 |
-| ui/screens/playlists/PlaylistDetailViewModel.kt | 36 | 0 |
-| data/comments/CommentsPager.kt | 28 | 5 |
+| ui/tv/components/TvNavRail.kt | 51 | 45 |
+| ui/screens/channel/ChannelViewModel.kt | 81 | 3 |
+| notification/SubscriptionCheckWorker.kt | 79 | 0 |
+| data/innertube/RssSubscriptionService.kt | 72 | 3 |
+| MainActivity.kt | 46 | 26 |
+| ui/screens/search/SearchViewModel.kt | 68 | 4 |
+| ui/screens/home/HomeViewModel.kt | 44 | 19 |
+| ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
+| ui/screens/search/SearchScreen.kt | 48 | 0 |
+| player/stream/PlaybackLoadResolver.kt | 44 | 1 |
+| player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
+| ui/screens/player/VideoPlayerViewModel.kt | 31 | 7 |
+| ui/screens/player/PlaybackStreamPreparer.kt | 35 | 0 |
+| ui/FlowNavigation.kt | 24 | 10 |
+| ui/screens/playlists/PlaylistDetailViewModel.kt | 33 | 1 |
+| ui/ChannelNavigation.kt | 22 | 11 |
 | ui/screens/home/FlowHeaderLogoIcon.kt | 25 | 7 |
 | ui/screens/home/HomeFeedSources.kt | 28 | 4 |
-| data/local/SubscriptionRepository.kt | 29 | 1 |
-| player/resolver/VideoPlaybackResolver.kt | 24 | 3 |
-| ui/components/VideoCard.kt | 16 | 11 |
-| ui/AppHooks.kt | 14 | 12 |
-| ui/NavigationDestinations.kt | 21 | 5 |
+| ui/screens/player/PlaybackPreparer.kt | 30 | 0 |
+| data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
+| data/local/ViewHistory.kt | 28 | 0 |
+| utils/ShareVideo.kt | 19 | 8 |
+| data/comments/CommentsPager.kt | 19 | 6 |
+| ui/components/shared/card/VideoCardStacked.kt | 15 | 10 |
 | data/local/PlayerPreferences.kt | 24 | 0 |
-| data/local/ViewHistory.kt | 24 | 0 |
-| ui/screens/home/HomeFeedGrid.kt | 23 | 1 |
-| utils/ShareVideo.kt | 18 | 6 |
+| data/paging/SearchPagingSource.kt | 18 | 6 |
+| data/video/VideoDownloadManager.kt | 23 | 1 |
+| data/video/VideoDownloadOptionsLoader.kt | 23 | 1 |
+| ui/NavigationDestinations.kt | 19 | 4 |
+| data/local/SubscriptionRepository.kt | 22 | 0 |
+| data/local/dao/WatchHistoryDao.kt | 22 | 0 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 22 | 0 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
-| data/video/downloader/ParallelDownloader.kt | 19 | 0 |
-| ui/FlowApp.kt | 13 | 5 |
-| ui/screens/player/content/PlayerErrorPanel.kt | 15 | 3 |
+| ui/screens/home/HomeFeedGrid.kt | 22 | 0 |
+| ui/FlowApp.kt | 13 | 7 |
+| ui/screens/player/content/PlayerErrorPanel.kt | 17 | 3 |
+| data/local/entity/VideoEntity.kt | 10 | 9 |
+| ui/AppHooks.kt | 10 | 9 |
 | player/stream/ResolvedPlayback.kt | 17 | 0 |
-| data/video/VideoDownloadManager.kt | 16 | 0 |
+| ui/components/shared/quickactions/QuickActionsViewModel.kt | 14 | 3 |
 | ui/PlayerNavigation.kt | 12 | 4 |
+| ui/screens/channel/ChannelTabController.kt | 13 | 3 |
+| ui/screens/player/effects/PlayerLoadEffects.kt | 14 | 2 |
+| data/local/SubscriptionRecordCodec.kt | 11 | 4 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
-| ui/ChannelNavigation.kt | 13 | 2 |
+| ui/components/shared/quickactions/VideoQuickActionsSheet.kt | 12 | 3 |
 | ui/screens/player/WatchSessionTracker.kt | 12 | 3 |
-| data/local/AppDatabase.kt | 13 | 1 |
-| data/local/dao/WatchHistoryDao.kt | 14 | 0 |
-| data/paging/SearchPagingSource.kt | 13 | 1 |
-| ui/components/QuickActionsViewModel.kt | 14 | 0 |
-| player/GlobalPlayerState.kt | 12 | 0 |
+| ui/screens/player/dialogs/PlayerDialogsContainer.kt | 14 | 1 |
+| player/GlobalPlayerState.kt | 13 | 0 |
 | player/stream/PlaybackPrefetcher.kt | 11 | 1 |
+| ui/components/layout/navigation/MediaNavigator.kt | 10 | 2 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
+| data/local/LikedVideosRepository.kt | 10 | 1 |
+| data/video/downloader/transfer/RangeDownloader.kt | 11 | 0 |
 | player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
-| ui/screens/channel/ChannelCommunityController.kt | 9 | 1 |
-| data/local/entity/VideoEntity.kt | 6 | 3 |
-| ui/screens/player/effects/PlayerLoadEffects.kt | 7 | 2 |
-| sync/merge/CollectionMergers.kt | 4 | 4 |
-| ui/screens/player/dialogs/PlayerDialogsContainer.kt | 7 | 1 |
-| ui/screens/player/stage/VideoStage.kt | 8 | 0 |
-| ui/components/shared/VideoShareAction.kt | 5 | 2 |
-| ui/screens/player/content/VideoInfoContent.kt | 4 | 3 |
-| data/engagement/VideoEngagementUseCase.kt | 6 | 0 |
-| data/local/LikedVideosRepository.kt | 5 | 1 |
-| sync/canonical/Canonical.kt | 6 | 0 |
-| sync/mapping/SimpleMappers.kt | 6 | 0 |
-| ... 40 more, each small | | |
+| ... 50 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
-- Modified upstream files: **7** (37 changed lines). New files: **2** (172 lines).
+- Modified upstream files: **6** (35 changed lines). New files: **2** (173 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -99,15 +99,14 @@ in it). **New files** never conflict; they are ours alone.
 | data/recommendation/NeuroScoring.kt | 2 | 2 |
 | data/recommendation/NeuroClusters.kt | 1 | 1 |
 | data/recommendation/NeuroModels.kt | 2 | 0 |
-| data/recommendation/NeuroVectorMath.kt | 1 | 1 |
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **46** (4746 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **45** (4845 lines).
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **30** (5735 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **35** (6833 lines).
 
 ## Build
 
@@ -119,11 +118,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Resources / strings
 
-- Modified upstream files: **45** (664 changed lines). New files: **3** (62 lines).
+- Modified upstream files: **42** (633 changed lines). New files: **3** (62 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/main/res/values/strings.xml | 83 | 11 |
+| app/src/main/res/values/strings.xml | 90 | 12 |
 | app/src/main/AndroidManifest.xml | 41 | 1 |
 | app/src/main/res/drawable/ic_splash_logo.xml | 32 | 10 |
 | app/src/main/res/drawable-xhdpi/tv_banner.xml | 8 | 18 |
@@ -135,33 +134,39 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/main/res/drawable/ic_fg_flow_play.xml | 7 | 11 |
 | app/src/main/res/drawable/ic_flow_badge_shape.xml | 6 | 12 |
 | app/src/main/res/drawable/ic_launcher_dynamic_foreground.xml | 8 | 9 |
-| app/src/main/res/drawable/splash_icon_ghost.xml | 0 | 17 |
 | app/src/main/res/values-zh-rCN/strings.xml | 6 | 9 |
 | app/src/main/res/drawable/ic_notification_logo.xml | 7 | 6 |
-| app/src/main/res/drawable/splash_icon_amoled.xml | 0 | 13 |
-| app/src/main/res/drawable/splash_icon_monochrome.xml | 0 | 13 |
+| app/src/main/res/values-it/strings.xml | 5 | 8 |
 | app/src/main/res/drawable/ic_flow_logo.xml | 0 | 12 |
-| app/src/main/res/values-ar/strings.xml | 4 | 7 |
+| app/src/main/res/values-ar/strings.xml | 5 | 7 |
+| app/src/main/res/values-uk/strings.xml | 5 | 7 |
 | app/src/main/res/values-az/strings.xml | 4 | 7 |
 | app/src/main/res/values-es/strings.xml | 4 | 7 |
 | app/src/main/res/values-fr/strings.xml | 4 | 7 |
 | app/src/main/res/values-in/strings.xml | 4 | 7 |
-| app/src/main/res/values-it/strings.xml | 4 | 7 |
 | app/src/main/res/values-ko/strings.xml | 4 | 7 |
 | app/src/main/res/values-pl/strings.xml | 4 | 7 |
 | app/src/main/res/values-pt-rBR/strings.xml | 4 | 7 |
 | app/src/main/res/values-ru/strings.xml | 4 | 7 |
 | app/src/main/res/values-tr/strings.xml | 4 | 7 |
-| app/src/main/res/values-uk/strings.xml | 4 | 7 |
-| ... 15 more, each small | | |
+| app/src/main/res/values-vi/strings.xml | 4 | 7 |
+| app/src/main/res/values-de/strings.xml | 4 | 6 |
+| app/src/main/res/values-hi/strings.xml | 4 | 5 |
+| ... 12 more, each small | | |
 
 ## Tests
 
-- Modified upstream files: **3** (28 changed lines). New files: **2** (168 lines).
+- Modified upstream files: **9** (45 changed lines). New files: **2** (168 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | app/src/test/java/io/github/aedev/flow/data/subscriptions/SubscriptionRefreshPlannerTest.kt | 12 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/paging/SearchPagingSourceTest.kt | 8 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/effects/WatchHistoryEntryTest.kt | 7 | 0 |
+| app/src/test/java/io/github/aedev/flow/player/stream/VideoCodecUtilsTest.kt | 6 | 0 |
+| app/src/test/java/io/github/aedev/flow/utils/ShareVideoTest.kt | 2 | 2 |
+| app/src/test/java/io/github/aedev/flow/player/stream/PlaybackLoadResolverTest.kt | 3 | 0 |
+| app/src/test/java/io/github/aedev/flow/ui/components/shared/quickactions/QuickActionsMessagesTest.kt | 1 | 1 |
+| app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelHarness.kt | 1 | 0 |
+| app/src/test/java/io/github/aedev/flow/ui/screens/search/SearchViewModelTest.kt | 1 | 0 |
 
