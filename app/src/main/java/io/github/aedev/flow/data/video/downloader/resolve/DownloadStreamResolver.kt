@@ -1,14 +1,21 @@
 package io.github.aedev.flow.data.video.downloader.resolve
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.bilibili.BilibiliLiveId
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.local.MusicAudioQuality
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.VideoCodec
 import io.github.aedev.flow.data.video.DefaultDownloadSelection
 import io.github.aedev.flow.data.video.DownloadStreamPolicy
 import io.github.aedev.flow.data.video.downloader.request.DownloadRequest
+import io.github.aedev.flow.data.video.toDownloadFormats
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.models.response.PlayerResponse.StreamingData.Format
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor.VideoExtractionResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,22 +40,44 @@ sealed interface ResolveOutcome {
 }
 
 /**
- * Turns a [DownloadRequest] into streams with fresh URLs, through the same InnerTube client ladder
- * playback uses (coalesced with it, so a download of the video on screen costs no second request).
+ * Turns a [DownloadRequest] into streams with fresh URLs: Bilibili ids through its own API, everything else
+ * through the same InnerTube client ladder playback uses (coalesced with it, so a download of the video on
+ * screen costs no second request).
  */
 @Singleton
 class DownloadStreamResolver
     @Inject
     constructor(
+        @ApplicationContext private val context: Context,
         private val preferences: PlayerPreferences,
     ) {
         suspend fun resolve(
             request: DownloadRequest,
             avoidItags: Set<Int> = emptySet(),
         ): ResolveOutcome {
+            if (BilibiliLiveId.isLive(request.videoId)) return ResolveOutcome.Unavailable
+            if (BilibiliVideoId.isBilibili(request.videoId)) return resolveBilibili(request, avoidItags)
             val result = InnerTubeVideoStreamExtractor.extract(request.videoId) ?: return ResolveOutcome.Unavailable
             if (result.isLive) return ResolveOutcome.Unavailable
             return select(request, result, avoidItags, defaults())
+        }
+
+        /** Bilibili's tracks come as plain MP4 URLs, offered to the same selection as YouTube's. */
+        private suspend fun resolveBilibili(
+            request: DownloadRequest,
+            avoidItags: Set<Int>,
+        ): ResolveOutcome {
+            val (bvid, page) = BilibiliVideoId.parse(request.videoId)
+            val playback =
+                try {
+                    bilibiliApi(context).playback(bvid, page)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    return ResolveOutcome.Unavailable
+                }
+            val (video, audio) = playback.toDownloadFormats()
+            return choose(request, video, audio, playback.info.durationSec * 1_000L, avoidItags, defaults())
         }
 
         private suspend fun defaults(): SelectionDefaults =
@@ -77,13 +106,21 @@ class DownloadStreamResolver
                 result: VideoExtractionResult,
                 avoidItags: Set<Int>,
                 defaults: SelectionDefaults,
+            ): ResolveOutcome = choose(request, result.videoFormats, result.audioFormats, result.durationMs(), avoidItags, defaults)
+
+            private fun choose(
+                request: DownloadRequest,
+                allVideo: List<Format>,
+                allAudio: List<Format>,
+                durationMs: Long,
+                avoidItags: Set<Int>,
+                defaults: SelectionDefaults,
             ): ResolveOutcome {
                 val audioFormats =
                     DownloadStreamPolicy
-                        .buildDownloadAudioFormats(result.audioFormats)
+                        .buildDownloadAudioFormats(allAudio)
                         .filterNot { it.itag in avoidItags }
                 val language = request.audioLanguage ?: defaults.language
-                val durationMs = result.durationMs()
                 // A song is only its audio, so it is the one download the song quality setting shapes.
                 val quality = if (request.wantsAudioOnly) defaults.musicQuality else MusicAudioQuality.HIGH
 
@@ -95,7 +132,7 @@ class DownloadStreamResolver
                             DownloadStreamPolicy.pickAacAudio(audioFormats.filter { it.audioTrack?.id == id }, language, quality)
                         }
                         ?: DownloadStreamPolicy.pickAacAudio(audioFormats, language, quality)
-                        ?: return if (result.audioFormats.any { !it.url.isNullOrBlank() }) {
+                        ?: return if (allAudio.any { !it.url.isNullOrBlank() }) {
                             ResolveOutcome.NoCompatibleAudio
                         } else {
                             ResolveOutcome.Unavailable
@@ -107,7 +144,7 @@ class DownloadStreamResolver
 
                 val videoFormats =
                     DownloadStreamPolicy
-                        .buildDownloadVideoFormats(result.videoFormats)
+                        .buildDownloadVideoFormats(allVideo)
                         .filterNot { it.itag in avoidItags }
                 request.videoItag
                     ?.let { itag -> videoFormats.firstOrNull { it.itag == itag } }
