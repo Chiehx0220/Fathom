@@ -80,6 +80,14 @@ fun parseYouTubeLink(text: String): YouTubeLink? {
     }
 }
 
+/** The video id [parseYouTubeLink] finds in [url] (a watch, Short or front-end link), or null. */
+fun youtubeVideoIdFromUrl(url: String): String? =
+    when (val link = parseYouTubeLink(url)) {
+        is YouTubeLink.Video -> link.id
+        is YouTubeLink.Short -> link.id
+        else -> null
+    }
+
 private fun firstUri(text: String): URI? {
     val candidate =
         URL_IN_TEXT.find(text)?.value?.trimEnd { it in TRAILING_PUNCTUATION }

@@ -67,7 +67,6 @@ import io.github.aedev.flow.ui.components.shared.quickactions.QuickActionsViewMo
 import io.github.aedev.flow.ui.components.shared.quickactions.sharedQuickActionsViewModel
 import io.github.aedev.flow.utils.YouTubeLink
 import io.github.aedev.flow.utils.parseYouTubeLink
-import io.github.aedev.flow.utils.videoIdFromUrl
 import org.schabi.newpipe.extractor.ServiceList
 
 /**
@@ -104,12 +103,12 @@ fun SearchScreen(
     }
     val submit: (String) -> Unit = { raw ->
         val text = raw.trim()
-        val bilibiliVideoId = resolvePastedVideoLink(text)?.takeIf { it.second == BILIBILI_SERVICE_ID }
+        val bilibiliVideoId = resolvePastedBilibiliVideoLink(text)
         val link = parseYouTubeLink(text)
         when {
             text.isEmpty() -> Unit
             bilibiliVideoId != null -> {
-                onVideoClick(sharedVideo(bilibiliVideoId.first, context.getString(R.string.shared_video), BILIBILI_SERVICE_ID))
+                onVideoClick(sharedVideo(bilibiliVideoId, context.getString(R.string.shared_video), BILIBILI_SERVICE_ID))
             }
             link == null -> search(text)
             link is YouTubeLink.Search -> search(link.query)
@@ -294,15 +293,12 @@ private fun launchVoiceSearch(
 }
 
 /**
- * Resolves a pasted URL to (videoId, serviceId), trying the fast YouTube-specific regex path
- * first (proven, zero regression risk), then falling back to the extractor's own per-service
- * URL resolution so links from other services (e.g. Bilibili) work too.
+ * A pasted Bilibili video or b23.tv short link's video id, or null: [parseYouTubeLink] already
+ * covers every YouTube link shape, so this only needs to catch what it does not.
  */
-private fun resolvePastedVideoLink(url: String): Pair<String, Int>? {
-    videoIdFromUrl(url)?.let { return it to ServiceList.YouTube.serviceId }
+private fun resolvePastedBilibiliVideoLink(url: String): String? {
     if (!url.startsWith("http")) return null
-    val id = BilibiliVideoId.fromUrl(url) ?: return null
-    return id to BILIBILI_SERVICE_ID
+    return BilibiliVideoId.fromUrl(url)
 }
 
 private fun sharedVideo(

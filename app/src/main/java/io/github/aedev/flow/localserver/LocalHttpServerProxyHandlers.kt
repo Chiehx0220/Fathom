@@ -4,7 +4,7 @@ import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import io.github.aedev.flow.player.error.StreamDenialClassifier
 import io.github.aedev.flow.player.error.StreamDenialKind
 import io.github.aedev.flow.player.stream.ClientGateTracker
-import io.github.aedev.flow.utils.videoIdFromUrl
+import io.github.aedev.flow.utils.youtubeVideoIdFromUrl
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.SubtitlesStream
@@ -202,7 +202,7 @@ internal fun ClientHandler.handleStreamProxy(
     // mtype is part of the cache key: itag-less services (Bilibili) share itag=-1 between video and audio.
     val mediaType = params["mtype"] ?: repId?.let { if (it.startsWith("a")) "audio" else "video" }
     val resolvedMediaUrl = requireNotNull(mediaUrl) { "Missing 'id' parameter" }
-    val videoId = videoIdFromUrl(resolvedMediaUrl)
+    val videoId = youtubeVideoIdFromUrl(resolvedMediaUrl)
     val cacheKey =
         if (repId != null) {
             repCacheKey(serviceId, resolvedMediaUrl, repId)

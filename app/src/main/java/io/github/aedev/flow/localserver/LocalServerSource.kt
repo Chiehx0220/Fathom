@@ -2,7 +2,7 @@ package io.github.aedev.flow.localserver
 
 import android.content.Context
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
-import io.github.aedev.flow.utils.videoIdFromUrl
+import io.github.aedev.flow.utils.youtubeVideoIdFromUrl
 import org.json.JSONArray
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.NewPipe
@@ -216,7 +216,7 @@ internal fun LocalServerSource.streams(
             ExtractorStreams(extractor)
         }
     if (!InnerTubeVideoStreamExtractor.supportsService(serviceId)) return extractorStreams
-    val videoId = videoIdFromUrl(mediaUrl) ?: return extractorStreams
+    val videoId = youtubeVideoIdFromUrl(mediaUrl) ?: return extractorStreams
     return MergedYouTubeStreams(extractorStreams, videoId)
 }
 
@@ -230,7 +230,7 @@ internal fun LocalServerSource.streamInfo(
     val extractor = LocalHttpServer.getCachedExtractor(NewPipe.getService(serviceId), serviceId, mediaUrl)
     val info = synchronized(extractor) { StreamInfo.getInfo(extractor) }
     if (InnerTubeVideoStreamExtractor.supportsService(serviceId)) {
-        videoIdFromUrl(mediaUrl)?.let { LocalServerYouTubeStreams.overlay(info, it) }
+        youtubeVideoIdFromUrl(mediaUrl)?.let { LocalServerYouTubeStreams.overlay(info, it) }
     }
     return info
 }
