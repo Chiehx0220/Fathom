@@ -53,7 +53,6 @@ internal fun PlayerDialogsContainer(
         when (prefs.downloadDialogStyle) {
             io.github.aedev.flow.data.local.DownloadDialogStyle.COMPACT -> {
                 MediaDownloadDialogCompact(
-                    streamInfo = null,
                     streamSizes = uiState.streamSizes,
                     innerTubeVideoFormats = uiState.innerTubeVideoFormats,
                     innerTubeAudioFormats = uiState.innerTubeAudioFormats,
@@ -65,7 +64,6 @@ internal fun PlayerDialogsContainer(
 
             io.github.aedev.flow.data.local.DownloadDialogStyle.FULL -> {
                 MediaDownloadDialog(
-                    streamInfo = null,
                     streamSizes = uiState.streamSizes,
                     innerTubeVideoFormats = uiState.innerTubeVideoFormats,
                     innerTubeAudioFormats = uiState.innerTubeAudioFormats,

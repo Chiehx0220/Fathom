@@ -12,6 +12,7 @@ import io.github.aedev.flow.player.stream.StreamProcessor
 import io.github.aedev.flow.player.stream.StreamSizeEstimator
 import io.github.aedev.flow.player.stream.VideoQualityOptions
 import io.github.aedev.flow.player.stream.buildStreams
+import io.github.aedev.flow.player.stream.toSubtitlesStreams
 import io.github.aedev.flow.ui.screens.player.state.blankVideo
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import org.schabi.newpipe.extractor.stream.AudioStream
@@ -205,6 +206,6 @@ internal class PlaybackStreamPreparer {
         translateTo: String,
     ): List<SubtitlesStream> =
         StreamProcessor.processSubtitleStreams(
-            CaptionTrackResolver.resolve(result.playerResponse, translateTo = translateTo),
+            CaptionTrackResolver.resolve(result.playerResponse, translateTo = translateTo).toSubtitlesStreams(),
         )
 }

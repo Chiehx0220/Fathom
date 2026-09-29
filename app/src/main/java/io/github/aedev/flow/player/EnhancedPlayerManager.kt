@@ -78,6 +78,7 @@ import io.github.aedev.flow.player.stream.ResolvedStreamData
 import io.github.aedev.flow.player.stream.ServicePlaybackStreamSelector
 import io.github.aedev.flow.player.stream.StreamProcessor
 import io.github.aedev.flow.player.stream.VideoCodecUtils
+import io.github.aedev.flow.player.stream.toSubtitlesStreams
 import io.github.aedev.flow.player.surface.SurfaceManager
 import io.github.aedev.flow.player.surface.VideoSurfacePolicy
 import io.github.aedev.flow.player.tracker.PlaybackTracker
@@ -1936,10 +1937,11 @@ class EnhancedPlayerManager private constructor() {
                         videoStreams = mergedVideoStreams,
                         audioStreams = mergedAudioStreams,
                         subtitles =
-                            CaptionTrackResolver.resolve(
-                                extraction.playerResponse,
-                                translateTo = preferredSubtitleLanguage,
-                            ),
+                            CaptionTrackResolver
+                                .resolve(
+                                    extraction.playerResponse,
+                                    translateTo = preferredSubtitleLanguage,
+                                ).toSubtitlesStreams(),
                         durationSeconds = InnerTubeVideoMapper.durationSeconds(extraction),
                         dashManifestUrl = extraction.liveDashUrl,
                         hlsUrl = extraction.liveHlsUrl,
@@ -2076,10 +2078,11 @@ class EnhancedPlayerManager private constructor() {
                 videoStreams = mergedVideoStreams,
                 audioStreams = mergedAudioStreams,
                 subtitles =
-                    CaptionTrackResolver.resolve(
-                        extraction.playerResponse,
-                        translateTo = preferredSubtitleLanguage,
-                    ),
+                    CaptionTrackResolver
+                        .resolve(
+                            extraction.playerResponse,
+                            translateTo = preferredSubtitleLanguage,
+                        ).toSubtitlesStreams(),
                 durationSeconds = InnerTubeVideoMapper.durationSeconds(extraction),
                 dashManifestUrl = extraction.liveDashUrl,
                 streamType = InnerTubeVideoMapper.streamType(extraction),

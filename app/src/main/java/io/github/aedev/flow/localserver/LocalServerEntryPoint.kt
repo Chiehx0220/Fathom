@@ -8,6 +8,7 @@ import dagger.hilt.components.SingletonComponent
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionWatchedVideos
 import io.github.aedev.flow.data.video.VideoDownloadManager
+import io.github.aedev.flow.data.video.downloader.work.DownloadController
 import io.github.aedev.flow.ui.screens.home.HomeFeedSources
 import okhttp3.OkHttpClient
 
@@ -27,6 +28,8 @@ interface LocalServerEntryPoint {
     fun subscriptionWatchedVideos(): SubscriptionWatchedVideos
 
     fun videoDownloadManager(): VideoDownloadManager
+
+    fun downloadController(): DownloadController
 
     fun okHttpClient(): OkHttpClient
 }

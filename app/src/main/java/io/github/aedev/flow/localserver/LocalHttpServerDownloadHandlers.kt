@@ -2,23 +2,16 @@ package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.entity.DownloadItemStatus
-import io.github.aedev.flow.data.video.downloader.FlowDownloadService
+import io.github.aedev.flow.data.video.downloader.request.toDownloadRequest
 import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
-import io.github.aedev.flow.player.stream.AudioStreamSelector
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.MediaFormat
-import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.OutputStream
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
-// Web "Download" button -> Flow's own FlowDownloadService/VideoDownloadManager (the same pipeline
-// the app's Quick Actions download uses), so files land in the same place, show up in the app's
-// Downloads screen, and the same progress/notification machinery applies. Nothing here downloads
-// anything itself. YouTube only: Flow's downloader has no Referer/header plumbing for other
-// services' CDNs, so the button is not rendered for them (app/js/watch.js).
+// Web "Download" button -> DownloadController, the same queue as the app's Quick Actions download.
+// The queue worker re-extracts and selects the stream; this only describes the video and quality.
+// YouTube only: the button is not rendered for other services (app/js/watch.js).
 
 // Web-facing state names for the button. "none" also covers CANCELLED (nothing left to show).
 private fun DownloadItemStatus.webState(): String =
@@ -47,49 +40,15 @@ private fun HistoryDbHelper.downloadStateFor(videoId: String): String {
     return downloadStateJson(state, progress)
 }
 
-// Mirrors QuickActionsViewModel.downloadVideo()'s NewPipe-StreamInfo fallback branch (best MP4
-// video-only <= the user's default download quality + preferred-language AAC audio, or a combined
-// progressive stream when that's taller/only option), minus its InnerTube/SABR/VP9 fallbacks - a
-// video that would need those fails here with a message rather than silently doing something
-// different from the app. Returns null on success, else a user-facing error.
+// Enqueues at the default download quality. Returns null on success, else a user-facing error.
 private fun HistoryDbHelper.startNativeDownload(
     serviceId: Int,
     mediaUrl: String,
     videoId: String,
 ): String? {
     val info = LocalServerSource.streamInfo(appContext, serviceId, mediaUrl)
-
     val prefs = PlayerPreferences(appContext)
     val targetHeight = runBlocking { prefs.defaultDownloadQuality.first() }.height
-    val preferredAudioLanguage = runBlocking { prefs.preferredAudioLanguage.first() }
-
-    fun heightOf(s: VideoStream) = LocalHttpServer.getResolutionHeight(s.resolution)
-
-    fun List<VideoStream>.bestForTarget(): VideoStream? {
-        if (isEmpty()) return null
-        if (targetHeight == 0) return maxByOrNull(::heightOf)
-        return filter { heightOf(it) <= targetHeight }.maxByOrNull(::heightOf) ?: minByOrNull(::heightOf)
-    }
-
-    val bestMp4VideoOnly = (info.videoOnlyStreams ?: emptyList()).filter { it.format == MediaFormat.MPEG_4 }.bestForTarget()
-    val bestCombined = (info.videoStreams ?: emptyList()).bestForTarget()
-
-    val useVideoOnly = bestMp4VideoOnly != null && (bestCombined == null || heightOf(bestMp4VideoOnly) > heightOf(bestCombined))
-    val selected =
-        (if (useVideoOnly) bestMp4VideoOnly else bestCombined)
-            ?: return "No downloadable stream found for this video"
-    val videoUrl = selected.content?.takeIf { it.isNotBlank() } ?: return "No downloadable stream found for this video"
-
-    var audioUrl: String? = null
-    if (useVideoOnly) {
-        val audio =
-            AudioStreamSelector.selectPreferredAudioStream(
-                streams = info.audioStreams ?: emptyList(),
-                preferredAudioLanguage = preferredAudioLanguage,
-                compatibilityFilter = { it.format == MediaFormat.M4A },
-            )
-        audioUrl = audio?.content?.takeIf { it.isNotBlank() } ?: return "No compatible audio stream found for this video"
-    }
 
     val video =
         FlowVideo(
@@ -97,7 +56,7 @@ private fun HistoryDbHelper.startNativeDownload(
             title = info.name?.ifBlank { null } ?: "Unknown",
             channelName = info.uploaderName ?: "",
             channelId = info.uploaderUrl?.substringAfterLast("/") ?: "local",
-            thumbnailUrl = info.thumbnails?.maxByOrNull { it.height }?.url ?: "",
+            thumbnailUrl = info.thumbnails.maxByOrNull { it.height }?.url ?: "",
             duration = info.duration.toInt(),
             viewCount = info.viewCount.coerceAtLeast(0),
             uploadDate = "",
@@ -105,21 +64,12 @@ private fun HistoryDbHelper.startNativeDownload(
             serviceId = serviceId,
         )
 
-    // startForegroundService can be refused while the app is in the background (Android 12+
-    // background-start rules) - surfaced to the page instead of failing silently.
-    return try {
-        FlowDownloadService.startDownload(
-            context = appContext,
-            video = video,
-            url = videoUrl,
-            quality = "${heightOf(selected)}p",
-            audioUrl = audioUrl,
-        )
-        null
-    } catch (e: Exception) {
-        LocalHttpServer.log("Download start refused: " + e.message)
-        "Android blocked starting the download while Flow is in the background - open the Flow app and try again"
+    runBlocking {
+        localServerEntryPoint(appContext)
+            .downloadController()
+            .enqueue(video.toDownloadRequest(targetHeight = targetHeight), replaceExisting = true)
     }
+    return null
 }
 
 // GET /api/v1/download?action=status|start|cancel|delete&id=<video url>&serviceId=<n>
@@ -163,7 +113,7 @@ internal fun ClientHandler.handleApiDownload(
         }
 
         "cancel" -> {
-            FlowDownloadService.cancelDownload(dbHelper.appContext, videoId)
+            localServerEntryPoint(dbHelper.appContext).downloadController().cancel(videoId)
             sendResponse(os, 200, downloadStateJson("none", 0), "application/json")
         }
 

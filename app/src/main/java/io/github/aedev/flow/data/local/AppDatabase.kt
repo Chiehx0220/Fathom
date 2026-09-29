@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room.databaseBuilder
 import androidx.room.RoomDatabase
 import io.github.aedev.flow.data.local.dao.CacheDao
+import io.github.aedev.flow.data.local.dao.DownloadCollectionDao
 import io.github.aedev.flow.data.local.dao.DownloadDao
 import io.github.aedev.flow.data.local.dao.HomeFeedCacheDao
 import io.github.aedev.flow.data.local.dao.MusicGraphDao
@@ -17,6 +18,8 @@ import io.github.aedev.flow.data.local.dao.SyncLogDao
 import io.github.aedev.flow.data.local.dao.SyncPeerDao
 import io.github.aedev.flow.data.local.dao.VideoDao
 import io.github.aedev.flow.data.local.dao.WatchHistoryDao
+import io.github.aedev.flow.data.local.entity.DownloadCollectionEntity
+import io.github.aedev.flow.data.local.entity.DownloadCollectionItemEntity
 import io.github.aedev.flow.data.local.entity.DownloadEntity
 import io.github.aedev.flow.data.local.entity.DownloadItemEntity
 import io.github.aedev.flow.data.local.entity.HomeFeedCacheEntity
@@ -64,25 +67,21 @@ import io.github.aedev.flow.data.local.migrations.Migration24To25
         MusicGraphPlaylistEntity::class,
         MusicGraphEdgeEntity::class,
         NoteEntity::class,
+        DownloadCollectionEntity::class,
+        DownloadCollectionItemEntity::class,
     ],
     autoMigrations = [
         AutoMigration(from = 24, to = 25, spec = Migration24To25::class),
         AutoMigration(from = 25, to = 26),
         AutoMigration(from = 26, to = 27),
+        AutoMigration(from = 27, to = 28),
     ],
-    // 27 is upstream's (adds notes). Our own serviceId migrations, previously numbered 26->27 and
-    // 27->28 before this collided with upstream's own use of 27, are renumbered 27->28 and 28->29.
-    //
-    // FORK VERSIONING POLICY: upstream keeps incrementing from here in its own small-number range
-    // (28, 29, 30...) on every future merge. Any migration that exists only in this fork - not
-    // merged from upstream - must NOT continue that sequence, or it collides with upstream's next
-    // version the same way this one did. Instead, jump to a reserved high block starting at 10001
-    // (e.g. the next fork-only migration is Migration(29, 10001)) so this fork's own version range
-    // can never overlap with anything upstream will ever reach on its own. Keep every migration
-    // that touches a column/table upstream might also add idempotent (see MigrationColumns.kt)
-    // regardless - a device can still arrive at a given version having already done the work under
-    // an older numbering, which a reserved block doesn't by itself prevent.
-    version = 29,
+    // FORK VERSIONING POLICY: versions up to 28 are upstream's (AutoMigration chain). Fork-only
+    // migrations must not continue that sequence, since upstream's next version would collide with
+    // them; they use the reserved 10001+ block (next: Migration(10002, 10003)). Migrations touching
+    // columns/tables upstream may also add stay idempotent (see MigrationColumns.kt): a device can
+    // already hold the schema from an earlier numbering.
+    version = 10002,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -97,6 +96,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cacheDao(): CacheDao
 
     abstract fun downloadDao(): DownloadDao
+
+    abstract fun downloadCollectionDao(): DownloadCollectionDao
 
     abstract fun watchHistoryDao(): WatchHistoryDao
 

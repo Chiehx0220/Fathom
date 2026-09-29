@@ -12,7 +12,6 @@ import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.dao.DownloadDao
 import io.github.aedev.flow.data.local.entity.DownloadEntity
@@ -21,6 +20,7 @@ import io.github.aedev.flow.data.local.entity.DownloadItemEntity
 import io.github.aedev.flow.data.local.entity.DownloadItemStatus
 import io.github.aedev.flow.data.local.entity.DownloadWithItems
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.video.downloader.work.DownloadStaging
 import io.github.aedev.flow.data.video.storage.DownloadDestination
 import io.github.aedev.flow.data.video.storage.DownloadFiles
 import io.github.aedev.flow.data.video.storage.DownloadLocation
@@ -115,7 +115,7 @@ class VideoDownloadManager
             context.getSharedPreferences("flow_file_tombstones", Context.MODE_PRIVATE)
         }
 
-        // Progress updates emitted by FlowDownloadService
+        // Progress updates emitted by DownloadRunner
         private val _progressUpdates = MutableSharedFlow<DownloadProgressUpdate>(extraBufferCapacity = 64)
         val progressUpdates: SharedFlow<DownloadProgressUpdate> = _progressUpdates.asSharedFlow()
 
@@ -212,6 +212,9 @@ class VideoDownloadManager
             }
         }
 
+        /** App-private working space for downloads in progress, never visible to other apps. */
+        fun stagingDirectory(): File = File(context.getExternalFilesDir(null) ?: context.filesDir, STAGING_DIR).apply { mkdirs() }
+
         /** The folder the user chose for a music or a video download. */
         suspend fun savedLocation(isMusic: Boolean): DownloadLocation =
             DownloadLocation.forDownload(
@@ -228,7 +231,7 @@ class VideoDownloadManager
             resolveDownloadDestination(
                 chosen = location,
                 defaults = defaultDirectories(fileType),
-                staging = File(context.getExternalFilesDir(null) ?: context.filesDir, STAGING_DIR).apply { mkdirs() },
+                staging = stagingDirectory(),
                 isUsableDirectory = ::isUsableDirectory,
                 hasTreeAccess = { DownloadFiles.hasTreeAccess(context, it) },
             )
@@ -286,12 +289,12 @@ class VideoDownloadManager
                             }.map { toDownloadedVideo(it) }
                     }.flowOn(Dispatchers.IO)
 
-        /** Save a new download with its items */
+        /** Save a new download with its items, replacing the file rows of an earlier attempt. */
         suspend fun saveDownload(
             video: Video,
             items: List<DownloadItemEntity>,
         ) {
-            downloadDao.insertDownload(
+            downloadDao.replaceDownload(
                 DownloadEntity(
                     videoId = video.id,
                     title = video.title,
@@ -301,53 +304,7 @@ class VideoDownloadManager
                     createdAt = System.currentTimeMillis(),
                     serviceId = video.serviceId,
                 ),
-            )
-            downloadDao.insertItems(items)
-        }
-
-        /** Save download with a single muxed file (simplified for completed downloads) */
-        suspend fun saveCompletedDownload(
-            video: Video,
-            filePath: String,
-            quality: String,
-            fileSize: Long,
-            fileType: DownloadFileType = DownloadFileType.VIDEO,
-        ) {
-            val fileName = File(filePath).name
-            downloadDao.insertDownload(
-                DownloadEntity(
-                    videoId = video.id,
-                    title = video.title,
-                    uploader = video.channelName,
-                    duration = video.duration.toLong(),
-                    thumbnailUrl = video.thumbnailUrl,
-                    createdAt = System.currentTimeMillis(),
-                    serviceId = video.serviceId,
-                ),
-            )
-            downloadDao.insertItem(
-                DownloadItemEntity(
-                    videoId = video.id,
-                    fileType = fileType,
-                    fileName = fileName,
-                    filePath = filePath,
-                    format = if (fileType == DownloadFileType.VIDEO) "mp4" else "m4a",
-                    quality = quality,
-                    downloadedBytes = fileSize,
-                    totalBytes = fileSize,
-                    status = DownloadItemStatus.COMPLETED,
-                ),
-            )
-        }
-
-        /** Legacy compat — wraps saveCompletedDownload for callers using DownloadedVideo */
-        suspend fun saveDownloadedVideo(downloadedVideo: DownloadedVideo) {
-            saveCompletedDownload(
-                video = downloadedVideo.video,
-                filePath = downloadedVideo.filePath,
-                quality = downloadedVideo.quality,
-                fileSize = downloadedVideo.fileSize,
-                fileType = DownloadFileType.VIDEO,
+                items,
             )
         }
 
@@ -406,15 +363,18 @@ class VideoDownloadManager
         /** Get download with items */
         suspend fun getDownloadWithItems(videoId: String): DownloadWithItems? = downloadDao.getDownloadWithItems(videoId)
 
-        /** Path of the finished video download of [videoId] when its file is still on disk. */
-        suspend fun localCopyPath(videoId: String): String? =
+        /** The finished video download of [videoId] when its file is still on disk. */
+        suspend fun findLocalCopy(videoId: String): DownloadedVideo? =
             withContext(Dispatchers.IO) {
                 downloadDao
                     .getDownloadWithItems(videoId)
                     ?.takeIf { it.overallStatus == DownloadItemStatus.COMPLETED && !it.isAudioOnly }
-                    ?.primaryFilePath
-                    ?.takeIf { DownloadFiles.exists(context, it) }
+                    ?.takeIf { download -> download.primaryFilePath?.let { DownloadFiles.exists(context, it) } == true }
+                    ?.let(::toDownloadedVideo)
             }
+
+        /** Path of the finished video download of [videoId] when its file is still on disk. */
+        suspend fun localCopyPath(videoId: String): String? = findLocalCopy(videoId)?.filePath
 
         /** Points a finished item at where its file ended up, such as a document in a picked folder. */
         suspend fun updateItemLocation(
@@ -480,6 +440,7 @@ class VideoDownloadManager
                             }
                         }
                         offlineSubtitleStore.delete(videoId)
+                        DownloadStaging(stagingDirectory(), videoId).clear()
                     }
                     true
                 } catch (e: Exception) {
@@ -566,12 +527,13 @@ class VideoDownloadManager
                         id = dwi.download.videoId,
                         title = dwi.download.title,
                         channelName = dwi.download.uploader,
-                        channelId = "local",
-                        thumbnailUrl = dwi.download.thumbnailUrl,
+                        channelId = dwi.download.channelId,
+                        thumbnailUrl = dwi.download.thumbnailPath?.let { "file://$it" } ?: dwi.download.thumbnailUrl,
                         duration = dwi.download.duration.toInt(),
-                        viewCount = 0,
-                        uploadDate = dwi.download.createdAt.toString(),
-                        description = context.getString(R.string.fallback_downloaded_locally),
+                        viewCount = dwi.download.viewCount,
+                        uploadDate = "",
+                        description = dwi.download.description,
+                        likeCount = dwi.download.likeCount,
                         serviceId = dwi.download.serviceId,
                     ),
                 filePath = dwi.primaryFilePath ?: "",

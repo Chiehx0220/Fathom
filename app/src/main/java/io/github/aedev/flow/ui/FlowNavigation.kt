@@ -20,6 +20,7 @@ import io.github.aedev.flow.data.localmedia.toVideo
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.data.music.model.toMusicTrack
+import io.github.aedev.flow.data.music.model.toVideo
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
 import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.ui.components.layout.LocalFlowBottomInsets
@@ -215,7 +216,7 @@ fun NavGraphBuilder.flowAppGraph(
                 navController.navigate("settings")
             },
             onVideoClick = { video ->
-                navController.openVideoOrShorts(video, disableShortsPlayer) { navController.navigateToPlayer(it.id, it.serviceId) }
+                navController.openVideoOrShorts(video, disableShortsPlayer) { playerViewModel.playVideo(it) }
             },
             onMusicClick = { track, queue, sourceName ->
                 musicPlayerViewModel.loadAndPlayTrack(track, queue, sourceName)
@@ -253,7 +254,7 @@ fun NavGraphBuilder.flowAppGraph(
         // Search owns the whole screen, the way YouTube's does.
         SearchScreen(
             onVideoClick = { video ->
-                navController.openVideoOrShorts(video, disableShortsPlayer) { navController.navigateToPlayer(it.id, it.serviceId) }
+                navController.openVideoOrShorts(video, disableShortsPlayer) { playerViewModel.playVideo(it) }
             },
             onShortsQueue = { source ->
                 navController.openShortsOrPlayer(source, disableShortsPlayer)
@@ -279,7 +280,7 @@ fun NavGraphBuilder.flowAppGraph(
         currentRoute.value = "categories"
         io.github.aedev.flow.ui.screens.categories.CategoriesScreen(
             onVideoClick = { video ->
-                navController.openVideoOrShorts(video, disableShortsPlayer) { navController.navigateToPlayer(it.id, it.serviceId) }
+                navController.openVideoOrShorts(video, disableShortsPlayer) { playerViewModel.playVideo(it) }
             },
             onShortClick = { videoId ->
                 navController.openShortsOrPlayer(ShortsQueueSource.SeededFeed(videoId), disableShortsPlayer)
@@ -363,7 +364,7 @@ fun NavGraphBuilder.flowAppGraph(
         ChannelScreen(
             channelUrl = channelUrl,
             onVideoClick = { video ->
-                navController.openVideoOrShorts(video, disableShortsPlayer) { navController.navigateToPlayer(it.id, it.serviceId) }
+                navController.openVideoOrShorts(video, disableShortsPlayer) { playerViewModel.playVideo(it) }
             },
             onChannelClick = { channelId ->
                 mediaNavigator.openChannel(channelId)
@@ -402,7 +403,7 @@ fun NavGraphBuilder.flowAppGraph(
                         )
                     playerViewModel.playLocalVideo(video, deviceFile.toString())
                 } else {
-                    navController.navigateToPlayer(track.videoId, track.serviceId)
+                    playerViewModel.playVideo(track.toVideo())
                 }
             },
             onShortsQueue = { source ->
@@ -484,6 +485,13 @@ fun NavGraphBuilder.flowAppGraph(
                 musicPlayerViewModel.loadAndPlayTrack(selectedTrack, musicTracks, downloadsTitle)
                 onMusicStarted()
             },
+            onOpenCollection = { summary ->
+                if (summary.collection.kind.isMusic) {
+                    mediaNavigator.openMusicPlaylist(summary.collection.id)
+                } else {
+                    navController.navigate("playlist/${summary.collection.id}")
+                }
+            },
             onHomeClick = {
                 navController.navigate("home") {
                     popUpTo("home") { inclusive = true }
@@ -527,7 +535,7 @@ fun NavGraphBuilder.flowAppGraph(
                 onMusicStarted()
             },
             onVideoClick = { track ->
-                navController.navigateToPlayer(track.videoId, track.serviceId)
+                playerViewModel.playVideo(track.toVideo())
             },
             onArtistClick = { channelId ->
                 mediaNavigator.openArtist(channelId)
