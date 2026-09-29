@@ -3,6 +3,8 @@
 This package ports the Bilibili service of PipePipeExtractor (PPE, GPL-3.0). Flow no longer depends
 on PPE (it uses NewPipeExtractor, like upstream); the port is kept in step by hand. The copy it was
 ported from is Chiehx0220/PipePipeExtractor at commit `aef9726d5b1172213066f60bc338eb4278651d61`.
+Upstream (InfinityLoop1308/PipePipeExtractor) has been reviewed up to `c68e10e2` (v5.4.0); its Bilibili
+changes since then are live-stream only, apart from the M-CDN filter below.
 
 When Bilibili changes its risk control, diff the PPE files on the right against the files on the
 left, re-port only what changed, and update the commit above. PPE paths are under
@@ -10,6 +12,7 @@ left, re-port only what changed, and update the commit above. PPE paths are unde
 
 | Here | PPE | Holds |
 |---|---|---|
+| `BilibiliCdn.kt` | `BilibiliService.java` (`isBiliBiliDownloadUrl`, `isMcdnUrl`, `pickStableStreamUrl`) | CDN hosts, required headers, M-CDN filtering |
 | `DeviceForger.kt` | `DeviceForger.java` | Forged Chrome user agent, WebGL strings, window size |
 | `BilibiliSigning.kt` | `utils.java` | av/bv ids, WBI signature, app signature, dm_img telemetry |
 | `BilibiliSession.kt` | `BilibiliService.java`, `utils.java` | Anonymous cookies, headers, daily WBI key |
@@ -26,6 +29,8 @@ left, re-port only what changed, and update the commit above. PPE paths are unde
   (`BilibiliApi.popular`) is Bilibili's public `web-interface/popular`; neither is in PPE.
 
 ## Differences from PPE
+- Backups are filtered by the same M-CDN rule as the primary (PPE does so for audio only), so a stream's mirror
+  group never contains an M-CDN node unless every candidate is one.
 - Requests go through Flow's OkHttp client, not PPE's downloader, so the default user agent of the one
   request sent with an empty Cookie header (`wbi/view`) is OkHttp's. Compare this first if that request fails.
 - A blocked video list moves to the next API in the same call. PPE moves on for the next call.

@@ -170,10 +170,11 @@ class BilibiliApi(
 
     private fun PlayUrlResponse.DashItem.toFormat(): BilibiliStreamFormat? {
         if (baseUrl.isEmpty()) return null
+        val urls = BilibiliCdn.stableUrls(baseUrl, backupUrl.orEmpty())
         return BilibiliStreamFormat(
             id = id,
-            url = baseUrl,
-            backupUrls = backupUrl.orEmpty(),
+            url = urls.first(),
+            backupUrls = urls.drop(1),
             codecs = codecs,
             bandwidth = bandwidth,
             width = width,

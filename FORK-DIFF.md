@@ -21,7 +21,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **110** (2393 changed lines). New files: **47** (4410 lines).
+- Modified upstream files: **110** (2386 changed lines). New files: **47** (4410 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -82,9 +82,9 @@ in it). **New files** never conflict; they are ours alone.
 | ui/components/layout/navigation/MediaNavigator.kt | 10 | 2 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
 | data/local/LikedVideosRepository.kt | 10 | 1 |
-| data/video/downloader/transfer/RangeDownloader.kt | 11 | 0 |
 | player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
+| ui/screens/channel/ChannelCommunityController.kt | 9 | 1 |
 | ... 50 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
@@ -102,11 +102,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **45** (4845 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **47** (4910 lines).
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **35** (6833 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **35** (6830 lines).
 
 ## Build
 

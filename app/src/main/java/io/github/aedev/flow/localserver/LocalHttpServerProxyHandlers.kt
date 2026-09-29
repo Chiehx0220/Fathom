@@ -1,5 +1,6 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.bilibili.BilibiliCdn
 import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import io.github.aedev.flow.player.error.StreamDenialClassifier
 import io.github.aedev.flow.player.error.StreamDenialKind
@@ -353,12 +354,8 @@ private fun fetchFromCdn(
             .url(directUrl)
             .header("User-Agent", cdnUserAgent(directUrl, cacheKey))
 
-    // Bilibili's CDN answers 403 without a matching Referer.
-    if (directUrl.contains("bilivideo.com") || directUrl.contains("bilibili.com") ||
-        directUrl.contains("akamaized.net")
-    ) {
-        reqBuilder.header("Referer", "https://www.bilibili.com/")
-        reqBuilder.header("Origin", "https://www.bilibili.com")
+    if (BilibiliCdn.isCdnUrl(directUrl) || directUrl.contains("bilibili.com")) {
+        BilibiliCdn.headers().forEach { (name, value) -> reqBuilder.header(name, value) }
     }
 
     if (rangeHeader != null) {

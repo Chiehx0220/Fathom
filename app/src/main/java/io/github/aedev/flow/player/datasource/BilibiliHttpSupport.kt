@@ -2,6 +2,7 @@ package io.github.aedev.flow.player.datasource
 
 import android.net.Uri
 import android.util.Log
+import io.github.aedev.flow.bilibili.BilibiliCdn
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -31,23 +32,11 @@ object BilibiliHttpSupport {
 
     private val warnedNoMirrors = AtomicBoolean(false)
 
-    // Broader than BilibiliService.isBiliBiliDownloadUrl() in the extractor (which only checks
-    // "bilivideo.com"/"akamaized.net"): Bilibili also serves from *.mcdn.bilivideo.cn edge/P2P
-    // mirrors (note the .cn, not .com), so match on "bilivideo" generally to catch those too.
-    fun isBilibiliCdnUri(uri: Uri): Boolean {
-        val host = uri.host ?: return false
-        return host.contains("bilivideo") || host.contains("akamaized.net")
-    }
+    fun isBilibiliCdnUri(uri: Uri): Boolean = uri.host?.let(BilibiliCdn::isCdnHost) == true
 
-    // These CDN edges hotlink-check Referer (and, for some streams, the session cookie) and 403
-    // without it. Deliberately no Cookie header — matches the already-verified-working localserver
-    // Bilibili CDN proxy, which sends only User-Agent/Referer/Origin; an earlier attempt that added
-    // a Cookie here still 403'd, so it's left out.
-    fun headers(): Map<String, String> =
-        mapOf(
-            "Origin" to "https://www.bilibili.com",
-            "Referer" to "https://www.bilibili.com/",
-        )
+    // Deliberately no Cookie header: the local server's CDN proxy sends only User-Agent/Referer/Origin,
+    // and adding a Cookie here still 403'd.
+    fun headers(): Map<String, String> = BilibiliCdn.headers()
 
     fun warnIfNoMirrors(host: String?) {
         if (warnedNoMirrors.compareAndSet(false, true)) {

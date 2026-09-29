@@ -1,6 +1,7 @@
 package io.github.aedev.flow.data.video.downloader.transfer
 
 import android.util.Log
+import io.github.aedev.flow.bilibili.BilibiliCdn
 import io.github.aedev.flow.data.video.downloader.YouTubeStreamUrls
 import io.github.aedev.flow.network.ProxyAwareClient
 import io.github.aedev.flow.player.datasource.GoogleVideoRequestPolicy
@@ -14,7 +15,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -281,17 +281,11 @@ class RangeDownloader internal constructor(
                 .url(url)
                 .header("Range", "bytes=$from-$to")
                 .header("User-Agent", fallbackUserAgent)
-            if (isBilibiliCdnUrl(url)) {
-                builder.header("Referer", BILIBILI_ORIGIN + "/").header("Origin", BILIBILI_ORIGIN)
+            if (BilibiliCdn.isCdnUrl(url)) {
+                BilibiliCdn.headers().forEach { (name, value) -> builder.header(name, value) }
             }
         }
         return builder.build()
-    }
-
-    /** Bilibili's CDN answers 403 unless the request appears to come from bilibili.com. */
-    private fun isBilibiliCdnUrl(url: String): Boolean {
-        val host = url.toHttpUrlOrNull()?.host.orEmpty()
-        return "bilivideo" in host || "akamaized.net" in host
     }
 
     private sealed interface ContentLength {
@@ -381,7 +375,6 @@ class RangeDownloader internal constructor(
         private const val INITIAL_RETRY_DELAY_MS = 2_000L
         private const val MAX_RETRY_AFTER_MS = 60_000L
         private const val MAX_PARALLEL_READS = 16
-        private const val BILIBILI_ORIGIN = "https://www.bilibili.com"
 
         fun blockCount(totalBytes: Long): Int = ((totalBytes + BLOCK_SIZE - 1) / BLOCK_SIZE).toInt()
 
