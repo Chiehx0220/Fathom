@@ -258,9 +258,11 @@ const scheduleNext = () => {
 
 // YouTube's 1440p and 4K come as AV1. If this browser can decode that smoothly, the manifest is asked for the tallest ladder (up to 4K);
 // otherwise it gets the H.264 one, which every device plays, up to 1080p. The answer does not change, so it is asked once.
+// decodingInfo() is only a hint; MediaSource.isTypeSupported() is what dash.js's CapabilitiesFilter enforces.
 let highestQuality = null;
 const canPlayHighest = () => highestQuality || (highestQuality = (async () => {
     try {
+        if (!(window.MediaSource && MediaSource.isTypeSupported('video/mp4; codecs="av01.0.12M.08"'))) return false;
         const info = await navigator.mediaCapabilities.decodingInfo({
             type: 'media-source',
             video: { contentType: 'video/mp4; codecs="av01.0.12M.08"', width: 2560, height: 1440, bitrate: 12000000, framerate: 30 },

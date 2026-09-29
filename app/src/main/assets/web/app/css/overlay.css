@@ -31,7 +31,8 @@
 
 .keyhints { position: fixed; left: 50%; bottom: 18px; z-index: 3040; display: flex; align-items: center; gap: 18px; padding: 10px 22px; border-radius: 26px; background: var(--s2); color: var(--mute); font-size: 13px; white-space: nowrap; transform: translateX(-50%); transition: opacity 0.4s; }
 .keyhints.idle { opacity: 0; }
-.keyhints .k { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; margin-right: 6px; padding: 0 6px; border-radius: 8px; background: var(--s3); color: var(--fg); font-size: 12px; font-weight: 500; }
+/* Middle-aligned: icon-font and text badges have different baselines. */
+.keyhints .k { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; min-width: 26px; height: 26px; margin-right: 6px; padding: 0 6px; border-radius: 8px; background: var(--s3); color: var(--fg); font-size: 12px; font-weight: 500; }
 .keyhints .k .i { font-size: 16px; }
 
 @media (max-width: 720px) {

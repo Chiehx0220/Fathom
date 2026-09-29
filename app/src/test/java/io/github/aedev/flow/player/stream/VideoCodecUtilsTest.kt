@@ -18,6 +18,12 @@ class VideoCodecUtilsTest {
     }
 
     @Test
+    fun `codec string preserves case - the tier letter is spec-significant`() {
+        assertThat(VideoCodecUtils.codecStringFromMimeType("video/mp4; codecs=\"av01.0.08M.08\"")).isEqualTo("av01.0.08M.08")
+        assertThat(VideoCodecUtils.codecStringFromMimeType("video/mp4; codecs=\"avc1.640028\"")).isEqualTo("avc1.640028")
+    }
+
+    @Test
     fun `codec labels and size keys are simple mappings`() {
         assertThat(VideoCodecUtils.codecLabelFromKey("av1")).isEqualTo("AV1")
         assertThat(VideoCodecUtils.codecLabelFromKey("h264")).isEqualTo("H264")

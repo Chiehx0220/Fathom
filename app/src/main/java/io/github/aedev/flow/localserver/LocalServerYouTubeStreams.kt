@@ -48,37 +48,53 @@ internal object LocalServerYouTubeStreams {
         extractionCache.remove(videoId)
     }
 
-    /** Overlays [info]'s video-only/audio streams with InnerTube's, keeping NewPipe's as a fallback. */
+    /**
+     * Overlays [info]'s video-only/audio streams with InnerTube's, keeping NewPipe's as a union
+     * rather than a replacement: InnerTube favors AV1/VP9, which some browsers cannot decode, and
+     * NewPipe's H.264 gives [DashCatalog]'s family picker a fallback.
+     */
     fun overlay(
         info: StreamInfo,
         videoId: String,
     ) {
         val result = extractionFor(videoId) ?: return
-        InnerTubeStreamBridge.convertVideoFormats(result.videoFormats).takeIf { it.isNotEmpty() }?.let { info.videoOnlyStreams = it }
-        InnerTubeStreamBridge.convertAudioFormats(result.audioFormats).takeIf { it.isNotEmpty() }?.let { info.audioStreams = it }
+        InnerTubeStreamBridge.convertVideoFormats(result.videoFormats).takeIf { it.isNotEmpty() }?.let {
+            info.videoOnlyStreams = unionByItag(it, info.videoOnlyStreams.orEmpty()) { s -> s.itag }
+        }
+        InnerTubeStreamBridge.convertAudioFormats(result.audioFormats).takeIf { it.isNotEmpty() }?.let {
+            info.audioStreams = unionByItag(it, info.audioStreams.orEmpty()) { s -> s.itag }
+        }
     }
 }
 
-/** [base]'s streams, with InnerTube's video-only/audio streams for [videoId] wherever it has any. */
+/** [preferred] first, then whichever of [fallback] isn't already there under the same itag. */
+private fun <T> unionByItag(
+    preferred: List<T>,
+    fallback: List<T>,
+    itagOf: (T) -> Int,
+): List<T> {
+    val seenItags = preferred.mapNotNullTo(HashSet()) { itagOf(it).takeIf { itag -> itag > 0 } }
+    return preferred + fallback.filter { itagOf(it) <= 0 || seenItags.add(itagOf(it)) }
+}
+
+/** [base]'s streams unioned with InnerTube's video-only/audio streams for [videoId], InnerTube first. */
 internal class MergedYouTubeStreams(
     private val base: StreamLists,
     private val videoId: String,
 ) : StreamLists {
+    private val innerTube by lazy { LocalServerYouTubeStreams.extractionFor(videoId) }
+
     override val length: Long get() = base.length
     override val videoStreams: List<VideoStream> get() = base.videoStreams
     override val hlsUrl: String? get() = base.hlsUrl
 
-    override val videoOnlyStreams: List<VideoStream>
-        get() {
-            val innerTube = innerTubeFormats()?.let { InnerTubeStreamBridge.convertVideoFormats(it.videoFormats) }
-            return if (!innerTube.isNullOrEmpty()) innerTube else base.videoOnlyStreams
-        }
+    override val videoOnlyStreams: List<VideoStream> by lazy {
+        val preferred = innerTube?.let { InnerTubeStreamBridge.convertVideoFormats(it.videoFormats) }.orEmpty()
+        unionByItag(preferred, base.videoOnlyStreams) { it.itag }
+    }
 
-    override val audioStreams: List<AudioStream>
-        get() {
-            val innerTube = innerTubeFormats()?.let { InnerTubeStreamBridge.convertAudioFormats(it.audioFormats) }
-            return if (!innerTube.isNullOrEmpty()) innerTube else base.audioStreams
-        }
-
-    private fun innerTubeFormats() = LocalServerYouTubeStreams.extractionFor(videoId)
+    override val audioStreams: List<AudioStream> by lazy {
+        val preferred = innerTube?.let { InnerTubeStreamBridge.convertAudioFormats(it.audioFormats) }.orEmpty()
+        unionByItag(preferred, base.audioStreams) { it.itag }
+    }
 }

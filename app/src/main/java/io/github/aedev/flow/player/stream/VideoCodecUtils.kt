@@ -84,16 +84,15 @@ object VideoCodecUtils {
         }
     }
 
-    fun codecStringFromMimeType(mimeType: String): String {
-        val m = mimeType.lowercase()
-        return CODECS_PARAMETER_REGEX
-            .find(m)
+    /** The `codecs=` value with its case preserved: AV1's tier letter (M/H) is case-sensitive in MSE. */
+    fun codecStringFromMimeType(mimeType: String): String =
+        CODECS_PARAMETER_REGEX
+            .find(mimeType)
             ?.groupValues
             ?.getOrNull(1)
             ?.substringBefore(",")
             ?.trim()
             .orEmpty()
-    }
 
     fun codecKeyFromStream(stream: VideoStream): String {
         val url =
