@@ -38,7 +38,9 @@ internal object BilibiliNativeSearch {
 
                 ContentType.CHANNELS -> BilibiliSearchType.USER
 
-                // Bilibili has no shorts, playlist or live tab in this client yet.
+                ContentType.LIVE -> BilibiliSearchType.LIVE
+
+                // Bilibili has no shorts or playlist tab in this client yet.
                 else -> return BilibiliSearchPage(emptyList(), nextKey = null)
             }
         val page = continuation?.toIntOrNull() ?: 1
@@ -57,6 +59,10 @@ internal object BilibiliNativeSearch {
 
                     is BilibiliSearchItem.User -> {
                         SearchResultItem.ChannelResult(item.toChannel())
+                    }
+
+                    is BilibiliSearchItem.Live -> {
+                        SearchResultItem.VideoResult(BilibiliVideoMapper.videoFromLiveItem(item.room))
                     }
                 }
             }

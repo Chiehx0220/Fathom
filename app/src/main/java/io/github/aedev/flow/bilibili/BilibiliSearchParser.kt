@@ -13,6 +13,7 @@ internal object BilibiliSearchParser {
         when (item.type) {
             "video" -> video(item)
             "bili_user" -> user(item)
+            "live_room" -> live(item)
             else -> null
         }
 
@@ -44,6 +45,20 @@ internal object BilibiliSearchParser {
             description = item.usign,
             followerCount = item.fans,
             videoCount = item.videos,
+        )
+    }
+
+    private fun live(item: SearchResponse.Item): BilibiliSearchItem.Live? {
+        if (item.roomid <= 0) return null
+        return BilibiliSearchItem.Live(
+            BilibiliLiveItem(
+                roomId = item.roomid,
+                title = cleanTitle(item.title),
+                coverUrl = absolute(item.userCover),
+                uploaderName = item.uname,
+                uploaderAvatarUrl = absolute(item.uface),
+                viewerCount = item.online,
+            ),
         )
     }
 

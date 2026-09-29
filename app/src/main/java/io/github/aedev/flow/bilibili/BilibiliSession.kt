@@ -18,6 +18,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
 import java.io.IOException
 import java.net.URI
 import java.time.Instant
@@ -239,6 +241,12 @@ class BilibiliSession(
         withContext(Dispatchers.IO) {
             http.newCall(request(url, headers)).execute().use { it.body?.string().orEmpty() }
         }
+
+    internal fun openWebSocket(
+        url: String,
+        headers: Map<String, String>,
+        listener: WebSocketListener,
+    ): WebSocket = http.newWebSocket(request(url, headers), listener)
 
     private fun request(
         url: String,

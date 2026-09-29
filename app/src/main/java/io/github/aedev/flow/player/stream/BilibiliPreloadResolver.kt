@@ -3,6 +3,7 @@ package io.github.aedev.flow.player.stream
 import android.content.Context
 import android.util.Log
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.di.bilibiliApi
@@ -17,12 +18,12 @@ internal object BilibiliPreloadResolver {
     private const val TAG = "BilibiliPreload"
     private const val RESOLVE_TIMEOUT_MS = 25_000L
 
-    /** Null when [video] is not Bilibili's or could not be resolved; the preload then retries later. */
+    /** Null when [video] is not a Bilibili video, is a live room (never preloaded) or could not be resolved. */
     suspend fun resolveOrNull(
         video: Video,
         context: Context,
     ): ResolvedStreamData? {
-        if (video.serviceId != BILIBILI_SERVICE_ID) return null
+        if (video.serviceId != BILIBILI_SERVICE_ID || BilibiliLiveId.isLive(video.id)) return null
         return try {
             resolve(video, context)
         } catch (e: CancellationException) {

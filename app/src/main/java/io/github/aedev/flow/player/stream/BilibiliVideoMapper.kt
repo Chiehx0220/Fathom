@@ -2,6 +2,9 @@ package io.github.aedev.flow.player.stream
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliChannelVideo
+import io.github.aedev.flow.bilibili.BilibiliLiveId
+import io.github.aedev.flow.bilibili.BilibiliLiveItem
+import io.github.aedev.flow.bilibili.BilibiliLiveRoom
 import io.github.aedev.flow.bilibili.BilibiliRelated
 import io.github.aedev.flow.bilibili.BilibiliSearchItem
 import io.github.aedev.flow.bilibili.BilibiliVideoInfo
@@ -105,6 +108,43 @@ object BilibiliVideoMapper {
             description = info.description,
             channelThumbnailUrl = info.uploader.avatarUrl.ifBlank { fallback?.channelThumbnailUrl.orEmpty() },
             tags = tagsOf(info.category).ifEmpty { fallback?.tags.orEmpty() },
+            serviceId = BILIBILI_SERVICE_ID,
+        )
+
+    /** A live room as a [Video]. [videoId] is the id the screen already uses ("live:<roomId>"), kept as is. */
+    fun videoFromLive(
+        videoId: String,
+        room: BilibiliLiveRoom,
+        fallback: Video? = null,
+    ): Video =
+        Video(
+            id = videoId,
+            title = room.title.ifBlank { fallback?.title.orEmpty() },
+            channelName = room.uploader.name.ifBlank { fallback?.channelName.orEmpty() },
+            channelId = room.uploader.mid.takeIf { it > 0 }?.toString() ?: fallback?.channelId.orEmpty(),
+            thumbnailUrl = room.coverUrl.ifBlank { fallback?.thumbnailUrl.orEmpty() },
+            duration = 0,
+            viewCount = room.viewerCount,
+            uploadDate = "",
+            channelThumbnailUrl = room.uploader.avatarUrl.ifBlank { fallback?.channelThumbnailUrl.orEmpty() },
+            tags = room.tags,
+            isLive = true,
+            serviceId = BILIBILI_SERVICE_ID,
+        )
+
+    /** A live room from a list (recommendations, search); it is playing now, so it has no duration. */
+    fun videoFromLiveItem(item: BilibiliLiveItem): Video =
+        Video(
+            id = BilibiliLiveId.of(item.roomId),
+            title = item.title,
+            channelName = item.uploaderName,
+            channelId = "",
+            thumbnailUrl = item.coverUrl,
+            duration = 0,
+            viewCount = item.viewerCount,
+            uploadDate = "",
+            channelThumbnailUrl = item.uploaderAvatarUrl,
+            isLive = true,
             serviceId = BILIBILI_SERVICE_ID,
         )
 

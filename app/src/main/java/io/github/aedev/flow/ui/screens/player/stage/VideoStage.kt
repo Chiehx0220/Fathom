@@ -178,11 +178,18 @@ internal fun VideoStage(
                     modifier = Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced),
                 )
                 if (video.supportsBulletComments) {
-                    DanmakuLayer(
-                        currentPositionMs = screenState.currentPosition,
-                        enabled = screenState.danmakuEnabled,
-                        modifier = Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced),
-                    )
+                    if (playerUiState.isLive) {
+                        LiveDanmakuLayer(
+                            enabled = screenState.danmakuEnabled,
+                            modifier = Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced),
+                        )
+                    } else {
+                        DanmakuLayer(
+                            currentPositionMs = screenState.currentPosition,
+                            enabled = screenState.danmakuEnabled,
+                            modifier = Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced),
+                        )
+                    }
                 }
             }
             if (playerUiState.isRestoredSession) {

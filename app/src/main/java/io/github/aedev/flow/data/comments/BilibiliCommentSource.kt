@@ -2,6 +2,7 @@ package io.github.aedev.flow.data.comments
 
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliComment
+import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.model.Comment
 import java.text.SimpleDateFormat
@@ -27,6 +28,8 @@ internal class BilibiliCommentSource(
         videoId: String,
         continuation: String,
     ): CommentsPageResult {
+        // A live room has no comment section; its chat is the danmaku layer.
+        if (BilibiliLiveId.isLive(videoId)) return CommentsPageResult(comments = emptyList(), continuation = null)
         val page = api.comments(bvidOf(videoId), continuation)
         return CommentsPageResult(comments = page.comments.map { it.toComment() }, continuation = page.nextOffset)
     }

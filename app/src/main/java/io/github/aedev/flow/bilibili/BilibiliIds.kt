@@ -58,6 +58,28 @@ object BilibiliPlaylistId {
 }
 
 /**
+ * How a live room is named inside Flow: "live:<roomId>". Rooms and videos share every place a video
+ * id goes (routes, history, the player), and neither shape can be a YouTube id.
+ */
+object BilibiliLiveId {
+    private const val PREFIX = "live:"
+    private val PATTERN = Regex("""^live:\d+$""")
+    private val LINK = Regex("""^https?://live\.bilibili\.com/(?:[a-z]+/)?(\d+)""", RegexOption.IGNORE_CASE)
+
+    fun isLive(videoId: String): Boolean = PATTERN.matches(videoId)
+
+    fun of(roomId: Long): String = "$PREFIX$roomId"
+
+    /** The room number in a "live:<roomId>" id; null for any other id. */
+    fun roomIdOf(videoId: String): Long? = if (isLive(videoId)) videoId.removePrefix(PREFIX).toLongOrNull() else null
+
+    /** The id in a live-room link ("https://live.bilibili.com/21452505?spm=1"); null when [url] is not one. */
+    fun fromUrl(url: String): String? = LINK.find(url.trim())?.groupValues?.get(1)?.toLongOrNull()?.let(::of)
+
+    fun toUrl(videoId: String): String = "https://live.bilibili.com/${videoId.removePrefix(PREFIX)}"
+}
+
+/**
  * How a video is named inside Flow: "BV1xx?p=2", the bvid and the 1-based part. Everything that has
  * to read or build such an id does it here.
  */
@@ -67,11 +89,11 @@ object BilibiliVideoId {
     private val PART = Regex("""[?&]p=(\d+)""")
 
     /**
-     * True for an id in that shape. Older saved rows can carry the wrong service id, so the id
-     * itself is the surer test: no YouTube id looks like this (they are eleven characters and never
-     * contain "?").
+     * True for a Bilibili video or live-room id. Older saved rows can carry the wrong service id, so
+     * the id itself is the surer test: no YouTube id looks like either (they are eleven characters
+     * and never contain "?" or ":"). Use [BilibiliLiveId.isLive] to tell a room from a video.
      */
-    fun isBilibili(videoId: String): Boolean = PATTERN.matches(videoId)
+    fun isBilibili(videoId: String): Boolean = PATTERN.matches(videoId) || BilibiliLiveId.isLive(videoId)
 
     /** "BV1xx?p=3" -> ("BV1xx", 3). A missing or unreadable part number means the first part. */
     fun parse(videoId: String): Pair<String, Int> {
@@ -110,7 +132,9 @@ object BilibiliVideoId {
         page: Int = 1,
     ): String = "$bvid?p=$page"
 
-    fun toUrl(videoId: String): String = "https://www.bilibili.com$VIDEO_PATH$videoId"
+    /** The link of a video, or of a live room for a "live:<roomId>" id. */
+    fun toUrl(videoId: String): String =
+        if (BilibiliLiveId.isLive(videoId)) BilibiliLiveId.toUrl(videoId) else "https://www.bilibili.com$VIDEO_PATH$videoId"
 
     private const val VIDEO_PATH = "/video/"
 }

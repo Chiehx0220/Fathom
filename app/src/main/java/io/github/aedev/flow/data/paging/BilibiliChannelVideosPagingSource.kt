@@ -27,10 +27,19 @@ class BilibiliChannelVideosPagingSource(
         val key = params.key ?: BilibiliChannelPageKey(page = 1, lastAid = 0L)
         return try {
             val result = withContext(Dispatchers.IO) { api.channelVideos(mid, key) }
+            // The room the uploader is streaming from leads the first page.
+            val liveRoom =
+                if (params.key == null) {
+                    withContext(Dispatchers.IO) { api.channelLiveRoom(mid) }
+                        ?.let { BilibiliVideoMapper.videoFromLiveItem(it).copy(channelId = mid.toString()) }
+                } else {
+                    null
+                }
             LoadResult.Page(
                 data =
                     loadedKeys.filter(
-                        result.videos.map { BilibiliVideoMapper.videoFromChannel(it, mid, channelName, channelAvatarUrl) },
+                        listOfNotNull(liveRoom) +
+                            result.videos.map { BilibiliVideoMapper.videoFromChannel(it, mid, channelName, channelAvatarUrl) },
                         Video::id,
                     ),
                 prevKey = null,

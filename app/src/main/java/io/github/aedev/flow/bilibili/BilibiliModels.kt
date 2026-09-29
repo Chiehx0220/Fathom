@@ -89,6 +89,7 @@ enum class BilibiliSearchType(
 ) {
     VIDEO("video"),
     USER("bili_user"),
+    LIVE("live_room"),
 }
 
 sealed interface BilibiliSearchItem {
@@ -113,12 +114,82 @@ sealed interface BilibiliSearchItem {
         val followerCount: Long,
         val videoCount: Int,
     ) : BilibiliSearchItem
+
+    data class Live(
+        val room: BilibiliLiveItem,
+    ) : BilibiliSearchItem
 }
 
 data class BilibiliSearchPage(
     val items: List<BilibiliSearchItem>,
     val hasMore: Boolean,
 )
+
+// endregion
+
+// region Live
+
+enum class BilibiliLiveStatus { OFFLINE, LIVE, REBROADCAST }
+
+/** A live room's page: who is streaming, what, and since when. */
+data class BilibiliLiveRoom(
+    /** The long room number; the one in a link may be a short alias of it. */
+    val roomId: Long,
+    val title: String,
+    val coverUrl: String,
+    val uploader: BilibiliUploader,
+    val viewerCount: Long,
+    /** Epoch seconds the stream started, 0 when unknown. */
+    val startedAtSec: Long,
+    val tags: List<String>,
+    val status: BilibiliLiveStatus,
+)
+
+/** What a live room can be played from: an HLS master playlist with every quality, or a single FLV. */
+data class BilibiliLiveStreams(
+    val hlsMasterUrl: String?,
+    val flvUrl: String?,
+)
+
+data class BilibiliLivePlayback(
+    val room: BilibiliLiveRoom,
+    val streams: BilibiliLiveStreams,
+)
+
+/** A live room in a list: recommendations and search results. */
+data class BilibiliLiveItem(
+    val roomId: Long,
+    val title: String,
+    val coverUrl: String,
+    val uploaderName: String,
+    val uploaderAvatarUrl: String,
+    val viewerCount: Long,
+    val startedAtSec: Long = 0,
+)
+
+/** Where and how to open a room's chat socket. */
+data class BilibiliLiveChatAccess(
+    val roomId: Long,
+    val token: String,
+    /** Full "wss://host:port/sub" addresses, best first. */
+    val endpoints: List<String>,
+    val buvid: String?,
+)
+
+/** One event of a room's chat. */
+sealed interface BilibiliLiveMessage {
+    data class Chat(
+        val text: String,
+        val argbColor: Int,
+        val position: BilibiliDanmakuPosition,
+    ) : BilibiliLiveMessage
+
+    data class SuperChat(
+        val text: String,
+        val priceYuan: Int,
+        val argbColor: Int,
+    ) : BilibiliLiveMessage
+}
 
 // endregion
 
@@ -226,6 +297,15 @@ class BilibiliGeoRestrictedException(
 ) : BilibiliException(message)
 
 class BilibiliPaidContentException(
+    message: String,
+) : BilibiliException(message)
+
+class BilibiliLiveNotStartedException(
+    message: String,
+) : BilibiliException(message)
+
+/** The room is replaying uploaded videos, which the live player does not cover. */
+class BilibiliLiveRebroadcastException(
     message: String,
 ) : BilibiliException(message)
 

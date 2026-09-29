@@ -9,39 +9,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.player.EnhancedPlayerManager
-import io.github.aedev.flow.player.danmaku.DanmakuComment
-import io.github.aedev.flow.player.danmaku.DanmakuPosition
 import kotlin.math.abs
-
-private const val SCROLL_DURATION_MS = 8_000L
-private const val FIXED_DURATION_MS = 4_000L
 
 // A tick that arrives more than this late for its scheduled time is treated as backlog (e.g. the
 // app was backgrounded) rather than spawned in a sudden burst.
 private const val STALE_THRESHOLD_MS = 1_200L
 private const val SEEK_JUMP_THRESHOLD_MS = 1_500L
-private const val SCROLL_LANES = 14
-private const val FIXED_LANES = 4
-
-private class ActiveDanmaku(
-    val comment: DanmakuComment,
-    val spawnMs: Long,
-    val lane: Int,
-)
 
 /**
  * Bilibili danmaku overlay - the native-player counterpart of Local Server's own JS-driven version
@@ -54,9 +34,8 @@ private class ActiveDanmaku(
  * correcting back to the real value every time a fresh one arrives. The extrapolation only runs
  * while [EnhancedPlayerState.isPlaying] is true, so it costs nothing while paused.
  *
- * BulletCommentsInfoItem.getLastingTime() always returns -1 (an extractor-library bug, not this
- * app's), so on-screen duration is hardcoded to Bilibili's own typical defaults instead of coming
- * from the data, matching Local Server's own /danmaku route.
+ * On-screen duration is Bilibili's own typical default (see [DanmakuField]), because the danmaku
+ * data carries no lasting time. A live room's chat is [LiveDanmakuLayer].
  */
 @Composable
 internal fun BoxScope.DanmakuLayer(
@@ -99,35 +78,10 @@ internal fun BoxScope.DanmakuLayer(
     val textMeasurer = rememberTextMeasurer()
     var nextIndex by remember(sorted) { mutableIntStateOf(0) }
     var lastPositionMs by remember(sorted) { mutableLongStateOf(-1L) }
-    val active = remember(sorted) { mutableStateListOf<ActiveDanmaku>() }
-    val scrollLaneUntil = remember(sorted) { LongArray(SCROLL_LANES) }
-    val topLaneUntil = remember(sorted) { LongArray(FIXED_LANES) }
-    val bottomLaneUntil = remember(sorted) { LongArray(FIXED_LANES) }
-
-    fun pickLane(
-        untilArr: LongArray,
-        now: Long,
-        dur: Long,
-    ): Int {
-        for (i in untilArr.indices) {
-            if (untilArr[i] <= now) {
-                untilArr[i] = now + dur
-                return i
-            }
-        }
-        var idx = 0
-        for (i in 1 until untilArr.size) if (untilArr[i] < untilArr[idx]) idx = i
-        untilArr[idx] = now + dur
-        return idx
-    }
-
-    fun durationFor(comment: DanmakuComment) = if (comment.position == DanmakuPosition.SCROLL) SCROLL_DURATION_MS else FIXED_DURATION_MS
+    val field = remember(sorted) { DanmakuField() }
 
     fun resync(posMs: Long) {
-        active.clear()
-        scrollLaneUntil.fill(0L)
-        topLaneUntil.fill(0L)
-        bottomLaneUntil.fill(0L)
+        field.clear()
         var idx = 0
         while (idx < sorted.size && sorted[idx].timeMs < posMs) idx++
         nextIndex = idx
@@ -141,67 +95,15 @@ internal fun BoxScope.DanmakuLayer(
         } else {
             while (nextIndex < sorted.size && sorted[nextIndex].timeMs <= posMs) {
                 val comment = sorted[nextIndex]
-                if (posMs - comment.timeMs < STALE_THRESHOLD_MS) {
-                    val dur = durationFor(comment)
-                    val lane =
-                        when (comment.position) {
-                            DanmakuPosition.TOP -> pickLane(topLaneUntil, posMs, dur)
-                            DanmakuPosition.BOTTOM -> pickLane(bottomLaneUntil, posMs, dur)
-                            DanmakuPosition.SCROLL -> pickLane(scrollLaneUntil, posMs, dur)
-                        }
-                    active.add(ActiveDanmaku(comment, posMs, lane))
-                }
+                if (posMs - comment.timeMs < STALE_THRESHOLD_MS) field.spawn(comment, posMs)
                 nextIndex++
             }
         }
         lastPositionMs = posMs
-        active.removeAll { posMs - it.spawnMs > durationFor(it.comment) }
+        field.expire(posMs)
     }
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        val widthDp = size.width / density
-        val posMs = smoothedPositionMs
-        active.forEach { entry ->
-            val comment = entry.comment
-            val fontSizeSp = (widthDp * comment.relativeFontSize * 0.028f).coerceIn(14f, 30f)
-            val layout =
-                textMeasurer.measure(
-                    text = comment.text,
-                    style =
-                        TextStyle(
-                            fontSize = fontSizeSp.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(comment.argbColor),
-                        ),
-                )
-            val laneHeightPx = fontSizeSp.sp.toPx() * 1.6f
-            when (comment.position) {
-                DanmakuPosition.SCROLL -> {
-                    val progress = ((posMs - entry.spawnMs).toFloat() / SCROLL_DURATION_MS).coerceIn(0f, 1f)
-                    val startX = size.width
-                    val endX = -layout.size.width.toFloat()
-                    val x = startX + (endX - startX) * progress
-                    drawText(layout, topLeft = Offset(x, entry.lane * laneHeightPx))
-                }
-
-                DanmakuPosition.TOP, DanmakuPosition.BOTTOM -> {
-                    val progress = ((posMs - entry.spawnMs).toFloat() / FIXED_DURATION_MS).coerceIn(0f, 1f)
-                    val alpha =
-                        when {
-                            progress < 0.1f -> progress / 0.1f
-                            progress > 0.85f -> (1f - progress) / 0.15f
-                            else -> 1f
-                        }.coerceIn(0f, 1f)
-                    val x = (size.width - layout.size.width) / 2f
-                    val y =
-                        if (comment.position == DanmakuPosition.TOP) {
-                            8f + entry.lane * laneHeightPx
-                        } else {
-                            size.height - 8f - (entry.lane + 1) * laneHeightPx
-                        }
-                    drawText(layout, topLeft = Offset(x, y), alpha = alpha)
-                }
-            }
-        }
+        with(field) { drawComments(textMeasurer, smoothedPositionMs) }
     }
 }

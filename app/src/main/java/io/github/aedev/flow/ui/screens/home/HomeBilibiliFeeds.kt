@@ -40,6 +40,7 @@ internal suspend fun <T> fetchSafely(
 
 private const val BILIBILI_VIDEOS_PER_CHANNEL = 5
 private const val BILIBILI_SUBS_TOTAL_LIMIT = 60
+private const val BILIBILI_LIVES_LIMIT = 6
 
 internal data class BilibiliWave1Feeds(
     val subs: List<Video>,
@@ -107,9 +108,17 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
                     .flatten()
             }
 
+        // Popular videos, plus a few of the rooms that are live right now.
         val deferredViral =
             async {
-                fetchSafely { bilibili.popular().map(BilibiliVideoMapper::videoFromRelated) }
+                val popular = async { fetchSafely { bilibili.popular().map(BilibiliVideoMapper::videoFromRelated) } }
+                val lives =
+                    async {
+                        fetchSafely {
+                            bilibili.recommendedLives().take(BILIBILI_LIVES_LIMIT).map(BilibiliVideoMapper::videoFromLiveItem)
+                        }
+                    }
+                popular.await() + lives.await()
             }
 
         BilibiliWave1Feeds(

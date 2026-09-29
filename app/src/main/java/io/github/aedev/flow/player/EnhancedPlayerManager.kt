@@ -2857,6 +2857,12 @@ class EnhancedPlayerManager private constructor() {
 
     fun resetDanmaku() = danmakuHandler?.reset()
 
+    /** Marks [roomId] as the live room whose chat the danmaku layer should show. */
+    fun startLiveDanmaku(roomId: Long) = danmakuHandler?.startLive(roomId)
+
+    val liveDanmakuRoom: StateFlow<Long?>
+        get() = danmakuHandler?.liveRoomId ?: MutableStateFlow(null)
+
     val danmakuComments: StateFlow<List<DanmakuComment>>
         get() = danmakuHandler?.comments ?: MutableStateFlow(emptyList())
 

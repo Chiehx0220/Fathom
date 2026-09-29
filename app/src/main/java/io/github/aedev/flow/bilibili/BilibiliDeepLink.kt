@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 /** What an external Bilibili link opens in Flow. */
 sealed interface BilibiliLinkTarget {
-    /** [videoId] in Flow's form, "BV1xx?p=2". */
+    /** [videoId] in Flow's form: "BV1xx?p=2", or "live:<roomId>" for a live room. */
     data class Video(
         val videoId: String,
     ) : BilibiliLinkTarget
@@ -36,10 +36,11 @@ object BilibiliDeepLink {
             .build()
     }
 
-    /** The video or uploader a link points at; null for anything else, including a short link (see [resolve]). */
+    /** The video, live room or uploader a link points at; null for anything else, including a short link (see [resolve]). */
     fun parse(text: String): BilibiliLinkTarget? {
         val url = firstLink(text) ?: return null
         if (!BilibiliLink.isBilibili(url)) return null
+        BilibiliLiveId.fromUrl(url)?.let { return BilibiliLinkTarget.Video(it) }
         BilibiliVideoId.fromUrl(url)?.let { id ->
             val (bvid, page) = BilibiliVideoId.parse(id)
             return BilibiliLinkTarget.Video(BilibiliVideoId.of(bvid, page))

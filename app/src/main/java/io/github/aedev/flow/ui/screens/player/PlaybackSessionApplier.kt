@@ -111,6 +111,10 @@ internal class PlaybackSessionApplier(
                 applyVodFromBilibili(load, step)
             }
 
+            is ResolvedPlayback.LiveFromBilibili -> {
+                applyLiveFromBilibili(load, step)
+            }
+
             is ResolvedPlayback.Upcoming -> {
                 enterUpcoming(load.videoId, step.releaseTimeMs, step.relatedVideos, load.token, step.details)
                 armCountdownMetadata(load, step.relatedVideos, step.details?.channelId)
@@ -255,6 +259,63 @@ internal class PlaybackSessionApplier(
                 uiState.update { it.applyVodFailure(step.relatedVideos, videoError) }
             }
         }
+    }
+
+    private suspend fun applyLiveFromBilibili(
+        load: LoadContext,
+        step: ResolvedPlayback.LiveFromBilibili,
+    ) {
+        try {
+            prepareLiveStreamFromBilibili(load, step)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Bilibili live failed for ${load.videoId}", e)
+            val videoError = VideoErrorMapper.from(context, e, load.videoId)
+            if (isLoadCurrent(load.token)) {
+                uiState.update { it.applyVodFailure(emptyList(), videoError) }
+            }
+        }
+    }
+
+    /**
+     * Bilibili's live room: an HLS master through the same player path as a YouTube live stream. A room
+     * has no related lane, and its chat is opened by the danmaku layer, only while that is on screen.
+     */
+    private suspend fun prepareLiveStreamFromBilibili(
+        load: LoadContext,
+        step: ResolvedPlayback.LiveFromBilibili,
+    ) = withContext(Dispatchers.Main) {
+        if (!isLoadCurrent(load.token)) return@withContext
+
+        val videoId = load.videoId
+        val streams = streamPreparer.assembleLive(videoId, uiState.value.cachedVideo, step)
+        val identity = streams.identity
+        GlobalPlayerState.setCurrentVideo(identity.enrichedVideo)
+        recordWatchClick(identity.enrichedVideo)
+        playbackPreparer.beginSession(videoId, identity.title, identity.channel, identity.thumbnail)
+
+        uiState.update { it.applyLiveStreams(emptyList(), streams.hlsUrl).copy(cachedVideo = identity.enrichedVideo) }
+
+        val liveStarted =
+            playbackPreparer.prepareLiveStreams(
+                videoId = videoId,
+                hlsUrl = streams.hlsUrl,
+                dashManifestUrl = null,
+                subtitles = emptyList(),
+                isCurrent = { isLoadCurrent(load.token) },
+                progressiveStream = streams.progressiveStream,
+            )
+        if (!liveStarted) return@withContext
+
+        secondaryMetadata.loadChannelMetadata(
+            videoId = videoId,
+            uploaderUrl = null,
+            channelId = identity.channelId,
+            embeddedAvatarUrls = identity.embeddedAvatarUrls,
+            loadToken = load.token,
+        )
+        playerManager.startLiveDanmaku(step.playback.room.roomId)
     }
 
     /**

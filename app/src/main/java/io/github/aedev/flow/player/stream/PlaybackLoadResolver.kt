@@ -3,6 +3,7 @@ package io.github.aedev.flow.player.stream
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.local.ViewHistory
@@ -225,7 +226,11 @@ class PlaybackLoadResolver
             val videoId = request.videoId
             val step =
                 try {
-                    bilibiliSource.resolve(request, preferences)
+                    if (BilibiliLiveId.isLive(videoId)) {
+                        bilibiliSource.resolveLive(request)
+                    } else {
+                        bilibiliSource.resolve(request, preferences)
+                    }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

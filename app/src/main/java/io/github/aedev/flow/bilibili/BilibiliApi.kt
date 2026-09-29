@@ -6,12 +6,14 @@
  */
 package io.github.aedev.flow.bilibili
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.Json
 import java.net.URLEncoder
 
 /**
- * Bilibili's web API, the counterpart of InnerTube for YouTube. Ordinary uploaded videos only;
- * bangumi, live and paid content are not covered yet.
+ * Bilibili's web API, the counterpart of InnerTube for YouTube: uploaded videos and live rooms.
+ * Bangumi and paid content are not covered yet.
  *
  * @param session holds the cookies, forged device and WBI key, shared by every call.
  * @param loggedInCookie the user's own cookie, if signed in. Without it Bilibili serves 1080p at most.
@@ -23,10 +25,13 @@ class BilibiliApi(
         Json {
             ignoreUnknownKeys = true
             isLenient = true
+            coerceInputValues = true
         },
 ) {
     private val userSpace = BilibiliUserSpace(session, json)
     private val comments = BilibiliComments(session, json)
+    private val live = BilibiliLive(session, json)
+    private val liveChat = BilibiliLiveChat(session, live, json)
 
     // region Video
 
@@ -128,7 +133,7 @@ class BilibiliApi(
             .map { BilibiliChapter(it.content, it.from.toInt(), it.imgUrl.takeIf { url -> url.isNotBlank() }) }
     }
 
-    /** All danmaku of one part. Live danmaku needs a WebSocket and is not covered. */
+    /** All danmaku of one part. A live room's chat is [liveMessages]. */
     suspend fun danmaku(info: BilibiliVideoInfo): List<BilibiliDanmaku> {
         val headers = session.headers("https://www.bilibili.com/video/${info.bvid}")
         val raw = session.getBytes("$DANMAKU_URL${info.cid}", headers)
@@ -214,7 +219,7 @@ class BilibiliApi(
 
     // region Search
 
-    /** One page (1-based). Live rooms, anime and films are skipped for now. */
+    /** One page (1-based). Anime and films are skipped for now. */
     suspend fun search(
         keyword: String,
         type: BilibiliSearchType,
@@ -229,6 +234,45 @@ class BilibiliApi(
         val items = data.result.orEmpty().mapNotNull { BilibiliSearchParser.toItem(it) }
         return BilibiliSearchPage(items, hasMore = page < data.numPages && !data.result.isNullOrEmpty())
     }
+
+    // endregion
+
+    // region Live
+
+    /**
+     * A room and where to watch it. Throws [BilibiliLiveNotStartedException] when it is not live and
+     * [BilibiliLiveRebroadcastException] when it is replaying uploaded videos.
+     */
+    suspend fun livePlayback(roomId: Long): BilibiliLivePlayback {
+        val room = live.room(roomId)
+        when (room.status) {
+            BilibiliLiveStatus.OFFLINE -> throw BilibiliLiveNotStartedException("Live is not started")
+            BilibiliLiveStatus.REBROADCAST -> throw BilibiliLiveRebroadcastException("This room is replaying uploaded videos")
+            BilibiliLiveStatus.LIVE -> Unit
+        }
+        val streams = live.streams(room.roomId)
+        if (streams.hlsMasterUrl == null && streams.flvUrl == null) {
+            throw BilibiliContentNotAvailableException("The room publishes no playable stream")
+        }
+        return BilibiliLivePlayback(room, streams)
+    }
+
+    suspend fun liveRoom(roomId: Long): BilibiliLiveRoom = live.room(roomId)
+
+    suspend fun recommendedLives(): List<BilibiliLiveItem> = live.recommended()
+
+    /** The room the uploader [mid] is live in right now; null when they are not, or have no room. */
+    suspend fun channelLiveRoom(mid: Long): BilibiliLiveItem? =
+        try {
+            live.roomOf(mid)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        }
+
+    /** The room's chat, reconnecting on its own until the collector stops. [roomId] is the long room number. */
+    fun liveMessages(roomId: Long): Flow<BilibiliLiveMessage> = liveChat.messages(roomId)
 
     // endregion
 

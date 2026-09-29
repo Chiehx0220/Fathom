@@ -199,6 +199,26 @@
                 <data android:host="b23.tv" />
             </intent-filter>
 
+            <!-- Bilibili live rooms: live.bilibili.com/<room number>. A path pattern has no digit class, so one per leading digit. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="live.bilibili.com" />
+                <data android:pathPattern="/1.*" />
+                <data android:pathPattern="/2.*" />
+                <data android:pathPattern="/3.*" />
+                <data android:pathPattern="/4.*" />
+                <data android:pathPattern="/5.*" />
+                <data android:pathPattern="/6.*" />
+                <data android:pathPattern="/7.*" />
+                <data android:pathPattern="/8.*" />
+                <data android:pathPattern="/9.*" />
+            </intent-filter>
+
             <!-- Piped frontend links (same video IDs as YouTube) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

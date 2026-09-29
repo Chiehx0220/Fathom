@@ -11,6 +11,7 @@ import io.github.aedev.flow.player.datasource.BilibiliMirrors
 import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.services.youtube.ItagItem
 import org.schabi.newpipe.extractor.stream.AudioStream
+import org.schabi.newpipe.extractor.stream.DeliveryMethod
 import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.util.Locale
@@ -86,6 +87,17 @@ object BilibiliStreamBridge {
 
     /** Bilibili's quality ids repeat across codecs, so they cannot serve as an itag; -1 is "none". */
     private const val NO_ITAG = -1
+
+    /** A live room's FLV address as the one muxed stream to play when the room publishes no HLS. */
+    fun liveFlvStream(url: String): VideoStream =
+        VideoStream
+            .Builder()
+            .setId("bilibili-live-flv")
+            .setContent(url, true)
+            .setIsVideoOnly(false)
+            .setResolution("")
+            .setDeliveryMethod(DeliveryMethod.PROGRESSIVE_HTTP)
+            .build()
 
     /** True for a stream this bridge built. */
     fun isBilibili(stream: Stream): Boolean = stream.id?.startsWith("bilibili-") == true

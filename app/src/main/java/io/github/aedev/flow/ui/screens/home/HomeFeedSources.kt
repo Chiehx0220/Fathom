@@ -2,6 +2,7 @@ package io.github.aedev.flow.ui.screens.home
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliApi
+import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
@@ -142,7 +143,9 @@ class HomeFeedSources
             return (
                 relatedSemaphore.withPermit {
                     withTimeoutOrNull(RELATED_FETCH_TIMEOUT_MS) {
-                        if (serviceIdOfVideo(seedId, serviceId) == BILIBILI_SERVICE_ID) {
+                        if (BilibiliLiveId.isLive(seedId)) {
+                            emptyList<Video>()
+                        } else if (serviceIdOfVideo(seedId, serviceId) == BILIBILI_SERVICE_ID) {
                             bilibili.related(BilibiliVideoId.parse(seedId).first).map(BilibiliVideoMapper::videoFromRelated)
                         } else {
                             repository.getRelatedCandidates(seedId)

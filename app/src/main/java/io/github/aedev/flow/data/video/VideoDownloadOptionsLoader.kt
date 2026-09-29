@@ -2,6 +2,7 @@ package io.github.aedev.flow.data.video
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.di.bilibiliApi
@@ -37,6 +38,8 @@ class VideoDownloadOptionsLoader
     ) {
         suspend fun load(video: Video): VideoDownloadOptions? =
             withContext(PerformanceDispatcher.networkIO) {
+                // A live room has nothing to download.
+                if (BilibiliLiveId.isLive(video.id)) return@withContext null
                 if (BilibiliVideoId.isBilibili(video.id)) return@withContext loadBilibili(video)
                 val result =
                     withTimeoutOrNull(EXTRACT_TIMEOUT_MS) {

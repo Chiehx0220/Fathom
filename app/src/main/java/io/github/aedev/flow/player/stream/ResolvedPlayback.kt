@@ -1,5 +1,6 @@
 package io.github.aedev.flow.player.stream
 
+import io.github.aedev.flow.bilibili.BilibiliLivePlayback
 import io.github.aedev.flow.bilibili.BilibiliPlayback
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.model.SponsorBlockSegment
@@ -76,6 +77,11 @@ sealed interface ResolvedPlayback {
         val preferredAudioLanguage: String,
         val preferredCodecKey: String,
         val resumePositionOverrideMs: Long?,
+    ) : ResolvedPlayback
+
+    /** A live room from Bilibili's native client: one step, since it has no premiere or SABR variants. */
+    data class LiveFromBilibili(
+        val playback: BilibiliLivePlayback,
     ) : ResolvedPlayback
 
     /** The video has not premiered yet, so the screen shows a countdown rather than an error. */

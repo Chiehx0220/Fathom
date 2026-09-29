@@ -2,6 +2,7 @@ package io.github.aedev.flow.ui.screens.player
 
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.player.stream.BilibiliStreamBridge
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.player.stream.InnerTubeStreamBridge
@@ -57,6 +58,8 @@ internal class PlaybackStreamPreparer {
         val hlsUrl: String?,
         val dashManifestUrl: String?,
         val subtitles: List<SubtitlesStream>,
+        /** A single muxed stream to play when there is no manifest; Bilibili's FLV-only rooms. */
+        val progressiveStream: VideoStream? = null,
     )
 
     fun assembleVod(
@@ -143,6 +146,31 @@ internal class PlaybackStreamPreparer {
             dashManifestUrl = result.liveDashUrl,
             subtitles = captionStreams(result, CaptionTrackResolver.NO_PREFERRED_LANGUAGE),
         )
+
+    /** Bilibili's counterpart: the room's HLS master playlist, or its FLV stream when it publishes no HLS. */
+    fun assembleLive(
+        videoId: String,
+        cached: Video?,
+        step: ResolvedPlayback.LiveFromBilibili,
+    ): LiveStreams {
+        val video = BilibiliVideoMapper.videoFromLive(videoId, step.playback.room, cached)
+        val streams = step.playback.streams
+        return LiveStreams(
+            identity =
+                StreamIdentity(
+                    enrichedVideo = video,
+                    title = video.title,
+                    channel = video.channelName,
+                    thumbnail = video.thumbnailUrl,
+                    channelId = video.channelId,
+                    embeddedAvatarUrls = listOfNotNull(video.channelThumbnailUrl.takeIf { it.isNotBlank() }),
+                ),
+            hlsUrl = streams.hlsMasterUrl,
+            dashManifestUrl = null,
+            subtitles = emptyList(),
+            progressiveStream = streams.flvUrl.takeIf { streams.hlsMasterUrl == null }?.let(BilibiliStreamBridge::liveFlvStream),
+        )
+    }
 
     private fun identity(
         videoId: String,

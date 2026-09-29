@@ -2534,6 +2534,10 @@
     <string name="error_login_required_hint">YouTube only plays this video for signed-in accounts.</string>
     <string name="error_not_available">Video not available</string>
     <string name="error_not_available_hint">This video may have been deleted, made private, or removed by YouTube.</string>
+    <string name="error_live_not_started">This stream has not started</string>
+    <string name="error_live_not_started_hint">The streamer is offline right now. Try again once they are live.</string>
+    <string name="error_live_rebroadcast">This room is replaying videos</string>
+    <string name="error_live_rebroadcast_hint">Flow cannot play uploaded videos that a room rebroadcasts as a live stream.</string>
     <string name="error_not_supported">Content type not supported</string>
     <string name="error_not_supported_hint">This format or content type cannot be played in Flow.</string>
     <string name="error_no_internet">No internet connection</string>

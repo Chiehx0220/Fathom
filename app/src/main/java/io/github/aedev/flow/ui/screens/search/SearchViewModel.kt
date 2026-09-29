@@ -11,6 +11,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.local.SearchHistoryRepository
@@ -134,10 +135,13 @@ class SearchViewModel
             // Only Bilibili is left: its video knows its uploader.
             val uploader =
                 runCatching {
-                    io.github.aedev.flow.di
-                        .bilibiliApi(context)
-                        .videoInfo(BilibiliVideoId.parse(video.id).first)
-                        .uploader
+                    val api = io.github.aedev.flow.di.bilibiliApi(context)
+                    val roomId = BilibiliLiveId.roomIdOf(video.id)
+                    if (roomId != null) {
+                        api.liveRoom(roomId).uploader
+                    } else {
+                        api.videoInfo(BilibiliVideoId.parse(video.id).first).uploader
+                    }
                 }.getOrNull() ?: return null
             if (uploader.mid <= 0) return null
             val channelId = uploader.mid.toString()

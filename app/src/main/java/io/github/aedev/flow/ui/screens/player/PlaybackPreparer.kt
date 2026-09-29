@@ -211,20 +211,20 @@ internal class PlaybackPreparer(
         dashManifestUrl: String?,
         subtitles: List<SubtitlesStream>,
         isCurrent: () -> Boolean,
+        progressiveStream: VideoStream? = null,
     ): Boolean =
         withContext(Dispatchers.Main) {
             if (!isCurrent()) return@withContext false
             if (playerManager.isPreparedForPlayback(videoId)) return@withContext false
 
-            // Live danmaku (real-time, WebSocket-based) is out of scope for now, so this only
-            // needs to clear whatever the previous video (if any) left loaded.
+            // Whatever danmaku the previous video left loaded; a live room's chat starts after this.
             playerManager.resetDanmaku()
 
             playerManager.setStreams(
                 videoId = videoId,
-                videoStream = null,
+                videoStream = progressiveStream,
                 audioStream = null,
-                videoStreams = emptyList(),
+                videoStreams = listOfNotNull(progressiveStream),
                 audioStreams = emptyList(),
                 subtitles = subtitles,
                 durationSeconds = 0L,

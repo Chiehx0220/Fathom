@@ -2,6 +2,8 @@ package io.github.aedev.flow.player.stream
 
 import android.util.Log
 import io.github.aedev.flow.bilibili.BilibiliApi
+import io.github.aedev.flow.bilibili.BilibiliContentNotAvailableException
+import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.model.Video
 import kotlinx.coroutines.CancellationException
@@ -13,8 +15,8 @@ import org.schabi.newpipe.extractor.stream.VideoStream
 
 /**
  * Bilibili's leg of [PlaybackLoadResolver]: what [InnerTubeVideoStreamExtractor] is for YouTube.
- * Fetches the video's streams and its related lane through the native client, and hands both back
- * as one [ResolvedPlayback] step.
+ * Fetches a video's streams and its related lane (or a live room's stream) through the native
+ * client, and hands them back as one [ResolvedPlayback] step.
  */
 internal class BilibiliPlaybackSource(
     private val api: BilibiliApi,
@@ -49,6 +51,12 @@ internal class BilibiliPlaybackSource(
                 resumePositionOverrideMs = request.resumePositionOverrideMs,
             )
         }
+
+    /** A live room, which has no related lane or parts: what plays is the room's own stream. */
+    suspend fun resolveLive(request: PlaybackResolutionRequest): ResolvedPlayback.LiveFromBilibili {
+        val roomId = BilibiliLiveId.roomIdOf(request.videoId) ?: throw BilibiliContentNotAvailableException("Not a live room id")
+        return ResolvedPlayback.LiveFromBilibili(api.livePlayback(roomId))
+    }
 
     companion object {
         private const val TAG = "BilibiliPlaybackSource"

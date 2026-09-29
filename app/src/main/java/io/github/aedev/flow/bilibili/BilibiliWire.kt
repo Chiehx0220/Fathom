@@ -176,6 +176,13 @@ internal data class SearchResponse(
         val tag: String = "",
         /** The partition, as on a view response. */
         val typename: String = "",
+        /** A live-room row's room number, cover ("//i0.hdslb.com/..."), viewer count, avatar and start time. */
+        val roomid: Long = 0,
+        @SerialName("user_cover") val userCover: String = "",
+        val uface: String = "",
+        val online: Long = 0,
+        @SerialName("live_time") val liveTime: String = "",
+        @SerialName("live_status") val liveStatus: Int = 0,
     )
 }
 
@@ -358,5 +365,143 @@ internal data class PopularResponse(
     @Serializable
     data class Data(
         val list: List<RelatedResponse.Item>? = null,
+    )
+}
+
+@Serializable
+internal data class RoomBaseInfoResponse(
+    val code: Int = 0,
+    val message: String = "",
+    val data: Data? = null,
+) {
+    @Serializable
+    data class Data(
+        /** Keyed by the room id that was asked for, which may be the short one. */
+        @SerialName("by_room_ids") val byRoomIds: Map<String, Room> = emptyMap(),
+    )
+
+    @Serializable
+    data class Room(
+        @SerialName("room_id") val roomId: Long = 0,
+        val uid: Long = 0,
+        val uname: String = "",
+        val title: String = "",
+        val cover: String = "",
+        @SerialName("cover_from_user") val coverFromUser: String? = null,
+        val face: String? = null,
+        val online: Long = 0,
+        /** 0 not live, 1 live, 2 rebroadcast of uploaded videos. */
+        @SerialName("live_status") val liveStatus: Int = 0,
+        /** "yyyy-MM-dd HH:mm:ss" in China time; "0000-00-00 00:00:00" when not live. */
+        @SerialName("live_time") val liveTime: String? = null,
+        @SerialName("tag_name") val tagName: String = "",
+        val tags: String = "",
+    )
+}
+
+@Serializable
+internal data class RoomPlayInfoResponse(
+    val code: Int = 0,
+    val message: String = "",
+    val data: Data? = null,
+) {
+    @Serializable
+    data class Data(
+        @SerialName("playurl_info") val playurlInfo: PlayurlInfo? = null,
+    )
+
+    @Serializable
+    data class PlayurlInfo(
+        val playurl: Playurl? = null,
+    )
+
+    @Serializable
+    data class Playurl(
+        val stream: List<Stream> = emptyList(),
+    )
+
+    @Serializable
+    data class Stream(
+        @SerialName("protocol_name") val protocolName: String = "",
+        val format: List<Format> = emptyList(),
+    )
+
+    @Serializable
+    data class Format(
+        @SerialName("format_name") val formatName: String = "",
+        /** An HLS master playlist listing every quality the viewer may watch; on the fmp4 entry only. */
+        @SerialName("master_url") val masterUrl: String? = null,
+        val codec: List<Codec> = emptyList(),
+    )
+
+    @Serializable
+    data class Codec(
+        @SerialName("codec_name") val codecName: String = "",
+        @SerialName("base_url") val baseUrl: String = "",
+        @SerialName("url_info") val urlInfo: List<UrlInfo> = emptyList(),
+    )
+
+    @Serializable
+    data class UrlInfo(
+        val host: String = "",
+        val extra: String = "",
+    )
+}
+
+@Serializable
+internal data class DanmuInfoResponse(
+    val code: Int = 0,
+    val data: Data? = null,
+) {
+    @Serializable
+    data class Data(
+        val token: String = "",
+        @SerialName("host_list") val hostList: List<Host> = emptyList(),
+    )
+
+    @Serializable
+    data class Host(
+        val host: String = "",
+        @SerialName("wss_port") val wssPort: Int = 443,
+    )
+}
+
+@Serializable
+internal data class RecommendedLivesResponse(
+    val code: Int = 0,
+    val data: List<Item>? = null,
+) {
+    @Serializable
+    data class Item(
+        val roomid: Long = 0,
+        val title: String = "",
+        val uname: String = "",
+        val face: String = "",
+        @SerialName("user_cover") val userCover: String = "",
+        @SerialName("system_cover") val systemCover: String = "",
+        @SerialName("watched_show") val watchedShow: Watched? = null,
+    )
+
+    @Serializable
+    data class Watched(
+        val num: Long = 0,
+    )
+}
+
+@Serializable
+internal data class LiveStatusByUidsResponse(
+    val code: Int = 0,
+    /** Keyed by uid; an uploader with no room gets an empty array instead, which does not decode. */
+    val data: Map<String, Room>? = null,
+) {
+    @Serializable
+    data class Room(
+        val title: String = "",
+        @SerialName("room_id") val roomId: Long = 0,
+        @SerialName("live_status") val liveStatus: Int = 0,
+        @SerialName("cover_from_user") val coverFromUser: String = "",
+        val online: Long = 0,
+        val uname: String = "",
+        val face: String = "",
     )
 }
