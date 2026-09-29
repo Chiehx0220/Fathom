@@ -157,13 +157,8 @@ class ShortsFeedRepository
             runCatching { FlowNeuroEngine.blockedContentMatcher() }.getOrElse { { _, _ -> false } }
 
         private suspend fun watchedReelIds(): Set<String> {
-            val threshold = playerPreferences.watchedThreshold.first()
-            return runCatching {
-                viewHistory.getWatchedShortIdsAboveThreshold(
-                    threshold.minPercent,
-                    threshold.maxRemainingMs,
-                )
-            }.getOrDefault(emptySet())
+            if (!playerPreferences.hideWatchedShorts.first()) return emptySet()
+            return runCatching { viewHistory.getShortProgress().finishedShortIds() }.getOrDefault(emptySet())
         }
 
         private val engine =

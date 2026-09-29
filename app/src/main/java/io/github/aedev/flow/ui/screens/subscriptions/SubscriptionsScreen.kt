@@ -46,11 +46,15 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import io.github.aedev.flow.R
+import io.github.aedev.flow.data.local.HomeFeedColumns
+import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.SubscriptionGroup
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
 import io.github.aedev.flow.ui.TabScrollEventBus
+import io.github.aedev.flow.ui.components.layout.LocalFlowBottomInsets
+import io.github.aedev.flow.ui.components.layout.floatAboveBottomChrome
 import io.github.aedev.flow.ui.components.layout.topbar.FlowSearchTopBar
 import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
 import kotlinx.coroutines.delay
@@ -71,6 +75,9 @@ fun SubscriptionsScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val columnPreference by remember(context) { PlayerPreferences(context) }
+        .homeFeedColumns
+        .collectAsStateWithLifecycle(HomeFeedColumns.AUTO)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val feedGridState = rememberLazyGridState()
@@ -85,7 +92,7 @@ fun SubscriptionsScreen(
     val importLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
-                viewModel.importNewPipeBackup(it, context)
+                viewModel.importNewPipeBackup(it)
                 scope.launch {
                     snackbarHostState.showSnackbar(context.getString(R.string.importing_from_backup))
                 }
@@ -93,6 +100,7 @@ fun SubscriptionsScreen(
         }
 
     LaunchedEffect(viewModel) { viewModel.ensureStarted() }
+    LaunchedEffect(viewModel) { viewModel.importMessages.collect { snackbarHostState.showSnackbar(it) } }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(viewModel, lifecycleOwner) {
@@ -220,7 +228,9 @@ fun SubscriptionsScreen(
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(snackbarHostState, Modifier.floatAboveBottomChrome(LocalFlowBottomInsets.current))
+        },
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0.dp),
     ) { padding ->
@@ -261,6 +271,7 @@ fun SubscriptionsScreen(
                         videos = videos,
                         topChannels = topChannels,
                         gridState = feedGridState,
+                        columnPreference = columnPreference,
                         onRefresh = viewModel::refreshFeed,
                         onVideoClick = onVideoClick,
                         onShortClick = onShortClick,

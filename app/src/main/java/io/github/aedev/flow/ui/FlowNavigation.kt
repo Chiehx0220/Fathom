@@ -1,25 +1,18 @@
 package io.github.aedev.flow.ui
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import androidx.navigation.navDeepLink
 import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.localmedia.toMusicTrack
@@ -28,12 +21,10 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.data.music.model.toMusicTrack
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
-import io.github.aedev.flow.data.shorts.queue.openAtVideoId
-import io.github.aedev.flow.data.stats.RecapPeriod
-import io.github.aedev.flow.player.EnhancedMusicPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
+import io.github.aedev.flow.ui.components.layout.LocalFlowBottomInsets
 import io.github.aedev.flow.ui.components.layout.navigation.MediaNavigator
-import io.github.aedev.flow.ui.components.musicplayer.MusicPlayerSheetState
+import io.github.aedev.flow.ui.components.musicplayer.sheet.MusicPlayerSheetState
 import io.github.aedev.flow.ui.components.settings.SettingsDestination
 import io.github.aedev.flow.ui.components.settings.SettingsTarget
 import io.github.aedev.flow.ui.components.videoplayer.PlayerDraggableState
@@ -51,6 +42,7 @@ import io.github.aedev.flow.ui.screens.notifications.NotificationScreen
 import io.github.aedev.flow.ui.screens.onboarding.OnboardingScreen
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
 import io.github.aedev.flow.ui.screens.player.state.VideoPlayerUiState
+import io.github.aedev.flow.ui.screens.player.state.shouldExpandInsteadOfPlaying
 import io.github.aedev.flow.ui.screens.playlists.PlaylistDetailScreen
 import io.github.aedev.flow.ui.screens.playlists.PlaylistsScreen
 import io.github.aedev.flow.ui.screens.recap.RecapRoutes
@@ -62,6 +54,7 @@ import io.github.aedev.flow.ui.screens.shorts.ShortsScreen
 import io.github.aedev.flow.ui.screens.subscriptions.SubscriptionsScreen
 import io.github.aedev.flow.ui.screens.update.UPDATE_ROUTE
 import io.github.aedev.flow.ui.screens.update.UpdateScreen
+import kotlinx.coroutines.flow.first
 
 @UnstableApi
 fun NavGraphBuilder.flowAppGraph(
@@ -76,12 +69,7 @@ fun NavGraphBuilder.flowAppGraph(
     playerVisibleState: MutableState<Boolean>,
     disableShortsPlayer: Boolean = false,
     defaultStartRoute: String = "home",
-    /**
-     * Read lazily inside the destination that needs it. Destination lambdas are captured once
-     * when NavHost remembers the graph, so a by-value Dp here is frozen at graph-construction
-     * time and never reflects the bar showing or hiding.
-     */
-    bottomNavOverlayPadding: () -> Dp = { 0.dp },
+    onMusicStarted: () -> Unit = {},
 ) {
     // =============================================
     // ONBOARDING (First-time user experience)
@@ -158,7 +146,7 @@ fun NavGraphBuilder.flowAppGraph(
         val isRootTab = source == ShortsQueueSource.Feed
         ShortsScreen(
             source = source,
-            bottomNavOverlayPadding = if (isRootTab) bottomNavOverlayPadding() else 0.dp,
+            bottomNavOverlayPadding = if (isRootTab) LocalFlowBottomInsets.current.barBottom else 0.dp,
             onBack = {
                 navController.popBackStack()
             },
@@ -231,10 +219,7 @@ fun NavGraphBuilder.flowAppGraph(
             },
             onMusicClick = { track, queue, sourceName ->
                 musicPlayerViewModel.loadAndPlayTrack(track, queue, sourceName)
-                val encodedUrl = android.net.Uri.encode(track.thumbnailUrl)
-                val encodedTitle = android.net.Uri.encode(track.title)
-                val encodedArtist = android.net.Uri.encode(track.artist)
-                navController.navigate("musicPlayer/${track.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl")
+                onMusicStarted()
             },
             onPlaylistClick = { playlistId ->
                 navController.navigate("playlist/${android.net.Uri.encode(playlistId)}")
@@ -251,12 +236,7 @@ fun NavGraphBuilder.flowAppGraph(
                 val musicTracks = tracks.map { it.track }
                 val selectedTrack = musicTracks[index]
                 musicPlayerViewModel.loadAndPlayTrack(selectedTrack, musicTracks, downloadsSourceName)
-                val encodedUrl = android.net.Uri.encode(selectedTrack.thumbnailUrl)
-                val encodedTitle = android.net.Uri.encode(selectedTrack.title)
-                val encodedArtist = android.net.Uri.encode(selectedTrack.artist)
-                navController.navigate(
-                    "musicPlayer/${selectedTrack.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl",
-                )
+                onMusicStarted()
             },
             onSavedShortClick = { video ->
                 if (disableShortsPlayer) {
@@ -430,10 +410,7 @@ fun NavGraphBuilder.flowAppGraph(
             },
             onMusicClick = { track, queue ->
                 musicPlayerViewModel.loadAndPlayTrack(track, queue, "History")
-                val encodedUrl = android.net.Uri.encode(track.thumbnailUrl)
-                val encodedTitle = android.net.Uri.encode(track.title)
-                val encodedArtist = android.net.Uri.encode(track.artist)
-                navController.navigate("musicPlayer/${track.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl")
+                onMusicStarted()
             },
             onBackClick = { navController.popBackStack() },
         )
@@ -459,15 +436,15 @@ fun NavGraphBuilder.flowAppGraph(
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
         PlaylistDetailScreen(
             onNavigateBack = { navController.popBackStack() },
-            onPlayPlaylist = { videos, index, shuffle ->
+            onPlayPlaylist = { videos, index, shuffle, title ->
                 val start = videos[index]
                 if (start.isMusic) {
                     // A YouTube Music playlist plays in the music player, like any other song list.
                     val tracks = videos.filter { it.isMusic }.map { it.toMusicTrack() }
-                    musicPlayerViewModel.loadAndPlayTrack(start.toMusicTrack(), tracks, "Playlist")
-                    navController.navigate("musicPlayer/${start.id}")
+                    musicPlayerViewModel.loadAndPlayTrack(start.toMusicTrack(), tracks, title)
+                    onMusicStarted()
                 } else {
-                    playerViewModel.playPlaylist(videos, index, "Playlist", shuffle)
+                    playerViewModel.playPlaylist(videos, index, title, shuffle)
                 }
             },
         )
@@ -488,26 +465,24 @@ fun NavGraphBuilder.flowAppGraph(
         currentRoute.value = "downloads"
 
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
+        val downloadsTitle =
+            androidx.compose.ui.res.stringResource(
+                io.github.aedev.flow.R.string.library_downloads_label,
+            )
 
         io.github.aedev.flow.ui.screens.library.DownloadsScreen(
             onBackClick = { navController.popBackStack() },
             onVideoClick = { videos, index ->
                 val videoList = videos.map { it.video }
-                playerViewModel.playPlaylist(videoList, index, "Downloads")
+                playerViewModel.playPlaylist(videoList, index, downloadsTitle)
                 GlobalPlayerState.setCurrentVideo(videoList[index])
             },
             onMusicClick = { tracks, index ->
                 val musicTracks = tracks.map { it.track }
                 val selectedTrack = musicTracks[index]
 
-                musicPlayerViewModel.loadAndPlayTrack(selectedTrack, musicTracks, "Downloads")
-
-                val encodedUrl = android.net.Uri.encode(selectedTrack.thumbnailUrl)
-                val encodedTitle = android.net.Uri.encode(selectedTrack.title)
-                val encodedArtist = android.net.Uri.encode(selectedTrack.artist)
-                navController.navigate(
-                    "musicPlayer/${selectedTrack.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl",
-                )
+                musicPlayerViewModel.loadAndPlayTrack(selectedTrack, musicTracks, downloadsTitle)
+                onMusicStarted()
             },
             onHomeClick = {
                 navController.navigate("home") {
@@ -531,7 +506,7 @@ fun NavGraphBuilder.flowAppGraph(
                 val tracks = items.map { it.toMusicTrack() }.let { if (shuffle) it.shuffled() else it }
                 val start = if (shuffle) tracks.first() else tracks[index]
                 musicPlayerViewModel.loadAndPlayTrack(start, tracks, localTitle)
-                navController.navigate("musicPlayer/${start.videoId}")
+                onMusicStarted()
             },
             onOpenSettings = {
                 navController.navigate("settings?target=${SettingsTarget(SettingsDestination.LOCAL_MEDIA).encode()}")
@@ -545,15 +520,11 @@ fun NavGraphBuilder.flowAppGraph(
         val musicPlayerViewModel = sharedMusicPlayerViewModel()
 
         EnhancedMusicScreen(
-            bottomNavOverlayPadding = bottomNavOverlayPadding,
             onSongClick = { track, queue, source ->
                 musicPlayerViewModel.loadAndPlayTrack(track, queue, source)
 
                 // Navigate to player
-                val encodedUrl = android.net.Uri.encode(track.thumbnailUrl)
-                val encodedTitle = android.net.Uri.encode(track.title)
-                val encodedArtist = android.net.Uri.encode(track.artist)
-                navController.navigate("musicPlayer/${track.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl")
+                onMusicStarted()
             },
             onVideoClick = { track ->
                 navController.navigateToPlayer(track.videoId, track.serviceId)
@@ -615,10 +586,7 @@ fun NavGraphBuilder.flowAppGraph(
             onBackClick = { navController.popBackStack() },
             onTrackClick = { track, queue, source ->
                 musicPlayerViewModel.loadAndPlayTrack(track, queue, source)
-                val encodedUrl = android.net.Uri.encode(track.thumbnailUrl)
-                val encodedTitle = android.net.Uri.encode(track.title)
-                val encodedArtist = android.net.Uri.encode(track.artist)
-                navController.navigate("musicPlayer/${track.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl")
+                onMusicStarted()
             },
             onAlbumClick = { albumId ->
                 mediaNavigator.openAlbum(albumId)
@@ -643,10 +611,7 @@ fun NavGraphBuilder.flowAppGraph(
                 io.github.aedev.flow.ui.screens.recognition.RecognitionViewModel
                     .toMusicTrack(result) ?: return
             musicPlayerViewModel.loadAndPlayTrack(track, listOf(track), "Recognized")
-            val encodedUrl = android.net.Uri.encode(track.thumbnailUrl)
-            val encodedTitle = android.net.Uri.encode(track.title)
-            val encodedArtist = android.net.Uri.encode(track.artist)
-            navController.navigate("musicPlayer/${track.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl")
+            onMusicStarted()
         }
 
         fun searchRecognized(
@@ -688,12 +653,7 @@ fun NavGraphBuilder.flowAppGraph(
                             album = item.album.orEmpty(),
                         )
                     musicPlayerViewModel.loadAndPlayTrack(track, listOf(track), "Recognized")
-                    val encodedUrl = android.net.Uri.encode(track.thumbnailUrl)
-                    val encodedTitle = android.net.Uri.encode(track.title)
-                    val encodedArtist = android.net.Uri.encode(track.artist)
-                    navController.navigate(
-                        "musicPlayer/${track.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl",
-                    )
+                    onMusicStarted()
                 } else {
                     val query =
                         io.github.aedev.flow.ui.screens.recognition.RecognitionViewModel
@@ -735,10 +695,7 @@ fun NavGraphBuilder.flowAppGraph(
                         channelId = song.artists.firstOrNull()?.id ?: "",
                     )
                 musicPlayerViewModel.loadAndPlayTrack(track, emptyList())
-                val encodedUrl = android.net.Uri.encode(track.thumbnailUrl)
-                val encodedTitle = android.net.Uri.encode(track.title)
-                val encodedArtist = android.net.Uri.encode(track.artist)
-                navController.navigate("musicPlayer/${track.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl")
+                onMusicStarted()
             },
             onAlbumClick = { albumId ->
                 mediaNavigator.openAlbum(albumId)
@@ -769,6 +726,11 @@ fun NavGraphBuilder.flowAppGraph(
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
                 CircularProgressIndicator()
             }
+        } else if (uiState.artistLoadFailed) {
+            io.github.aedev.flow.ui.screens.music.ArtistPageError(
+                onBackClick = { navController.popBackStack() },
+                onRetry = { musicViewModel.fetchArtistDetails(channelId) },
+            )
         } else {
             uiState.artistDetails?.let { details ->
                 ArtistPage(
@@ -779,12 +741,7 @@ fun NavGraphBuilder.flowAppGraph(
                     onBackClick = { navController.popBackStack() },
                     onTrackClick = { track, queue ->
                         musicPlayerViewModel.loadAndPlayTrack(track, queue)
-                        val encodedUrl = android.net.Uri.encode(track.thumbnailUrl)
-                        val encodedTitle = android.net.Uri.encode(track.title)
-                        val encodedArtist = android.net.Uri.encode(track.artist)
-                        navController.navigate(
-                            "musicPlayer/${track.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl",
-                        )
+                        onMusicStarted()
                     },
                     onAlbumClick = { album ->
                         mediaNavigator.openAlbum(album.id)
@@ -842,10 +799,7 @@ fun NavGraphBuilder.flowAppGraph(
                         duration = songItem.duration ?: 0,
                     )
                 musicPlayerViewModel.loadAndPlayTrack(track, listOf(track))
-                val encodedUrl = android.net.Uri.encode(track.thumbnailUrl)
-                val encodedTitle = android.net.Uri.encode(track.title)
-                val encodedArtist = android.net.Uri.encode(track.artist)
-                navController.navigate("musicPlayer/${track.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl")
+                onMusicStarted()
             },
             onAlbumClick = { albumId ->
                 mediaNavigator.openAlbum(albumId)
@@ -869,12 +823,7 @@ fun NavGraphBuilder.flowAppGraph(
                     onBackClick = { navController.popBackStack() },
                     onTrackClick = { track, queue, sourceName ->
                         musicPlayerViewModel.loadAndPlayTrack(track, queue, sourceName)
-                        val encodedUrl = android.net.Uri.encode(track.thumbnailUrl)
-                        val encodedTitle = android.net.Uri.encode(track.title)
-                        val encodedArtist = android.net.Uri.encode(track.artist)
-                        navController.navigate(
-                            "musicPlayer/${track.videoId}?title=$encodedTitle&artist=$encodedArtist&thumbnailUrl=$encodedUrl",
-                        )
+                        onMusicStarted()
                     },
                     onArtistClick = { channelId -> mediaNavigator.openArtist(channelId) },
                     onCollectionClick = { mediaNavigator.openMusicPlaylist(it) },
@@ -884,34 +833,26 @@ fun NavGraphBuilder.flowAppGraph(
         )
     }
 
-    // Music Player Screen - now a global draggable overlay.
+    // A YouTube Music link: the song plays in the music player, and this route leaves at once.
     composable(
-        route = "musicPlayer/{trackId}?title={title}&artist={artist}&thumbnailUrl={thumbnailUrl}",
-        arguments =
-            listOf(
-                navArgument("trackId") { type = NavType.StringType },
-                navArgument("title") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                },
-                navArgument("artist") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                },
-                navArgument("thumbnailUrl") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                },
-            ),
+        route = MUSIC_PLAYER_ROUTE_PATTERN,
+        arguments = listOf(navArgument(MUSIC_PLAYER_ROUTE_ARG) { type = NavType.StringType }),
     ) { backStackEntry ->
         currentRoute.value = "musicPlayer"
+        val musicPlayerViewModel = sharedMusicPlayerViewModel()
+        val videoId = backStackEntry.arguments?.getString(MUSIC_PLAYER_ROUTE_ARG).orEmpty()
 
-        LaunchedEffect(Unit) {
-            musicPlayerSheetState.expand()
+        LaunchedEffect(videoId) {
+            // The music player stays hidden while a video is loaded, so a music link closes it first.
+            if (playerViewModel.uiState.value.cachedVideo != null) GlobalPlayerState.requestDismiss()
+            musicPlayerViewModel.playFromLink(videoId)
+            onMusicStarted()
             withFrameNanos { }
             navController.popTransientRouteOrNavigateStart(defaultStartRoute)
         }
     }
+
+    widgetPlaybackRoutes(navController, currentRoute, defaultStartRoute, playerViewModel, onMusicStarted)
 
     composable(
         route = "player/{videoId}?serviceId={serviceId}",
@@ -921,49 +862,6 @@ fun NavGraphBuilder.flowAppGraph(
                 navArgument("serviceId") {
                     type = NavType.IntType
                     defaultValue = org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId
-                },
-            ),
-        deepLinks =
-            listOf(
-                navDeepLink {
-                    uriPattern = "http://www.youtube.com/watch?v={videoId}"
-                    action = android.content.Intent.ACTION_VIEW
-                },
-                navDeepLink {
-                    uriPattern = "https://www.youtube.com/watch?v={videoId}"
-                    action = android.content.Intent.ACTION_VIEW
-                },
-                navDeepLink {
-                    uriPattern = "http://youtube.com/watch?v={videoId}"
-                    action = android.content.Intent.ACTION_VIEW
-                },
-                navDeepLink {
-                    uriPattern = "https://youtube.com/watch?v={videoId}"
-                    action = android.content.Intent.ACTION_VIEW
-                },
-                navDeepLink {
-                    uriPattern = "http://youtu.be/{videoId}"
-                    action = android.content.Intent.ACTION_VIEW
-                },
-                navDeepLink {
-                    uriPattern = "https://youtu.be/{videoId}"
-                    action = android.content.Intent.ACTION_VIEW
-                },
-                navDeepLink {
-                    uriPattern = "http://m.youtube.com/watch?v={videoId}"
-                    action = android.content.Intent.ACTION_VIEW
-                },
-                navDeepLink {
-                    uriPattern = "https://m.youtube.com/watch?v={videoId}"
-                    action = android.content.Intent.ACTION_VIEW
-                },
-                navDeepLink {
-                    uriPattern = "https://www.youtube.com/shorts/{videoId}"
-                    action = android.content.Intent.ACTION_VIEW
-                },
-                navDeepLink {
-                    uriPattern = "https://youtube.com/shorts/{videoId}"
-                    action = android.content.Intent.ACTION_VIEW
                 },
             ),
     ) { backStackEntry ->
@@ -979,26 +877,24 @@ fun NavGraphBuilder.flowAppGraph(
         // Use passed state
         val playerUiState = playerUiStateResult.value
         LaunchedEffect(effectiveVideoId) {
-            val isAlreadyPlayingThis =
-                playerUiState.cachedVideo?.id == effectiveVideoId &&
-                    !playerUiState.isRestoredSession
-            if (!isAlreadyPlayingThis) {
-                val placeholder =
-                    Video(
-                        id = effectiveVideoId,
-                        title = "",
-                        channelName = "",
-                        channelId = "",
-                        thumbnailUrl = "",
-                        duration = 0,
-                        viewCount = 0L,
-                        uploadDate = "",
-                        description = "",
-                        channelThumbnailUrl = "",
-                        serviceId = effectiveServiceId,
-                    )
-                playerViewModel.playVideo(placeholder)
-                GlobalPlayerState.setCurrentVideo(placeholder)
+            if (!playerUiState.shouldExpandInsteadOfPlaying(effectiveVideoId)) {
+                val video =
+                    playerUiState.cachedVideo?.takeIf { it.id == effectiveVideoId }
+                        ?: Video(
+                            id = effectiveVideoId,
+                            title = "",
+                            channelName = "",
+                            channelId = "",
+                            thumbnailUrl = "",
+                            duration = 0,
+                            viewCount = 0L,
+                            uploadDate = "",
+                            description = "",
+                            channelThumbnailUrl = "",
+                            serviceId = effectiveServiceId,
+                        )
+                playerViewModel.playVideo(video)
+                GlobalPlayerState.setCurrentVideo(video)
             } else {
                 playerViewModel.showVideoPlayer()
                 playerVisibleState.value = true
@@ -1009,15 +905,5 @@ fun NavGraphBuilder.flowAppGraph(
         }
 
         Box(modifier = Modifier.fillMaxSize())
-    }
-}
-
-private fun NavHostController.popTransientRouteOrNavigateStart(defaultStartRoute: String) {
-    if (previousBackStackEntry != null) {
-        popBackStack()
-    } else {
-        navigate(defaultStartRoute) {
-            launchSingleTop = true
-        }
     }
 }

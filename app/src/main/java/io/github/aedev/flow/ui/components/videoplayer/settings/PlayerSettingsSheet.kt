@@ -110,6 +110,7 @@ fun SettingsMenuDialog(
         onProgressChange = onSheetProgressChange,
         header = { dragModifier ->
             FlowSheetHeader(
+                inSidePane = !enableVerticalDismiss,
                 title = currentTitle,
                 onClose = { sheetState.dismiss() },
                 modifier = dragModifier,

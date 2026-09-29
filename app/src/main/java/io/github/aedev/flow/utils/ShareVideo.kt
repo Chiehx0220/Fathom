@@ -28,6 +28,10 @@ fun youtubeWatchUrl(
     }
 }
 
+fun youtubeShortsUrl(videoId: String): String = "https://youtube.com/shorts/$videoId"
+
+fun youtubeMusicWatchUrl(videoId: String): String = "https://music.youtube.com/watch?v=$videoId"
+
 /**
  * The chooser intent every "share this video" affordance raises. [linkOnly] is the user's
  * "share without text" preference: on, the payload is the bare link; off, it is the link under a
@@ -39,43 +43,68 @@ fun shareVideoIntent(
     title: String,
     linkOnly: Boolean,
     serviceId: Int = ServiceList.YouTube.serviceId,
+    isShort: Boolean = false,
 ): Intent {
-    val url = youtubeWatchUrl(videoId, serviceId = serviceId)
+    val url = if (isShort) youtubeShortsUrl(videoId) else youtubeWatchUrl(videoId, serviceId = serviceId)
     val shareText =
-        if (linkOnly) {
-            context.getString(R.string.share_link_only_template, url)
-        } else {
-            context.getString(R.string.check_out_video_template, title, url)
+        when {
+            linkOnly -> context.getString(R.string.share_link_only_template, url)
+            isShort -> context.getString(R.string.check_out_short_template, title, url)
+            else -> context.getString(R.string.check_out_video_template, title, url)
         }
-    val shareIntent =
-        Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, title)
-            putExtra(Intent.EXTRA_TEXT, shareText)
-        }
-    return Intent.createChooser(shareIntent, context.getString(R.string.share_video))
+    return textShareChooser(shareText, title.takeUnless { linkOnly }, context.getString(R.string.share_video))
 }
 
-/** Shares a YouTube playlist's link, with its [title] as the subject. */
+/** The song counterpart of [shareVideoIntent], linking to YouTube Music. */
+fun shareSongIntent(
+    context: Context,
+    videoId: String,
+    title: String,
+    artist: String,
+    linkOnly: Boolean,
+): Intent {
+    val shareText =
+        if (linkOnly) {
+            youtubeMusicWatchUrl(videoId)
+        } else {
+            context.getString(R.string.share_message_template, title, artist, videoId)
+        }
+    return textShareChooser(shareText, title.takeUnless { linkOnly }, context.getString(R.string.share_song))
+}
+
+/** Shares a YouTube playlist's link, with its [title] as the subject unless only the link is shared. */
 fun sharePlaylist(
     context: Context,
     playlistId: String,
     title: String,
-) = shareLink(context, "https://www.youtube.com/playlist?list=$playlistId", title)
+    linkOnly: Boolean,
+) = shareLink(context, "https://www.youtube.com/playlist?list=$playlistId", title, linkOnly)
 
-/** Shares [url] as plain text through the system sheet, with [title] as the subject. */
+/**
+ * Shares [url] as plain text through the system sheet. [title] goes in the subject, which some
+ * apps paste above the link, so it is left out when the user shares links without text.
+ */
 fun shareLink(
     context: Context,
     url: String,
     title: String,
+    linkOnly: Boolean = false,
 ) {
+    context.startActivity(textShareChooser(url, title.takeUnless { linkOnly }, context.getString(R.string.share)))
+}
+
+private fun textShareChooser(
+    text: String,
+    subject: String?,
+    chooserTitle: String,
+): Intent {
     val send =
         Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, title)
-            putExtra(Intent.EXTRA_TEXT, url)
+            subject?.let { putExtra(Intent.EXTRA_SUBJECT, it) }
+            putExtra(Intent.EXTRA_TEXT, text)
         }
-    context.startActivity(Intent.createChooser(send, context.getString(R.string.share)))
+    return Intent.createChooser(send, chooserTitle)
 }
 
 /**
@@ -110,6 +139,7 @@ fun shareVideo(
     title: String,
     linkOnly: Boolean,
     serviceId: Int = ServiceList.YouTube.serviceId,
+    isShort: Boolean = false,
 ) {
-    context.startActivity(shareVideoIntent(context, videoId, title, linkOnly, serviceId))
+    context.startActivity(shareVideoIntent(context, videoId, title, linkOnly, serviceId, isShort))
 }

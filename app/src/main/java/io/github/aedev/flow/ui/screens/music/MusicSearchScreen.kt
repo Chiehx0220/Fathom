@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,15 +38,19 @@ import io.github.aedev.flow.innertube.models.ArtistItem
 import io.github.aedev.flow.innertube.models.PlaylistItem
 import io.github.aedev.flow.innertube.models.SongItem
 import io.github.aedev.flow.innertube.models.YTItem
+import io.github.aedev.flow.innertube.pages.SearchSummaryKind
+import io.github.aedev.flow.ui.components.layout.flowBottomContentPadding
 import io.github.aedev.flow.ui.components.music.card.TopResultCard
 import io.github.aedev.flow.ui.components.music.header.MusicSectionHeader
 import io.github.aedev.flow.ui.components.music.item.MusicCollectionRow
 import io.github.aedev.flow.ui.components.music.search.MusicSearchBar
 import io.github.aedev.flow.ui.components.music.search.SearchFilterChips
 import io.github.aedev.flow.ui.components.music.search.SearchSuggestionRow
+import io.github.aedev.flow.ui.components.music.search.searchSummaryTitle
 import io.github.aedev.flow.ui.components.music.sheet.LocalMusicMenus
 import io.github.aedev.flow.ui.components.music.sheet.toCollectionActionItem
 import io.github.aedev.flow.ui.components.shared.FlowEmptyState
+import io.github.aedev.flow.ui.components.shared.FlowErrorState
 import io.github.aedev.flow.ui.components.shared.FlowFeedProgress
 import io.github.aedev.flow.ui.components.shared.FlowLoadingIndicator
 import kotlinx.coroutines.delay
@@ -180,6 +185,7 @@ fun MusicSearchScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0.dp),
     ) { padding ->
         Column(
             modifier =
@@ -188,7 +194,10 @@ fun MusicSearchScreen(
                     .padding(padding),
         ) {
             if (!uiState.isSearching) {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = flowBottomContentPadding()),
+                ) {
                     items(uiState.recommendedItems, key = { it.stableLazyKey("recommended") }) { item ->
                         MusicCollectionRow(
                             item = item,
@@ -214,7 +223,6 @@ fun MusicSearchScreen(
                     onFilterClick = viewModel::applyFilter,
                 )
 
-                val topResultTarget = stringResource(R.string.section_top_result)
                 val searchSource = stringResource(R.string.search_source_template).format(query)
                 val artistSourceTemplate = stringResource(R.string.artist_source_template)
 
@@ -226,8 +234,17 @@ fun MusicSearchScreen(
                         uiState.filteredResults.isNotEmpty()
                     }
 
+                val error = uiState.error
                 if (uiState.isLoading) {
                     FlowLoadingIndicator()
+                } else if (!hasResults && error != null) {
+                    FlowErrorState(
+                        error = error,
+                        onRetry = {
+                            val filter = uiState.activeFilter
+                            if (filter == null) viewModel.performSearch(query) else viewModel.applyFilter(filter)
+                        },
+                    )
                 } else if (!hasResults) {
                     FlowEmptyState(
                         title = stringResource(R.string.music_search_no_results, query),
@@ -236,15 +253,15 @@ fun MusicSearchScreen(
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 80.dp),
+                        contentPadding = PaddingValues(bottom = flowBottomContentPadding()),
                     ) {
                         if (uiState.activeFilter == null && summaries != null) {
                             summaries.forEachIndexed { index, summary ->
                                 item(key = "summary_header_$index") {
-                                    MusicSectionHeader(title = summary.title)
+                                    MusicSectionHeader(title = searchSummaryTitle(summary))
                                 }
 
-                                val isTopResult = summary.title == topResultTarget
+                                val isTopResult = summary.kind == SearchSummaryKind.TOP_RESULT
                                 if (isTopResult) {
                                     val topItem = summary.items.first()
                                     item(key = "top_result") {
@@ -269,7 +286,7 @@ fun MusicSearchScreen(
 
                                 items(
                                     items = if (isTopResult) summary.items.drop(1) else summary.items,
-                                    key = { it.stableLazyKey("summary_${summary.title}") },
+                                    key = { it.stableLazyKey("summary_${summary.kind}_${summary.title}") },
                                 ) { item ->
                                     MusicCollectionRow(
                                         showPlayCount = true,

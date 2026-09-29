@@ -30,6 +30,7 @@ import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
 import io.github.aedev.flow.innertube.pages.renderer.CommunityPost
 import io.github.aedev.flow.innertube.pages.renderer.FeedItemOwner
 import io.github.aedev.flow.ui.youtubeChannelBrowseId
+import io.github.aedev.flow.ui.youtubeChannelUrl
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -213,8 +214,9 @@ class ChannelViewModel
                 loadBilibiliChannel(mid)
                 return
             }
-            val browseId = youtubeChannelBrowseId(channelUrl)
-            if (browseId == null) {
+            val directId = youtubeChannelBrowseId(channelUrl)
+            val vanityUrl = youtubeChannelUrl(channelUrl)
+            if (directId == null && vanityUrl == null) {
                 _uiState.update { it.copy(error = appContext.getString(R.string.error_invalid_channel_url), isLoading = false) }
                 return
             }
@@ -223,6 +225,13 @@ class ChannelViewModel
                 _uiState.update {
                     it.copy(isLoading = true, error = null, serviceId = ServiceList.YouTube.serviceId)
                 }
+
+                val browseId =
+                    directId ?: YouTube.resolveChannelId(checkNotNull(vanityUrl)).getOrElse { error ->
+                        Log.e(TAG, "Failed to resolve $vanityUrl", error)
+                        _uiState.update { it.copy(error = appContext.getString(R.string.error_channel_link_not_found), isLoading = false) }
+                        return@launch
+                    }
 
                 YouTube.channel(browseId).fold(
                     onSuccess = { page ->

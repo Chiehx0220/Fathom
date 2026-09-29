@@ -4,6 +4,7 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.model.ShortVideo
 import io.github.aedev.flow.data.model.toShortVideo
+import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.data.shorts.ShortsFeedRepository
 import io.github.aedev.flow.data.shorts.spreadChannels
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
@@ -57,24 +58,31 @@ class SavedShortsLoader(
     override suspend fun more(cursor: String?): ShortsQueuePage = exhaustedPage()
 }
 
+/**
+ * [exclusions] keeps reels marked not interested and blocked channels out, as the Subscriptions feed
+ * does. The tapped reel is exempt from every filter: the user just chose it.
+ */
 class SubscriptionShortsLoader(
     private val subscriptionFeedRepository: SubscriptionFeedRepository,
     private val playerPreferences: PlayerPreferences,
     private val watchedVideos: SubscriptionWatchedVideos,
     private val anchorVideoId: String?,
+    private val exclusions: suspend () -> FeedExclusions = { FeedExclusions.NONE },
 ) : ShortsQueueLoader {
     override suspend fun initial(): ShortsQueuePage {
         val excludedChannelIds = playerPreferences.subscriptionShortsExcludedChannels.first()
-        val watchedIds = watchedVideos.ids.first()
+        val watchedIds = watchedVideos.shortIds.first()
+        val hidden = exclusions()
         val items =
             subscriptionFeedRepository
                 .observeFeed()
                 .first()
                 .asSequence()
-                .filter { it.isShort && it.id.isNotBlank() }
-                .filter { it.channelId !in excludedChannelIds }
-                .filter { it.id == anchorVideoId || it.id !in watchedIds }
-                .sortedByDescending { it.timestamp }
+                .filter { it.id.isNotBlank() }
+                .filter {
+                    it.id == anchorVideoId ||
+                        (it.isShort && it.channelId !in excludedChannelIds && !hidden.hides(it) && it.id !in watchedIds)
+                }.sortedByDescending { it.timestamp }
                 .map { it.toShortVideo() }
                 .toList()
         return ShortsQueuePage(spreadChannels(items, ShortVideo::channelId), cursor = null, exhausted = true)

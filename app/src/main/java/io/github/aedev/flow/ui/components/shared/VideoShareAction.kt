@@ -1,14 +1,21 @@
 package io.github.aedev.flow.ui.components.shared
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.utils.shareVideo
 import org.schabi.newpipe.extractor.ServiceList
+
+/** The user's "share links without text" preference, for every share affordance to honour. */
+@Composable
+fun rememberShareLinksWithoutText(): State<Boolean> {
+    val context = LocalContext.current
+    val preferences = remember(context) { PlayerPreferences(context) }
+    return preferences.shareWithoutText.collectAsStateWithLifecycle(initialValue = false)
+}
 
 /**
  * A share callback that already honours the user's "share without text" preference, so a component
@@ -16,14 +23,12 @@ import org.schabi.newpipe.extractor.ServiceList
  * importing a feature package or re-deriving the payload.
  */
 @Composable
-fun rememberVideoShareAction(): (videoId: String, title: String, serviceId: Int) -> Unit {
+fun rememberVideoShareAction(): (videoId: String, title: String, serviceId: Int, isShort: Boolean) -> Unit {
     val context = LocalContext.current
-    val preferences = remember(context) { PlayerPreferences(context) }
-    val shareWithoutText by preferences.shareWithoutText.collectAsStateWithLifecycle(initialValue = false)
-    val linkOnly by rememberUpdatedState(shareWithoutText)
+    val linkOnly = rememberShareLinksWithoutText()
     return remember(context) {
-        { videoId: String, title: String, serviceId: Int ->
-            shareVideo(context, videoId, title, linkOnly, serviceId)
+        { videoId: String, title: String, serviceId: Int, isShort: Boolean ->
+            shareVideo(context, videoId, title, linkOnly.value, serviceId, isShort)
         }
     }
 }

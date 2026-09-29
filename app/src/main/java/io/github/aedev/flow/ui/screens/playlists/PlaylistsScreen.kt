@@ -5,6 +5,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -14,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.PlaylistPlay
 import androidx.compose.material.icons.filled.MusicNote
@@ -40,12 +42,17 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.data.model.PlaylistInfo
 import io.github.aedev.flow.data.playlist.PlaylistImport
 import io.github.aedev.flow.ui.components.PlaylistCard
+import io.github.aedev.flow.ui.components.PlaylistCardLayout
+import io.github.aedev.flow.ui.components.layout.LocalFlowBottomInsets
+import io.github.aedev.flow.ui.components.layout.floatAboveBottomChrome
+import io.github.aedev.flow.ui.components.layout.flowBottomContentPadding
 import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
 import io.github.aedev.flow.ui.components.library.MusicPlaylistLibraryCard
 import io.github.aedev.flow.ui.components.library.PlaylistCreationFabMenu
 import io.github.aedev.flow.ui.components.library.PlaylistCreationTarget
 import io.github.aedev.flow.ui.components.library.PlaylistLibraryFilterRow
 import io.github.aedev.flow.ui.components.library.PlaylistOwnershipFilter
+import io.github.aedev.flow.ui.components.library.libraryGridLayoutFor
 import io.github.aedev.flow.ui.components.library.message
 import io.github.aedev.flow.ui.components.shared.CollectionEditDialog
 import io.github.aedev.flow.ui.components.shared.DeleteCollectionDialog
@@ -58,7 +65,8 @@ import kotlinx.coroutines.launch
 
 private val GridCellMinWidth = 160.dp
 private val GridSpacing = 16.dp
-private val GridContentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp)
+private val GridSidePadding = 16.dp
+private val GridTopPadding = 8.dp
 private val FabMenuPadding = 16.dp
 
 // Some file pickers label a .json file as plain text or a generic binary.
@@ -160,79 +168,101 @@ fun PlaylistsScreen(
                     if (isLoading) {
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                     } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Adaptive(GridCellMinWidth),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = GridContentPadding,
-                            verticalArrangement = Arrangement.spacedBy(GridSpacing),
-                            horizontalArrangement = Arrangement.spacedBy(GridSpacing),
-                        ) {
-                            when (contentKind) {
-                                MediaKind.Videos -> {
-                                    if (visibleVideoPlaylists.isEmpty()) {
-                                        item(
-                                            key = "empty-video-playlists",
-                                            span = { GridItemSpan(maxLineSpan) },
-                                            contentType = "empty",
-                                        ) {
-                                            FlowEmptyState(
-                                                title = stringResource(R.string.no_playlists_found),
-                                                icon = Icons.AutoMirrored.Outlined.PlaylistPlay,
-                                            )
-                                        }
-                                    } else {
-                                        items(
-                                            items = visibleVideoPlaylists,
-                                            key = { "video-${it.id}" },
-                                            contentType = { "video-playlist" },
-                                            span = { GridItemSpan(maxLineSpan) },
-                                        ) { playlist ->
-                                            PlaylistCard(
-                                                playlist = playlist,
-                                                onClick = { onVideoPlaylistClick(playlist) },
-                                                onDeleteClick = { videoToDelete = playlist },
-                                                useInternalPadding = false,
-                                            )
+                        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                            val videoGrid = remember(maxWidth) { libraryGridLayoutFor(maxWidth) }
+                            val videoCards = contentKind == MediaKind.Videos && videoGrid.isGrid
+                            val sidePadding = if (videoCards) videoGrid.padding else GridSidePadding
+                            val partialRows =
+                                remember(visibleVideoPlaylists.size, videoGrid) { videoGrid.partialRows(visibleVideoPlaylists.size) }
+                            LazyVerticalGrid(
+                                columns =
+                                    if (videoCards) GridCells.Fixed(videoGrid.columns) else GridCells.Adaptive(GridCellMinWidth),
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding =
+                                    PaddingValues(
+                                        start = sidePadding,
+                                        top = GridTopPadding,
+                                        end = sidePadding,
+                                        bottom = flowBottomContentPadding(),
+                                    ),
+                                verticalArrangement = Arrangement.spacedBy(GridSpacing),
+                                horizontalArrangement = Arrangement.spacedBy(if (videoCards) videoGrid.spacing else GridSpacing),
+                            ) {
+                                when (contentKind) {
+                                    MediaKind.Videos -> {
+                                        if (visibleVideoPlaylists.isEmpty()) {
+                                            item(
+                                                key = "empty-video-playlists",
+                                                span = { GridItemSpan(maxLineSpan) },
+                                                contentType = "empty",
+                                            ) {
+                                                FlowEmptyState(
+                                                    title = stringResource(R.string.no_playlists_found),
+                                                    icon = Icons.AutoMirrored.Outlined.PlaylistPlay,
+                                                )
+                                            }
+                                        } else {
+                                            itemsIndexed(
+                                                items = visibleVideoPlaylists,
+                                                key = { _, playlist -> "video-${playlist.id}" },
+                                                contentType = { _, _ -> "video-playlist" },
+                                                span = { index, _ ->
+                                                    GridItemSpan(if (videoCards && index !in partialRows) 1 else maxLineSpan)
+                                                },
+                                            ) { index, playlist ->
+                                                PlaylistCard(
+                                                    playlist = playlist,
+                                                    onClick = { onVideoPlaylistClick(playlist) },
+                                                    onDeleteClick = { videoToDelete = playlist },
+                                                    layout =
+                                                        if (videoCards && index !in partialRows) {
+                                                            PlaylistCardLayout.SHELF
+                                                        } else {
+                                                            PlaylistCardLayout.LIST
+                                                        },
+                                                    useInternalPadding = false,
+                                                )
+                                            }
                                         }
                                     }
-                                }
 
-                                MediaKind.Music -> {
-                                    if (visibleMusicPlaylists.isEmpty()) {
-                                        item(
-                                            key = "empty-music-playlists",
-                                            span = { GridItemSpan(maxLineSpan) },
-                                            contentType = "empty",
-                                        ) {
-                                            FlowEmptyState(
-                                                title = stringResource(R.string.empty_music_playlists),
-                                                icon = Icons.Default.MusicNote,
-                                            )
-                                        }
-                                    } else {
-                                        items(
-                                            items = visibleMusicPlaylists,
-                                            key = { "music-${it.id}" },
-                                            contentType = { "music-playlist" },
-                                        ) { playlist ->
-                                            val isOwned = playlist.id in ownedMusicPlaylistIds
-                                            MusicPlaylistLibraryCard(
-                                                playlist = playlist,
-                                                onClick = { onMusicPlaylistClick(playlist) },
-                                                onDownload =
-                                                    if (isOwned) {
-                                                        { musicViewModel.downloadPlaylist(playlist) }
-                                                    } else {
-                                                        null
-                                                    },
-                                                onRename =
-                                                    if (isOwned) {
-                                                        { musicToRename = playlist }
-                                                    } else {
-                                                        null
-                                                    },
-                                                onDelete = { musicToDelete = playlist },
-                                            )
+                                    MediaKind.Music -> {
+                                        if (visibleMusicPlaylists.isEmpty()) {
+                                            item(
+                                                key = "empty-music-playlists",
+                                                span = { GridItemSpan(maxLineSpan) },
+                                                contentType = "empty",
+                                            ) {
+                                                FlowEmptyState(
+                                                    title = stringResource(R.string.empty_music_playlists),
+                                                    icon = Icons.Default.MusicNote,
+                                                )
+                                            }
+                                        } else {
+                                            items(
+                                                items = visibleMusicPlaylists,
+                                                key = { "music-${it.id}" },
+                                                contentType = { "music-playlist" },
+                                            ) { playlist ->
+                                                val isOwned = playlist.id in ownedMusicPlaylistIds
+                                                MusicPlaylistLibraryCard(
+                                                    playlist = playlist,
+                                                    onClick = { onMusicPlaylistClick(playlist) },
+                                                    onDownload =
+                                                        if (isOwned) {
+                                                            { musicViewModel.downloadPlaylist(playlist) }
+                                                        } else {
+                                                            null
+                                                        },
+                                                    onRename =
+                                                        if (isOwned) {
+                                                            { musicToRename = playlist }
+                                                        } else {
+                                                            null
+                                                        },
+                                                    onDelete = { musicToDelete = playlist },
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -249,6 +279,7 @@ fun PlaylistsScreen(
                 modifier =
                     Modifier
                         .align(Alignment.BottomEnd)
+                        .floatAboveBottomChrome(LocalFlowBottomInsets.current)
                         .padding(FabMenuPadding),
             )
         }

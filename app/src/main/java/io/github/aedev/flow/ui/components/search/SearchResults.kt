@@ -13,19 +13,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
-import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Playlist
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.paging.SearchResultItem
 import io.github.aedev.flow.data.paging.SearchShelfKind
 import io.github.aedev.flow.ui.components.FeedGridLayout
 import io.github.aedev.flow.ui.components.PlaylistCard
 import io.github.aedev.flow.ui.components.PlaylistCardLayout
+import io.github.aedev.flow.ui.components.layout.flowBottomContentPadding
+import io.github.aedev.flow.ui.components.shared.FeedGridTopPadding
 import io.github.aedev.flow.ui.components.shared.FeedPagingFooter
 import io.github.aedev.flow.ui.components.shared.MediaShortCard
 import io.github.aedev.flow.ui.components.shared.ShortCardDefaults
 import io.github.aedev.flow.ui.components.shared.card.MediaVideoCard
+import io.github.aedev.flow.ui.components.shared.card.VideoCardDefaults
 import io.github.aedev.flow.ui.components.shared.card.VideoCardLayout
 import io.github.aedev.flow.ui.components.shared.dismissKeyboardOnPress
 import io.github.aedev.flow.ui.components.shared.rememberFeedGridPlan
@@ -66,9 +67,8 @@ fun SearchResults(
         columns = plan.cells,
         state = gridState,
         modifier = modifier.fillMaxSize().dismissKeyboardOnPress(actions.dismissKeyboard),
-        contentPadding = plan.contentPadding,
-        horizontalArrangement = Arrangement.spacedBy(plan.gutter),
-        verticalArrangement = Arrangement.spacedBy(plan.gutter),
+        contentPadding = plan.contentPadding(top = FeedGridTopPadding, bottom = flowBottomContentPadding()),
+        verticalArrangement = Arrangement.spacedBy(plan.rowSpacing),
     ) {
         items(
             count = pagingItems.itemCount,
@@ -103,6 +103,7 @@ fun SearchResults(
                         playlist = item.playlist,
                         onClick = { actions.onPlaylistClick(item.playlist) },
                         layout = if (plan.isListCard(index)) PlaylistCardLayout.LIST else PlaylistCardLayout.SHELF,
+                        modifier = if (plan.isListCard(index)) Modifier else Modifier.padding(horizontal = VideoCardDefaults.Inset),
                     )
                 }
 
@@ -138,19 +139,21 @@ fun SearchResults(
 fun SearchShortsGrid(
     pagingItems: LazyPagingItems<SearchResultItem>,
     gridState: LazyGridState,
+    feedLayout: FeedGridLayout,
     actions: SearchResultActions,
     modifier: Modifier = Modifier,
 ) {
+    val sidePadding = ShortCardDefaults.gridPadding(feedLayout)
     LazyVerticalGrid(
         columns = GridCells.Adaptive(ShortCardDefaults.MinWidth),
         state = gridState,
         modifier = modifier.fillMaxSize().dismissKeyboardOnPress(actions.dismissKeyboard),
         contentPadding =
             PaddingValues(
-                start = ShortGridPadding,
-                end = ShortGridPadding,
-                top = TopPadding,
-                bottom = BottomPadding,
+                start = sidePadding,
+                end = sidePadding,
+                top = FeedGridTopPadding,
+                bottom = flowBottomContentPadding(),
             ),
         horizontalArrangement = Arrangement.spacedBy(ShortCardDefaults.Spacing),
         verticalArrangement = Arrangement.spacedBy(ShortCardDefaults.Spacing),
@@ -182,18 +185,6 @@ fun SearchShortsGrid(
 private fun LazyPagingItems<SearchResultItem>.loadedShorts(): List<Video> =
     (0 until itemCount).mapNotNull { (peek(it) as? SearchResultItem.VideoResult)?.video }
 
-private fun Video.asChannel(channelId: String) =
-    Channel(
-        id = channelId,
-        name = channelName,
-        thumbnailUrl = channelThumbnailUrl,
-        subscriberCount = 0,
-        // Only YouTube ids fit this URL shape; another service's channel is opened from its id and
-        // service, which the navigation resolves through that service's own link handler.
-        url = if (serviceId.isYouTubeServiceId) "https://www.youtube.com/channel/$channelId" else "",
-        serviceId = serviceId,
-    )
-
 /** The hero card and every strip own their row; only results share one. */
 private fun SearchResultItem?.spansRow(): Boolean =
     when (this) {
@@ -219,7 +210,3 @@ private fun SearchResultItem?.contentType(): Any =
         is SearchResultItem.ShelfResult -> "shelf:${kind.name}"
         null -> "placeholder"
     }
-
-private val TopPadding = 8.dp
-private val BottomPadding = 90.dp
-private val ShortGridPadding = 12.dp

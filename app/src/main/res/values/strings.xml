@@ -120,6 +120,21 @@
     <string name="open">Open</string>
     <string name="up_next">UP NEXT</string>
     <string name="lyrics">LYRICS</string>
+    <string name="music_player_tab_up_next">Up next</string>
+    <string name="music_player_tab_lyrics">Lyrics</string>
+    <string name="music_player_lyrics_full_screen">Full screen lyrics</string>
+    <string name="lyrics_play_from_line">Play from this line</string>
+    <string name="lyrics_show_translation">Translation</string>
+    <string name="lyrics_show_translation_summary">Show the translated line under each lyric</string>
+    <string name="lyrics_show_romanization">Romanization</string>
+    <string name="lyrics_show_romanization_summary">Show lyrics in other scripts in Latin letters too</string>
+    <string name="lyrics_auto_romanize">Romanize on this device</string>
+    <string name="lyrics_auto_romanize_summary">When the lyrics source has no romanization</string>
+    <string name="player_appearance_artwork_control_colors_title">Artwork colors on controls</string>
+    <string name="player_appearance_artwork_control_colors_subtitle">Tint the buttons and seek bar from the cover</string>
+    <string name="player_appearance_plain_control_colors_title">Control colors</string>
+    <string name="player_appearance_plain_control_colors_monochrome">Black and white</string>
+    <string name="player_appearance_plain_control_colors_app">App theme</string>
     <string name="related">RELATED</string>
     <string name="close">Close</string>
     <string name="more_options">More options</string>
@@ -192,7 +207,9 @@
     <string name="unsubscribe">Unsubscribe</string>
     <string name="share_video">Share video</string>
     <string name="check_out_video_template">Check out this video: %1$s\n%2$s</string>
+    <string name="check_out_short_template">Check out this short: %1$s\n%2$s</string>
     <string name="share_link_only_template">%1$s</string>
+    <string name="link_not_supported">Flow can\'t open this kind of link</string>
     <string name="content_settings_share_without_text_title">Share links without text</string>
     <string name="content_settings_share_without_text_subtitle">Share just the video link, without the “Check out this video” message</string>
     <string name="related_videos">Related Videos</string>
@@ -339,7 +356,6 @@
     <string name="description_copied">Description copied to clipboard</string>
     <string name="title_copied">Title copied to clipboard</string>
     <string name="tags">Tags</string>
-    <string name="in_this_video">In this video</string>
     <string name="sb_manual_skip">Skip</string>
     <string name="sb_skip_segment">Skip %1$s</string>
     <string name="ago">Ago</string>
@@ -438,7 +454,6 @@
     <string name="search_hint">Search</string>
     <string name="search_videos_channels_placeholder">Search videos, channels...</string>
     <string name="search_voice_prompt">Speak to search…</string>
-    <string name="shared_video">Shared Video</string>
     <string name="search_failed">Search failed</string>
     <string name="loading_more">Loading more…</string>
     <string name="load_failed">Load failed</string>
@@ -1063,9 +1078,13 @@
     <string name="content_settings_header_shorts">Shorts</string>
     <string name="content_settings_shorts_content_title">Show Shorts</string>
     <string name="content_settings_shorts_content_subtitle">Hide Shorts everywhere. Saved Shorts and history are kept.</string>
+    <string name="content_settings_hide_watched_shorts_title">Hide watched Shorts</string>
+    <string name="content_settings_hide_watched_shorts_subtitle">Keep Shorts you finished out of shelves and the Shorts feed</string>
     <string name="content_settings_header_content_components">Content Components</string>
     <string name="content_settings_restored_music_mini_player_title">Show restored music mini player</string>
     <string name="content_settings_restored_music_mini_player_subtitle">Show your last music session after it\'s restored</string>
+    <string name="settings_open_music_player_on_play_title">Open the full player for new songs</string>
+    <string name="settings_open_music_player_on_play_summary">Off keeps a new song in the mini player</string>
     <string name="content_settings_hide_watched_home_title">Hide Watched Videos from Home</string>
     <string name="content_settings_hide_watched_home_subtitle">Hide videos you\'ve watched from Home</string>
     <string name="content_settings_hide_watched_subscriptions_title">Hide Watched Videos from Subscriptions</string>
@@ -1368,7 +1387,6 @@
     <!-- Shorts Screen -->
     <string name="loading_shorts">Loading shorts…</string>
     <string name="error_short_load">An error occurred</string>
-    <string name="share_short_template">Check out this short: https://youtu.be/%1$s</string>
     <string name="speed_2x">2x Speed</string>
     <string name="cd_liked">Liked</string>
     <string name="cd_pause">Pause</string>
@@ -1616,12 +1634,14 @@
     <string name="performance_header">Performance</string>
     <string name="parallel_downloading_title">Parallel Downloading</string>
     <string name="parallel_downloading_subtitle">Download files in multiple chunks for max speed.</string>
-    <string name="concurrent_threads_title">Concurrent Threads</string>
+    <string name="concurrent_threads_title">Connections per file</string>
+    <string name="concurrent_downloads_title">Downloads at once</string>
+    <string name="concurrent_downloads_summary">How many files download at the same time</string>
     <plurals name="threads_per_download_template">
         <item quantity="one">%1$d thread per download</item>
         <item quantity="other">%1$d threads per download</item>
     </plurals>
-    <string name="performance_optimization_note">More threads can be faster but use more battery and heat.</string>
+    <string name="performance_optimization_note">More at once can be faster but uses more battery and heat.</string>
     <string name="location_dialog_subtitle">Choose where downloaded files are saved on your device.</string>
     <string name="location_preset_header">Preset Locations</string>
     <string name="location_custom_header">Custom Location</string>
@@ -1631,6 +1651,7 @@
     <string name="location_internal_app_desc">Private to Flow. Removed if you uninstall.</string>
     <string name="location_custom_saf_label">Browse…</string>
     <string name="location_custom_saf_desc">Pick any folder using the system file picker</string>
+    <string name="download_location_not_writable">Can\'t save there. Using %1$s</string>
     <string name="location_custom_manual_label">Enter path manually</string>
     <string name="location_custom_manual_desc">Type an absolute path, e.g. /storage/emulated/0/MyFolder</string>
     <string name="location_manual_dialog_title">Custom Download Path</string>
@@ -2170,6 +2191,9 @@
     <string name="filter_songs">Songs</string>
     <string name="filter_community_playlists">Community playlists</string>
     <string name="section_top_result">Top result</string>
+    <string name="music_search_section_artists">Artists</string>
+    <string name="music_search_section_playlists">Playlists</string>
+    <string name="music_search_section_episodes">Episodes</string>
     <string name="subtitle_song_prefix">Song • %1$s</string>
     <string name="subtitle_artist">Artist</string>
     <string name="subtitle_album_template">Album • %1$s</string>
@@ -2241,9 +2265,9 @@
     <string name="download_audio">Audio</string>
     <string name="download_title_label">Title</string>
     <string name="download_format_label">Format</string>
-    <string name="download_threads_label">Threads</string>
-    <string name="download_threads_decrease">Fewer download threads</string>
-    <string name="download_threads_increase">More download threads</string>
+    <string name="download_threads_label">Connections</string>
+    <string name="download_threads_decrease">Fewer connections per file</string>
+    <string name="download_threads_increase">More connections per file</string>
     <string name="download_no_compatible_audio">No compatible audio stream — download cannot proceed</string>
     <!-- Quality shown in the downloads list for a SABR download, whose resolution is not known up front -->
     <string name="download_quality_best">Best</string>
@@ -2476,9 +2500,14 @@
     <string name="export_data_section_header">Choose Export Type</string>
     <string name="export_data_section_subtitle">Select what you want to export and save to your device</string>
     <string name="export_newpipe_subs_title">Export subscriptions (NewPipe format)</string>
-    <string name="export_newpipe_subs_desc">Export your subscriptions as a NewPipe-compatible JSON file.</string>
+    <string name="export_newpipe_subs_desc">A NewPipe JSON file. In NewPipe, use Import from previous export.</string>
     <string name="export_newpipe_subs_success">NewPipe subscriptions exported successfully</string>
     <string name="export_newpipe_subs_failed">Failed to export NewPipe subscriptions</string>
+    <plurals name="export_newpipe_subs_skipped">
+        <item quantity="one">Exported, but %1$d channel without a channel ID was left out</item>
+        <item quantity="other">Exported, but %1$d channels without a channel ID were left out</item>
+    </plurals>
+    <string name="backup_busy">Another import or export is still running</string>
     <string name="export_app_data_title">App Data Backup</string>
     <string name="export_app_data_desc">Export your subscriptions, watch history, playlists, and settings</string>
     <!-- Video Player Errors -->
@@ -2496,6 +2525,10 @@
     <string name="error_channel_terminated_hint">This channel no longer exists on YouTube.</string>
     <string name="error_captcha">YouTube CAPTCHA required</string>
     <string name="error_captcha_hint">YouTube is asking for bot verification. Please open YouTube in a browser and solve the CAPTCHA, then try again.</string>
+    <string name="error_bot_wall">YouTube is blocking this network</string>
+    <string name="error_bot_wall_hint">Try another network or turn off your VPN.</string>
+    <string name="error_login_required">Sign-in required</string>
+    <string name="error_login_required_hint">YouTube only plays this video for signed-in accounts.</string>
     <string name="error_not_available">Video not available</string>
     <string name="error_not_available_hint">This video may have been deleted, made private, or removed by YouTube.</string>
     <string name="error_not_supported">Content type not supported</string>
@@ -2920,15 +2953,15 @@
     <string name="widget_recognize_description">Identify the song playing around you with one tap</string>
     <string name="widget_turntable_label">Turntable</string>
     <string name="widget_turntable_description">Your music as a spinning record</string>
-    <string name="widget_recently_played_label">Recently played</string>
+    <string name="widget_recently_played_label">Continue watching</string>
     <string name="widget_on_repeat_label">On Repeat</string>
     <string name="widget_on_repeat">On Repeat</string>
     <string name="widget_on_repeat_description">The songs you keep coming back to</string>
     <string name="widget_no_on_repeat">Songs you keep replaying will appear here</string>
-    <string name="widget_recently_played_description">Pick up where you left off</string>
+    <string name="widget_recently_played_description">Pick up videos where you left off</string>
     <string name="widget_downloads_label">Downloads</string>
-    <string name="widget_downloads_description">Play your offline downloads</string>
-    <string name="widget_recently_played">Recently played</string>
+    <string name="widget_downloads_description">Play your downloaded videos and songs</string>
+    <string name="widget_recently_played">Continue watching</string>
     <string name="widget_downloads">Downloads</string>
     <string name="widget_nothing_playing">Nothing playing</string>
     <string name="widget_play">Play</string>
@@ -2941,6 +2974,47 @@
     <string name="widget_open_history">Open history</string>
     <string name="widget_no_recent">Videos you watch will appear here</string>
     <string name="widget_no_downloads">Your downloads will appear here</string>
+    <string name="widget_unlike">Remove from liked</string>
+    <string name="widget_open_player">Open player</string>
+    <string name="widget_short_badge">Short</string>
+    <plurals name="widget_minutes_left">
+        <item quantity="one">%d min left</item>
+        <item quantity="other">%d min left</item>
+    </plurals>
+    <plurals name="widget_downloads_in_progress">
+        <item quantity="one">%d downloading</item>
+        <item quantity="other">%d downloading</item>
+    </plurals>
+    <string name="widget_browse_downloads">Browse downloads</string>
+    <string name="widget_shuffle">Shuffle</string>
+    <string name="widget_identify_song">Identify song</string>
+    <string name="widget_open_music">Open Music</string>
+    <string name="widget_config_shortcuts">Shortcuts</string>
+    <string name="widget_config_shortcuts_footer">Choose up to four. Search is always there.</string>
+    <string name="widget_playlist_label">Playlist</string>
+    <string name="widget_playlist_description">Watch later or any playlist, one tap from playing</string>
+    <string name="widget_choose_playlist">Choose a playlist</string>
+    <string name="widget_config_playlist">Your playlists</string>
+    <string name="widget_playlist_empty">Nothing here yet</string>
+    <string name="widget_refresh">Refresh</string>
+    <plurals name="widget_playlist_songs">
+        <item quantity="one">%d song</item>
+        <item quantity="other">%d songs</item>
+    </plurals>
+    <plurals name="widget_playlist_videos">
+        <item quantity="one">%d video</item>
+        <item quantity="other">%d videos</item>
+    </plurals>
+    <string name="widget_week_label">Your week</string>
+    <string name="widget_week_description">Your watching and listening over the last seven days</string>
+    <string name="widget_week_title">Last 7 days</string>
+    <string name="widget_week_top_artist">Top artist this month</string>
+    <string name="settings_widgets_title">Widgets</string>
+    <string name="settings_widgets_summary">Put Flow on your home screen</string>
+    <string name="settings_widgets_add_header">Add to home screen</string>
+    <string name="settings_widgets_footer">Tap one to place it, or long-press your home screen.</string>
+    <string name="settings_widgets_unsupported">Your launcher can\'t add widgets for apps. Long-press your home screen to add one.</string>
+    <string name="settings_keywords_widgets">home screen, launcher, widget, now playing, turntable</string>
     <!-- Localization follow-up (#738) -->
     <string name="ui_open_in_youtube">Open in YouTube</string>
     <string name="ui_open_in_service">Open in %1$s</string>
@@ -3124,6 +3198,7 @@
     <string name="error_no_videos_for_category">No videos found for this category.</string>
     <string name="error_failed_to_load_videos">Failed to load videos.</string>
     <string name="error_invalid_channel_url">Invalid channel URL</string>
+    <string name="error_channel_link_not_found">Couldn\'t find the channel this link points to</string>
     <string name="error_channel_loading_timed_out">Channel loading timed out</string>
     <string name="error_failed_to_load_feed">Failed to load feed</string>
     <string name="error_failed_to_load_channel">Failed to load channel</string>
@@ -3132,6 +3207,7 @@
     <string name="error_search_timed_out">Search timed out</string>
     <string name="error_filter_search_timed_out">Filter search timed out</string>
     <string name="error_failed_to_load_playlist">Failed to load playlist</string>
+    <string name="error_failed_to_load_artist">Couldn\'t load this artist</string>
     <string name="error_failed_to_load_content">Failed to load content</string>
     <string name="error_no_videos_found">No videos found</string>
     <string name="error_no_shorts_found">No Shorts found</string>
@@ -3253,6 +3329,7 @@
     <string name="error_failed_to_load_media_invalid_streams">Failed to load media: Invalid streams</string>
     <string name="error_playback_retry_hint">Try again later or check your network connection.</string>
     <string name="download_waiting_for_wifi">Waiting for WiFi</string>
+    <string name="notification_download_saved_elsewhere">Saved to %1$s. The chosen folder can\'t be used.</string>
     <string name="download_failed_try_again">Download failed. Please try again.</string>
     <string name="download_merging_audio_video">Merging audio &amp; video…</string>
     <string name="download_muxing_incompatible">Muxing failed - audio format incompatible with video container. Try re-downloading.</string>
@@ -3309,7 +3386,8 @@
     <string name="fallback_downloaded_locally">Downloaded locally</string>
     <string name="fallback_more_results">More results</string>
     <string name="remove_from_queue">Remove from queue</string>
-    <string name="remove_from_queue_confirmation">Are you sure you want to remove this video from the queue?</string>
+    <string name="removed_from_queue">Removed from queue</string>
+    <string name="queue_after_this_template">%1$s after this</string>
     <string name="reorder_queue_item">Reorder queue item</string>
     <string name="music_search_no_results">No results for \"%1$s\"</string>
     <plurals name="chapters_count_template">

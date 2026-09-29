@@ -44,16 +44,20 @@ import io.github.aedev.flow.platform.AppUiMode
 import io.github.aedev.flow.platform.AppUiRoot
 import io.github.aedev.flow.platform.DeviceFormFactorDetector
 import io.github.aedev.flow.player.BackgroundPlaybackPolicy
+import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.player.LifecyclePlaybackPreferences
 import io.github.aedev.flow.player.MemoryPressurePolicy
 import io.github.aedev.flow.player.PictureInPictureHelper
 import io.github.aedev.flow.ui.FlowApp
+import io.github.aedev.flow.ui.LinkDestination
 import io.github.aedev.flow.ui.PendingDeeplink
 import io.github.aedev.flow.ui.components.library.message
 import io.github.aedev.flow.ui.components.shared.ProvideChannelGroupLabels
 import io.github.aedev.flow.ui.components.shared.ProvideDateDisplaySettings
 import io.github.aedev.flow.ui.components.shared.card.ProvideVideoCardState
+import io.github.aedev.flow.ui.linkDestination
+import io.github.aedev.flow.ui.linkTextOf
 import io.github.aedev.flow.ui.musicCollectionRoute
 import io.github.aedev.flow.ui.screens.crash.CrashReportScreen
 import io.github.aedev.flow.ui.screens.update.UPDATE_ROUTE
@@ -65,11 +69,11 @@ import io.github.aedev.flow.ui.startup.themeSettings
 import io.github.aedev.flow.ui.theme.FlowTheme
 import io.github.aedev.flow.ui.tv.FlowTvApp
 import io.github.aedev.flow.ui.utils.ProvideWindowSizeClass
-import io.github.aedev.flow.ui.youtubeChannelDeepLinkRoute
 import io.github.aedev.flow.ui.youtubeChannelRoute
 import io.github.aedev.flow.utils.AppLanguageManager
 import io.github.aedev.flow.utils.FlowCrashHandler
 import io.github.aedev.flow.utils.PLAYLIST_FILE_MIME_TYPE
+import io.github.aedev.flow.utils.parseYouTubeLink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -99,6 +103,15 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var playlistTransfer: dagger.Lazy<PlaylistTransfer>
+
+    @Inject
+    lateinit var videoPlayerManager: dagger.Lazy<EnhancedPlayerManager>
+
+    @Inject
+    lateinit var widgetContentSync: dagger.Lazy<io.github.aedev.flow.widget.core.refresh.WidgetContentSync>
+
+    @Inject
+    lateinit var nowPlayingWidgetPublisher: dagger.Lazy<io.github.aedev.flow.widget.nowplaying.NowPlayingWidgetPublisher>
 
     // A recreated activity gets its launch intent again; a playlist file in it was already imported.
     private var isRestoringState = false
@@ -188,6 +201,10 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             io.github.aedev.flow.widget.core.FlowWidgets
                 .observeThemeChanges(applicationContext)
+        }
+        lifecycleScope.launch(Dispatchers.Default) {
+            widgetContentSync.get().startIfPlaced()
+            nowPlayingWidgetPublisher.get().repairStalePlayback()
         }
 
         isRestoringState = savedInstanceState != null
@@ -367,29 +384,21 @@ class MainActivity : ComponentActivity() {
             if (!isRestoringState) importPlaylistFile(playlistFile)
             return
         }
-        val data = intent.data
         val notificationVideoId = intent.getStringExtra("notification_video_id") ?: intent.getStringExtra("video_id")
 
         val widgetRoute =
             intent.getStringExtra(
-                io.github.aedev.flow.widget.core.WidgetDeepLink.EXTRA_WIDGET_ROUTE,
+                io.github.aedev.flow.widget.core.action.WidgetDeepLink.EXTRA_WIDGET_ROUTE,
             )
         if (widgetRoute != null) {
-            intent.removeExtra(io.github.aedev.flow.widget.core.WidgetDeepLink.EXTRA_WIDGET_ROUTE)
+            intent.removeExtra(io.github.aedev.flow.widget.core.action.WidgetDeepLink.EXTRA_WIDGET_ROUTE)
             _pendingRoute.value = widgetRoute
             return
         }
 
-        val linkedText =
-            when {
-                data != null && intent.action == Intent.ACTION_VIEW -> data.toString()
-                intent.action == Intent.ACTION_SEND && intent.type == "text/plain" -> intent.getStringExtra(Intent.EXTRA_TEXT)
-                else -> null
-            }
-        if (linkedText != null && openBilibiliLink(linkedText)) return
-        val channelRoute = linkedText?.let(::youtubeChannelDeepLinkRoute)
-        if (channelRoute != null) {
-            _pendingRoute.value = channelRoute
+        val linkText = linkTextOf(intent)
+        if (linkText != null) {
+            if (!openBilibiliLink(linkText)) openLink(linkText)
             return
         }
 
@@ -398,7 +407,6 @@ class MainActivity : ComponentActivity() {
             _openMusicPlayerRequest.intValue += 1
             intent.removeExtra("notification_video_id")
             intent.removeExtra("video_id")
-            intent.removeExtra("deeplink_video_id")
             return
         }
 
@@ -410,37 +418,35 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        var isShort = false
-        val videoId =
-            if (data != null && intent.action == Intent.ACTION_VIEW) {
-                val urlString = data.toString()
-                if (urlString.contains("shorts/")) {
-                    isShort = true
-                }
-                extractVideoId(urlString)
-            } else if (intent.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-                val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
-                if (sharedText != null) {
-                    if (sharedText.contains("shorts/")) {
-                        isShort = true
-                    }
-                    extractVideoId(sharedText)
-                } else {
-                    null
-                }
-            } else {
-                notificationVideoId
-            }
-        // Check extra
-        if (intent.getBooleanExtra("is_short", false) || intent.getBooleanExtra("is_shorts", false)) {
-            isShort = true
+        val isShort = intent.getBooleanExtra("is_short", false) || intent.getBooleanExtra("is_shorts", false)
+        // Every deep link that reaches this point (a notification tap) is YouTube by construction,
+        // so PendingDeeplink's serviceId default applies as-is.
+        if (notificationVideoId != null) {
+            _pendingDeeplink.value = PendingDeeplink(videoId = notificationVideoId, isShort = isShort)
         }
+    }
 
-        // Every deep link that reaches this point (a shared/opened youtube.com URL) is YouTube by
-        // construction, so PendingDeeplink's serviceId default applies as-is.
-        if (videoId != null) {
-            _pendingDeeplink.value = PendingDeeplink(videoId = videoId, isShort = isShort)
-            intent.putExtra("deeplink_video_id", videoId)
+    /**
+     * A link from another app. A recreated activity gets its intent again, and its restored back
+     * stack already holds the page the link opened, so only playback is re-requested then.
+     */
+    private fun openLink(text: String) {
+        when (val destination = parseYouTubeLink(text)?.let(::linkDestination)) {
+            is LinkDestination.Video -> {
+                _pendingDeeplink.value = PendingDeeplink(videoId = destination.videoId)
+            }
+
+            is LinkDestination.Short -> {
+                _pendingDeeplink.value = PendingDeeplink(videoId = destination.videoId, isShort = true)
+            }
+
+            is LinkDestination.Page -> {
+                if (!isRestoringState) _pendingRoute.value = destination.route
+            }
+
+            null -> {
+                if (!isRestoringState) Toast.makeText(this, R.string.link_not_supported, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -471,22 +477,6 @@ class MainActivity : ComponentActivity() {
         _pendingDeeplink.value = null
     }
 
-    private fun extractVideoId(url: String): String? {
-        val patterns =
-            listOf(
-                Regex("v=([^&]+)"),
-                Regex("shorts/([^/?]+)"),
-                Regex("youtu.be/([^/?]+)"),
-                Regex("embed/([^/?]+)"),
-                Regex("v/([^/?]+)"),
-            )
-        for (pattern in patterns) {
-            val match = pattern.find(url)
-            if (match != null) return match.groupValues[1]
-        }
-        return url.substringAfterLast("/").substringBefore("?").ifEmpty { null }
-    }
-
     override fun onPictureInPictureModeChanged(
         isInPictureInPictureMode: Boolean,
         newConfig: android.content.res.Configuration,
@@ -497,6 +487,7 @@ class MainActivity : ComponentActivity() {
         pendingAutoPip = false
 
         clearWindowBrightnessOverride()
+        restoreVideoForPipWindow(isInPictureInPictureMode)
 
         pipDismissCheckJob?.cancel()
         if (!isInPictureInPictureMode) {
@@ -514,6 +505,21 @@ class MainActivity : ComponentActivity() {
                             .stopBackgroundService()
                     }
                 }
+        }
+    }
+
+    private fun restoreVideoForPipWindow(isInPictureInPictureMode: Boolean) {
+        val playerManager = videoPlayerManager.get()
+        if (
+            MemoryPressurePolicy.shouldRestoreVideoOnPipEntry(
+                isInPictureInPictureMode = isInPictureInPictureMode,
+                isAudioOnly = playerManager.isInAudioOnlyMode(),
+                isVideoRestorePending = playerManager.isVideoSurfaceRestorePending(),
+                explicitBackgroundPlaybackActive = GlobalPlayerState.isExplicitBackgroundPlaybackActive.value,
+            )
+        ) {
+            videoLifecycleLog("restoreVideoOutput for PiP window")
+            playerManager.restoreVideoOutput()
         }
     }
 
@@ -683,11 +689,10 @@ class MainActivity : ComponentActivity() {
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
         FlowCrashHandler.recordPhase("memory", "MainActivity.onTrimMemory level=$level")
-        if (MemoryPressurePolicy.shouldReleaseVideoPlayback(level)) {
-            io.github.aedev.flow.player.EnhancedPlayerManager
-                .getInstance()
-                .handleCriticalMemoryPressure()
-        }
+        videoPlayerManager.get().handleMemoryPressure(
+            trimLevel = level,
+            videoVisible = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) || isInPictureInPictureMode,
+        )
     }
 
     fun enterPlayerPictureInPictureMode(

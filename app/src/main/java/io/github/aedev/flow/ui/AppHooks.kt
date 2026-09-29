@@ -18,17 +18,32 @@ import io.github.aedev.flow.utils.NetworkConnectivityObserver
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
+/**
+ * Suspends until the NavHost has set its graph. The NavHost is composed only once the onboarding
+ * check resolves, so a fresh activity has a window where navigate() throws (#1079, #1102).
+ */
+suspend fun NavController.awaitGraph() {
+    currentBackStackEntryFlow.first()
+}
+
 /** Navigates to a route handed in from outside the graph, once the graph has its first entry. */
 @Composable
 fun HandlePendingRoute(
     pendingRoute: String?,
     navController: NavController,
+    startRoute: String,
     onConsumed: () -> Unit,
+    onBeforeNavigate: () -> Unit = {},
 ) {
     LaunchedEffect(pendingRoute) {
         pendingRoute?.let { route ->
-            navController.currentBackStackEntryFlow.first()
-            navController.navigate(route)
+            navController.awaitGraph()
+            onBeforeNavigate()
+            val tab = flowTabForRoute(route)
+            when {
+                tab != null -> navController.navigateToTab(tab, startRoute)
+                navController.currentBackStackEntry?.destination?.route != route -> navController.navigate(route)
+            }
             onConsumed()
         }
     }
@@ -41,43 +56,20 @@ fun HandleDeepLinks(
     onDeeplinkConsumed: () -> Unit,
 ) {
     LaunchedEffect(pendingDeeplink) {
-        if (pendingDeeplink != null) {
-            val (videoId, serviceId, isShort) = pendingDeeplink
-            val maxAttempts = 30
-            var navigated = false
-            for (attempt in 1..maxAttempts) {
-                delay(100L)
-                try {
-                    if (navController.currentDestination != null) {
-                        if (isShort) {
-                            navController.openShorts(ShortsQueueSource.SeededFeed(videoId)) {
-                                launchSingleTop = true
-                            }
-                        } else {
-                            // Route through navigateToPlayer (PlayerNavigation.kt), not a hand-built
-                            // "player/$id?serviceId=$id" string: a raw Bilibili id can itself contain
-                            // "?p=1", which would inject a second "?" and make the route's own
-                            // "?serviceId=" query silently fail to parse, falling back to YouTube.
-                            navController.navigateToPlayer(videoId, serviceId)
-                        }
-                        navigated = true
-                        break
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.w(
-                        "HandleDeepLinks",
-                        "Navigation attempt $attempt failed for $videoId: ${e.message}",
-                    )
-                }
-            }
-            if (!navigated) {
-                android.util.Log.e(
-                    "HandleDeepLinks",
-                    "Navigation failed after $maxAttempts attempts for: $videoId",
-                )
-            }
-            onDeeplinkConsumed()
+        val (videoId, serviceId, isShort) = pendingDeeplink ?: return@LaunchedEffect
+        navController.awaitGraph()
+        if (isShort) {
+            // Every Shorts queue shares one route, so single-top would reuse whichever Shorts screen
+            // is on top and keep its old queue instead of opening the linked short.
+            navController.openShorts(ShortsQueueSource.SeededFeed(videoId))
+        } else {
+            // Route through navigateToPlayer (PlayerNavigation.kt), not a hand-built
+            // "player/$id?serviceId=$id" string: a raw Bilibili id can itself contain
+            // "?p=1", which would inject a second "?" and make the route's own
+            // "?serviceId=" query silently fail to parse, falling back to YouTube.
+            navController.navigateToPlayer(videoId, serviceId)
         }
+        onDeeplinkConsumed()
     }
 }
 

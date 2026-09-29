@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
+import javax.inject.Provider
 
 private const val SHARING_TIMEOUT_MS = 5_000L
 private const val MAX_AVATARS = 3
@@ -54,6 +55,7 @@ class QuickActionsViewModel
         private val feedback: VideoFeedbackUseCase,
         private val downloadOptions: VideoDownloadOptionsLoader,
         private val likedMedia: LikedMediaUseCase,
+        private val playerManager: Provider<EnhancedPlayerManager>,
     ) : ViewModel() {
         val watchLaterIds: StateFlow<Set<String>> =
             playlistRepository
@@ -191,12 +193,12 @@ class QuickActionsViewModel
         }
 
         fun playVideoNext(video: Video) {
-            EnhancedPlayerManager.getInstance().addVideoToQueueNext(video)
+            playerManager.get().addVideoToQueueNext(video)
             emit(R.string.play_next_toast)
         }
 
         fun addVideoToQueue(video: Video) {
-            EnhancedPlayerManager.getInstance().addVideoToQueue(video)
+            playerManager.get().addVideoToQueue(video)
             emit(R.string.added_to_queue_toast)
         }
 
@@ -262,6 +264,10 @@ class QuickActionsViewModel
 
                         is QuickActionUndo.RestoreFromTrash -> {
                             Unit
+                        }
+
+                        is QuickActionUndo.QueueRemoval -> {
+                            playerManager.get().restoreRemovedVideo(undo.entry)
                         }
                     }
                 }

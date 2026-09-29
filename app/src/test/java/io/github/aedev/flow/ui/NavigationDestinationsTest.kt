@@ -31,6 +31,15 @@ class NavigationDestinationsTest {
     }
 
     @Test
+    fun routesFromOutsideTheGraphResolveToTheirTab() {
+        assertEquals(FlowTab.Search, flowTabForRoute("search"))
+        assertEquals(FlowTab.Music, flowTabForRoute("music"))
+        listOf("downloads", "history", "musicRecognize", "musicPlayer/abc", "settings").forEach { route ->
+            assertNull(flowTabForRoute(route))
+        }
+    }
+
+    @Test
     fun searchIsTheOnlyTabWithoutTheBar() {
         FlowTab.entries.forEach { tab -> assertEquals(tab != FlowTab.Search, tab.showsNavigationBar()) }
         assertFalse((null as FlowTab?).showsNavigationBar())
@@ -38,24 +47,13 @@ class NavigationDestinationsTest {
     }
 
     @Test
-    fun channelLinksOpenTheChannelRoute() {
-        assertEquals(
-            "channel?url=https%3A%2F%2Fwww.youtube.com%2Fchannel%2FUCXuqSBlHAE6Xw-yeJA0Tunw",
-            youtubeChannelDeepLinkRoute("https://www.youtube.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw"),
-        )
-        assertEquals(
-            "channel?url=https%3A%2F%2Fwww.youtube.com%2Fchannel%2FUCXuqSBlHAE6Xw-yeJA0Tunw",
-            youtubeChannelDeepLinkRoute("https://m.youtube.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw?si=abc"),
-        )
-    }
-
-    @Test
-    fun linksBrowseCannotOpenAreNotChannelRoutes() {
-        assertEquals(null, youtubeChannelDeepLinkRoute("https://www.youtube.com/@LinusTechTips"))
-        assertEquals(null, youtubeChannelDeepLinkRoute("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
-        assertEquals(null, youtubeChannelDeepLinkRoute("https://youtu.be/dQw4w9WgXcQ"))
-        assertEquals(null, youtubeChannelDeepLinkRoute("https://www.youtube.com/shorts/dQw4w9WgXcQ"))
-        assertEquals(null, youtubeChannelDeepLinkRoute("https://www.youtube.com/c/LinusTechTips"))
+    fun onlyChannelIdsAreBrowsedDirectly() {
+        assertEquals("UCXuqSBlHAE6Xw-yeJA0Tunw", youtubeChannelBrowseId("UCXuqSBlHAE6Xw-yeJA0Tunw"))
+        assertEquals("UCXuqSBlHAE6Xw-yeJA0Tunw", youtubeChannelBrowseId("https://m.youtube.com/channel/UCXuqSBlHAE6Xw-yeJA0Tunw?si=abc"))
+        assertNull(youtubeChannelBrowseId("@LinusTechTips"))
+        assertNull(youtubeChannelBrowseId("https://www.youtube.com/@LinusTechTips"))
+        assertNull(youtubeChannelBrowseId("https://www.youtube.com/c/LinusTechTips"))
+        assertNull(youtubeChannelBrowseId(" "))
     }
 
     @Test

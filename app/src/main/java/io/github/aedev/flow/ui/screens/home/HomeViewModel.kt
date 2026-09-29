@@ -44,7 +44,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
 
 private data class Wave1FeedResults(
@@ -139,6 +138,7 @@ class HomeViewModel
         private var savedInterestJob: Job? = null
 
         private val watchedVideoIds = MutableStateFlow<Set<String>>(emptySet())
+        private val watchedShortIds = MutableStateFlow<Set<String>>(emptySet())
 
         init {
             if (HomeFeedCache.isFresh()) {
@@ -167,18 +167,21 @@ class HomeViewModel
                     playerPreferences.hideWatchedVideosFromHome,
                     playerPreferences.watchedThreshold,
                     playerPreferences.continueWatchingEnabled,
-                ) { history, hideWatched, threshold, continueWatchingEnabled ->
+                    playerPreferences.hideWatchedShorts,
+                ) { history, hideWatched, threshold, continueWatchingEnabled, hideWatchedShorts ->
                     filterHomeHistory(
                         history = history,
                         hideWatchedVideos = hideWatched,
                         watchedThreshold = threshold,
                         continueWatchingEnabled = continueWatchingEnabled,
+                        hideWatchedShorts = hideWatchedShorts,
                     )
                 }.collect { result ->
                     watchedVideoIds.value = result.watchedVideoIds
+                    watchedShortIds.value = result.watchedShortIds
                     _uiState.update { state ->
                         val videos = state.videos.filterWatched(result.watchedVideoIds)
-                        val shorts = state.shorts.filterWatched(result.watchedVideoIds)
+                        val shorts = state.shorts.filterWatched(result.watchedShortIds)
                         if (videos != state.videos || shorts != state.shorts) {
                             HomeFeedCache.update(videos, shorts)
                         }
@@ -199,26 +202,11 @@ class HomeViewModel
                 FeedInvalidationBus.events.collect { event ->
                     when (event) {
                         is FeedInvalidationBus.Event.ChannelBlocked -> {
-                            HomeFeedCache.filterOut(channelId = event.channelId)
-                            HomeFeedCache.filterOut(videoId = event.videoId)
-                            viewModelScope.launch(PerformanceDispatcher.networkIO) {
-                                persistentHomeFeedCache.deleteChannel(event.channelId)
-                                persistentHomeFeedCache.deleteVideo(event.videoId)
-                            }
-                            _uiState.update { state ->
-                                state.copy(
-                                    videos =
-                                        state.videos.filter {
-                                            it.id != event.videoId && it.channelId != event.channelId
-                                        },
-                                    shorts =
-                                        state.shorts.filter {
-                                            it.id != event.videoId && it.channelId != event.channelId
-                                        },
-                                )
-                            }
-                            // Targeted eviction — preserves other channel caches in discovery engine
-                            shortsRepository.evictChannel(event.channelId)
+                            dropChannelFromFeed(event.channelId, event.videoId)
+                        }
+
+                        is FeedInvalidationBus.Event.ChannelUnsubscribed -> {
+                            dropChannelFromFeed(event.channelId)
                         }
 
                         is FeedInvalidationBus.Event.NotInterested -> {
@@ -380,6 +368,26 @@ class HomeViewModel
             }
         }
 
+        private fun dropChannelFromFeed(
+            channelId: String,
+            videoId: String? = null,
+        ) {
+            HomeFeedCache.filterOut(channelId = channelId, videoId = videoId)
+            subsBacklog = subsBacklog.filter { it.channelId != channelId }
+            viewModelScope.launch(PerformanceDispatcher.networkIO) {
+                persistentHomeFeedCache.deleteChannel(channelId)
+                videoId?.let { persistentHomeFeedCache.deleteVideo(it) }
+            }
+            _uiState.update { state ->
+                state.copy(
+                    videos = state.videos.filter { it.id != videoId && it.channelId != channelId },
+                    shorts = state.shorts.filter { it.id != videoId && it.channelId != channelId },
+                )
+            }
+            // Targeted eviction — preserves other channel caches in discovery engine
+            shortsRepository.evictChannel(channelId)
+        }
+
         private suspend fun cacheFilters(): HomeFeedCacheFilters {
             val brain = runCatching { FlowNeuroEngine.getBrainSnapshot() }.getOrElse { UserBrain() }
             return HomeFeedCacheFilters(
@@ -424,14 +432,13 @@ class HomeViewModel
             val newShorts = if (playerPreferences.effectiveHomeShortsShelfEnabled.first()) reels else emptyList()
 
             _uiState.update { state ->
-                val watched = watchedVideoIds.value
                 val updatedVideos = if (append) (state.videos + regularVideos) else regularVideos
                 state.copy(
-                    videos = updatedVideos.distinctBy { it.id }.filterWatched(watched),
+                    videos = updatedVideos.distinctBy { it.id }.filterWatched(watchedVideoIds.value),
                     shorts =
                         (state.shorts + newShorts)
                             .distinctBy { it.id }
-                            .filterWatched(watched)
+                            .filterWatched(watchedShortIds.value)
                             .sortedByDescending { it.timestamp },
                 )
             }
@@ -534,7 +541,7 @@ class HomeViewModel
                     val feedShorts =
                         (rawSubs.extractShorts() + rawDiscovery.extractShorts() + rawViral.extractShorts())
                             .distinctBy { it.id }
-                            .filterWatched(watchedVideoIds.value)
+                            .filterWatched(watchedShortIds.value)
                             .filterRecentHomeSuggestion(now)
                     if (feedShorts.isNotEmpty() && playerPreferences.effectiveHomeShortsShelfEnabled.first()) {
                         val rankedShorts = FlowNeuroEngine.rank(feedShorts, userSubs)
@@ -919,7 +926,7 @@ class HomeViewModel
                 val moreShorts =
                     rawVideos
                         .extractShorts()
-                        .filterWatched(watchedVideoIds.value)
+                        .filterWatched(watchedShortIds.value)
                         .filterRecentHomeSuggestion(now)
                 if (moreShorts.isNotEmpty() && playerPreferences.effectiveHomeShortsShelfEnabled.first()) {
                     val rankedMore = FlowNeuroEngine.rank(moreShorts, userSubs)
@@ -1108,7 +1115,6 @@ class HomeViewModel
          * offers a refresh instead of filling itself with unrelated content.
          */
         private fun settleWithoutFeed() {
-            currentPage = null
             _uiState.update {
                 it.copy(
                     isLoading = false,

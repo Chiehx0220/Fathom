@@ -208,7 +208,7 @@ fun ShortsScreen(
                                     showDescriptionSheet = true
                                 },
                                 // Shorts are a YouTube-only feed (ShortVideo carries no serviceId).
-                                onShareClick = { shareVideo(short.id, short.title, ServiceList.YouTube.serviceId) },
+                                onShareClick = { shareVideo(short.id, short.title, ServiceList.YouTube.serviceId, true) },
                                 onMoreClick = { settingsSheet.open(page, short.id) },
                                 onVideoEnded = {
                                     scope.launch {

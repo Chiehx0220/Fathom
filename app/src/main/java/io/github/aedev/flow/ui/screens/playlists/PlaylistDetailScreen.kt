@@ -48,6 +48,7 @@ import io.github.aedev.flow.ui.components.shared.FlowSidePanes
 import io.github.aedev.flow.ui.components.shared.quickactions.sharedQuickActionsViewModel
 import io.github.aedev.flow.ui.components.shared.rememberFlowPaneState
 import io.github.aedev.flow.ui.components.shared.rememberReorderableLazyListState
+import io.github.aedev.flow.ui.components.shared.rememberShareLinksWithoutText
 import io.github.aedev.flow.utils.PLAYLIST_FILE_MIME_TYPE
 import io.github.aedev.flow.utils.filterBySearch
 import io.github.aedev.flow.utils.sharePlaylist
@@ -57,7 +58,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun PlaylistDetailScreen(
     onNavigateBack: () -> Unit,
-    onPlayPlaylist: (videos: List<Video>, startIndex: Int, shuffle: Boolean) -> Unit,
+    onPlayPlaylist: (videos: List<Video>, startIndex: Int, shuffle: Boolean, title: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PlaylistDetailViewModel = hiltViewModel(),
 ) {
@@ -68,6 +69,7 @@ fun PlaylistDetailScreen(
     val mergeTargets by viewModel.userCreatedPlaylists.collectAsStateWithLifecycle()
     val quickActions = sharedQuickActionsViewModel()
     val context = LocalContext.current
+    val shareLinkOnly by rememberShareLinksWithoutText()
 
     var dialog by remember { mutableStateOf<PlaylistDialog?>(null) }
     var selectedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -130,14 +132,23 @@ fun PlaylistDetailScreen(
     val headerState = rememberPlaylistHeaderState(uiState, displayVideos, downloadBatch)
     val headerActions =
         PlaylistHeaderActions(
-            onPlayAll = { if (displayVideos.isNotEmpty()) onPlayPlaylist(displayVideos, 0, false) },
-            onShuffle = { if (displayVideos.isNotEmpty()) onPlayPlaylist(displayVideos, displayVideos.indices.random(), true) },
+            onPlayAll = { if (displayVideos.isNotEmpty()) onPlayPlaylist(displayVideos, 0, false, uiState.playlistName) },
+            onShuffle = {
+                if (displayVideos.isNotEmpty()) {
+                    onPlayPlaylist(
+                        displayVideos,
+                        displayVideos.indices.random(),
+                        true,
+                        uiState.playlistName,
+                    )
+                }
+            },
             onDownloadAll = { dialog = PlaylistDialog.DownloadAll },
             onSaveToggle = { if (uiState.isSaved) viewModel.unsaveFromLibrary() else viewModel.saveToLibrary() },
             onAddAll = { dialog = PlaylistDialog.AddAll },
             onShare = {
                 if (!isUserCreated) {
-                    sharePlaylist(context, viewModel.playlistId, uiState.playlistName)
+                    sharePlaylist(context, viewModel.playlistId, uiState.playlistName, shareLinkOnly)
                 } else {
                     scope.launch {
                         val file = viewModel.shareableFile()
@@ -211,11 +222,10 @@ fun PlaylistDetailScreen(
                                     canModify = canModify,
                                     selectionMode = selectionMode,
                                     selectedIds = selectedIds,
-                                    showAddedDate = isUserCreated,
+                                    showAddedDate = sortOrder.showsDateAdded,
                                     isWatchLater = uiState.isWatchLater,
                                     isLikes = uiState.isLikes,
                                     searchQuery = searchQuery.orEmpty(),
-                                    positions = positions,
                                 ),
                             isLoadingMore = uiState.isLoadingMore,
                             listState = listState,
@@ -224,7 +234,7 @@ fun PlaylistDetailScreen(
                                 if (selectionMode) {
                                     selectedIds = if (video.id in selectedIds) selectedIds - video.id else selectedIds + video.id
                                 } else {
-                                    onPlayPlaylist(displayVideos, positions[video.id]?.minus(1) ?: index, false)
+                                    onPlayPlaylist(displayVideos, positions[video.id]?.minus(1) ?: index, false, uiState.playlistName)
                                 }
                             },
                             onRemove = { viewModel.removeVideo(it.id) },

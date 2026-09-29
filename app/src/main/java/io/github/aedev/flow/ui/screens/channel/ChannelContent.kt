@@ -62,6 +62,7 @@ import io.github.aedev.flow.ui.components.channel.ChannelTabItems
 import io.github.aedev.flow.ui.components.channel.ChannelTabRow
 import io.github.aedev.flow.ui.components.channel.CommunityPostCard
 import io.github.aedev.flow.ui.components.channel.PostsPaneMaxWidth
+import io.github.aedev.flow.ui.components.layout.flowBottomContentPadding
 import io.github.aedev.flow.ui.components.shared.FeedShelfActions
 import io.github.aedev.flow.ui.components.shared.FeedShelfSections
 import io.github.aedev.flow.ui.components.shared.FeedShelfSlots
@@ -212,7 +213,7 @@ internal fun ChannelContent(
     val playlistsListState = rememberLazyGridState()
     val postsListState = rememberLazyListState()
     val homeListState = rememberLazyGridState()
-    val searchListState = rememberLazyListState()
+    val searchListState = rememberLazyGridState()
     val aboutListState = rememberLazyListState()
     val genericListState = rememberLazyGridState()
 
@@ -248,7 +249,7 @@ internal fun ChannelContent(
             verticalAlignment = Alignment.Top,
             userScrollEnabled = true,
         ) { page ->
-            val listPadding = PaddingValues(top = visibleHeaderHeightDp)
+            val listPadding = PaddingValues(top = visibleHeaderHeightDp, bottom = flowBottomContentPadding())
             val tab = visibleTabs.getOrElse(page) { visibleTabs.first() }
 
             when {
@@ -291,6 +292,7 @@ internal fun ChannelContent(
                         contentPadding = listPadding,
                         topInset = visibleHeaderHeightDp,
                         isGridView = isGridView,
+                        columnPreference = columnPreference,
                         onVideoClick = onVideoClick,
                         onRetry = { onSearchQueryChange(uiState.searchQuery) },
                     )

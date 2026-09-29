@@ -61,6 +61,7 @@ class SearchViewModel
         private val shortsQueueHandoff: ShortsQueueHandoff,
         private val searchHistory: SearchHistoryRepository,
         private val videoStats: VideoStatsRecorder,
+        private val neuroEngine: FlowNeuroEngine,
     ) : ViewModel() {
         // Signal each distinct submitted query once — typing and filter churn stay silent.
         private var lastSignaledQuery: String? = null
@@ -96,7 +97,7 @@ class SearchViewModel
                                 shortsEnabled = shortsEnabled,
                                 serviceId = key.serviceId,
                                 onHeader = ::onHeader,
-                                blockedChannelIds = { FlowNeuroEngine.getInstance(context).getBlockedChannels() },
+                                exclusions = { neuroEngine.feedExclusions() },
                                 bilibiliApi =
                                     io.github.aedev.flow.di
                                         .bilibiliApi(context),

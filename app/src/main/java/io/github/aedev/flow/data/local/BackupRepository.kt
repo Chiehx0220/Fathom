@@ -9,15 +9,15 @@ import android.provider.OpenableColumns
 import androidx.room.withTransaction
 import com.google.gson.GsonBuilder
 import com.google.gson.Strictness
-import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
 import dagger.hilt.android.EntryPointAccessors
 import io.github.aedev.flow.BuildConfig
 import io.github.aedev.flow.R
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliChannelId
-import io.github.aedev.flow.bilibili.serviceIdOfChannel
 import io.github.aedev.flow.data.audio.eq.EqStateJson
+import io.github.aedev.flow.data.backup.NewPipeChannelRef
+import io.github.aedev.flow.data.backup.NewPipeSubscriptionCodec
+import io.github.aedev.flow.data.backup.NewPipeSubscriptionEntry
+import io.github.aedev.flow.data.backup.NewPipeSubscriptionExport
 import io.github.aedev.flow.data.local.entity.NoteEntity
 import io.github.aedev.flow.data.local.entity.PlaylistEntity
 import io.github.aedev.flow.data.local.entity.PlaylistVideoCrossRef
@@ -27,12 +27,11 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
-import io.github.aedev.flow.di.bilibiliApi
+import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.player.audio.AudioEffectsEntryPoint
 import io.github.aedev.flow.util.AppIcons
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
-import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
 import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -43,9 +42,6 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
-import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.ServiceList
-import org.schabi.newpipe.extractor.channel.ChannelInfo
 import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
 import java.io.InputStreamReader
@@ -89,21 +85,6 @@ data class BackupData(
     val likedVideos: List<LikedVideoInfo>? = emptyList(),
     val contentPreferences: ContentPreferencesBackup? = null,
     val settings: SettingsBackup? = null,
-)
-
-data class NewPipeSubscriptionItem(
-    @SerializedName("service_id")
-    val serviceId: Int,
-    val url: String,
-    val name: String,
-)
-
-data class NewPipeSubscriptionExport(
-    val subscriptions: List<NewPipeSubscriptionItem>,
-    @SerializedName("app_version")
-    val appVersion: String = BuildConfig.VERSION_NAME,
-    @SerializedName("app_version_int")
-    val appVersionInt: Int = BuildConfig.VERSION_CODE,
 )
 
 private data class FreeTubeHistoryExportEntry(
@@ -358,37 +339,22 @@ class BackupRepository(
             }
         }
 
-    suspend fun exportSubscriptionsAsNewPipe(uri: Uri): Result<Unit> =
+    suspend fun exportSubscriptionsAsNewPipe(uri: Uri): Result<NewPipeSubscriptionExport> =
         withContext(Dispatchers.IO) {
             try {
-                val subscriptions = subscriptionRepo.getAllSubscriptions().first()
-                val items =
-                    subscriptions.mapNotNull { sub ->
-                        val url =
-                            if (sub.serviceId.isYouTubeServiceId) {
-                                toNewPipeChannelUrl(sub.channelId)
-                            } else {
-                                // Other services (e.g. Bilibili) don't share YouTube's URL shape -
-                                // resolve through that service's own link handler instead of
-                                // guessing at URL structure.
-                                resolveNonYouTubeChannelUrl(sub.channelId, sub.serviceId) { "" }.ifEmpty { null }
-                            } ?: return@mapNotNull null
-                        NewPipeSubscriptionItem(
-                            serviceId = sub.serviceId,
-                            url = url,
-                            name = sub.channelName.ifBlank { sub.channelId.trim() },
-                        )
-                    }
-                val payload = NewPipeSubscriptionExport(subscriptions = items)
-
-                val json = gson.toJson(payload)
+                val export =
+                    NewPipeSubscriptionCodec.encode(
+                        subscriptionRepo.getAllSubscriptions().first(),
+                        appVersion = BuildConfig.VERSION_NAME,
+                        appVersionInt = BuildConfig.VERSION_CODE,
+                    )
                 context.contentResolver.openOutputStream(uri, "wt")?.use { outputStream ->
                     OutputStreamWriter(outputStream, Charsets.UTF_8).use { writer ->
-                        writer.write(json)
+                        writer.write(export.json)
                     }
                 } ?: return@withContext Result.failure(Exception("Could not open output stream"))
 
-                Result.success(Unit)
+                Result.success(export)
             } catch (e: Exception) {
                 Result.failure(e)
             }
@@ -442,92 +408,39 @@ class BackupRepository(
     ): Result<Int> =
         withContext(Dispatchers.IO) {
             try {
-                var importedCount = 0
-                val subscriptionsToImport = mutableListOf<ChannelSubscription>()
-                val semaphore = Semaphore(5) // Limit concurrent requests
-
-                context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    val jsonString = inputStream.bufferedReader().use { it.readText() }
-                    val jsonObject = org.json.JSONObject(jsonString)
-
-                    if (jsonObject.has("subscriptions")) {
-                        val subscriptionsArray = jsonObject.getJSONArray("subscriptions")
-
-                        for (i in 0 until subscriptionsArray.length()) {
-                            val item = subscriptionsArray.getJSONObject(i)
-                            // NewPipe Export Format: service_id, url, name
-                            val url = item.optString("url")
-                            val name = item.optString("name")
-                            val serviceId = item.optInt("service_id", ServiceList.YouTube.serviceId)
-
-                            if (url.isNotEmpty() && name.isNotEmpty()) {
-                                var channelId = ""
-                                if (!serviceId.isYouTubeServiceId) {
-                                    // Other services (e.g. Bilibili) don't share YouTube's URL shape -
-                                    // resolve the id through that service's own link handler instead
-                                    // of guessing at URL structure.
-                                    channelId = resolveNonYouTubeChannelId(url, serviceId) { "" }
-                                } else {
-                                    if (url.contains("/channel/")) {
-                                        channelId = url.substringAfter("/channel/")
-                                    } else if (url.contains("/@")) {
-                                        channelId = url.substringAfter("/@")
-                                    } else if (url.contains("/user/")) {
-                                        channelId = url.substringAfter("/user/")
-                                    }
-
-                                    if (channelId.contains("/")) channelId = channelId.substringBefore("/")
-                                    if (channelId.contains("?")) channelId = channelId.substringBefore("?")
-                                }
-
-                                if (channelId.isNotEmpty()) {
-                                    val subscription =
-                                        ChannelSubscription(
-                                            channelId = channelId,
-                                            channelName = name,
-                                            channelThumbnail = "", // Will be fetched
-                                            subscribedAt = System.currentTimeMillis(),
-                                            serviceId = serviceId,
-                                        )
-                                    subscriptionsToImport.add(subscription)
-                                }
-                            }
-                        }
+                val json =
+                    context.contentResolver.openInputStream(uri)?.use { it.bufferedReader().readText() }
+                        ?: return@withContext Result.failure(Exception("Could not read file"))
+                val entries =
+                    NewPipeSubscriptionCodec.decode(json).getOrElse {
+                        return@withContext Result.failure(Exception("invalid_format", it))
                     }
-                }
 
-                // Fetch avatars in parallel with rate limiting
-                val totalForProgress = subscriptionsToImport.size
+                val semaphore = Semaphore(5)
                 val completedCount = AtomicInteger(0)
-                onProgress?.invoke(0, totalForProgress)
-                val subscriptionsWithAvatars = mutableListOf<ChannelSubscription>()
+                onProgress?.invoke(0, entries.size)
+                val resolved = mutableListOf<ChannelSubscription>()
                 supervisorScope {
-                    subscriptionsToImport.chunked(25).forEach { batch ->
-                        subscriptionsWithAvatars +=
+                    entries.chunked(25).forEach { batch ->
+                        resolved +=
                             batch
-                                .map { sub ->
+                                .map { entry ->
                                     async(Dispatchers.IO) {
                                         semaphore.withPermit {
-                                            val result =
-                                                try {
-                                                    val avatarUrl = fetchChannelAvatar(sub.channelId, sub.serviceId)
-                                                    sub.copy(channelThumbnail = avatarUrl)
-                                                } catch (e: Exception) {
-                                                    sub
-                                                }
-                                            onProgress?.invoke(completedCount.incrementAndGet(), totalForProgress)
-                                            result
+                                            resolveNewPipeEntry(entry).also {
+                                                onProgress?.invoke(completedCount.incrementAndGet(), entries.size)
+                                            }
                                         }
                                     }
                                 }.awaitAll()
+                                .filterNotNull()
                     }
                 }
-
-                subscriptionRepo.subscribeAll(subscriptionsWithAvatars)
-                importedCount = subscriptionsWithAvatars.size
+                val subscriptions = resolved.distinctBy { it.channelId }
+                subscriptionRepo.subscribeAll(subscriptions)
 
                 // V9.2: Seed recommendation engine from imported subscriptions
-                val channelNames = subscriptionsWithAvatars.map { it.channelName }.filter { it.isNotEmpty() }
+                val channelNames = subscriptions.map { it.channelName }.filter { it.isNotEmpty() }
                 if (channelNames.isNotEmpty()) {
                     try {
                         FlowNeuroEngine.bootstrapFromSubscriptions(context, channelNames)
@@ -535,11 +448,30 @@ class BackupRepository(
                     }
                 }
 
-                Result.success(importedCount)
+                Result.success(subscriptions.size)
             } catch (e: Exception) {
                 Result.failure(e)
             }
         }
+
+    /**
+     * Browse only opens channel ids, so links are resolved first. A handle that does not resolve is
+     * kept as `@handle` so it still exports; a `/user/` or `/c/` link that does not is dropped.
+     */
+    private suspend fun resolveNewPipeEntry(entry: NewPipeSubscriptionEntry): ChannelSubscription? {
+        val channelId =
+            when (val ref = entry.ref) {
+                is NewPipeChannelRef.Id -> ref.channelId
+                is NewPipeChannelRef.Handle -> YouTube.resolveChannelId(ref.url).getOrElse { "@${ref.handle}" }
+                is NewPipeChannelRef.Legacy -> YouTube.resolveChannelId(ref.url).getOrNull() ?: return null
+            }
+        val header = if (channelId.startsWith("UC")) YouTube.channelLanding(channelId).getOrNull()?.header else null
+        return ChannelSubscription(
+            channelId = channelId,
+            channelName = entry.name.ifBlank { header?.title.orEmpty() }.ifBlank { channelId },
+            channelThumbnail = header?.avatarUrl.orEmpty(),
+        )
+    }
 
     suspend fun importYouTube(
         uri: Uri,
@@ -2266,26 +2198,6 @@ class BackupRepository(
         }
     }
 
-    private fun toNewPipeChannelUrl(channelId: String): String? {
-        val trimmed = channelId.trim()
-        if (trimmed.isEmpty()) return null
-
-        val ucId = Regex("UC[0-9A-Za-z_-]{22}").find(trimmed)?.value
-        if (ucId != null) {
-            return "https://www.youtube.com/channel/$ucId"
-        }
-
-        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-            return trimmed
-        }
-
-        if (trimmed.startsWith("@")) {
-            return "https://www.youtube.com/$trimmed"
-        }
-
-        return "https://www.youtube.com/@$trimmed"
-    }
-
     private suspend fun writeToFolder(
         folderUri: Uri,
         filename: String,
@@ -2381,34 +2293,15 @@ class BackupRepository(
             }
         }
 
-    /** A channel's avatar, from YouTube through NewPipe or from Bilibili's own API; "" when it cannot be read. */
-    private suspend fun fetchChannelAvatar(
-        channelId: String,
-        serviceId: Int = ServiceList.YouTube.serviceId,
-    ): String =
-        try {
-            val owner = serviceIdOfChannel(channelId, serviceId)
-            if (owner == BILIBILI_SERVICE_ID) {
-                BilibiliChannelId.midOf(channelId)?.let { bilibiliApi(context).channelInfo(it).avatarUrl }.orEmpty()
-            } else if (!owner.isYouTubeServiceId) {
-                ""
-            } else {
-                val url =
-                    if (channelId.startsWith("UC") && channelId.length > 20) {
-                        "https://www.youtube.com/channel/$channelId"
-                    } else {
-                        "https://www.youtube.com/@$channelId"
-                    }
-                ChannelInfo
-                    .getInfo(NewPipe.getService(owner), url)
-                    .avatars
-                    .maxByOrNull { it.height }
-                    ?.url
-                    .orEmpty()
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
+    private suspend fun fetchChannelAvatar(channelId: String): String =
+        if (channelId.startsWith("UC")) {
+            YouTube
+                .channelLanding(channelId)
+                .getOrNull()
+                ?.header
+                ?.avatarUrl
+                .orEmpty()
+        } else {
             ""
         }
 }

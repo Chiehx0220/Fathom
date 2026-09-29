@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -31,13 +32,15 @@ import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.data.stats.RecapPeriod
 import io.github.aedev.flow.data.video.DownloadedVideo
 import io.github.aedev.flow.ui.OnTabReselected
+import io.github.aedev.flow.ui.components.layout.flowBottomContentPadding
 import io.github.aedev.flow.ui.components.layout.navigation.FlowTab
 import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
 import io.github.aedev.flow.ui.components.shared.FlowEmptyState
+import io.github.aedev.flow.ui.components.shared.FlowMaxContentWidth
 import io.github.aedev.flow.ui.components.stats.RecapEntryCard
 import java.time.format.TextStyle
 
-private val ListContentPadding = PaddingValues(vertical = 12.dp)
+private val ListVerticalPadding = 12.dp
 private val ShelfSpacing = 24.dp
 private val RecapCardPadding = 16.dp
 
@@ -82,7 +85,7 @@ fun LibraryScreen(
                     .fillMaxSize()
                     .padding(padding)
                     .background(MaterialTheme.colorScheme.background),
-            contentPadding = ListContentPadding,
+            contentPadding = PaddingValues(top = ListVerticalPadding, bottom = flowBottomContentPadding(ListVerticalPadding)),
             verticalArrangement = Arrangement.spacedBy(ShelfSpacing),
         ) {
             item(key = "recap", contentType = "recap") {
@@ -152,7 +155,7 @@ fun LibraryScreen(
             }
 
             item(key = "settings-data", contentType = "navigation-section") {
-                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Column(modifier = Modifier.widthIn(max = FlowMaxContentWidth).padding(horizontal = 16.dp)) {
                     LibrarySectionHeader(stringResource(R.string.library_settings_data_header))
                     LibrarySectionRow(
                         section = LibrarySection.LOCAL_MEDIA,

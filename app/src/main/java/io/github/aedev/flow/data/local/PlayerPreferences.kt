@@ -5,6 +5,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
+import io.github.aedev.flow.data.model.SponsorBlockCategories
+import io.github.aedev.flow.data.video.storage.DownloadLocation
 import io.github.aedev.flow.network.AppProxyConfig
 import io.github.aedev.flow.network.AppProxyType
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
@@ -35,6 +37,8 @@ const val DEFAULT_PORTRAIT_SEEKBAR_PADDING_DP = 16
 const val MAX_PORTRAIT_SEEKBAR_PADDING_DP = 64
 const val DEFAULT_FULLSCREEN_SEEKBAR_PADDING_DP = 48
 const val MAX_FULLSCREEN_SEEKBAR_PADDING_DP = 120
+const val DEFAULT_CONCURRENT_DOWNLOADS = 3
+const val MAX_CONCURRENT_DOWNLOADS = 5
 val DEFAULT_NAV_TAB_ORDER = listOf(0, 1, 2, 3, 4, 5, 6)
 
 private const val MAX_UNPLAYABLE_VIDEO_IDS = 300
@@ -97,11 +101,14 @@ class PlayerPreferences(
 
         // Download settings
         val DOWNLOAD_THREADS = intPreferencesKey("download_threads")
+        val CONCURRENT_DOWNLOADS = intPreferencesKey("concurrent_downloads")
         val DOWNLOAD_OVER_WIFI_ONLY = booleanPreferencesKey("download_over_wifi_only")
         val DEFAULT_DOWNLOAD_QUALITY = stringPreferencesKey("default_download_quality")
         val DEFAULT_DOWNLOAD_CODEC = stringPreferencesKey("default_download_codec")
         val DOWNLOAD_LOCATION = stringPreferencesKey("download_location")
         val MUSIC_DOWNLOAD_LOCATION = stringPreferencesKey("music_download_location")
+        val DOWNLOAD_LOCATION_TREE = stringPreferencesKey("download_location_tree")
+        val MUSIC_DOWNLOAD_LOCATION_TREE = stringPreferencesKey("music_download_location_tree")
 
         // Download dialog style + remembered last-used download options (compact dialog)
         val DOWNLOAD_DIALOG_STYLE = stringPreferencesKey("download_dialog_style")
@@ -133,6 +140,8 @@ class PlayerPreferences(
         val SLIDER_STYLE = stringPreferencesKey("slider_style")
         val MUSIC_PLAYER_BACKGROUND_STYLE = stringPreferencesKey("music_player_background_style")
         val HIDE_MUSIC_PLAYER_ARTWORK = booleanPreferencesKey("hide_music_player_artwork")
+        val MUSIC_ARTWORK_CONTROL_COLORS = booleanPreferencesKey("music_artwork_control_colors")
+        val MUSIC_PLAIN_CONTROL_COLORS = stringPreferencesKey("music_plain_control_colors")
         val SHORTS_PLAYER_UI_MODE = stringPreferencesKey("shorts_player_ui_mode")
         val GESTURE_OVERLAY_STYLE = stringPreferencesKey("gesture_overlay_style")
         val PLAYER_HAPTICS_ENABLED = booleanPreferencesKey("player_haptics_enabled")
@@ -154,6 +163,9 @@ class PlayerPreferences(
         val PREFERRED_LYRICS_PROVIDER = stringPreferencesKey("preferred_lyrics_provider")
         val LYRICS_PROVIDER_ORDER = stringPreferencesKey("lyrics_provider_order")
         val LYRICS_TEXT_ALIGN = stringPreferencesKey("lyrics_text_align")
+        val LYRICS_SHOW_TRANSLATION = booleanPreferencesKey("lyrics_show_translation")
+        val LYRICS_SHOW_ROMANIZATION = booleanPreferencesKey("lyrics_show_romanization")
+        val LYRICS_AUTO_ROMANIZE = booleanPreferencesKey("lyrics_auto_romanize")
         val LYRICS_PROVIDER_ENABLED_BETTERLYRICS = booleanPreferencesKey("lyrics_provider_enabled_betterlyrics")
         val LYRICS_PROVIDER_ENABLED_SIMPMUSIC = booleanPreferencesKey("lyrics_provider_enabled_simpmusic")
         val LYRICS_PROVIDER_ENABLED_LYRICSPLUS = booleanPreferencesKey("lyrics_provider_enabled_lyricsplus")
@@ -240,6 +252,7 @@ class PlayerPreferences(
         val MINI_PLAYER_SHOW_NEXT_PREV_CONTROLS = booleanPreferencesKey("mini_player_show_next_prev_controls")
         val MINI_PLAYER_CONTINUE_WATCHING_ENABLED = booleanPreferencesKey("mini_player_continue_watching_enabled")
         val SHOW_RESTORED_MUSIC_MINI_PLAYER = booleanPreferencesKey("show_restored_music_mini_player")
+        val OPEN_MUSIC_PLAYER_ON_PLAY = booleanPreferencesKey("open_music_player_on_play")
 
         // Audio focus during calls
         val PLAY_DURING_CALLS = booleanPreferencesKey("play_during_calls")
@@ -279,6 +292,7 @@ class PlayerPreferences(
         val HIDE_WATCHED_VIDEOS = booleanPreferencesKey("hide_watched_videos")
         val HIDE_WATCHED_HOME_FEED = booleanPreferencesKey("hide_watched_home_feed")
         val HIDE_WATCHED_SUBSCRIPTIONS = booleanPreferencesKey("hide_watched_subscriptions")
+        val HIDE_WATCHED_SHORTS = booleanPreferencesKey("hide_watched_shorts")
         val WATCHED_THRESHOLD = stringPreferencesKey("watched_threshold")
         val DISABLE_SHORTS_PLAYER = booleanPreferencesKey("disable_shorts_player")
         val SHOW_SHORTS_PLAYER_PROMPT = booleanPreferencesKey("show_shorts_player_prompt")
@@ -544,7 +558,7 @@ class PlayerPreferences(
                 else -> Keys.SB_ACTION_SPONSOR
             }
         return context.playerPreferencesDataStore.data.map { preferences ->
-            SponsorBlockAction.fromString(preferences[key] ?: SponsorBlockAction.SKIP.name)
+            preferences[key]?.let(SponsorBlockAction::fromString) ?: SponsorBlockCategories.defaultAction(category)
         }
     }
 
@@ -726,6 +740,34 @@ class PlayerPreferences(
     suspend fun setMusicPlayerBackgroundStyle(style: MusicPlayerBackgroundStyle) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.MUSIC_PLAYER_BACKGROUND_STYLE] = style.name
+        }
+    }
+
+    /** Whether the music player's buttons and seek bar take the artwork's colors. */
+    val musicArtworkControlColors: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.MUSIC_ARTWORK_CONTROL_COLORS] ?: true }
+
+    suspend fun setMusicArtworkControlColors(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_ARTWORK_CONTROL_COLORS] = enabled
+        }
+    }
+
+    /** The colors the controls use when artwork colors are off. */
+    val musicPlainControlColors: Flow<MusicPlainControlColors> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                runCatching {
+                    MusicPlainControlColors.valueOf(
+                        preferences[Keys.MUSIC_PLAIN_CONTROL_COLORS] ?: MusicPlainControlColors.MONOCHROME.name,
+                    )
+                }.getOrDefault(MusicPlainControlColors.MONOCHROME)
+            }
+
+    suspend fun setMusicPlainControlColors(colors: MusicPlainControlColors) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_PLAIN_CONTROL_COLORS] = colors.name
         }
     }
 
@@ -2085,6 +2127,17 @@ class PlayerPreferences(
         }
     }
 
+    /** Watched Shorts leave the Home and Subscriptions shelves and every Shorts queue, whatever the video settings say. */
+    val hideWatchedShorts: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.HIDE_WATCHED_SHORTS] ?: true }
+
+    suspend fun setHideWatchedShorts(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.HIDE_WATCHED_SHORTS] = enabled
+        }
+    }
+
     // Defaults to ALMOST_FINISHED so long videos only disappear in their final minute instead of at a flat 90%.
     val watchedThreshold: Flow<WatchedThreshold> =
         context.playerPreferencesDataStore.data
@@ -2522,6 +2575,19 @@ class PlayerPreferences(
         }
     }
 
+    /** How many downloads transfer at the same time. */
+    val concurrentDownloads: Flow<Int> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                (preferences[Keys.CONCURRENT_DOWNLOADS] ?: DEFAULT_CONCURRENT_DOWNLOADS).coerceIn(1, MAX_CONCURRENT_DOWNLOADS)
+            }
+
+    suspend fun setConcurrentDownloads(count: Int) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.CONCURRENT_DOWNLOADS] = count.coerceIn(1, MAX_CONCURRENT_DOWNLOADS)
+        }
+    }
+
     // Download dialog style (Classic full dialog vs new Compact dialog)
     val downloadDialogStyle: Flow<DownloadDialogStyle> =
         context.playerPreferencesDataStore.data
@@ -2604,38 +2670,39 @@ class PlayerPreferences(
         }
     }
 
-    /** Custom download directory path (null = default Movies/Flow or Music/Flow) */
-    val downloadLocation: Flow<String?> =
+    /** The folder video downloads go to; unset means the default folder. */
+    val downloadLocation: Flow<DownloadLocation> =
         context.playerPreferencesDataStore.data
             .map { preferences ->
-                preferences[Keys.DOWNLOAD_LOCATION]
+                DownloadLocation(preferences[Keys.DOWNLOAD_LOCATION], preferences[Keys.DOWNLOAD_LOCATION_TREE])
             }
 
-    suspend fun setDownloadLocation(path: String?) {
+    suspend fun setDownloadLocation(location: DownloadLocation) {
         context.playerPreferencesDataStore.edit { preferences ->
-            if (path != null) {
-                preferences[Keys.DOWNLOAD_LOCATION] = path
-            } else {
-                preferences.remove(Keys.DOWNLOAD_LOCATION)
-            }
+            preferences.putOrRemove(Keys.DOWNLOAD_LOCATION, location.path)
+            preferences.putOrRemove(Keys.DOWNLOAD_LOCATION_TREE, location.treeUri)
         }
     }
 
-    /** Custom music download directory path (null = use the video/global download location defaults) */
-    val musicDownloadLocation: Flow<String?> =
+    /** The folder music downloads go to; unset means they follow [downloadLocation]. */
+    val musicDownloadLocation: Flow<DownloadLocation> =
         context.playerPreferencesDataStore.data
             .map { preferences ->
-                preferences[Keys.MUSIC_DOWNLOAD_LOCATION]
+                DownloadLocation(preferences[Keys.MUSIC_DOWNLOAD_LOCATION], preferences[Keys.MUSIC_DOWNLOAD_LOCATION_TREE])
             }
 
-    suspend fun setMusicDownloadLocation(path: String?) {
+    suspend fun setMusicDownloadLocation(location: DownloadLocation) {
         context.playerPreferencesDataStore.edit { preferences ->
-            if (path != null) {
-                preferences[Keys.MUSIC_DOWNLOAD_LOCATION] = path
-            } else {
-                preferences.remove(Keys.MUSIC_DOWNLOAD_LOCATION)
-            }
+            preferences.putOrRemove(Keys.MUSIC_DOWNLOAD_LOCATION, location.path)
+            preferences.putOrRemove(Keys.MUSIC_DOWNLOAD_LOCATION_TREE, location.treeUri)
         }
+    }
+
+    private fun MutablePreferences.putOrRemove(
+        key: Preferences.Key<String>,
+        value: String?,
+    ) {
+        if (value.isNullOrBlank()) remove(key) else this[key] = value
     }
 
     val proxyEnabled: Flow<Boolean> =
@@ -2813,6 +2880,28 @@ class PlayerPreferences(
         }
     }
 
+    val lyricsShowTranslation: Flow<Boolean> =
+        context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_SHOW_TRANSLATION] ?: true }
+
+    suspend fun setLyricsShowTranslation(show: Boolean) {
+        context.playerPreferencesDataStore.edit { it[Keys.LYRICS_SHOW_TRANSLATION] = show }
+    }
+
+    val lyricsShowRomanization: Flow<Boolean> =
+        context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_SHOW_ROMANIZATION] ?: true }
+
+    suspend fun setLyricsShowRomanization(show: Boolean) {
+        context.playerPreferencesDataStore.edit { it[Keys.LYRICS_SHOW_ROMANIZATION] = show }
+    }
+
+    /** Whether lyrics in other scripts get a Latin-script line made on the device when the source has none. */
+    val lyricsAutoRomanize: Flow<Boolean> =
+        context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_AUTO_ROMANIZE] ?: false }
+
+    suspend fun setLyricsAutoRomanize(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { it[Keys.LYRICS_AUTO_ROMANIZE] = enabled }
+    }
+
     // ========== MINI PLAYER PREFERENCES ==========
 
     val miniPlayerScale: Flow<Float> =
@@ -2848,6 +2937,19 @@ class PlayerPreferences(
     suspend fun setShowRestoredMusicMiniPlayer(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.SHOW_RESTORED_MUSIC_MINI_PLAYER] = enabled
+        }
+    }
+
+    /** Whether starting a song opens the full player; off keeps it in the mini player. */
+    val openMusicPlayerOnPlay: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.OPEN_MUSIC_PLAYER_ON_PLAY] ?: false
+            }
+
+    suspend fun setOpenMusicPlayerOnPlay(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.OPEN_MUSIC_PLAYER_ON_PLAY] = enabled
         }
     }
 
@@ -3145,6 +3247,12 @@ enum class DownloadDialogStyle {
     COMPACT,
 }
 
+/** Control colors for the music player when artwork colors are off. */
+enum class MusicPlainControlColors {
+    MONOCHROME,
+    APP_THEME,
+}
+
 enum class MusicPlayerBackgroundStyle {
     BLUR_GRADIENT,
     BLUR,
@@ -3233,29 +3341,6 @@ enum class HomeFeedColumns(
 enum class PlayerRelatedCardStyle {
     COMPACT,
     FULL_WIDTH,
-}
-
-enum class WatchedThreshold(
-    val minPercent: Float,
-    val maxRemainingMs: Long,
-) {
-    PERCENT_90(90f, Long.MAX_VALUE),
-    PERCENT_95(95f, Long.MAX_VALUE),
-    PERCENT_99(99f, Long.MAX_VALUE),
-    ALMOST_FINISHED(99f, 60_000L),
-    ;
-
-    fun isWatched(
-        positionMs: Long,
-        durationMs: Long,
-    ): Boolean {
-        if (positionMs <= 0L || durationMs <= 0L) return false
-        val percent = positionMs.toFloat() / durationMs.toFloat() * 100f
-        return when (this) {
-            ALMOST_FINISHED -> durationMs - positionMs <= maxRemainingMs
-            else -> percent >= minPercent
-        }
-    }
 }
 
 const val LYRICS_ALIGN_LEFT = "left"

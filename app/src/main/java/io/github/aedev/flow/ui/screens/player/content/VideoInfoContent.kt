@@ -178,7 +178,7 @@ internal fun VideoInfoContent(
             if (fileUri != null) {
                 context.shareMediaFiles(listOf(fileUri), mimeType = "video/*")
             } else {
-                shareVideoAction(video.id, resolvedVideoTitle, video.serviceId)
+                shareVideoAction(video.id, resolvedVideoTitle, video.serviceId, video.isShort)
             }
         },
         isDeviceFile = LocalMediaIds.isLocal(video.id),

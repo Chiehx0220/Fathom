@@ -14,10 +14,10 @@
     <!-- Fallback popup player for devices whose ROM does not expose native Android PiP. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
-    <!-- Required for writing to external Downloads/Movies on API < 29 -->
+    <!-- Writing to a chosen folder through plain files on API 29 and below (legacy storage on 29) -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
+        android:maxSdkVersion="29" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
@@ -72,6 +72,7 @@
         android:theme="@style/Theme.Flow"
         android:usesCleartextTraffic="true"
         android:resizeableActivity="true"
+        android:requestLegacyExternalStorage="true"
         android:enableOnBackInvokedCallback="true">
 
         <!--
@@ -110,11 +111,13 @@
             </intent-filter>
         </activity>
 
+        <!-- singleTask: a share or link from another app must reach this instance through
+             onNewIntent, not start a second one inside the sharing app's task (#1121). -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true"
             android:theme="@style/Theme.Flow.Starting"
@@ -136,11 +139,27 @@
                 <data android:host="m.music.youtube.com" />
                 <data android:pathPrefix="/watch" />
                 <data android:pathPrefix="/v" />
+                <data android:pathPrefix="/live" />
+                <data android:pathPrefix="/embed" />
+                <data android:pathPrefix="/shorts" />
+                <data android:pathPrefix="/playlist" />
+                <data android:pathPrefix="/browse" />
                 <data android:pathPrefix="/channel" />
                 <data android:pathPrefix="/c" />
                 <data android:pathPrefix="/user" />
-                <data android:pathPrefix="/results" />
-                <data android:pathPrefix="/shorts" />
+                <data android:pathPrefix="/@" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="www.youtube-nocookie.com" />
+                <data android:host="youtube-nocookie.com" />
+                <data android:pathPrefix="/embed" />
             </intent-filter>
 
             <intent-filter android:autoVerify="true">
@@ -296,6 +315,19 @@
 
         <!-- Home-screen widgets (Jetpack Glance) -->
         <receiver
+            android:name=".widget.core.action.WidgetPlaybackReceiver"
+            android:exported="false" />
+        <activity
+            android:name=".widget.config.WidgetConfigActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Flow">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+        <receiver
             android:name=".widget.nowplaying.NowPlayingWidgetReceiver"
             android:exported="true"
             android:label="@string/widget_now_playing_label">
@@ -360,6 +392,28 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_on_repeat_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.playlist.PlaylistWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_playlist_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_playlist_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.week.WeekWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_week_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_week_info" />
         </receiver>
         <receiver
             android:name=".widget.downloads.DownloadsWidgetReceiver"
