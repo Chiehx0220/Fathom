@@ -30,10 +30,12 @@ import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.YouTube
+import io.github.aedev.flow.localserver.videoIdToUrl
 import io.github.aedev.flow.player.audio.AudioEffectsEntryPoint
 import io.github.aedev.flow.util.AppIcons
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
+import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
 import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -372,14 +374,22 @@ class BackupRepository(
                         val videoId = entry.videoId.trim()
                         if (videoId.isEmpty()) return@mapNotNull null
                         val channelUrl =
-                            ucIdRegex
-                                .find(entry.channelId.trim())
-                                ?.value
-                                ?.let { "https://www.youtube.com/channel/$it" }
-                                ?: "https://www.youtube.com/"
+                            if (entry.serviceId.isYouTubeServiceId) {
+                                ucIdRegex
+                                    .find(entry.channelId.trim())
+                                    ?.value
+                                    ?.let { "https://www.youtube.com/channel/$it" }
+                                    ?: "https://www.youtube.com/"
+                            } else {
+                                // Other services (e.g. Bilibili) don't share YouTube's URL shape -
+                                // resolve through that service's own link handler instead of
+                                // guessing at URL structure.
+                                resolveNonYouTubeChannelUrl(entry.channelId, entry.serviceId) { "" }
+                                    .ifEmpty { "https://www.youtube.com/" }
+                            }
                         YouTubeTakeoutHistoryEntryOut(
                             title = "Watched ${entry.title}",
-                            titleUrl = "https://www.youtube.com/watch?v=$videoId",
+                            titleUrl = videoIdToUrl(videoId, entry.serviceId),
                             subtitles =
                                 listOf(
                                     YouTubeTakeoutSubtitleOut(
