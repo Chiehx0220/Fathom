@@ -210,6 +210,7 @@
     <string name="check_out_short_template">Check out this short: %1$s\n%2$s</string>
     <string name="share_link_only_template">%1$s</string>
     <string name="link_not_supported">Flow can\'t open this kind of link</string>
+    <string name="shared_video">Shared Video</string>
     <string name="content_settings_share_without_text_title">Share links without text</string>
     <string name="content_settings_share_without_text_subtitle">Share just the video link, without the “Check out this video” message</string>
     <string name="related_videos">Related Videos</string>

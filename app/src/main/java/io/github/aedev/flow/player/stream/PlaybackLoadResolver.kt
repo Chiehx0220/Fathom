@@ -208,7 +208,7 @@ class PlaybackLoadResolver
             // InnerTube is YouTube's own API; every other service resolves through its own native
             // client, which produces its own step type rather than an InnerTube result.
             if (!InnerTubeVideoStreamExtractor.supportsService(request.serviceId)) {
-                resolveNonYouTube(request, preferences, offlineAbsolutePath, isOfflineAvailable, isCurrent, onStep)
+                resolveNonYouTube(request, preferences, offlineLocalPath, isOfflineAvailable, isCurrent, onStep)
                 return
             }
 

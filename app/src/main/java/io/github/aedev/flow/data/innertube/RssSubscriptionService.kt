@@ -551,6 +551,7 @@ class RssSubscriptionService
 
             /** Bilibili blocks bursts, so its uploaders are read a few at a time. */
             const val BILIBILI_CHUNK_SIZE = 3
+            const val MAX_VIDEOS_PER_CHANNEL = 60
             const val UNKNOWN_LABEL = "Unknown"
 
             const val RSS_CHUNK_SIZE = 8
