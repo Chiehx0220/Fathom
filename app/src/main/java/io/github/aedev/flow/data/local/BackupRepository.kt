@@ -13,6 +13,7 @@ import com.google.gson.stream.JsonReader
 import dagger.hilt.android.EntryPointAccessors
 import io.github.aedev.flow.BuildConfig
 import io.github.aedev.flow.R
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.data.audio.eq.EqStateJson
 import io.github.aedev.flow.data.backup.NewPipeChannelRef
 import io.github.aedev.flow.data.backup.NewPipeSubscriptionCodec
@@ -27,6 +28,7 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.player.audio.AudioEffectsEntryPoint
 import io.github.aedev.flow.util.AppIcons
@@ -459,17 +461,41 @@ class BackupRepository(
      * kept as `@handle` so it still exports; a `/user/` or `/c/` link that does not is dropped.
      */
     private suspend fun resolveNewPipeEntry(entry: NewPipeSubscriptionEntry): ChannelSubscription? {
+        val bilibiliRef = entry.ref as? NewPipeChannelRef.Bilibili
+        if (bilibiliRef != null) return resolveBilibiliNewPipeEntry(bilibiliRef.mid, entry.name)
+
         val channelId =
             when (val ref = entry.ref) {
                 is NewPipeChannelRef.Id -> ref.channelId
                 is NewPipeChannelRef.Handle -> YouTube.resolveChannelId(ref.url).getOrElse { "@${ref.handle}" }
                 is NewPipeChannelRef.Legacy -> YouTube.resolveChannelId(ref.url).getOrNull() ?: return null
+                is NewPipeChannelRef.Bilibili -> return null
             }
         val header = if (channelId.startsWith("UC")) YouTube.channelLanding(channelId).getOrNull()?.header else null
         return ChannelSubscription(
             channelId = channelId,
             channelName = entry.name.ifBlank { header?.title.orEmpty() }.ifBlank { channelId },
             channelThumbnail = header?.avatarUrl.orEmpty(),
+        )
+    }
+
+    private suspend fun resolveBilibiliNewPipeEntry(
+        mid: Long,
+        name: String,
+    ): ChannelSubscription {
+        val info =
+            try {
+                bilibiliApi(context).channelInfo(mid)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+        return ChannelSubscription(
+            channelId = mid.toString(),
+            channelName = name.ifBlank { info?.name.orEmpty() }.ifBlank { mid.toString() },
+            channelThumbnail = info?.avatarUrl.orEmpty(),
+            serviceId = BILIBILI_SERVICE_ID,
         )
     }
 

@@ -1,5 +1,7 @@
 package io.github.aedev.flow.data.backup
 
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliChannelId
 import io.github.aedev.flow.data.local.ChannelSubscription
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -22,6 +24,11 @@ sealed interface NewPipeChannelRef {
     data class Legacy(
         val url: String,
     ) : NewPipeChannelRef
+
+    /** A Bilibili uploader, identified by its `mid` (PipePipe's own `service_id: 5`). */
+    data class Bilibili(
+        val mid: Long,
+    ) : NewPipeChannelRef
 }
 
 data class NewPipeSubscriptionEntry(
@@ -37,7 +44,8 @@ data class NewPipeSubscriptionExport(
 /**
  * NewPipe's subscription export: `{app_version, app_version_int, subscriptions: [{service_id, url, name}]}`.
  * NewPipe decodes it strictly, so [encode] writes exactly those keys, and only channels it can open:
- * a `/channel/UC…` id or an `@handle`.
+ * a `/channel/UC…` id or an `@handle` (`service_id: 0`), or a Bilibili uploader (`service_id: 5`,
+ * PipePipe's own numbering) as `https://space.bilibili.com/{mid}`.
  */
 object NewPipeSubscriptionCodec {
     private const val YOUTUBE_SERVICE_ID = 0
@@ -81,8 +89,13 @@ object NewPipeSubscriptionCodec {
     ): NewPipeSubscriptionExport {
         val items =
             subscriptions.mapNotNull { subscription ->
-                val url = channelUrl(subscription.channelId) ?: return@mapNotNull null
-                Item(YOUTUBE_SERVICE_ID, url, subscription.channelName.ifBlank { subscription.channelId.trim() })
+                val (serviceId, url) =
+                    if (subscription.serviceId == BILIBILI_SERVICE_ID) {
+                        BILIBILI_SERVICE_ID to "https://space.bilibili.com/${subscription.channelId.trim()}"
+                    } else {
+                        YOUTUBE_SERVICE_ID to (channelUrl(subscription.channelId) ?: return@mapNotNull null)
+                    }
+                Item(serviceId, url, subscription.channelName.ifBlank { subscription.channelId.trim() })
             }
         val json = Json.encodeToString(Export.serializer(), Export(appVersion, appVersionInt, items))
         return NewPipeSubscriptionExport(json, skipped = subscriptions.size - items.size)
@@ -94,9 +107,15 @@ object NewPipeSubscriptionCodec {
             reader
                 .decodeFromString(Import.serializer(), json)
                 .subscriptions
-                .filter { it.serviceId == YOUTUBE_SERVICE_ID }
-                .mapNotNull { item -> parseChannelUrl(item.url)?.let { NewPipeSubscriptionEntry(it, item.name.trim()) } }
+                .mapNotNull { item -> refFor(item)?.let { NewPipeSubscriptionEntry(it, item.name.trim()) } }
                 .distinctBy { it.ref }
+        }
+
+    private fun refFor(item: ImportItem): NewPipeChannelRef? =
+        when (item.serviceId) {
+            YOUTUBE_SERVICE_ID -> parseChannelUrl(item.url)
+            BILIBILI_SERVICE_ID -> BilibiliChannelId.midOf(item.url)?.let(NewPipeChannelRef::Bilibili)
+            else -> null
         }
 
     /** A stored channel id as a URL NewPipe can open, or null when the id is neither a UC id nor an @handle. */
