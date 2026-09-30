@@ -21,7 +21,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **111** (2533 changed lines). New files: **47** (4350 lines).
+- Modified upstream files: **113** (2622 changed lines). New files: **49** (4558 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -35,10 +35,12 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/search/SearchViewModel.kt | 72 | 4 |
 | data/innertube/RssSubscriptionService.kt | 72 | 3 |
 | MainActivity.kt | 46 | 26 |
+| ui/screens/home/FlowHeaderLogoIcon.kt | 60 | 7 |
 | ui/screens/home/HomeViewModel.kt | 44 | 19 |
 | ui/screens/player/PlaybackStreamPreparer.kt | 63 | 0 |
 | ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
 | player/stream/PlaybackLoadResolver.kt | 49 | 1 |
+| data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
 | ui/screens/search/SearchScreen.kt | 48 | 0 |
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
 | ui/screens/player/VideoPlayerViewModel.kt | 31 | 7 |
@@ -47,7 +49,6 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/PlaybackPreparer.kt | 32 | 2 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 33 | 1 |
 | ui/ChannelNavigation.kt | 22 | 11 |
-| ui/screens/home/FlowHeaderLogoIcon.kt | 25 | 7 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/local/ViewHistory.kt | 28 | 0 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
@@ -84,8 +85,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/components/layout/navigation/MediaNavigator.kt | 10 | 2 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
 | data/local/LikedVideosRepository.kt | 10 | 1 |
-| player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
-| ... 51 more, each small | | |
+| ... 53 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -102,7 +102,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **47** (5323 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **52** (5877 lines).
 
 ## Local server (fork-only feature)
 
@@ -118,11 +118,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Resources / strings
 
-- Modified upstream files: **42** (657 changed lines). New files: **3** (62 lines).
+- Modified upstream files: **42** (659 changed lines). New files: **3** (62 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/main/res/values/strings.xml | 94 | 12 |
+| app/src/main/res/values/strings.xml | 95 | 13 |
 | app/src/main/AndroidManifest.xml | 61 | 1 |
 | app/src/main/res/drawable/ic_splash_logo.xml | 32 | 10 |
 | app/src/main/res/drawable-xhdpi/tv_banner.xml | 8 | 18 |
