@@ -576,7 +576,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Scallop (Expressive) -->
+        <!-- Anchor (Expressive) -->
         <activity-alias
             android:name=".IconExpressiveScallop"
             android:enabled="false"
@@ -590,21 +590,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Segmented F (Expressive) -->
-        <activity-alias
-            android:name=".IconExpressiveSegmented"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_expressive_segmented"
-            android:roundIcon="@mipmap/ic_launcher_expressive_segmented_round"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-
-        <!-- Sunny Play (Expressive) -->
+        <!-- Lighthouse (Expressive) -->
         <activity-alias
             android:name=".IconExpressivePlay"
             android:enabled="false"
@@ -618,7 +604,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Sky Clover (Expressive) -->
+        <!-- Sailboat (Expressive) -->
         <activity-alias
             android:name=".IconExpressiveSky"
             android:enabled="false"
@@ -632,21 +618,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Mint Flower (Expressive) -->
-        <activity-alias
-            android:name=".IconExpressiveMint"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_expressive_mint"
-            android:roundIcon="@mipmap/ic_launcher_expressive_mint_round"
-            android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-
-        <!-- Night Cookie (Expressive) -->
+        <!-- Night Sea (Expressive) -->
         <activity-alias
             android:name=".IconExpressiveCookie"
             android:enabled="false"
@@ -660,7 +632,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Oval (Expressive) -->
+        <!-- Submarine (Expressive) -->
         <activity-alias
             android:name=".IconExpressiveOval"
             android:enabled="false"
@@ -674,7 +646,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Pill (Expressive) -->
+        <!-- Depth Gauge (Expressive) -->
         <activity-alias
             android:name=".IconExpressivePill"
             android:enabled="false"

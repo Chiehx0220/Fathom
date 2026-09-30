@@ -31,12 +31,6 @@ private val ExpressiveSplashes =
                 R.style.Theme_Flow_Starting_Dark_Expressive_Scallop,
                 R.style.Theme_Flow_Starting_Black_Expressive_Scallop,
             ),
-        ".IconExpressiveSegmented" to
-            ExpressiveSplash(
-                R.style.Theme_Flow_Starting_Light_Expressive_Segmented,
-                R.style.Theme_Flow_Starting_Dark_Expressive_Segmented,
-                R.style.Theme_Flow_Starting_Black_Expressive_Segmented,
-            ),
         ".IconExpressivePlay" to
             ExpressiveSplash(
                 R.style.Theme_Flow_Starting_Light_Expressive_Play,
@@ -48,12 +42,6 @@ private val ExpressiveSplashes =
                 R.style.Theme_Flow_Starting_Light_Expressive_Sky,
                 R.style.Theme_Flow_Starting_Dark_Expressive_Sky,
                 R.style.Theme_Flow_Starting_Black_Expressive_Sky,
-            ),
-        ".IconExpressiveMint" to
-            ExpressiveSplash(
-                R.style.Theme_Flow_Starting_Light_Expressive_Mint,
-                R.style.Theme_Flow_Starting_Dark_Expressive_Mint,
-                R.style.Theme_Flow_Starting_Black_Expressive_Mint,
             ),
         ".IconExpressiveCookie" to
             ExpressiveSplash(

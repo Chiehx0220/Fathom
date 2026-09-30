@@ -841,14 +841,12 @@
     <string name="icon_name_dynamic">Material You</string>
     <string name="icon_name_material_sky">Material Sky</string>
     <string name="icon_name_material_mint">Material Mint</string>
-    <string name="icon_name_expressive_scallop">Scallop</string>
-    <string name="icon_name_expressive_segmented">Segmented F</string>
-    <string name="icon_name_expressive_play">Sunny Play</string>
-    <string name="icon_name_expressive_sky">Sky Clover</string>
-    <string name="icon_name_expressive_mint">Mint Flower</string>
-    <string name="icon_name_expressive_cookie">Night Cookie</string>
-    <string name="icon_name_expressive_oval">Oval</string>
-    <string name="icon_name_expressive_pill">Pill</string>
+    <string name="icon_name_expressive_scallop">Anchor</string>
+    <string name="icon_name_expressive_play">Lighthouse</string>
+    <string name="icon_name_expressive_sky">Sailboat</string>
+    <string name="icon_name_expressive_cookie">Night Sea</string>
+    <string name="icon_name_expressive_oval">Submarine</string>
+    <string name="icon_name_expressive_pill">Depth Gauge</string>
     <!-- Player Appearance -->
     <string name="player_appearance_title">Player Appearance</string>
     <string name="player_appearance_header">Customize Player Controls</string>

@@ -87,17 +87,11 @@
     <style name="Theme.Flow.Starting.Light.Expressive.Scallop">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_scallop</item>
     </style>
-    <style name="Theme.Flow.Starting.Light.Expressive.Segmented">
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_segmented</item>
-    </style>
     <style name="Theme.Flow.Starting.Light.Expressive.Play">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_play</item>
     </style>
     <style name="Theme.Flow.Starting.Light.Expressive.Sky">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_sky</item>
-    </style>
-    <style name="Theme.Flow.Starting.Light.Expressive.Mint">
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_mint</item>
     </style>
     <style name="Theme.Flow.Starting.Light.Expressive.Cookie">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_cookie</item>
@@ -112,17 +106,11 @@
     <style name="Theme.Flow.Starting.Dark.Expressive.Scallop">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_scallop</item>
     </style>
-    <style name="Theme.Flow.Starting.Dark.Expressive.Segmented">
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_segmented</item>
-    </style>
     <style name="Theme.Flow.Starting.Dark.Expressive.Play">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_play</item>
     </style>
     <style name="Theme.Flow.Starting.Dark.Expressive.Sky">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_sky</item>
-    </style>
-    <style name="Theme.Flow.Starting.Dark.Expressive.Mint">
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_mint</item>
     </style>
     <style name="Theme.Flow.Starting.Dark.Expressive.Cookie">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_cookie</item>
@@ -137,17 +125,11 @@
     <style name="Theme.Flow.Starting.Black.Expressive.Scallop">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_scallop</item>
     </style>
-    <style name="Theme.Flow.Starting.Black.Expressive.Segmented">
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_segmented</item>
-    </style>
     <style name="Theme.Flow.Starting.Black.Expressive.Play">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_play</item>
     </style>
     <style name="Theme.Flow.Starting.Black.Expressive.Sky">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_sky</item>
-    </style>
-    <style name="Theme.Flow.Starting.Black.Expressive.Mint">
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_mint</item>
     </style>
     <style name="Theme.Flow.Starting.Black.Expressive.Cookie">
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_expressive_cookie</item>
