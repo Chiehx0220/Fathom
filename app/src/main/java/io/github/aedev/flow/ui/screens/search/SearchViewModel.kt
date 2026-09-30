@@ -27,6 +27,7 @@ import io.github.aedev.flow.data.shorts.ShortsContentFilter
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueHandoff
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
 import io.github.aedev.flow.data.stats.VideoStatsRecorder
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.pages.search.SearchHeader
 import io.github.aedev.flow.innertube.pages.search.SearchSuggestion
 import io.github.aedev.flow.ui.youtubeChannelUrl
@@ -99,9 +100,7 @@ class SearchViewModel
                                 serviceId = key.serviceId,
                                 onHeader = ::onHeader,
                                 exclusions = { neuroEngine.feedExclusions() },
-                                bilibiliApi =
-                                    io.github.aedev.flow.di
-                                        .bilibiliApi(context),
+                                bilibiliApi = bilibiliApi(context),
                             )
                         },
                     ).flow
@@ -135,7 +134,7 @@ class SearchViewModel
             // Only Bilibili is left: its video knows its uploader.
             val uploader =
                 runCatching {
-                    val api = io.github.aedev.flow.di.bilibiliApi(context)
+                    val api = bilibiliApi(context)
                     val roomId = BilibiliLiveId.roomIdOf(video.id)
                     if (roomId != null) {
                         api.liveRoom(roomId).uploader

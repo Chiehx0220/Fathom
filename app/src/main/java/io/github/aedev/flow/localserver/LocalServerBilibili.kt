@@ -86,18 +86,19 @@ internal object LocalServerBilibili {
                 emptyList()
             }
         val items =
-            lives + result.items.filterIsInstance<BilibiliSearchItem.Video>().map {
-                bilibiliVideoItem(
-                    "${it.bvid}?p=1",
-                    it.title,
-                    it.thumbnailUrl,
-                    it.durationSec,
-                    it.viewCount,
-                    it.uploader.name,
-                    it.uploader.mid,
-                    it.uploader.avatarUrl,
-                )
-            }
+            lives +
+                result.items.filterIsInstance<BilibiliSearchItem.Video>().map {
+                    bilibiliVideoItem(
+                        "${it.bvid}?p=1",
+                        it.title,
+                        it.thumbnailUrl,
+                        it.durationSec,
+                        it.viewCount,
+                        it.uploader.name,
+                        it.uploader.mid,
+                        it.uploader.avatarUrl,
+                    )
+                }
         return ListPage(items, Page((page + 1).toString()).takeIf { result.hasMore })
     }
 

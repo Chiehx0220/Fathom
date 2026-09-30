@@ -32,7 +32,12 @@ internal class BilibiliLive(
             uploader = BilibiliUploader(room.uid, room.uname, room.face.orEmpty().toHttps()),
             viewerCount = room.online,
             startedAtSec = parseStartTime(room.liveTime),
-            tags = (room.tagName + "," + room.tags).split(',').map { it.trim() }.filter { it.isNotEmpty() }.distinct(),
+            tags =
+                (room.tagName + "," + room.tags)
+                    .split(',')
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .distinct(),
             status =
                 when (room.liveStatus) {
                     1 -> BilibiliLiveStatus.LIVE
@@ -54,7 +59,11 @@ internal class BilibiliLive(
         if (response.code != 0) throw BilibiliContentNotAvailableException(response.message.ifBlank { "Bilibili code ${response.code}" })
         var hls: String? = null
         var flv: String? = null
-        for (stream in response.data?.playurlInfo?.playurl?.stream.orEmpty()) {
+        for (stream in response.data
+            ?.playurlInfo
+            ?.playurl
+            ?.stream
+            .orEmpty()) {
             for (format in stream.format) {
                 when {
                     stream.protocolName == "http_hls" && format.formatName == "fmp4" && hls == null -> {

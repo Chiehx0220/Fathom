@@ -106,13 +106,25 @@ fun SearchScreen(
         val bilibiliVideoId = resolvePastedBilibiliVideoLink(text)
         val link = parseYouTubeLink(text)
         when {
-            text.isEmpty() -> Unit
+            text.isEmpty() -> {
+                Unit
+            }
+
             bilibiliVideoId != null -> {
                 onVideoClick(sharedVideo(bilibiliVideoId, context.getString(R.string.shared_video), BILIBILI_SERVICE_ID))
             }
-            link == null -> search(text)
-            link is YouTubeLink.Search -> search(link.query)
-            !mediaNavigator.openLink(link) -> quickActions.announce(R.string.link_not_supported)
+
+            link == null -> {
+                search(text)
+            }
+
+            link is YouTubeLink.Search -> {
+                search(link.query)
+            }
+
+            !mediaNavigator.openLink(link) -> {
+                quickActions.announce(R.string.link_not_supported)
+            }
         }
     }
 

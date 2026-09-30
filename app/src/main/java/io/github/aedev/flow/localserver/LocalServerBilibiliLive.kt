@@ -79,8 +79,7 @@ internal object LocalServerBilibiliLive {
     fun roomOf(
         context: Context,
         mid: Long,
-    ): StreamInfoItem? =
-        runCatching { runBlocking { bilibiliApi(context).channelLiveRoom(mid) } }.getOrNull()?.let(::bilibiliLiveItem)
+    ): StreamInfoItem? = runCatching { runBlocking { bilibiliApi(context).channelLiveRoom(mid) } }.getOrNull()?.let(::bilibiliLiveItem)
 
     // region Chat
 

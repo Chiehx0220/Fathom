@@ -74,7 +74,13 @@ object BilibiliLiveId {
     fun roomIdOf(videoId: String): Long? = if (isLive(videoId)) videoId.removePrefix(PREFIX).toLongOrNull() else null
 
     /** The id in a live-room link ("https://live.bilibili.com/21452505?spm=1"); null when [url] is not one. */
-    fun fromUrl(url: String): String? = LINK.find(url.trim())?.groupValues?.get(1)?.toLongOrNull()?.let(::of)
+    fun fromUrl(url: String): String? =
+        LINK
+            .find(url.trim())
+            ?.groupValues
+            ?.get(1)
+            ?.toLongOrNull()
+            ?.let(::of)
 
     fun toUrl(videoId: String): String = "https://live.bilibili.com/${videoId.removePrefix(PREFIX)}"
 }

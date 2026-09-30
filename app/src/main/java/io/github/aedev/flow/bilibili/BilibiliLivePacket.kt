@@ -116,7 +116,12 @@ internal object BilibiliLivePacket {
     /** info[0] holds the style (mode at 1, colour at 3), info[1] the text. */
     private fun chat(info: JsonArray?): BilibiliLiveMessage.Chat? {
         val style = info?.getOrNull(0)?.jsonArray ?: return null
-        val text = info.getOrNull(1)?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotEmpty() } ?: return null
+        val text =
+            info
+                .getOrNull(1)
+                ?.jsonPrimitive
+                ?.contentOrNull
+                ?.takeIf { it.isNotEmpty() } ?: return null
         val position =
             when (style.getOrNull(1)?.jsonPrimitive?.intOrNull) {
                 4 -> BilibiliDanmakuPosition.BOTTOM
@@ -128,7 +133,12 @@ internal object BilibiliLivePacket {
     }
 
     private fun superChat(data: JsonObject?): BilibiliLiveMessage.SuperChat? {
-        val message = data?.get("message")?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotEmpty() } ?: return null
+        val message =
+            data
+                ?.get("message")
+                ?.jsonPrimitive
+                ?.contentOrNull
+                ?.takeIf { it.isNotEmpty() } ?: return null
         val price = data["price"]?.jsonPrimitive?.intOrNull ?: 0
         val rgb =
             data["background_bottom_color"]

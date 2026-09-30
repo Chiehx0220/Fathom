@@ -121,7 +121,10 @@ object BilibiliVideoMapper {
             id = videoId,
             title = room.title.ifBlank { fallback?.title.orEmpty() },
             channelName = room.uploader.name.ifBlank { fallback?.channelName.orEmpty() },
-            channelId = room.uploader.mid.takeIf { it > 0 }?.toString() ?: fallback?.channelId.orEmpty(),
+            channelId =
+                room.uploader.mid
+                    .takeIf { it > 0 }
+                    ?.toString() ?: fallback?.channelId.orEmpty(),
             thumbnailUrl = room.coverUrl.ifBlank { fallback?.thumbnailUrl.orEmpty() },
             duration = 0,
             viewCount = room.viewerCount,
