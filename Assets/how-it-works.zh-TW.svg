@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 380" width="920" height="380" role="img" aria-label="Fathom 的運作方式:YouTube 與 Bilibili 進入手機上的 Fathom App,App 內有 FlowNeuro 和本地網頁伺服器,同一個 Wi-Fi 下的任何瀏覽器都能開啟。">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1.5 L8.5 5 L1 8.5" fill="none" stroke="#74777F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect x="1" y="1" width="918" height="378" rx="32" fill="#F4F6FA" stroke="#DDE1E8" stroke-width="2"/>
+
+  <!-- sources -->
+  <rect x="36" y="80" width="150" height="56" rx="28" fill="#FFDAD6"/>
+  <path d="M62 96 L62 120 L82 108 Z" fill="#BA1A1A" stroke="#BA1A1A" stroke-width="3" stroke-linejoin="round"/>
+  <text x="96" y="115" font-family="Roboto, 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif" font-size="18" font-weight="600" fill="#410002">YouTube</text>
+  <rect x="36" y="244" width="150" height="56" rx="28" fill="#FFD9E4"/>
+  <rect x="58" y="260" width="26" height="22" rx="7" fill="none" stroke="#B0135A" stroke-width="3"/>
+  <path d="M65 260 L61 254 M77 260 L81 254" stroke="#B0135A" stroke-width="3" stroke-linecap="round"/>
+  <text x="96" y="279" font-family="Roboto, 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif" font-size="18" font-weight="600" fill="#3E001D">Bilibili</text>
+
+  <!-- phone -->
+  <rect x="250" y="32" width="440" height="316" rx="32" fill="#E4E9F2"/>
+  <rect x="274" y="52" width="16" height="26" rx="4" fill="none" stroke="#44474E" stroke-width="2.2"/>
+  <text x="302" y="72" font-family="Roboto, 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif" font-size="15" font-weight="600" fill="#44474E">你的手機</text>
+
+  <rect x="274" y="145" width="182" height="110" rx="24" fill="#D3E3FD"/>
+  <text x="365" y="196" text-anchor="middle" font-family="Roboto, 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif" font-size="19" font-weight="600" fill="#0B2B57">Fathom</text><text x="365" y="218" text-anchor="middle" font-family="Roboto, 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif" font-size="13.5" fill="#0B2B57" opacity=".82">原生用戶端</text>
+  <rect x="490" y="96" width="176" height="84" rx="24" fill="#E8DEF8"/>
+  <text x="578" y="132" text-anchor="middle" font-family="Roboto, 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif" font-size="19" font-weight="600" fill="#1D192B">FlowNeuro</text><text x="578" y="154" text-anchor="middle" font-family="Roboto, 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif" font-size="13.5" fill="#1D192B" opacity=".82">裝置端推薦引擎</text>
+  <rect x="490" y="220" width="176" height="84" rx="24" fill="#C9EBE1"/>
+  <text x="578" y="256" text-anchor="middle" font-family="Roboto, 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif" font-size="19" font-weight="600" fill="#06302A">網頁伺服器</text><text x="578" y="278" text-anchor="middle" font-family="Roboto, 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif" font-size="13.5" fill="#06302A" opacity=".82">連接埠 8080</text>
+
+  <!-- browser -->
+  <rect x="734" y="226" width="150" height="72" rx="36" fill="#FFE3B8"/>
+  <text x="809" y="258" text-anchor="middle" font-family="Roboto, 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif" font-size="19" font-weight="600" fill="#2B1700">任何瀏覽器</text><text x="809" y="280" text-anchor="middle" font-family="Roboto, 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', system-ui, sans-serif" font-size="13.5" fill="#2B1700" opacity=".82">同一個 Wi-Fi</text>
+
+  <!-- flows -->
+  <g fill="none" stroke="#74777F" stroke-width="2.5" stroke-linecap="round">
+    <path d="M188 108 C224 108 236 168 270 176" marker-end="url(#a)"/>
+    <path d="M188 272 C224 272 236 224 270 216" marker-end="url(#a)"/>
+    <path d="M458 168 L484 148" marker-start="url(#a)" marker-end="url(#a)"/>
+    <path d="M458 232 L484 252" marker-end="url(#a)"/>
+    <path d="M670 262 L726 262" marker-end="url(#a)"/>
+  </g>
+</svg>
