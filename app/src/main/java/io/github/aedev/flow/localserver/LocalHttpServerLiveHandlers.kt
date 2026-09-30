@@ -56,7 +56,7 @@ internal fun ClientHandler.handleHlsProxy(
             .build()
     LocalHttpServer.httpClient.newCall(request).execute().use { response ->
         val body = response.body
-        if (!response.isSuccessful || body == null) {
+        if (!response.isSuccessful) {
             sendResponse(os, 502, "The live server answered ${response.code}.", "text/plain; charset=UTF-8")
             return
         }

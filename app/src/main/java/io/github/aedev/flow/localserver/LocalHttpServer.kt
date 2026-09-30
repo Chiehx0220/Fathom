@@ -22,9 +22,7 @@ import org.schabi.newpipe.extractor.stream.StreamExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.VideoStream
-import java.io.BufferedReader
 import java.io.IOException
-import java.io.InputStreamReader
 import java.io.OutputStream
 import java.net.ServerSocket
 import java.net.Socket
@@ -424,152 +422,54 @@ class LocalHttpServer(
         private val context: android.content.Context,
         private val executorService: ExecutorService,
     ) : Runnable {
-        // Set once at the top of run() so sendResponse() can check Accept-Encoding.
+        // Set once run() has read the request, so sendResponse() can check Accept-Encoding.
         private var requestHeaders: MutableMap<String, String>? = null
+
+        internal val remoteAddress: String? get() = socket.inetAddress.hostAddress
 
         override fun run() {
             try {
-                BufferedReader(InputStreamReader(socket.getInputStream(), "UTF-8")).use { reader ->
-                    socket.getOutputStream().use { os ->
-                        val requestLine = reader.readLine() ?: return
+                socket.tcpNoDelay = true
+                // A browser opens spare connections it never sends on; without a limit each would hold a thread for good.
+                socket.soTimeout = REQUEST_READ_TIMEOUT_MS
+                val head = readRequestHead(socket.getInputStream()) ?: return
+                socket.soTimeout = 0
 
-                        val parts = requestLine.split(" ")
-                        if (parts.size < 2) return
+                val requestLine = head[0].split(" ")
+                if (requestLine.size < 2) return
+                val method = requestLine[0]
+                val rawUri = requestLine[1]
+                val path = rawUri.substringBefore('?')
+                val query = if (rawUri.contains('?')) rawUri.substringAfter('?') else null
+                val params = parseQueryParams(query)
+                log("Request: $method $path" + (if (query != null) "?$query" else ""))
 
-                        val method = parts[0]
-                        val rawUri = parts[1]
+                val requestHeaders = parseRequestHeaders(head)
+                this.requestHeaders = requestHeaders
 
-                        var path = rawUri
-                        var query: String? = null
-                        val qIdx = rawUri.indexOf("?")
-                        if (qIdx >= 0) {
-                            path = rawUri.substring(0, qIdx)
-                            query = rawUri.substring(qIdx + 1)
+                socket.getOutputStream().use { os ->
+                    if ("OPTIONS".equals(method, ignoreCase = true)) {
+                        os.write(CORS_PREFLIGHT.toByteArray(Charsets.UTF_8))
+                        os.flush()
+                        return
+                    }
+                    try {
+                        val route = ROUTES[path]
+                        if (route != null) {
+                            route(this, os, params, requestHeaders)
+                        } else {
+                            sendResponse(os, 404, "Page Not Found", "text/plain; charset=UTF-8")
                         }
-
-                        val params = parseQueryParams(query)
-                        log("Request: $method $path" + (if (query != null) "?$query" else ""))
-
-                        val requestHeaders = HashMap<String, String>()
-                        this.requestHeaders = requestHeaders
-                        var headerLine: String?
-                        while (reader.readLine().also { headerLine = it } != null && headerLine!!.isNotEmpty()) {
-                            val line = headerLine!!
-                            val colonIdx = line.indexOf(":")
-                            if (colonIdx > 0) {
-                                val name = line.substring(0, colonIdx).trim().lowercase(Locale.US)
-                                val value = line.substring(colonIdx + 1).trim()
-                                requestHeaders[name] = value
-                            }
-                        }
-
-                        if ("OPTIONS".equals(method, ignoreCase = true)) {
-                            val sb =
-                                "HTTP/1.1 204 No Content\r\n" +
-                                    "Access-Control-Allow-Origin: *\r\n" +
-                                    "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n" +
-                                    "Access-Control-Allow-Headers: *\r\n" +
-                                    "Access-Control-Expose-Headers: *\r\n" +
-                                    "Access-Control-Max-Age: 86400\r\n" +
-                                    "\r\n"
-                            os.write(sb.toByteArray(Charsets.UTF_8))
-                            os.flush()
-                            return
-                        }
-
-                        var postBody = ""
-                        if ("POST".equals(method, ignoreCase = true)) {
-                            val contentLengthHeader = requestHeaders["content-length"]
-                            if (contentLengthHeader != null) {
-                                try {
-                                    val contentLength = contentLengthHeader.toInt()
-                                    val buffer = CharArray(contentLength)
-                                    var totalRead = 0
-                                    while (totalRead < contentLength) {
-                                        val read = reader.read(buffer, totalRead, contentLength - totalRead)
-                                        if (read == -1) break
-                                        totalRead += read
-                                    }
-                                    postBody = String(buffer, 0, totalRead)
-                                } catch (e: Exception) {
-                                    log("Error reading POST body: " + e.message)
-                                }
-                            }
-                        }
-
-                        val ua = requestHeaders["user-agent"]
-                        var isTv = false
-                        if (ua != null) {
-                            val uaLower = ua.lowercase(Locale.US)
-                            isTv =
-                                listOf("tv", "googletv", "androidtv", "smarttv", "appletv", "roku", "aftb", "aftt", "firetv")
-                                    .any(uaLower::contains)
-                        }
-
-                        try {
-                            // Route table rebuilt per request: each lambda captures this request's state.
-                            val routes: Map<String, () -> Unit> =
-                                mapOf(
-                                    "/" to { handleAppShell(os) },
-                                    "/danmaku" to { handleDanmaku(os, params) },
-                                    "/live_chat" to { handleLiveChat(os, params) },
-                                    "/hls" to { handleHlsProxy(os, params) },
-                                    "/send-link" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
-                                    "/play" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
-                                    "/send-command" to { handleSendCommand(os, params) },
-                                    "/poll-commands" to { handlePollCommands(os) },
-                                    "/remote-state" to { handleRemoteState(os, params) },
-                                    "/release-lock" to { handleReleaseLock(os, params) },
-                                    "/history_action" to { handleHistoryAction(os, params) },
-                                    "/stream" to { handleStreamProxy(os, params, requestHeaders) },
-                                    "/manifest" to { handleManifestProxy(os, params) },
-                                    "/subtitles" to { handleSubtitlesProxy(os, params) },
-                                    "/thumbnails" to { handleThumbnailsProxy(os, params) },
-                                    "/image-proxy" to { handleImageProxy(os, params) },
-                                    "/api/player/play" to { handleApiPlayerPlay(os, params) },
-                                    "/api/player/pause" to { handleApiPlayerPause(os) },
-                                    "/api/player/resume" to { handleApiPlayerResume(os) },
-                                    "/api/player/stop" to { handleApiPlayerStop(os) },
-                                    "/search-history" to { handleSearchHistory(os, params) },
-                                    "/subscribe" to { handleSubscribeAction(os, params) },
-                                    "/block_channel" to { handleBlockChannelAction(os, params) },
-                                    "/bookmark_playlist" to { handlePlaylistBookmarkAction(os, params) },
-                                    "/watch_later_action" to { handleWatchLaterAction(os, params) },
-                                    "/rate_video" to { handleRateVideoAction(os, params) },
-                                    "/api/v1/search" to { handleApiSearch(os, params) },
-                                    "/api/v1/home" to { handleApiHome(os, params) },
-                                    "/api/v1/channel" to { handleApiChannel(os, params) },
-                                    "/api/v1/video" to { handleApiVideo(os, params) },
-                                    "/api/v1/comments" to { handleApiComments(os, params) },
-                                    "/api/v1/watch_progress" to { handleApiWatchProgress(os, params) },
-                                    "/api/v1/download" to { handleApiDownload(os, params) },
-                                    "/api/v1/bilibili_probe" to { handleApiBilibiliProbe(os, params) },
-                                    "/api/v1/recommendations" to { handleApiRecommendations(os, params) },
-                                    "/api/v1/ping" to { handleApiPing(os) },
-                                    "/api/v1/history" to { handleApiHistory(os) },
-                                    "/api/v1/library" to { handleApiLibrary(os, params) },
-                                    "/api/v1/feed" to { handleApiFeed(os, params) },
-                                    "/api/v1/playlist" to { handleApiPlaylist(os, params) },
-                                    "/api/v1/state" to { handleApiState(os, params) },
-                                    "/api/v1/sponsor" to { handleApiSponsor(os, params) },
-                                    "/api/v1/settings" to { handleApiSettings(os, params) },
-                                    "/app.css" to { handleAppCss(os) },
-                                    "/app.js" to { handleAppJs(os) },
-                                )
-                            val route = routes[path]
-                            if (route != null) {
-                                route()
-                            } else {
-                                sendResponse(os, 404, "Page Not Found", "text/plain; charset=UTF-8")
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            log("Error during route handling: " + e.message)
-                            sendResponse(os, 500, "Internal Server Error:\n" + e.toString(), "text/plain; charset=UTF-8")
-                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        log("Error during route handling: " + e.message)
+                        sendResponse(os, 500, "Internal Server Error:\n" + e.toString(), "text/plain; charset=UTF-8")
                     }
                 }
+            } catch (e: IOException) {
+                // The client went away, or never sent a request.
             } catch (e: Exception) {
+                log("Request failed: $e")
             } finally {
                 try {
                     socket.close()
@@ -754,7 +654,7 @@ class LocalHttpServer(
         }
 
         @Throws(Exception::class)
-        private fun handleSearchHistory(
+        internal fun handleSearchHistory(
             os: OutputStream,
             params: Map<String, String>,
         ) {
