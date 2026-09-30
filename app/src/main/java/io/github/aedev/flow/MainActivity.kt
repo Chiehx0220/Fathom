@@ -503,9 +503,17 @@ class MainActivity : ComponentActivity() {
                         io.github.aedev.flow.player.EnhancedPlayerManager
                             .getInstance()
                             .stopBackgroundService()
+                        // onStop ran while the window was still in PiP, so it skipped this (#1152).
+                        pauseShortsPlayers()
                     }
                 }
         }
+    }
+
+    private fun pauseShortsPlayers() {
+        io.github.aedev.flow.player.shorts.ShortsPlayerPool
+            .getInstance()
+            .pauseAll()
     }
 
     private fun restoreVideoForPipWindow(isInPictureInPictureMode: Boolean) {
@@ -613,9 +621,7 @@ class MainActivity : ComponentActivity() {
                 releaseOrientationLock()
             }
             if (!lifecyclePlaybackPreferences.settings.shortsBackgroundPlay) {
-                io.github.aedev.flow.player.shorts.ShortsPlayerPool
-                    .getInstance()
-                    .pauseAll()
+                pauseShortsPlayers()
             }
 
             if (pendingAutoPip) {
