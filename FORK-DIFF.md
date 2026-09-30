@@ -21,7 +21,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (2622 changed lines). New files: **49** (4558 lines).
+- Modified upstream files: **113** (2622 changed lines). New files: **49** (4576 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -102,11 +102,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **52** (5877 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **53** (6080 lines).
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **35** (6830 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **40** (7043 lines).
 
 ## Build
 
