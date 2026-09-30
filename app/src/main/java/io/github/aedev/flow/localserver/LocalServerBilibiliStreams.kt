@@ -15,7 +15,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.ConcurrentHashMap
 
-/** The local server's Bilibili video pages: one video's metadata and streams, as a [StreamInfo]. */
+/** The local server's Bilibili video pages: one video's metadata and streams, as a [StreamInfo]. Live rooms: [LocalServerBilibiliLive]. */
 internal object LocalServerBilibiliStreams {
     private const val INFO_TTL_MS = 30 * 60 * 1000L
 
@@ -35,6 +35,7 @@ internal object LocalServerBilibiliStreams {
         context: Context,
         mediaUrl: String,
     ): StreamInfo {
+        LocalServerBilibiliLive.roomIdOf(mediaUrl)?.let { return LocalServerBilibiliLive.streamInfo(context, it) }
         val id = LocalServerBilibili.videoIdOf(mediaUrl)
         val (bvid, part) = BilibiliVideoId.parse(id)
         val key = "$bvid?p=$part"

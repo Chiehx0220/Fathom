@@ -120,7 +120,14 @@ object ApiRenderer {
         // Not part of Flow's Video model - points ExoPlayer at this server's proxy routes.
         val playback = JSONObject()
         val hasVideo = info.videoStreams.isNotEmpty() || info.videoOnlyStreams.isNotEmpty() || !info.hlsUrl.isNullOrEmpty()
-        playback.put("isDash", hasVideo)
+        val isBilibiliLive =
+            LocalServerBilibili.isBilibili(serviceId) && info.streamType == StreamType.LIVE_STREAM && !info.hlsUrl.isNullOrEmpty()
+        playback.put("isDash", hasVideo && !isBilibiliLive)
+        if (isBilibiliLive) {
+            // The room's playlist goes through the relay: its CDN needs a Referer a browser cannot send.
+            playback.put("hlsUrl", hlsRelayPath(info.hlsUrl.orEmpty()))
+            playback.put("liveRoom", info.id)
+        }
         playback.put("manifestUrl", "/manifest?serviceId=$serviceId&id=$infoUrlEncoded")
         playback.put("streamUrl", "/stream?serviceId=$serviceId&id=$infoUrlEncoded")
 

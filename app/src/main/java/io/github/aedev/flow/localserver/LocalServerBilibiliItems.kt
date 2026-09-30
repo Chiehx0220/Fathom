@@ -2,6 +2,8 @@ package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliChannelVideo
 import io.github.aedev.flow.bilibili.BilibiliComment
+import io.github.aedev.flow.bilibili.BilibiliLiveId
+import io.github.aedev.flow.bilibili.BilibiliLiveItem
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.stream.Description
@@ -32,6 +34,20 @@ internal fun bilibiliVideoItem(
         this.uploaderAvatarUrl = uploaderAvatarUrl
         setDuration(durationSec.toLong())
         setViewCount(views)
+    }
+
+/** A live room's row: opens the room, and shows as live in a list. */
+internal fun bilibiliLiveItem(room: BilibiliLiveItem): StreamInfoItem =
+    StreamInfoItem(
+        LocalServerBilibili.serviceId,
+        BilibiliLiveId.toUrl(BilibiliLiveId.of(room.roomId)),
+        room.title,
+        StreamType.LIVE_STREAM,
+    ).apply {
+        thumbnailUrl = room.coverUrl
+        setUploaderName(room.uploaderName)
+        uploaderAvatarUrl = room.uploaderAvatarUrl
+        setViewCount(room.viewerCount)
     }
 
 /** A row of an uploader's video list; the name and avatar come from the caller, the list has neither. */

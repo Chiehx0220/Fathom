@@ -512,6 +512,8 @@ class LocalHttpServer(
                                 mapOf(
                                     "/" to { handleAppShell(os) },
                                     "/danmaku" to { handleDanmaku(os, params) },
+                                    "/live_chat" to { handleLiveChat(os, params) },
+                                    "/hls" to { handleHlsProxy(os, params) },
                                     "/send-link" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
                                     "/play" to { handleSendLink(os, params, socket.inetAddress.hostAddress) },
                                     "/send-command" to { handleSendCommand(os, params) },
