@@ -26,11 +26,11 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "io.github.aedev.flow"
+        applicationId = "io.github.chiehx0220.fathom"
         minSdk = 28
         targetSdk = 36
         versionCode = 18
-        versionName = "2.2.1"
+        versionName = "0.1.0"
 
         buildConfigField("int", "NIGHTLY_RUN", "0")
 
