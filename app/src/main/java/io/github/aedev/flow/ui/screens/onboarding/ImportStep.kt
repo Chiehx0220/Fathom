@@ -4,11 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -45,6 +48,7 @@ private val TilePadding = 16.dp
 private val TileContentSpacing = 12.dp
 private val GlyphSize = 40.dp
 private val GlyphIconSize = 24.dp
+private val GlyphGap = 6.dp
 private val DoneSize = 24.dp
 private val DoneIconSize = 16.dp
 private val DoneInset = 10.dp
@@ -87,13 +91,13 @@ internal fun ImportStep(
                 }
             }
             items(rows, key = { row -> row.first().name }) { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(TileSpacing)) {
+                Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(TileSpacing)) {
                     row.forEach { source ->
                         SourceTile(
                             source = source,
                             imported = source in importedSources,
                             onClick = { openSource = source },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
                         )
                     }
                     repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
@@ -145,7 +149,7 @@ private fun SourceTile(
                     Text(
                         text = stringResource(source.shortTitleRes),
                         style = MaterialTheme.typography.titleSmall,
-                        maxLines = 1,
+                        maxLines = 2,
                     )
                     Text(
                         text = pluralStringResource(R.plurals.onboarding_import_count, source.kinds.size, source.kinds.size),
@@ -176,12 +180,27 @@ private fun SourceTile(
 /** The source app's own icon on a neutral disc; brand icons keep their colours. */
 @Composable
 private fun SourceGlyph(source: ImportSource) {
+    if (source == ImportSource.FLOW) {
+        // A Flow backup comes from Flow or from Fathom itself, so the tile shows both icons.
+        Row(horizontalArrangement = Arrangement.spacedBy(GlyphGap)) {
+            GlyphDisc(R.drawable.ic_flow_upstream_logo, Color.Unspecified)
+            GlyphDisc(R.drawable.ic_fathom_logo, Color.Unspecified)
+        }
+        return
+    }
+    // Metrolist's icon is light grey artwork that vanishes on a light disc; it reads as a silhouette.
+    val tint = if (source == ImportSource.METROLIST) MaterialTheme.colorScheme.onSurface else Color.Unspecified
+    GlyphDisc(source.iconRes, tint)
+}
+
+@Composable
+private fun GlyphDisc(
+    iconRes: Int?,
+    tint: Color,
+) {
     Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surface, modifier = Modifier.size(GlyphSize)) {
         Box(contentAlignment = Alignment.Center) {
-            val iconRes = source.iconRes
             if (iconRes != null) {
-                // Metrolist's icon is light grey artwork that vanishes on a light disc; it reads as a silhouette.
-                val tint = if (source == ImportSource.METROLIST) MaterialTheme.colorScheme.onSurface else Color.Unspecified
                 Icon(painterResource(iconRes), contentDescription = null, tint = tint, modifier = Modifier.size(GlyphIconSize))
             } else {
                 Icon(Icons.Outlined.History, contentDescription = null, modifier = Modifier.size(GlyphIconSize))

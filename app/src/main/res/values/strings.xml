@@ -1811,7 +1811,7 @@
     <string name="onboarding_step_interests">Interests</string>
     <string name="onboarding_step_channels">Channels</string>
     <string name="onboarding_step_import">Import</string>
-    <string name="onboarding_import_source_flow">Flow backup</string>
+    <string name="onboarding_import_source_flow">Flow / Fathom backup</string>
     <string name="onboarding_import_source_youtube">YouTube</string>
     <string name="onboarding_import_footnote">Everything here is optional. Settings has the same imports.</string>
     <string name="onboarding_import_done">Imported</string>
@@ -3561,9 +3561,9 @@
     <string name="settings_backup_tab_auto">Automatic</string>
     <string name="settings_backup_full">Full backup</string>
     <string name="settings_backup_individual">Individual exports</string>
-    <string name="settings_backup_restore_flow">Restore from Flow</string>
+    <string name="settings_backup_restore_flow">Restore from Flow / Fathom</string>
     <string name="settings_backup_source_youtube">YouTube and Google Takeout</string>
-    <string name="settings_backup_source_newpipe">NewPipe</string>
+    <string name="settings_backup_source_newpipe">NewPipe / PipePipe</string>
     <string name="settings_backup_source_libretube">LibreTube</string>
     <string name="settings_backup_source_freetube">FreeTube</string>
     <string name="settings_backup_source_metrolist">Metrolist</string>
