@@ -19,10 +19,11 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private const val STABLE_RELEASE_API = "https://api.github.com/repos/A-EDev/Flow/releases/latest"
-private const val NIGHTLY_RELEASE_API = "https://api.github.com/repos/A-EDev/Flow/releases/tags/nightly"
+private const val STABLE_RELEASE_API = "https://api.github.com/repos/Chiehx0220/Fathom/releases/latest"
+private const val NIGHTLY_RELEASE_API = "https://api.github.com/repos/Chiehx0220/Fathom/releases/tags/nightly"
 private const val NIGHTLY_CHANNEL = "nightly"
 private const val GITHUB_JSON = "application/vnd.github+json"
+private const val HTTP_NOT_FOUND = 404
 
 /** Where an automatic check may surface a release; each announces a version once. */
 enum class UpdateAnnouncement { LAUNCH_PAGE, NOTIFICATION }
@@ -104,16 +105,20 @@ class UpdateRepository
                             .cacheControl(CacheControl.FORCE_NETWORK)
                             .build()
                     client.newCall(request).execute().use { response ->
-                        if (!response.isSuccessful) throw IOException("Update check failed: HTTP ${response.code}")
-                        response.body.string()
+                        when {
+                            response.code == HTTP_NOT_FOUND -> null
+                            !response.isSuccessful -> throw IOException("Update check failed: HTTP ${response.code}")
+                            else -> response.body.string()
+                        }
                     }
                 }
-            val parsed = parseGitHubRelease(body)
             val release =
-                if (isNightly) {
-                    parsed.toNightlyReleaseIfNewer(BuildConfig.NIGHTLY_RUN)
-                } else {
-                    parsed.toAppReleaseIfNewer(BuildConfig.VERSION_NAME, Build.SUPPORTED_ABIS.toList())
+                body?.let(::parseGitHubRelease)?.let { parsed ->
+                    if (isNightly) {
+                        parsed.toNightlyReleaseIfNewer(BuildConfig.NIGHTLY_RUN)
+                    } else {
+                        parsed.toAppReleaseIfNewer(BuildConfig.VERSION_NAME, Build.SUPPORTED_ABIS.toList())
+                    }
                 }
             dataManager.setLastUpdateCheck(System.currentTimeMillis())
             _latest.value = release

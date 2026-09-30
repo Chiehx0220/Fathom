@@ -7,10 +7,10 @@ import java.time.Instant
 
 private val ReleaseJson = Json { ignoreUnknownKeys = true }
 private const val SHA256_PREFIX = "sha256:"
-private const val FOSS_PREFIX = "flow-foss"
-private const val UNIVERSAL_APK = "flow.apk"
+private const val FOSS_PREFIX = "fathom-foss"
+private const val UNIVERSAL_APK = "fathom.apk"
 private const val APK_SUFFIX = ".apk"
-private val NightlyApk = Regex("""flow-nightly-(\d+)\.apk""", RegexOption.IGNORE_CASE)
+private val NightlyApk = Regex("""fathom-nightly-(\d+)\.apk""", RegexOption.IGNORE_CASE)
 
 @Serializable
 internal data class GitHubRelease(
@@ -71,7 +71,7 @@ internal fun GitHubRelease.toNightlyReleaseIfNewer(currentRun: Int): AppRelease?
 
 /**
  * The github-flavour APK for this device: the split build for its preferred ABI, else the universal
- * `flow.apk`, else any github APK. Foss builds are never picked; they are signed for other stores.
+ * `fathom.apk`, else any github APK. Foss builds are never picked; they are signed for other stores.
  */
 internal fun selectApk(
     assets: List<GitHubAsset>,
@@ -81,11 +81,11 @@ internal fun selectApk(
         assets.filter {
             it.name.endsWith(APK_SUFFIX, ignoreCase = true) && !it.name.startsWith(FOSS_PREFIX, ignoreCase = true)
         }
-    val splits = github.filter { asset -> supportedAbis.any { asset.name.equals("flow-$it.apk", ignoreCase = true) } }
+    val splits = github.filter { asset -> supportedAbis.any { asset.name.equals("fathom-$it.apk", ignoreCase = true) } }
     if (splits.isNotEmpty()) {
-        return supportedAbis.firstNotNullOfOrNull { abi -> splits.firstOrNull { it.name.equals("flow-$abi.apk", ignoreCase = true) } }
+        return supportedAbis.firstNotNullOfOrNull { abi -> splits.firstOrNull { it.name.equals("fathom-$abi.apk", ignoreCase = true) } }
     }
-    val publishesSplits = github.any { it.name.startsWith("flow-", ignoreCase = true) }
+    val publishesSplits = github.any { it.name.startsWith("fathom-", ignoreCase = true) }
     if (publishesSplits && github.none { it.name.equals(UNIVERSAL_APK, ignoreCase = true) }) return null
     return github.firstOrNull { it.name.equals(UNIVERSAL_APK, ignoreCase = true) } ?: github.firstOrNull()
 }
