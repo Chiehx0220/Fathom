@@ -1710,7 +1710,7 @@
     <string name="about_fathom_maintainer_role">Maintainer of Fathom</string>
     <string name="about_upstream_title">Upstream Flow</string>
     <string name="about_credit_pipepipe">Origin of the Bilibili client</string>
-    <string name="about_credit_localtube">Origin of the local web server</string>
+    <string name="about_credit_localtube">Inspiration for the local web server</string>
     <string name="about_credit_vidstack">Web player of the local server</string>
     <string name="about_credit_dashjs">Streaming engine of the web player</string>
     <string name="about_creator_name">A-EDev</string>

@@ -98,7 +98,7 @@
   <img src="Assets/screenshots/web.png" alt="電腦瀏覽器中的 Fathom 網頁版" width="90%">
 </p>
 
-> 網頁版移植自 diekaiju 的 [localtube](https://github.com/diekaiju/localtube),並擴充了 Bilibili 支援。
+> 內建伺服器與網頁版的靈感來自 diekaiju 的 [localtube](https://github.com/diekaiju/localtube),在 Fathom 中重新撰寫並擴充了 Bilibili 支援。
 
 ### 🎮 用手機遙控
 
@@ -142,7 +142,7 @@ Flow 原有的功能(SponsorBlock、DeArrow、音樂、Shorts、下載、主題)
 
 ## 🙏 致謝
 
-[Flow](https://github.com/A-EDev/Flow) 與 FlowNeuro,A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor),InfinityLoop1308(Bilibili 用戶端的移植來源) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube),diekaiju · [Vidstack](https://vidstack.io) 與 [dash.js](https://github.com/Dash-Industry-Forum/dash.js)
+[Flow](https://github.com/A-EDev/Flow) 與 FlowNeuro,A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor),InfinityLoop1308(Bilibili 用戶端以它為基礎) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube),diekaiju · [Vidstack](https://vidstack.io) 與 [dash.js](https://github.com/Dash-Industry-Forum/dash.js)
 
 ## 📄 授權
 

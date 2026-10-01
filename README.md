@@ -100,7 +100,7 @@ In the web app:
   <img src="Assets/screenshots/web.png" alt="The Fathom web page in a desktop browser" width="90%">
 </p>
 
-> The web page is ported from [localtube](https://github.com/diekaiju/localtube) by diekaiju, and extended with Bilibili.
+> The web server and web page are inspired by [localtube](https://github.com/diekaiju/localtube) by diekaiju, rewritten for Fathom and extended with Bilibili.
 
 ### 🎮 Remote control
 
@@ -144,7 +144,7 @@ Everything else in Flow (SponsorBlock, DeArrow, music, Shorts, downloads, themes
 
 ## 🙏 Credits
 
-[Flow](https://github.com/A-EDev/Flow) and FlowNeuro by A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor) by InfinityLoop1308 (Bilibili client origin) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube) by diekaiju · [Vidstack](https://vidstack.io) and [dash.js](https://github.com/Dash-Industry-Forum/dash.js)
+[Flow](https://github.com/A-EDev/Flow) and FlowNeuro by A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor) by InfinityLoop1308 (the Bilibili client is based on it) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube) by diekaiju · [Vidstack](https://vidstack.io) and [dash.js](https://github.com/Dash-Industry-Forum/dash.js)
 
 ## 📄 License
 
