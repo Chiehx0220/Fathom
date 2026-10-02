@@ -136,6 +136,7 @@ class HomeViewModel
         fun setContentSourceFilter(filter: io.github.aedev.flow.data.local.HomeContentSourceFilter) {
             viewModelScope.launch(PerformanceDispatcher.diskIO) {
                 playerPreferences.setHomeContentSourceFilter(filter)
+                chipFeeds.onSourceChanged()
                 loadFlowFeed(forceRefresh = true)
             }
         }
@@ -181,7 +182,13 @@ class HomeViewModel
             chipFeeds.attach(
                 scope = viewModelScope,
                 savedState = savedStateHandle,
-                context = ChipFeedContext(::cacheFilters, ::feedExclusions) { watchedVideoIds.value },
+                context =
+                    ChipFeedContext(
+                        filters = ::cacheFilters,
+                        exclusions = ::feedExclusions,
+                        watched = { watchedVideoIds.value },
+                        source = { playerPreferences.homeContentSourceFilter.first() },
+                    ),
             )
             if (HomeFeedCache.isFresh()) {
                 _uiState.update {

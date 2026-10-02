@@ -2,6 +2,7 @@ package io.github.aedev.flow.ui.screens.home.chips
 
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
+import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
 import io.github.aedev.flow.data.local.LikedVideosRepository
@@ -9,6 +10,7 @@ import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.local.dao.VideoDao
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.recommendation.ChannelMemoryRepository
 import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
@@ -44,6 +46,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeoutOrNull
+import org.schabi.newpipe.extractor.ServiceList
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
@@ -52,6 +55,7 @@ internal class ChipFeedContext(
     val filters: suspend () -> HomeFeedCacheFilters,
     val exclusions: suspend () -> FeedExclusions,
     val watched: () -> Set<String>,
+    val source: suspend () -> HomeContentSourceFilter = { HomeContentSourceFilter.MIX },
 )
 
 /**
@@ -71,6 +75,7 @@ class HomeChipFeeds
         private val videoStats: VideoStatsRecorder,
         private val homeFeedCache: HomeFeedCacheRepository,
         private val videoDao: VideoDao,
+        private val bilibili: BilibiliChipSource,
     ) {
         private val chipsState = MutableStateFlow(HomeChipsState())
         internal val state: StateFlow<HomeChipsState> = chipsState.asStateFlow()
@@ -153,6 +158,16 @@ class HomeChipFeeds
             load(chip, force = true)
         }
 
+        fun onSourceChanged() {
+            cache.clear()
+            val chip = chipFor(chipsState.value.selected)
+            if (chip != null && chip != HomeChip.All) {
+                chipsState.update { it.copy(feed = ChipFeed.Loading) }
+                load(chip, force = true)
+            }
+            refreshChips()
+        }
+
         private fun chipFor(key: String): HomeChip? =
             visibleChips(interests, emptySet(), hasMixSeeds = true, hasWatched = true, selected = key).firstOrNull { it.key == key }
 
@@ -216,9 +231,11 @@ class HomeChipFeeds
         /** The feed's own hygiene, then the engine's ranking: no Shorts, nothing watched or hidden. */
         private suspend fun ranked(videos: List<Video>): List<Video> {
             val exclusions = context.exclusions()
+            val source = context.source()
             val pool =
                 videos
                     .distinctBy { it.id }
+                    .filter { source.allows(it) }
                     .filterValid()
                     .filter { !it.isShort }
                     .filterWatched(context.watched())
@@ -301,26 +318,46 @@ class HomeChipFeeds
         private suspend fun search(
             queries: List<String>,
             params: String? = null,
-        ): List<Video> =
-            coroutineScope {
-                queries
-                    .map { query ->
+            includeBilibili: Boolean = true,
+        ): List<Video> {
+            val source = context.source()
+            val youtube =
+                if (!source.wantsYouTube) {
+                    emptyList()
+                } else {
+                    coroutineScope {
+                        queries
+                            .map { query ->
+                                async {
+                                    withTimeoutOrNull(HomeChipParams.SEARCH_TIMEOUT_MS) {
+                                        runCatching { repository.searchVideos(query, params = params).first }.getOrDefault(emptyList())
+                                    }.orEmpty()
+                                }
+                            }.awaitAll()
+                            .flatten()
+                    }
+                }
+            return youtube + if (includeBilibili && source.wantsBilibili) bilibili.search(queries) else emptyList()
+        }
+
+        private suspend fun related(
+            seedIds: List<String>,
+            inputs: List<GraphSeedInput>,
+        ): List<Video> {
+            val source = context.source()
+            val serviceOf = inputs.associate { it.id to it.serviceId }
+            return coroutineScope {
+                seedIds
+                    .filter { source.allows(serviceOf[it] ?: ServiceList.YouTube.serviceId) }
+                    .map { id ->
                         async {
-                            withTimeoutOrNull(HomeChipParams.SEARCH_TIMEOUT_MS) {
-                                runCatching { repository.searchVideos(query, params = params).first }.getOrDefault(emptyList())
-                            }.orEmpty()
+                            runCatching { feedSources.relatedVideos(id, context.filters, serviceOf[id] ?: ServiceList.YouTube.serviceId) }
+                                .getOrDefault(emptyList())
                         }
                     }.awaitAll()
                     .flatten()
             }
-
-        private suspend fun related(seedIds: List<String>): List<Video> =
-            coroutineScope {
-                seedIds
-                    .map { id -> async { runCatching { feedSources.relatedVideos(id, context.filters) }.getOrDefault(emptyList()) } }
-                    .awaitAll()
-                    .flatten()
-            }
+        }
 
         private fun GraphSeedInput.asVideo() =
             Video(
@@ -348,14 +385,15 @@ class HomeChipFeeds
             val storedClusters = FlowNeuroEngine.clusterKeys(stored)
             val pool =
                 search(interestQueries(interest)) +
-                    related(seeds) +
+                    related(seeds, history) +
                     stored.filter { storedClusters[it.id] == interest.representative }
             return ranked(pool).take(HomeChipParams.MAX_VIDEOS)
         }
 
         private suspend fun newToYou(): List<Video> {
-            val strongSeeds = GraphSeedSelector.select(feedSources.historySeedInputs(), HomeChipParams.RELATED_SEEDS)
-            val pool = search(FlowNeuroEngine.explorationQueries(HomeChipParams.QUERIES_PER_INTEREST)) + related(strongSeeds)
+            val history = feedSources.historySeedInputs()
+            val strongSeeds = GraphSeedSelector.select(history, HomeChipParams.RELATED_SEEDS)
+            val pool = search(FlowNeuroEngine.explorationQueries(HomeChipParams.QUERIES_PER_INTEREST)) + related(strongSeeds, history)
             val brain = FlowNeuroEngine.getBrainSnapshot()
             val known =
                 buildSet {
@@ -393,7 +431,8 @@ class HomeChipFeeds
                 )
             val pool =
                 storedUploads().filter { it.isLive } +
-                    search(interests.take(2).mapNotNull { interestQueries(it, 1).firstOrNull() }, liveParams)
+                    search(interests.take(2).mapNotNull { interestQueries(it, 1).firstOrNull() }, liveParams, includeBilibili = false) +
+                    if (context.source().wantsBilibili) bilibili.lives() else emptyList()
             return ranked(pool.filter { it.isLive && !it.isUpcoming }).take(HomeChipParams.MAX_VIDEOS)
         }
 
@@ -408,11 +447,13 @@ class HomeChipFeeds
             val taste = FlowNeuroEngine.tasteAffinity(history.map { it.toResumeVideo() })
             val disliked = runCatching { likedVideos.dislikedVideoIds() }.getOrDefault(emptySet())
             val exclusions = context.exclusions()
+            val source = context.source()
             val ordered =
                 watchAgain(history, rewatches, taste, disliked, now)
                     .asSequence()
                     // History has no upload date; a zero time keeps the card from claiming "now".
                     .map { it.toResumeVideo().copy(timestamp = 0L).withThumbnail() }
+                    .filter { source.allows(it) }
                     .filterNot(exclusions::hidesFromRecommendations)
                     .take(limit)
                     .toList()
@@ -443,12 +484,13 @@ class HomeChipFeeds
             if (videos.isEmpty()) return emptyList()
             val clusters = FlowNeuroEngine.clusterKeys(videos.map { it.first })
             val likedIds = likes.mapTo(HashSet()) { it.videoId }
+            val source = context.source()
             val candidates =
-                videos.map { (video, at) ->
+                videos.filter { (video, _) -> source.allows(video) }.map { (video, at) ->
                     val liked = video.id in likedIds
                     MixSeedCandidate(
                         // High quality first; the mix card falls back to hqdefault where hq720 is missing.
-                        video = video.copy(thumbnailUrl = ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(video.id)),
+                        video = video.withHighQualityThumbnail(),
                         cluster = clusters[video.id] ?: video.channelId,
                         strength = if (liked) LIKED_SEED_STRENGTH else 1.0,
                         at = at,
@@ -484,8 +526,10 @@ class HomeChipFeeds
         }
 
         /** Some stored records lack a thumbnail; every YouTube video has one at a known address. */
-        private fun Video.withThumbnail(): Video =
-            if (thumbnailUrl.isNotBlank()) this else copy(thumbnailUrl = ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(id))
+        private fun Video.withThumbnail(): Video = if (thumbnailUrl.isNotBlank()) this else withHighQualityThumbnail()
+
+        private fun Video.withHighQualityThumbnail(): Video =
+            if (serviceId.isYouTubeServiceId) copy(thumbnailUrl = ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(id)) else this
 
         private companion object {
             const val TAG = "HomeChipFeeds"

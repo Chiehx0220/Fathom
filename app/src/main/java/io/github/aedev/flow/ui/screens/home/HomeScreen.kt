@@ -53,7 +53,6 @@ import io.github.aedev.flow.ui.components.rememberFeedGridLayout
 import io.github.aedev.flow.ui.components.shared.FeedGridSkeleton
 import io.github.aedev.flow.ui.components.shared.FlowErrorState
 import io.github.aedev.flow.ui.components.shared.FlowPullToRefreshBox
-import io.github.aedev.flow.ui.screens.home.chips.HomeChip
 import io.github.aedev.flow.ui.screens.home.chips.HomeChipContent
 import io.github.aedev.flow.ui.screens.home.chips.HomeChipRow
 import kotlinx.coroutines.FlowPreview
@@ -215,10 +214,7 @@ fun HomeScreen(
                         // The source filter shapes the mixed feed only, so picking one returns to All.
                         HomeContentSourceFilterChip(
                             selected = contentSourceFilter,
-                            onSelect = { filter ->
-                                if (!chips.isAll) viewModel.selectChip(HomeChip.All.key)
-                                viewModel.setContentSourceFilter(filter)
-                            },
+                            onSelect = viewModel::setContentSourceFilter,
                         )
                     },
                 )

@@ -190,6 +190,9 @@ internal class ChipResultCache {
         entries[chip.key]?.let { entries[chip.key] = feed to it.second }
     }
 
+    @Synchronized
+    fun clear() = entries.clear()
+
     /** Chips whose fresh result was empty: hidden until it expires. */
     @Synchronized
     fun emptyKeys(
