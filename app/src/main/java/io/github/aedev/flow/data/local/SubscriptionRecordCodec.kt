@@ -1,10 +1,12 @@
 package io.github.aedev.flow.data.local
 
 import io.github.aedev.flow.bilibili.serviceIdOfChannel
+import org.schabi.newpipe.extractor.ServiceList
 
 /**
  * The stored form of a subscription:
- * `id|name|thumbnail|subscribedAt|lastVideoId|lastCheckTime|notify|isMusic|lastFeedFetchAt|serviceId`.
+ * `id|name|thumbnail|subscribedAt|lastVideoId|lastCheckTime|notify|isMusic|lastFeedFetchAt`, plus `|serviceId`
+ * for a channel that is not YouTube's.
  *
  * Text fields escape `|` as `%7C`, and `%` as `%25` only where it would otherwise read as an escape,
  * so a record without either is byte-identical to what older versions wrote. An older version
@@ -35,18 +37,18 @@ internal object SubscriptionRecordCodec {
     private val VideoIdPattern = Regex("[A-Za-z0-9_-]{11}")
 
     fun encode(channel: ChannelSubscription): String =
-        listOf(
-            escape(channel.channelId),
-            escape(channel.channelName),
-            channel.channelThumbnail.replace(SEPARATOR.toString(), ESCAPED_SEPARATOR),
-            channel.subscribedAt.toString(),
-            escape(channel.lastVideoId.orEmpty()),
-            channel.lastCheckTime.toString(),
-            channel.isNotificationEnabled.toString(),
-            channel.isMusic.toString(),
-            channel.lastFeedFetchAt.toString(),
-            channel.serviceId.toString(),
-        ).joinToString(SEPARATOR.toString())
+        buildList {
+            add(escape(channel.channelId))
+            add(escape(channel.channelName))
+            add(channel.channelThumbnail.replace(SEPARATOR.toString(), ESCAPED_SEPARATOR))
+            add(channel.subscribedAt.toString())
+            add(escape(channel.lastVideoId.orEmpty()))
+            add(channel.lastCheckTime.toString())
+            add(channel.isNotificationEnabled.toString())
+            add(channel.isMusic.toString())
+            add(channel.lastFeedFetchAt.toString())
+            if (channel.serviceId != ServiceList.YouTube.serviceId) add(channel.serviceId.toString())
+        }.joinToString(SEPARATOR.toString())
 
     fun decode(data: String): ChannelSubscription? {
         val parts = data.split(SEPARATOR)
