@@ -64,7 +64,7 @@ object BilibiliPlaylistId {
 object BilibiliLiveId {
     private const val PREFIX = "live:"
     private val PATTERN = Regex("""^live:\d+$""")
-    private val LINK = Regex("""^https?://live\.bilibili\.com/(?:[a-z]+/)?(\d+)""", RegexOption.IGNORE_CASE)
+    private val LINK = Regex("""^https?://live\.bilibili\.com/(?:[a-z][a-z0-9]*/)?(\d+)""", RegexOption.IGNORE_CASE)
 
     fun isLive(videoId: String): Boolean = PATTERN.matches(videoId)
 
