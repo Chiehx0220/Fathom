@@ -6,7 +6,6 @@ import io.github.aedev.flow.bilibili.BilibiliSearchItem
 import io.github.aedev.flow.bilibili.BilibiliSearchType
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.isCjk
 import io.github.aedev.flow.data.subscriptions.latestVideos
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import kotlinx.coroutines.CoroutineScope
@@ -90,9 +89,7 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
         // fresh-subs RSS lane.
         val deferredDiscovery =
             async {
-                // Only the Chinese and Japanese interests: an English query finds little on Bilibili.
                 discoveryQueries
-                    .filter { query -> query.any(::isCjk) }
                     .take(BILIBILI_DISCOVERY_QUERY_LIMIT)
                     .map { query ->
                         async {
