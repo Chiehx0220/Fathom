@@ -124,3 +124,16 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
             viral = deferredViral.await(),
         )
     }
+
+/**
+ * Spreads each service's videos evenly through the list, keeping their relative order. A ranker that
+ * scores one service higher would otherwise put all of it first and the other service last.
+ */
+internal fun List<Video>.spreadByService(): List<Video> {
+    val byService = groupBy { it.serviceId }
+    if (byService.size < 2) return this
+    return byService.values
+        .flatMap { group -> group.mapIndexed { index, video -> video to (index + 0.5) / group.size } }
+        .sortedBy { it.second }
+        .map { it.first }
+}

@@ -637,7 +637,7 @@ class HomeViewModel
                         // lane can ever contain a non-YouTube video right now (see HomeContentSourceFilter).
                         val sourceFilterServiceId = playerPreferences.homeContentSourceFilter.first().serviceId
                         val finalMix =
-                            sourceFilterServiceId?.let { id -> mix.videos.filter { it.serviceId == id } } ?: mix.videos
+                            sourceFilterServiceId?.let { id -> mix.videos.filter { it.serviceId == id } } ?: mix.videos.spreadByService()
                         subsBacklog =
                             sourceFilterServiceId?.let { id -> mix.subsBacklog.filter { it.serviceId == id } }
                                 ?: mix.subsBacklog

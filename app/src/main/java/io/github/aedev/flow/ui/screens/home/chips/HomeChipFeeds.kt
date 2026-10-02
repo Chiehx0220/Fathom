@@ -26,6 +26,7 @@ import io.github.aedev.flow.ui.screens.home.HomeFeedSources
 import io.github.aedev.flow.ui.screens.home.enrichAvatars
 import io.github.aedev.flow.ui.screens.home.filterValid
 import io.github.aedev.flow.ui.screens.home.filterWatched
+import io.github.aedev.flow.ui.screens.home.spreadByService
 import io.github.aedev.flow.ui.screens.home.toResumeVideo
 import io.github.aedev.flow.ui.screens.home.withChannelMetadataFrom
 import io.github.aedev.flow.utils.PerformanceDispatcher
@@ -240,7 +241,7 @@ class HomeChipFeeds
                     .filter { !it.isShort }
                     .filterWatched(context.watched())
                     .filterNot(exclusions::hidesFromRecommendations)
-            return if (pool.isEmpty()) pool else withSubscriptionAvatars(FlowNeuroEngine.rank(pool, userSubs()))
+            return if (pool.isEmpty()) pool else withSubscriptionAvatars(FlowNeuroEngine.rank(pool, userSubs()).spreadByService())
         }
 
         /** Subscription-store rows carry no avatar; the subscription list already knows each one. */
