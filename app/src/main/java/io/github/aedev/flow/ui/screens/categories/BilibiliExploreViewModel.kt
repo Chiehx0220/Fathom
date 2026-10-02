@@ -94,7 +94,7 @@ class BilibiliExploreViewModel
 
         private suspend fun fetch(tab: BilibiliExploreTab): List<Video> =
             when (tab) {
-                BilibiliExploreTab.POPULAR ->
+                BilibiliExploreTab.POPULAR -> {
                     coroutineScope {
                         (1..POPULAR_PAGES)
                             .map { page -> async { runCatching { bilibili.popular(page) }.getOrDefault(emptyList()) } }
@@ -103,8 +103,11 @@ class BilibiliExploreViewModel
                             .distinctBy { it.bvid }
                             .map(BilibiliVideoMapper::videoFromRelated)
                     }
+                }
 
-                BilibiliExploreTab.LIVE -> bilibili.recommendedLives().map(BilibiliVideoMapper::videoFromLiveItem)
+                BilibiliExploreTab.LIVE -> {
+                    bilibili.recommendedLives().map(BilibiliVideoMapper::videoFromLiveItem)
+                }
             }
 
         private companion object {

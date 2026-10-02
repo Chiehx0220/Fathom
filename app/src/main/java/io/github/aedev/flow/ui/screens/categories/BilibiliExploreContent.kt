@@ -53,11 +53,15 @@ internal fun BilibiliExploreContent(
         BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
             val feedLayout = rememberFeedGridLayout(maxWidth, columnPreference)
             when {
-                state.isLoading -> FeedGridSkeleton(layout = feedLayout, listMode = isListView)
+                state.isLoading -> {
+                    FeedGridSkeleton(layout = feedLayout, listMode = isListView)
+                }
 
-                error != null -> FlowErrorState(error = error, onRetry = viewModel::refresh)
+                error != null -> {
+                    FlowErrorState(error = error, onRetry = viewModel::refresh)
+                }
 
-                else ->
+                else -> {
                     key(state.tab) {
                         CategoryChartGrid(
                             entries = state.videos,
@@ -67,6 +71,7 @@ internal fun BilibiliExploreContent(
                             onVideoClick = onVideoClick,
                         )
                     }
+                }
             }
         }
     }
