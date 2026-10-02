@@ -1,10 +1,7 @@
 package io.github.aedev.flow.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -12,13 +9,11 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
-import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.local.VideoHistoryEntry
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.ui.components.FeedGridLayout
@@ -41,8 +36,6 @@ internal fun HomeFeedGrid(
     feedLayout: FeedGridLayout,
     isListView: Boolean,
     gridState: LazyGridState,
-    contentSourceFilter: HomeContentSourceFilter? = null,
-    onContentSourceFilterSelect: ((HomeContentSourceFilter) -> Unit)? = null,
     onVideoClick: (Video) -> Unit,
     onEnrichChannelMetadata: (Video) -> Unit,
     onContinueWatchingClick: (VideoHistoryEntry) -> Unit,
@@ -87,23 +80,6 @@ internal fun HomeFeedGrid(
         contentPadding = plan.contentPadding(top = FeedTopPadding, bottom = flowBottomContentPadding()),
         verticalArrangement = Arrangement.spacedBy(plan.rowSpacing),
     ) {
-        if (contentSourceFilter != null && onContentSourceFilterSelect != null) {
-            item(
-                span = { GridItemSpan(maxLineSpan) },
-                key = "content_source_filter_chip",
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                    contentAlignment = Alignment.CenterEnd,
-                ) {
-                    HomeContentSourceFilterChip(
-                        selected = contentSourceFilter,
-                        onSelect = onContentSourceFilterSelect,
-                    )
-                }
-            }
-        }
-
         itemsIndexed(
             items = rows,
             key = { _, row -> row.key },

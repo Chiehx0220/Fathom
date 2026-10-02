@@ -39,6 +39,7 @@ internal fun HomeChipRow(
     scrollState: TopAppBarState,
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier,
+    leading: (@Composable () -> Unit)? = null,
 ) {
     val heightPx = with(LocalDensity.current) { ChipRowHeight.toPx() }
     SideEffect {
@@ -58,6 +59,7 @@ internal fun HomeChipRow(
         horizontalArrangement = Arrangement.spacedBy(ChipSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        leading?.let { content -> item(key = "leading") { content() } }
         items(state.chips, key = { it.key }) { chip ->
             val label = chip.label()
             val description = stringResource(R.string.home_chip_description, label)

@@ -53,6 +53,7 @@ import io.github.aedev.flow.ui.components.rememberFeedGridLayout
 import io.github.aedev.flow.ui.components.shared.FeedGridSkeleton
 import io.github.aedev.flow.ui.components.shared.FlowErrorState
 import io.github.aedev.flow.ui.components.shared.FlowPullToRefreshBox
+import io.github.aedev.flow.ui.screens.home.chips.HomeChip
 import io.github.aedev.flow.ui.screens.home.chips.HomeChipContent
 import io.github.aedev.flow.ui.screens.home.chips.HomeChipRow
 import kotlinx.coroutines.FlowPreview
@@ -202,13 +203,23 @@ fun HomeScreen(
                     .padding(padding)
                     .background(MaterialTheme.colorScheme.background),
         ) {
-            if (homeFeedEnabled && chips.chips.size > 1) {
+            if (homeFeedEnabled) {
                 HomeChipRow(
                     state = chips,
                     scrollState = chipRowState,
                     onSelect = { key ->
                         chipRowState.heightOffset = 0f
                         viewModel.selectChip(key)
+                    },
+                    leading = {
+                        // The source filter shapes the mixed feed only, so picking one returns to All.
+                        HomeContentSourceFilterChip(
+                            selected = contentSourceFilter,
+                            onSelect = { filter ->
+                                if (!chips.isAll) viewModel.selectChip(HomeChip.All.key)
+                                viewModel.setContentSourceFilter(filter)
+                            },
+                        )
                     },
                 )
             }
@@ -272,8 +283,6 @@ fun HomeScreen(
                                 feedLayout = feedLayout,
                                 isListView = isListView,
                                 gridState = gridState,
-                                contentSourceFilter = contentSourceFilter,
-                                onContentSourceFilterSelect = viewModel::setContentSourceFilter,
                                 onVideoClick = onVideoClick,
                                 onEnrichChannelMetadata = viewModel::enrichChannelMetadataIfMissing,
                                 onContinueWatchingClick = { entry -> onVideoClick(entry.toResumeVideo()) },

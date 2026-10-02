@@ -14,6 +14,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SelectableChipColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -69,6 +70,7 @@ fun FlowDropdownFilterChip(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    colors: SelectableChipColors? = null,
 ) {
     FilterChip(
         selected = selected,
@@ -82,6 +84,7 @@ fun FlowDropdownFilterChip(
         },
         shapes = FilterChipDefaults.shapes(),
         modifier = modifier,
+        colors = colors ?: FilterChipDefaults.filterChipColors(),
         trailingIcon = {
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowDown,
