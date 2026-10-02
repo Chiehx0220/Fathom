@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.engagement.FeedInvalidationBus
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
 import io.github.aedev.flow.data.local.*
+import io.github.aedev.flow.data.localmedia.LocalMediaDetails
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.Video
@@ -73,6 +74,7 @@ class VideoPlayerViewModel
         private val videoQueueStore: VideoQueueStore,
         private val watchLaterCleanup: WatchLaterCleanup,
         private val offlineSubtitleStore: io.github.aedev.flow.data.video.OfflineSubtitleStore,
+        private val localSubtitles: io.github.aedev.flow.data.localmedia.LocalSubtitles,
         private val sponsorBlockRepository: SponsorBlockRepository,
         private val liveChatRepository: io.github.aedev.flow.data.repository.LiveChatRepository,
         private val homeFeedCacheRepository: HomeFeedCacheRepository,
@@ -81,6 +83,7 @@ class VideoPlayerViewModel
         private val playbackResolver: PlaybackLoadResolver,
         notesRepository: io.github.aedev.flow.data.notes.NotesRepository,
         private val videoStats: io.github.aedev.flow.data.stats.VideoStatsRecorder,
+        private val localMediaDetails: LocalMediaDetails,
         @NetworkIoDispatcher private val networkDispatcher: CoroutineDispatcher,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : ViewModel() {
@@ -107,6 +110,7 @@ class VideoPlayerViewModel
                 playerPreferences = playerPreferences,
                 videoDownloadManager = videoDownloadManager,
                 offlineSubtitleStore = offlineSubtitleStore,
+                localSubtitles = localSubtitles,
                 sponsorBlockRepository = sponsorBlockRepository,
                 liveChatRepository = liveChatRepository,
                 homeFeedCacheRepository = homeFeedCacheRepository,
@@ -417,6 +421,11 @@ class VideoPlayerViewModel
                     savedPosition = runCatching { viewHistory.getSavedPosition(video.id) }.getOrDefault(0L),
                 )
             }
+            viewModelScope.launch {
+                val detailed = localMediaDetails.enrich(video) ?: return@launch
+                _uiState.update { it.withDeviceFileDetails(detailed) }
+                if (GlobalPlayerState.currentVideo.value?.id == detailed.id) GlobalPlayerState.setCurrentVideo(detailed)
+            }
         }
 
         /** Drops the load, the queue and the music player so this screen owns playback outright. */
@@ -698,9 +707,17 @@ class VideoPlayerViewModel
             videoId: String,
         ) = engagementState.observe(channelId, videoId)
 
-        fun toggleSubtitles(enabled: Boolean) = settings.setSubtitlesEnabled(enabled)
-
         fun toggleAutoplay(enabled: Boolean) = settings.toggleAutoplay(enabled)
+
+        /** Adds a subtitle file to the device file or download that is playing; false when unreadable. */
+        suspend fun addSubtitleFile(uri: android.net.Uri): Boolean = sessionApplier.addSubtitleFile(uri)
+
+        suspend fun subtitleFolder(): android.net.Uri? = sessionApplier.subtitleFolder()
+
+        /** Shifts the captions by [offsetMs]: positive shows them later. */
+        fun setSubtitleOffset(offsetMs: Long) {
+            viewModelScope.launch { sessionApplier.setSubtitleOffset(offsetMs) }
+        }
 
         fun toggleLoop(enabled: Boolean) = settings.toggleLoop(enabled)
 

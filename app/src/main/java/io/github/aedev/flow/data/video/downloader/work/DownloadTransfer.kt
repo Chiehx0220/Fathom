@@ -18,7 +18,6 @@ import io.github.aedev.flow.data.video.downloader.transfer.TransferState
 import io.github.aedev.flow.data.video.downloader.transfer.TransferStream
 import io.github.aedev.flow.innertube.models.YouTubeClient
 import io.github.aedev.flow.player.error.StreamDenialClassifier
-import io.github.aedev.flow.player.error.StreamDenialKind
 import io.github.aedev.flow.player.sabr.integration.SabrDownloadEngine
 import io.github.aedev.flow.player.stream.ClientGateTracker
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
@@ -130,7 +129,7 @@ class DownloadTransfer
 
                     is TransferResult.Denied -> {
                         val itag = StreamDenialClassifier.itagOf(result.url)?.toIntOrNull()
-                        reportRefusal(result.url)
+                        ClientGateTracker.reportDenied(result.url)
                         if (itag != null && (refusals.merge(itag, 1, Int::plus) ?: 0) >= 2) avoid = avoid + itag
                     }
 
@@ -149,15 +148,6 @@ class DownloadTransfer
             // SABR is YouTube's streaming protocol; a Bilibili URL that stays refused has nothing to fall back to.
             if (BilibiliVideoId.isBilibili(request.videoId)) return FetchOutcome.Failed(FetchFailure.REFUSED)
             return viaSabr(request, staging, itemId)
-        }
-
-        private fun reportRefusal(url: String) {
-            val client = StreamDenialClassifier.clientOf(url)
-            when (StreamDenialClassifier.classify(url)) {
-                StreamDenialKind.ATTESTATION_GATED -> ClientGateTracker.reportGated(client)
-                StreamDenialKind.TOKEN_REJECTED -> ClientGateTracker.reportRefused(client)
-                StreamDenialKind.URL_EXPIRED, StreamDenialKind.UNKNOWN -> Unit
-            }
         }
 
         /**

@@ -76,6 +76,11 @@ data class UserBrain(
     val timeVectors: Map<TimeBucket, ContentVector> =
         TimeBucket.entries
             .associateWith { ContentVector() },
+    /**
+     * Positive long-form events learned per time bucket. Device-local, never synced: a bucket that
+     * has seen a handful of videos must not weigh as much as the whole profile.
+     */
+    val timeBucketCounts: Map<TimeBucket, Int> = emptyMap(),
     val globalVector: ContentVector = ContentVector(),
     val channelScores: Map<String, Double> = emptyMap(),
     val topicAffinities: Map<String, Double> = emptyMap(),
@@ -95,8 +100,8 @@ data class UserBrain(
     val shortsVector: ContentVector = ContentVector(),
     /**
      * Hard suppression: video IDs that must NOT appear in ranked results.
-     * Maps videoId → timestamp when suppression was applied.
-     * Entries expire after VIDEO_SUPPRESSION_DAYS.
+     * Maps videoId → timestamp when suppression was applied. Entries never expire;
+     * only the oldest are dropped past FlowNeuroEngine.MAX_SUPPRESSED_VIDEOS.
      */
     val suppressedVideoIds: Map<String, Long> = emptyMap(),
     /**
@@ -123,7 +128,11 @@ data class UserBrain(
     val tagAffinities: Map<String, Double> = emptyMap(),
     /** Reels used as related-chain seeds recently (videoId → lastUsedAt), for rotation. */
     val recentShortsSeeds: Map<String, Long> = emptyMap(),
-    val schemaVersion: Int = 16,
+    /** Fetch state and verdicts for channels watched without subscribing; see [ChannelMemory]. */
+    val channelMemory: ChannelMemoryState = ChannelMemoryState(),
+    /** The interest chips Home showed last; see [InterestChips]. */
+    val interestChips: InterestChipSet = InterestChipSet(),
+    val schemaVersion: Int = 17,
 )
 
 // ── Interaction Types ──
@@ -312,4 +321,22 @@ internal data class ScoringParams(
     val candidatePoolSize: Int,
     val now: Long,
     val exploreWeight: Double = 0.0,
-)
+) {
+    val preparedGlobal by lazy { NeuroVectorMath.PreparedVector(brain.globalVector) }
+    val preparedShorts by lazy { NeuroVectorMath.PreparedVector(brain.shortsVector) }
+    val preparedContext by lazy { NeuroVectorMath.PreparedVector(timeContextVector) }
+
+    /** brain.topicAffinities as topic → (other topic → weight), built once per rank(). */
+    val affinityNeighbours: Map<String, Map<String, Double>> by lazy {
+        val neighbours = HashMap<String, HashMap<String, Double>>()
+        brain.topicAffinities.forEach { (key, weight) ->
+            val bar = key.indexOf('|')
+            if (bar <= 0) return@forEach
+            val a = key.substring(0, bar)
+            val b = key.substring(bar + 1)
+            neighbours.getOrPut(a) { HashMap() }[b] = weight
+            neighbours.getOrPut(b) { HashMap() }[a] = weight
+        }
+        neighbours
+    }
+}

@@ -13,6 +13,7 @@ import io.github.aedev.flow.data.video.DownloadStreamPolicy
 import io.github.aedev.flow.data.video.OfflineSubtitleStore
 import io.github.aedev.flow.data.video.VideoDownloadManager
 import io.github.aedev.flow.data.video.downloader.request.DownloadRequest
+import io.github.aedev.flow.data.video.downloader.subtitle.DownloadSubtitleFile
 import io.github.aedev.flow.data.video.downloader.tags.CoverArtLoader
 import io.github.aedev.flow.data.video.downloader.tags.DownloadKind
 import io.github.aedev.flow.data.video.downloader.tags.Mp4Remuxer
@@ -21,6 +22,7 @@ import io.github.aedev.flow.data.video.storage.DownloadCovers
 import io.github.aedev.flow.data.video.storage.DownloadFiles
 import io.github.aedev.flow.data.video.storage.DownloadPlacement
 import io.github.aedev.flow.data.video.storage.PlacedFile
+import io.github.aedev.flow.player.stream.ResolvedCaption
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -52,6 +54,7 @@ class DownloadRunner
         private val downloads: VideoDownloadManager,
         private val transfer: DownloadTransfer,
         private val enricher: DownloadMetadataEnricher,
+        private val lyrics: DownloadLyrics,
         private val remuxer: Mp4Remuxer,
         private val tagWriter: Mp4TagWriter,
         private val coverArt: CoverArtLoader,
@@ -61,6 +64,7 @@ class DownloadRunner
         private val preferences: PlayerPreferences,
         private val sponsorBlock: SponsorBlockRepository,
         private val subtitles: OfflineSubtitleStore,
+        private val subtitleFile: DownloadSubtitleFile,
     ) {
         suspend fun run(videoId: String) {
             val row = downloadDao.getDownloadWithItems(videoId) ?: return
@@ -76,9 +80,16 @@ class DownloadRunner
                 val threads = request.threads ?: preferences.downloadThreads.first()
                 coroutineScope {
                     val cover = async { coverArt.load(request.tags.thumbnailUrl, request.kind) }
+                    val withLyrics = async { lyrics.addTo(request) }
                     when (val fetched = transfer.fetch(request, staging, item.id, threads)) {
-                        is FetchOutcome.Failed -> fail(request, staging, messageFor(fetched.reason), keepParts = true)
-                        is FetchOutcome.Fetched -> finish(request, staging, item.id, fetched, cover.await())
+                        is FetchOutcome.Failed -> {
+                            withLyrics.cancel()
+                            fail(request, staging, messageFor(fetched.reason), keepParts = true)
+                        }
+
+                        is FetchOutcome.Fetched -> {
+                            finish(withLyrics.await(), staging, item.id, fetched, cover.await())
+                        }
                     }
                 }
             } catch (e: CancellationException) {
@@ -134,7 +145,9 @@ class DownloadRunner
                 fail(request, staging, context.getString(R.string.download_failed_save), keepParts = true)
                 return
             }
-            withContext(NonCancellable) { commit(request, staging, itemId, placed, extension, size, qualityOf(fetched), cover) }
+            withContext(NonCancellable) {
+                commit(request, staging, itemId, placed, extension, size, qualityOf(fetched), cover, fetched.streams?.captions.orEmpty())
+            }
         }
 
         private suspend fun commit(
@@ -146,6 +159,7 @@ class DownloadRunner
             size: Long,
             quality: String,
             cover: ByteArray?,
+            captions: List<ResolvedCaption>,
         ) {
             val path = placed.path
             val mimeType = if (request.wantsAudioOnly) "audio/mp4" else "video/mp4"
@@ -157,7 +171,8 @@ class DownloadRunner
             staging.clear()
             if (request.kind != DownloadKind.MUSIC && !request.wantsAudioOnly) {
                 saveSponsorBlockSegments(request.videoId)
-                runCatching { subtitles.saveForVideo(request.videoId) }.onFailure { Log.w(TAG, "captions not saved", it) }
+                runCatching { subtitles.saveForVideo(request.videoId, captions) }.onFailure { Log.w(TAG, "captions not saved", it) }
+                runCatching { subtitleFile.writeBeside(request, placed, captions) }.onFailure { Log.w(TAG, "subtitle file not saved", it) }
             }
         }
 

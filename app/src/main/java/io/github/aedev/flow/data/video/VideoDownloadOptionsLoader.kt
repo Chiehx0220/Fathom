@@ -7,7 +7,10 @@ import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
+import io.github.aedev.flow.player.state.SubtitleOption
+import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
+import io.github.aedev.flow.player.stream.StreamProcessor
 import io.github.aedev.flow.player.stream.StreamSizeEstimator
 import io.github.aedev.flow.player.stream.durationMs
 import io.github.aedev.flow.player.stream.playableAudioFormats
@@ -25,6 +28,7 @@ data class VideoDownloadOptions(
     val videoFormats: List<PlayerResponse.StreamingData.Format>,
     val audioFormats: List<PlayerResponse.StreamingData.Format>,
     val streamSizes: Map<String, Long>,
+    val subtitles: List<SubtitleOption> = emptyList(),
 )
 
 /**
@@ -53,6 +57,10 @@ class VideoDownloadOptionsLoader
                     videoFormats = videoFormats,
                     audioFormats = audioFormats,
                     streamSizes = StreamSizeEstimator.fromInnerTubeFormats(videoFormats, audioFormats, result.durationMs() ?: 0L),
+                    subtitles =
+                        StreamProcessor.toSubtitleOptions(
+                            StreamProcessor.processCaptions(CaptionTrackResolver.resolve(result.playerResponse)),
+                        ),
                 )
             }
 

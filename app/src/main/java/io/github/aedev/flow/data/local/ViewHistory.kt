@@ -96,8 +96,7 @@ class ViewHistory private constructor(
         isLocal: Boolean = LocalMediaIds.isLocal(videoId),
         serviceId: Int = 0,
     ) {
-        val prefs = PlayerPreferences(context)
-        if (prefs.isDeepFlowCurrentlyActive() && !prefs.isDeepFlowSaveToHistoryEnabled()) return
+        if (PlayerPreferences(context).isWatchHistorySavingBlocked()) return
 
         val thumbnail = if (isLocal) thumbnailUrl else ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, thumbnailUrl)
         dao.upsert(
@@ -127,8 +126,7 @@ class ViewHistory private constructor(
         durationMs: Long,
     ) {
         if (durationMs <= 0L) return
-        val prefs = PlayerPreferences(context)
-        if (prefs.isDeepFlowCurrentlyActive() && !prefs.isDeepFlowSaveToHistoryEnabled()) return
+        if (PlayerPreferences(context).isWatchHistorySavingBlocked()) return
         dao.markCompleted(videoId, durationMs)
     }
 
@@ -169,8 +167,7 @@ class ViewHistory private constructor(
         isShort: Boolean = false,
         serviceId: Int = 0,
     ) {
-        val prefs = PlayerPreferences(context)
-        if (prefs.isDeepFlowCurrentlyActive() && !prefs.isDeepFlowSaveToHistoryEnabled()) return
+        if (PlayerPreferences(context).isWatchHistorySavingBlocked()) return
 
         val thumbnail = ThumbnailUrlResolver.normalizeVideoThumbnail(videoId, thumbnailUrl)
         val existingPosition = dao.getPosition(videoId) ?: 0L // preserve saved progress

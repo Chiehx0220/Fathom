@@ -35,14 +35,20 @@ class DownloadTagReader
     ) {
         suspend fun read(uri: Uri): EmbeddedTags? =
             withContext(Dispatchers.IO) {
-                val entries = withTimeoutOrNull(TIMEOUT_MS) { retrieveEntries(uri) }.orEmpty()
-                val embedded = EmbeddedTags.fromEntries(entries)
+                val embedded = EmbeddedTags.fromEntries(entries(uri))
                 if (embedded.flow != null) return@withContext embedded
                 val platform = readWithPlatform(uri)
                 val merged =
                     platform?.let { embedded.withFallback(it.title, it.artist, it.album, it.cover) } ?: embedded
-                merged.takeIf { it.title != null || it.artist != null || it.album != null || it.cover != null }
+                merged.takeIf { tags ->
+                    tags.cover != null ||
+                        listOf(tags.title, tags.artist, tags.album, tags.description, tags.comment, tags.lyrics).any { it != null }
+                }
             }
+
+        /** Every metadata entry Media3 parses from the file's container, from all its tracks; empty on failure. */
+        internal suspend fun entries(uri: Uri): List<Metadata.Entry> =
+            withContext(Dispatchers.IO) { withTimeoutOrNull(TIMEOUT_MS) { retrieveEntries(uri) }.orEmpty() }
 
         private suspend fun retrieveEntries(uri: Uri): List<Metadata.Entry> =
             try {

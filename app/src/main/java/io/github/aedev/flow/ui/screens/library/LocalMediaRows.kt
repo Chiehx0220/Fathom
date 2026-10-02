@@ -23,6 +23,7 @@ import io.github.aedev.flow.ui.components.shared.ArtworkThumbnail
 import io.github.aedev.flow.ui.components.shared.MediaRow
 import io.github.aedev.flow.ui.components.shared.MediaThumbnail
 import io.github.aedev.flow.ui.components.shared.MediaThumbnailDefaults
+import io.github.aedev.flow.ui.components.shared.card.LocalVideoCardPreferences
 import io.github.aedev.flow.utils.formatDurationMillis
 import io.github.aedev.flow.utils.formatYouTubeRelativeTime
 
@@ -62,7 +63,7 @@ internal fun LocalMediaRow(
     MediaRow(
         title = item.title,
         modifier = modifier,
-        subtitle = if (item.isVideo) item.folderName else item.artist.ifBlank { item.folderName },
+        subtitle = item.artist.ifBlank { item.folderName },
         supporting = localSupportingLine(item),
         supportingColor = MaterialTheme.colorScheme.onSurfaceVariant,
         titleMaxLines = if (item.isVideo) 2 else 1,
@@ -91,7 +92,7 @@ internal fun LocalMediaCard(
 ) {
     LibraryVideoCard(
         title = item.title,
-        subtitle = item.folderName,
+        subtitle = item.artist.ifBlank { item.folderName },
         supporting = localSupportingLine(item),
         onClick = onClick,
         onLongClick = onLongClick,
@@ -114,7 +115,7 @@ internal fun LocalVideoThumbnail(
         videoId = item.mediaId,
         thumbnailUrl = item.contentUri,
         durationSeconds = (item.durationMs / 1_000L).toInt(),
-        showWatchProgress = true,
+        showWatchProgress = LocalVideoCardPreferences.current.showWatchProgress,
         placeholder = Icons.Outlined.VideoLibrary,
         modifier = modifier,
         width = width,

@@ -21,7 +21,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (2622 changed lines). New files: **49** (4576 lines).
+- Modified upstream files: **118** (2698 changed lines). New files: **50** (4578 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -32,23 +32,24 @@ in it). **New files** never conflict; they are ours alone.
 | ui/tv/components/TvNavRail.kt | 51 | 45 |
 | ui/screens/channel/ChannelViewModel.kt | 81 | 3 |
 | notification/SubscriptionCheckWorker.kt | 79 | 0 |
-| ui/screens/search/SearchViewModel.kt | 72 | 4 |
 | data/innertube/RssSubscriptionService.kt | 72 | 3 |
+| ui/screens/search/SearchViewModel.kt | 71 | 4 |
 | MainActivity.kt | 46 | 26 |
+| ui/screens/search/SearchScreen.kt | 64 | 4 |
 | ui/screens/home/FlowHeaderLogoIcon.kt | 60 | 7 |
-| ui/screens/home/HomeViewModel.kt | 44 | 19 |
 | ui/screens/player/PlaybackStreamPreparer.kt | 63 | 0 |
 | ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
 | player/stream/PlaybackLoadResolver.kt | 49 | 1 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
-| ui/screens/search/SearchScreen.kt | 48 | 0 |
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
+| ui/screens/home/HomeViewModel.kt | 34 | 4 |
 | ui/screens/player/VideoPlayerViewModel.kt | 31 | 7 |
 | ui/screens/home/HomeFeedSources.kt | 31 | 4 |
 | ui/FlowNavigation.kt | 24 | 10 |
 | ui/screens/player/PlaybackPreparer.kt | 32 | 2 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 33 | 1 |
 | ui/ChannelNavigation.kt | 22 | 11 |
+| ui/screens/onboarding/ImportStep.kt | 25 | 6 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/local/ViewHistory.kt | 28 | 0 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
@@ -58,6 +59,7 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/PlayerPreferences.kt | 24 | 0 |
 | data/paging/SearchPagingSource.kt | 18 | 6 |
 | data/video/VideoDownloadManager.kt | 23 | 1 |
+| data/update/UpdateRepository.kt | 14 | 9 |
 | player/stream/ResolvedPlayback.kt | 23 | 0 |
 | ui/NavigationDestinations.kt | 19 | 4 |
 | data/local/SubscriptionRepository.kt | 22 | 0 |
@@ -80,29 +82,22 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/WatchSessionTracker.kt | 12 | 3 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 14 | 1 |
 | ui/screens/player/stage/VideoStage.kt | 15 | 0 |
+| data/update/GitHubRelease.kt | 7 | 7 |
 | player/GlobalPlayerState.kt | 13 | 0 |
 | player/stream/PlaybackPrefetcher.kt | 11 | 1 |
-| ui/components/layout/navigation/MediaNavigator.kt | 10 | 2 |
-| ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
-| data/local/LikedVideosRepository.kt | 10 | 1 |
-| ... 53 more, each small | | |
+| ... 58 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
-- Modified upstream files: **6** (35 changed lines). New files: **2** (173 lines).
+- Modified upstream files: **1** (2 changed lines). New files: **1** (22 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| data/recommendation/NeuroTokenizer.kt | 8 | 9 |
-| data/recommendation/NeuroDiscovery.kt | 3 | 3 |
-| data/recommendation/FlowNeuroEngine.kt | 2 | 2 |
-| data/recommendation/NeuroScoring.kt | 2 | 2 |
-| data/recommendation/NeuroClusters.kt | 1 | 1 |
 | data/recommendation/NeuroModels.kt | 2 | 0 |
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **53** (6080 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **53** (6108 lines).
 
 ## Local server (fork-only feature)
 
@@ -110,56 +105,57 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Build
 
-- Modified upstream files: **1** (7 changed lines). New files: **0** (0 lines).
+- Modified upstream files: **1** (11 changed lines). New files: **0** (0 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/build.gradle.kts | 6 | 1 |
+| app/build.gradle.kts | 8 | 3 |
 
 ## Resources / strings
 
-- Modified upstream files: **42** (659 changed lines). New files: **3** (62 lines).
+- Modified upstream files: **64** (1335 changed lines). New files: **3** (62 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/main/res/values/strings.xml | 95 | 13 |
-| app/src/main/AndroidManifest.xml | 61 | 1 |
+| app/src/main/res/values/strings.xml | 169 | 89 |
+| app/src/main/AndroidManifest.xml | 67 | 35 |
+| app/src/main/res/drawable/ic_launcher_expressive_pill_foreground.xml | 34 | 10 |
 | app/src/main/res/drawable/ic_splash_logo.xml | 32 | 10 |
+| app/src/main/res/drawable/ic_launcher_expressive_pill_monochrome.xml | 34 | 7 |
+| app/src/main/res/drawable/ic_launcher_expressive_sky_foreground.xml | 24 | 10 |
+| app/src/main/res/drawable/splash_icon_expressive_segmented.xml | 0 | 32 |
+| app/src/main/res/drawable/ic_launcher_expressive_sky_monochrome.xml | 24 | 7 |
+| app/src/main/res/drawable/ic_launcher_expressive_oval_foreground.xml | 17 | 10 |
 | app/src/main/res/drawable-xhdpi/tv_banner.xml | 8 | 18 |
 | app/src/main/res/drawable/ic_fg_ghost.xml | 9 | 15 |
+| app/src/main/res/drawable/ic_flow_badge_glyph.xml | 13 | 11 |
+| app/src/main/res/drawable/ic_launcher_expressive_cookie_foreground.xml | 17 | 7 |
+| app/src/main/res/drawable/ic_launcher_expressive_cookie_monochrome.xml | 17 | 7 |
+| app/src/main/res/drawable/ic_launcher_expressive_oval_monochrome.xml | 17 | 7 |
+| app/src/main/res/drawable/ic_launcher_expressive_play_foreground.xml | 14 | 10 |
+| app/src/main/res/drawable/ic_launcher_expressive_scallop_foreground.xml | 14 | 10 |
 | app/src/main/res/drawable/ic_fg_amoled.xml | 9 | 13 |
+| app/src/main/res/drawable/ic_launcher_expressive_segmented_foreground.xml | 0 | 22 |
+| app/src/main/res/drawable/ic_launcher_expressive_segmented_monochrome.xml | 0 | 22 |
+| app/src/main/res/drawable/ic_launcher_expressive_play_monochrome.xml | 14 | 7 |
+| app/src/main/res/drawable/ic_launcher_expressive_scallop_monochrome.xml | 14 | 7 |
 | app/src/main/res/drawable/ic_launcher_foreground.xml | 9 | 12 |
-| app/src/main/res/drawable/ic_flow_badge_glyph.xml | 9 | 11 |
 | app/src/main/res/drawable/ic_fg_monochrome.xml | 9 | 10 |
 | app/src/main/res/drawable/ic_fg_flow_play.xml | 7 | 11 |
 | app/src/main/res/drawable/ic_flow_badge_shape.xml | 6 | 12 |
+| app/src/main/res/values/themes.xml | 0 | 18 |
 | app/src/main/res/drawable/ic_launcher_dynamic_foreground.xml | 8 | 9 |
 | app/src/main/res/values-zh-rCN/strings.xml | 6 | 9 |
-| app/src/main/res/drawable/ic_notification_logo.xml | 7 | 6 |
-| app/src/main/res/values-it/strings.xml | 5 | 8 |
-| app/src/main/res/drawable/ic_flow_logo.xml | 0 | 12 |
-| app/src/main/res/values-ar/strings.xml | 5 | 7 |
-| app/src/main/res/values-uk/strings.xml | 5 | 7 |
-| app/src/main/res/values-az/strings.xml | 4 | 7 |
-| app/src/main/res/values-es/strings.xml | 4 | 7 |
-| app/src/main/res/values-fr/strings.xml | 4 | 7 |
-| app/src/main/res/values-in/strings.xml | 4 | 7 |
-| app/src/main/res/values-ko/strings.xml | 4 | 7 |
-| app/src/main/res/values-pl/strings.xml | 4 | 7 |
-| app/src/main/res/values-pt-rBR/strings.xml | 4 | 7 |
-| app/src/main/res/values-ru/strings.xml | 4 | 7 |
-| app/src/main/res/values-tr/strings.xml | 4 | 7 |
-| app/src/main/res/values-vi/strings.xml | 4 | 7 |
-| app/src/main/res/values-de/strings.xml | 4 | 6 |
-| app/src/main/res/values-hi/strings.xml | 4 | 5 |
-| ... 12 more, each small | | |
+| app/src/main/res/drawable/ic_launcher_expressive_mint_foreground.xml | 0 | 13 |
+| ... 34 more, each small | | |
 
 ## Tests
 
-- Modified upstream files: **9** (45 changed lines). New files: **2** (168 lines).
+- Modified upstream files: **10** (71 changed lines). New files: **2** (168 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
+| app/src/test/java/io/github/aedev/flow/data/update/GitHubReleaseTest.kt | 13 | 13 |
 | app/src/test/java/io/github/aedev/flow/data/subscriptions/SubscriptionRefreshPlannerTest.kt | 12 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/paging/SearchPagingSourceTest.kt | 8 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/effects/WatchHistoryEntryTest.kt | 7 | 0 |

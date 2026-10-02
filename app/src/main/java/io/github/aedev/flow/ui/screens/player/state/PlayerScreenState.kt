@@ -49,8 +49,6 @@ class PlayerScreenState {
     var showSeekBackAnimation by mutableStateOf(false)
 
     // Subtitle States
-    var subtitlesEnabled by mutableStateOf(false)
-    var selectedSubtitleUrl by mutableStateOf<String?>(null)
     var subtitleStyle by mutableStateOf(SubtitleStyle())
 
     // Danmaku (Bilibili bullet comments) toggle - a general viewing preference like showControls,
@@ -93,8 +91,6 @@ class PlayerScreenState {
         lockOverlayRevealSignal = 0
         currentPosition = 0L
         duration = 0L
-        subtitlesEnabled = false
-        selectedSubtitleUrl = null
         selectedTranscriptUrl = null
         showBrightnessOverlay = false
         showVolumeOverlay = false
@@ -146,17 +142,6 @@ class PlayerScreenState {
         isFullscreen = !isFullscreen
     }
 
-    fun enableSubtitles(url: String) {
-        selectedSubtitleUrl = url
-        subtitlesEnabled = true
-    }
-
-    fun disableSubtitles() {
-        subtitlesEnabled = false
-        selectedSubtitleUrl = null
-        selectedTranscriptUrl = null
-    }
-
     fun onInteraction() {
         lastInteractionTimestamp = System.currentTimeMillis()
     }
@@ -180,8 +165,11 @@ fun rememberPlayerScreenState(): PlayerScreenState = remember { PlayerScreenStat
 internal fun transcriptTrackUrl(
     playerState: io.github.aedev.flow.player.EnhancedPlayerState,
     screenState: PlayerScreenState,
-): String? =
-    screenState.selectedTranscriptUrl?.takeIf { url -> playerState.availableSubtitles.any { it.url == url } }
-        ?: screenState.selectedSubtitleUrl
-        ?: playerState.availableSubtitles.firstOrNull { !it.isTranslated }?.url
-        ?: playerState.availableSubtitles.firstOrNull()?.url
+): String? {
+    // Only tracks fetched over the network can be read; files and tracks inside a video have no URL.
+    val readable = playerState.availableSubtitles.filter { it.url.startsWith("http") }
+    return screenState.selectedTranscriptUrl?.takeIf { url -> readable.any { it.url == url } }
+        ?: playerState.selectedSubtitleUrl?.takeIf { url -> readable.any { it.url == url } }
+        ?: readable.firstOrNull { !it.isTranslated }?.url
+        ?: readable.firstOrNull()?.url
+}

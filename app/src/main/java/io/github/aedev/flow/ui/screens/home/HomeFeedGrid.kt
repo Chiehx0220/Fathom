@@ -15,7 +15,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.local.VideoHistoryEntry
 import io.github.aedev.flow.data.model.Video
@@ -48,10 +50,12 @@ internal fun HomeFeedGrid(
     onShortClick: (List<Video>, Video) -> Unit,
     onSeeAllHistory: () -> Unit,
     onOpenShortsFeed: () -> Unit,
+    onShortsShown: (ids: List<String>) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val videos = uiState.videos
+    val channelMemoryReason = stringResource(R.string.home_reason_channel_memory)
     val rows =
         remember(videos, feedLayout.columns, uiState.continueWatchingVideos.isNotEmpty(), uiState.shorts.isNotEmpty()) {
             homeFeedRows(
@@ -115,6 +119,7 @@ internal fun HomeFeedGrid(
                         onClick = { onVideoClick(row.video) },
                         useInternalPadding = !feedLayout.isCompact,
                         thumbnailWidth = plan.listThumbnailWidth,
+                        reason = if (row.video.id in uiState.channelMemoryVideoIds) channelMemoryReason else null,
                         modifier = Modifier.testTag("home_video_card"),
                     )
                 }
@@ -139,6 +144,7 @@ internal fun HomeFeedGrid(
                         shorts = uiState.shorts,
                         onShortClick = onShortClick,
                         onSeeAllClick = onOpenShortsFeed,
+                        onShortsShown = onShortsShown,
                         modifier = Modifier.testTag("home_shorts_shelf"),
                     )
                 }

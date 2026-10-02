@@ -112,7 +112,9 @@ class RssSubscriptionServiceTest {
     fun `a channel whose RSS lists only reels falls back to its tabs`() =
         runTest {
             reelIds = setOf("r1", "r2")
-            rss("UCa", entry("r1"), entry("r2"))
+            // The feed keeps a channel's newest reel only, so r2 is clearly older: two equal ages read
+            // the clock twice and could otherwise put r2 a millisecond ahead.
+            rss("UCa", entry("r1"), entry("r2", ageHours = 4))
             coEvery { uploads.fetch("UCa", any(), any()) } returns
                 Result.success(ChannelUploads(owner = FeedItemOwner("UCa", "Channel"), videos = listOf(upload("long", "UCa"))))
 
@@ -121,6 +123,57 @@ class RssSubscriptionServiceTest {
             coVerify(exactly = 1) { uploads.fetch("UCa", any(), any()) }
             assertThat(chunk.videos.map { it.id }).containsAtLeast("long", "r1")
             assertThat(chunk.failedChannelIds).isEmpty()
+        }
+
+    @Test
+    fun `an old reel off the Shorts tab is not passed off as a new upload (1175)`() =
+        runTest {
+            reelIds = setOf("r1")
+            rss("UCa", entry("r1", ageHours = 5))
+            coEvery { uploads.fetch("UCa", any(), any()) } returns
+                Result.success(
+                    ChannelUploads(
+                        owner = FeedItemOwner("UCa", "Channel"),
+                        shorts =
+                            listOf(
+                                upload("r1", "UCa").copy(isShort = true, timestamp = 0L),
+                                upload("old-reel", "UCa").copy(isShort = true, timestamp = 0L),
+                            ),
+                    ),
+                )
+
+            val chunk = sweep("UCa")
+
+            assertThat(chunk.videos.map { it.id }).doesNotContain("old-reel")
+            val dated = chunk.videos.single { it.id == "r1" }
+            assertThat(System.currentTimeMillis() - dated.timestamp).isAtLeast(4 * hour)
+        }
+
+    @Test
+    fun `a channel whose entries are all classified already is not browsed again`() =
+        runTest {
+            rss("UCa", entry("reel"), entry("video"))
+
+            val chunk =
+                service
+                    .fetchSubscriptionVideos(listOf("UCa"), storedReelVerdicts = mapOf("reel" to true, "video" to false))
+                    .last()
+
+            coVerify(exactly = 0) { reelIndex.markReels(any(), any(), any()) }
+            assertThat(chunk.videos.single { it.id == "reel" }.isShort).isTrue()
+            assertThat(chunk.videos.single { it.id == "video" }.isShort).isFalse()
+        }
+
+    @Test
+    fun `a new entry still gets its channel browsed`() =
+        runTest {
+            reelIds = setOf("new-reel")
+            rss("UCa", entry("video"), entry("new-reel"))
+
+            val chunk = service.fetchSubscriptionVideos(listOf("UCa"), storedReelVerdicts = mapOf("video" to false)).last()
+
+            coVerify(exactly = 1) { reelIndex.markReels("UCa", any(), any()) }
+            assertThat(chunk.videos.single { it.id == "new-reel" }.isShort).isTrue()
         }
 
     @Test
