@@ -7,6 +7,7 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.VideoCollaborator
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.model.needsCollaboratorResolution
 import io.github.aedev.flow.data.shorts.ShortsClassifier
 import io.github.aedev.flow.innertube.YouTube
@@ -1109,12 +1110,15 @@ internal fun selectCommentAuthorThumbnail(
         .resolveChannelAvatar(embeddedAvatar)
         .ifBlank { ThumbnailUrlResolver.resolveChannelAvatar(resolvedChannelAvatar) }
 
-/** No real channel id, or no avatar that can be shown (blank, a video frame or a channel page URL). */
+/** YouTube-only: another service's ids are not "UC" ids and 404 on lookup. */
 internal fun Video.needsChannelMetadata(): Boolean =
-    channelId.isBlank() ||
-        !channelId.startsWith("UC") ||
-        channelThumbnailUrl.isBlank() ||
-        ThumbnailUrlResolver.isUnusableChannelAvatar(channelThumbnailUrl)
+    serviceId.isYouTubeServiceId &&
+        (
+            channelId.isBlank() ||
+                !channelId.startsWith("UC") ||
+                channelThumbnailUrl.isBlank() ||
+                ThumbnailUrlResolver.isUnusableChannelAvatar(channelThumbnailUrl)
+        )
 
 internal fun mergeWatchMetadata(
     video: Video,
