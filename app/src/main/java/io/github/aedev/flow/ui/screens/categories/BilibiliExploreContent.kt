@@ -30,6 +30,7 @@ internal fun BilibiliExploreContent(
     onVideoClick: (Video) -> Unit,
     columnPreference: HomeFeedColumns,
     isListView: Boolean,
+    sourceChip: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: BilibiliExploreViewModel = hiltViewModel(),
 ) {
@@ -41,6 +42,7 @@ internal fun BilibiliExploreContent(
             modifier = Modifier.fillMaxWidth().padding(horizontal = TabRowPadding, vertical = TabRowVerticalPadding),
             horizontalArrangement = Arrangement.spacedBy(TabSpacing),
         ) {
+            sourceChip()
             BilibiliExploreTab.entries.forEach { tab ->
                 FlowFilterChip(
                     label = stringResource(tab.labelRes),

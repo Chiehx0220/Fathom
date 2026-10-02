@@ -31,6 +31,7 @@ internal fun CategoryTabBar(
     selected: ExploreDestination,
     onSelect: (ExploreDestination) -> Unit,
     modifier: Modifier = Modifier,
+    leading: (@Composable () -> Unit)? = null,
 ) {
     LazyRow(
         modifier = modifier.fillMaxWidth(),
@@ -38,6 +39,7 @@ internal fun CategoryTabBar(
         contentPadding = PaddingValues(horizontal = RowHorizontalPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        leading?.let { content -> item(key = "leading") { content() } }
         items(CATEGORY_TABS, key = { it.destination.name }) { tab ->
             FlowFilterChip(
                 label = stringResource(tab.labelRes),

@@ -1,10 +1,8 @@
 package io.github.aedev.flow.ui.screens.categories
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,10 +23,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,7 +43,6 @@ import io.github.aedev.flow.ui.components.categories.CategorySubTabMenu
 import io.github.aedev.flow.ui.components.categories.CategoryTabBar
 import io.github.aedev.flow.ui.components.layout.navigation.FlowTab
 import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
-import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBarDefaults
 import io.github.aedev.flow.ui.components.rememberFeedGridLayout
 import io.github.aedev.flow.ui.components.shared.FeedGridSkeleton
 import io.github.aedev.flow.ui.components.shared.FlowChoice
@@ -80,6 +74,13 @@ fun CategoriesScreen(
     val exploreSource by preferences.exploreSource.collectAsStateWithLifecycle(HomeContentSourceFilter.YOUTUBE)
     val isBilibili = exploreSource == HomeContentSourceFilter.BILIBILI
     val scope = rememberCoroutineScope()
+    val sourceChip: @Composable () -> Unit = {
+        HomeContentSourceFilterChip(
+            selected = exploreSource,
+            options = ExploreSources,
+            onSelect = { source -> scope.launch { preferences.setExploreSource(source) } },
+        )
+    }
 
     val shelfState = rememberLazyGridState()
     val gridState = rememberLazyGridState()
@@ -94,27 +95,7 @@ fun CategoriesScreen(
     Scaffold(
         topBar = {
             FlowTopBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(TitleChipSpacing),
-                    ) {
-                        Text(
-                            text = uiState.openShelfTitle ?: stringResource(R.string.categories_title),
-                            style = FlowTopBarDefaults.titleStyle,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                        if (uiState.openShelfTitle == null) {
-                            HomeContentSourceFilterChip(
-                                selected = exploreSource,
-                                options = ExploreSources,
-                                onSelect = { source -> scope.launch { preferences.setExploreSource(source) } },
-                            )
-                        }
-                    }
-                },
+                title = uiState.openShelfTitle ?: stringResource(R.string.categories_title),
                 onBack = uiState.openShelfTitle?.let { { viewModel.closeShelf() } },
                 actions = {
                     if (!isBilibili) {
@@ -149,6 +130,7 @@ fun CategoriesScreen(
                     onVideoClick = onVideoClick,
                     columnPreference = columnPreference,
                     isListView = uiState.isListView,
+                    sourceChip = sourceChip,
                     modifier = Modifier.weight(1f),
                 )
                 return@Column
@@ -158,6 +140,7 @@ fun CategoriesScreen(
                     selected = uiState.selected,
                     onSelect = viewModel::select,
                     modifier = Modifier.padding(vertical = ChipRowVerticalPadding),
+                    leading = sourceChip,
                 )
                 CategorySubTabMenu(
                     subTabs = uiState.subTabs,
@@ -230,6 +213,5 @@ fun CategoriesScreen(
 }
 
 private val ChipRowVerticalPadding = 4.dp
-private val TitleChipSpacing = 12.dp
 private val ExploreSources = listOf(HomeContentSourceFilter.YOUTUBE, HomeContentSourceFilter.BILIBILI)
 private val RegionDialogMaxHeight = 260.dp
