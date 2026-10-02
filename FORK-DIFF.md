@@ -21,7 +21,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **118** (2698 changed lines). New files: **50** (4578 lines).
+- Modified upstream files: **119** (2729 changed lines). New files: **49** (4576 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -41,10 +41,11 @@ in it). **New files** never conflict; they are ours alone.
 | ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
 | player/stream/PlaybackLoadResolver.kt | 49 | 1 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
+| data/local/SubscriptionRecordCodec.kt | 24 | 15 |
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
+| ui/screens/home/HomeFeedSources.kt | 33 | 5 |
 | ui/screens/home/HomeViewModel.kt | 34 | 4 |
 | ui/screens/player/VideoPlayerViewModel.kt | 31 | 7 |
-| ui/screens/home/HomeFeedSources.kt | 31 | 4 |
 | ui/FlowNavigation.kt | 24 | 10 |
 | ui/screens/player/PlaybackPreparer.kt | 32 | 2 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 33 | 1 |
@@ -59,6 +60,7 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/PlayerPreferences.kt | 24 | 0 |
 | data/paging/SearchPagingSource.kt | 18 | 6 |
 | data/video/VideoDownloadManager.kt | 23 | 1 |
+| ui/screens/home/HomeFeedGrid.kt | 24 | 0 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | player/stream/ResolvedPlayback.kt | 23 | 0 |
 | ui/NavigationDestinations.kt | 19 | 4 |
@@ -66,7 +68,6 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/dao/WatchHistoryDao.kt | 22 | 0 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 22 | 0 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
-| ui/screens/home/HomeFeedGrid.kt | 22 | 0 |
 | player/error/VideoErrorMapper.kt | 20 | 0 |
 | ui/FlowApp.kt | 13 | 7 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 17 | 3 |
@@ -76,7 +77,6 @@ in it). **New files** never conflict; they are ours alone.
 | ui/PlayerNavigation.kt | 12 | 4 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 14 | 2 |
-| data/local/SubscriptionRecordCodec.kt | 11 | 4 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
 | ui/components/shared/quickactions/VideoQuickActionsSheet.kt | 12 | 3 |
 | ui/screens/player/WatchSessionTracker.kt | 12 | 3 |
@@ -85,23 +85,24 @@ in it). **New files** never conflict; they are ours alone.
 | data/update/GitHubRelease.kt | 7 | 7 |
 | player/GlobalPlayerState.kt | 13 | 0 |
 | player/stream/PlaybackPrefetcher.kt | 11 | 1 |
-| ... 58 more, each small | | |
+| ... 59 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
-- Modified upstream files: **1** (2 changed lines). New files: **1** (22 lines).
+- Modified upstream files: **2** (6 changed lines). New files: **0** (0 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
+| data/recommendation/NeuroText.kt | 2 | 2 |
 | data/recommendation/NeuroModels.kt | 2 | 0 |
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **53** (6108 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **53** (6105 lines).
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **40** (7043 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **40** (7033 lines).
 
 ## Build
 
@@ -113,7 +114,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Resources / strings
 
-- Modified upstream files: **64** (1335 changed lines). New files: **3** (62 lines).
+- Modified upstream files: **65** (1347 changed lines). New files: **4** (76 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -147,11 +148,11 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/main/res/drawable/ic_launcher_dynamic_foreground.xml | 8 | 9 |
 | app/src/main/res/values-zh-rCN/strings.xml | 6 | 9 |
 | app/src/main/res/drawable/ic_launcher_expressive_mint_foreground.xml | 0 | 13 |
-| ... 34 more, each small | | |
+| ... 35 more, each small | | |
 
 ## Tests
 
-- Modified upstream files: **10** (71 changed lines). New files: **2** (168 lines).
+- Modified upstream files: **12** (77 changed lines). New files: **2** (168 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -160,9 +161,11 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/data/paging/SearchPagingSourceTest.kt | 8 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/effects/WatchHistoryEntryTest.kt | 7 | 0 |
 | app/src/test/java/io/github/aedev/flow/player/stream/VideoCodecUtilsTest.kt | 6 | 0 |
-| app/src/test/java/io/github/aedev/flow/utils/ShareVideoTest.kt | 2 | 2 |
+| app/src/test/java/io/github/aedev/flow/utils/ShareVideoTest.kt | 3 | 3 |
 | app/src/test/java/io/github/aedev/flow/player/stream/PlaybackLoadResolverTest.kt | 3 | 0 |
+| app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/components/shared/quickactions/QuickActionsMessagesTest.kt | 1 | 1 |
+| app/src/test/java/io/github/aedev/flow/ui/screens/home/HomeFeedSourcesSeedTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelHarness.kt | 1 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/search/SearchViewModelTest.kt | 1 | 0 |
 

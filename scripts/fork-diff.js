@@ -1,6 +1,6 @@
 const {execSync}=require("child_process");const fs=require("fs");
 const sh=c=>execSync(c,{encoding:"utf8",maxBuffer:1<<26,stdio:["ignore","pipe","ignore"]});
-const num=sh("git diff upstream/main --numstat -- app/src/main app/src/test build.gradle.kts gradle app/build.gradle.kts").trim().split("\n").filter(Boolean).map(l=>{const [a,d,p]=l.split("\t");return {a:+a||0,d:+d||0,p}});
+const num=sh("git diff upstream/main --numstat --no-renames -- app/src/main app/src/test build.gradle.kts gradle app/build.gradle.kts").trim().split("\n").filter(Boolean).map(l=>{const [a,d,p]=l.split("\t");return {a:+a||0,d:+d||0,p}});
 const isNew=p=>{try{sh(`git cat-file -e upstream/main:${p}`);return false}catch(e){return true}};
 const rows=num.map(r=>({...r,isNew:isNew(r.p)}));
 const area=p=>{
