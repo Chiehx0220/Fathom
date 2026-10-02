@@ -74,7 +74,7 @@ class ShareVideoTest {
 
         assertThat(linkOnly.getStringExtra(Intent.EXTRA_TEXT)).isEqualTo("https://youtube.com/shorts/abc123")
         assertThat(withText.getStringExtra(Intent.EXTRA_TEXT))
-            .isEqualTo(context.getString(R.string.check_out_short_template, "A title", "abc123"))
+            .isEqualTo(context.getString(R.string.check_out_short_template, "A title", "https://youtube.com/shorts/abc123"))
         assertThat(withText.getStringExtra(Intent.EXTRA_TEXT)).contains("https://youtube.com/shorts/abc123")
     }
 

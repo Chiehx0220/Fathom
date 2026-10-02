@@ -469,7 +469,7 @@ class HomeChipFeeds
                     .map { seed ->
                         async {
                             val next =
-                                runCatching { feedSources.relatedVideos(seed.video.id, context.filters) }
+                                runCatching { feedSources.relatedVideos(seed.video.id, context.filters, seed.video.serviceId) }
                                     .getOrDefault(emptyList())
                                     .filterValid()
                                     .filter { !it.isShort && it.id != seed.video.id && it.id !in disliked }

@@ -27,8 +27,8 @@ import io.github.aedev.flow.data.recommendation.UserBrain
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.repository.needsChannelMetadata
 import io.github.aedev.flow.data.shorts.ShortsFeedRepository
-import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.data.subscriptions.HomeSubscriptionUploads
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.pages.renderer.FeedItemOwner
 import io.github.aedev.flow.ui.screens.home.chips.ChipFeedContext
 import io.github.aedev.flow.ui.screens.home.chips.HomeChipFeeds

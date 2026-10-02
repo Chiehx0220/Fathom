@@ -41,8 +41,8 @@ internal fun HomeFeedGrid(
     feedLayout: FeedGridLayout,
     isListView: Boolean,
     gridState: LazyGridState,
-    contentSourceFilter: HomeContentSourceFilter,
-    onContentSourceFilterSelect: (HomeContentSourceFilter) -> Unit,
+    contentSourceFilter: HomeContentSourceFilter? = null,
+    onContentSourceFilterSelect: ((HomeContentSourceFilter) -> Unit)? = null,
     onVideoClick: (Video) -> Unit,
     onEnrichChannelMetadata: (Video) -> Unit,
     onContinueWatchingClick: (VideoHistoryEntry) -> Unit,
@@ -87,18 +87,20 @@ internal fun HomeFeedGrid(
         contentPadding = plan.contentPadding(top = FeedTopPadding, bottom = flowBottomContentPadding()),
         verticalArrangement = Arrangement.spacedBy(plan.rowSpacing),
     ) {
-        item(
-            span = { GridItemSpan(maxLineSpan) },
-            key = "content_source_filter_chip",
-        ) {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                contentAlignment = Alignment.CenterEnd,
+        if (contentSourceFilter != null && onContentSourceFilterSelect != null) {
+            item(
+                span = { GridItemSpan(maxLineSpan) },
+                key = "content_source_filter_chip",
             ) {
-                HomeContentSourceFilterChip(
-                    selected = contentSourceFilter,
-                    onSelect = onContentSourceFilterSelect,
-                )
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    HomeContentSourceFilterChip(
+                        selected = contentSourceFilter,
+                        onSelect = onContentSourceFilterSelect,
+                    )
+                }
             }
         }
 

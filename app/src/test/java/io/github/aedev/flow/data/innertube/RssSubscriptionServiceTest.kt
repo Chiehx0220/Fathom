@@ -28,7 +28,7 @@ class RssSubscriptionServiceTest {
     private val rssClient: ChannelRssClient = mockk()
     private val reelIndex: ChannelReelIndex = mockk()
     private val uploads: ChannelUploadsClient = mockk()
-    private val service = RssSubscriptionService(rssClient, reelIndex, uploads)
+    private val service = RssSubscriptionService(rssClient, reelIndex, uploads, mockk())
     private val hour = 3_600_000L
 
     private var reelIds: Set<String> = emptySet()

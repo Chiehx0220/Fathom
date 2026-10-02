@@ -9,11 +9,12 @@ import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.local.SearchHistoryRepository
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.local.ViewHistory
+import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.InteractionType
+import io.github.aedev.flow.data.recommendation.NeuroScoring
 import io.github.aedev.flow.data.recommendation.UserBrain
 import io.github.aedev.flow.data.repository.YouTubeRepository
-import io.github.aedev.flow.data.shorts.ChannelReelIndex
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.explore.chartsCountryOrFallback
 import io.github.aedev.flow.player.PlayerRelatedVideosPolicy
@@ -29,6 +30,7 @@ import io.github.aedev.flow.ui.screens.home.feedTasteProfile
 import io.github.aedev.flow.ui.screens.home.filterValid
 import io.github.aedev.flow.ui.screens.home.filterWatched
 import io.github.aedev.flow.ui.screens.home.spaceByChannel
+import io.github.aedev.flow.ui.screens.home.storedSubscriptionVideos
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -409,11 +411,14 @@ fun HistoryDbHelper.nativeClearHistory() {
 // Flow's video-only [FlowVideo] display model.
 
 // Singleton shared with native (same instance as the Hilt provider).
-private fun HistoryDbHelper.youTubeRepository(): YouTubeRepository =
-    YouTubeRepository.getInstance(PlayerPreferences(appContext), ChannelReelIndex())
+private fun HistoryDbHelper.youTubeRepository(): YouTubeRepository = YouTubeRepository.getInstance(PlayerPreferences(appContext))
 
 // Singleton reached through LocalServerEntryPoint, since this runs outside Hilt.
 private fun HistoryDbHelper.homeFeedSources(): HomeFeedSources = localServerEntryPoint(appContext).homeFeedSources()
+
+// The subscription store is local, so this never touches the network.
+private suspend fun HistoryDbHelper.storedSubscriptionFeed(): List<FlowVideo> =
+    runCatching { localServerEntryPoint(appContext).subscriptionFeedRepository().observeFeed().first() }.getOrDefault(emptyList())
 
 @Volatile
 private var flowNeuroInitialized = false
@@ -527,7 +532,7 @@ private suspend fun CoroutineScope.fetchDiscoveryVideos(
  * avatars. */
 private data class HomeFeedContext(
     val watched: Set<String>,
-    val excludedChannels: Set<String>,
+    val exclusions: FeedExclusions,
     val brain: UserBrain,
     val taste: FeedTasteProfile,
     val subAvatarMap: Map<String, String>,
@@ -536,7 +541,7 @@ private data class HomeFeedContext(
 private suspend fun HistoryDbHelper.buildHomeFeedContext(): HomeFeedContext {
     val hideWatched = playerPreferences().hideWatchedVideosFromHome.first()
     val watched = if (hideWatched) viewHistory().getAllWatchedVideoIds() else emptySet()
-    val excludedChannels = runCatching { FlowNeuroEngine.getExcludedChannelIds() }.getOrDefault(emptySet())
+    val exclusions = runCatching { FlowNeuroEngine.feedExclusions() }.getOrDefault(FeedExclusions.NONE)
     val brain = runCatching { FlowNeuroEngine.getBrainSnapshot() }.getOrElse { UserBrain() }
     val taste = feedTasteProfile(brain, FlowNeuroEngine.getPersona(brain))
     val subAvatarMap =
@@ -547,7 +552,7 @@ private suspend fun HistoryDbHelper.buildHomeFeedContext(): HomeFeedContext {
                 .filter { it.channelThumbnail.isNotEmpty() }
                 .associate { it.channelId to it.channelThumbnail }
         }.getOrDefault(emptyMap())
-    return HomeFeedContext(watched, excludedChannels, brain, taste, subAvatarMap)
+    return HomeFeedContext(watched, exclusions, brain, taste, subAvatarMap)
 }
 
 /** Dedupes by video id, ranks via FlowNeuroEngine (falls back to unranked order on failure),
@@ -610,25 +615,14 @@ fun HistoryDbHelper.buildAndRankHomeFeed(
         val subIds = subscriptionRepository().getAllSubscriptionIds()
         val context = buildHomeFeedContext()
         val cacheFilters: suspend () -> HomeFeedCacheFilters = {
-            HomeFeedCacheFilters(
-                watchedVideoIds = context.watched,
-                suppressedVideoIds = context.brain.suppressedVideoIds.keys,
-                blockedChannelIds = context.brain.blockedChannels,
-                suppressedChannelIds = context.brain.suppressedChannels.keys,
-            )
+            HomeFeedCacheFilters(watchedVideoIds = context.watched, exclusions = context.exclusions)
         }
 
-        lateinit var rawSubs: List<FlowVideo>
         lateinit var rawDiscovery: List<FlowVideo>
         lateinit var rawViral: List<FlowVideo>
         lateinit var rawRelated: List<GraphCandidate>
         lateinit var rssFeed: List<FlowVideo>
         supervisorScope {
-            val subsDeferred =
-                async {
-                    if (feedMode != "mix" || subIds.isEmpty()) return@async emptyList()
-                    runCatching { repo.getSubscriptionFeed(subIds.toList()) }.getOrDefault(emptyList())
-                }
             val discoveryDeferred = async { fetchDiscoveryVideos(repo, resetDepth = true) }
             val viralDeferred = async { runCatching { trendingVideos() }.getOrDefault(emptyList()) }
             val relatedDeferred =
@@ -639,30 +633,26 @@ fun HistoryDbHelper.buildAndRankHomeFeed(
                         sources.fetchRelatedGraph(seedInputs, seedIds, cacheFilters).candidates
                     }.getOrDefault(emptyList())
                 }
-            // Cache read from the same SubscriptionFeedRepository as native; no network call.
-            val rssDeferred =
-                async {
-                    runCatching {
-                        localServerEntryPoint(appContext).subscriptionFeedRepository().observeFeed().first()
-                    }.getOrDefault(emptyList())
-                }
+            val rssDeferred = async { storedSubscriptionFeed() }
 
-            rawSubs = subsDeferred.await()
             rawDiscovery = discoveryDeferred.await()
             rawViral = viralDeferred.await()
             rawRelated = relatedDeferred.await()
             rssFeed = rssDeferred.await()
         }
 
+        // Home has no separate trending lane any more, so trending joins discovery.
+        val rawSubs = if (feedMode == "mix" && subIds.isNotEmpty()) rssFeed.storedSubscriptionVideos(now) else emptyList()
         val lanes =
             buildHomeFeedLanes(
                 rawSubs = rawSubs,
-                rawDiscovery = rawDiscovery,
-                rawViral = rawViral,
+                rawDiscovery = rawDiscovery + rawViral,
+                rawMemory = emptyList(),
                 rawRelated = rawRelated,
                 rssFeed = rssFeed,
                 watched = context.watched,
-                excludedChannels = context.excludedChannels,
+                exclusions = context.exclusions,
+                isRecentlyShown = { id -> NeuroScoring.isRecentlySeen(context.brain.feedHistory[id], now) },
                 taste = context.taste,
                 now = now,
                 freshSlotTarget = dynamicFreshSubSlots(subIds.size),
@@ -685,10 +675,10 @@ fun HistoryDbHelper.buildAndRankHomeFeed(
         result to true
     }
 
-/** `feedMode == "subs"`: native subscription pool via `filterValid`/`filterWatched`/`demoteByFit`/
+/** `feedMode == "subs"`: the stored subscription uploads via `filterValid`/`filterWatched`/`demoteByFit`/
  * `spaceByChannel`, but NOT through [buildHomeFeedLanes]/[assembleHomeFeed] - that pipeline caps
  * the subs lane at 15 and the mix at 40 (`HOME_TARGET_SIZE`), which would truncate this mode's
- * uncapped "just my subscriptions" contract. Deliberate, not an oversight. */
+ * "just my subscriptions" contract. Deliberate, not an oversight. */
 fun HistoryDbHelper.buildSubsOnlyFeed(serviceId: Int): List<InfoItem> =
     runBlocking {
         val cacheKey = "$serviceId:subs"
@@ -703,13 +693,13 @@ fun HistoryDbHelper.buildSubsOnlyFeed(serviceId: Int): List<InfoItem> =
         if (subIds.isEmpty()) return@runBlocking emptyList()
 
         val context = buildHomeFeedContext()
-        val rawSubs = runCatching { youTubeRepository().getSubscriptionFeed(subIds.toList()) }.getOrDefault(emptyList())
         val pool =
-            rawSubs
+            storedSubscriptionFeed()
+                .storedSubscriptionVideos(now)
                 .filter { it.serviceId == serviceId }
                 .filterValid()
                 .filterWatched(context.watched)
-                .filter { it.channelId.isBlank() || it.channelId !in context.excludedChannels }
+                .filterNot(context.exclusions::hidesFromRecommendations)
                 .enrichAvatars(context.subAvatarMap)
         if (pool.isEmpty()) return@runBlocking emptyList()
 

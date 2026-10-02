@@ -150,7 +150,8 @@ class HomeFeedSources
         internal suspend fun relatedVideos(
             seedId: String,
             filters: suspend () -> HomeFeedCacheFilters,
-        ): List<Video> = fetchRelatedVideos(seedId, filters)
+            serviceId: Int = ServiceList.YouTube.serviceId,
+        ): List<Video> = fetchRelatedVideos(seedId, serviceId, filters)
 
         private suspend fun fetchRelatedVideos(
             seedId: String,
