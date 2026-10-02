@@ -168,6 +168,7 @@ class PlayerPreferences(
         val WATCH_HISTORY_PAUSED = booleanPreferencesKey("watch_history_paused")
         val HOME_NAVIGATION_ENABLED = booleanPreferencesKey("home_navigation_enabled")
         val HOME_CONTENT_SOURCE_FILTER = stringPreferencesKey("home_content_source_filter")
+        val EXPLORE_SOURCE = stringPreferencesKey("explore_source")
         val SHORTS_NAVIGATION_ENABLED = booleanPreferencesKey("shorts_navigation_enabled")
         val BOTTOM_NAV_HIDE_ON_SCROLL = booleanPreferencesKey("bottom_nav_hide_on_scroll")
         val MUSIC_NAVIGATION_ENABLED = booleanPreferencesKey("music_navigation_enabled")
@@ -992,6 +993,20 @@ class PlayerPreferences(
     suspend fun setHomeContentSourceFilter(filter: HomeContentSourceFilter) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.HOME_CONTENT_SOURCE_FILTER] = filter.name
+        }
+    }
+
+    val exploreSource: Flow<HomeContentSourceFilter> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                HomeContentSourceFilter
+                    .fromStoredName(preferences[Keys.EXPLORE_SOURCE])
+                    .takeIf { it == HomeContentSourceFilter.BILIBILI } ?: HomeContentSourceFilter.YOUTUBE
+            }
+
+    suspend fun setExploreSource(source: HomeContentSourceFilter) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.EXPLORE_SOURCE] = source.name
         }
     }
 
