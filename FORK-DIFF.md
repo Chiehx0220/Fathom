@@ -21,7 +21,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **119** (2729 changed lines). New files: **49** (4576 lines).
+- Modified upstream files: **121** (2796 changed lines). New files: **49** (4582 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -39,8 +39,10 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/home/FlowHeaderLogoIcon.kt | 60 | 7 |
 | ui/screens/player/PlaybackStreamPreparer.kt | 63 | 0 |
 | ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
+| ui/screens/categories/CategoriesScreen.kt | 53 | 7 |
 | player/stream/PlaybackLoadResolver.kt | 49 | 1 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
+| data/local/PlayerPreferences.kt | 39 | 0 |
 | data/local/SubscriptionRecordCodec.kt | 24 | 15 |
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
 | ui/screens/home/HomeFeedSources.kt | 33 | 5 |
@@ -57,10 +59,8 @@ in it). **New files** never conflict; they are ours alone.
 | utils/ShareVideo.kt | 19 | 8 |
 | data/comments/CommentsPager.kt | 19 | 6 |
 | ui/components/shared/card/VideoCardStacked.kt | 15 | 10 |
-| data/local/PlayerPreferences.kt | 24 | 0 |
 | data/paging/SearchPagingSource.kt | 18 | 6 |
 | data/video/VideoDownloadManager.kt | 23 | 1 |
-| ui/screens/home/HomeFeedGrid.kt | 24 | 0 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | player/stream/ResolvedPlayback.kt | 23 | 0 |
 | ui/NavigationDestinations.kt | 19 | 4 |
@@ -74,6 +74,7 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/entity/VideoEntity.kt | 10 | 9 |
 | ui/AppHooks.kt | 10 | 9 |
 | ui/components/shared/quickactions/QuickActionsViewModel.kt | 14 | 3 |
+| ui/screens/home/HomeScreen.kt | 15 | 2 |
 | ui/PlayerNavigation.kt | 12 | 4 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 14 | 2 |
@@ -84,12 +85,11 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/stage/VideoStage.kt | 15 | 0 |
 | data/update/GitHubRelease.kt | 7 | 7 |
 | player/GlobalPlayerState.kt | 13 | 0 |
-| player/stream/PlaybackPrefetcher.kt | 11 | 1 |
-| ... 59 more, each small | | |
+| ... 61 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
-- Modified upstream files: **2** (6 changed lines). New files: **0** (0 lines).
+- Modified upstream files: **2** (6 changed lines). New files: **2** (747 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -98,7 +98,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **53** (6105 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **55** (6295 lines).
 
 ## Local server (fork-only feature)
 
@@ -114,11 +114,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Resources / strings
 
-- Modified upstream files: **65** (1347 changed lines). New files: **4** (76 lines).
+- Modified upstream files: **65** (1348 changed lines). New files: **4** (76 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/main/res/values/strings.xml | 169 | 89 |
+| app/src/main/res/values/strings.xml | 170 | 89 |
 | app/src/main/AndroidManifest.xml | 67 | 35 |
 | app/src/main/res/drawable/ic_launcher_expressive_pill_foreground.xml | 34 | 10 |
 | app/src/main/res/drawable/ic_splash_logo.xml | 32 | 10 |
