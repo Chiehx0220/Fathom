@@ -29,8 +29,8 @@ android {
         applicationId = "io.github.chiehx0220.fathom"
         minSdk = 28
         targetSdk = 36
-        versionCode = 18
-        versionName = "0.1.0"
+        versionCode = 19
+        versionName = "0.1.1"
 
         buildConfigField("int", "NIGHTLY_RUN", "0")
 
