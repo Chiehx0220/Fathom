@@ -18,10 +18,12 @@ in it). **New files** never conflict; they are ours alone.
    "Hooks in upstream files" group below, not in the Bilibili or local server files.
 4. Rules that keep the surface small: new code goes in a new file and upstream files only get a call to it;
    no reformatting or import reordering of upstream files.
+5. `node scripts/fork-diff.js --check` compares the size of that surface with `scripts/fork-diff-budget.json`
+   and fails when it grew; `--update-budget` lowers the budget after a cleanup.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **124** (2894 changed lines). New files: **51** (4653 lines).
+- Modified upstream files: **128** (2952 changed lines). New files: **54** (4721 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -29,25 +31,25 @@ in it). **New files** never conflict; they are ours alone.
 | player/EnhancedPlayerManager.kt | 127 | 30 |
 | data/local/BackupRepository.kt | 109 | 18 |
 | player/datasource/YouTubeHttpDataSource.kt | 97 | 7 |
+| ui/screens/home/chips/HomeChipFeeds.kt | 59 | 38 |
 | ui/tv/components/TvNavRail.kt | 51 | 45 |
-| ui/screens/home/chips/HomeChipFeeds.kt | 70 | 25 |
 | ui/screens/channel/ChannelViewModel.kt | 81 | 3 |
 | notification/SubscriptionCheckWorker.kt | 79 | 0 |
 | data/innertube/RssSubscriptionService.kt | 72 | 3 |
 | ui/screens/search/SearchViewModel.kt | 71 | 4 |
 | MainActivity.kt | 46 | 26 |
+| ui/screens/home/HomeViewModel.kt | 60 | 9 |
 | ui/screens/search/SearchScreen.kt | 64 | 4 |
 | ui/screens/home/FlowHeaderLogoIcon.kt | 60 | 7 |
 | ui/screens/player/PlaybackStreamPreparer.kt | 63 | 0 |
 | ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
 | player/stream/PlaybackLoadResolver.kt | 49 | 1 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
-| ui/screens/home/HomeViewModel.kt | 42 | 5 |
+| ui/screens/home/HomeFeedSources.kt | 42 | 5 |
 | ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
 | data/local/PlayerPreferences.kt | 39 | 0 |
 | data/local/SubscriptionRecordCodec.kt | 24 | 15 |
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
-| ui/screens/home/HomeFeedSources.kt | 33 | 5 |
 | ui/screens/player/VideoPlayerViewModel.kt | 31 | 7 |
 | ui/FlowNavigation.kt | 24 | 10 |
 | ui/screens/player/PlaybackPreparer.kt | 32 | 2 |
@@ -58,9 +60,11 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/ViewHistory.kt | 28 | 0 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
 | utils/ShareVideo.kt | 19 | 8 |
+| ui/FlowApp.kt | 13 | 13 |
 | data/comments/CommentsPager.kt | 19 | 6 |
 | ui/components/shared/card/VideoCardStacked.kt | 15 | 10 |
 | data/paging/SearchPagingSource.kt | 18 | 6 |
+| data/repository/YouTubeRepository.kt | 18 | 6 |
 | data/video/VideoDownloadManager.kt | 23 | 1 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | player/stream/ResolvedPlayback.kt | 23 | 0 |
@@ -70,7 +74,6 @@ in it). **New files** never conflict; they are ours alone.
 | data/subscriptions/SubscriptionFeedRepository.kt | 22 | 0 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
 | player/error/VideoErrorMapper.kt | 20 | 0 |
-| ui/FlowApp.kt | 13 | 7 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 17 | 3 |
 | data/local/entity/VideoEntity.kt | 10 | 9 |
 | ui/AppHooks.kt | 10 | 9 |
@@ -83,9 +86,8 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/WatchSessionTracker.kt | 12 | 3 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 14 | 1 |
 | ui/screens/player/stage/VideoStage.kt | 15 | 0 |
-| data/repository/YouTubeRepository.kt | 9 | 5 |
 | data/update/GitHubRelease.kt | 7 | 7 |
-| ... 64 more, each small | | |
+| ... 68 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -98,7 +100,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **55** (6318 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **56** (6391 lines).
 
 ## Local server (fork-only feature)
 
@@ -106,19 +108,18 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Build
 
-- Modified upstream files: **1** (13 changed lines). New files: **0** (0 lines).
+- Modified upstream files: **1** (14 changed lines). New files: **0** (0 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/build.gradle.kts | 9 | 4 |
+| app/build.gradle.kts | 10 | 4 |
 
 ## Resources / strings
 
-- Modified upstream files: **65** (1348 changed lines). New files: **4** (76 lines).
+- Modified upstream files: **39** (861 changed lines). New files: **4** (76 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/main/res/values/strings.xml | 170 | 89 |
 | app/src/main/AndroidManifest.xml | 67 | 35 |
 | app/src/main/res/drawable/ic_launcher_expressive_pill_foreground.xml | 34 | 10 |
 | app/src/main/res/drawable/ic_splash_logo.xml | 32 | 10 |
@@ -146,13 +147,14 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/main/res/drawable/ic_flow_badge_shape.xml | 6 | 12 |
 | app/src/main/res/values/themes.xml | 0 | 18 |
 | app/src/main/res/drawable/ic_launcher_dynamic_foreground.xml | 8 | 9 |
-| app/src/main/res/values-zh-rCN/strings.xml | 6 | 9 |
 | app/src/main/res/drawable/ic_launcher_expressive_mint_foreground.xml | 0 | 13 |
-| ... 35 more, each small | | |
+| app/src/main/res/drawable/ic_notification_logo.xml | 7 | 6 |
+| app/src/main/res/drawable/ic_flow_logo.xml | 0 | 12 |
+| ... 9 more, each small | | |
 
 ## Tests
 
-- Modified upstream files: **14** (87 changed lines). New files: **2** (168 lines).
+- Modified upstream files: **14** (87 changed lines). New files: **5** (392 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
