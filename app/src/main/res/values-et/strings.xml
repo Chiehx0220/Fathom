@@ -51,7 +51,7 @@
     <string name="kbps">kbps</string>
     <string name="filter_discover">Otsi ja avasta</string>
     <string name="filter_popular">Populaarsed</string>
-    <string name="app_name">Fathom</string>
+    <string name="app_name">Flow</string>
     <string name="library_manage_data_subtitle">Kustuta puhverdatud andmed ja ajalugu</string>
     <string name="empty_description">Kirjeldust pole saadaval</string>
     <string name="clear_all">Eemalda kõik</string>
@@ -113,7 +113,7 @@
     <string name="chapters">Peatükid</string>
     <string name="artist">Esitaja</string>
     <string name="playlist">Esitusloend</string>
-    <string name="app_name_uppercase">FATHOM</string>
+    <string name="app_name_uppercase">FLOW</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="liked_music">Meeldivaks märgitud muusika</string>
     <string name="liked_videos">Meeldivaks märgitud videod</string>
@@ -135,7 +135,7 @@
     <string name="subscribed_to">Oled tellinud: %s</string>
     <string name="unsubscribed_from">Oled lõpetanud tellimuse: %s</string>
     <string name="share_video">Jaga videot</string>
-    <string name="check_out_video_template">Vaata seda videot: %1$s\n%2$s</string>
+    <string name="check_out_video_template">Vaata seda videot: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
     <string name="related_videos">Seotud videod</string>
     <string name="quality_auto_template">Automaatne (%1$dp)</string>
     <string name="video_marked_not_interested">Video on märgitud mittehuvitavaks</string>

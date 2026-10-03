@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Fathom</string>
+    <string name="app_name">Flow</string>
     <string name="subscriptions_search_placeholder">Pesquisar Inscrições...</string>
     <string name="top_bar_subscriptions_title">Inscrições</string>
     <string name="view_all_button_label">Todos</string>
@@ -83,7 +83,7 @@
     <string name="unsubscribed_from">Inscrição cancelada de %s</string>
     <string name="unsubscribe">Cancelar inscrição</string>
     <string name="share_video">Partilhar vídeo</string>
-    <string name="check_out_video_template">Confira este vídeo: %1$s\n%2$s</string>
+    <string name="check_out_video_template">Confira este vídeo: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
     <string name="related_videos">Vídeos Relacionados</string>
     <string name="quality_auto">Automático</string>
     <string name="quality_auto_template">Automático (%1$dp)</string>
@@ -443,7 +443,7 @@
     <string name="transcript_no_matches">Nenhuma linha corresponde à sua pesquisa</string>
     <string name="channel_links">Links</string>
     <string name="playlist">Playlist</string>
-    <string name="app_name_uppercase">FATHOM</string>
+    <string name="app_name_uppercase">FLOW</string>
     <string name="player_time_separator">/</string>
     <string name="you">Você</string>
     <string name="play_all">Reproduzir tudo</string>

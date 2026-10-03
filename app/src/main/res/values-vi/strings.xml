@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Fathom</string>
+    <string name="app_name">Flow</string>
     <string name="subscriptions_search_placeholder">Tìm kênh đã đăng ký…</string>
     <string name="subscriptions_sort_label">Sắp xếp kênh</string>
     <string name="subscriptions_sort_default">Mặc định</string>
@@ -132,8 +132,8 @@
     <string name="unsubscribed_from">Đã hủy đăng ký %s</string>
     <string name="unsubscribe">Hủy đăng ký</string>
     <string name="share_video">Chia sẻ video</string>
-    <string name="check_out_video_template">Xem thử video này: %1$s\n%2$s</string>
-    <string name="share_link_only_template">%1$s</string>
+    <string name="check_out_video_template">Xem thử video này: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
     <string name="content_settings_share_without_text_title">Chia sẻ không kèm văn bản</string>
     <string name="content_settings_share_without_text_subtitle">Chỉ chia sẻ đường dẫn, bỏ qua tin nhắn mặc định</string>
     <string name="related_videos">Video liên quan</string>
@@ -289,7 +289,7 @@
     <string name="artist">Nghệ sĩ</string>
     <string name="playlist">Danh sách phát</string>
     <string name="playlist_visibility_metadata">%1$s • %2$s</string>
-    <string name="app_name_uppercase">FATHOM</string>
+    <string name="app_name_uppercase">FLOW</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">Nguồn cấp cá nhân hóa</string>
     <string name="import_newpipe_backup">Nhập sao lưu NewPipe</string>
@@ -554,6 +554,9 @@
     <string name="app_icon_picker_subtitle">Chọn kiểu biểu tượng. Thay đổi áp dụng ngay, màn hình chính sẽ làm mới.</string>
     <string name="app_icon_picker_warning">Lưu ý: chuyển biểu tượng có thể tạm thời xóa biểu tượng khỏi màn hình chính. Giữ biểu tượng để thêm lại nếu cần.</string>
     <string name="app_icon_apply_toast">Đã cập nhật biểu tượng - màn hình chính sẽ làm mới</string>
+    <string name="icon_name_flow_red">Flow Đỏ</string>
+    <string name="icon_name_flow_light">Flow Sáng</string>
+    <string name="icon_name_flow_play">Flow Phát</string>
     <string name="icon_name_amoled">AMOLED Tối</string>
     <string name="icon_name_monochrome">Đơn sắc</string>
     <string name="player_appearance_title">Giao diện trình phát</string>

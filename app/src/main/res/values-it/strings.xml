@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Fathom</string>
+    <string name="app_name">Flow</string>
     <string name="subscriptions_search_placeholder">Cerca iscrizioni …</string>
     <string name="top_bar_subscriptions_title">Iscrizioni</string>
     <string name="subscribed">Iscritto</string>
@@ -91,7 +91,7 @@
     <string name="unsubscribed_from">Disiscritto da %s</string>
     <string name="unsubscribe">Annulla</string>
     <string name="share_video">Condividi video</string>
-    <string name="check_out_video_template">Guarda questo video: %1$s\n%2$s</string>
+    <string name="check_out_video_template">Guarda questo video: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
     <string name="related_videos">Video correlati</string>
     <string name="quality_auto">Automatica</string>
     <string name="quality_auto_template">Automatica (%1$dp)</string>
@@ -185,7 +185,7 @@
     <string name="chapters">Capitoli</string>
     <string name="artist">Artista</string>
     <string name="playlist">Playlist</string>
-    <string name="app_name_uppercase">FATHOM</string>
+    <string name="app_name_uppercase">FLOW</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">Il tuo feed personalizzato</string>
     <string name="import_newpipe_backup">Importa backup di NewPipe</string>
@@ -374,6 +374,7 @@
     <string name="app_icon_picker_subtitle">Scegli uno stile per l\'icona del launcher. La modifica ha effetto immediato e il launcher si aggiornerà brevemente.</string>
     <string name="app_icon_picker_warning">Cambiare icona potrebbe rimuovere momentaneamente Flow dalla schermata home. Aggiungila nuovamente dal drawer delle app, se necessario.</string>
     <string name="app_icon_apply_toast">Icona aggiornata - il tuo launcher si aggiornerà</string>
+    <string name="icon_name_flow_red">Rosso Flow</string>
     <string name="icon_name_amoled">AMOLED scuro</string>
     <string name="icon_name_monochrome">Monocromatica</string>
     <string name="icon_name_ghost">Ghost</string>
@@ -1441,6 +1442,7 @@
     <string name="appearance_system_defaults_subtitle">Scegli quale tema viene utilizzato quando il dispositivo passa dalla modalità chiara a quella scura.</string>
     <string name="appearance_system_light_theme">Tema modalità chiara</string>
     <string name="appearance_system_dark_theme">Tema modalità scura</string>
+    <string name="icon_name_flow_light">Flow Light</string>
     <string name="icon_name_material_sky">Material Sky</string>
     <string name="icon_name_material_mint">Material Mint</string>
     <string name="theme_name_material_you">Material You</string>
@@ -1626,8 +1628,8 @@
     <string name="history_tab_local_videos">Video locali</string>
     <string name="history_tab_local_music">Musica locale</string>
     <string name="deep_flow_save_history_title">Salva nella cronologia di visualizzazione</string>
-    <string name="deep_flow_save_history_subtitle">Conserva i video visualizzati nella cronologia (con i progressi). L\'algoritmo continuerà comunque a non usarli per l\'apprendimento. Disattivato = non viene salvato nulla.</string>
-    <string name="share_link_only_template">%1$s</string>
+    <string name="deep_flow_save_history_subtitle">Conserva la cronologia delle visualizzazioni senza apprendere suggerimenti</string>
+    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
     <string name="content_settings_share_without_text_title">Condividi link senza testo</string>
     <string name="content_settings_share_without_text_subtitle">Condividi solo il link dei video, senza il messaggio \"Dai un\'occhiata a questo video\"</string>
     <string name="player_appearance_controls_while_loading_title">Controlli durante il caricamento</string>
@@ -1635,6 +1637,7 @@
     <string name="player_settings_autoplay_countdown_title">Ritardo della riproduzione automatica</string>
     <string name="player_settings_autoplay_countdown_none">Nessuno (cambia immediatamente)</string>
     <string name="player_settings_autoplay_countdown_dialog_body">Mostra un conto alla rovescia prima del passaggio automatico al video successivo. Durante il conto alla rovescia puoi ricominciare il video attuale, annullare il passaggio, oppure riprodurre il video successivo immediatamente.</string>
+    <string name="icon_name_flow_play">Flow Play</string>
     <string name="autoplay_countdown_up_next">A seguire</string>
     <string name="autoplay_countdown_next_video">Prossimo video</string>
     <string name="autoplay_countdown_cancel">Annulla</string>

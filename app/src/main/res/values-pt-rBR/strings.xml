@@ -7,7 +7,7 @@
     <string name="no_subscriptions_yet">Sem inscrições ainda</string>
     <string name="status_downloaded">Baixado</string>
     <string name="title_create_playlist">Criar Playlist</string>
-    <string name="app_name">Fathom</string>
+    <string name="app_name">Flow</string>
     <string name="empty_subscriptions_body">Inscreva-se em canais para ver seus vídeos mais recentes aqui</string>
     <string name="home_refresh_feed">Atualizar o feed</string>
     <string name="retry">Tentar Novamente</string>
@@ -97,7 +97,7 @@
     <string name="unsubscribed_from">Inscrição cancelada de %s</string>
     <string name="unsubscribe">Cancelar inscrição</string>
     <string name="share_video">Compartilhar vídeo</string>
-    <string name="check_out_video_template">Confira este vídeo: %1$s\n%2$s</string>
+    <string name="check_out_video_template">Confira este vídeo: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
     <string name="video_marked_not_interested">Vídeo marcado como não interessado</string>
     <string name="play_mode_suggestion_title">Sugestão de Modo de Reprodução</string>
     <string name="play_mode_suggestion_body">Este vídeo tem menos de 2 minutos de duração. Você gostaria de mudar para um reprodutor especializado?</string>
@@ -314,7 +314,7 @@
     <string name="playlist_sort_date_added_oldest">Data de adição (mais antigo)</string>
     <string name="playlist_sort_date_published_oldest">Data de publicação (mais antigo)</string>
     <string name="refresh_lyrics">Atualizar letra</string>
-    <string name="share_link_only_template">%1$s</string>
+    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
     <string name="content_settings_share_without_text_title">Compartilhar links sem texto</string>
     <string name="content_settings_share_without_text_subtitle">Compartilhe apenas o link do vídeo, sem a mensagem \"Confira este vídeo\"</string>
     <plurals name="channels_count">
@@ -341,7 +341,7 @@
     <string name="added_to_playlist_toast">Adicionado à playlist</string>
     <string name="close_player">Fechar reprodutor</string>
     <string name="playlist">Playlist</string>
-    <string name="app_name_uppercase">FATHOM</string>
+    <string name="app_name_uppercase">FLOW</string>
     <string name="edit_group">Editar Grupo</string>
     <string name="delete_group">Deletar Grupo</string>
     <string name="group_name_label">Nome do grupo</string>
@@ -462,6 +462,7 @@
     <string name="appearance_role_secondary">Secundário</string>
     <string name="appearance_role_background">Plano de fundo</string>
     <string name="appearance_role_outline">Contorno</string>
+    <string name="icon_name_flow_red">Flow Vermelho</string>
     <string name="icon_name_amoled">Preto AMOLED</string>
     <string name="settings_item_player_appearance_subtitle">Personalizar o estilo da barra de progresso</string>
     <string name="player_fullscreen_seekbar_width_full">Largura total</string>
@@ -728,6 +729,8 @@
     <string name="app_icon_picker_subtitle">Escolha o estilo de ícone para o aplicativo. A alteração entra em vigor imediatamente e o launcher será atualizado em seguida.</string>
     <string name="app_icon_picker_warning">Alterar o ícone pode remover o Flow da sua tela inicial por um momento. Adicione-o de volta da gaveta de aplicativos, se necessário.</string>
     <string name="app_icon_apply_toast">Ícone atualizado - o launcher será atualizado</string>
+    <string name="icon_name_flow_light">Flow Claro</string>
+    <string name="icon_name_flow_play">Play Flow</string>
     <string name="icon_name_dynamic">Material You</string>
     <string name="icon_name_material_sky">Material Sky</string>
     <string name="icon_name_material_mint">Material Mint</string>

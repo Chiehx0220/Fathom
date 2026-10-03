@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Fathom</string>
+    <string name="app_name">Flow</string>
     <string name="subscriptions_sort_label">Seřadit kanály</string>
     <string name="subscriptions_sort_default">Výchozí</string>
     <string name="subscriptions_sort_name">Jméno (A-Z)</string>
@@ -141,6 +141,6 @@
     <string name="subscribed_to">Odebírej %s</string>
     <string name="unsubscribed_from">Přestat sledovat %s</string>
     <string name="unsubscribe">Přestat sledovat</string>
-    <string name="check_out_video_template">Podívejte se na toto video: %1$s\n%2$s</string>
-    <string name="share_link_only_template">%1$s</string>
+    <string name="check_out_video_template">Podívejte se na toto video: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
 </resources>

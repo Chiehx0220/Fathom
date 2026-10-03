@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="check_out_video_template">看一下這影片：%1$s\n%2$s</string>
+</resources>

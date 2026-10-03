@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Fathom</string>
+    <string name="app_name">Flow</string>
     <string name="subscriptions_search_placeholder">Претражи претплате...</string>
     <string name="subscriptions_sort_label">Сортирај канале</string>
     <string name="subscriptions_sort_default">Подразумевано</string>
@@ -74,7 +74,7 @@
     <string name="unsubscribed_from">Отпретплаћен од %s</string>
     <string name="unsubscribe">Отпретплати</string>
     <string name="share_video">Подели снимак</string>
-    <string name="check_out_video_template">Види овај снимак: %1$s\n%2$s</string>
+    <string name="check_out_video_template">Види овај снимак: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
     <string name="content_settings_share_without_text_title">Дели линкове без текста</string>
     <string name="content_settings_share_without_text_subtitle">Једино дели линк снимка, без поруке \"Види овај снимак\"</string>
     <string name="related_videos">Слични снимци</string>

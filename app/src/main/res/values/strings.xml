@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Fathom</string>
-    <string name="app_launcher_name" translatable="false">Fathom</string>
+    <string name="app_name">Flow</string>
+    <string name="app_launcher_name" translatable="false">Flow</string>
     <string name="subscriptions_search_placeholder">Search subscriptions ...</string>
     <string name="subscriptions_sort_label">Sort channels</string>
     <string name="subscriptions_sort_default">Default</string>
@@ -39,7 +39,7 @@
     <string name="copy_logs">Copy logs</string>
     <string name="logs_copied">Logs copied</string>
     <string name="logs_copy_failed">Couldn\'t copy logs</string>
-    <string name="channel_error_log_clip_label">Fathom channel error log</string>
+    <string name="channel_error_log_clip_label">Flow channel error log</string>
     <string name="shorts">Shorts</string>
     <string name="failed_to_load_channel">Failed to load channel</string>
     <string name="subscribers">Subscribers</string>
@@ -67,7 +67,7 @@
     <string name="local_media_empty_title">No %1$s found</string>
     <string name="local_media_empty_body">Videos and music stored on this device will appear here.</string>
     <string name="local_media_permission_title">Permission needed</string>
-    <string name="local_media_permission_body">Allow access to your media so Fathom can find and play local videos and music.</string>
+    <string name="local_media_permission_body">Allow access to your media so Flow can find and play local videos and music.</string>
     <string name="local_media_grant">Grant access</string>
     <string name="library_settings_data_header"><![CDATA[Settings & Data]]></string>
     <string name="library_manage_data_label">Manage Data</string>
@@ -209,11 +209,10 @@
     <string name="unsubscribed_from">Unsubscribed from %s</string>
     <string name="unsubscribe">Unsubscribe</string>
     <string name="share_video">Share video</string>
-    <string name="check_out_video_template">Check out this video: %1$s\n%2$s</string>
-    <string name="check_out_short_template">Check out this short: %1$s\n%2$s</string>
-    <string name="share_link_only_template">%1$s</string>
-    <string name="link_not_supported">Fathom can\'t open this kind of link</string>
-    <string name="shared_video">Shared Video</string>
+    <string name="check_out_video_template">Check out this video: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
+    <string name="check_out_short_template">Check out this short: %1$s\nhttps://youtube.com/shorts/%2$s</string>
+    <string name="link_not_supported">Flow can\'t open this kind of link</string>
     <string name="content_settings_share_without_text_title">Share links without text</string>
     <string name="content_settings_share_without_text_subtitle">Share just the video link, without the “Check out this video” message</string>
     <string name="related_videos">Related Videos</string>
@@ -341,7 +340,7 @@
     <string name="new_update_available">New Update Available</string>
     <string name="update_available_template">%1$s is now available</string>
     <string name="release_notes">RELEASE NOTES</string>
-    <string name="update_flow">Update Fathom</string>
+    <string name="update_flow">Update Flow</string>
     <string name="maybe_later">Maybe later</string>
     <!-- Navigation -->
     <string name="nav_home">Home</string>
@@ -399,7 +398,7 @@
     <string name="channel_links">Links</string>
     <string name="artist">Artist</string>
     <string name="playlist">Playlist</string>
-    <string name="app_name_uppercase">FATHOM</string>
+    <string name="app_name_uppercase">FLOW</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">Your personalized feed</string>
     <plurals name="videos_curated_template">
@@ -635,7 +634,7 @@
     <string name="settings_header_about">About</string>
     <string name="settings_header_notifications">Notifications</string>
     <string name="settings_item_notifications">Notification Preferences</string>
-    <string name="settings_item_notifications_subtitle">Control which notifications Fathom can send</string>
+    <string name="settings_item_notifications_subtitle">Control which notifications Flow can send</string>
     <string name="notif_settings_title">Notification Preferences</string>
     <string name="notif_type_new_videos">New Videos</string>
     <string name="notif_type_new_videos_subtitle">Notify when subscribed channels upload new videos</string>
@@ -644,21 +643,21 @@
     <string name="notif_type_reminders">Screen Time Reminders</string>
     <string name="notif_type_reminders_subtitle">Bedtime and break reminders from Time Management</string>
     <string name="notif_type_updates">App Updates</string>
-    <string name="notif_type_updates_subtitle">Get notified when a new version of Fathom is available</string>
+    <string name="notif_type_updates_subtitle">Get notified when a new version of Flow is available</string>
     <string name="notif_type_general">General Notifications</string>
     <string name="notif_type_general_subtitle">Miscellaneous app alerts and announcements</string>
     <string name="notif_system_settings">System Notification Settings</string>
     <string name="notif_system_settings_subtitle">Open Android settings to manage per-channel permissions</string>
     <string name="notif_check_interval_section_header">Feed Check Schedule</string>
     <string name="notif_master_toggle">Enable notifications</string>
-    <string name="notif_master_toggle_subtitle">Let Fathom check for new videos in the background</string>
+    <string name="notif_master_toggle_subtitle">Let Flow check for new videos in the background</string>
     <string name="notif_background_restricted_title">Background checks are restricted</string>
-    <string name="notif_background_restricted_subtitle">Android blocks checks while Fathom is closed. Tap to allow background activity.</string>
+    <string name="notif_background_restricted_subtitle">Android blocks checks while Flow is closed. Tap to allow background activity.</string>
     <string name="notif_check_interval">New Video Check Interval</string>
     <string name="notif_check_interval_subtitle_template">Check every %s</string>
     <string name="notif_check_interval_disabled">Background notification checks are disabled</string>
     <string name="notif_check_interval_dialog_title">Check Interval</string>
-    <string name="notif_check_interval_dialog_body">How often Fathom checks your subscriptions for new videos.</string>
+    <string name="notif_check_interval_dialog_body">How often Flow checks your subscriptions for new videos.</string>
     <string name="notif_interval_15m">15 minutes</string>
     <string name="notif_interval_30m">30 minutes</string>
     <string name="notif_interval_1h">1 hour</string>
@@ -687,60 +686,6 @@
     <string name="settings_item_downloads">Download Settings</string>
     <string name="settings_item_downloads_subtitle">Performance, Storage, Threads</string>
     <string name="settings_item_region">Trending Region</string>
-    <string name="settings_local_server_status_online">SERVER ONLINE</string>
-    <string name="settings_local_server_status_offline">OFFLINE</string>
-    <string name="settings_local_server_open_browser">Open in Browser</string>
-    <string name="settings_local_server_open_remote">Remote Control</string>
-    <string name="remote_title">Remote Control</string>
-    <string name="remote_connected_to">Connected to %1$s</string>
-    <string name="remote_disconnect">Disconnect</string>
-    <string name="remote_not_connected">Not connected</string>
-    <string name="remote_connect_step_open">On the TV or computer, open this address in a browser on the same Wi-Fi.</string>
-    <string name="remote_connect_step_cast">Press the cast button at the top of the page.</string>
-    <string name="remote_copy_address">Copy address</string>
-    <string name="remote_address_copied">Address copied</string>
-    <string name="remote_server_off">The local server is off. Turn it on in Settings first.</string>
-    <string name="settings_local_server_off">Off</string>
-    <string name="settings_local_server_on">On</string>
-    <string name="remote_tab_directions">Directions</string>
-    <string name="remote_tab_playback">Playback</string>
-    <string name="remote_tab_touchpad">Touchpad</string>
-    <string name="remote_search_hint">Search on the screen</string>
-    <string name="remote_search_clear">Clear</string>
-    <string name="remote_open_video_page">Open the video page</string>
-    <string name="remote_search_submit">Search</string>
-    <string name="remote_search_voice">Search by voice</string>
-    <string name="remote_search_voice_prompt">Say what to search for</string>
-    <string name="remote_voice_unavailable">Voice search is not available on this phone</string>
-    <string name="remote_touchpad_hint">Drag to move the pointer, tap to click, use two fingers to scroll</string>
-    <string name="remote_ok">OK</string>
-    <string name="remote_up">Up</string>
-    <string name="remote_down">Down</string>
-    <string name="remote_left">Left</string>
-    <string name="remote_right">Right</string>
-    <string name="remote_options">Options</string>
-    <string name="remote_chapter_previous">Previous chapter</string>
-    <string name="remote_chapter_next">Next chapter</string>
-    <string name="remote_home">Home</string>
-    <string name="remote_subscriptions">Subs</string>
-    <string name="remote_history">History</string>
-    <string name="remote_back">Back</string>
-    <string name="remote_now_playing">Now playing</string>
-    <string name="remote_no_video">No video is open. Pick one on the screen, then use these keys to control it.</string>
-    <string name="remote_rewind">Back 10 seconds</string>
-    <string name="remote_forward">Forward 10 seconds</string>
-    <string name="remote_play_pause">Play or pause</string>
-    <string name="remote_volume_down">Volume down</string>
-    <string name="remote_volume_up">Volume up</string>
-    <string name="remote_mute">Mute</string>
-    <string name="remote_fullscreen">Full screen</string>
-    <string name="remote_skip_segment">Skip %1$s</string>
-    <string name="remote_chapters">Chapters</string>
-    <string name="remote_chapter_list">See all chapters</string>
-    <string name="settings_item_local_server">Local Web Server</string>
-    <string name="settings_item_local_server_subtitle">Browse and watch over the local network from any browser</string>
-    <string name="settings_item_open_local_server">Open Local Server</string>
-    <string name="settings_item_open_local_server_subtitle">Opens in your browser</string>
     <string name="settings_item_search_history">Search &amp; History</string>
     <string name="settings_item_search_history_subtitle">Clear history, manage suggestions</string>
     <string name="settings_item_time_management">Time Management</string>
@@ -749,10 +694,10 @@
     <string name="settings_item_export_data_subtitle">Backup your data</string>
     <string name="settings_item_import_data">Import Data</string>
     <string name="settings_item_import_data_subtitle">Restore from backup or import from other apps</string>
-    <string name="settings_item_about_flow">About Fathom</string>
+    <string name="settings_item_about_flow">About Flow</string>
     <string name="settings_item_about_flow_subtitle">Version, License, Contributors</string>
     <string name="settings_item_support">Support &amp; Donations</string>
-    <string name="settings_item_support_subtitle">Help support the development of Fathom</string>
+    <string name="settings_item_support_subtitle">Help support the development of Flow</string>
     <string name="settings_region_dialog_title">Select Region</string>
     <string name="settings_language_dialog_title">Select App Language</string>
     <string name="settings_language_system_default">System default</string>
@@ -760,7 +705,7 @@
     <string name="settings_export_failed">Export failed: %1$s</string>
     <!-- Appearance Screen -->
     <string name="appearance_title">Appearance</string>
-    <string name="appearance_subtitle">Personalize your Fathom experience</string>
+    <string name="appearance_subtitle">Personalize your Flow experience</string>
     <string name="appearance_current_theme">CURRENT THEME</string>
     <string name="appearance_category_all">All</string>
     <string name="appearance_category_light">Light</string>
@@ -832,23 +777,25 @@
     <string name="appearance_system_dark_theme">Dark mode theme</string>
     <!-- App Icon Picker -->
     <string name="app_icon_picker_subtitle">Choose a launcher icon style. The change takes effect immediately and the launcher will briefly refresh.</string>
-    <string name="app_icon_picker_warning">Changing the icon may remove Fathom from your home screen for a moment. Add it back from the app drawer if needed.</string>
+    <string name="app_icon_picker_warning">Changing the icon may remove Flow from your home screen for a moment. Add it back from the app drawer if needed.</string>
     <string name="app_icon_apply_toast">Icon updated - your launcher will refresh</string>
-    <string name="icon_name_flow_red">Fathom</string>
-    <string name="icon_name_flow_light">Fathom Light</string>
-    <string name="icon_name_flow_play">Fathom Navy</string>
+    <string name="icon_name_flow_red">Flow Red</string>
+    <string name="icon_name_flow_light">Flow Light</string>
+    <string name="icon_name_flow_play">Flow Play</string>
     <string name="icon_name_amoled">AMOLED Dark</string>
     <string name="icon_name_monochrome">Monochrome</string>
     <string name="icon_name_ghost">Ghost</string>
     <string name="icon_name_dynamic">Material You</string>
     <string name="icon_name_material_sky">Material Sky</string>
     <string name="icon_name_material_mint">Material Mint</string>
-    <string name="icon_name_expressive_scallop">Anchor</string>
-    <string name="icon_name_expressive_play">Lighthouse</string>
-    <string name="icon_name_expressive_sky">Sailboat</string>
-    <string name="icon_name_expressive_cookie">Night Sea</string>
-    <string name="icon_name_expressive_oval">Submarine</string>
-    <string name="icon_name_expressive_pill">Depth Gauge</string>
+    <string name="icon_name_expressive_scallop">Scallop</string>
+    <string name="icon_name_expressive_segmented">Segmented F</string>
+    <string name="icon_name_expressive_play">Sunny Play</string>
+    <string name="icon_name_expressive_sky">Sky Clover</string>
+    <string name="icon_name_expressive_mint">Mint Flower</string>
+    <string name="icon_name_expressive_cookie">Night Cookie</string>
+    <string name="icon_name_expressive_oval">Oval</string>
+    <string name="icon_name_expressive_pill">Pill</string>
     <!-- Player Appearance -->
     <string name="player_appearance_title">Player Appearance</string>
     <string name="player_appearance_header">Customize Player Controls</string>
@@ -1063,8 +1010,6 @@
     <string name="content_settings_home_reselect_refresh_subtitle">Tap Home again at the top to reload it</string>
     <string name="content_settings_home_feed_disabled_title">Home Feed Disabled</string>
     <string name="content_settings_home_feed_disabled_body">Personalized recommendations are turned off. You can re-enable this in Content Settings.</string>
-    <string name="home_content_filter_mix">Mix</string>
-    <string name="home_content_filter_description">Filter which service Home shows videos from</string>
     <!-- Video Player Related Card Style -->
     <string name="content_settings_header_player">Video Player</string>
     <string name="content_settings_related_card_style_title">Related Video Card Style</string>
@@ -1091,7 +1036,7 @@
     <string name="pause_watch_history_title">Pause watch history</string>
     <string name="pause_watch_history_subtitle">Stop saving what you watch. Deep Flow also pauses learning</string>
     <string name="content_settings_show_app_logo_title">Show app logo icon</string>
-    <string name="content_settings_show_app_logo_subtitle">Display the Fathom logo icon next to the app name in the home screen top bar</string>
+    <string name="content_settings_show_app_logo_subtitle">Show the Flow logo in the Home top bar</string>
     <string name="content_settings_header_shorts">Shorts</string>
     <string name="content_settings_shorts_content_title">Show Shorts</string>
     <string name="content_settings_shorts_content_subtitle">Hide Shorts everywhere. Saved Shorts and history are kept.</string>
@@ -1139,7 +1084,7 @@
     <string name="content_settings_subs_show_live_title">Subscription live streams</string>
     <string name="content_settings_subs_show_live_subtitle">Show live and recent streams in the feed</string>
     <string name="content_settings_nav_order_title">Tab order and default</string>
-    <string name="content_settings_nav_order_subtitle">Drag to reorder. Choose the tab Fathom opens on.</string>
+    <string name="content_settings_nav_order_subtitle">Drag to reorder. Choose the tab Flow opens on.</string>
     <string name="settings_subs_shorts_shelf_title">Subscriptions shorts shelf</string>
     <string name="settings_subs_shorts_shelf_subtitle">Show a Shorts shelf in the subscription feed</string>
     <string name="settings_home_shorts_shelf_title">Home screen shorts shelf</string>
@@ -1164,7 +1109,6 @@
     <string name="categories_switch_to_list">Switch to list view</string>
     <string name="category_movies">Movies</string>
     <string name="category_live">Live</string>
-    <string name="explore_bilibili_popular">Popular</string>
     <string name="category_news">News</string>
     <string name="category_sports">Sports</string>
     <string name="category_learning">Learning</string>
@@ -1260,7 +1204,6 @@
     <string name="player_settings_display">Display</string>
     <string name="player_settings_ambient_mode">Ambient mode</string>
     <string name="player_settings_ambient_mode_subtitle">A soft glow of the video\'s colors around it</string>
-    <string name="player_settings_danmaku">Danmaku</string>
     <string name="loop_video">Loop video</string>
     <string name="player_settings_sponsorblock">SponsorBlock</string>
     <string name="player_settings_sponsorblock_subtitle">Skip sponsored segments</string>
@@ -1333,14 +1276,14 @@
     <string name="player_settings_audio_original_desc">Uses the video\'s native audio track</string>
     <string name="player_settings_subtitle_language">Preferred Subtitle Language</string>
     <string name="player_settings_subtitle_language_dialog_title">Subtitle Language</string>
-    <string name="player_settings_subtitle_language_dialog_body">Captions open in this language when available. Otherwise Fathom translates an existing track.</string>
+    <string name="player_settings_subtitle_language_dialog_body">Captions open in this language when available. Otherwise Flow translates an existing track.</string>
     <string name="player_settings_subtitle_language_none">No preference</string>
     <string name="player_settings_subtitle_language_none_desc">Use the first caption track the video offers</string>
     <string name="player_settings_auto_enable_subtitles">Turn Captions On Automatically</string>
     <string name="player_settings_auto_enable_subtitles_subtitle">Turn on captions in your preferred language</string>
     <string name="player_settings_video_codec">Default Video Codec</string>
     <string name="player_settings_video_codec_dialog_title">Default Video Codec</string>
-    <string name="player_settings_video_codec_dialog_body">The codec Fathom picks first. You can still choose any codec from the quality menu. H.264 plays smoothest on most devices. AV1 and VP9 use less data but need more power.</string>
+    <string name="player_settings_video_codec_dialog_body">The codec Flow picks first. You can still choose any codec from the quality menu. H.264 plays smoothest on most devices. AV1 and VP9 use less data but need more power.</string>
     <string name="player_settings_video_codec_auto_desc">Let the app choose (prefers H.264)</string>
     <string name="player_settings_video_codec_fallback">Fallback Codec</string>
     <string name="player_settings_video_codec_fallback_auto">Automatic</string>
@@ -1469,7 +1412,7 @@
     <!-- Time Management Screen -->
     <string name="time_management_title">Time management</string>
     <string name="time_management_subtitle">Track and control your screen time</string>
-    <string name="stats_disclaimer">Based on your watch history in Fathom. Actual use may differ.</string>
+    <string name="stats_disclaimer">Based on your watch history in Flow. Actual use may differ.</string>
     <string name="tools_to_manage_time">Tools to manage your time</string>
     <string name="remind_bedtime">Remind me when it\'s bedtime</string>
     <string name="start_time">Start time</string>
@@ -1573,8 +1516,8 @@
     <string name="import_youtube_failed_template">Failed to import YouTube backup: %1$s</string>
     <string name="import_flow_backup_item_title">Import Flow Backup</string>
     <string name="import_flow_backup_desc">Restore your history, settings, and subscriptions from a Flow backup file.</string>
-    <string name="import_from_newpipe">Import from NewPipe / PipePipe</string>
-    <string name="import_from_newpipe_desc">Import subscriptions from a NewPipe or PipePipe export file (JSON).</string>
+    <string name="import_from_newpipe">Import from NewPipe</string>
+    <string name="import_from_newpipe_desc">Import subscriptions from a NewPipe export file (JSON).</string>
     <string name="import_from_libretube">Import from LibreTube</string>
     <string name="import_from_libretube_desc">Import subscriptions from a LibreTube backup file (JSON).</string>
     <string name="import_playlists_section_title">Playlists</string>
@@ -1674,7 +1617,7 @@
     <string name="location_downloads_label">Downloads / Flow</string>
     <string name="location_movies_label">Movies / Flow</string>
     <string name="location_internal_app_label">Internal App Storage</string>
-    <string name="location_internal_app_desc">Private to Fathom. Removed if you uninstall.</string>
+    <string name="location_internal_app_desc">Private to Flow. Removed if you uninstall.</string>
     <string name="location_custom_saf_label">Browse…</string>
     <string name="location_custom_saf_desc">Pick any folder using the system file picker</string>
     <string name="download_location_not_writable">Can\'t save there. Using %1$s</string>
@@ -1699,8 +1642,8 @@
     <string name="address_copied_toast">Address copied to clipboard</string>
     <string name="donation_address_clip_label">Donation Address</string>
     <!-- One-time support prompt -->
-    <string name="donation_prompt_title">Enjoying Fathom?</string>
-    <string name="donation_prompt_message">Fathom is free, open source and ad-free. If it earned a spot on your phone, a little support keeps it going.</string>
+    <string name="donation_prompt_title">Enjoying Flow?</string>
+    <string name="donation_prompt_message">Flow is free, open source and ad-free. If it earned a spot on your phone, a little support keeps it going.</string>
     <string name="donation_method_patreon" translatable="false">Patreon</string>
     <string name="donation_prompt_methods">Patreon · Bitcoin · Ethereum · Solana · USDT · Monero</string>
     <string name="donation_prompt_support">Support development</string>
@@ -1708,25 +1651,6 @@
     <string name="donation_prompt_never">Don\'t show again</string>
     <!-- About Screen -->
     <string name="about_creator">Creator</string>
-    <string name="about_based_on">Based on</string>
-    <string name="about_section_fathom">Fathom</string>
-    <string name="support_fathom_title">Support Fathom</string>
-    <string name="support_fathom_desc">Fathom is a fork of Flow, built and maintained independently. If you find it useful, you can help keep it going.</string>
-    <string name="support_upstream_title">Support Flow too</string>
-    <string name="support_upstream_desc">Fathom is built on Flow, created by A-EDev. If you like what it is built on, you can support the original author as well.</string>
-    <string name="support_upstream_button">Support Flow</string>
-    <string name="support_fathom_kofi">Support on Ko-fi</string>
-    <string name="support_fathom_sponsors">Sponsor on GitHub</string>
-    <string name="about_contact_flow_website">Flow website</string>
-    <string name="about_contact_fathom_github">Fathom on GitHub</string>
-    <string name="about_contact_flow_reddit">Flow on Reddit</string>
-    <string name="about_fathom_maintained_by">Maintained by</string>
-    <string name="about_fathom_maintainer_role">Maintainer of Fathom</string>
-    <string name="about_upstream_title">Upstream Flow</string>
-    <string name="about_credit_pipepipe">Origin of the Bilibili client</string>
-    <string name="about_credit_localtube">Inspiration for the local web server</string>
-    <string name="about_credit_vidstack">Web player of the local server</string>
-    <string name="about_credit_dashjs">Streaming engine of the web player</string>
     <string name="about_creator_name">A-EDev</string>
     <string name="about_website">Website</string>
     <string name="about_website_address">flow.aedev.me</string>
@@ -1795,7 +1719,7 @@
     <string name="remove_selected_playlist_text">They will be removed from this playlist.</string>
     <string name="remove_selected_watch_later_text">They will be removed from Watch later.</string>
     <!-- Onboarding -->
-    <string name="welcome_to_flow">Welcome to Fathom</string>
+    <string name="welcome_to_flow">Welcome to Flow</string>
     <string name="onboarding_subtitle">Tell us what you\'re interested in</string>
     <string name="onboarding_instructions">Select at least 3 topics to personalize your experience</string>
     <string name="onboarding_interests_title">What do you enjoy?</string>
@@ -1823,7 +1747,7 @@
     <string name="onboarding_step_interests">Interests</string>
     <string name="onboarding_step_channels">Channels</string>
     <string name="onboarding_step_import">Import</string>
-    <string name="onboarding_import_source_flow">Flow / Fathom backup</string>
+    <string name="onboarding_import_source_flow">Flow backup</string>
     <string name="onboarding_import_source_youtube">YouTube</string>
     <string name="onboarding_import_footnote">Everything here is optional. Settings has the same imports.</string>
     <string name="onboarding_import_done">Imported</string>
@@ -1847,7 +1771,7 @@
         <item quantity="one">Pick %d more</item>
         <item quantity="other">Pick %d more</item>
     </plurals>
-    <string name="onboarding_welcome_title">Make Fathom yours</string>
+    <string name="onboarding_welcome_title">Make Flow yours</string>
     <string name="onboarding_welcome_subtitle">Videos and music around what you love. Setup takes a minute.</string>
     <string name="onboarding_alerts_title">Never miss an upload</string>
     <string name="onboarding_alerts_subtitle">Get a heads up when your channels post.</string>
@@ -1887,7 +1811,7 @@
     <string name="category_science_nature">Science &amp; Nature</string>
     <string name="category_news_current_events">News &amp; Current Events</string>
     <!-- Flow Personality Screen -->
-    <string name="flow_control_center">Fathom Control Center</string>
+    <string name="flow_control_center">Flow Control Center</string>
     <string name="action_refresh">Refresh</string>
     <string name="loading_neural_matrix">Loading Neural Matrix...</string>
     <string name="neural_interest_map_subtitle">Your neural interest map</string>
@@ -1902,7 +1826,7 @@
     <string name="persona_initiate_title">The Initiate</string>
     <string name="persona_initiate_description">Just getting started. Your profile is still forming.</string>
     <string name="persona_audiophile_title">The Audiophile</string>
-    <string name="persona_audiophile_description">You use Fathom mostly for Music. The vibe is everything.</string>
+    <string name="persona_audiophile_description">You use Flow mostly for Music. The vibe is everything.</string>
     <string name="persona_livewire_title">The Livewire</string>
     <string name="persona_livewire_description">You love the raw energy of Livestreams and premieres.</string>
     <string name="persona_night_owl_title">The Night Owl</string>
@@ -2188,7 +2112,7 @@
     <string name="eq_bass_boost">Bass boost</string>
     <string name="eq_edit">Edit equalizer</string>
     <string name="eq_system">System equalizer</string>
-    <string name="eq_system_desc">Adds to Fathom\'s own equalizer</string>
+    <string name="eq_system_desc">Adds to Flow\'s own equalizer</string>
     <string name="eq_graph_description">Response curve, %1$d bands. Drag a point to change it.</string>
     <string name="eq_graph_hint">Tap the curve to add a band</string>
     <string name="eq_name">Name</string>
@@ -2412,7 +2336,7 @@
     <string name="check_for_updates">Check for Updates</string>
     <string name="check_for_updates_subtitle">Tap to check for the latest version</string>
     <string name="checking_for_updates">Checking for updates…</string>
-    <string name="flow_is_up_to_date">Fathom is up to date!</string>
+    <string name="flow_is_up_to_date">Flow is up to date!</string>
     <string name="update_check_failed">Couldn\'t check for updates. Check your connection.</string>
     <!-- Export / Import Flow Engine data (Settings + ImportDataScreen) -->
     <string name="export_engine_data">Export Engine Profile</string>
@@ -2502,7 +2426,7 @@
     <string name="sync_error_peer_also_receive">The other device is also set to Receive. Set it to Send, then try again.</string>
     <string name="sync_error_qr_expired">This pairing session has expired. Ask the other device to create a fresh one.</string>
     <string name="sync_error_qr_wrong_version">Incompatible app version on the other device.</string>
-    <string name="sync_error_qr_not_flow">That doesn\'t look like valid Fathom connection data.</string>
+    <string name="sync_error_qr_not_flow">That doesn\'t look like valid Flow connection data.</string>
     <string name="sync_error_qr_bad_address">The connection data is missing a valid network address.</string>
     <string name="sync_step_title_send">Send</string>
     <string name="sync_step_title_receive">Receive</string>
@@ -2526,8 +2450,8 @@
     <string name="sync_collection_likes_body">Liked and disliked videos and music.</string>
     <string name="sync_collection_subscriptions_body">The channels you follow.</string>
     <string name="sync_collection_settings_body">Playback, appearance and download preferences.</string>
-    <string name="sync_collection_recommendation_profile_body">What Fathom has learned about what you watch.</string>
-    <string name="sync_collection_music_profile_body">What Fathom has learned about what you listen to.</string>
+    <string name="sync_collection_recommendation_profile_body">What Flow has learned about what you watch.</string>
+    <string name="sync_collection_music_profile_body">What Flow has learned about what you listen to.</string>
     <string name="sync_waiting_for_peer">Waiting for the other device to connect…</string>
     <string name="sync_cancel_session">Cancel sync</string>
     <string name="sync_expires_label">QR code expires</string>
@@ -2595,12 +2519,8 @@
     <string name="error_login_required_hint">YouTube only plays this video for signed-in accounts.</string>
     <string name="error_not_available">Video not available</string>
     <string name="error_not_available_hint">This video may have been deleted, made private, or removed by YouTube.</string>
-    <string name="error_live_not_started">This stream has not started</string>
-    <string name="error_live_not_started_hint">The streamer is offline right now. Try again once they are live.</string>
-    <string name="error_live_rebroadcast">This room is replaying videos</string>
-    <string name="error_live_rebroadcast_hint">Fathom cannot play uploaded videos that a room rebroadcasts as a live stream.</string>
     <string name="error_not_supported">Content type not supported</string>
-    <string name="error_not_supported_hint">This format or content type cannot be played in Fathom.</string>
+    <string name="error_not_supported_hint">This format or content type cannot be played in Flow.</string>
     <string name="error_no_internet">No internet connection</string>
     <string name="error_no_internet_hint">Check your Wi-Fi or mobile data and try again.</string>
     <string name="error_timeout">Connection timed out</string>
@@ -2618,7 +2538,7 @@
     <string name="error_playback_failed">Playback failed</string>
     <string name="error_playback_failed_hint">An unexpected player error occurred. Please try again.</string>
     <string name="error_extraction_failed">Failed to parse video data</string>
-    <string name="error_extraction_failed_hint">YouTube may have updated its format. Fathom will be updated soon — please try again later.</string>
+    <string name="error_extraction_failed_hint">YouTube may have updated its format. Flow will be updated soon — please try again later.</string>
     <string name="error_generic">Failed to load video</string>
     <string name="error_generic_hint">An unknown error occurred. Please try again.</string>
     <string name="music_playback_warning_forbidden">Music stream access was denied. YouTube may be limiting this IP; try reloading or switching network/VPN.</string>
@@ -2667,7 +2587,7 @@
     <string name="settings_item_diagnostics">Diagnostics</string>
     <string name="settings_item_diagnostics_subtitle">View error logs and crash reports</string>
     <string name="diagnostics_title">Diagnostics</string>
-    <string name="diagnostics_report_subject">Fathom Diagnostics Report</string>
+    <string name="diagnostics_report_subject">Flow Diagnostics Report</string>
     <string name="diagnostics_tab_session">Session Logs</string>
     <string name="diagnostics_tab_crashes">Crash Reports</string>
     <string name="diagnostics_copy">Copy report</string>
@@ -2677,7 +2597,7 @@
     <string name="diagnostics_clear_confirm_body">All saved crash reports will be deleted. This cannot be undone.</string>
     <string name="diagnostics_reset_session">Reset YouTube session</string>
     <string name="diagnostics_reset_session_confirm_title">Reset YouTube session?</string>
-    <string name="diagnostics_reset_session_confirm_body">Fathom will build a new playback identity. Try this if videos stop after a minute or won\'t play.\n\nPlayback may be rough for a minute or two. Your saved data is not affected.</string>
+    <string name="diagnostics_reset_session_confirm_body">Flow will build a new playback identity. Try this if videos stop after a minute or won\'t play.\n\nPlayback may be rough for a minute or two. Your saved data is not affected.</string>
     <string name="diagnostics_reset_session_done">YouTube session reset. Reopen the video to try again.</string>
     <string name="reset">Reset</string>
     <string name="diagnostics_no_crashes">No crash reports</string>
@@ -2848,7 +2768,7 @@
     <string name="no_match_found">No match found</string>
     <string name="recognition_error">Recognition failed</string>
     <string name="try_again">Try again</string>
-    <string name="search_in_flow">Search in Fathom</string>
+    <string name="search_in_flow">Search in Flow</string>
     <string name="recognition_search_history">Search recognized songs</string>
     <string name="recognition_history_empty">Recognized songs will appear here</string>
     <string name="recognition_clear_history">Clear history?</string>
@@ -2879,15 +2799,15 @@
     <string name="discord_presence_account">Discord account</string>
     <string name="discord_presence_privacy_section">Privacy and account risk</string>
     <string name="discord_presence_privacy_title">Privacy</string>
-    <string name="discord_presence_privacy_body">Fathom shares the title, creator, artwork and progress of what you play. Off by default. Your Discord token is encrypted and never logged.</string>
+    <string name="discord_presence_privacy_body">Flow shares the title, creator, artwork and progress of what you play. Off by default. Your Discord token is encrypted and never logged.</string>
     <string name="discord_presence_gateway_warning">This signs in with your Discord token instead of an official login. It breaks Discord\'s Terms of Service and can get your account limited or banned.</string>
     <string name="discord_presence_risk_dialog_title">Accept Discord account risk?</string>
-    <string name="discord_presence_risk_dialog_body">Connecting gives Fathom your Discord token. It stays encrypted on this device and is only sent to Discord. This method breaks Discord\'s Terms of Service, so your account could be limited or banned.</string>
+    <string name="discord_presence_risk_dialog_body">Connecting gives Flow your Discord token. It stays encrypted on this device and is only sent to Discord. This method breaks Discord\'s Terms of Service, so your account could be limited or banned.</string>
     <string name="discord_presence_risk_accept">I understand, connect</string>
     <string name="discord_error_not_initialized">Discord Rich Presence has not initialized.</string>
     <string name="discord_error_enable_before_connect">Enable Discord Rich Presence before connecting an account.</string>
     <string name="discord_error_unavailable">Discord Rich Presence is unavailable in this build.</string>
-    <string name="discord_error_open_flow">Open Fathom before connecting Discord.</string>
+    <string name="discord_error_open_flow">Open Flow before connecting Discord.</string>
     <string name="discord_error_connection_in_progress">A Discord connection is already in progress.</string>
     <string name="discord_error_login_timeout">Discord sign-in timed out.</string>
     <string name="discord_error_login_cancelled">Discord connection was cancelled.</string>
@@ -2968,7 +2888,7 @@
     <string name="tv_settings_sync">Sync devices</string>
     <string name="tv_sync_qr_session_active">This code stays active while this screen is open.</string>
     <string name="tv_remote_guide_title">Remote &amp; keypad guide</string>
-    <string name="tv_remote_guide_subtitle">A quick reference for navigating Fathom from the couch</string>
+    <string name="tv_remote_guide_subtitle">A quick reference for navigating Flow from the couch</string>
     <string name="tv_remote_guide_back">Back to settings</string>
     <string name="tv_guide_navigation_title">Navigation</string>
     <string name="tv_guide_search_title">Search &amp; browse</string>
@@ -3014,9 +2934,9 @@
     <string name="tv_about_version">Version %1$s</string>
     <!-- Home-screen widgets -->
     <string name="widget_now_playing_label">Now Playing</string>
-    <string name="widget_now_playing_description">Control the music that\'s playing in Fathom</string>
+    <string name="widget_now_playing_description">Control the music that\'s playing in Flow</string>
     <string name="widget_quick_actions_label">Quick actions</string>
-    <string name="widget_quick_actions_description">Search Fathom and jump to downloads, history, or recognition</string>
+    <string name="widget_quick_actions_description">Search Flow and jump to downloads, history, or recognition</string>
     <string name="widget_recognize_label">Recognize music</string>
     <string name="widget_recognize_description">Identify the song playing around you with one tap</string>
     <string name="widget_turntable_label">Turntable</string>
@@ -3078,14 +2998,13 @@
     <string name="widget_week_title">Last 7 days</string>
     <string name="widget_week_top_artist">Top artist this month</string>
     <string name="settings_widgets_title">Widgets</string>
-    <string name="settings_widgets_summary">Put Fathom on your home screen</string>
+    <string name="settings_widgets_summary">Put Flow on your home screen</string>
     <string name="settings_widgets_add_header">Add to home screen</string>
     <string name="settings_widgets_footer">Tap one to place it, or long-press your home screen.</string>
     <string name="settings_widgets_unsupported">Your launcher can\'t add widgets for apps. Long-press your home screen to add one.</string>
     <string name="settings_keywords_widgets">home screen, launcher, widget, now playing, turntable</string>
     <!-- Localization follow-up (#738) -->
     <string name="ui_open_in_youtube">Open in YouTube</string>
-    <string name="ui_open_in_service">Open in %1$s</string>
     <string name="ui_playback_error">Playback error</string>
     <string name="ui_replay">Replay</string>
     <string name="ui_skip_back_10_seconds">Skip Back 10s</string>
@@ -3096,7 +3015,7 @@
     <string name="ui_navigate">Navigate</string>
     <string name="ui_options">Options</string>
     <string name="ui_selected">Selected</string>
-    <string name="ui_flow_logo">Fathom logo</string>
+    <string name="ui_flow_logo">Flow logo</string>
     <string name="ui_list_view">List view</string>
     <string name="ui_grid_view">Grid view</string>
     <string name="ui_back">Back</string>
@@ -3119,7 +3038,7 @@
     <string name="ui_no_crash_logs">No crash logs</string>
     <string name="ui_copy_log">Copy Log</string>
     <string name="ui_clear_and_continue">Clear &amp; Continue</string>
-    <string name="crash_title">Fathom closed unexpectedly</string>
+    <string name="crash_title">Flow closed unexpectedly</string>
     <string name="crash_subtitle">This report stays on your device until you share it.</string>
     <string name="crash_summary_error">Error</string>
     <string name="crash_summary_message">Message</string>
@@ -3132,7 +3051,7 @@
     <string name="crash_report">Report</string>
     <string name="crash_continue">Continue</string>
     <string name="crash_report_copied">Full report copied. Paste it into the Logs field.</string>
-    <string name="ui_crashed_last_session">Fathom crashed last session</string>
+    <string name="ui_crashed_last_session">Flow crashed last session</string>
     <string name="ui_copy_log_description">Copy the log below and paste it into a GitHub issue so it can be fixed.</string>
     <string name="ui_search_settings">Search settings…</string>
     <string name="ui_custom_interest_title">Add Custom Interest</string>
@@ -3140,7 +3059,7 @@
     <string name="ui_custom_interest_hint">Custom interest (e.g. Jazz, Astrophysics)</string>
     <string name="ui_add_interest">Add interest</string>
     <string name="ui_version">Version %1$s</string>
-    <string name="update_download_prompt">A new version of Fathom is available (%1$s). Download the latest APK?</string>
+    <string name="update_download_prompt">A new version of Flow is available (%1$s). Download the latest APK?</string>
     <string name="ui_instrumental">I N S T R U M E N T A L</string>
     <string name="ui_playlist_empty">Playlist is empty</string>
     <plurals name="ui_downloading_videos">
@@ -3198,7 +3117,7 @@
     <string name="notification_downloading">Downloading: %1$s</string>
     <string name="notification_download_complete">Download complete</string>
     <string name="notification_download_failed">Download failed</string>
-    <string name="notification_channel_downloads_name">Fathom Downloads</string>
+    <string name="notification_channel_downloads_name">Flow Downloads</string>
     <!-- Download notification subtitle while paused; %1$s is the reason or a hint -->
     <string name="notification_download_paused">Paused — %1$s</string>
     <string name="notification_download_paused_hint">tap to resume</string>
@@ -3220,10 +3139,10 @@
     </plurals>
     <string name="notification_update_available">Update Available: %1$s</string>
     <string name="notification_tap_to_update">Tap to update to the latest version.</string>
-    <string name="update_downloading_notification">Downloading Fathom %1$s</string>
-    <string name="update_ready_notification">Fathom %1$s is ready</string>
+    <string name="update_downloading_notification">Downloading Flow %1$s</string>
+    <string name="update_ready_notification">Flow %1$s is ready</string>
     <string name="update_ready_notification_text">Verified. Tap to install.</string>
-    <string name="update_title">Fathom %1$s is here</string>
+    <string name="update_title">Flow %1$s is here</string>
     <string name="update_version_change">%1$s → %2$s</string>
     <string name="update_not_now">Not now</string>
     <string name="update_skip_version">Skip this version</string>
@@ -3235,11 +3154,11 @@
     <string name="update_action_allow">Allow installs</string>
     <string name="update_action_install">Install update</string>
     <string name="update_action_installing">Installing</string>
-    <string name="update_permission_notice">Allow Fathom to install updates. Android asks for this once.</string>
+    <string name="update_permission_notice">Allow Flow to install updates. Android asks for this once.</string>
     <string name="update_failed_network">The download stopped. Check your connection and try again.</string>
     <string name="update_failed_storage">There is not enough space for the update.</string>
     <string name="update_failed_checksum">The file did not match the release, so it was deleted. Try again.</string>
-    <string name="update_failed_package">The file was not a Fathom update, so it was deleted.</string>
+    <string name="update_failed_package">The file was not a Flow update, so it was deleted.</string>
     <string name="update_failed_install">Android could not install the update. Try again.</string>
     <string name="notification_watch_later_reminder">Watch Later Reminder</string>
     <string name="notification_video_live">Video is live</string>
@@ -3315,7 +3234,7 @@
         <item quantity="other">%1$d files hidden</item>
     </plurals>
     <string name="local_manage">Manage</string>
-    <string name="local_partial_access_title">Fathom can see only the videos you picked</string>
+    <string name="local_partial_access_title">Flow can see only the videos you picked</string>
     <string name="local_partial_access_body">Allow access to all videos to see the rest.</string>
     <string name="local_open_settings">Open settings</string>
     <string name="local_permission_denied_body">Allow access to videos and music in the app settings to see them here.</string>
@@ -3372,7 +3291,7 @@
     <string name="downloads_sort_largest">Largest</string>
     <string name="downloads_sort_title">Title</string>
     <string name="downloads_sort_channel">Channel</string>
-    <string name="downloads_storage_used">%1$s in Fathom</string>
+    <string name="downloads_storage_used">%1$s in Flow</string>
     <string name="downloads_storage_free">%1$s free</string>
     <string name="downloads_storage_videos">Videos %1$s</string>
     <string name="downloads_storage_music">Music %1$s</string>
@@ -3423,9 +3342,9 @@
     <string name="download_failed_audio_length">Failed to get audio content length</string>
     <string name="download_workers_failed">One or more workers failed</string>
     <string name="download_block_failed">Block %1$s failed: %2$s</string>
-    <string name="import_migrate_description">Migrate your subscriptions and history from other platforms to Fathom seamlessly.</string>
+    <string name="import_migrate_description">Migrate your subscriptions and history from other platforms to Flow seamlessly.</string>
     <string name="import_backup_restore">Backup &amp; Restore</string>
-    <string name="import_manage_backups">Manage your Fathom backups</string>
+    <string name="import_manage_backups">Manage your Flow backups</string>
     <string name="import_external_services">External Services</string>
     <string name="import_other_youtube_clients">Import from other YouTube clients</string>
     <string name="imported_successfully">%1$s imported successfully</string>
@@ -3609,9 +3528,9 @@
     <string name="settings_backup_tab_auto">Automatic</string>
     <string name="settings_backup_full">Full backup</string>
     <string name="settings_backup_individual">Individual exports</string>
-    <string name="settings_backup_restore_flow">Restore from Flow / Fathom</string>
+    <string name="settings_backup_restore_flow">Restore from Flow</string>
     <string name="settings_backup_source_youtube">YouTube and Google Takeout</string>
-    <string name="settings_backup_source_newpipe">NewPipe / PipePipe</string>
+    <string name="settings_backup_source_newpipe">NewPipe</string>
     <string name="settings_backup_source_libretube">LibreTube</string>
     <string name="settings_backup_source_freetube">FreeTube</string>
     <string name="settings_backup_source_metrolist">Metrolist</string>
@@ -3753,9 +3672,9 @@
 
     <!-- Your taste -->
     <string name="taste_title">Your taste</string>
-    <string name="taste_summary">How Fathom sees you, and what shapes your feed</string>
+    <string name="taste_summary">How Flow sees you, and what shapes your feed</string>
     <string name="taste_keywords">persona, profile, algorithm, recommendations, interests, brain, engine, control center</string>
-    <string name="taste_card_hint">See how Fathom sees you</string>
+    <string name="taste_card_hint">See how Flow sees you</string>
     <string name="taste_card_loading">Reading your profile</string>
     <string name="taste_shape_header">Taste shape</string>
     <string name="taste_shape_description">Your profile against what you watch at this time of day</string>
@@ -3792,16 +3711,16 @@
     <string name="taste_export_music">Export music profile</string>
     <string name="taste_import_music">Import music profile</string>
     <string name="taste_reset_music">Reset music profile</string>
-    <string name="taste_reset_video_body">This clears what Fathom learned from your videos and starts again from zero. Your recap and hidden channels, topics and videos stay.</string>
+    <string name="taste_reset_video_body">This clears what Flow learned from your videos and starts again from zero. Your recap and hidden channels, topics and videos stay.</string>
     <string name="taste_reset_music_title">Reset music profile?</string>
-    <string name="taste_reset_music_body">This clears what Fathom learned from your music and starts again from zero. Your recap stays.</string>
+    <string name="taste_reset_music_body">This clears what Flow learned from your music and starts again from zero. Your recap stays.</string>
     <string name="taste_trait_now">Now %1$s</string>
     <string name="taste_reset_done">Profile reset</string>
     <string name="diagnostics_engine_header">Engine details</string>
     <string name="diagnostics_engine_queries_none">None yet</string>
 
     <!-- Flow Recap -->
-    <string name="recap_title">Fathom Recap</string>
+    <string name="recap_title">Flow Recap</string>
     <string name="recap_summary">What you watched and listened to, month by month</string>
     <string name="recap_keywords">wrapped, stats, statistics, recap, year in review, watch time, listening time, most watched, top artists</string>
     <string name="recap_period_month">Month</string>
@@ -3810,7 +3729,7 @@
     <string name="recap_source_all">Everything</string>
     <string name="recap_source_video">Videos</string>
     <string name="recap_source_music">Music</string>
-    <string name="recap_total_time">Time in Fathom</string>
+    <string name="recap_total_time">Time in Flow</string>
     <string name="recap_delta_up">%1$s more than the time before</string>
     <string name="recap_delta_down">%1$s less than the time before</string>
     <string name="recap_delta_same">About the same as the time before</string>
@@ -3888,7 +3807,7 @@
         <item quantity="other">%d videos</item>
     </plurals>
     <string name="recap_empty_title">Your recap starts now</string>
-    <string name="recap_empty_body">Fathom keeps these stats on this device only. Watch and listen for a while and they fill in.</string>
+    <string name="recap_empty_body">Flow keeps these stats on this device only. Watch and listen for a while and they fill in.</string>
     <string name="recap_period_empty">Nothing recorded for this period</string>
     <string name="recap_insights_title">What stood out</string>
     <string name="recap_insight_night_owl">Night owl</string>
@@ -3910,7 +3829,7 @@
     <string name="recap_ready_body">See what you watched and listened to, and share it if you like</string>
     <string name="recap_ready_open">Open</string>
     <string name="recap_ready_dismiss">Not now</string>
-    <string name="recap_story_intro">Your %1$s in Fathom</string>
+    <string name="recap_story_intro">Your %1$s in Flow</string>
     <plurals name="recap_story_intro_body">
         <item quantity="one">Spread over %d day</item>
         <item quantity="other">Spread over %d days</item>
@@ -3933,12 +3852,12 @@
     <string name="recap_story_summary">Your %1$s, in one card</string>
     <string name="recap_story_share">Share</string>
     <string name="recap_story_share_title">Share your recap</string>
-    <string name="recap_story_share_text">My %1$s in Fathom: %2$s</string>
+    <string name="recap_story_share_text">My %1$s in Flow: %2$s</string>
     <string name="recap_story_close">Close</string>
     <string name="recap_story_next">Next</string>
     <string name="recap_story_previous">Previous</string>
     <string name="recap_story_page">Page %1$d of %2$d</string>
-    <string name="recap_story_made_with">Made with Fathom</string>
+    <string name="recap_story_made_with">Made with Flow</string>
     <string name="recap_story_pause">Pause</string>
     <string name="recap_story_play">Play</string>
     <string name="recap_summary_top_channel">Top channel</string>
@@ -3954,7 +3873,7 @@
     <string name="playlist_export_failed">Couldn\'t save the playlist</string>
     <string name="playlist_share_failed">Couldn\'t share the playlist</string>
     <string name="playlist_import_not_a_playlist">This file isn\'t a Flow playlist</string>
-    <string name="playlist_import_too_new">This playlist needs a newer version of Fathom</string>
+    <string name="playlist_import_too_new">This playlist needs a newer version of Flow</string>
     <string name="playlist_import_empty">This playlist has no videos to import</string>
     <string name="playlist_import_unreadable">Couldn\'t read this file</string>
     <plurals name="playlist_imported">

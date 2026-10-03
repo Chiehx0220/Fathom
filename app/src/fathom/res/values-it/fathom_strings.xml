@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="check_out_video_template">Guarda questo video: %1$s\n%2$s</string>
+    <string name="deep_flow_save_history_subtitle">Conserva i video visualizzati nella cronologia (con i progressi). L\'algoritmo continuerà comunque a non usarli per l\'apprendimento. Disattivato = non viene salvato nulla.</string>
+    <string name="share_link_only_template">%1$s</string>
+</resources>

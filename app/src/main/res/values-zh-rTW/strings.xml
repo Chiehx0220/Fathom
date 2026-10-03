@@ -42,7 +42,7 @@
     <string name="history_no_results_body">試試其他搜尋或篩選條件</string>
     <string name="history_tab_videos">影片</string>
     <string name="history_tab_shorts">Shorts</string>
-    <string name="app_name">Fathom</string>
+    <string name="app_name">Flow</string>
     <string name="liked">已讚好</string>
     <string name="liked_music">讚好音樂</string>
     <string name="liked_videos">讚好</string>
@@ -115,7 +115,7 @@
     <string name="speed_2x">２倍速</string>
     <string name="cd_liked">已讚好</string>
     <string name="cd_pause">暫停</string>
-    <string name="check_out_video_template">看一下這影片：%1$s\n%2$s</string>
+    <string name="check_out_video_template">看一下這影片：%1$s\nhttps://youtube.com/watch?v=%2$s</string>
     <string name="related_videos">相關影片</string>
     <string name="quality_auto">自動</string>
     <string name="quality_auto_template">自動（%1$dp）</string>
@@ -328,7 +328,7 @@
     <string name="chapters">章節</string>
     <string name="artist">藝人</string>
     <string name="playlist">播放清單</string>
-    <string name="app_name_uppercase">FATHOM</string>
+    <string name="app_name_uppercase">FLOW</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="unsubscribed_from_template">已取消訂閱 %1$s</string>
     <string name="hide_channel_shorts">隱藏此頻道的 Shorts</string>
@@ -443,6 +443,9 @@
     <string name="app_icon_picker_subtitle">選擇啟動器圖示樣式。變更會立即生效，啟動器將短暫重新整理。</string>
     <string name="app_icon_picker_warning">變更圖示可能會暫時將 Flow 從主畫面移除。如有需要，請從應用程式抽屜將它加回主畫面。</string>
     <string name="app_icon_apply_toast">圖示已更新－啟動器將重新整理</string>
+    <string name="icon_name_flow_red">Flow Red</string>
+    <string name="icon_name_flow_light">Flow Light</string>
+    <string name="icon_name_flow_play">Flow Play</string>
     <string name="icon_name_amoled">AMOLED黑</string>
     <string name="icon_name_monochrome">單色</string>
     <string name="icon_name_ghost">幽靈</string>

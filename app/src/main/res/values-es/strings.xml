@@ -71,7 +71,7 @@
     <string name="subscribed_to">Suscrito a %s</string>
     <string name="unsubscribed_from">Te has dado de baja de %s</string>
     <string name="share_video">Compartir video</string>
-    <string name="check_out_video_template">Mira este video: %1$s\n%2$s</string>
+    <string name="check_out_video_template">Mira este video: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
     <string name="related_videos">Videos relacionados</string>
     <string name="quality_auto">Automático</string>
     <string name="video_marked_not_interested">Vídeo marcado como no interesante</string>
@@ -206,7 +206,7 @@
     <string name="artist">Artista</string>
     <string name="comments">Comentarios</string>
     <string name="filter_workout">Ejercicio</string>
-    <string name="app_name">Fathom</string>
+    <string name="app_name">Flow</string>
     <string name="download_all">Descargar todo</string>
     <string name="saved">Guardadas</string>
     <string name="resume">Reanudar</string>
@@ -228,7 +228,7 @@
     <string name="album_art">Caratula del álbum</string>
     <string name="views_template">%1$s visualizaciones</string>
     <string name="chapters">Capítulos</string>
-    <string name="app_name_uppercase">FATHOM</string>
+    <string name="app_name_uppercase">FLOW</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">Tu feed personal</string>
     <string name="import_newpipe_backup">Importar copia de seguridad de NewPipe</string>
@@ -517,6 +517,7 @@
     <string name="settings_item_region">Región de tendencia</string>
     <string name="settings_item_search_history">Búsqueda e historial</string>
     <string name="settings_item_search_history_subtitle">Borrar historial, gestionar sugerencias</string>
+    <string name="icon_name_flow_red">Flow Rojo</string>
     <string name="icon_name_monochrome">Monocromo</string>
     <string name="icon_name_ghost">Fantasma</string>
     <string name="icon_name_dynamic">Material You</string>
@@ -1484,6 +1485,7 @@
     <string name="appearance_system_dark_theme">Tema del modo oscuro</string>
     <string name="theme_desc_material_you">Colores de fondo de pantalla en Android 12+</string>
     <string name="appearance_system_defaults_title">Temas predeterminados del sistema</string>
+    <string name="icon_name_flow_light">Flow Claro</string>
     <string name="icon_name_material_sky">Material Sky</string>
     <string name="icon_name_material_mint">Material Mint</string>
     <string name="content_settings_subs_show_videos_title">Vídeos de suscripciones</string>
@@ -1614,7 +1616,7 @@
     <string name="local_media_grant">Proporcionar acceso</string>
     <string name="history_tab_local_videos">Videos locales</string>
     <string name="history_tab_local_music">Música local</string>
-    <string name="share_link_only_template">%1$s</string>
+    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
     <string name="content_settings_share_without_text_title">Compartir enlaces sin texto</string>
     <string name="shorts_player_ui_default">Predeterminada</string>
     <string name="shorts_player_ui_simple">Sencilla</string>
@@ -1662,6 +1664,7 @@
     <string name="appearance_color_alpha">Alfa</string>
     <string name="appearance_navigate_back">Volver atrás</string>
     <string name="appearance_selected">Seleccionado</string>
+    <string name="icon_name_flow_play">Flow Play</string>
     <string name="player_appearance_hide_music_artwork_title">Ocultar la portada del reproductor de música</string>
     <string name="player_appearance_hide_music_artwork_subtitle">Mostrar el icono de la aplicación con el color extraído de la portada</string>
     <string name="subscriptions_sort_label">Ordenar canales</string>

@@ -67,7 +67,7 @@
     <string name="play_next_desc">Diputar setelah lagu saat ini</string>
     <string name="add_to_queue">Tambahkan ke antrean</string>
     <string name="add_to_queue_desc">Tambahkan ke akhir antrean</string>
-    <string name="app_name_uppercase">FATHOM</string>
+    <string name="app_name_uppercase">FLOW</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="new_update_available">Pembaruan Baru Tersedia</string>
     <string name="update_available_template">%1$s kini tersedia</string>
@@ -122,6 +122,7 @@
     <string name="appearance_category_dark">Gelap</string>
     <string name="appearance_category_special">Spesial</string>
     <string name="app_icon_apply_toast">Ikon diperbarui - launcher Anda akan disegarkan</string>
+    <string name="icon_name_flow_red">Flow Merah</string>
     <string name="icon_name_amoled">AMOLED Gelap</string>
     <string name="icon_name_monochrome">Monokrom</string>
     <string name="icon_name_ghost">Hantu</string>
@@ -134,7 +135,7 @@
     <string name="lyrics_provider_lrclib">LrcLib</string>
     <string name="lyrics_provider_better_lyrics">Better Lyrics</string>
     <string name="lyrics_provider_simpmusic">SimpMusic</string>
-    <string name="app_name">Fathom</string>
+    <string name="app_name">Flow</string>
     <string name="subscriptions_search_placeholder">Mencari langganan...</string>
     <string name="top_bar_subscriptions_title">Langganan</string>
     <string name="view_all_button_label">Semua</string>
@@ -203,7 +204,7 @@
     <string name="unsubscribed_from">Berhenti berlangganan dari %s</string>
     <string name="unsubscribe">Berhenti Berlangganan</string>
     <string name="share_video">Bagikan video</string>
-    <string name="check_out_video_template">Lihat video ini: %1$s\n%2$s</string>
+    <string name="check_out_video_template">Lihat video ini: %1$s\nhttps://youtube.com/watch?v=%2$s</string>
     <string name="related_videos">Video Terkait</string>
     <string name="video_marked_not_interested">Video ditandai sebagai tidak diminati</string>
     <string name="play_mode_suggestion_title">Saran Mode Putar</string>
@@ -1441,6 +1442,7 @@
     <string name="appearance_system_defaults_subtitle">Pilih tema yang digunakan saat perangkat Anda beralih antara mode terang dan gelap.</string>
     <string name="appearance_system_light_theme">Tema mode terang</string>
     <string name="appearance_system_dark_theme">Tema mode gelap</string>
+    <string name="icon_name_flow_light">Flow Light</string>
     <string name="icon_name_material_sky">Material Sky</string>
     <string name="icon_name_material_mint">Material Mint</string>
     <string name="player_adaptive_size_title">Ukuran Pemutar Adaptif</string>
@@ -1621,11 +1623,12 @@
     <string name="local_media_grant">Berikan akses</string>
     <string name="history_tab_local_videos">Video bawaan</string>
     <string name="history_tab_local_music">Musik bawaan</string>
-    <string name="share_link_only_template">%1$s</string>
+    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
     <string name="content_settings_share_without_text_title">Bagikan tautan tanpa teks</string>
     <string name="content_settings_share_without_text_subtitle">Bagikan hanya tautan video, tanpa pesan “Check out this video”</string>
     <string name="deep_flow_save_history_title">Simpan untuk melihat riwayat tontonan</string>
     <string name="deep_flow_save_history_subtitle">Simpan riwayat tontonan tanpa memengaruhi rekomendasi</string>
+    <string name="icon_name_flow_play">Flow mainkan</string>
     <string name="player_appearance_controls_while_loading_title">Kontrol Saat Memuat</string>
     <string name="player_appearance_controls_while_loading_subtitle">Tampilkan kontrol sebelum video selesai dimuat</string>
     <string name="player_settings_autoplay_countdown_title">Jeda putar otomatis</string>

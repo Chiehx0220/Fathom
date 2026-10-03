@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="check_out_video_template">Şu videoya göz at: %1$s\n%2$s</string>
+    <string name="share_link_only_template">%1$s</string>
+</resources>

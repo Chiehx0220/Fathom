@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Fathom</string>
+    <string name="app_name">Flow</string>
     <string name="subscriptions_search_placeholder">සබ්ක්‍රිප්ශන්ස් හොයන්න...</string>
     <string name="subscriptions_sort_label">නාලිකා වර්ග කරන්න</string>
     <string name="subscriptions_sort_default">පෙරනිමිය</string>
@@ -138,8 +138,8 @@
     <string name="unsubscribed_from">%sවෙතින් දායකත්වයෙන් ඉවත් විය</string>
     <string name="unsubscribe">දායකත්වයෙන් ඉවත් වන්න</string>
     <string name="share_video">වීඩියෝව බෙදා ගන්න</string>
-    <string name="check_out_video_template">මේ වීඩියෝව බලන්න:%1$s\n%2$s</string>
-    <string name="share_link_only_template">%1$s</string>
+    <string name="check_out_video_template">මේ වීඩියෝව බලන්න:%1$s\nhttps://youtube.com/watch?v=%2$s</string>
+    <string name="share_link_only_template">https://youtube.com/watch?v=%1$s</string>
     <string name="content_settings_share_without_text_title">පෙළ නොමැතිව සබැඳි බෙදා ගන්න</string>
     <string name="content_settings_share_without_text_subtitle">\"මෙම වීඩියෝව බලන්න\" පණිවිඩය නොමැතිව, වීඩියෝ සබැඳිය පමණක් බෙදා ගන්න</string>
     <string name="related_videos">ගැලපෙන වීඩියෝ</string>

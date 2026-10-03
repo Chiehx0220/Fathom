@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="check_out_video_template">Перегляньте це відео: %1$s\n%2$s</string>
+    <string name="share_link_only_template">%1$s</string>
+    <string name="deep_flow_save_history_subtitle">Зберігати переглянуті відео в історії (разом із прогресом). Алгоритм все одно не використовуватиме їх для рекомендацій. Вимк = нічого не зберігається.</string>
+</resources>

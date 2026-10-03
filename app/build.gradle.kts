@@ -167,6 +167,7 @@ android {
     sourceSets {
         getByName("androidTest").assets.directories.add("$projectDir/schemas")
         getByName("nightly").baselineProfiles.directories.add("src/githubRelease/generated/baselineProfiles")
+        listOf("github", "foss").forEach { getByName(it).res.srcDir("src/fathom/res") }
     }
 
     compileOptions {
