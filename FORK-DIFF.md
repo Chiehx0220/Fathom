@@ -108,19 +108,18 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Build
 
-- Modified upstream files: **1** (14 changed lines). New files: **0** (0 lines).
+- Modified upstream files: **1** (15 changed lines). New files: **0** (0 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/build.gradle.kts | 10 | 4 |
+| app/build.gradle.kts | 11 | 4 |
 
 ## Resources / strings
 
-- Modified upstream files: **39** (861 changed lines). New files: **4** (76 lines).
+- Modified upstream files: **38** (759 changed lines). New files: **4** (76 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/main/AndroidManifest.xml | 67 | 35 |
 | app/src/main/res/drawable/ic_launcher_expressive_pill_foreground.xml | 34 | 10 |
 | app/src/main/res/drawable/ic_splash_logo.xml | 32 | 10 |
 | app/src/main/res/drawable/ic_launcher_expressive_pill_monochrome.xml | 34 | 7 |
@@ -150,7 +149,8 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/main/res/drawable/ic_launcher_expressive_mint_foreground.xml | 0 | 13 |
 | app/src/main/res/drawable/ic_notification_logo.xml | 7 | 6 |
 | app/src/main/res/drawable/ic_flow_logo.xml | 0 | 12 |
-| ... 9 more, each small | | |
+| app/src/main/res/values/colors.xml | 5 | 7 |
+| ... 8 more, each small | | |
 
 ## Tests
 
