@@ -751,6 +751,7 @@ class HomeViewModel
                 wave2Job =
                     viewModelScope.launch(PerformanceDispatcher.networkIO) wave2@{
                         try {
+                            val wave2Filter = playerPreferences.homeContentSourceFilter.first()
                             val wave2Raw =
                                 wave2Queries
                                     .map { q ->
@@ -758,7 +759,7 @@ class HomeViewModel
                                             q to (
                                                 withTimeoutOrNull(6_000L) {
                                                     try {
-                                                        repository.searchVideos(q).first
+                                                        feedSources.searchDiscovery(q, wave2Filter)
                                                     } catch (cancellation: CancellationException) {
                                                         throw cancellation
                                                     } catch (error: Exception) {
@@ -778,7 +779,7 @@ class HomeViewModel
                                     .flatMap { it.second }
                                     .filterValid()
                                     .filterWatched(wave2Watched)
-                                    .filter { !wave2FinalMixIds.contains(it.id) }
+                                    .filter { wave2Filter.allows(it) && !wave2FinalMixIds.contains(it.id) }
                                     .filterNot(feedExclusions()::hidesFromRecommendations)
                             if (wave2Valid.isEmpty()) return@wave2
 
@@ -981,6 +982,7 @@ class HomeViewModel
 
                 val searchQueries = listOfNotNull(queryA, queryB)
 
+                val loadMoreFilter = playerPreferences.homeContentSourceFilter.first()
                 val rawVideos =
                     coroutineScope {
                         searchQueries
@@ -988,7 +990,7 @@ class HomeViewModel
                                 async {
                                     withTimeoutOrNull(6_000L) {
                                         try {
-                                            repository.searchVideos(query).first
+                                            feedSources.searchDiscovery(query, loadMoreFilter)
                                         } catch (cancellation: CancellationException) {
                                             throw cancellation
                                         } catch (error: Exception) {
@@ -1113,6 +1115,7 @@ class HomeViewModel
         ): List<Video>? {
             if (page.isEmpty() || !homePrefetchQueue.isCurrent(generation)) return null
             val exclusions = feedExclusions()
+            val sourceFilter = playerPreferences.homeContentSourceFilter.first()
             var updatedSnapshot: List<Video>? = null
             var appendedPage = emptyList<Video>()
             _uiState.update { state ->
@@ -1121,7 +1124,9 @@ class HomeViewModel
                 appendedPage =
                     page
                         .filterWatched(watchedVideoIds.value)
+                        .filter { sourceFilter.allows(it) }
                         .filterNot { it.id in existingVideoIds || exclusions.hidesFromRecommendations(it) }
+                        .spreadByService()
                 if (appendedPage.isEmpty()) return@update state
                 val tailChannels = state.videos.takeLast(2).map { it.channelId }
                 val updated = state.videos + spaceByChannel(appendedPage, seedRecent = tailChannels)

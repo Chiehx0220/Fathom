@@ -1,10 +1,8 @@
 package io.github.aedev.flow.ui.screens.home
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliApi
-import io.github.aedev.flow.bilibili.BilibiliLiveId
-import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
+import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
 import io.github.aedev.flow.data.local.LikedVideosRepository
@@ -15,7 +13,7 @@ import io.github.aedev.flow.data.recommendation.GraphSeedInput
 import io.github.aedev.flow.data.recommendation.GraphSeedSelector
 import io.github.aedev.flow.data.recommendation.GraphSeedSource
 import io.github.aedev.flow.data.repository.YouTubeRepository
-import io.github.aedev.flow.player.stream.BilibiliVideoMapper
+import io.github.aedev.flow.data.source.VideoSources
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -58,7 +56,7 @@ class HomeFeedSources
         private val viewHistory: ViewHistory,
         private val likedVideosRepository: LikedVideosRepository,
         private val playlistRepository: PlaylistRepository,
-        private val bilibili: BilibiliApi,
+        private val sources: VideoSources,
     ) {
         private data class CachedRelated(
             val videos: List<Video>,
@@ -146,6 +144,19 @@ class HomeFeedSources
             seedIds.forEach { savedSeedCooldown[it] = now }
         }
 
+        /** One discovery query asked of every service the filter allows. */
+        internal suspend fun searchDiscovery(
+            query: String,
+            filter: HomeContentSourceFilter,
+        ): List<Video> =
+            coroutineScope {
+                sources
+                    .forFilter(filter)
+                    .map { source -> async { source.search(query) } }
+                    .awaitAll()
+                    .flatten()
+            }
+
         /** One seed's related list, through the same memory and Room caches the feed uses. */
         internal suspend fun relatedVideos(
             seedId: String,
@@ -173,10 +184,8 @@ class HomeFeedSources
             return (
                 relatedSemaphore.withPermit {
                     withTimeoutOrNull(RELATED_FETCH_TIMEOUT_MS) {
-                        if (BilibiliLiveId.isLive(seedId)) {
-                            emptyList<Video>()
-                        } else if (serviceIdOfVideo(seedId, serviceId) == BILIBILI_SERVICE_ID) {
-                            bilibili.related(BilibiliVideoId.parse(seedId).first).map(BilibiliVideoMapper::videoFromRelated)
+                        if (serviceIdOfVideo(seedId, serviceId) == BILIBILI_SERVICE_ID) {
+                            sources.forService(BILIBILI_SERVICE_ID)?.related(seedId).orEmpty()
                         } else {
                             repository.getRelatedCandidates(seedId)
                         }
