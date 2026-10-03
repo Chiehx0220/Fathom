@@ -20,6 +20,12 @@ interface VideoSource {
     ): List<Video>
 
     suspend fun related(videoId: String): List<Video>
+
+    /** The queries this service wants for [filter]; a service that ignores the query for it takes one. */
+    fun queriesFor(
+        queries: List<String>,
+        filter: SearchFilter,
+    ): List<String> = queries
 }
 
 internal suspend fun <T> boundedOrEmpty(

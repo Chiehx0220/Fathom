@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
+import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.data.engagement.FeedInvalidationBus
 import io.github.aedev.flow.data.feed.FeedPrefetchQueue
 import io.github.aedev.flow.data.feed.FeedPrefetchRequest
@@ -56,6 +57,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
+import org.schabi.newpipe.extractor.ServiceList
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
@@ -505,22 +507,29 @@ class HomeViewModel
                         currentQueryIndex = 0
 
                         val userSubs = subscriptionScope().boosted
+                        val sourceFilter = playerPreferences.homeContentSourceFilter.first()
                         val region = playerPreferences.trendingRegion.first()
                         val fetchStart = System.currentTimeMillis()
 
                         // ── Wave 1: first 3 queries + related lanes; subscriptions come from the store ──
                         val wave1QueryCount = discoveryQueries.size.coerceAtMost(3)
                         val wave1Queries = discoveryQueries.take(wave1QueryCount)
+                        val youtubeQueries = if (sourceFilter.allows(ServiceList.YouTube.serviceId)) wave1Queries else emptyList()
                         currentQueryIndex = wave1QueryCount
 
                         val results =
                             supervisorScope {
                                 val deferredBilibili =
-                                    launchBilibiliWave1Feeds(subscriptionRepository, bilibiliApi(appContext), discoveryQueries.toList())
+                                    launchBilibiliWave1Feeds(
+                                        subscriptionRepository,
+                                        bilibiliApi(appContext),
+                                        discoveryQueries.toList(),
+                                        enabled = sourceFilter.allows(BILIBILI_SERVICE_ID),
+                                    )
 
                                 val deferredDiscovery =
                                     async {
-                                        wave1Queries
+                                        youtubeQueries
                                             .map { query ->
                                                 async {
                                                     query to
@@ -635,7 +644,7 @@ class HomeViewModel
                         // Home-only source filter (YouTube/Bilibili/mix) - Subscriptions and Search are
                         // untouched. Applied after assembly, not per-lane, since only the fresh-subs
                         // lane can ever contain a non-YouTube video right now (see HomeContentSourceFilter).
-                        val sourceFilterServiceId = playerPreferences.homeContentSourceFilter.first().serviceId
+                        val sourceFilterServiceId = sourceFilter.serviceId
                         val finalMix =
                             sourceFilterServiceId?.let { id -> mix.videos.filter { it.serviceId == id } } ?: mix.videos.spreadByService()
                         subsBacklog =

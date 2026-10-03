@@ -39,6 +39,11 @@ class BilibiliVideoSource
                 }
             }
 
+        override fun queriesFor(
+            queries: List<String>,
+            filter: SearchFilter,
+        ): List<String> = if (filter == SearchFilter.LIVE) queries.take(1) else queries.take(MAX_QUERIES)
+
         override suspend fun related(videoId: String): List<Video> =
             if (BilibiliLiveId.isLive(videoId)) {
                 emptyList()
@@ -65,6 +70,7 @@ class BilibiliVideoSource
 
         private companion object {
             const val TIMEOUT_MS = 6_000L
+            const val MAX_QUERIES = 2
             const val MILLIS_PER_SECOND = 1000L
             const val WEEK_MS = 7L * 24L * 60L * 60L * 1000L
         }

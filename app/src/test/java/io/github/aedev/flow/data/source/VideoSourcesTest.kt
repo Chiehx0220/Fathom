@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.model.Video
+import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -45,6 +46,15 @@ class VideoSourcesTest {
     @Test
     fun `a wrong saved service id loses to the shape of the id`() {
         assertThat(sources.forVideo("BV1xx411c7mD", savedServiceId = ServiceList.YouTube.serviceId)).isSameInstanceAs(bilibili)
+    }
+
+    @Test
+    fun `Bilibili takes one query for live and at most two otherwise`() {
+        val bilibiliSource = BilibiliVideoSource(mockk())
+        val queries = listOf("a", "b", "c")
+        assertThat(bilibiliSource.queriesFor(queries, SearchFilter.LIVE)).containsExactly("a")
+        assertThat(bilibiliSource.queriesFor(queries, SearchFilter.ANY)).containsExactly("a", "b").inOrder()
+        assertThat(youtube.queriesFor(queries, SearchFilter.ANY)).containsExactlyElementsIn(queries).inOrder()
     }
 
     @Test

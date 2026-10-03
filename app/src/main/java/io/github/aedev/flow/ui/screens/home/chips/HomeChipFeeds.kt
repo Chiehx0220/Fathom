@@ -19,9 +19,10 @@ import io.github.aedev.flow.data.recommendation.GraphSeedSelector
 import io.github.aedev.flow.data.recommendation.InterestChip
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.repository.needsChannelMetadata
+import io.github.aedev.flow.data.source.SearchFilter
+import io.github.aedev.flow.data.source.VideoSources
 import io.github.aedev.flow.data.stats.VideoStatsRecorder
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
-import io.github.aedev.flow.innertube.YouTubeSearchParams
 import io.github.aedev.flow.ui.screens.home.HomeFeedSources
 import io.github.aedev.flow.ui.screens.home.enrichAvatars
 import io.github.aedev.flow.ui.screens.home.filterValid
@@ -46,7 +47,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.ServiceList
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
@@ -76,7 +76,7 @@ class HomeChipFeeds
         private val videoStats: VideoStatsRecorder,
         private val homeFeedCache: HomeFeedCacheRepository,
         private val videoDao: VideoDao,
-        private val bilibili: BilibiliChipSource,
+        private val sources: VideoSources,
     ) {
         private val chipsState = MutableStateFlow(HomeChipsState())
         internal val state: StateFlow<HomeChipsState> = chipsState.asStateFlow()
@@ -318,28 +318,15 @@ class HomeChipFeeds
 
         private suspend fun search(
             queries: List<String>,
-            params: String? = null,
-            includeBilibili: Boolean = true,
-        ): List<Video> {
-            val source = context.source()
-            val youtube =
-                if (!source.wantsYouTube) {
-                    emptyList()
-                } else {
-                    coroutineScope {
-                        queries
-                            .map { query ->
-                                async {
-                                    withTimeoutOrNull(HomeChipParams.SEARCH_TIMEOUT_MS) {
-                                        runCatching { repository.searchVideos(query, params = params).first }.getOrDefault(emptyList())
-                                    }.orEmpty()
-                                }
-                            }.awaitAll()
-                            .flatten()
-                    }
-                }
-            return youtube + if (includeBilibili && source.wantsBilibili) bilibili.search(queries) else emptyList()
-        }
+            filter: SearchFilter = SearchFilter.ANY,
+        ): List<Video> =
+            coroutineScope {
+                sources
+                    .forFilter(context.source())
+                    .flatMap { source -> source.queriesFor(queries, filter).map { query -> async { source.search(query, filter) } } }
+                    .awaitAll()
+                    .flatten()
+            }
 
         private suspend fun related(
             seedIds: List<String>,
@@ -413,27 +400,16 @@ class HomeChipFeeds
             return unknown.filterNot { it.id in rejected }.take(HomeChipParams.MAX_VIDEOS)
         }
 
+        private fun interestQuery(): List<String> = interests.take(2).mapNotNull { interestQueries(it, 1).firstOrNull() }
+
         private suspend fun recentlyUploaded(): List<Video> {
             val now = System.currentTimeMillis()
-            val week =
-                YouTubeSearchParams.build(
-                    contentType = YouTubeSearchParams.ContentType.VIDEO,
-                    uploadDate = YouTubeSearchParams.UploadDate.THIS_WEEK,
-                )
-            val pool = storedUploads() + search(interests.take(2).mapNotNull { interestQueries(it, 1).firstOrNull() }, week)
+            val pool = storedUploads() + search(interestQuery(), SearchFilter.UPLOADED_THIS_WEEK)
             return freshnessOrder(ranked(uploadedThisWeek(pool, now)), now).take(HomeChipParams.MAX_VIDEOS)
         }
 
         private suspend fun live(): List<Video> {
-            val liveParams =
-                YouTubeSearchParams.build(
-                    contentType = YouTubeSearchParams.ContentType.VIDEO,
-                    features = setOf(YouTubeSearchParams.Feature.LIVE),
-                )
-            val pool =
-                storedUploads().filter { it.isLive } +
-                    search(interests.take(2).mapNotNull { interestQueries(it, 1).firstOrNull() }, liveParams, includeBilibili = false) +
-                    if (context.source().wantsBilibili) bilibili.lives() else emptyList()
+            val pool = storedUploads().filter { it.isLive } + search(interestQuery(), SearchFilter.LIVE)
             return ranked(pool.filter { it.isLive && !it.isUpcoming }).take(HomeChipParams.MAX_VIDEOS)
         }
 

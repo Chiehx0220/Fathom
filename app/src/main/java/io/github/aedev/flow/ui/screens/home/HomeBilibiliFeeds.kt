@@ -53,8 +53,10 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
     subscriptionRepository: SubscriptionRepository,
     bilibili: BilibiliApi,
     discoveryQueries: List<String>,
+    enabled: Boolean,
 ): Deferred<BilibiliWave1Feeds> =
     async {
+        if (!enabled) return@async BilibiliWave1Feeds(emptyList(), emptyList(), emptyList())
         // getAllSubscriptionIds() has no per-service info - filter to Bilibili channels here so
         // the fetch below routes through the right extractor.
         val bilibiliSubs =
