@@ -21,7 +21,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **121** (2796 changed lines). New files: **49** (4582 lines).
+- Modified upstream files: **124** (2894 changed lines). New files: **51** (4653 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -30,6 +30,7 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/BackupRepository.kt | 109 | 18 |
 | player/datasource/YouTubeHttpDataSource.kt | 97 | 7 |
 | ui/tv/components/TvNavRail.kt | 51 | 45 |
+| ui/screens/home/chips/HomeChipFeeds.kt | 70 | 25 |
 | ui/screens/channel/ChannelViewModel.kt | 81 | 3 |
 | notification/SubscriptionCheckWorker.kt | 79 | 0 |
 | data/innertube/RssSubscriptionService.kt | 72 | 3 |
@@ -39,14 +40,14 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/home/FlowHeaderLogoIcon.kt | 60 | 7 |
 | ui/screens/player/PlaybackStreamPreparer.kt | 63 | 0 |
 | ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
-| ui/screens/categories/CategoriesScreen.kt | 53 | 7 |
 | player/stream/PlaybackLoadResolver.kt | 49 | 1 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
+| ui/screens/home/HomeViewModel.kt | 42 | 5 |
+| ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
 | data/local/PlayerPreferences.kt | 39 | 0 |
 | data/local/SubscriptionRecordCodec.kt | 24 | 15 |
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
 | ui/screens/home/HomeFeedSources.kt | 33 | 5 |
-| ui/screens/home/HomeViewModel.kt | 34 | 4 |
 | ui/screens/player/VideoPlayerViewModel.kt | 31 | 7 |
 | ui/FlowNavigation.kt | 24 | 10 |
 | ui/screens/player/PlaybackPreparer.kt | 32 | 2 |
@@ -74,7 +75,6 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/entity/VideoEntity.kt | 10 | 9 |
 | ui/AppHooks.kt | 10 | 9 |
 | ui/components/shared/quickactions/QuickActionsViewModel.kt | 14 | 3 |
-| ui/screens/home/HomeScreen.kt | 15 | 2 |
 | ui/PlayerNavigation.kt | 12 | 4 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 14 | 2 |
@@ -83,9 +83,9 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/WatchSessionTracker.kt | 12 | 3 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 14 | 1 |
 | ui/screens/player/stage/VideoStage.kt | 15 | 0 |
+| data/repository/YouTubeRepository.kt | 9 | 5 |
 | data/update/GitHubRelease.kt | 7 | 7 |
-| player/GlobalPlayerState.kt | 13 | 0 |
-| ... 61 more, each small | | |
+| ... 64 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -98,7 +98,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **55** (6295 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **55** (6318 lines).
 
 ## Local server (fork-only feature)
 
@@ -106,11 +106,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Build
 
-- Modified upstream files: **1** (11 changed lines). New files: **0** (0 lines).
+- Modified upstream files: **1** (13 changed lines). New files: **0** (0 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/build.gradle.kts | 8 | 3 |
+| app/build.gradle.kts | 9 | 4 |
 
 ## Resources / strings
 
@@ -152,13 +152,14 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **12** (77 changed lines). New files: **2** (168 lines).
+- Modified upstream files: **14** (87 changed lines). New files: **2** (168 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | app/src/test/java/io/github/aedev/flow/data/update/GitHubReleaseTest.kt | 13 | 13 |
 | app/src/test/java/io/github/aedev/flow/data/subscriptions/SubscriptionRefreshPlannerTest.kt | 12 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/paging/SearchPagingSourceTest.kt | 8 | 1 |
+| app/src/test/java/io/github/aedev/flow/data/repository/ChannelMetadataNeedTest.kt | 9 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/effects/WatchHistoryEntryTest.kt | 7 | 0 |
 | app/src/test/java/io/github/aedev/flow/player/stream/VideoCodecUtilsTest.kt | 6 | 0 |
 | app/src/test/java/io/github/aedev/flow/utils/ShareVideoTest.kt | 3 | 3 |
@@ -166,6 +167,7 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/components/shared/quickactions/QuickActionsMessagesTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/home/HomeFeedSourcesSeedTest.kt | 1 | 1 |
+| app/src/test/java/io/github/aedev/flow/ui/screens/home/chips/HomeChipFeedsTest.kt | 1 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelHarness.kt | 1 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/search/SearchViewModelTest.kt | 1 | 0 |
 
