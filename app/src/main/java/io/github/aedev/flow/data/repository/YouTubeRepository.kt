@@ -7,6 +7,7 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.VideoCollaborator
+import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.model.needsCollaboratorResolution
 import io.github.aedev.flow.data.shorts.ShortsClassifier
@@ -391,6 +392,7 @@ class YouTubeRepository
          */
         suspend fun getVideoStreamInfo(videoId: String): StreamInfo? =
             withContext(Dispatchers.IO) {
+                if (!videoId.isYouTubeVideoId) return@withContext null
                 try {
                     val url = "https://www.youtube.com/watch?v=$videoId"
                     StreamInfo.getInfo(service, url)
@@ -537,6 +539,7 @@ class YouTubeRepository
          * rather than failing the surface.
          */
         suspend fun watchNextResponse(videoId: String): JsonElement? {
+            if (!videoId.isYouTubeVideoId) return null
             watchNextCache.get(videoId)?.let { return it }
             return watchNextCoalescer.run(videoId) {
                 YouTube
@@ -562,6 +565,7 @@ class YouTubeRepository
             videoId: String,
             requireRelated: Boolean = false,
         ): WatchMetadataResponse? {
+            if (!videoId.isYouTubeVideoId) return null
             cachedWatchMetadata(videoId)?.let { return it }
             val shared = watchNextResponse(videoId)?.let(::decodeWatchMetadata)
             // [YouTube.watchMetadata] retries against the other host when the lane comes back
@@ -588,7 +592,7 @@ class YouTubeRepository
          * stable clustering signal for the recommendation engine and never changes.
          */
         suspend fun videoCategory(videoId: String): String? {
-            if (videoId.isBlank()) return null
+            if (videoId.isBlank() || !videoId.isYouTubeVideoId) return null
             videoCategoryCache.cached(videoId)?.let { return it }
             return videoCategoryCoalescer.run(videoId) {
                 YouTube
@@ -691,6 +695,7 @@ class YouTubeRepository
          */
         suspend fun getComments(videoId: String): Pair<List<Comment>, Page?> =
             withContext(Dispatchers.IO) {
+                if (!videoId.isYouTubeVideoId) return@withContext Pair(emptyList(), null)
                 try {
                     val url = "https://www.youtube.com/watch?v=$videoId"
                     val commentsInfo =
@@ -829,6 +834,7 @@ class YouTubeRepository
          */
         suspend fun returnYouTubeDislikeCounts(videoId: String): ReturnYouTubeDislikeCounts? =
             returnYouTubeDislikeCoalescer.run(videoId) {
+                if (!videoId.isYouTubeVideoId) return@run null
                 val response = YouTube.returnYouTubeDislike(videoId).getOrNull() ?: return@run null
                 ReturnYouTubeDislikeCounts(
                     likes = response.likes?.toLong()?.takeIf { it >= 0L },
@@ -883,6 +889,7 @@ class YouTubeRepository
 
         suspend fun refreshVideoMetadata(video: Video): Video? =
             withContext(Dispatchers.IO) {
+                if (!video.isYouTube) return@withContext null
                 val response = YouTube.watchMetadataLite(video.id).getOrNull() ?: return@withContext null
                 mergeWatchMetadata(video, response)
             }
@@ -932,6 +939,7 @@ class YouTubeRepository
             }
 
         private suspend fun fetchWatchStreamInfoWithAlternates(videoId: String): StreamInfo? {
+            if (!videoId.isYouTubeVideoId) return null
             val urls =
                 listOf(
                     "https://www.youtube.com/watch?v=$videoId",

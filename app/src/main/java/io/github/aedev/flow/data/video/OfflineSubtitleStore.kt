@@ -3,6 +3,7 @@ package io.github.aedev.flow.data.video
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.repository.isYouTubeVideoId
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.YouTubeClient
 import io.github.aedev.flow.player.stream.CaptionFormat
@@ -158,6 +159,7 @@ class OfflineSubtitleStore
             videoId: String,
             translateTo: String? = null,
         ): List<ResolvedCaption> {
+            if (!videoId.isYouTubeVideoId) return emptyList()
             CAPTION_CLIENTS.forEach { client ->
                 val response = YouTube.player(videoId, client = client).getOrNull()
                 // VTT, not the default srv3: downloadTo() below validates and stores the raw

@@ -1,6 +1,7 @@
 package io.github.aedev.flow.ui.screens.subscriptions
 
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.model.isYouTube
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.YouTubeClient
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
@@ -16,6 +17,7 @@ internal suspend fun fetchSubscriptionPlayerMetadata(
     timeoutMs: Long,
 ): Video? =
     withTimeoutOrNull(timeoutMs) {
+        if (!video.isYouTube) return@withTimeoutOrNull null
         val response =
             YouTube.player(video.id, client = YouTubeClient.ANDROID).getOrNull()
                 ?: YouTube.player(video.id, client = YouTubeClient.MOBILE).getOrNull()

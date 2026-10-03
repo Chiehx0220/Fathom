@@ -1,5 +1,6 @@
 package io.github.aedev.flow.player.stream
 
+import io.github.aedev.flow.data.repository.isYouTubeVideoId
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.YouTubeClient
 import kotlinx.coroutines.CancellationException
@@ -36,6 +37,7 @@ class UpcomingPremiereProbe
     constructor() {
         suspend fun probe(videoId: String): UpcomingPremiere =
             try {
+                if (!videoId.isYouTubeVideoId) return UpcomingPremiere.NOT_UPCOMING
                 val response =
                     withTimeoutOrNull(PROBE_TIMEOUT_MS) {
                         YouTube.player(videoId, client = YouTubeClient.MOBILE).getOrNull()
