@@ -1,0 +1,38 @@
+name: Fork diff budget
+
+# Fails when a change grows the part of upstream Flow's code this fork has edited, since that is where
+# merge conflicts come from. Put new code in a new file and leave only a call in the upstream file.
+# After a cleanup, lower the budget: node scripts/fork-diff.js --update-budget
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  budget:
+    name: Check the budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Fetch upstream Flow
+        run: |
+          git remote add upstream https://github.com/A-EDev/Flow.git
+          git fetch --no-tags upstream main
+
+      - name: Compare with the budget
+        run: node scripts/fork-diff.js --check
