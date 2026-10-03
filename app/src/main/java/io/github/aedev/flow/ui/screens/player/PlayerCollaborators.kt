@@ -97,6 +97,7 @@ internal class PlayerCollaborators(
             playerPreferences = playerPreferences,
             offlineSubtitleStore = offlineSubtitleStore,
             localSubtitles = localSubtitles,
+            cachedCategory = repository::cachedVideoCategory,
         )
 
     val secondaryMetadata =

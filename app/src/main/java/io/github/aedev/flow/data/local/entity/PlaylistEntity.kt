@@ -1,5 +1,6 @@
 package io.github.aedev.flow.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -20,4 +21,5 @@ data class PlaylistEntity(
     val isUserCreated: Boolean = true,
     val syncId: String? = null,
     val serviceId: Int = 0,
+    @ColumnInfo(defaultValue = "0") val position: Int = 0,
 )

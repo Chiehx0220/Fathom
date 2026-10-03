@@ -75,13 +75,14 @@ import io.github.aedev.flow.data.local.migrations.Migration24To25
         AutoMigration(from = 25, to = 26),
         AutoMigration(from = 26, to = 27),
         AutoMigration(from = 27, to = 28),
+        AutoMigration(from = 28, to = 29),
     ],
-    // FORK VERSIONING POLICY: versions up to 28 are upstream's (AutoMigration chain). Fork-only
+    // FORK VERSIONING POLICY: versions up to 29 are upstream's (AutoMigration chain). Fork-only
     // migrations must not continue that sequence, since upstream's next version would collide with
-    // them; they use the reserved 10001+ block (next: Migration(10002, 10003)). Migrations touching
+    // them; they use the reserved 10001+ block (next: Migration(10003, 10004)). Migrations touching
     // columns/tables upstream may also add stay idempotent (see MigrationColumns.kt): a device can
     // already hold the schema from an earlier numbering.
-    version = 10002,
+    version = 10003,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
