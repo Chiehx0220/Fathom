@@ -7,15 +7,10 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
-import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.player.stream.BilibiliVideoMapper
+import io.github.aedev.flow.data.source.BilibiliVideoSource
 import io.github.aedev.flow.utils.PerformanceDispatcher
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,7 +36,7 @@ data class BilibiliExploreState(
 class BilibiliExploreViewModel
     @Inject
     constructor(
-        private val bilibili: BilibiliApi,
+        private val source: BilibiliVideoSource,
         @ApplicationContext private val context: Context,
     ) : ViewModel() {
         private val _state = MutableStateFlow(BilibiliExploreState())
@@ -73,14 +68,7 @@ class BilibiliExploreViewModel
             _state.value = BilibiliExploreState(tab = tab)
             loadJob =
                 viewModelScope.launch(PerformanceDispatcher.networkIO) {
-                    val videos =
-                        try {
-                            fetch(tab)
-                        } catch (cancellation: CancellationException) {
-                            throw cancellation
-                        } catch (_: Exception) {
-                            emptyList()
-                        }
+                    val videos = fetch(tab)
                     if (videos.isNotEmpty()) loaded[tab] = videos
                     _state.update {
                         it.copy(
@@ -95,22 +83,11 @@ class BilibiliExploreViewModel
         private suspend fun fetch(tab: BilibiliExploreTab): List<Video> =
             when (tab) {
                 BilibiliExploreTab.POPULAR -> {
-                    coroutineScope {
-                        (1..POPULAR_PAGES)
-                            .map { page -> async { runCatching { bilibili.popular(page) }.getOrDefault(emptyList()) } }
-                            .awaitAll()
-                            .flatten()
-                            .distinctBy { it.bvid }
-                            .map(BilibiliVideoMapper::videoFromRelated)
-                    }
+                    source.popular()
                 }
 
                 BilibiliExploreTab.LIVE -> {
-                    bilibili.recommendedLives().map(BilibiliVideoMapper::videoFromLiveItem)
+                    source.lives()
                 }
             }
-
-        private companion object {
-            const val POPULAR_PAGES = 3
-        }
     }

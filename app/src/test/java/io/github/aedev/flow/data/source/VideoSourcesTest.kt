@@ -2,8 +2,12 @@ package io.github.aedev.flow.data.source
 
 import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliApi
+import io.github.aedev.flow.bilibili.BilibiliRelated
+import io.github.aedev.flow.bilibili.BilibiliUploader
 import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.model.Video
+import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -56,6 +60,20 @@ class VideoSourcesTest {
         assertThat(bilibiliSource.queriesFor(queries, SearchFilter.ANY)).containsExactly("a", "b").inOrder()
         assertThat(youtube.queriesFor(queries, SearchFilter.ANY)).containsExactlyElementsIn(queries).inOrder()
     }
+
+    @Test
+    fun `popular merges its pages, drops repeats and survives a failing page`() =
+        runTest {
+            fun related(bvid: String) = BilibiliRelated(bvid, "t", "", 60, 1, BilibiliUploader(1, "u", ""), 0)
+            val api: BilibiliApi = mockk()
+            coEvery { api.popular(1) } returns listOf(related("BVa"))
+            coEvery { api.popular(2) } throws IllegalStateException("risk control")
+            coEvery { api.popular(3) } returns listOf(related("BVa"), related("BVb"))
+
+            val ids = BilibiliVideoSource(api).popular().map { it.id }
+
+            assertThat(ids).containsExactly("BVa?p=1", "BVb?p=1").inOrder()
+        }
 
     @Test
     fun `a failing fetch yields no videos`() =

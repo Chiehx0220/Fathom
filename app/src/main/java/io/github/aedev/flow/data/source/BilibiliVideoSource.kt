@@ -8,6 +8,9 @@ import io.github.aedev.flow.bilibili.BilibiliSearchType
 import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,7 +29,7 @@ class BilibiliVideoSource
         ): List<Video> =
             when (filter) {
                 SearchFilter.LIVE -> {
-                    boundedOrEmpty(TIMEOUT_MS) { api.recommendedLives().map(BilibiliVideoMapper::videoFromLiveItem) }
+                    lives()
                 }
 
                 SearchFilter.ANY -> {
@@ -43,6 +46,19 @@ class BilibiliVideoSource
             queries: List<String>,
             filter: SearchFilter,
         ): List<String> = if (filter == SearchFilter.LIVE) queries.take(1) else queries.take(MAX_QUERIES)
+
+        /** The site's popular list: [pages] pages fetched together, one that fails costs only its own videos. */
+        suspend fun popular(pages: Int = POPULAR_PAGES): List<Video> =
+            coroutineScope {
+                (1..pages)
+                    .map { page -> async { boundedOrEmpty(TIMEOUT_MS) { api.popular(page) } } }
+                    .awaitAll()
+                    .flatten()
+                    .distinctBy { it.bvid }
+                    .map(BilibiliVideoMapper::videoFromRelated)
+            }
+
+        suspend fun lives(): List<Video> = boundedOrEmpty(TIMEOUT_MS) { api.recommendedLives().map(BilibiliVideoMapper::videoFromLiveItem) }
 
         override suspend fun related(videoId: String): List<Video> =
             if (BilibiliLiveId.isLive(videoId)) {
@@ -71,6 +87,7 @@ class BilibiliVideoSource
         private companion object {
             const val TIMEOUT_MS = 6_000L
             const val MAX_QUERIES = 2
+            const val POPULAR_PAGES = 3
             const val MILLIS_PER_SECOND = 1000L
             const val WEEK_MS = 7L * 24L * 60L * 60L * 1000L
         }
