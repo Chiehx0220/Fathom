@@ -45,11 +45,10 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.ui.components.settings.SettingsGroupScope
 import io.github.aedev.flow.ui.components.settings.SettingsPage
 import io.github.aedev.flow.ui.components.shared.FlowNavRow
-import io.github.aedev.flow.ui.screens.settings.about.ChangelogSheet
 import io.github.aedev.flow.ui.screens.settings.about.DeviceInfoDialog
 import io.github.aedev.flow.ui.screens.settings.about.IconReddit
 
-private enum class FathomAboutDialog { CHANGELOG, DEVICE }
+private enum class FathomAboutDialog { DEVICE }
 
 private const val FATHOM_CREATOR_NAME = "Chiehx0220"
 private const val FATHOM_CREATOR_URL = "https://github.com/Chiehx0220"
@@ -105,7 +104,7 @@ internal fun FathomAboutScreen(onBack: (() -> Unit)?) {
                 title = { stringResource(R.string.about_changelog) },
                 subtitle = { stringResource(R.string.whats_new_in_flow) },
                 icon = Icons.Outlined.History,
-                onClick = { dialog = FathomAboutDialog.CHANGELOG },
+                onClick = { open(AboutLinks.FATHOM_RELEASES) },
             )
         }
         group(key = "about.contact", header = R.string.section_contact) {
@@ -168,7 +167,6 @@ internal fun FathomAboutScreen(onBack: (() -> Unit)?) {
     }
 
     when (dialog) {
-        FathomAboutDialog.CHANGELOG -> ChangelogSheet(onDismiss = { dialog = null })
         FathomAboutDialog.DEVICE -> DeviceInfoDialog(onDismiss = { dialog = null })
         null -> Unit
     }

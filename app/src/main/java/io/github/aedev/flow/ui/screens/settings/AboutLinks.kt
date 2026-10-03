@@ -6,8 +6,8 @@ import io.github.aedev.flow.R
 /** Every external address the About and donation screens link to, shared by the phone and TV versions. */
 internal object AboutLinks {
     const val FATHOM_GITHUB = "https://github.com/Chiehx0220/Fathom"
+    const val FATHOM_RELEASES = "https://github.com/Chiehx0220/Fathom/releases"
     const val FLOW_GITHUB = "https://github.com/A-EDev/Flow"
-    const val FLOW_RELEASES = "https://github.com/A-EDev/Flow/releases"
     const val FLOW_WEBSITE = "https://flow.aedev.me"
     const val FLOW_REDDIT = "https://www.reddit.com/r/Flow_Official/"
     const val FLOW_DONATION = "https://patreon.com/A_EDev"

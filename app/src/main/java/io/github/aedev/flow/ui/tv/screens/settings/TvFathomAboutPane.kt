@@ -84,7 +84,7 @@ fun TvFathomAboutPane(modifier: Modifier = Modifier) {
                     label = stringResource(R.string.about_changelog),
                     supportingText = stringResource(R.string.whats_new_in_flow),
                     leadingIcon = Icons.Outlined.History,
-                    onClick = { context.openUrl(AboutLinks.FLOW_RELEASES) },
+                    onClick = { context.openUrl(AboutLinks.FATHOM_RELEASES) },
                 )
             }
             item(key = "website") {
