@@ -22,6 +22,8 @@ enum class HomeContentSourceFilter {
                 BILIBILI -> BILIBILI_SERVICE_ID
             }
 
+    fun allows(serviceId: Int): Boolean = this.serviceId?.let { it == serviceId } ?: true
+
     companion object {
         fun fromStoredName(name: String?): HomeContentSourceFilter = entries.firstOrNull { it.name == name } ?: MIX
     }

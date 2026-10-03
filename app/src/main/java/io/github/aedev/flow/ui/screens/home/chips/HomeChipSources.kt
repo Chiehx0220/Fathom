@@ -15,8 +15,6 @@ import javax.inject.Inject
 private const val BILIBILI_QUERY_LIMIT = 2
 private const val MILLIS_PER_SECOND = 1000L
 
-internal fun HomeContentSourceFilter.allows(serviceId: Int): Boolean = this.serviceId?.let { it == serviceId } ?: true
-
 internal fun HomeContentSourceFilter.allows(video: Video): Boolean = allows(video.serviceId)
 
 internal val HomeContentSourceFilter.wantsYouTube: Boolean get() = this != HomeContentSourceFilter.BILIBILI
