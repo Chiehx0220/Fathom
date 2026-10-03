@@ -168,6 +168,7 @@ android {
         getByName("androidTest").assets.directories.add("$projectDir/schemas")
         getByName("nightly").baselineProfiles.directories.add("src/githubRelease/generated/baselineProfiles")
         listOf("github", "foss").forEach { getByName(it).res.srcDir("src/fathom/res") }
+        listOf("debug", "release", "nightly").forEach { getByName(it).manifest.srcFile("src/fathom/AndroidManifest.xml") }
     }
 
     compileOptions {

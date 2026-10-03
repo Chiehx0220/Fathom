@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Fathom's additions to upstream's manifest, laid over src/main/AndroidManifest.xml by the manifest merger so
+  that file stays identical to upstream. Wired to the build types in app/build.gradle.kts.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+
+        <activity android:name="io.github.aedev.flow.MainActivity">
+            <!-- Bilibili videos and uploader pages, and b23.tv short links. No autoVerify: the domains are not ours. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="www.bilibili.com" />
+                <data android:host="bilibili.com" />
+                <data android:host="m.bilibili.com" />
+                <data android:pathPrefix="/video/BV" />
+                <data android:pathPrefix="/space" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="space.bilibili.com" />
+                <data android:host="b23.tv" />
+            </intent-filter>
+
+            <!-- Bilibili live rooms: live.bilibili.com/<room number>. A path pattern has no digit class, so one per leading digit. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="live.bilibili.com" />
+                <data android:pathPattern="/1.*" />
+                <data android:pathPattern="/2.*" />
+                <data android:pathPattern="/3.*" />
+                <data android:pathPattern="/4.*" />
+                <data android:pathPattern="/5.*" />
+                <data android:pathPattern="/6.*" />
+                <data android:pathPattern="/7.*" />
+                <data android:pathPattern="/8.*" />
+                <data android:pathPattern="/9.*" />
+            </intent-filter>
+        </activity>
+
+        <!-- The phone as a remote for the page paired with the local server. -->
+        <activity
+            android:name="io.github.aedev.flow.localserver.RemoteActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Flow" />
+
+        <!-- Local Server foreground service: serves the local web UI on port 8080. -->
+        <service
+            android:name="io.github.aedev.flow.localserver.ServerService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- Launcher icons upstream ships that Fathom does not. -->
+        <activity-alias
+            android:name=".IconExpressiveSegmented"
+            tools:node="remove" />
+        <activity-alias
+            android:name=".IconExpressiveMint"
+            tools:node="remove" />
+
+    </application>
+</manifest>

@@ -173,52 +173,6 @@
                 <data android:host="youtu.be" />
             </intent-filter>
 
-            <!-- Bilibili videos and uploader pages, and b23.tv short links. No autoVerify: the domains are not ours. -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-                <data android:host="www.bilibili.com" />
-                <data android:host="bilibili.com" />
-                <data android:host="m.bilibili.com" />
-                <data android:pathPrefix="/video/BV" />
-                <data android:pathPrefix="/space" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-                <data android:host="space.bilibili.com" />
-                <data android:host="b23.tv" />
-            </intent-filter>
-
-            <!-- Bilibili live rooms: live.bilibili.com/<room number>. A path pattern has no digit class, so one per leading digit. -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-                <data android:host="live.bilibili.com" />
-                <data android:pathPattern="/1.*" />
-                <data android:pathPattern="/2.*" />
-                <data android:pathPattern="/3.*" />
-                <data android:pathPattern="/4.*" />
-                <data android:pathPattern="/5.*" />
-                <data android:pathPattern="/6.*" />
-                <data android:pathPattern="/7.*" />
-                <data android:pathPattern="/8.*" />
-                <data android:pathPattern="/9.*" />
-            </intent-filter>
-
             <!-- Piped frontend links (same video IDs as YouTube) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -291,21 +245,7 @@
             android:exported="false"
             android:foregroundServiceType="dataSync">
         </service>
-
-        <!-- The phone as a remote for the page paired with the local server. -->
-        <activity
-            android:name="io.github.aedev.flow.localserver.RemoteActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Flow" />
-
-        <!-- Local Server foreground service: serves the local web UI on port 8080. -->
-        <service
-            android:name="io.github.aedev.flow.localserver.ServerService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="dataSync">
-        </service>
-
+        
         <!-- Notification action receiver for downloads and other actions -->
         <receiver 
             android:name=".notification.NotificationActionReceiver"
@@ -576,7 +516,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Anchor (Expressive) -->
+        <!-- Scallop (Expressive) -->
         <activity-alias
             android:name=".IconExpressiveScallop"
             android:enabled="false"
@@ -590,7 +530,21 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Lighthouse (Expressive) -->
+        <!-- Segmented F (Expressive) -->
+        <activity-alias
+            android:name=".IconExpressiveSegmented"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_expressive_segmented"
+            android:roundIcon="@mipmap/ic_launcher_expressive_segmented_round"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Sunny Play (Expressive) -->
         <activity-alias
             android:name=".IconExpressivePlay"
             android:enabled="false"
@@ -604,7 +558,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Sailboat (Expressive) -->
+        <!-- Sky Clover (Expressive) -->
         <activity-alias
             android:name=".IconExpressiveSky"
             android:enabled="false"
@@ -618,7 +572,21 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Night Sea (Expressive) -->
+        <!-- Mint Flower (Expressive) -->
+        <activity-alias
+            android:name=".IconExpressiveMint"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_expressive_mint"
+            android:roundIcon="@mipmap/ic_launcher_expressive_mint_round"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Night Cookie (Expressive) -->
         <activity-alias
             android:name=".IconExpressiveCookie"
             android:enabled="false"
@@ -632,7 +600,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Submarine (Expressive) -->
+        <!-- Oval (Expressive) -->
         <activity-alias
             android:name=".IconExpressiveOval"
             android:enabled="false"
@@ -646,7 +614,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- Depth Gauge (Expressive) -->
+        <!-- Pill (Expressive) -->
         <activity-alias
             android:name=".IconExpressivePill"
             android:enabled="false"
