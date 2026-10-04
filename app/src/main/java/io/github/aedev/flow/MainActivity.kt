@@ -29,9 +29,6 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliDeepLink
-import io.github.aedev.flow.bilibili.BilibiliLinkTarget
 import io.github.aedev.flow.data.local.AppUiModePreferences
 import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.data.playlist.PlaylistImport
@@ -69,7 +66,6 @@ import io.github.aedev.flow.ui.startup.themeSettings
 import io.github.aedev.flow.ui.theme.FlowTheme
 import io.github.aedev.flow.ui.tv.FlowTvApp
 import io.github.aedev.flow.ui.utils.ProvideWindowSizeClass
-import io.github.aedev.flow.ui.youtubeChannelRoute
 import io.github.aedev.flow.utils.AppLanguageManager
 import io.github.aedev.flow.utils.FlowCrashHandler
 import io.github.aedev.flow.utils.PLAYLIST_FILE_MIME_TYPE
@@ -450,28 +446,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** Opens a Bilibili video or uploader link, also inside a shared text or behind a b23.tv short link; false when [text] has none. */
-    private fun openBilibiliLink(text: String): Boolean {
-        fun open(target: BilibiliLinkTarget) {
-            when (target) {
-                is BilibiliLinkTarget.Video -> {
-                    _pendingDeeplink.value =
-                        PendingDeeplink(videoId = target.videoId, serviceId = BILIBILI_SERVICE_ID)
-                }
-
-                is BilibiliLinkTarget.Uploader -> {
-                    _pendingRoute.value = youtubeChannelRoute(target.mid.toString(), BILIBILI_SERVICE_ID)
-                }
-            }
-        }
-        BilibiliDeepLink.parse(text)?.let {
-            open(it)
-            return true
-        }
-        if (!BilibiliDeepLink.isShortLink(text)) return false
-        lifecycleScope.launch { BilibiliDeepLink.resolve(text)?.let { open(it) } }
-        return true
-    }
+    private fun openBilibiliLink(text: String): Boolean =
+        BilibiliLinks.open(text, lifecycleScope, { _pendingDeeplink.value = it }, { _pendingRoute.value = it })
 
     fun consumeDeeplink() {
         _pendingDeeplink.value = null

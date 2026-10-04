@@ -83,7 +83,7 @@ class PlaybackLoadResolverTest {
 
         resolver =
             PlaybackLoadResolver(
-                context = context,
+                nonYouTube = NonYouTubeResolver(context),
                 repository = repository,
                 viewHistory = viewHistory,
                 playerPreferences = playerPreferences,

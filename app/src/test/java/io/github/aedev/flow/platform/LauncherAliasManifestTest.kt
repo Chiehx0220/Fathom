@@ -14,14 +14,25 @@ import javax.xml.parsers.DocumentBuilderFactory
 class LauncherAliasManifestTest {
     private val androidNs = "http://schemas.android.com/apk/res/android"
 
-    private val aliases: List<Element> =
+    private val toolsNs = "http://schemas.android.com/tools"
+
+    private fun aliasesIn(path: String): List<Element> =
         DocumentBuilderFactory
             .newInstance()
             .apply { isNamespaceAware = true }
             .newDocumentBuilder()
-            .parse(File("src/main/AndroidManifest.xml"))
+            .parse(File(path))
             .getElementsByTagName("activity-alias")
             .let { nodes -> (0 until nodes.length).map { nodes.item(it) as Element } }
+
+    // Fathom's overlay manifest removes the launcher icons it does not ship; the merged manifest has what is left.
+    private val removedByOverlay: Set<String> =
+        aliasesIn("src/fathom/AndroidManifest.xml")
+            .filter { it.getAttributeNS(toolsNs, "node") == "remove" }
+            .map { it.android("name") }
+            .toSet()
+
+    private val aliases: List<Element> = aliasesIn("src/main/AndroidManifest.xml").filterNot { it.android("name") in removedByOverlay }
 
     private fun Element.android(name: String) = getAttributeNS(androidNs, name)
 

@@ -32,6 +32,7 @@ import io.github.aedev.flow.player.error.PlayerDiagnostics
 import io.github.aedev.flow.player.state.EnhancedPlayerState
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
+import io.github.aedev.flow.player.stream.NonYouTubeResolver
 import io.github.aedev.flow.player.stream.PlaybackLoadResolver
 import io.github.aedev.flow.player.stream.UpcomingPremiereProbe
 import io.github.aedev.flow.utils.NetworkState
@@ -204,7 +205,7 @@ internal class VideoPlayerViewModelHarness(
             upcomingPremiereProbe = UpcomingPremiereProbe(),
             playbackResolver =
                 PlaybackLoadResolver(
-                    context = context,
+                    nonYouTube = NonYouTubeResolver(context),
                     repository = repository,
                     viewHistory = viewHistory,
                     playerPreferences = playerPreferences,

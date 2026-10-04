@@ -23,28 +23,23 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **128** (2952 changed lines). New files: **54** (4721 lines).
+- Modified upstream files: **128** (2460 changed lines). New files: **54** (4721 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| ui/screens/player/PlaybackSessionApplier.kt | 177 | 0 |
 | player/EnhancedPlayerManager.kt | 127 | 30 |
 | data/local/BackupRepository.kt | 109 | 18 |
 | player/datasource/YouTubeHttpDataSource.kt | 97 | 7 |
 | ui/screens/home/chips/HomeChipFeeds.kt | 59 | 38 |
 | ui/tv/components/TvNavRail.kt | 51 | 45 |
 | ui/screens/channel/ChannelViewModel.kt | 81 | 3 |
-| notification/SubscriptionCheckWorker.kt | 79 | 0 |
 | data/innertube/RssSubscriptionService.kt | 72 | 3 |
-| ui/screens/search/SearchViewModel.kt | 71 | 4 |
-| MainActivity.kt | 46 | 26 |
 | ui/screens/home/HomeViewModel.kt | 60 | 9 |
 | ui/screens/search/SearchScreen.kt | 64 | 4 |
 | ui/screens/home/FlowHeaderLogoIcon.kt | 60 | 7 |
-| ui/screens/player/PlaybackStreamPreparer.kt | 63 | 0 |
 | ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
-| player/stream/PlaybackLoadResolver.kt | 49 | 1 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
+| MainActivity.kt | 22 | 26 |
 | ui/screens/home/HomeFeedSources.kt | 42 | 5 |
 | ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
 | data/local/PlayerPreferences.kt | 39 | 0 |
@@ -52,8 +47,6 @@ in it). **New files** never conflict; they are ours alone.
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
 | ui/screens/player/VideoPlayerViewModel.kt | 31 | 7 |
 | ui/FlowNavigation.kt | 24 | 10 |
-| ui/screens/player/PlaybackPreparer.kt | 32 | 2 |
-| ui/screens/playlists/PlaylistDetailViewModel.kt | 33 | 1 |
 | ui/ChannelNavigation.kt | 22 | 11 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
@@ -63,13 +56,13 @@ in it). **New files** never conflict; they are ours alone.
 | ui/FlowApp.kt | 13 | 13 |
 | data/comments/CommentsPager.kt | 19 | 6 |
 | ui/components/shared/card/VideoCardStacked.kt | 15 | 10 |
+| ui/screens/player/PlaybackSessionApplier.kt | 25 | 0 |
+| ui/screens/search/SearchViewModel.kt | 21 | 4 |
 | data/paging/SearchPagingSource.kt | 18 | 6 |
 | data/repository/YouTubeRepository.kt | 18 | 6 |
 | data/video/VideoDownloadManager.kt | 23 | 1 |
 | data/update/UpdateRepository.kt | 14 | 9 |
-| player/stream/ResolvedPlayback.kt | 23 | 0 |
 | ui/NavigationDestinations.kt | 19 | 4 |
-| data/local/SubscriptionRepository.kt | 22 | 0 |
 | data/local/dao/WatchHistoryDao.kt | 22 | 0 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 22 | 0 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
@@ -87,6 +80,13 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 14 | 1 |
 | ui/screens/player/stage/VideoStage.kt | 15 | 0 |
 | data/update/GitHubRelease.kt | 7 | 7 |
+| player/GlobalPlayerState.kt | 13 | 0 |
+| player/stream/PlaybackLoadResolver.kt | 12 | 1 |
+| ui/screens/home/HomeScreen.kt | 11 | 2 |
+| player/stream/PlaybackPrefetcher.kt | 11 | 1 |
+| ui/components/layout/navigation/MediaNavigator.kt | 10 | 2 |
+| ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
+| ui/startup/SplashThemes.kt | 0 | 12 |
 | ... 68 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
@@ -104,7 +104,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **40** (7033 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **40** (7034 lines).
 
 ## Build
 
@@ -154,7 +154,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **14** (87 changed lines). New files: **5** (392 lines).
+- Modified upstream files: **13** (87 changed lines). New files: **5** (392 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -169,7 +169,6 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/components/shared/quickactions/QuickActionsMessagesTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/home/HomeFeedSourcesSeedTest.kt | 1 | 1 |
+| app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelHarness.kt | 2 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/home/chips/HomeChipFeedsTest.kt | 1 | 0 |
-| app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelHarness.kt | 1 | 0 |
-| app/src/test/java/io/github/aedev/flow/ui/screens/search/SearchViewModelTest.kt | 1 | 0 |
 

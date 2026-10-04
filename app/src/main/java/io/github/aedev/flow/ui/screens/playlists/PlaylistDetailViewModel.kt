@@ -33,12 +33,10 @@ import io.github.aedev.flow.data.video.BackgroundDownloadQueuer
 import io.github.aedev.flow.data.video.DownloadBatch
 import io.github.aedev.flow.data.video.downloader.collection.CollectionSpec
 import io.github.aedev.flow.data.video.downloader.collection.DownloadedCollections
-import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.ui.components.library.PlaylistSortOrder
 import io.github.aedev.flow.ui.components.library.sortedForPlaylist
 import io.github.aedev.flow.ui.components.shared.quickactions.QuickActionUndo
 import io.github.aedev.flow.utils.PerformanceDispatcher
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -461,32 +459,10 @@ class PlaylistDetailViewModel
             }
         }
 
-        /** A Bilibili series or season, shaped as the page YouTube playlists arrive in; it is loaded whole, so nothing follows it. */
-        private suspend fun bilibiliPlaylistPage(): RemotePlaylistPage? {
-            val ref = BilibiliPlaylistId.parse(playlistId) ?: return null
-            return try {
-                val details = BilibiliPlaylistLoader.load(bilibiliApi(context), playlistId, ref)
-                RemotePlaylistPage(
-                    title = details.name,
-                    ownerName = null,
-                    ownerId = ref.mid.toString(),
-                    description = "",
-                    thumbnailUrl = details.thumbnailUrl,
-                    videos = details.videos,
-                    continuation = null,
-                )
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                android.util.Log.w("PlaylistDetail", "Bilibili playlist failed: ${e.message}")
-                null
-            }
-        }
-
         private suspend fun loadRemotePlaylist() {
             val page =
                 if (BilibiliPlaylistId.parse(playlistId) != null) {
-                    bilibiliPlaylistPage()
+                    bilibiliPlaylistPage(context, playlistId)
                 } else {
                     playlistRepository.cachedComplete(playlistId) ?: playlistRepository.firstPage(playlistId)
                 }

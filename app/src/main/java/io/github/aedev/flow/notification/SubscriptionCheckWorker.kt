@@ -16,13 +16,9 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import io.github.aedev.flow.data.innertube.ChannelLabel
-import io.github.aedev.flow.data.innertube.RssSubscriptionService
 import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
-import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
 import io.github.aedev.flow.data.subscriptions.ChannelRssClient
 import io.github.aedev.flow.data.subscriptions.ChannelRssParser
@@ -58,8 +54,6 @@ class SubscriptionCheckWorker(
 
         fun subscriptionFeedRepository(): SubscriptionFeedRepository
 
-        fun rssSubscriptionService(): RssSubscriptionService
-
         fun channelRssClient(): ChannelRssClient
 
         fun channelReelIndex(): ChannelReelIndex
@@ -75,14 +69,6 @@ class SubscriptionCheckWorker(
 
         /** How many channels are polled concurrently. */
         private const val CHANNEL_CHUNK_SIZE = 10
-
-        /**
-         * A non-YouTube subscription (e.g. Bilibili) has no lightweight feed - every check is a full
-         * channel-tabs fetch. Floored independently of the user's chosen overall interval (which is
-         * tuned for YouTube's cheap RSS ping) so a short setting there can't turn into hammering
-         * (and risking Bilibili's own risk-control blocking) every run instead.
-         */
-        private val NON_YOUTUBE_MIN_CHECK_INTERVAL_MS = TimeUnit.HOURS.toMillis(2)
 
         /**
          * Schedule periodic subscription checks
@@ -229,12 +215,7 @@ class SubscriptionCheckWorker(
         repository: SubscriptionRepository,
         announceReels: Boolean,
     ): List<NotificationHelper.NewVideoEntry> {
-        // The RSS client only speaks YouTube's feed format - a non-YouTube subscription (e.g.
-        // Bilibili) has no such shortcut and goes through the heavier channel-tabs path instead,
-        // floored to its own minimum interval below.
-        if (!subscription.serviceId.isYouTubeServiceId) {
-            return checkNonYouTubeChannel(subscription, repository, announceReels)
-        }
+        NonYouTubeChannelCheck.checkOrNull(applicationContext, subscription, repository)?.let { return it }
         val feed =
             dependencies.channelRssClient().fetch(subscription.channelId).getOrElse { error ->
                 Log.w(TAG, "Failed to check RSS for ${subscription.channelName}: ${error.message}")
@@ -271,65 +252,6 @@ class SubscriptionCheckWorker(
                 videoId = video.videoId,
                 thumbnailUrl = video.thumbnailUrl,
             )
-        }
-    }
-
-    /**
-     * A non-YouTube channel (e.g. Bilibili) has no RSS shortcut, so this is a full channel-tabs
-     * fetch - floored to [NON_YOUTUBE_MIN_CHECK_INTERVAL_MS] regardless of the user's configured
-     * overall interval, which is tuned for YouTube's much cheaper RSS ping.
-     */
-    private suspend fun checkNonYouTubeChannel(
-        subscription: ChannelSubscription,
-        repository: SubscriptionRepository,
-        announceReels: Boolean,
-    ): List<NotificationHelper.NewVideoEntry> {
-        val now = System.currentTimeMillis()
-        if (now - subscription.lastCheckTime < NON_YOUTUBE_MIN_CHECK_INTERVAL_MS) {
-            return emptyList()
-        }
-
-        val videos =
-            dependencies
-                .rssSubscriptionService()
-                .fetchLatestChannelVideos(
-                    subscription.channelId,
-                    label = ChannelLabel(subscription.channelName, subscription.channelThumbnail),
-                )
-        val latestVideo = videos.firstOrNull() ?: return emptyList()
-
-        // Shorts have no Bilibili equivalent - nothing here needs a reel verdict, unlike the RSS
-        // path above which shares an endpoint with actual YouTube Shorts.
-        dependencies.subscriptionFeedRepository().seedFromNotificationCheck(videos)
-
-        val newVideos = newVideosSince(videos, subscription.lastVideoId)
-        repository.updateChannelLatestVideo(subscription.channelId, latestVideo.id)
-
-        if (newVideos.isNotEmpty()) {
-            Log.d(TAG, "${newVideos.size} new video(s) for ${subscription.channelName}")
-        }
-
-        return newVideos.map { video ->
-            NotificationHelper.NewVideoEntry(
-                channelName = subscription.channelName,
-                videoTitle = video.title,
-                videoId = video.id,
-                thumbnailUrl = video.thumbnailUrl,
-            )
-        }
-    }
-
-    /** Mirrors [ChannelRssParser.newEntriesSince] for a plain [Video] list from the channel-tabs path. */
-    private fun newVideosSince(
-        videos: List<Video>,
-        lastVideoId: String?,
-    ): List<Video> {
-        if (videos.isEmpty() || lastVideoId == null) return emptyList()
-        val knownIndex = videos.indexOfFirst { it.id == lastVideoId }
-        return when {
-            knownIndex == 0 -> emptyList()
-            knownIndex > 0 -> videos.take(minOf(knownIndex, ChannelRssParser.MAX_NEW_PER_CHANNEL))
-            else -> videos.take(1)
         }
     }
 }

@@ -1,9 +1,6 @@
 package io.github.aedev.flow.player.stream
 
-import android.content.Context
 import android.util.Log
-import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.local.ViewHistory
@@ -14,7 +11,6 @@ import io.github.aedev.flow.data.video.DownloadedVideo
 import io.github.aedev.flow.data.video.VideoDownloadManager
 import io.github.aedev.flow.di.IoDispatcher
 import io.github.aedev.flow.di.NetworkIoDispatcher
-import io.github.aedev.flow.di.bilibiliApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -49,8 +45,8 @@ internal data class StreamPreferences(
 class PlaybackLoadResolver
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
         private val repository: YouTubeRepository,
+        private val nonYouTube: NonYouTubeResolver,
         private val viewHistory: ViewHistory,
         private val playerPreferences: PlayerPreferences,
         private val videoDownloadManager: VideoDownloadManager,
@@ -58,8 +54,6 @@ class PlaybackLoadResolver
         @NetworkIoDispatcher private val networkDispatcher: CoroutineDispatcher,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) {
-        private val bilibiliSource by lazy { BilibiliPlaybackSource(bilibiliApi(context)) }
-
         /**
          * @param scope the caller's load job, which owns the extraction so it ends with that job.
          * @param isCurrent whether the load that started this resolution is still the current one.
@@ -153,7 +147,7 @@ class PlaybackLoadResolver
             // InnerTube is YouTube's own API; every other service resolves through its own native
             // client, which produces its own step type rather than an InnerTube result.
             if (!InnerTubeVideoStreamExtractor.supportsService(request.serviceId)) {
-                resolveNonYouTube(request, preferences, isCurrent, onStep)
+                nonYouTube.resolve(request, preferences, isCurrent, onStep)
                 return
             }
 
@@ -214,37 +208,6 @@ class PlaybackLoadResolver
                     upcomingOrFailure(videoId, PlaybackFailure.EXTRACTION, extractionFailureCause(videoId), relatedVideos, resolveUpcoming),
                 )
             }
-        }
-
-        // resolve() already checked localCopyOf(), so there is no offline fallback here.
-        private suspend fun resolveNonYouTube(
-            request: PlaybackResolutionRequest,
-            preferences: StreamPreferences,
-            isCurrent: () -> Boolean,
-            onStep: suspend (ResolvedPlayback) -> Unit,
-        ) {
-            val videoId = request.videoId
-            val step =
-                try {
-                    if (BilibiliLiveId.isLive(videoId)) {
-                        bilibiliSource.resolveLive(request)
-                    } else {
-                        bilibiliSource.resolve(request, preferences)
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Log.e(TAG, "Native extraction failed for $videoId (service ${request.serviceId})", e)
-                    currentCoroutineContext().ensureActive()
-                    if (!isCurrent()) return
-                    // No premiere lookup: that is a YouTube call and means nothing for these ids.
-                    onStep(ResolvedPlayback.Failed(PlaybackFailure.EXTRACTION, e, relatedVideos = null))
-                    return
-                }
-
-            currentCoroutineContext().ensureActive()
-            if (!isCurrent()) return
-            onStep(step)
         }
 
         private suspend fun upcomingOrFailure(

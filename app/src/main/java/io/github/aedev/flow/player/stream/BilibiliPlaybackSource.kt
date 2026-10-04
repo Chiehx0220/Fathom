@@ -24,7 +24,7 @@ internal class BilibiliPlaybackSource(
     suspend fun resolve(
         request: PlaybackResolutionRequest,
         preferences: StreamPreferences,
-    ): ResolvedPlayback.VodFromBilibili =
+    ): VodFromBilibili =
         coroutineScope {
             val (bvid, page) = BilibiliVideoId.parse(request.videoId)
             // Started first so the two requests overlap; a failure here only costs the related lane.
@@ -42,7 +42,7 @@ internal class BilibiliPlaybackSource(
                     }
                 }
             val playback = api.playback(bvid, page)
-            ResolvedPlayback.VodFromBilibili(
+            VodFromBilibili(
                 playback = playback,
                 relatedVideos = related.await(),
                 preferredQuality = preferences.quality,
@@ -53,9 +53,9 @@ internal class BilibiliPlaybackSource(
         }
 
     /** A live room, which has no related lane or parts: what plays is the room's own stream. */
-    suspend fun resolveLive(request: PlaybackResolutionRequest): ResolvedPlayback.LiveFromBilibili {
+    suspend fun resolveLive(request: PlaybackResolutionRequest): LiveFromBilibili {
         val roomId = BilibiliLiveId.roomIdOf(request.videoId) ?: throw BilibiliContentNotAvailableException("Not a live room id")
-        return ResolvedPlayback.LiveFromBilibili(api.livePlayback(roomId))
+        return LiveFromBilibili(api.livePlayback(roomId))
     }
 
     companion object {
@@ -84,7 +84,7 @@ internal class BilibiliStreams(
 )
 
 /** Shared by the player screen and the gapless preload, so both pick the same streams for the same preferences. */
-internal fun ResolvedPlayback.VodFromBilibili.buildStreams(): BilibiliStreams {
+internal fun VodFromBilibili.buildStreams(): BilibiliStreams {
     val bvid = playback.info.bvid
     val videoStreams = BilibiliStreamBridge.convertVideoFormats(bvid, playback.videoFormats)
     val audioStreams = BilibiliStreamBridge.convertAudioFormats(bvid, playback.audioFormats)

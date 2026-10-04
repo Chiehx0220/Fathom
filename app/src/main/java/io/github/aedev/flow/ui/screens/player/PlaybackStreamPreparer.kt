@@ -2,8 +2,6 @@ package io.github.aedev.flow.ui.screens.player
 
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.player.stream.BilibiliStreamBridge
-import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.player.stream.InnerTubeStreamBridge
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
@@ -13,7 +11,6 @@ import io.github.aedev.flow.player.stream.ServicePlaybackStreamSelector
 import io.github.aedev.flow.player.stream.StreamProcessor
 import io.github.aedev.flow.player.stream.StreamSizeEstimator
 import io.github.aedev.flow.player.stream.VideoQualityOptions
-import io.github.aedev.flow.player.stream.buildStreams
 import io.github.aedev.flow.ui.screens.player.state.blankVideo
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import org.schabi.newpipe.extractor.stream.AudioStream
@@ -101,39 +98,6 @@ internal class PlaybackStreamPreparer {
         )
     }
 
-    /** Bilibili's counterpart: its streams and identity arrive without a watch response to read them from. */
-    fun assembleVod(
-        videoId: String,
-        cached: Video?,
-        step: ResolvedPlayback.VodFromBilibili,
-    ): VodStreams {
-        val info = step.playback.info
-        val streams = step.buildStreams()
-        val videoStreams = streams.videoStreams
-        val audioStreams = streams.audioStreams
-        val video = BilibiliVideoMapper.videoFromInfo(videoId, info, cached)
-        return VodStreams(
-            identity =
-                StreamIdentity(
-                    enrichedVideo = video,
-                    title = video.title,
-                    channel = video.channelName,
-                    thumbnail = video.thumbnailUrl,
-                    channelId = video.channelId,
-                    embeddedAvatarUrls = listOfNotNull(video.channelThumbnailUrl.takeIf { it.isNotBlank() }),
-                ),
-            durationSeconds = info.durationSec.toLong(),
-            videoStreams = videoStreams,
-            audioStreams = audioStreams,
-            availableQualities = VideoQualityOptions.availableQualities(videoStreams),
-            videoStream = streams.selectedVideo,
-            audioStream = streams.selectedAudio,
-            subtitles = emptyList(),
-            isAdaptiveMode = step.preferredQuality == VideoQuality.AUTO,
-            streamSizes = emptyMap(),
-        )
-    }
-
     fun assembleLive(
         videoId: String,
         cached: Video?,
@@ -145,31 +109,6 @@ internal class PlaybackStreamPreparer {
             dashManifestUrl = result.liveDashUrl,
             subtitles = captionStreams(result, CaptionTrackResolver.NO_PREFERRED_LANGUAGE),
         )
-
-    /** Bilibili's counterpart: the room's HLS master playlist, or its FLV stream when it publishes no HLS. */
-    fun assembleLive(
-        videoId: String,
-        cached: Video?,
-        step: ResolvedPlayback.LiveFromBilibili,
-    ): LiveStreams {
-        val video = BilibiliVideoMapper.videoFromLive(videoId, step.playback.room, cached)
-        val streams = step.playback.streams
-        return LiveStreams(
-            identity =
-                StreamIdentity(
-                    enrichedVideo = video,
-                    title = video.title,
-                    channel = video.channelName,
-                    thumbnail = video.thumbnailUrl,
-                    channelId = video.channelId,
-                    embeddedAvatarUrls = listOfNotNull(video.channelThumbnailUrl.takeIf { it.isNotBlank() }),
-                ),
-            hlsUrl = streams.hlsMasterUrl,
-            dashManifestUrl = null,
-            subtitles = emptyList(),
-            progressiveStream = streams.flvUrl.takeIf { streams.hlsMasterUrl == null }?.let(BilibiliStreamBridge::liveFlvStream),
-        )
-    }
 
     private fun identity(
         videoId: String,
