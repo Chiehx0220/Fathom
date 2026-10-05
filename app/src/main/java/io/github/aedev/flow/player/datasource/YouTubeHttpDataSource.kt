@@ -1,7 +1,6 @@
 package io.github.aedev.flow.player.datasource
 
 import android.net.Uri
-import android.os.SystemClock
 import android.util.Log
 import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
@@ -40,7 +39,8 @@ class YouTubeHttpDataSource private constructor(
             "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 " +
                 "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
 
-        override fun createDataSource(): HttpDataSource = YouTubeHttpDataSource(userAgent, requestProperties.toMap())
+        override fun createDataSource(): HttpDataSource =
+            BilibiliRoutingDataSource.around(YouTubeHttpDataSource(userAgent, requestProperties.toMap()), requestProperties.toMap())
 
         override fun setDefaultRequestProperties(defaultRequestProperties: MutableMap<String, String>): HttpDataSource.Factory {
             requestProperties.clear()
@@ -49,14 +49,8 @@ class YouTubeHttpDataSource private constructor(
         }
     }
 
-    private class OpenedSource(
-        val source: DataSource,
-        val length: Long,
-    )
-
     companion object {
         private const val TAG = "YouTubeHttpDataSource"
-
         private val clientLock = Any()
 
         @Volatile
@@ -65,7 +59,7 @@ class YouTubeHttpDataSource private constructor(
         @Volatile
         private var cachedProxySignature: String = ""
 
-        private fun sharedClient(): OkHttpClient {
+        internal fun sharedClient(): OkHttpClient {
             val proxySignature = AppProxyManager.currentSignature()
             cachedClient?.takeIf { cachedProxySignature == proxySignature }?.let { return it }
 
@@ -88,24 +82,13 @@ class YouTubeHttpDataSource private constructor(
         }
     }
 
-    // The Bilibili transfer in progress: which URL, and what its reads have moved so far (see BilibiliMirrors.recordSpeed).
-    private var speedUrl: String? = null
-    private var readBytes = 0L
-    private var readNanos = 0L
-
     @UnstableApi
     override fun open(dataSpec: DataSpec): Long {
         currentUri = dataSpec.uri
-        speedUrl = null
-        readBytes = 0L
-        readNanos = 0L
 
-        val isBili = BilibiliHttpSupport.isBilibiliCdnUri(dataSpec.uri)
         val requestUserAgent =
             if (isYouTubeUri(dataSpec.uri)) {
                 resolveYouTubeUserAgent(dataSpec.uri)
-            } else if (isBili) {
-                BilibiliHttpSupport.USER_AGENT
             } else {
                 userAgent
             }
@@ -118,83 +101,21 @@ class YouTubeHttpDataSource private constructor(
         requestHeaders.putAll(defaultRequestProperties)
         if (isYouTubeUri(dataSpec.uri)) {
             requestHeaders.putAll(youtubeHeaders(dataSpec.uri))
-        } else if (isBili) {
-            requestHeaders.putAll(BilibiliHttpSupport.headers())
         }
         if (requestHeaders.isNotEmpty()) {
             factory.setDefaultRequestProperties(requestHeaders)
         }
 
-        val startedMs = SystemClock.elapsedRealtime()
-        // Bilibili lists two mirrors per file; when this request has one to fall back to, both may be
-        // tried (see HedgedOpen) so a stalled mirror costs one short delay rather than seconds.
-        val mirrors = if (isBili) BilibiliMirrors.groupFor(dataSpec.uri.toString()) else null
-        if (isBili && mirrors == null) BilibiliHttpSupport.warnIfNoMirrors(dataSpec.uri.host)
+        dataSource = factory.createDataSource()
         return try {
-            val length: Long
-            var openedUri = dataSpec.uri
-            var hedged = false
-            if (mirrors != null) {
-                val winner =
-                    HedgedOpen.race(
-                        urls = mirrors.order(),
-                        hedgeDelayMs = BilibiliHttpSupport.HEDGE_DELAY_MS,
-                        executor = BilibiliHttpSupport.hedgeExecutor,
-                        open = { url ->
-                            val source = factory.createDataSource()
-                            try {
-                                OpenedSource(source, source.open(dataSpec.withUri(Uri.parse(url))))
-                            } catch (e: Throwable) {
-                                runCatching { source.close() }
-                                throw e
-                            }
-                        },
-                        close = { runCatching { it.source.close() } },
-                    )
-                mirrors.markWinner(winner.url)
-                dataSource = winner.value.source
-                length = winner.value.length
-                openedUri = Uri.parse(winner.url)
-                hedged = winner.hedged
-            } else {
-                dataSource = factory.createDataSource()
-                length = dataSource!!.open(dataSpec)
-            }
-            currentUri = openedUri
-            if (isBili) speedUrl = openedUri.toString()
-            if (isBili) {
-                // Only the requests worth a look: one that needed its other mirror, or that took long
-                // to answer. The rest is the normal case and would bury these.
-                val answeredMs = SystemClock.elapsedRealtime() - startedMs
-                if (hedged || answeredMs >= BilibiliHttpSupport.SLOW_OPEN_LOG_MS) {
-                    Log.w(
-                        "BiliCdn",
-                        "open host=${openedUri.host} pos=${dataSpec.position} reqLen=${dataSpec.length} " +
-                            "answeredInMs=$answeredMs mirrored=${mirrors != null} hedged=$hedged",
-                    )
-                }
-            }
-            length
+            dataSource!!.open(dataSpec)
         } catch (e: HttpDataSource.InvalidResponseCodeException) {
-            if (e.responseCode == 403) logForbidden(dataSpec, isBili)
-            throw e
-        } catch (e: java.io.IOException) {
-            // A cancelled request (the player seeked away) is not a failure; anything else is.
-            if (isBili && e !is java.io.InterruptedIOException && e.cause !is java.io.InterruptedIOException) {
-                Log.w(
-                    "BiliCdn",
-                    "open FAILED host=${dataSpec.uri.host} pos=${dataSpec.position} " +
-                        "afterMs=${SystemClock.elapsedRealtime() - startedMs} ${e::class.java.simpleName}: ${e.message}",
-                )
-            }
+            if (e.responseCode == 403) logForbidden(dataSpec)
             throw e
         }
     }
 
-    private fun logForbidden(
-        dataSpec: DataSpec,
-        isBili: Boolean,
-    ) {
+    private fun logForbidden(dataSpec: DataSpec) {
         val url = dataSpec.uri.toString()
         val expiry = StreamDenialClassifier.describeExpiry(url)
         val kind = StreamDenialClassifier.classify(url)
@@ -203,12 +124,12 @@ class YouTubeHttpDataSource private constructor(
         val pot = StreamDenialClassifier.hasPoToken(url)
         Log.w(
             TAG,
-            "HTTP 403 isBili=$isBili c=$client itag=$itag mime=${StreamDenialClassifier.queryParam(url, "mime")} " +
+            "HTTP 403 c=$client itag=$itag mime=${StreamDenialClassifier.queryParam(url, "mime")} " +
                 "pot=$pot range=${dataSpec.position}+${dataSpec.length} $expiry denial=$kind",
         )
         PlayerDiagnostics.logWarning(
             TAG,
-            "403 isBili=$isBili c=$client itag=$itag pot=$pot range=${dataSpec.position}+${dataSpec.length} $expiry denial=$kind",
+            "403 c=$client itag=$itag pot=$pot range=${dataSpec.position}+${dataSpec.length} $expiry denial=$kind",
         )
     }
 
@@ -216,19 +137,9 @@ class YouTubeHttpDataSource private constructor(
         buffer: ByteArray,
         offset: Int,
         length: Int,
-    ): Int {
-        val source = dataSource ?: return C.RESULT_END_OF_INPUT
-        if (speedUrl == null) return source.read(buffer, offset, length)
-        val startedNanos = System.nanoTime()
-        val count = source.read(buffer, offset, length)
-        readNanos += System.nanoTime() - startedNanos
-        if (count > 0) readBytes += count
-        return count
-    }
+    ): Int = dataSource?.read(buffer, offset, length) ?: C.RESULT_END_OF_INPUT
 
     override fun close() {
-        speedUrl?.let { BilibiliMirrors.recordSpeed(it, readBytes, readNanos) }
-        speedUrl = null
         dataSource?.close()
         dataSource = null
     }

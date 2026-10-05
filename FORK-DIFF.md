@@ -23,12 +23,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **122** (2072 changed lines). New files: **57** (4967 lines).
+- Modified upstream files: **122** (1973 changed lines). New files: **57** (4967 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | data/local/BackupRepository.kt | 109 | 18 |
-| player/datasource/YouTubeHttpDataSource.kt | 97 | 7 |
 | ui/screens/home/chips/HomeChipFeeds.kt | 59 | 38 |
 | ui/tv/components/TvNavRail.kt | 51 | 45 |
 | data/innertube/RssSubscriptionService.kt | 72 | 3 |
@@ -87,6 +86,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/channel/ChannelCommunityController.kt | 9 | 1 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
+| ui/AppHooks.kt | 4 | 5 |
 | ... 62 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
@@ -100,7 +100,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **63** (6892 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **64** (6991 lines).
 
 ## Local server (fork-only feature)
 

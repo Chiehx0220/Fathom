@@ -2,7 +2,7 @@ package io.github.aedev.flow.player.datasource
 
 /**
  * The mirror URLs of each Bilibili stream (its own CDN and Akamai). The player holds one URL per
- * stream, so [YouTubeHttpDataSource] looks the others up here. Mirrors are tried fastest first, by the
+ * stream, so [BilibiliHttpDataSource] looks the others up here. Mirrors are tried fastest first, by the
  * transfer speed measured on each host ([recordSpeed]); which one answered first last time breaks ties.
  */
 object BilibiliMirrors {

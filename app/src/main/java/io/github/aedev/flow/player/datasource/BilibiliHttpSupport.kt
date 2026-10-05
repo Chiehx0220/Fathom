@@ -8,8 +8,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Bilibili-specific behavior for [YouTubeHttpDataSource]: CDN host detection, request headers and
- * mirror-hedging tuning. Kept out of that class so upstream's own edits to it stay a clean merge.
+ * Bilibili-specific behavior for [BilibiliRoutingDataSource] and [BilibiliHttpDataSource]: CDN host
+ * detection, request headers and mirror-hedging tuning. Kept out of [YouTubeHttpDataSource] so
+ * upstream's own edits to it stay a clean merge.
  */
 object BilibiliHttpSupport {
     // A mirror that has not answered in this long is raced against the next one. Measured
