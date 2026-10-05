@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="icon_bg_flow_play">#0F1D33</color>
+    <color name="icon_bg_expressive_scallop">#DCE6F7</color>
+    <color name="icon_bg_expressive_play">#0F1D33</color>
+    <color name="icon_bg_expressive_oval">#2F62C9</color>
+    <color name="icon_bg_expressive_pill">#F2EDE0</color>
+</resources>

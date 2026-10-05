@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android TV launcher banner: the Fathom badge centred on navy, inside the 5% overscan-safe area. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp"
+    android:height="90dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path android:fillColor="#0F1D33" android:pathData="M0,0h320v180h-320z"/>
+    <group android:scaleX="5" android:scaleY="5" android:translateX="100" android:translateY="30">
+    <path android:fillColor="#F2EDE0" android:pathData="M7,2 L17,2 C20,2 22,4 22,7 L22,17 C22,20 20,22 17,22 L7,22 C4,22 2,20 2,17 L2,7 C2,4 4,2 7,2 Z"/>
+        <group android:translateX="-1.56" android:translateY="0.48">
+          <path android:fillColor="@android:color/transparent" android:strokeColor="#0F1D33" android:strokeWidth="1.2" android:strokeLineCap="round" android:pathData="M8.88,4.32 L8.88,18.72 M8.88,5.28 L18.24,5.28 M8.88,10.08 L12,10.08 M8.88,14.88 L12,14.88"/>
+          <path android:fillColor="#C99A34" android:pathData="M13.92,10.08 L13.92,14.88 L18,12.48 Z"/>
+        </group>
+    </group>
+</vector>
