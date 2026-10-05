@@ -23,7 +23,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **178** (3994 changed lines). New files: **57** (4915 lines).
+- Modified upstream files: **178** (3913 changed lines). New files: **56** (4899 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -44,7 +44,6 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/VideoPlayerViewModel.kt | 34 | 26 |
 | ui/screens/shorts/ShortsPipEffects.kt | 12 | 48 |
 | data/localmedia/LocalEmbeddedTags.kt | 2 | 51 |
-| MainActivity.kt | 22 | 30 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
 | ui/screens/home/HomeFeedSources.kt | 42 | 5 |
 | ui/utils/NetworkTransport.kt | 0 | 47 |
@@ -58,7 +57,6 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/search/SearchViewModel.kt | 19 | 20 |
 | data/local/SearchHistoryEntries.kt | 0 | 38 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 25 | 10 |
-| ui/FlowNavigation.kt | 24 | 10 |
 | ui/ChannelNavigation.kt | 22 | 11 |
 | data/localmedia/LocalMediaStore.kt | 11 | 21 |
 | ui/components/shared/card/VideoCardState.kt | 9 | 23 |
@@ -71,7 +69,6 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/ViewHistory.kt | 28 | 0 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
 | service/Media3MusicService.kt | 0 | 27 |
-| ui/FlowApp.kt | 13 | 13 |
 | data/comments/CommentsPager.kt | 19 | 6 |
 | ui/components/shared/card/VideoCardStacked.kt | 15 | 10 |
 | ui/screens/player/PlaybackSessionApplier.kt | 25 | 0 |
@@ -86,7 +83,10 @@ in it). **New files** never conflict; they are ours alone.
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
 | data/subscriptions/ChannelUploadsClient.kt | 0 | 21 |
 | player/MusicMutePause.kt | 0 | 21 |
+| ui/FlowApp.kt | 11 | 10 |
 | utils/ShareVideo.kt | 14 | 7 |
+| player/error/VideoErrorMapper.kt | 20 | 0 |
+| ui/screens/player/content/PlayerErrorPanel.kt | 17 | 3 |
 | ... 118 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
@@ -100,7 +100,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **61** (6799 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **61** (6803 lines).
 
 ## Local server (fork-only feature)
 

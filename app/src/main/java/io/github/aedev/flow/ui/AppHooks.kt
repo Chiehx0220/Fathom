@@ -51,23 +51,21 @@ fun HandlePendingRoute(
 
 @Composable
 fun HandleDeepLinks(
-    pendingDeeplink: PendingDeeplink?,
+    deeplinkVideoId: String?,
+    isShort: Boolean,
     navController: NavHostController,
     onDeeplinkConsumed: () -> Unit,
 ) {
-    LaunchedEffect(pendingDeeplink) {
-        val (videoId, serviceId, isShort) = pendingDeeplink ?: return@LaunchedEffect
+    LaunchedEffect(deeplinkVideoId, isShort) {
+        val videoId = deeplinkVideoId ?: return@LaunchedEffect
         navController.awaitGraph()
         if (isShort) {
             // Every Shorts queue shares one route, so single-top would reuse whichever Shorts screen
             // is on top and keep its old queue instead of opening the linked short.
             navController.openShorts(ShortsQueueSource.SeededFeed(videoId))
         } else {
-            // Route through navigateToPlayer (PlayerNavigation.kt), not a hand-built
-            // "player/$id?serviceId=$id" string: a raw Bilibili id can itself contain
-            // "?p=1", which would inject a second "?" and make the route's own
-            // "?serviceId=" query silently fail to parse, falling back to YouTube.
-            navController.navigateToPlayer(videoId, serviceId)
+            // navigateToPlayer (PlayerNavigation.kt) encodes the id: a raw Bilibili id can contain "?p=1".
+            navController.navigateToPlayer(videoId)
         }
         onDeeplinkConsumed()
     }

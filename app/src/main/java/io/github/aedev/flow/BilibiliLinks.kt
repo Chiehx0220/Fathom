@@ -3,7 +3,6 @@ package io.github.aedev.flow
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliDeepLink
 import io.github.aedev.flow.bilibili.BilibiliLinkTarget
-import io.github.aedev.flow.ui.PendingDeeplink
 import io.github.aedev.flow.ui.youtubeChannelRoute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -17,13 +16,13 @@ internal object BilibiliLinks {
     fun open(
         text: String,
         scope: CoroutineScope,
-        onVideo: (PendingDeeplink) -> Unit,
+        onVideo: (String) -> Unit,
         onRoute: (String?) -> Unit,
     ): Boolean {
         fun open(target: BilibiliLinkTarget) {
             when (target) {
                 is BilibiliLinkTarget.Video -> {
-                    onVideo(PendingDeeplink(videoId = target.videoId, serviceId = BILIBILI_SERVICE_ID))
+                    onVideo(target.videoId)
                 }
 
                 is BilibiliLinkTarget.Uploader -> {

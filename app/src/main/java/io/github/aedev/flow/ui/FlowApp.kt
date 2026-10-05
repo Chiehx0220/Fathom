@@ -82,7 +82,8 @@ fun FlowApp(
     themeVariant: ThemeVariant,
     systemLightThemeMode: ThemeMode,
     systemDarkThemeMode: ThemeMode,
-    pendingDeeplink: PendingDeeplink? = null,
+    deeplinkVideoId: String? = null,
+    isShort: Boolean = false,
     openMusicPlayerRequest: Int = 0,
     onDeeplinkConsumed: () -> Unit = {},
     pendingRoute: String? = null,
@@ -162,7 +163,7 @@ fun FlowApp(
         subscriptionRefreshOnStartup = subscriptionRefreshOnStartup,
     )
 
-    HandleDeepLinks(pendingDeeplink, navController, onDeeplinkConsumed)
+    HandleDeepLinks(deeplinkVideoId, isShort, navController, onDeeplinkConsumed)
     OfflineMonitor(context, navController, snackbarHostState, currentRoute)
 
     val currentEntry by navController.currentBackStackEntryAsState()
@@ -375,7 +376,7 @@ fun FlowApp(
             navController.awaitGraph()
             val video = currentVideo
             if (!isShortsPlayerRoute && !currentRoute.value.startsWith("player") && video != null) {
-                navController.navigateToPlayer(video.id, video.serviceId)
+                navController.navigateToPlayer(video.id)
             }
         }
 

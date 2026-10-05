@@ -48,7 +48,6 @@ import io.github.aedev.flow.player.MemoryPressurePolicy
 import io.github.aedev.flow.player.PictureInPictureHelper
 import io.github.aedev.flow.ui.FlowApp
 import io.github.aedev.flow.ui.LinkDestination
-import io.github.aedev.flow.ui.PendingDeeplink
 import io.github.aedev.flow.ui.components.library.message
 import io.github.aedev.flow.ui.components.shared.ProvideChannelGroupLabels
 import io.github.aedev.flow.ui.components.shared.ProvideDateDisplaySettings
@@ -82,8 +81,11 @@ private const val PORTRAIT_REEL_ASPECT_RATIO = 9f / 16f
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val _pendingDeeplink = mutableStateOf<PendingDeeplink?>(null)
-    val pendingDeeplink: State<PendingDeeplink?> = _pendingDeeplink
+    private val _deeplinkVideoId = mutableStateOf<String?>(null)
+    val deeplinkVideoId: State<String?> = _deeplinkVideoId
+
+    private val _isDeeplinkShort = mutableStateOf(false)
+    val isDeeplinkShort: State<Boolean> = _isDeeplinkShort
 
     private val _openMusicPlayerRequest = mutableIntStateOf(0)
     val openMusicPlayerRequest: State<Int> = _openMusicPlayerRequest
@@ -274,15 +276,16 @@ class MainActivity : ComponentActivity() {
                                 // 1. MAIN APP (Home/NavHost)
                                 // This loads *behind* the splash screen immediately.
                                 // By the time splash fades, this is ready.
-                                val pendingDeeplink by this@MainActivity.pendingDeeplink
+                                val deeplinkVideoId by this@MainActivity.deeplinkVideoId
+                                val isDeeplinkShort by this@MainActivity.isDeeplinkShort
                                 val openMusicPlayerRequest by this@MainActivity.openMusicPlayerRequest
                                 val pendingRoute by this@MainActivity.pendingRoute
 
                                 if (appUiRoot == AppUiRoot.TV) {
                                     SideEffect { splashController.contentReady = true }
                                     FlowTvApp(
-                                        deeplinkVideoId = pendingDeeplink?.videoId,
-                                        isShort = pendingDeeplink?.isShort ?: false,
+                                        deeplinkVideoId = deeplinkVideoId,
+                                        isShort = isDeeplinkShort,
                                         onDeeplinkConsumed = { consumeDeeplink() },
                                     )
                                 } else {
@@ -292,7 +295,8 @@ class MainActivity : ComponentActivity() {
                                             themeVariant = theme.themeVariant,
                                             systemLightThemeMode = theme.systemLightThemeMode,
                                             systemDarkThemeMode = theme.systemDarkThemeMode,
-                                            pendingDeeplink = pendingDeeplink,
+                                            deeplinkVideoId = deeplinkVideoId,
+                                            isShort = isDeeplinkShort,
                                             openMusicPlayerRequest = openMusicPlayerRequest,
                                             onDeeplinkConsumed = {
                                                 consumeDeeplink()
@@ -399,7 +403,8 @@ class MainActivity : ComponentActivity() {
         }
 
         if (intent.getBooleanExtra("open_music_player", false)) {
-            _pendingDeeplink.value = null
+            _deeplinkVideoId.value = null
+            _isDeeplinkShort.value = false
             _openMusicPlayerRequest.intValue += 1
             intent.removeExtra("notification_video_id")
             intent.removeExtra("video_id")
@@ -408,18 +413,17 @@ class MainActivity : ComponentActivity() {
 
         if (intent.getBooleanExtra("open_video_player", false)) {
             intent.removeExtra("open_video_player")
-            GlobalPlayerState.currentVideo.value?.let { video ->
-                _pendingDeeplink.value = PendingDeeplink(videoId = video.id, serviceId = video.serviceId)
+            val currentVideoId = GlobalPlayerState.currentVideo.value?.id
+            if (currentVideoId != null) {
+                _isDeeplinkShort.value = false
+                _deeplinkVideoId.value = currentVideoId
             }
             return
         }
 
         val isShort = intent.getBooleanExtra("is_short", false) || intent.getBooleanExtra("is_shorts", false)
-        // Every deep link that reaches this point (a notification tap) is YouTube by construction,
-        // so PendingDeeplink's serviceId default applies as-is.
-        if (notificationVideoId != null) {
-            _pendingDeeplink.value = PendingDeeplink(videoId = notificationVideoId, isShort = isShort)
-        }
+        _isDeeplinkShort.value = isShort && notificationVideoId != null
+        notificationVideoId?.let { _deeplinkVideoId.value = it }
     }
 
     /**
@@ -429,11 +433,13 @@ class MainActivity : ComponentActivity() {
     private fun openLink(text: String) {
         when (val destination = parseYouTubeLink(text)?.let(::linkDestination)) {
             is LinkDestination.Video -> {
-                _pendingDeeplink.value = PendingDeeplink(videoId = destination.videoId)
+                _isDeeplinkShort.value = false
+                _deeplinkVideoId.value = destination.videoId
             }
 
             is LinkDestination.Short -> {
-                _pendingDeeplink.value = PendingDeeplink(videoId = destination.videoId, isShort = true)
+                _isDeeplinkShort.value = true
+                _deeplinkVideoId.value = destination.videoId
             }
 
             is LinkDestination.Page -> {
@@ -447,10 +453,16 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openBilibiliLink(text: String): Boolean =
-        BilibiliLinks.open(text, lifecycleScope, { _pendingDeeplink.value = it }, { _pendingRoute.value = it })
+        BilibiliLinks.open(text, lifecycleScope, { videoId -> openVideoLink(videoId) }, { _pendingRoute.value = it })
+
+    private fun openVideoLink(videoId: String) {
+        _isDeeplinkShort.value = false
+        _deeplinkVideoId.value = videoId
+    }
 
     fun consumeDeeplink() {
-        _pendingDeeplink.value = null
+        _deeplinkVideoId.value = null
+        _isDeeplinkShort.value = false
     }
 
     override fun onPictureInPictureModeChanged(

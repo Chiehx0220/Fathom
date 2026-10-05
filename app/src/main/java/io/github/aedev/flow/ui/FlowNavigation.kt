@@ -14,6 +14,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.localmedia.toMusicTrack
@@ -248,11 +249,7 @@ fun NavGraphBuilder.flowAppGraph(
                 onMusicStarted()
             },
             onSavedShortClick = { video ->
-                if (disableShortsPlayer) {
-                    navController.navigateToPlayer(video.id, video.serviceId)
-                } else {
-                    navController.openShorts(ShortsQueueSource.Saved(video.id))
-                }
+                navController.openShortsOrPlayer(ShortsQueueSource.Saved(video.id), disableShortsPlayer)
             },
         )
     }
@@ -913,15 +910,8 @@ fun NavGraphBuilder.flowAppGraph(
     widgetPlaybackRoutes(navController, currentRoute, defaultStartRoute, playerViewModel, onMusicStarted)
 
     composable(
-        route = "player/{videoId}?serviceId={serviceId}",
-        arguments =
-            listOf(
-                navArgument("videoId") { type = NavType.StringType },
-                navArgument("serviceId") {
-                    type = NavType.IntType
-                    defaultValue = org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId
-                },
-            ),
+        route = "player/{videoId}",
+        arguments = listOf(navArgument("videoId") { type = NavType.StringType }),
     ) { backStackEntry ->
         val videoId = backStackEntry.arguments?.getString("videoId")
         val effectiveVideoId =
@@ -929,8 +919,6 @@ fun NavGraphBuilder.flowAppGraph(
                 !videoId.isNullOrEmpty() && videoId != "sample" -> videoId
                 else -> "jNQXAC9IVRw"
             }
-        val effectiveServiceId =
-            backStackEntry.arguments?.getInt("serviceId") ?: org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId
 
         // Use passed state
         val playerUiState = playerUiStateResult.value
@@ -949,7 +937,7 @@ fun NavGraphBuilder.flowAppGraph(
                             uploadDate = "",
                             description = "",
                             channelThumbnailUrl = "",
-                            serviceId = effectiveServiceId,
+                            serviceId = serviceIdOfVideo(effectiveVideoId),
                         )
                 playerViewModel.playVideo(video)
                 GlobalPlayerState.setCurrentVideo(video)
