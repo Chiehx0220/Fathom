@@ -6,6 +6,7 @@ import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.model.resolvedServiceId
 import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.utils.NetworkState
 import kotlinx.coroutines.CancellationException
@@ -23,7 +24,7 @@ internal object BilibiliPreloadResolver {
         video: Video,
         context: Context,
     ): ResolvedStreamData? {
-        if (video.serviceId != BILIBILI_SERVICE_ID || BilibiliLiveId.isLive(video.id)) return null
+        if (video.resolvedServiceId != BILIBILI_SERVICE_ID || BilibiliLiveId.isLive(video.id)) return null
         return try {
             resolve(video, context)
         } catch (e: CancellationException) {

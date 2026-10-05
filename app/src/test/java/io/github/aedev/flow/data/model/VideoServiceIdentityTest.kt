@@ -47,4 +47,10 @@ class VideoServiceIdentityTest {
     fun `a local media id has no shape of its own and keeps the stored service id`() {
         assertThat(video("local:42", serviceId = youTube).resolvedServiceId).isEqualTo(youTube)
     }
+
+    @Test
+    fun `bullet comments follow the id's service, not the stored one`() {
+        assertThat(video("BV1xx411c7mD", serviceId = youTube).supportsBulletComments).isTrue()
+        assertThat(video("dQw4w9WgXcQ", serviceId = youTube).supportsBulletComments).isFalse()
+    }
 }

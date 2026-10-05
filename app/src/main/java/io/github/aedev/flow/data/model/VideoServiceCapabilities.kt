@@ -26,4 +26,4 @@ val Int.isYouTubeServiceId: Boolean
 
 /** See [serviceSupportsBulletComments] for why this isn't a NewPipeExtractor capability check. */
 val Video.supportsBulletComments: Boolean
-    get() = serviceSupportsBulletComments(serviceId)
+    get() = serviceSupportsBulletComments(resolvedServiceId)

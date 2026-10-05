@@ -4,6 +4,7 @@ import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliSearchItem
 import io.github.aedev.flow.bilibili.BilibiliSearchType
+import io.github.aedev.flow.bilibili.serviceIdOfChannel
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.subscriptions.latestVideos
@@ -64,7 +65,7 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
                 subscriptionRepository
                     .getAllSubscriptions()
                     .first()
-                    .filter { it.serviceId == BILIBILI_SERVICE_ID }
+                    .filter { serviceIdOfChannel(it.channelId, it.serviceId) == BILIBILI_SERVICE_ID }
             }.getOrElse { emptyList() }
 
         // getSubscriptionFeed()'s rotation cursor is YouTube-tuned - Bilibili gets its own small,
