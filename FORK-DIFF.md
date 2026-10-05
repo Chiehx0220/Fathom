@@ -23,7 +23,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **121** (2232 changed lines). New files: **56** (4899 lines).
+- Modified upstream files: **122** (2235 changed lines). New files: **56** (4899 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -87,7 +87,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/channel/ChannelCommunityController.kt | 9 | 1 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
-| ... 61 more, each small | | |
+| ... 62 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 

@@ -1,5 +1,6 @@
 package io.github.aedev.flow.utils
 
+import io.github.aedev.flow.bilibili.bilibiliThumbnailCandidates
 import io.github.aedev.flow.data.local.ThumbnailQuality
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 
@@ -71,7 +72,7 @@ object ThumbnailUrlResolver {
             when {
                 raw.isEmpty() -> youtubeCandidates
                 isYoutubeVideoThumbnail(raw) -> youtubeCandidates
-                else -> listOf(raw) + youtubeCandidates
+                else -> bilibiliThumbnailCandidates(raw, quality, portrait) ?: (listOf(raw) + youtubeCandidates)
             }
 
         return candidates
