@@ -7,21 +7,19 @@ import android.content.Intent
 import android.net.Uri
 import io.github.aedev.flow.MainActivity
 import io.github.aedev.flow.R
-import io.github.aedev.flow.data.model.isYouTubeServiceId
+import io.github.aedev.flow.data.repository.isYouTubeVideoId
 import io.github.aedev.flow.localserver.videoIdToUrl
-import org.schabi.newpipe.extractor.ServiceList
 
 /**
  * The canonical watch link for a video, optionally seeked to [positionSeconds]. The timestamp
- * query param is a YouTube-only convention, so it is only appended for [ServiceList.YouTube].
+ * query param is a YouTube-only convention, so it is only appended for a YouTube id.
  */
 fun youtubeWatchUrl(
     videoId: String,
     positionSeconds: Long? = null,
-    serviceId: Int = ServiceList.YouTube.serviceId,
 ): String {
-    val watchUrl = videoIdToUrl(videoId, serviceId)
-    return if (positionSeconds == null || !serviceId.isYouTubeServiceId) {
+    val watchUrl = videoIdToUrl(videoId)
+    return if (positionSeconds == null || !videoId.isYouTubeVideoId) {
         watchUrl
     } else {
         "$watchUrl&t=${positionSeconds}s"
@@ -42,10 +40,9 @@ fun shareVideoIntent(
     videoId: String,
     title: String,
     linkOnly: Boolean,
-    serviceId: Int = ServiceList.YouTube.serviceId,
     isShort: Boolean = false,
 ): Intent {
-    val url = if (isShort) youtubeShortsUrl(videoId) else youtubeWatchUrl(videoId, serviceId = serviceId)
+    val url = if (isShort) youtubeShortsUrl(videoId) else youtubeWatchUrl(videoId)
     val shareText =
         when {
             linkOnly -> context.getString(R.string.share_link_only_template, url)
@@ -138,8 +135,7 @@ fun shareVideo(
     videoId: String,
     title: String,
     linkOnly: Boolean,
-    serviceId: Int = ServiceList.YouTube.serviceId,
     isShort: Boolean = false,
 ) {
-    context.startActivity(shareVideoIntent(context, videoId, title, linkOnly, serviceId, isShort))
+    context.startActivity(shareVideoIntent(context, videoId, title, linkOnly, isShort))
 }

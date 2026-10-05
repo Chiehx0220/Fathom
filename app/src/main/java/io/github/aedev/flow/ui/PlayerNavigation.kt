@@ -17,7 +17,7 @@ internal fun NavHostController.navigateToPlayer(
     videoId: String,
     serviceId: Int = ServiceList.YouTube.serviceId,
 ) {
-    PlaybackPrefetcher.prefetch(videoId, serviceId)
+    PlaybackPrefetcher.prefetch(videoId)
     // videoId is encoded because non-YouTube ids can contain characters the route's own
     // "?serviceId=" query syntax would otherwise misparse (e.g. Bilibili's "BVxxxx?p=1").
     navigate("player/${Uri.encode(videoId)}?serviceId=$serviceId")

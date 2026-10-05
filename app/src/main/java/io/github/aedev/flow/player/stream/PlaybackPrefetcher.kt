@@ -2,13 +2,12 @@ package io.github.aedev.flow.player.stream
 
 import android.util.Log
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
-import io.github.aedev.flow.data.model.isYouTubeServiceId
+import io.github.aedev.flow.data.repository.isYouTubeVideoId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.ServiceList
 
 /**
  * Starts stream extraction the moment a video is tapped, ahead of the player screen composing and
@@ -36,15 +35,12 @@ object PlaybackPrefetcher {
      * ignored rather than sent through a client ladder that would certainly fail.
      *
      * [InnerTubeVideoStreamExtractor] only talks to YouTube's private API - for any other
-     * [serviceId] (e.g. Bilibili) warming it would just fail after a full client-ladder timeout, so
+     * service's id (e.g. Bilibili) warming it would just fail after a full client-ladder timeout, so
      * it's skipped; that service's actual player load goes through the generic extractor instead.
      */
-    fun prefetch(
-        videoId: String,
-        serviceId: Int = ServiceList.YouTube.serviceId,
-    ) {
+    fun prefetch(videoId: String) {
         if (videoId.isBlank() || LocalMediaIds.isLocal(videoId)) return
-        if (!serviceId.isYouTubeServiceId) return
+        if (!videoId.isYouTubeVideoId) return
         synchronized(lock) {
             if (inFlightVideoId == videoId && inFlight?.isActive == true) return
             // Only the most recently tapped video is worth warming. Leaving an abandoned one

@@ -7,7 +7,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.utils.shareVideo
-import org.schabi.newpipe.extractor.ServiceList
 
 /** The user's "share links without text" preference, for every share affordance to honour. */
 @Composable
@@ -23,12 +22,10 @@ fun rememberShareLinksWithoutText(): State<Boolean> {
  * importing a feature package or re-deriving the payload.
  */
 @Composable
-fun rememberVideoShareAction(): (videoId: String, title: String, serviceId: Int, isShort: Boolean) -> Unit {
+fun rememberVideoShareAction(): (videoId: String, title: String, isShort: Boolean) -> Unit {
     val context = LocalContext.current
     val linkOnly = rememberShareLinksWithoutText()
     return remember(context) {
-        { videoId: String, title: String, serviceId: Int, isShort: Boolean ->
-            shareVideo(context, videoId, title, linkOnly.value, serviceId, isShort)
-        }
+        { videoId: String, title: String, isShort: Boolean -> shareVideo(context, videoId, title, linkOnly.value, isShort) }
     }
 }

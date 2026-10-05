@@ -37,6 +37,15 @@ class ShareVideoTest {
     }
 
     @Test
+    fun `a Bilibili id links to Bilibili and never gets a YouTube timestamp`() {
+        val url = youtubeWatchUrl("BV1xx411c7mD", 95L)
+
+        assertThat(url).contains("bilibili.com")
+        assertThat(url).doesNotContain("youtube.com")
+        assertThat(url).doesNotContain("t=95s")
+    }
+
+    @Test
     fun `share without text sends the bare link`() {
         val sent = payload(shareVideoIntent(context, "abc123", "A title", linkOnly = true))
 

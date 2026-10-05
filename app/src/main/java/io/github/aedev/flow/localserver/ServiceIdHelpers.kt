@@ -1,6 +1,7 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliChannelId
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import org.schabi.newpipe.extractor.ServiceList
 
@@ -48,7 +49,10 @@ fun channelUrlToId(url: String?): String? {
 fun videoIdToUrl(
     videoId: String,
     serviceId: Int = ServiceList.YouTube.serviceId,
-): String = if (serviceId.isYouTubeServiceId) "https://www.youtube.com/watch?v=$videoId" else LocalServerBilibili.videoUrl(videoId)
+): String {
+    val isYouTube = serviceIdOfVideo(videoId, serviceId).isYouTubeServiceId
+    return if (isYouTube) "https://www.youtube.com/watch?v=$videoId" else LocalServerBilibili.videoUrl(videoId)
+}
 
 fun playlistIdToUrl(playlistId: String): String = "https://www.youtube.com/playlist?list=$playlistId"
 

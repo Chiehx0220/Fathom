@@ -173,7 +173,7 @@ private fun VideoPrimaryActions(
                 icon = Icons.Outlined.Share,
                 label = stringResource(R.string.share),
                 onClick = {
-                    share(video.id, video.title, video.serviceId, video.isShort)
+                    share(video.id, video.title, video.isShort)
                     onDismiss()
                 },
             ),
@@ -356,7 +356,7 @@ private fun moreRows(
         actionRow("copy_link", Icons.Outlined.ContentCopy, stringResource(R.string.copy_video_link)) {
             scope.launch {
                 clipboard.setClipEntry(
-                    ClipEntry(ClipData.newPlainText(video.title, youtubeWatchUrl(video.id, serviceId = video.serviceId))),
+                    ClipEntry(ClipData.newPlainText(video.title, youtubeWatchUrl(video.id))),
                 )
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) viewModel.announce(R.string.link_copied)
                 onDismiss()

@@ -180,7 +180,7 @@ internal fun VideoInfoContent(
             if (fileUri != null) {
                 context.shareMediaFiles(listOf(fileUri), mimeType = "video/*")
             } else {
-                shareVideoAction(video.id, resolvedVideoTitle, video.serviceId, video.isShort)
+                shareVideoAction(video.id, resolvedVideoTitle, video.isShort)
             }
         },
         isDeviceFile = LocalMediaIds.isLocal(video.id),
@@ -191,14 +191,14 @@ internal fun VideoInfoContent(
         hasNote = !videoNote.isNullOrBlank(),
         onBackgroundPlayClick = { viewModel.startBackgroundPlayback() },
         onCopyLinkClick = {
-            val url = youtubeWatchUrl(video.id, serviceId = video.serviceId)
+            val url = youtubeWatchUrl(video.id)
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             clipboard.setPrimaryClip(ClipData.newPlainText("video_link", url))
             Toast.makeText(context, context.getString(R.string.link_copied), Toast.LENGTH_SHORT).show()
         },
         onCopyLinkAtTimeClick = {
             val positionMs = EnhancedPlayerManager.getInstance().getCurrentPosition()
-            val url = youtubeWatchUrl(video.id, positionMs / 1000L, video.serviceId)
+            val url = youtubeWatchUrl(video.id, positionMs / 1000L)
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             clipboard.setPrimaryClip(ClipData.newPlainText("video_link_at_time", url))
             Toast.makeText(context, context.getString(R.string.link_with_timestamp_copied), Toast.LENGTH_SHORT).show()
