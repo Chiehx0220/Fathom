@@ -23,7 +23,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **122** (2132 changed lines). New files: **56** (4899 lines).
+- Modified upstream files: **122** (2072 changed lines). New files: **57** (4967 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -31,7 +31,6 @@ in it). **New files** never conflict; they are ours alone.
 | player/datasource/YouTubeHttpDataSource.kt | 97 | 7 |
 | ui/screens/home/chips/HomeChipFeeds.kt | 59 | 38 |
 | ui/tv/components/TvNavRail.kt | 51 | 45 |
-| ui/screens/channel/ChannelViewModel.kt | 83 | 3 |
 | data/innertube/RssSubscriptionService.kt | 72 | 3 |
 | ui/screens/home/HomeViewModel.kt | 60 | 9 |
 | ui/screens/home/FlowHeaderLogoIcon.kt | 60 | 7 |
@@ -49,6 +48,7 @@ in it). **New files** never conflict; they are ours alone.
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/local/ViewHistory.kt | 28 | 0 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
+| ui/screens/channel/ChannelViewModel.kt | 23 | 3 |
 | data/comments/CommentsPager.kt | 19 | 6 |
 | ui/components/shared/card/VideoCardStacked.kt | 15 | 10 |
 | ui/screens/player/PlaybackSessionApplier.kt | 25 | 0 |
