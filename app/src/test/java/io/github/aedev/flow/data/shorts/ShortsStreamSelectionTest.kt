@@ -1,10 +1,15 @@
 package io.github.aedev.flow.data.shorts
 
+import io.github.aedev.flow.testing.DefaultLocaleRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Rule
 import org.junit.Test
 
 class ShortsStreamSelectionTest {
+    @get:Rule
+    val englishNames = DefaultLocaleRule()
+
     private val av1At480 =
         reelVideoFormat(itag = 788, mimeType = "video/mp4; codecs=\"av01.0.05M.08\"", width = 608, height = 1080, qualityLabel = "480p")
     private val vp9At480 =

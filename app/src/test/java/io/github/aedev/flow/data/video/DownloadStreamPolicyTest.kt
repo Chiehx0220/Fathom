@@ -2,11 +2,16 @@ package io.github.aedev.flow.data.video
 
 import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.innertube.models.response.PlayerResponse.StreamingData.Format
+import io.github.aedev.flow.testing.DefaultLocaleRule
+import org.junit.Rule
 import org.junit.Test
 import java.util.Locale
 
 /** Pins the download policy against InnerTube formats as the `/player` response carries them. */
 class DownloadStreamPolicyTest {
+    @get:Rule
+    val englishNames = DefaultLocaleRule()
+
     private fun audio(
         itag: Int,
         mimeType: String = M4A,
