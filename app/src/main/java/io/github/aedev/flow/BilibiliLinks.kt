@@ -1,6 +1,5 @@
 package io.github.aedev.flow
 
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliDeepLink
 import io.github.aedev.flow.bilibili.BilibiliLinkTarget
 import io.github.aedev.flow.ui.youtubeChannelRoute
@@ -26,7 +25,7 @@ internal object BilibiliLinks {
                 }
 
                 is BilibiliLinkTarget.Uploader -> {
-                    onRoute(youtubeChannelRoute(target.mid.toString(), BILIBILI_SERVICE_ID))
+                    onRoute(youtubeChannelRoute(target.mid.toString()))
                 }
             }
         }

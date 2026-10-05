@@ -23,7 +23,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **126** (2318 changed lines). New files: **56** (4899 lines).
+- Modified upstream files: **121** (2232 changed lines). New files: **56** (4899 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -45,7 +45,6 @@ in it). **New files** never conflict; they are ours alone.
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
 | ui/screens/player/VideoPlayerViewModel.kt | 31 | 7 |
 | ui/screens/search/SearchScreen.kt | 38 | 0 |
-| ui/ChannelNavigation.kt | 22 | 11 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/local/ViewHistory.kt | 28 | 0 |
@@ -58,17 +57,15 @@ in it). **New files** never conflict; they are ours alone.
 | data/repository/YouTubeRepository.kt | 18 | 6 |
 | data/video/VideoDownloadManager.kt | 23 | 1 |
 | data/update/UpdateRepository.kt | 14 | 9 |
-| ui/NavigationDestinations.kt | 19 | 4 |
 | data/local/dao/WatchHistoryDao.kt | 22 | 0 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 22 | 0 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
-| ui/FlowApp.kt | 11 | 10 |
 | utils/ShareVideo.kt | 14 | 7 |
 | player/error/VideoErrorMapper.kt | 20 | 0 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 17 | 3 |
 | data/local/entity/VideoEntity.kt | 10 | 9 |
+| ui/FlowApp.kt | 8 | 10 |
 | ui/components/shared/quickactions/QuickActionsViewModel.kt | 14 | 3 |
-| ui/FlowNavigation.kt | 9 | 7 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 14 | 2 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
@@ -80,14 +77,17 @@ in it). **New files** never conflict; they are ours alone.
 | player/stream/PlaybackLoadResolver.kt | 12 | 1 |
 | ui/components/shared/quickactions/VideoQuickActionsSheet.kt | 11 | 2 |
 | ui/screens/home/HomeScreen.kt | 11 | 2 |
-| ui/components/layout/navigation/MediaNavigator.kt | 10 | 2 |
+| ui/FlowNavigation.kt | 7 | 5 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
 | ui/startup/SplashThemes.kt | 0 | 12 |
 | data/local/LikedVideosRepository.kt | 10 | 1 |
 | MainActivity.kt | 9 | 1 |
 | player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
-| ... 66 more, each small | | |
+| ui/screens/channel/ChannelCommunityController.kt | 9 | 1 |
+| ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
+| player/stream/VideoCodecUtils.kt | 4 | 5 |
+| ... 61 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -100,7 +100,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **61** (6803 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **61** (6802 lines).
 
 ## Local server (fork-only feature)
 
@@ -154,7 +154,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **14** (111 changed lines). New files: **6** (448 lines).
+- Modified upstream files: **15** (119 changed lines). New files: **6** (448 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -164,6 +164,7 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/data/subscriptions/SubscriptionRefreshPlannerTest.kt | 12 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/paging/SearchPagingSourceTest.kt | 8 | 1 |
 | app/src/test/java/io/github/aedev/flow/data/repository/ChannelMetadataNeedTest.kt | 9 | 0 |
+| app/src/test/java/io/github/aedev/flow/ui/NavigationDestinationsTest.kt | 8 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/effects/WatchHistoryEntryTest.kt | 7 | 0 |
 | app/src/test/java/io/github/aedev/flow/player/stream/VideoCodecUtilsTest.kt | 6 | 0 |
 | app/src/test/java/io/github/aedev/flow/player/stream/PlaybackLoadResolverTest.kt | 3 | 0 |

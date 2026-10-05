@@ -41,13 +41,10 @@ internal class FlowMediaNavigator(
     private val beforeNavigate: () -> Unit,
     private val shortsExitRoute: () -> String,
 ) : MediaNavigator {
-    override fun openChannel(
-        channelId: String,
-        serviceId: Int,
-    ) {
+    override fun openChannel(channelId: String) {
         if (channelId.isBlank()) return
         beforeNavigate()
-        navController.navigateToYoutubeChannel(channelId, serviceId)
+        navController.navigateToYoutubeChannel(channelId)
     }
 
     override fun openArtist(artistId: String) =

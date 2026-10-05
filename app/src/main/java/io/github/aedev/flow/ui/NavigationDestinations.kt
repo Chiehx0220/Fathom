@@ -2,12 +2,9 @@ package io.github.aedev.flow.ui
 
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
-import io.github.aedev.flow.data.model.isYouTubeServiceId
+import io.github.aedev.flow.bilibili.BilibiliChannelId
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
 import io.github.aedev.flow.ui.components.layout.navigation.FlowTab
-import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
-import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.ServiceList
 import java.net.URI
 import java.net.URLEncoder
 
@@ -48,19 +45,12 @@ internal fun shortsExitRoute(tabs: List<FlowTab>): String = (tabs.firstOrNull { 
 /** Search is a tab, but it keeps the back-button layout of the other search screens, so no bar. */
 internal fun FlowTab?.showsNavigationBar(): Boolean = this != null && this != FlowTab.Search
 
-internal fun youtubeChannelUrl(
-    channelIdOrHandle: String,
-    serviceId: Int = ServiceList.YouTube.serviceId,
-): String? {
+internal fun youtubeChannelUrl(channelIdOrHandle: String): String? {
     val value = channelIdOrHandle.trim()
     if (value.isEmpty()) return null
-    if (value.startsWith("http://") || value.startsWith("https://")) return normalizeYoutubeChannelUrl(value)
-    if (!serviceId.isYouTubeServiceId) {
-        // Bare id for a non-YouTube service (e.g. Bilibili's numeric "mid") - resolve through that
-        // service's own link handler instead of assuming a YouTube URL shape.
-        return resolveNonYouTubeChannelUrl(value, serviceId) { "" }.ifEmpty { null }
-    }
     return when {
+        value.startsWith("http://") || value.startsWith("https://") -> normalizeYoutubeChannelUrl(value)
+        BilibiliChannelId.isMid(value) -> "https://space.bilibili.com/$value"
         value.startsWith("UC") -> "https://www.youtube.com/channel/$value"
         value.startsWith("@") -> "https://www.youtube.com/$value"
         else -> "https://www.youtube.com/@$value"
@@ -88,11 +78,8 @@ internal fun youtubeChannelBrowseId(channelIdOrUrl: String): String? {
         ?.takeIf { it.startsWith("UC") }
 }
 
-internal fun youtubeChannelRoute(
-    channelIdOrHandle: String,
-    serviceId: Int = ServiceList.YouTube.serviceId,
-): String? =
-    youtubeChannelUrl(channelIdOrHandle, serviceId)?.let { channelUrl ->
+internal fun youtubeChannelRoute(channelIdOrHandle: String): String? =
+    youtubeChannelUrl(channelIdOrHandle)?.let { channelUrl ->
         "channel?url=${URLEncoder.encode(channelUrl, Charsets.UTF_8.name())}"
     }
 

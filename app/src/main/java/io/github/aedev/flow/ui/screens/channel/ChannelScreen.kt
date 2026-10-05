@@ -204,9 +204,7 @@ fun ChannelScreen(
                     IconButton(onClick = {
                         // channelUrl may already be a full URL, so it must be normalized rather than
                         // pasted behind /channel/ — that produced a nested, unopenable share link.
-                        // serviceId matters here too: header.id for a non-YouTube channel isn't a bare
-                        // YouTube handle, so resolving it without serviceId would build a bogus youtube.com link.
-                        val shareUrl = youtubeChannelUrl(uiState.header?.id ?: channelUrl, uiState.serviceId) ?: channelUrl
+                        val shareUrl = youtubeChannelUrl(uiState.header?.id ?: channelUrl) ?: channelUrl
                         val shareIntent =
                             Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"

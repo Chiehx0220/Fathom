@@ -182,7 +182,7 @@ fun NavGraphBuilder.flowAppGraph(
                 if (channel.isMusic && channel.id.isNotBlank()) {
                     mediaNavigator.openArtist(channel.id)
                 } else {
-                    mediaNavigator.openChannel(channel.url.ifBlank { channel.id }, channel.serviceId)
+                    mediaNavigator.openChannel(channel.url.ifBlank { channel.id })
                 }
             },
         )
@@ -265,7 +265,7 @@ fun NavGraphBuilder.flowAppGraph(
                 navController.openShortsOrPlayer(source, disableShortsPlayer)
             },
             onChannelClick = { channel ->
-                mediaNavigator.openChannel(channel.url.ifBlank { channel.id }, channel.serviceId)
+                mediaNavigator.openChannel(channel.url.ifBlank { channel.id })
             },
             onPlaylistClick = { playlist ->
                 navController.navigate("playlist/${android.net.Uri.encode(playlist.id)}")

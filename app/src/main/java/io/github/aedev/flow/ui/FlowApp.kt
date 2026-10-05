@@ -608,12 +608,9 @@ fun FlowApp(
                     playerVisible = false
                 },
                 // channelArg can be a stale or blank id (the nav placeholder's channelId is never synced back once
-                // real metadata loads), so fall back to the active video's own channel and service.
+                // real metadata loads), so fall back to the active video's own channel.
                 onNavigateToChannel = { channelArg ->
-                    mediaNavigator.openChannel(
-                        channelArg.takeIf { it.isNotBlank() } ?: activeVideo?.channelId.orEmpty(),
-                        activeVideo?.serviceId ?: org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId,
-                    )
+                    mediaNavigator.openChannel(channelArg.takeIf { it.isNotBlank() } ?: activeVideo?.channelId.orEmpty())
                 },
                 onNavigateToShorts = { videoId ->
                     playerSheetState.collapse()

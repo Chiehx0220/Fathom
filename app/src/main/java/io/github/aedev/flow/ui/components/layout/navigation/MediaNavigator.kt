@@ -3,7 +3,6 @@ package io.github.aedev.flow.ui.components.layout.navigation
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
 import io.github.aedev.flow.utils.YouTubeLink
-import org.schabi.newpipe.extractor.ServiceList
 
 /**
  * The app-wide way to open the page behind a piece of media: its channel, artist, album or playlist,
@@ -15,11 +14,7 @@ import org.schabi.newpipe.extractor.ServiceList
  */
 @Stable
 interface MediaNavigator {
-    /** [serviceId] says which service the channel belongs to; a bare Bilibili uploader id is recognized without it. */
-    fun openChannel(
-        channelId: String,
-        serviceId: Int = ServiceList.YouTube.serviceId,
-    )
+    fun openChannel(channelId: String)
 
     fun openArtist(artistId: String)
 
@@ -34,10 +29,7 @@ interface MediaNavigator {
 }
 
 private object NoOpMediaNavigator : MediaNavigator {
-    override fun openChannel(
-        channelId: String,
-        serviceId: Int,
-    ) = Unit
+    override fun openChannel(channelId: String) = Unit
 
     override fun openArtist(artistId: String) = Unit
 

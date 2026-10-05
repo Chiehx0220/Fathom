@@ -219,7 +219,7 @@ internal class VideoCardState(
         if (collaborators.size > 1) {
             sheets.showCollaborators = true
         } else {
-            navigator.openChannel(video.channelId, video.serviceId)
+            navigator.openChannel(video.channelId)
         }
     }
 }

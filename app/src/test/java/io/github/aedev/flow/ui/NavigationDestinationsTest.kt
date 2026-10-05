@@ -93,4 +93,12 @@ class NavigationDestinationsTest {
             youtubeChannelRoute("@flow"),
         )
     }
+
+    @Test
+    fun `a bare uploader number is a Bilibili space and an at-handle stays on YouTube`() {
+        assertEquals("https://space.bilibili.com/12345", youtubeChannelUrl("12345"))
+        assertEquals("https://space.bilibili.com/12345", youtubeChannelUrl(" 12345 "))
+        assertEquals("https://www.youtube.com/@12345", youtubeChannelUrl("@12345"))
+        assertEquals("https://space.bilibili.com/12345", youtubeChannelUrl("https://space.bilibili.com/12345"))
+    }
 }
