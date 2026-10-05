@@ -23,11 +23,10 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **122** (2235 changed lines). New files: **56** (4899 lines).
+- Modified upstream files: **122** (2132 changed lines). New files: **56** (4899 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| player/EnhancedPlayerManager.kt | 127 | 30 |
 | data/local/BackupRepository.kt | 109 | 18 |
 | player/datasource/YouTubeHttpDataSource.kt | 97 | 7 |
 | ui/screens/home/chips/HomeChipFeeds.kt | 59 | 38 |
@@ -37,6 +36,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/home/HomeViewModel.kt | 60 | 9 |
 | ui/screens/home/FlowHeaderLogoIcon.kt | 60 | 7 |
 | ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
+| player/EnhancedPlayerManager.kt | 52 | 2 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
 | ui/screens/home/HomeFeedSources.kt | 42 | 5 |
 | ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
@@ -100,7 +100,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **61** (6802 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **63** (6892 lines).
 
 ## Local server (fork-only feature)
 
@@ -154,7 +154,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **15** (119 changed lines). New files: **6** (448 lines).
+- Modified upstream files: **17** (129 changed lines). New files: **7** (472 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -167,6 +167,8 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/ui/NavigationDestinationsTest.kt | 8 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/effects/WatchHistoryEntryTest.kt | 7 | 0 |
 | app/src/test/java/io/github/aedev/flow/player/stream/VideoCodecUtilsTest.kt | 6 | 0 |
+| app/src/test/java/io/github/aedev/flow/data/shorts/ShortsStreamSelectionTest.kt | 5 | 0 |
+| app/src/test/java/io/github/aedev/flow/data/video/DownloadStreamPolicyTest.kt | 5 | 0 |
 | app/src/test/java/io/github/aedev/flow/player/stream/PlaybackLoadResolverTest.kt | 3 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/components/shared/quickactions/QuickActionsMessagesTest.kt | 1 | 1 |

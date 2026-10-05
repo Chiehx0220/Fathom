@@ -374,86 +374,45 @@ class EnhancedPlayerManager private constructor() {
                     )
                 }
 
-            // Media3's session attaches its own Player.Listener straight to whatever player this
-            // wraps (that's ForwardingPlayer's default addListener/removeListener), and only
-            // re-asks getMediaMetadata() when that real player fires an event - a transition, a
-            // timeline change. GlobalPlayerState.currentVideo finishes enriching well after that
-            // event already fired for this video, so overriding the getter alone is invisible to
-            // the session: it's stuck on whatever it read at that first ask. Tracking the
-            // session's listener here too (still forwarded to the real player as before, so normal
-            // playback events are untouched) lets notifyMediaMetadataChanged() push the corrected
-            // value through it directly once GlobalPlayerState actually has it.
-            class VideoSessionPlayer(
-                wrapped: Player,
-            ) : ForwardingPlayer(wrapped) {
-                private val extraListeners = java.util.concurrent.CopyOnWriteArraySet<Player.Listener>()
-
-                override fun addListener(listener: Player.Listener) {
-                    extraListeners.add(listener)
-                    autoNextLog("VideoSessionPlayer addListener count=${extraListeners.size}")
-                    super.addListener(listener)
-                }
-
-                override fun removeListener(listener: Player.Listener) {
-                    extraListeners.remove(listener)
-                    autoNextLog("VideoSessionPlayer removeListener count=${extraListeners.size}")
-                    super.removeListener(listener)
-                }
-
-                override fun getMediaMetadata(): MediaMetadata {
-                    val v = GlobalPlayerState.currentVideo.value ?: return super.getMediaMetadata()
-                    return v.toVideoSessionMetadata().toMedia3Metadata()
-                }
-
-                fun notifyMediaMetadataChanged() {
-                    val metadata = mediaMetadata
-                    autoNextLog(
-                        "VideoSessionPlayer notifyMediaMetadataChanged title=${metadata.title} " +
-                            "artist=${metadata.artist} listeners=${extraListeners.size}",
-                    )
-                    extraListeners.forEach {
-                        try {
-                            it.onMediaMetadataChanged(metadata)
-                        } catch (e: Exception) {
-                            autoNextLog("VideoSessionPlayer notify listener threw ${e.javaClass.simpleName}: ${e.message}")
-                        }
+            val sessionPlayer =
+                object : MetadataSyncingPlayer(realPlayer, ::autoNextLog) {
+                    override fun getMediaMetadata(): MediaMetadata {
+                        val v = GlobalPlayerState.currentVideo.value ?: return super.getMediaMetadata()
+                        return v.toVideoSessionMetadata().toMedia3Metadata()
                     }
+
+                    override fun getAvailableCommands(): Player.Commands =
+                        super
+                            .getAvailableCommands()
+                            .buildUpon()
+                            .add(Player.COMMAND_SEEK_TO_NEXT)
+                            .add(Player.COMMAND_SEEK_TO_PREVIOUS)
+                            .build()
+
+                    override fun isCommandAvailable(command: Int): Boolean = availableCommands.contains(command)
+
+                    override fun seekToNext() {
+                        autoNextLog("MediaSession seekToNext")
+                        this@EnhancedPlayerManager.skipToNextFromSession()
+                    }
+
+                    override fun seekToNextMediaItem() {
+                        autoNextLog("MediaSession seekToNextMediaItem")
+                        this@EnhancedPlayerManager.skipToNextFromSession()
+                    }
+
+                    override fun seekToPrevious() {
+                        this@EnhancedPlayerManager.playPrevious()
+                    }
+
+                    override fun seekToPreviousMediaItem() {
+                        this@EnhancedPlayerManager.playPrevious()
+                    }
+
+                    override fun hasNextMediaItem(): Boolean = this@EnhancedPlayerManager.hasNextForSession()
+
+                    override fun hasPreviousMediaItem(): Boolean = this@EnhancedPlayerManager.hasPrevious()
                 }
-
-                override fun getAvailableCommands(): Player.Commands =
-                    super
-                        .getAvailableCommands()
-                        .buildUpon()
-                        .add(Player.COMMAND_SEEK_TO_NEXT)
-                        .add(Player.COMMAND_SEEK_TO_PREVIOUS)
-                        .build()
-
-                override fun isCommandAvailable(command: Int): Boolean = availableCommands.contains(command)
-
-                override fun seekToNext() {
-                    autoNextLog("MediaSession seekToNext")
-                    this@EnhancedPlayerManager.skipToNextFromSession()
-                }
-
-                override fun seekToNextMediaItem() {
-                    autoNextLog("MediaSession seekToNextMediaItem")
-                    this@EnhancedPlayerManager.skipToNextFromSession()
-                }
-
-                override fun seekToPrevious() {
-                    this@EnhancedPlayerManager.playPrevious()
-                }
-
-                override fun seekToPreviousMediaItem() {
-                    this@EnhancedPlayerManager.playPrevious()
-                }
-
-                override fun hasNextMediaItem(): Boolean = this@EnhancedPlayerManager.hasNextForSession()
-
-                override fun hasPreviousMediaItem(): Boolean = this@EnhancedPlayerManager.hasPrevious()
-            }
-
-            val sessionPlayer = VideoSessionPlayer(realPlayer)
 
             val builder =
                 MediaSession
@@ -462,13 +421,7 @@ class EnhancedPlayerManager private constructor() {
                     .setBitmapLoader(sessionArtworkBitmapLoader(appCtx))
             if (sessionActivity != null) builder.setSessionActivity(sessionActivity)
             videoMediaSession = builder.build()
-            videoMetadataSyncJob =
-                scope.launch {
-                    GlobalPlayerState.currentVideo.collect { video ->
-                        autoNextLog("VideoSessionPlayer GlobalPlayerState.currentVideo changed id=${video?.id} title=${video?.title}")
-                        sessionPlayer.notifyMediaMetadataChanged()
-                    }
-                }
+            videoMetadataSyncJob = sessionPlayer.syncMetadataWith(scope, GlobalPlayerState.currentVideo)
             Log.d(TAG, "Video MediaSession created")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create video MediaSession", e)
