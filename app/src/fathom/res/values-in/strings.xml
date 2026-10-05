@@ -4,7 +4,7 @@
     <string name="app_name">Fathom</string>
     <string name="channel_error_log_clip_label">Log kesalahan kanal Fathom</string>
     <string name="local_media_permission_body">Memungkinkan akses ke media Anda sehingga Fathom dapat menemukan dan memutar video dan musik lokal.</string>
-    <string name="link_not_supported">Fathom tidak dapat membuka tautan seperti ini</string>
+    <string name="link_not_supported">Fathom tidak dapat membuka jenis tautan ini</string>
     <string name="update_flow">Perbarui Fathom</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Kendalikan notifikasi mana yang dapat dikirim oleh Fathom</string>
@@ -31,6 +31,7 @@
     <string name="onboarding_welcome_title">Jadikan Fathom milik Anda</string>
     <string name="flow_control_center">Pusat Kontrol Fathom</string>
     <string name="persona_audiophile_description">Anda menggunakan Fathom terutama untuk Musik. Vibe adalah segalanya.</string>
+    <string name="eq_system_desc">Ditambahkan ke equalizer Fathom</string>
     <string name="flow_is_up_to_date">Fathom sudah terbaru!</string>
     <string name="sync_error_qr_not_flow">Data koneksi Fathom tersebut tampaknya tidak valid.</string>
     <string name="sync_collection_recommendation_profile_body">Apa yang telah dipelajari Fathom tentang apa yang Anda tonton.</string>
@@ -46,6 +47,7 @@
     <string name="tv_remote_guide_subtitle">Referensi singkat untuk menavigasi Fathom dari sofa</string>
     <string name="widget_now_playing_description">Kontrol musik yang sedang diputar di Fathom</string>
     <string name="widget_quick_actions_description">Cari Fathom dan langsung buka unduhan, riwayat, atau pengenalan</string>
+    <string name="settings_widgets_summary">Letakkan Fathom di layar utama Anda</string>
     <string name="ui_flow_logo">Logo Fathom</string>
     <string name="crash_title">Fathom tertutup secara tidak terduga</string>
     <string name="ui_crashed_last_session">Fathom mengalami crash pada sesi terakhir</string>
@@ -56,11 +58,13 @@
     <string name="update_title">Fathom %1$s tersedia</string>
     <string name="update_permission_notice">Izinkan Fathom menginstal pembaruan. Android hanya meminta izin ini satu kali.</string>
     <string name="update_failed_package">File tersebut bukan pembaruan Fathom sehingga telah dihapus.</string>
+    <string name="local_partial_access_title">Fathom hanya dapat melihat video yang Anda pilih</string>
+    <string name="downloads_storage_used">%1$s di Fathom</string>
     <string name="import_migrate_description">Migrasikan langganan dan riwayat Anda dari platform lain ke Fathom dengan mudah.</string>
     <string name="import_manage_backups">Kelola cadangan Fathom Anda</string>
     <string name="taste_summary">Cara Fathom melihat Anda dan hal yang membentuk feed Anda</string>
     <string name="taste_card_hint">Lihat cara Fathom melihat Anda</string>
-    <string name="taste_reset_video_body">Tindakan ini menghapus data yang dipelajari Fathom dari video Anda dan memulai kembali dari nol. Rekap Anda tetap ada.</string>
+    <string name="taste_reset_video_body">Ini menghapus data yang dipelajari Fathom dari video Anda dan memulai ulang dari nol. Ringkasan serta channel, topik, dan video tersembunyi Anda tetap tersimpan.</string>
     <string name="taste_reset_music_body">Tindakan ini menghapus data yang dipelajari Fathom dari musik Anda dan memulai kembali dari nol. Rekap Anda tetap ada.</string>
     <string name="recap_title">Rekap Fathom</string>
     <string name="recap_total_time">Waktu di Fathom</string>
@@ -68,6 +72,10 @@
     <string name="recap_story_intro">%1$s Anda di Fathom</string>
     <string name="recap_story_share_text">%1$s saya di Fathom: %2$s</string>
     <string name="recap_story_made_with">Dibuat dengan Fathom</string>
+    <string name="playlist_import_too_new">Playlist ini memerlukan versi Fathom yang lebih baru</string>
+    <string name="subtitle_add_file_failed">Fathom tidak dapat membaca file tersebut sebagai subtitle</string>
+    <string name="playlist_import_not_a_playlist">File ini bukan playlist Fathom</string>
+    <string name="scrobbling_import_offer_body">Fathom menambahkan 20 artis yang paling sering Anda putar selama setahun terakhir ke artis favorit. Anda dapat menghapusnya kapan saja nanti.</string>
     <string name="discord_presence_playing_fallback">Diputar di Fathom</string>
     <string name="export_watch_history_desc">Ekspor sebagai JSON riwayat YouTube (dapat diimpor ke LibreTube dan Fathom)</string>
     <string name="whats_new_in_flow">Yang baru di Fathom</string>

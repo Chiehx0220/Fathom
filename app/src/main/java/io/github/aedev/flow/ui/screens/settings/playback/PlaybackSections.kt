@@ -29,6 +29,7 @@ internal fun SettingsListScope.playbackSections(
 ) {
     group(key = "playback.general", header = R.string.playback_header) {
         switch(PlaybackIndex.backgroundPlay, viewModel.backgroundPlay, viewModel::setBackgroundPlay)
+        switch(PlaybackIndex.startPaused, viewModel.startPaused, viewModel::setStartPaused)
         switch(PlaybackIndex.autoplay, viewModel.autoplay, viewModel::setAutoplay, enabled = !state.loopAll)
         switch(PlaybackIndex.queueAutoplay, viewModel.queueAutoplay, viewModel::setQueueAutoplay, enabled = !state.loopAll)
         choice(PlaybackIndex.autoplayCountdown, onClick = { openDialog(PlaybackDialog.AUTOPLAY_COUNTDOWN) }) {
@@ -100,6 +101,7 @@ internal fun SettingsListScope.playbackSections(
     shortsPlayerSection(viewModel, state, openDialog)
     group(key = "playback.music", header = R.string.settings_section_music) {
         switch(PlaybackIndex.endlessRadio, viewModel.endlessRadio, viewModel::setEndlessRadio)
+        switch(PlaybackIndex.pauseMusicWhenMuted, viewModel.pauseMusicWhenMuted, viewModel::setPauseMusicWhenMuted)
         switch(PlaybackIndex.musicVideoSwitch, viewModel.musicVideoSwitch, viewModel::setMusicVideoSwitch)
         choice(PlaybackIndex.lyricsProviders, onClick = { openDialog(PlaybackDialog.LYRICS) }) {
             val providers by viewModel.lyricsProviders.collectAsStateWithLifecycle()

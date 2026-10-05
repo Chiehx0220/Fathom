@@ -23,71 +23,71 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **178** (3913 changed lines). New files: **56** (4899 lines).
+- Modified upstream files: **126** (2318 changed lines). New files: **56** (4899 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| player/PictureInPictureHelper.kt | 130 | 163 |
-| player/EnhancedPlayerManager.kt | 128 | 46 |
+| player/EnhancedPlayerManager.kt | 127 | 30 |
 | data/local/BackupRepository.kt | 109 | 18 |
-| data/innertube/RssSubscriptionService.kt | 83 | 43 |
-| ui/screens/channel/ChannelViewModel.kt | 88 | 21 |
 | player/datasource/YouTubeHttpDataSource.kt | 97 | 7 |
-| data/local/PlayerPreferences.kt | 39 | 63 |
 | ui/screens/home/chips/HomeChipFeeds.kt | 59 | 38 |
 | ui/tv/components/TvNavRail.kt | 51 | 45 |
-| ui/screens/search/SearchScreen.kt | 68 | 20 |
-| ui/screens/settings/quality/QualitySettingsScreen.kt | 4 | 67 |
+| ui/screens/channel/ChannelViewModel.kt | 83 | 3 |
+| data/innertube/RssSubscriptionService.kt | 72 | 3 |
 | ui/screens/home/HomeViewModel.kt | 60 | 9 |
 | ui/screens/home/FlowHeaderLogoIcon.kt | 60 | 7 |
 | ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
-| ui/screens/player/VideoPlayerViewModel.kt | 34 | 26 |
-| ui/screens/shorts/ShortsPipEffects.kt | 12 | 48 |
-| data/localmedia/LocalEmbeddedTags.kt | 2 | 51 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
 | ui/screens/home/HomeFeedSources.kt | 42 | 5 |
-| ui/utils/NetworkTransport.kt | 0 | 47 |
-| ui/components/shared/quickactions/QuickActionsViewModel.kt | 14 | 31 |
-| data/localmedia/MediaStoreThumbnails.kt | 3 | 40 |
-| data/localmedia/LocalMediaReindex.kt | 0 | 41 |
 | ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
-| ui/screens/shorts/ShortsPagerEffects.kt | 40 | 0 |
+| data/local/PlayerPreferences.kt | 39 | 0 |
 | data/local/SubscriptionRecordCodec.kt | 24 | 15 |
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
-| ui/screens/search/SearchViewModel.kt | 19 | 20 |
-| data/local/SearchHistoryEntries.kt | 0 | 38 |
-| data/subscriptions/SubscriptionFeedRepository.kt | 25 | 10 |
+| ui/screens/player/VideoPlayerViewModel.kt | 31 | 7 |
+| ui/screens/search/SearchScreen.kt | 38 | 0 |
 | ui/ChannelNavigation.kt | 22 | 11 |
-| data/localmedia/LocalMediaStore.kt | 11 | 21 |
-| ui/components/shared/card/VideoCardState.kt | 9 | 23 |
-| player/PipActions.kt | 0 | 31 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
-| data/local/SearchHistoryRepository.kt | 19 | 11 |
-| ui/components/search/SearchFilterSummary.kt | 0 | 30 |
-| utils/ThumbnailUrlResolver.kt | 6 | 24 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/local/ViewHistory.kt | 28 | 0 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
-| service/Media3MusicService.kt | 0 | 27 |
 | data/comments/CommentsPager.kt | 19 | 6 |
 | ui/components/shared/card/VideoCardStacked.kt | 15 | 10 |
 | ui/screens/player/PlaybackSessionApplier.kt | 25 | 0 |
+| ui/screens/search/SearchViewModel.kt | 21 | 4 |
 | data/paging/SearchPagingSource.kt | 18 | 6 |
 | data/repository/YouTubeRepository.kt | 18 | 6 |
 | data/video/VideoDownloadManager.kt | 23 | 1 |
-| ui/components/music/sheet/MusicQuickActionsSheet.kt | 3 | 21 |
-| ui/screens/settings/quality/QualityOptions.kt | 4 | 20 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | ui/NavigationDestinations.kt | 19 | 4 |
 | data/local/dao/WatchHistoryDao.kt | 22 | 0 |
+| data/subscriptions/SubscriptionFeedRepository.kt | 22 | 0 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
-| data/subscriptions/ChannelUploadsClient.kt | 0 | 21 |
-| player/MusicMutePause.kt | 0 | 21 |
 | ui/FlowApp.kt | 11 | 10 |
 | utils/ShareVideo.kt | 14 | 7 |
 | player/error/VideoErrorMapper.kt | 20 | 0 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 17 | 3 |
-| ... 118 more, each small | | |
+| data/local/entity/VideoEntity.kt | 10 | 9 |
+| ui/components/shared/quickactions/QuickActionsViewModel.kt | 14 | 3 |
+| ui/FlowNavigation.kt | 9 | 7 |
+| ui/screens/channel/ChannelTabController.kt | 13 | 3 |
+| ui/screens/player/effects/PlayerLoadEffects.kt | 14 | 2 |
+| data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
+| ui/screens/player/WatchSessionTracker.kt | 12 | 3 |
+| ui/screens/player/dialogs/PlayerDialogsContainer.kt | 14 | 1 |
+| ui/screens/player/stage/VideoStage.kt | 15 | 0 |
+| data/update/GitHubRelease.kt | 7 | 7 |
+| player/GlobalPlayerState.kt | 13 | 0 |
+| player/stream/PlaybackLoadResolver.kt | 12 | 1 |
+| ui/components/shared/quickactions/VideoQuickActionsSheet.kt | 11 | 2 |
+| ui/screens/home/HomeScreen.kt | 11 | 2 |
+| ui/components/layout/navigation/MediaNavigator.kt | 10 | 2 |
+| ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
+| ui/startup/SplashThemes.kt | 0 | 12 |
+| data/local/LikedVideosRepository.kt | 10 | 1 |
+| MainActivity.kt | 9 | 1 |
+| player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
+| player/stream/ResolvedStreamData.kt | 10 | 0 |
+| ... 66 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -116,14 +116,10 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Resources / strings
 
-- Modified upstream files: **44** (2230 changed lines). New files: **4** (76 lines).
+- Modified upstream files: **38** (759 changed lines). New files: **4** (76 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/main/res/values-uk/strings.xml | 8 | 674 |
-| app/src/main/res/values-in/strings.xml | 19 | 529 |
-| app/src/main/res/values-ar/strings.xml | 4 | 147 |
-| app/src/main/res/values-pt-rBR/strings.xml | 1 | 59 |
 | app/src/main/res/drawable/ic_launcher_expressive_pill_foreground.xml | 34 | 10 |
 | app/src/main/res/drawable/ic_splash_logo.xml | 32 | 10 |
 | app/src/main/res/drawable/ic_launcher_expressive_pill_monochrome.xml | 34 | 7 |
@@ -148,45 +144,32 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/main/res/drawable/ic_fg_monochrome.xml | 9 | 10 |
 | app/src/main/res/drawable/ic_fg_flow_play.xml | 7 | 11 |
 | app/src/main/res/drawable/ic_flow_badge_shape.xml | 6 | 12 |
-| app/src/main/res/values/strings.xml | 0 | 18 |
 | app/src/main/res/values/themes.xml | 0 | 18 |
-| ... 14 more, each small | | |
+| app/src/main/res/drawable/ic_launcher_dynamic_foreground.xml | 8 | 9 |
+| app/src/main/res/drawable/ic_launcher_expressive_mint_foreground.xml | 0 | 13 |
+| app/src/main/res/drawable/ic_notification_logo.xml | 7 | 6 |
+| app/src/main/res/drawable/ic_flow_logo.xml | 0 | 12 |
+| app/src/main/res/values/colors.xml | 5 | 7 |
+| ... 8 more, each small | | |
 
 ## Tests
 
-- Modified upstream files: **36** (866 changed lines). New files: **6** (448 lines).
+- Modified upstream files: **14** (111 changed lines). New files: **6** (448 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/test/java/io/github/aedev/flow/data/local/SearchHistoryEntriesTest.kt | 0 | 85 |
-| app/src/test/java/io/github/aedev/flow/ui/components/shared/quickactions/QuickActionsMessagesTest.kt | 2 | 65 |
-| app/src/test/java/io/github/aedev/flow/utils/ThumbnailQualityTiersTest.kt | 0 | 66 |
-| app/src/test/java/io/github/aedev/flow/data/subscriptions/ChannelUploadsClientTest.kt | 0 | 57 |
-| app/src/test/java/io/github/aedev/flow/data/subscriptions/SubscriptionReelVerdictsTest.kt | 0 | 55 |
-| app/src/test/java/io/github/aedev/flow/data/localmedia/LocalLibraryLoaderTest.kt | 0 | 45 |
-| app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelEntryPointsTest.kt | 0 | 38 |
-| app/src/test/java/io/github/aedev/flow/player/PipActionsTest.kt | 0 | 37 |
-| app/src/test/java/io/github/aedev/flow/ui/screens/search/SearchViewModelTest.kt | 1 | 36 |
-| app/src/test/java/io/github/aedev/flow/ui/screens/channel/ChannelLoadGuardTest.kt | 0 | 35 |
-| app/src/test/java/io/github/aedev/flow/ui/components/search/SearchFilterSummaryTest.kt | 0 | 32 |
-| app/src/test/java/io/github/aedev/flow/data/localmedia/LocalMediaReindexTest.kt | 0 | 28 |
-| app/src/test/java/io/github/aedev/flow/player/MusicMutePauseTest.kt | 0 | 28 |
 | app/src/test/java/io/github/aedev/flow/data/update/GitHubReleaseTest.kt | 13 | 13 |
-| app/src/test/java/io/github/aedev/flow/ui/screens/channel/ChannelScreenTabTest.kt | 5 | 21 |
-| app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 4 | 18 |
-| app/src/test/java/io/github/aedev/flow/data/localmedia/MediaStoreThumbnailsTest.kt | 0 | 20 |
-| app/src/test/java/io/github/aedev/flow/data/localmedia/LocalEmbeddedTextTest.kt | 0 | 16 |
 | app/src/test/java/io/github/aedev/flow/platform/LauncherAliasManifestTest.kt | 13 | 2 |
-| app/src/test/java/io/github/aedev/flow/ui/components/shorts/ShortsQualitySelectionTest.kt | 0 | 15 |
 | app/src/test/java/io/github/aedev/flow/utils/ShareVideoTest.kt | 12 | 3 |
-| app/src/test/java/io/github/aedev/flow/data/subscriptions/SubscriptionFeedWriteTest.kt | 0 | 14 |
 | app/src/test/java/io/github/aedev/flow/data/subscriptions/SubscriptionRefreshPlannerTest.kt | 12 | 0 |
-| app/src/test/java/io/github/aedev/flow/data/shorts/ChannelReelIndexTest.kt | 6 | 5 |
 | app/src/test/java/io/github/aedev/flow/data/paging/SearchPagingSourceTest.kt | 8 | 1 |
 | app/src/test/java/io/github/aedev/flow/data/repository/ChannelMetadataNeedTest.kt | 9 | 0 |
-| app/src/test/java/io/github/aedev/flow/ui/screens/crash/CrashSummaryTest.kt | 0 | 9 |
-| app/src/test/java/io/github/aedev/flow/ui/screens/settings/QualityAndPlaybackOptionsTest.kt | 9 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/effects/WatchHistoryEntryTest.kt | 7 | 0 |
 | app/src/test/java/io/github/aedev/flow/player/stream/VideoCodecUtilsTest.kt | 6 | 0 |
-| ... 6 more, each small | | |
+| app/src/test/java/io/github/aedev/flow/player/stream/PlaybackLoadResolverTest.kt | 3 | 0 |
+| app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 1 | 1 |
+| app/src/test/java/io/github/aedev/flow/ui/components/shared/quickactions/QuickActionsMessagesTest.kt | 1 | 1 |
+| app/src/test/java/io/github/aedev/flow/ui/screens/home/HomeFeedSourcesSeedTest.kt | 1 | 1 |
+| app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelHarness.kt | 2 | 0 |
+| app/src/test/java/io/github/aedev/flow/ui/screens/home/chips/HomeChipFeedsTest.kt | 1 | 0 |
 

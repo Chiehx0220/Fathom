@@ -29,6 +29,7 @@ class PlaybackSettingsViewModel
 
         val backgroundPlay = preferences.backgroundPlayEnabled.asState(false)
         val autoplay = preferences.autoplayEnabled.asState(true)
+        val startPaused = preferences.startVideosPaused.asState(false)
         val queueAutoplay = preferences.queueAutoplayEnabled.asState(true)
         val autoplayCountdown = preferences.autoplayCountdownSeconds.asState(0)
         val loopAll = preferences.videoLoopEnabled.asState(false)
@@ -90,12 +91,15 @@ class PlaybackSettingsViewModel
 
         val endlessRadio = preferences.musicEndlessRadioEnabled.asState(true)
         val musicVideoSwitch = preferences.musicVideoSwitch.asState(false)
+        val pauseMusicWhenMuted = preferences.pauseMusicWhenMuted.asState(false)
         val lyricsProviders =
             combine(preferences.lyricsProviderOrder, preferences.allLyricsProviderEnabledStates()) { order, enabled ->
                 lyricsRegistry.getOrderedProviders(order).map { LyricsProviderState(it.name, enabled[it.name] ?: true) }
             }.asState(lyricsRegistry.getOrderedProviders("").map { LyricsProviderState(it.name, true) })
 
         fun setBackgroundPlay(value: Boolean) = write { preferences.setBackgroundPlayEnabled(value) }
+
+        fun setStartPaused(value: Boolean) = write { preferences.setStartVideosPaused(value) }
 
         fun setAutoplay(value: Boolean) = write { preferences.setAutoplayEnabled(value && !loopAll.value) }
 
@@ -208,6 +212,8 @@ class PlaybackSettingsViewModel
         fun setEndlessRadio(value: Boolean) = write { preferences.setMusicEndlessRadioEnabled(value) }
 
         fun setMusicVideoSwitch(value: Boolean) = write { preferences.setMusicVideoSwitch(value) }
+
+        fun setPauseMusicWhenMuted(value: Boolean) = write { preferences.setPauseMusicWhenMuted(value) }
 
         fun setLyricsProviderEnabled(
             name: String,

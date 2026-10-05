@@ -74,6 +74,7 @@
     <string name="playlist_import_too_new">تحتاج قائمة التشغيل هذه إلى إصدار أحدث من Fathom</string>
     <string name="subtitle_add_file_failed">لا يستطيع Fathom قراءة هذا الملف كترجمة</string>
     <string name="playlist_import_not_a_playlist">هذا الملف ليس قائمة تشغيل لـ Fathom</string>
+    <string name="scrobbling_import_offer_body">سيضيف Fathom أكثر 20 فنانًا استمعت إليهم خلال العام الماضي إلى فنانيك المفضّلين. ويمكنك إزالة أيٍّ منهم لاحقًا.</string>
     <string name="discord_presence_playing_fallback">يلعب علي Fathom</string>
     <string name="export_watch_history_desc">تصدير كملف JSON لسجل فيديوهات YouTube (يتم استيراده إلى LibreTube و Fathom)</string>
     <string name="whats_new_in_flow">ما الجديد في Fathom</string>

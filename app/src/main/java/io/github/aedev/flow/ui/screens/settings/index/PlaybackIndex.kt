@@ -15,6 +15,15 @@ internal object PlaybackIndex {
             section = R.string.playback_header,
             destination = page,
         )
+    val startPaused =
+        SettingEntry(
+            key = "playback.start_paused",
+            title = R.string.player_settings_start_paused,
+            summary = R.string.player_settings_start_paused_subtitle,
+            keywords = R.string.settings_keywords_autoplay,
+            section = R.string.playback_header,
+            destination = page,
+        )
     val autoplay =
         SettingEntry(
             key = "playback.autoplay",
@@ -404,6 +413,14 @@ internal object PlaybackIndex {
             section = R.string.settings_section_music,
             destination = page,
         )
+    val pauseMusicWhenMuted =
+        SettingEntry(
+            key = "playback.pause_music_when_muted",
+            title = R.string.settings_pause_music_muted_title,
+            summary = R.string.settings_pause_music_muted_summary,
+            section = R.string.settings_section_music,
+            destination = page,
+        )
     val musicVideoSwitch =
         SettingEntry(
             key = "playback.music_video_switch",
@@ -424,6 +441,7 @@ internal object PlaybackIndex {
     val all =
         listOf(
             backgroundPlay,
+            startPaused,
             autoplay,
             queueAutoplay,
             autoplayCountdown,
@@ -472,6 +490,7 @@ internal object PlaybackIndex {
             shortsPip,
             shortsContinueIntoFeed,
             endlessRadio,
+            pauseMusicWhenMuted,
             musicVideoSwitch,
             lyricsProviders,
         )

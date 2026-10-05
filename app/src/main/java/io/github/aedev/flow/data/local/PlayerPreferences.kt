@@ -69,6 +69,7 @@ class PlayerPreferences(
         val BACKGROUND_PLAY_ENABLED = booleanPreferencesKey("background_play_enabled")
         val AUTOPLAY_ENABLED = booleanPreferencesKey("autoplay_enabled")
         val QUEUE_AUTOPLAY_ENABLED = booleanPreferencesKey("queue_autoplay_enabled")
+        val START_VIDEOS_PAUSED = booleanPreferencesKey("start_videos_paused")
         val MUSIC_ENDLESS_RADIO_ENABLED = booleanPreferencesKey("music_endless_radio_enabled")
         val AUTOPLAY_COUNTDOWN_SECONDS = intPreferencesKey("autoplay_countdown_seconds")
         val SHOW_CONTROLS_WHILE_LOADING = booleanPreferencesKey("show_controls_while_loading")
@@ -146,6 +147,8 @@ class PlayerPreferences(
         // Shorts quality preferences
         val SHORTS_QUALITY_WIFI = stringPreferencesKey("shorts_quality_wifi")
         val SHORTS_QUALITY_CELLULAR = stringPreferencesKey("shorts_quality_cellular")
+        val THUMBNAIL_QUALITY_WIFI = stringPreferencesKey("thumbnail_quality_wifi")
+        val THUMBNAIL_QUALITY_CELLULAR = stringPreferencesKey("thumbnail_quality_cellular")
 
         // UI preferences
         val GRID_ITEM_SIZE = stringPreferencesKey("grid_item_size")
@@ -159,6 +162,7 @@ class PlayerPreferences(
         val PLAYER_HAPTICS_ENABLED = booleanPreferencesKey("player_haptics_enabled")
         val GROUPED_QUALITY_SELECTOR_ENABLED = booleanPreferencesKey("grouped_quality_selector_enabled")
         val SHORTS_CONTENT_ENABLED = booleanPreferencesKey("shorts_content_enabled")
+        val CHANNEL_SHORTS_TAB_WHEN_HIDDEN = booleanPreferencesKey("channel_shorts_tab_when_hidden")
         val NOTES_ENABLED = booleanPreferencesKey("notes_enabled")
         val CHANNEL_NOTES_ENABLED = booleanPreferencesKey("channel_notes_enabled")
         val VIDEO_NOTES_ENABLED = booleanPreferencesKey("video_notes_enabled")
@@ -302,6 +306,7 @@ class PlayerPreferences(
         val MUSIC_VIDEO_SWITCH = booleanPreferencesKey("music_video_switch")
         val ANIMATED_ARTWORK = booleanPreferencesKey("animated_artwork")
         val MUSIC_REPEAT_MODE = intPreferencesKey("music_repeat_mode")
+        val PAUSE_MUSIC_WHEN_MUTED = booleanPreferencesKey("pause_music_when_muted")
         val ANIMATED_ARTWORK_WIFI_ONLY = booleanPreferencesKey("animated_artwork_wifi_only")
         val AUTO_DOWNLOAD_LIKED_MUSIC = booleanPreferencesKey("auto_download_liked_music")
         val RECAP_SOURCE = stringPreferencesKey("recap_source")
@@ -914,6 +919,22 @@ class PlayerPreferences(
         }
     }
 
+    /** Keeps a channel's Shorts tab while the master switch hides Shorts everywhere else. */
+    val channelShortsTabWhenHidden: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.CHANNEL_SHORTS_TAB_WHEN_HIDDEN] ?: false
+            }
+
+    val effectiveChannelShortsTabEnabled: Flow<Boolean> =
+        combine(shortsContentEnabled, channelShortsTabWhenHidden) { master, keep -> master || keep }
+
+    suspend fun setChannelShortsTabWhenHidden(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.CHANNEL_SHORTS_TAB_WHEN_HIDDEN] = enabled
+        }
+    }
+
     /**
      * When OFF the Library screen drops the horizontal preview shelves and lists each section as a
      * single navigation row with its item count.
@@ -1412,6 +1433,26 @@ class PlayerPreferences(
         }
     }
 
+    val thumbnailQualityWifi: Flow<ThumbnailQuality> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> ThumbnailQuality.fromName(preferences[Keys.THUMBNAIL_QUALITY_WIFI]) }
+
+    val thumbnailQualityCellular: Flow<ThumbnailQuality> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> ThumbnailQuality.fromName(preferences[Keys.THUMBNAIL_QUALITY_CELLULAR]) }
+
+    suspend fun setThumbnailQualityWifi(quality: ThumbnailQuality) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.THUMBNAIL_QUALITY_WIFI] = quality.name
+        }
+    }
+
+    suspend fun setThumbnailQualityCellular(quality: ThumbnailQuality) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.THUMBNAIL_QUALITY_CELLULAR] = quality.name
+        }
+    }
+
     val musicAudioQuality: Flow<MusicAudioQuality> =
         context.playerPreferencesDataStore.data
             .map { preferences ->
@@ -1447,6 +1488,17 @@ class PlayerPreferences(
     suspend fun setAutoplayEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.AUTOPLAY_ENABLED] = enabled
+        }
+    }
+
+    /** A video the viewer opens loads and waits for play; what plays after it is the autoplay settings' call. */
+    val startVideosPaused: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.START_VIDEOS_PAUSED] ?: false }
+
+    suspend fun setStartVideosPaused(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.START_VIDEOS_PAUSED] = enabled
         }
     }
 
@@ -1991,6 +2043,17 @@ class PlayerPreferences(
     suspend fun setMusicVideoSwitch(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.MUSIC_VIDEO_SWITCH] = enabled
+        }
+    }
+
+    val pauseMusicWhenMuted: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.PAUSE_MUSIC_WHEN_MUTED] ?: false }
+            .distinctUntilChanged()
+
+    suspend fun setPauseMusicWhenMuted(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.PAUSE_MUSIC_WHEN_MUTED] = enabled
         }
     }
 

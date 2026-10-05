@@ -41,10 +41,11 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.local.ContentType
+import io.github.aedev.flow.data.local.SearchFilter
+import io.github.aedev.flow.data.local.availableWith
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Playlist
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.paging.SearchResultItem
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
 import io.github.aedev.flow.ui.OnTabReselected
@@ -67,7 +68,6 @@ import io.github.aedev.flow.ui.components.shared.quickactions.QuickActionsViewMo
 import io.github.aedev.flow.ui.components.shared.quickactions.sharedQuickActionsViewModel
 import io.github.aedev.flow.utils.YouTubeLink
 import io.github.aedev.flow.utils.parseYouTubeLink
-import org.schabi.newpipe.extractor.ServiceList
 
 /**
  * The route: a bar, then either what the user might be looking for or what they found.
@@ -97,36 +97,23 @@ fun SearchScreen(
     var showFilters by rememberSaveable { mutableStateOf(false) }
 
     val mediaNavigator = LocalMediaNavigator.current
-    val search: (String) -> Unit = { query ->
+    val search: (String, SearchFilter) -> Unit = { query, filters ->
         state.onSubmit(query)
-        viewModel.search(query, uiState.filters)
+        viewModel.submit(query, filters)
     }
-    val submit: (String) -> Unit = { raw ->
+    val submitWith: (String, SearchFilter) -> Unit = { raw, filters ->
         val text = raw.trim()
         val bilibiliVideoId = resolvePastedBilibiliVideoLink(text)
         val link = parseYouTubeLink(text)
         when {
-            text.isEmpty() -> {
-                Unit
-            }
-
-            bilibiliVideoId != null -> {
-                onVideoClick(sharedVideo(bilibiliVideoId, context.getString(R.string.shared_video), BILIBILI_SERVICE_ID))
-            }
-
-            link == null -> {
-                search(text)
-            }
-
-            link is YouTubeLink.Search -> {
-                search(link.query)
-            }
-
-            !mediaNavigator.openLink(link) -> {
-                quickActions.announce(R.string.link_not_supported)
-            }
+            text.isEmpty() -> Unit
+            bilibiliVideoId != null -> onVideoClick(sharedBilibiliVideo(bilibiliVideoId, context.getString(R.string.shared_video)))
+            link == null -> search(text, filters)
+            link is YouTubeLink.Search -> search(link.query, filters)
+            !mediaNavigator.openLink(link) -> quickActions.announce(R.string.link_not_supported)
         }
     }
+    val submit: (String) -> Unit = { raw -> submitWith(raw, uiState.filters) }
 
     val voiceSearchLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -156,8 +143,13 @@ fun SearchScreen(
         }
     }
 
+    // A new query starts at the top; coming back from a result keeps the grid where it was.
+    var scrolledForQuery by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(uiState.query) {
-        if (uiState.query.isNotBlank()) gridState.scrollToItem(0)
+        if (uiState.query.isNotBlank() && scrolledForQuery != uiState.query) {
+            if (scrolledForQuery != null) gridState.scrollToItem(0)
+            scrolledForQuery = uiState.query
+        }
     }
 
     LaunchedEffect(pagingItems.itemSnapshotList.items) {
@@ -210,6 +202,10 @@ fun SearchScreen(
                     onSubmit = { text ->
                         state.textFieldState.setTextAndPlaceCursorAtEnd(text)
                         submit(text)
+                    },
+                    onHistorySelect = { item ->
+                        state.textFieldState.setTextAndPlaceCursorAtEnd(item.query)
+                        submitWith(item.query, item.filters?.availableWith(state.shortsContentEnabled) ?: uiState.filters)
                     },
                     onFill = state.textFieldState::setTextAndPlaceCursorAtEnd,
                     onDeleteHistoryItem = state::deleteHistoryItem,
@@ -313,25 +309,19 @@ private fun resolvePastedBilibiliVideoLink(url: String): String? {
     return BilibiliVideoId.fromUrl(url)
 }
 
-private fun sharedVideo(
+private fun sharedBilibiliVideo(
     videoId: String,
     title: String,
-    serviceId: Int = ServiceList.YouTube.serviceId,
 ) = Video(
     id = videoId,
     title = title,
     channelName = title,
     channelId = "",
-    thumbnailUrl =
-        if (serviceId.isYouTubeServiceId) {
-            "https://img.youtube.com/vi/$videoId/maxresdefault.jpg"
-        } else {
-            ""
-        },
+    thumbnailUrl = "",
     duration = 0,
     viewCount = 0L,
     uploadDate = "",
-    serviceId = serviceId,
+    serviceId = BILIBILI_SERVICE_ID,
 )
 
 private val FilterBarVerticalPadding = 4.dp

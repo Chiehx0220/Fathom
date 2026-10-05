@@ -46,6 +46,7 @@
     <string name="tv_remote_guide_subtitle">Uma forma rápida de navegar no Fathom do sofá</string>
     <string name="widget_now_playing_description">Controle a música que está tocando no Fathom</string>
     <string name="widget_quick_actions_description">Pesquisar no Fathom e ir para downloads, histórico ou reconhecimento</string>
+    <string name="settings_widgets_summary">Coloque o Fathom na sua tela inicial</string>
     <string name="ui_flow_logo">Fathom logo</string>
     <string name="ui_crashed_last_session">Fathom falhou na última sessão</string>
     <string name="update_download_prompt">Uma nova versão do Fathom está disponível (%1$s). Baixar o APK mais recente?</string>
