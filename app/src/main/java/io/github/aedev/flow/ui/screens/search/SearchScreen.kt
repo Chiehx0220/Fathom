@@ -38,8 +38,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import io.github.aedev.flow.R
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.local.ContentType
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.local.availableWith
@@ -299,29 +297,5 @@ private fun launchVoiceSearch(
     } catch (_: ActivityNotFoundException) {
     }
 }
-
-/**
- * A pasted Bilibili video or b23.tv short link's video id, or null: [parseYouTubeLink] already
- * covers every YouTube link shape, so this only needs to catch what it does not.
- */
-private fun resolvePastedBilibiliVideoLink(url: String): String? {
-    if (!url.startsWith("http")) return null
-    return BilibiliVideoId.fromUrl(url)
-}
-
-private fun sharedBilibiliVideo(
-    videoId: String,
-    title: String,
-) = Video(
-    id = videoId,
-    title = title,
-    channelName = title,
-    channelId = "",
-    thumbnailUrl = "",
-    duration = 0,
-    viewCount = 0L,
-    uploadDate = "",
-    serviceId = BILIBILI_SERVICE_ID,
-)
 
 private val FilterBarVerticalPadding = 4.dp

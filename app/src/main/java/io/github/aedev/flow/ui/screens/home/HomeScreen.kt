@@ -171,7 +171,7 @@ fun HomeScreen(
                 leading =
                     if (showAppLogoIcon) {
                         {
-                            FlowHeaderLogoIcon(
+                            FathomHeaderLogoIcon(
                                 isDeepFlowActive = deepFlowActive,
                                 onToggleDeepFlow = {
                                     coroutineScope.launch {
