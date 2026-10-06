@@ -1,14 +1,13 @@
 package io.github.aedev.flow.data.innertube
 
 import android.util.Log
-import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
+import io.github.aedev.flow.data.subscriptions.BilibiliSubscriptionFeed
 import io.github.aedev.flow.data.subscriptions.ChannelRssClient
 import io.github.aedev.flow.data.subscriptions.ChannelRssEntry
 import io.github.aedev.flow.data.subscriptions.ChannelUploadsClient
-import io.github.aedev.flow.data.subscriptions.latestVideos
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.formatYouTubeRelativeTime
 import io.github.aedev.flow.utils.parsePremiereTimestamp
@@ -62,7 +61,7 @@ class RssSubscriptionService
         private val rssClient: ChannelRssClient,
         private val channelReelIndex: ChannelReelIndex,
         private val channelUploads: ChannelUploadsClient,
-        private val bilibiliApi: BilibiliApi,
+        private val bilibili: BilibiliSubscriptionFeed,
     ) {
         /**
          * @param serviceIdByChannel a channel missing from here is YouTube's. Bilibili has no RSS feed and
@@ -218,24 +217,10 @@ class RssSubscriptionService
                     )
                 }
 
-                for (chunk in bilibiliChannelIds.chunked(BILIBILI_CHUNK_SIZE)) {
-                    val results =
-                        coroutineScope {
-                            chunk
-                                .map { channelId ->
-                                    async(Dispatchers.IO) {
-                                        channelId to
-                                            fetchBilibiliVideos(channelId, minimumDateMillis, labelByChannel[channelId])
-                                    }
-                                }.awaitAll()
-                        }
-                    for ((channelId, result) in results) {
-                        if (result.failed) {
-                            unreachableChannelIds += channelId
-                            result.failureReason?.let { failureReasons[channelId] = it }
-                        }
-                        allRegular.addAll(result.videos)
-                    }
+                bilibili.readInChunks(bilibiliChannelIds, labelByChannel, minimumDateMillis) { chunk ->
+                    unreachableChannelIds += chunk.failureReasons.keys
+                    failureReasons += chunk.failureReasons
+                    allRegular.addAll(chunk.videos)
                     compactAccumulator(allRegular, MAX_REGULAR_VIDEOS)
                     emit(
                         SubscriptionFeedChunk(
@@ -260,31 +245,6 @@ class RssSubscriptionService
                         "shorts=${allShorts.size.coerceAtMost(MAX_SHORTS)} unreachable=${unreachableChannelIds.size} " +
                         "incomplete=${incompleteChannelIds.size} ========",
                 )
-            }
-
-        /** The latest uploads of one Bilibili uploader, [channelId] being their numeric id; [label] is the subscribed name and avatar. */
-        suspend fun fetchLatestChannelVideos(
-            channelId: String,
-            limit: Int = 5,
-            label: ChannelLabel? = null,
-        ): List<Video> {
-            val mid = channelId.toLongOrNull() ?: return emptyList()
-            return bilibiliApi.latestVideos(mid, limit, channelName = label?.name.orEmpty(), channelAvatarUrl = label?.avatarUrl.orEmpty())
-        }
-
-        private suspend fun fetchBilibiliVideos(
-            channelId: String,
-            minimumDateMillis: Long,
-            label: ChannelLabel?,
-        ): ChannelFetchResult =
-            try {
-                val videos = fetchLatestChannelVideos(channelId, MAX_VIDEOS_PER_CHANNEL, label).filter { it.timestamp > minimumDateMillis }
-                ChannelFetchResult(videos, failed = false)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.w(TAG, "[$channelId] Bilibili channel failed (${e::class.simpleName}): ${e.message}")
-                ChannelFetchResult(emptyList(), failed = true, failureReason = "${e::class.simpleName}: ${e.message}")
             }
 
         private suspend fun runChannelTabFetch(
@@ -594,10 +554,6 @@ class RssSubscriptionService
 
         private companion object {
             const val TAG = "InnertubeSubs"
-
-            /** Bilibili blocks bursts, so its uploaders are read a few at a time. */
-            const val BILIBILI_CHUNK_SIZE = 3
-            const val MAX_VIDEOS_PER_CHANNEL = 60
             const val UNKNOWN_LABEL = "Unknown"
 
             const val RSS_CHUNK_SIZE = 8

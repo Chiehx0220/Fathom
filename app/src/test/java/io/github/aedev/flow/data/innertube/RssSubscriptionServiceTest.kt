@@ -3,6 +3,7 @@ package io.github.aedev.flow.data.innertube
 import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
+import io.github.aedev.flow.data.subscriptions.BilibiliSubscriptionFeed
 import io.github.aedev.flow.data.subscriptions.ChannelRssClient
 import io.github.aedev.flow.data.subscriptions.ChannelRssEntry
 import io.github.aedev.flow.data.subscriptions.ChannelRssFeed
@@ -28,7 +29,7 @@ class RssSubscriptionServiceTest {
     private val rssClient: ChannelRssClient = mockk()
     private val reelIndex: ChannelReelIndex = mockk()
     private val uploads: ChannelUploadsClient = mockk()
-    private val service = RssSubscriptionService(rssClient, reelIndex, uploads, mockk())
+    private val service = RssSubscriptionService(rssClient, reelIndex, uploads, BilibiliSubscriptionFeed(mockk()))
     private val hour = 3_600_000L
 
     private var reelIds: Set<String> = emptySet()

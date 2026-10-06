@@ -7,11 +7,11 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.github.aedev.flow.data.innertube.ChannelLabel
-import io.github.aedev.flow.data.innertube.RssSubscriptionService
 import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTubeServiceId
+import io.github.aedev.flow.data.subscriptions.BilibiliSubscriptionFeed
 import io.github.aedev.flow.data.subscriptions.ChannelRssParser
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import java.util.concurrent.TimeUnit
@@ -31,7 +31,7 @@ internal object NonYouTubeChannelCheck {
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface Dependencies {
-        fun rssSubscriptionService(): RssSubscriptionService
+        fun bilibiliSubscriptionFeed(): BilibiliSubscriptionFeed
 
         fun subscriptionFeedRepository(): SubscriptionFeedRepository
     }
@@ -58,8 +58,8 @@ internal object NonYouTubeChannelCheck {
 
         val videos =
             dependencies
-                .rssSubscriptionService()
-                .fetchLatestChannelVideos(
+                .bilibiliSubscriptionFeed()
+                .latestVideos(
                     subscription.channelId,
                     label = ChannelLabel(subscription.channelName, subscription.channelThumbnail),
                 )
