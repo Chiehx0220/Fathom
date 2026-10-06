@@ -1,0 +1,36 @@
+name: Rebrand strings
+
+# Fails when the generated Fathom strings (app/src/fathom/res/values-*/strings.xml) no longer match what
+# scripts/rebrand-strings.js would write from upstream's translations. Those files are generated, not
+# edited by hand: put Fathom's own wording in fathom_strings.xml, then run
+#   node scripts/rebrand-strings.js
+# Also run it, and --report, after every merge of upstream.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  strings:
+    name: Check the generated strings
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+
+      - name: Compare with the generator's output
+        run: node scripts/rebrand-strings.js --check
+
+      - name: List "Flow" nobody has decided on
+        run: node scripts/rebrand-strings.js --report
