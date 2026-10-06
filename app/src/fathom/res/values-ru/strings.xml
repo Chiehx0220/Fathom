@@ -18,9 +18,6 @@
     <string name="settings_item_about_flow">О Fathom</string>
     <string name="settings_item_support_subtitle">Поддержите разработку Fathom</string>
     <string name="appearance_subtitle">Персонализация интерфейса Fathom</string>
-    <string name="icon_name_flow_red">Fathom Red</string>
-    <string name="icon_name_flow_light">Fathom Light</string>
-    <string name="icon_name_flow_play">Fathom Play</string>
     <string name="content_settings_show_app_logo_subtitle">Отображать логотип Fathom рядом с названием приложения в верхней панели главного экрана</string>
     <string name="player_settings_subtitle_language_dialog_body">Субтитры будут запускаться на этом языке. Если такой дорожки нет, Fathom включит автоперевод от YouTube. Выбор субтитров в плеере также изменит эту настройку.</string>
     <string name="donation_prompt_title">Нравится Fathom?</string>

@@ -19,9 +19,6 @@
     <string name="settings_item_about_flow">Giới thiệu Fathom</string>
     <string name="settings_item_support_subtitle">Giúp phát triển Fathom</string>
     <string name="appearance_subtitle">Cá nhân hóa trải nghiệm Fathom</string>
-    <string name="icon_name_flow_red">Fathom Đỏ</string>
-    <string name="icon_name_flow_light">Fathom Sáng</string>
-    <string name="icon_name_flow_play">Fathom Phát</string>
     <string name="content_settings_show_app_logo_subtitle">Hiển thị logo Fathom cạnh tên ứng dụng trên thanh trên cùng</string>
     <string name="player_settings_subtitle_language_dialog_body">Phụ đề sẽ mở bằng ngôn ngữ này khi có sẵn. Nếu video không có phụ đề, Fathom sẽ sử dụng bản dịch của YouTube từ phụ đề hiện có. Việc chọn phụ đề trong lúc phát cũng sẽ cập nhật tùy chọn này.</string>
     <string name="donation_prompt_title">Thích Fathom?</string>

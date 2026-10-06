@@ -16,9 +16,6 @@
     <string name="settings_item_about_flow">关于Fathom</string>
     <string name="settings_item_support_subtitle">帮助支持Fathom的发展</string>
     <string name="appearance_subtitle">个性化您的 Fathom 体验</string>
-    <string name="icon_name_flow_red">Fathom 红色</string>
-    <string name="icon_name_flow_light">Fathom Light</string>
-    <string name="icon_name_flow_play">Fathom Play</string>
     <string name="content_settings_show_app_logo_subtitle">在主屏幕顶部栏中应用程序名称旁边显示 Fathom 徽标图标</string>
     <string name="player_settings_subtitle_language_dialog_body">如果可用，标题将以该语言打开。如果视频中没有轨道，Fathom将使用YouTube对现有轨道的翻译。在播放期间拾取字幕也会更新此内容。</string>
     <string name="donation_prompt_title">喜欢Fathom吗？</string>

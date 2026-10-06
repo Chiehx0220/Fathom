@@ -2,4 +2,13 @@
 <resources>
     <string name="check_out_video_template">Lihat video ini: %1$s\n%2$s</string>
     <string name="share_link_only_template">%1$s</string>
+    <string name="icon_name_flow_red">Fathom</string>
+    <string name="icon_name_flow_light">Fathom Light</string>
+    <string name="icon_name_flow_play">Fathom Navy</string>
+    <string name="icon_name_expressive_scallop">Anchor</string>
+    <string name="icon_name_expressive_play">Lighthouse</string>
+    <string name="icon_name_expressive_sky">Sailboat</string>
+    <string name="icon_name_expressive_cookie">Night Sea</string>
+    <string name="icon_name_expressive_oval">Submarine</string>
+    <string name="icon_name_expressive_pill">Depth Gauge</string>
 </resources>

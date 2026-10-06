@@ -16,8 +16,6 @@
     <string name="settings_item_support_subtitle">ساهم في دعم تطوير Fathom</string>
     <string name="appearance_subtitle">خصّص تجربتك مع Fathom</string>
     <string name="app_icon_picker_warning">قد يؤدي تغيير الأيقونة إلى إزالة Fathom من الشاشة الرئيسية مؤقتًا. أعد إضافته من درج التطبيقات إذا لزم الأمر.</string>
-    <string name="icon_name_flow_red">أحمر Fathom</string>
-    <string name="icon_name_flow_light">فاتح Fathom</string>
     <string name="content_settings_show_app_logo_subtitle">إظهار شعار Fathom في الشريط العلوي للصفحة الرئيسية</string>
     <string name="content_settings_nav_order_subtitle">اسحب لإعادة الترتيب. اختر علامة التبويب التي يفتح عليها Fathom.</string>
     <string name="player_settings_subtitle_language_dialog_body">تُفتح الترجمة بهذا اللغة عند توفرها. وإلا يترجم Fathom مسارًا موجودًا.</string>

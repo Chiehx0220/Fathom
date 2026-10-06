@@ -18,9 +18,6 @@
     <string name="settings_item_about_flow">Sobre Fathom</string>
     <string name="settings_item_support_subtitle">Ayuda a apoyar el desarrollo de Fathom</string>
     <string name="appearance_subtitle">Personaliza tu experiencia en Fathom</string>
-    <string name="icon_name_flow_red">Fathom Rojo</string>
-    <string name="icon_name_flow_light">Fathom Claro</string>
-    <string name="icon_name_flow_play">Fathom Play</string>
     <string name="content_settings_show_app_logo_subtitle">Muestra el ícono del logotipo de Fathom junto al nombre de la aplicación en la barra superior de la pantalla de inicio</string>
     <string name="player_settings_subtitle_language_dialog_body">Los subtítulos se abren en este idioma cuando están disponibles. Si el vídeo no contiene ninguna pista, Fathom utiliza la traducción de YouTube de una pista existente. Al seleccionar un subtítulo durante la reproducción, este también se actualiza.</string>
     <string name="donation_prompt_title">Disfrutando Fathom?</string>

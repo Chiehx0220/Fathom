@@ -18,9 +18,6 @@
     <string name="settings_item_about_flow">À propos de Fathom</string>
     <string name="settings_item_support_subtitle">Aidez à soutenir le développement de Fathom</string>
     <string name="app_icon_picker_warning">La modification de l\'icône peut entraîner la disparition temporaire de Fathom de votre écran d\'accueil. Si nécessaire, rajoutez-la depuis le tiroir d\'applications.</string>
-    <string name="icon_name_flow_red">Fathom Rouge</string>
-    <string name="icon_name_flow_light">Fathom clair</string>
-    <string name="icon_name_flow_play">Fathom Lecture</string>
     <string name="content_settings_show_app_logo_subtitle">Afficher l\'icône du logo Fathom à côté du nom de l\'application dans la barre supérieure de l\'écran d\'accueil</string>
     <string name="player_settings_subtitle_language_dialog_body">Les sous-titres s\'affichent dans cette langue lorsqu\'ils sont disponibles. Si la vidéo ne contient aucune piste, Fathom utilise la traduction proposée par YouTube d\'une piste existante. Le choix d\'un sous-titre pendant la lecture met également celle-ci à jour.</string>
     <string name="donation_prompt_title">Vous appréciez Fathom ?</string>

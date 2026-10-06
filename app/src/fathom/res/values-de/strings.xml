@@ -15,9 +15,6 @@
     <string name="settings_item_about_flow">Über Fathom</string>
     <string name="settings_item_support_subtitle">Unterstützung bei der Entwicklung von Fathom</string>
     <string name="appearance_subtitle">Personalisieren Sie Ihre Fathom-Erfahrung</string>
-    <string name="icon_name_flow_red">Fathom Rot</string>
-    <string name="icon_name_flow_light">Fathom hell</string>
-    <string name="icon_name_flow_play">Fathom Play</string>
     <string name="content_settings_show_app_logo_subtitle">Das Fathom-Logo neben dem App-Namen in der oberen Leiste des Startbildschirms anzeigen</string>
     <string name="donation_prompt_title">Gefällt dir „Fathom“?</string>
     <string name="donation_prompt_message">Fathom ist kostenlos, Open Source und ohne Werbung oder Tracker entwickelt. Wenn die App sich einen Platz auf Ihrem Gerät verdient hat, denken Sie bitte darüber nach, die Entwicklung zu unterstützen – das trägt wirklich dazu bei, das Projekt am Leben zu erhalten.</string>

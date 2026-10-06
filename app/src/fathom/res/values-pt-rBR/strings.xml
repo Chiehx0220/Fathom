@@ -15,9 +15,6 @@
     <string name="settings_item_support_subtitle">Apoie o desenvolvimento do Fathom</string>
     <string name="appearance_subtitle">Personalize sua experiência no Fathom</string>
     <string name="app_icon_picker_warning">Alterar o ícone pode remover o Fathom da sua tela inicial por um momento. Adicione-o de volta da gaveta de aplicativos, se necessário.</string>
-    <string name="icon_name_flow_red">Fathom Vermelho</string>
-    <string name="icon_name_flow_light">Fathom Claro</string>
-    <string name="icon_name_flow_play">Play Fathom</string>
     <string name="content_settings_show_app_logo_subtitle">Mostra o logo do Fathom na barra superior da tela inicial</string>
     <string name="content_settings_nav_order_subtitle">Arraste para reordenar. Escolha a aba que Fathom abrirá.</string>
     <string name="player_settings_subtitle_language_dialog_body">As legendas abrem neste idioma quando disponíveis. Se não estiverem disponíveis o Fathom traduzirá uma faixa existente.</string>

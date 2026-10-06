@@ -3,4 +3,13 @@
     <string name="check_out_video_template">Перегляньте це відео: %1$s\n%2$s</string>
     <string name="share_link_only_template">%1$s</string>
     <string name="deep_flow_save_history_subtitle">Зберігати переглянуті відео в історії (разом із прогресом). Алгоритм все одно не використовуватиме їх для рекомендацій. Вимк = нічого не зберігається.</string>
+    <string name="icon_name_flow_red">Fathom</string>
+    <string name="icon_name_flow_light">Fathom Light</string>
+    <string name="icon_name_flow_play">Fathom Navy</string>
+    <string name="icon_name_expressive_scallop">Anchor</string>
+    <string name="icon_name_expressive_play">Lighthouse</string>
+    <string name="icon_name_expressive_sky">Sailboat</string>
+    <string name="icon_name_expressive_cookie">Night Sea</string>
+    <string name="icon_name_expressive_oval">Submarine</string>
+    <string name="icon_name_expressive_pill">Depth Gauge</string>
 </resources>

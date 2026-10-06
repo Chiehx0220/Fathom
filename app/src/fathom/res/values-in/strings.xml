@@ -16,9 +16,6 @@
     <string name="settings_item_support_subtitle">Bantu dukung pengembangan Fathom</string>
     <string name="appearance_subtitle">Personalisasi pengalaman Fathom Anda</string>
     <string name="app_icon_picker_warning">Mengubah ikon mungkin akan menghapus Fathom dari layar utama Anda untuk sementara. Tambahkan kembali dari laci aplikasi jika diperlukan.</string>
-    <string name="icon_name_flow_red">Fathom Merah</string>
-    <string name="icon_name_flow_light">Fathom Light</string>
-    <string name="icon_name_flow_play">Fathom mainkan</string>
     <string name="content_settings_show_app_logo_subtitle">Tampilkan logo Fathom di bilah atas Beranda</string>
     <string name="content_settings_nav_order_subtitle">Seret untuk mengurutkan ulang. Pilih tab yang dibuka Fathom.</string>
     <string name="player_settings_subtitle_language_dialog_body">Teks akan dibuka dalam bahasa ini jika tersedia. Jika tidak, Fathom menerjemahkan trek teks yang ada.</string>
