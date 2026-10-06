@@ -376,7 +376,7 @@ internal data class RoomBaseInfoResponse(
 ) {
     @Serializable
     data class Data(
-        /** Keyed by the room id that was asked for, which may be the short one. */
+        /** Keyed by the long room id, even when the short one was asked for. */
         @SerialName("by_room_ids") val byRoomIds: Map<String, Room> = emptyMap(),
     )
 

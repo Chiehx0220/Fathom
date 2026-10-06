@@ -20,7 +20,10 @@ internal class BilibiliLive(
         val headers = session.headers(liveReferer(roomId))
         val url = "$ROOM_BASE_INFO_URL$roomId&req_biz=web_room_componet"
         val response = json.decodeFromString<RoomBaseInfoResponse>(session.get(url, headers))
-        val room = response.data?.byRoomIds?.get(roomId.toString())
+        // Asked for one room, so the one answered is it, whichever number it is filed under: a short room
+        // number comes back under the long one.
+        val rooms = response.data?.byRoomIds.orEmpty()
+        val room = rooms[roomId.toString()] ?: rooms.values.singleOrNull()
         if (response.code != 0 || room == null || room.roomId <= 0) {
             throw BilibiliContentNotAvailableException(response.message.ifBlank { "Can not get live room info" })
         }
@@ -28,7 +31,7 @@ internal class BilibiliLive(
             roomId = room.roomId,
             title = room.title,
             coverUrl = (room.coverFromUser ?: room.cover).toHttps(),
-            // The room info carries no avatar; the channel lookup that follows fills it in.
+            // The room info carries no avatar; BilibiliApi asks the uploader's channel for it.
             uploader = BilibiliUploader(room.uid, room.uname, room.face.orEmpty().toHttps()),
             viewerCount = room.online,
             startedAtSec = parseStartTime(room.liveTime),

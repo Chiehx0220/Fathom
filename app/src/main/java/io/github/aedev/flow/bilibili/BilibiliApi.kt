@@ -244,7 +244,7 @@ class BilibiliApi(
      * [BilibiliLiveRebroadcastException] when it is replaying uploaded videos.
      */
     suspend fun livePlayback(roomId: Long): BilibiliLivePlayback {
-        val room = live.room(roomId)
+        val room = withAvatar(live.room(roomId))
         when (room.status) {
             BilibiliLiveStatus.OFFLINE -> throw BilibiliLiveNotStartedException("Live is not started")
             BilibiliLiveStatus.REBROADCAST -> throw BilibiliLiveRebroadcastException("This room is replaying uploaded videos")
@@ -257,7 +257,21 @@ class BilibiliApi(
         return BilibiliLivePlayback(room, streams)
     }
 
-    suspend fun liveRoom(roomId: Long): BilibiliLiveRoom = live.room(roomId)
+    suspend fun liveRoom(roomId: Long): BilibiliLiveRoom = withAvatar(live.room(roomId))
+
+    /** A room's own info carries no avatar for its uploader, so it is asked of their channel; the room is as good without it. */
+    private suspend fun withAvatar(room: BilibiliLiveRoom): BilibiliLiveRoom {
+        if (room.uploader.avatarUrl.isNotBlank() || room.uploader.mid <= 0) return room
+        val avatar =
+            try {
+                channelInfo(room.uploader.mid).avatarUrl
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                return room
+            }
+        return room.copy(uploader = room.uploader.copy(avatarUrl = avatar))
+    }
 
     suspend fun recommendedLives(): List<BilibiliLiveItem> = live.recommended()
 
