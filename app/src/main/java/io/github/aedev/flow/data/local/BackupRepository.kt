@@ -13,7 +13,6 @@ import com.google.gson.stream.JsonReader
 import dagger.hilt.android.EntryPointAccessors
 import io.github.aedev.flow.BuildConfig
 import io.github.aedev.flow.R
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.data.audio.eq.EqStateJson
 import io.github.aedev.flow.data.backup.NewPipeChannelRef
 import io.github.aedev.flow.data.backup.NewPipeSubscriptionCodec
@@ -27,7 +26,6 @@ import io.github.aedev.flow.data.local.entity.VideoEntity
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
-import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.localserver.videoIdToUrl
 import io.github.aedev.flow.platform.AppIconEntryPoint
@@ -35,9 +33,6 @@ import io.github.aedev.flow.player.audio.AudioEffectsEntryPoint
 import io.github.aedev.flow.util.AppIcons
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
-import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
-import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -405,11 +400,7 @@ class BackupRepository(
                                     ?.let { "https://www.youtube.com/channel/$it" }
                                     ?: "https://www.youtube.com/"
                             } else {
-                                // Other services (e.g. Bilibili) don't share YouTube's URL shape -
-                                // resolve through that service's own link handler instead of
-                                // guessing at URL structure.
-                                resolveNonYouTubeChannelUrl(entry.channelId, entry.serviceId) { "" }
-                                    .ifEmpty { "https://www.youtube.com/" }
+                                nonYouTubeChannelUrlOrHome(entry.channelId, entry.serviceId)
                             }
                         YouTubeTakeoutHistoryEntryOut(
                             title = "Watched ${entry.title}",
@@ -496,7 +487,7 @@ class BackupRepository(
      */
     private suspend fun resolveNewPipeEntry(entry: NewPipeSubscriptionEntry): ChannelSubscription? {
         val bilibiliRef = entry.ref as? NewPipeChannelRef.Bilibili
-        if (bilibiliRef != null) return resolveBilibiliNewPipeEntry(bilibiliRef.mid, entry.name)
+        if (bilibiliRef != null) return bilibiliSubscriptionFromNewPipe(context, bilibiliRef.mid, entry.name)
 
         val channelId =
             when (val ref = entry.ref) {
@@ -510,26 +501,6 @@ class BackupRepository(
             channelId = channelId,
             channelName = entry.name.ifBlank { header?.title.orEmpty() }.ifBlank { channelId },
             channelThumbnail = header?.avatarUrl.orEmpty(),
-        )
-    }
-
-    private suspend fun resolveBilibiliNewPipeEntry(
-        mid: Long,
-        name: String,
-    ): ChannelSubscription {
-        val info =
-            try {
-                bilibiliApi(context).channelInfo(mid)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                null
-            }
-        return ChannelSubscription(
-            channelId = mid.toString(),
-            channelName = name.ifBlank { info?.name.orEmpty() }.ifBlank { mid.toString() },
-            channelThumbnail = info?.avatarUrl.orEmpty(),
-            serviceId = BILIBILI_SERVICE_ID,
         )
     }
 
@@ -765,10 +736,7 @@ class BackupRepository(
                                 if (serviceId.isYouTubeServiceId) {
                                     extractYouTubeVideoId(videoUrl)
                                 } else {
-                                    // Other services (e.g. Bilibili) don't share YouTube's video-id
-                                    // URL shape - resolve through that service's own link handler
-                                    // instead of guessing at URL structure.
-                                    resolveNonYouTubeStreamId(videoUrl, serviceId) { "" }.ifEmpty { null }
+                                    nonYouTubeVideoId(videoUrl, serviceId)
                                 } ?: continue
 
                             val title = cursor.getString(1).orEmpty()
@@ -797,13 +765,7 @@ class BackupRepository(
                                     timestamp = timestamp,
                                     title = title,
                                     thumbnailUrl =
-                                        storedThumbnail.ifBlank {
-                                            if (serviceId.isYouTubeServiceId) {
-                                                ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(videoId)
-                                            } else {
-                                                ""
-                                            }
-                                        },
+                                        storedThumbnail.ifBlank { fallbackThumbnail(videoId, serviceId) },
                                     channelName = channelName,
                                     channelId = channelId,
                                     isMusic = false,
@@ -1839,10 +1801,7 @@ class BackupRepository(
                                 if (stream.serviceId.isYouTubeServiceId) {
                                     extractYouTubeVideoId(stream.url)
                                 } else {
-                                    // Other services (e.g. Bilibili) don't share YouTube's video-id
-                                    // URL shape - resolve through that service's own link handler
-                                    // instead of guessing at URL structure.
-                                    resolveNonYouTubeStreamId(stream.url, stream.serviceId) { "" }.ifEmpty { null }
+                                    nonYouTubeVideoId(stream.url, stream.serviceId)
                                 }
                             videoId?.let { it to stream.serviceId }
                         }
@@ -1851,12 +1810,7 @@ class BackupRepository(
 
                     val playlistId = "newpipe_pl_${playlist.uid}_${System.currentTimeMillis()}"
                     val (firstVideoId, firstServiceId) = videoIds.first()
-                    val firstThumb =
-                        if (firstServiceId.isYouTubeServiceId) {
-                            ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(firstVideoId)
-                        } else {
-                            ""
-                        }
+                    val firstThumb = fallbackThumbnail(firstVideoId, firstServiceId)
 
                     database.withTransaction {
                         database.playlistDao().insertPlaylist(
@@ -1878,12 +1832,7 @@ class BackupRepository(
                                     title = "",
                                     channelName = "",
                                     channelId = "",
-                                    thumbnailUrl =
-                                        if (serviceId.isYouTubeServiceId) {
-                                            ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(videoId)
-                                        } else {
-                                            ""
-                                        },
+                                    thumbnailUrl = fallbackThumbnail(videoId, serviceId),
                                     duration = 0,
                                     viewCount = 0L,
                                     uploadDate = "",
