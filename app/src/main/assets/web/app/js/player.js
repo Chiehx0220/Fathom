@@ -314,7 +314,7 @@ const loadPlayer = (way) => Promise.all([
 // ones in the page), and the SponsorBlock marks on the seek bar.
 const SKIN_STYLE = `
 :host([data-mini]) media-controls, :host([data-mini]) media-title { display: none !important; }
-.sb-mark { position: absolute; top: 0; height: 100%; min-width: 3px; border-radius: 2px; pointer-events: none; background: #00D400; opacity: 0.85; }
+.sb-mark { position: absolute; top: 50%; height: 4px; transform: translateY(-50%); min-width: 3px; border-radius: 2px; pointer-events: none; background: #00D400; opacity: 0.9; }
 .sb-mark.intro, .sb-mark.outro { background: #00FFFF; }
 .sb-mark.interaction { background: #CC00FF; }
 .sb-mark.selfpromo { background: #FFFF00; }
