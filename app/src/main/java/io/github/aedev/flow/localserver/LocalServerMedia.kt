@@ -34,7 +34,13 @@ object LocalServerMedia {
             val end = url.indexOf("?", start)
             return if (end == -1) url.substring(start) else url.substring(start, end)
         }
-        return url
+        // A Bilibili video or live room is stored under "BV1xx?p=1" / "live:123", the ids the app's own history uses; kept as a whole link
+        // here it became a second row, and its url a link inside a link.
+        return io.github.aedev.flow.bilibili.BilibiliVideoId
+            .fromUrl(url)
+            ?: io.github.aedev.flow.bilibili.BilibiliLiveId
+                .fromUrl(url)
+            ?: url
     }
 
     internal fun fetchChannelUploads(

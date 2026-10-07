@@ -18,6 +18,11 @@ class LocalServerMediaTest {
     fun `a video id is taken from a watch, shorts or short link`() {
         assertThat(LocalServerMedia.getVideoId("https://www.youtube.com/watch?v=abc123&t=5")).isEqualTo("abc123")
         assertThat(LocalServerMedia.getVideoId("https://www.youtube.com/watch?v=abc123")).isEqualTo("abc123")
+        assertThat(LocalServerMedia.getVideoId("https://www.bilibili.com/video/BV1YtHs62EHZ?p=1")).isEqualTo("BV1YtHs62EHZ?p=1")
+        assertThat(LocalServerMedia.getVideoId("https://www.bilibili.com/video/https://www.bilibili.com/video/BV1YtHs62EHZ?p=2"))
+            .isEqualTo("BV1YtHs62EHZ?p=2")
+        assertThat(LocalServerMedia.getVideoId("https://live.bilibili.com/21144080?spm=1")).isEqualTo("live:21144080")
+        assertThat(LocalServerMedia.getVideoId("BV1YtHs62EHZ?p=1")).isEqualTo("BV1YtHs62EHZ?p=1")
         assertThat(LocalServerMedia.getVideoId("https://www.youtube.com/shorts/xyz789?feature=share")).isEqualTo("xyz789")
         assertThat(LocalServerMedia.getVideoId("https://youtu.be/def456?si=1")).isEqualTo("def456")
     }

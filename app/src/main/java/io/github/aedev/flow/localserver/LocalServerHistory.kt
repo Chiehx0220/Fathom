@@ -84,10 +84,14 @@ fun HistoryDbHelper.nativeClearHistory() {
 fun HistoryDbHelper.nativeHistoryJson(): org.json.JSONArray =
     runBlocking {
         val array = org.json.JSONArray()
+        // A video can sit in two rows (one under a whole link, written by the web page before ids were normalised): the most recent one stands.
+        val seen = HashSet<String>()
         for (entry in viewHistory().getAllHistory().first()) {
+            val url = videoIdToUrl(entry.videoId, entry.serviceId)
+            if (!seen.add(url)) continue
             val json = org.json.JSONObject()
-            json.put("id", entry.videoId)
-            json.put("url", videoIdToUrl(entry.videoId, entry.serviceId))
+            json.put("id", LocalServerMedia.getVideoId(entry.videoId))
+            json.put("url", url)
             json.put("serviceId", entry.serviceId)
             json.put("title", entry.title)
             json.put("channelName", entry.channelName)

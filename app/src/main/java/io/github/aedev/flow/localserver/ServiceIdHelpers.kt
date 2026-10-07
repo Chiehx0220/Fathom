@@ -50,8 +50,10 @@ fun videoIdToUrl(
     videoId: String,
     serviceId: Int = ServiceList.YouTube.serviceId,
 ): String {
-    val isYouTube = serviceIdOfVideo(videoId, serviceId).isYouTubeServiceId
-    return if (isYouTube) "https://www.youtube.com/watch?v=$videoId" else LocalServerBilibili.videoUrl(videoId)
+    // Rows the web page wrote before ids were normalised hold a whole Bilibili link as the id; that reads as its id here.
+    val id = LocalServerMedia.getVideoId(videoId)
+    val isYouTube = serviceIdOfVideo(id, serviceId).isYouTubeServiceId
+    return if (isYouTube) "https://www.youtube.com/watch?v=$id" else LocalServerBilibili.videoUrl(id)
 }
 
 fun playlistIdToUrl(playlistId: String): String = "https://www.youtube.com/playlist?list=$playlistId"
