@@ -53,6 +53,10 @@ body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
 .watch-info .who { font-weight: 500; }
 .about { max-width: 980px; margin: 18px var(--pad-x) 0; padding: 18px 22px; border-radius: 20px; background: var(--s1); color: var(--mute); white-space: pre-wrap; overflow-wrap: anywhere; }
 .about b { display: block; margin-bottom: 8px; color: var(--fg); font-weight: 500; }
+.about-text { line-height: 1.5; max-height: 6em; overflow: hidden; }
+.about.open .about-text { max-height: none; }
+.about-toggle { margin-top: 12px; height: 38px; }
+.about-toggle[hidden] { display: none; }
 
 .comments { max-width: 980px; padding: 26px var(--pad-x) 0; }
 .comments h2 { margin-bottom: 12px; font-size: 20px; font-weight: 500; }

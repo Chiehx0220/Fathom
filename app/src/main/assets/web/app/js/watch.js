@@ -169,7 +169,11 @@ const render = async (root, params, isCurrent) => {
     if (!isCurrent()) return;
     FT.player.dock('full');
 
-    const about = h('div', { class: 'about' }, h('b', {}, [FT.views(info.viewCount), info.uploadDate].filter(Boolean).join(' · ') || 'About'), FT.description(info.description, info.descriptionType));
+    // A long description starts folded to a few lines, so the comments are not pushed screens down; the button shows only when there is more.
+    const aboutText = h('div', { class: 'about-text' }, FT.description(info.description, info.descriptionType));
+    const aboutToggle = h('button', { type: 'button', class: 'btn about-toggle', hidden: true, data: { f: '', key: 'about' },
+        onclick: () => { const open = about.classList.toggle('open'); aboutToggle.textContent = open ? 'Show less' : 'Show more'; } }, 'Show more');
+    const about = h('div', { class: 'about' }, h('b', {}, [FT.views(info.viewCount), info.uploadDate].filter(Boolean).join(' · ') || 'About'), aboutText, aboutToggle);
     const commentsHolder = h('section', { class: 'comments' }, h('h2', {}, 'Comments'), FT.loading());
     const related = (info.relatedVideos || []).filter((v) => !v.isShort);
     const page = h('div', {},
@@ -184,6 +188,8 @@ const render = async (root, params, isCurrent) => {
         commentsHolder);
     root.replaceChildren(slot, page);
     loadComments(commentsHolder, service, info.url, isCurrent);
+    // Measured once the text has a size (the page may not be laid out yet) and again whenever it changes, e.g. when the window is resized.
+    new ResizeObserver(() => { aboutToggle.hidden = !about.classList.contains('open') && aboutText.scrollHeight <= aboutText.clientHeight + 1; }).observe(aboutText);
 
     // The picture shrinks into the corner once it has scrolled out of sight, and comes back when it is in view again.
     if (observer) observer.disconnect();
