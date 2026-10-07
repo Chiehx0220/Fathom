@@ -430,6 +430,25 @@ const build = async (info, way, owner) => {
     return tree;
 };
 
+// A video that was left part-way starts where it was left (the history keeps a percentage; "Continue watching" on the home page offers the same).
+// Reports of the new position follow from the usual timer, so a visit that only opens the video does not overwrite the saved progress with 0.
+const resumeFromHistory = (owner, media, info, service) => {
+    if (info.isLive || info.playback.liveRoom) return;
+    FT.api.history().then((hist) => {
+        const saved = (hist.videos || []).find((v) => v.url === info.url && (v.serviceId ?? 0) === service);
+        if (!saved || !(saved.progress > 2 && saved.progress < 95)) return;
+        // Some files start their timeline past 0, so "has not played yet" is judged from where the buffer begins, not from 0.
+        const seek = (fresh) => {
+            if (current !== owner || !isFinite(media.duration)) return;
+            const start = media.buffered.length ? media.buffered.start(0) : 0;
+            if (!fresh && media.currentTime - start > 5) return;
+            media.currentTime = (saved.progress / 100) * media.duration;
+        };
+        if (media.readyState >= 1) seek(false);
+        else media.addEventListener('loadedmetadata', () => seek(true), { once: true });
+    }).catch(() => {});
+};
+
 // ---- The public side ----
 
 FT.player = {
@@ -461,6 +480,7 @@ FT.player = {
         if (way.tag === 'hlsjs-video' && !way.live) p.source = { src: way.src, engine: { hlsJs: HLS_SETTINGS } };
         else p.src = way.src;
         publishMediaSession(info);
+        resumeFromHistory(owner, p, info, service);
         FT.api.sponsor(service, info.url).then((body) => {
             if (!current || current.url !== info.url) return;
             current.segments = body.segments || [];
