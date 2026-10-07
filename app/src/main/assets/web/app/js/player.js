@@ -284,9 +284,9 @@ const scheduleNext = () => {
     }, 6000);
 };
 
-// YouTube's 1440p and 4K come as AV1. If this browser can decode that smoothly, the manifest is asked for the tallest ladder (up to 4K);
+// YouTube's 1440p and 4K come as AV1. If this browser can decode that smoothly, the playlist is asked for the tallest ladder (up to 4K);
 // otherwise it gets the H.264 one, which every device plays, up to 1080p. The answer does not change, so it is asked once.
-// decodingInfo() is only a hint; MediaSource.isTypeSupported() is what dash.js's CapabilitiesFilter enforces.
+// decodingInfo() is only a hint; MediaSource.isTypeSupported() is what the player enforces.
 let highestQuality = null;
 const canPlayHighest = () => highestQuality || (highestQuality = (async () => {
     try {
@@ -320,27 +320,16 @@ const SKIN_STYLE = `
 .sb-mark.selfpromo { background: #FFFF00; }
 .sb-mark.music_offtopic { background: #FF9900; }`;
 
-// dash.js 5 settings. A longer buffer than its default (bufferTimeDefault, 18 s), so a stall on a slow link does not drain it; and a high first
-// rung (kbps) instead of the lowest one, which the estimate corrects within a few segments if the link cannot hold it.
-const DASH_SETTINGS = {
-    streaming: {
-        abr: { initialBitrate: { video: 6000 } },
-        buffer: { bufferTimeDefault: 60, bufferTimeAtTopQuality: 90, bufferTimeAtTopQualityLongForm: 120, bufferToKeep: 30, avoidCurrentTimeRangePruning: true },
-    },
-};
+// hls.js settings. A longer buffer than its default (30 s), so a stall on a slow link does not drain it; and a high first rung (bits/s) instead
+// of the lowest one, which the estimate corrects within a few segments if the link cannot hold it.
+const HLS_SETTINGS = { maxBufferLength: 60, maxMaxBufferLength: 120, backBufferLength: 30, abrEwmaDefaultEstimate: 6000000 };
 
-// Which media component plays what /api/v1/video describes, and whether the live skin (a Live button, no time slider) fits it. A live room is an
-// HLS playlist, video streams come as a DASH manifest, and anything else (audio only) is one stream the browser plays as it is.
-const vodEngine = () => { try { return localStorage.getItem('fathom-vod'); } catch (e) { return null; } };
-
+// Which media component plays what /api/v1/video describes, and whether the live skin (a Live button, no time slider) fits it. A live room and
+// every video with a quality ladder is an HLS playlist, and anything else (audio only) is one stream the browser plays as it is.
 const planFor = async (info) => {
     const pb = info.playback;
     if (pb.hlsUrl) return { live: !!pb.liveRoom, tag: 'hlsjs-video', src: pb.hlsUrl };
-    // Experiment: localStorage['fathom-vod'] = 'hls' plays on-demand video through the server's HLS playlists instead of the DASH manifest.
-    if (pb.isDash && pb.manifestUrl.startsWith('/manifest') && vodEngine() === 'hls') {
-        return { live: false, tag: 'hlsjs-video', src: pb.manifestUrl.replace('/manifest', '/hlsvod') + ((await canPlayHighest()) ? '&prefer=hd' : '') };
-    }
-    if (pb.isDash) return { live: false, tag: 'dash-video', src: pb.manifestUrl + ((await canPlayHighest()) ? '&prefer=hd' : '') };
+    if (pb.isAdaptive) return { live: false, tag: 'hlsjs-video', src: pb.playlistUrl + ((await canPlayHighest()) ? '&prefer=hd' : '') };
     return { live: false, tag: 'video', src: pb.streamUrl };
 };
 
@@ -469,7 +458,7 @@ FT.player = {
         }
         // The frames shown above the seek bar while it is dragged: a WebVTT track of storyboard regions (a video that has none answers 404).
         if (!info.playback.liveRoom && !info.isLive) p.append(track('metadata', 'thumbnails', 'en', `/thumbnails?serviceId=${service}&id=${FT.enc(info.url)}`, true));
-        if (way.tag === 'dash-video') p.source = { src: way.src, engine: { dashJs: DASH_SETTINGS } };
+        if (way.tag === 'hlsjs-video' && !way.live) p.source = { src: way.src, engine: { hlsJs: HLS_SETTINGS } };
         else p.src = way.src;
         publishMediaSession(info);
         FT.api.sponsor(service, info.url).then((body) => {

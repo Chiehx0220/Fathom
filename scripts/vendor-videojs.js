@@ -19,8 +19,8 @@ const ROOT = path.join(__dirname, '..');
 const DEST = path.join(ROOT, 'app/src/main/assets/web/vendor/videojs');
 
 // video.js / live-video.js: the player and its skin (VOD, and live without a time slider).
-// media/dash-video.js: DASH through dash.js. media/hlsjs-video.js: HLS through hls.js.
-const ENTRIES = ['video.js', 'live-video.js', 'media/dash-video.js', 'media/hlsjs-video.js'];
+// media/hlsjs-video.js: HLS through hls.js (live rooms and on-demand video alike).
+const ENTRIES = ['video.js', 'live-video.js', 'media/hlsjs-video.js'];
 const EXTRA = ['global.css', 'LICENSE', 'package.json'];
 
 const IMPORT = /(?:\bfrom|\bimport)\s*["'](\.{1,2}\/[^"']+)["']|import\(\s*["'](\.{1,2}\/[^"']+)["']\s*\)/g;

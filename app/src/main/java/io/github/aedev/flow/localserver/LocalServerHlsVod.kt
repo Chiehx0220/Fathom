@@ -11,7 +11,7 @@ internal class FragmentSpan(
 )
 
 /**
- * Reads a `sidx` box (the segment index at the `indexRange` of a DASH-style MP4) into the byte spans of its segments.
+ * Reads a `sidx` box (the segment index at the `indexRange` of an MP4 with a segment index) into the byte spans of its segments.
  * [indexEnd] is the last byte of the box in the file: the first segment follows it, plus the box's own first offset.
  */
 internal object SidxParser {
@@ -52,13 +52,13 @@ internal object SidxParser {
     }
 }
 
-/** Writes a [DashCatalog] as HLS playlists (fMP4 segments addressed by byte range, so the files are not copied or cut). */
+/** Writes a [StreamCatalog] as HLS playlists (fMP4 segments addressed by byte range, so the files are not copied or cut). */
 internal object HlsVod {
     private const val AUDIO_GROUP = "aud"
 
     /** [playlistUrl] is the address of a representation's media playlist. */
     fun master(
-        catalog: DashCatalog,
+        catalog: StreamCatalog,
         playlistUrl: (String) -> String,
     ): String {
         val out = StringBuilder("#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-INDEPENDENT-SEGMENTS\n")
@@ -86,7 +86,7 @@ internal object HlsVod {
     /** The playlist of one file: its `init` and the [spans] of its segments, all as byte ranges of [streamUrl]. */
     fun media(
         streamUrl: String,
-        init: DashCatalog.ByteRange,
+        init: StreamCatalog.ByteRange,
         spans: List<FragmentSpan>,
     ): String {
         val target =

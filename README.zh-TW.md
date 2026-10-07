@@ -142,7 +142,7 @@ Flow 原有的功能(SponsorBlock、DeArrow、音樂、Shorts、下載、主題)
 
 ## 🙏 致謝
 
-[Flow](https://github.com/A-EDev/Flow) 與 FlowNeuro,A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor),InfinityLoop1308(Bilibili 用戶端以它為基礎) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube),diekaiju · [Video.js](https://videojs.org)、[dash.js](https://github.com/Dash-Industry-Forum/dash.js) 與 [hls.js](https://github.com/video-dev/hls.js)
+[Flow](https://github.com/A-EDev/Flow) 與 FlowNeuro,A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor),InfinityLoop1308(Bilibili 用戶端以它為基礎) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube),diekaiju · [Video.js](https://videojs.org) 與 [hls.js](https://github.com/video-dev/hls.js)
 
 ## 📄 授權
 

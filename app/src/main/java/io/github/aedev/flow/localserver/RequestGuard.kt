@@ -41,7 +41,7 @@ internal val MUTATING_PATHS: Set<String> =
 
 /** Read-only media routes that other devices and players fetch, so they answer cross-origin requests. */
 internal val CROSS_ORIGIN_PATHS: Set<String> =
-    setOf("/stream", "/manifest", "/hls", "/subtitles", "/thumbnails", "/image-proxy", "/danmaku", "/live_chat")
+    setOf("/stream", "/hlsvod", "/hls", "/subtitles", "/thumbnails", "/image-proxy", "/danmaku", "/live_chat")
 
 private val IPV4 = Regex("""\d{1,3}(\.\d{1,3}){3}""")
 private val LOCAL_SUFFIXES = listOf(".local", ".lan", ".home.arpa", ".internal")

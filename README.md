@@ -144,7 +144,7 @@ Everything else in Flow (SponsorBlock, DeArrow, music, Shorts, downloads, themes
 
 ## 🙏 Credits
 
-[Flow](https://github.com/A-EDev/Flow) and FlowNeuro by A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor) by InfinityLoop1308 (the Bilibili client is based on it) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube) by diekaiju · [Video.js](https://videojs.org), [dash.js](https://github.com/Dash-Industry-Forum/dash.js) and [hls.js](https://github.com/video-dev/hls.js)
+[Flow](https://github.com/A-EDev/Flow) and FlowNeuro by A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor) by InfinityLoop1308 (the Bilibili client is based on it) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube) by diekaiju · [Video.js](https://videojs.org) and [hls.js](https://github.com/video-dev/hls.js)
 
 ## 📄 License
 

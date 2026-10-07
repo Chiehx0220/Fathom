@@ -3,7 +3,7 @@ package io.github.aedev.flow.localserver
 import java.io.OutputStream
 import java.net.URLEncoder
 
-// Video on demand as HLS: the same representations the DASH manifest offers, as an HLS master playlist and a media playlist per file.
+// Video on demand as HLS: the representations of a video, as an HLS master playlist and a media playlist per file.
 
 private const val HLS_TYPE = "application/vnd.apple.mpegurl"
 
@@ -18,7 +18,7 @@ internal fun ClientHandler.handleHlsVod(
     val repId = params["rep"]
 
     if (repId == null) {
-        val catalog = DashCatalog.of(extractor, preferredTrack = params["audio_track"], highest = params["prefer"] == "hd")
+        val catalog = StreamCatalog.of(extractor, preferredTrack = params["audio_track"], highest = params["prefer"] == "hd")
         catalog.videos.forEach { warmRep(catalog, serviceId, mediaUrl, it.id) }
         catalog.audioTracks.forEach { t -> t.audios.forEach { warmRep(catalog, serviceId, mediaUrl, it.id) } }
         val base = "/hlsvod?serviceId=$serviceId&id=${enc(mediaUrl)}"
@@ -27,16 +27,16 @@ internal fun ClientHandler.handleHlsVod(
     }
 
     // Any quality of the file, not only the ones the default offer lists.
-    val catalog = DashCatalog.of(extractor, highest = true)
+    val catalog = StreamCatalog.of(extractor, highest = true)
     val ranges =
         catalog.videos.firstOrNull { it.id == repId }?.let { it.init to it.index }
             ?: catalog.audioTracks.firstNotNullOfOrNull { t -> t.audios.firstOrNull { it.id == repId } }?.let { it.init to it.index }
-            ?: DashCatalog
+            ?: StreamCatalog
                 .of(extractor, highest = false)
                 .videos
                 .firstOrNull { it.id == repId }
                 ?.let { it.init to it.index }
-    val fileUrl = DashCatalog.urlOf(extractor, repId)
+    val fileUrl = StreamCatalog.urlOf(extractor, repId)
     if (ranges == null || fileUrl == null) {
         sendResponse(os, 404, "Unknown representation.", "text/plain; charset=UTF-8")
         return
@@ -58,11 +58,11 @@ internal fun ClientHandler.handleHlsVod(
             sendResponse(os, 502, "The segment index is not usable: ${e.message}", "text/plain; charset=UTF-8")
             return
         }
-    sendResponse(os, 200, HlsVod.media(DashManifest.streamPath(serviceId, mediaUrl, repId), init, spans), HLS_TYPE)
+    sendResponse(os, 200, HlsVod.media(StreamPath.of(serviceId, mediaUrl, repId), init, spans), HLS_TYPE)
 }
 
 private fun warmRep(
-    catalog: DashCatalog,
+    catalog: StreamCatalog,
     serviceId: Int,
     mediaUrl: String,
     repId: String,

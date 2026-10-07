@@ -51,7 +51,7 @@ internal object LocalServerYouTubeStreams {
     /**
      * Overlays [info]'s video-only/audio streams with InnerTube's, keeping NewPipe's as a union
      * rather than a replacement: InnerTube favors AV1/VP9, which some browsers cannot decode, and
-     * NewPipe's H.264 gives [DashCatalog]'s family picker a fallback.
+     * NewPipe's H.264 gives [StreamCatalog]'s family picker a fallback.
      */
     fun overlay(
         info: StreamInfo,

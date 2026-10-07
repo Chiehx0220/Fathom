@@ -4,16 +4,15 @@ import org.schabi.newpipe.extractor.MediaFormat
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.net.URLEncoder
-import java.util.Locale
 
 /**
  * What the web player can be offered for one video: the qualities and audio tracks, each with a short id of its own.
  *
- * The manifest, and the `/stream` route the player then fetches from, both work from this one list. A `/stream?rep=` request
+ * The playlists, and the `/stream` route the player then fetches from, both work from this one list. A `/stream?rep=` request
  * names a representation by that id, so nothing depends on an itag being unique (Bilibili has none) or on video and audio
  * agreeing which stream an itag meant.
  */
-internal class DashCatalog(
+internal class StreamCatalog(
     val videos: List<Video>,
     val audioTracks: List<AudioTrack>,
 ) {
@@ -69,17 +68,16 @@ internal class DashCatalog(
          * Reads the catalog out of [streams]. [preferredTrack] is the audio track to start on (the player takes the first);
          * without one, the best track by [LocalServerMedia.audioTrackPriorityComparator].
          *
-         * All the video sits in one AdaptationSet, and a player cannot move between codecs inside one set, so only one codec
-         * family is offered. Normally that is H.264, which every device plays; with [highest] it is whichever family reaches the
+         * A player does not switch between codec families mid-stream reliably, so only one codec family is offered. Normally that is H.264, which every device plays; with [highest] it is whichever family reaches the
          * tallest picture (YouTube's 1440p and 4K come as AV1), for a player that has said it can decode that smoothly.
          */
         fun of(
             streams: StreamLists,
             preferredTrack: String? = null,
             highest: Boolean = false,
-        ): DashCatalog {
+        ): StreamCatalog {
             val (rawVideo, rawAudio) = synchronized(streams) { streams.videoOnlyStreams to streams.audioStreams }
-            return DashCatalog(pickFamily(playableVideos(rawVideo), highest), audioTracks(rawAudio, preferredTrack))
+            return StreamCatalog(pickFamily(playableVideos(rawVideo), highest), audioTracks(rawAudio, preferredTrack))
         }
 
         /** The address of representation [repId], of any quality: a player may ask for one the default offer would leave out. */
@@ -214,95 +212,9 @@ internal class DashCatalog(
     }
 }
 
-/** Writes a [DashCatalog] as an MPEG-DASH manifest (on-demand profile, a byte-range index per representation). */
-internal object DashManifest {
-    // The manifest needs a length; a service that reports none gets a placeholder long enough not to end the video early.
-    private const val UNKNOWN_DURATION_SEC = 1800.0
-
-    /** [streamUrl] turns a representation id into the address the player fetches it from. */
-    fun write(
-        catalog: DashCatalog,
-        durationSec: Double,
-        streamUrl: (String) -> String,
-    ): String {
-        val duration = "PT" + String.format(Locale.US, "%.3f", if (durationSec > 0) durationSec else UNKNOWN_DURATION_SEC) + "S"
-        val xml = StringBuilder()
-        xml.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
-        xml.append(
-            "<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\" type=\"static\" mediaPresentationDuration=\"$duration\" minBufferTime=\"PT1.5S\">\n",
-        )
-        xml.append("  <Period duration=\"$duration\">\n")
-
-        var setId = 0
-        if (catalog.videos.isNotEmpty()) {
-            xml.append(
-                "    <AdaptationSet id=\"${setId++}\" mimeType=\"video/mp4\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\">\n",
-            )
-            for (v in catalog.videos) {
-                xml.append("      <Representation id=\"${esc(v.id)}\" bandwidth=\"${v.bandwidth}\" codecs=\"${esc(v.codec)}\"")
-                if (v.width > 0 && v.height > 0) xml.append(" width=\"${v.width}\" height=\"${v.height}\"")
-                if (v.fps > 0) xml.append(" frameRate=\"${v.fps}\"")
-                xml.append(" sar=\"1:1\">\n")
-                representationBody(xml, streamUrl(v.id), v.index, v.init)
-                xml.append("      </Representation>\n")
-            }
-            xml.append("    </AdaptationSet>\n")
-        }
-
-        for (track in catalog.audioTracks) {
-            xml.append(
-                "    <AdaptationSet id=\"${setId++}\" mimeType=\"audio/mp4\" subsegmentAlignment=\"true\" subsegmentStartsWithSAP=\"1\"",
-            )
-            track.language?.let { xml.append(" lang=\"${esc(it)}\"") }
-            track.label?.let { xml.append(" label=\"${esc(it)}\"") }
-            xml.append(">\n")
-            // Any track that is not the original is a dub.
-            if (track.hasRole) {
-                xml.append(
-                    "      <Role schemeIdUri=\"urn:mpeg:dash:role:2011\" value=\"${if (track.original) "main" else "dub"}\"/>\n",
-                )
-            }
-            for (a in track.audios) {
-                xml.append(
-                    "      <Representation id=\"${esc(
-                        a.id,
-                    )}\" bandwidth=\"${a.bandwidth}\" codecs=\"${esc(a.codec)}\" audioSamplingRate=\"44100\">\n",
-                )
-                xml.append(
-                    "        <AudioChannelConfiguration schemeIdUri=\"urn:mpeg:dash:23003:3:audio_channel_configuration:2011\" value=\"2\"/>\n",
-                )
-                representationBody(xml, streamUrl(a.id), a.index, a.init)
-                xml.append("      </Representation>\n")
-            }
-            xml.append("    </AdaptationSet>\n")
-        }
-
-        xml.append("  </Period>\n")
-        xml.append("</MPD>\n")
-        return xml.toString()
-    }
-
-    private fun representationBody(
-        xml: StringBuilder,
-        url: String,
-        index: DashCatalog.ByteRange,
-        init: DashCatalog.ByteRange,
-    ) {
-        xml.append("        <BaseURL>${esc(url)}</BaseURL>\n")
-        xml.append("        <SegmentBase indexRange=\"$index\" indexRangeExact=\"true\">\n")
-        xml.append("          <Initialization range=\"$init\"/>\n")
-        xml.append("        </SegmentBase>\n")
-    }
-
-    private fun esc(text: String) =
-        text
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("\"", "&quot;")
-
-    /** The `/stream` address of a representation. */
-    fun streamPath(
+/** The `/stream` address of a representation. */
+internal object StreamPath {
+    fun of(
         serviceId: Int,
         mediaUrl: String,
         repId: String,

@@ -116,7 +116,6 @@
     <string name="about_credit_pipepipe">Origin of the Bilibili client</string>
     <string name="about_credit_localtube">Inspiration for the local web server</string>
     <string name="about_credit_videojs">Web player of the local server</string>
-    <string name="about_credit_dashjs">DASH streaming engine of the web player</string>
     <string name="about_credit_hlsjs">HLS streaming engine of the web player, for live rooms</string>
     <string name="welcome_to_flow">Welcome to Fathom</string>
     <string name="onboarding_import_source_flow">Flow / Fathom backup</string>

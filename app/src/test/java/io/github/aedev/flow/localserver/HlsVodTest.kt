@@ -55,7 +55,7 @@ class HlsVodTest {
         val text =
             HlsVod.media(
                 "/stream?rep=v1",
-                DashCatalog.ByteRange(0, 739),
+                StreamCatalog.ByteRange(0, 739),
                 listOf(FragmentSpan(1000, 500, 4.0), FragmentSpan(1500, 700, 5.2)),
             )
         assertTrue(text.contains("#EXT-X-MAP:URI=\"/stream?rep=v1\",BYTERANGE=\"740@0\""))
@@ -67,10 +67,10 @@ class HlsVodTest {
 
     @Test
     fun masterPlaylistNamesVideosAndAudio() {
-        val audio = DashCatalog.Audio("a140", "u", 128_000, "mp4a.40.2", DashCatalog.ByteRange(0, 1), DashCatalog.ByteRange(2, 3))
-        val track = DashCatalog.AudioTrack("", "en", null, true, false, listOf(audio))
+        val audio = StreamCatalog.Audio("a140", "u", 128_000, "mp4a.40.2", StreamCatalog.ByteRange(0, 1), StreamCatalog.ByteRange(2, 3))
+        val track = StreamCatalog.AudioTrack("", "en", null, true, false, listOf(audio))
         val video =
-            DashCatalog.Video(
+            StreamCatalog.Video(
                 "v137",
                 "u",
                 4_000_000,
@@ -78,10 +78,10 @@ class HlsVodTest {
                 1920,
                 1080,
                 30,
-                DashCatalog.ByteRange(0, 1),
-                DashCatalog.ByteRange(2, 3),
+                StreamCatalog.ByteRange(0, 1),
+                StreamCatalog.ByteRange(2, 3),
             )
-        val text = HlsVod.master(DashCatalog(listOf(video), listOf(track))) { "/p?rep=$it" }
+        val text = HlsVod.master(StreamCatalog(listOf(video), listOf(track))) { "/p?rep=$it" }
         assertTrue(text.contains("TYPE=AUDIO,GROUP-ID=\"aud\""))
         assertTrue(text.contains("BANDWIDTH=4128000"))
         assertTrue(text.contains("RESOLUTION=1920x1080,FRAME-RATE=30.000,AUDIO=\"aud\""))

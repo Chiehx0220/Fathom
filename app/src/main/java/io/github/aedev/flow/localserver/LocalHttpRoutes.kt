@@ -20,7 +20,6 @@ internal val ROUTES: Map<String, Route> =
         "/release-lock" to route { os, params, _ -> handleReleaseLock(os, params) },
         "/history_action" to route { os, params, _ -> handleHistoryAction(os, params) },
         "/stream" to route { os, params, requestHeaders -> handleStreamProxy(os, params, requestHeaders) },
-        "/manifest" to route { os, params, _ -> handleManifestProxy(os, params) },
         "/hlsvod" to route { os, params, _ -> handleHlsVod(os, params) },
         "/subtitles" to route { os, params, _ -> handleSubtitlesProxy(os, params) },
         "/thumbnails" to route { os, params, _ -> handleThumbnailsProxy(os, params) },

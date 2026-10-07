@@ -222,7 +222,7 @@ internal fun ClientHandler.handleStreamProxy(
                 if (repId !=
                     null
                 ) {
-                    DashCatalog.urlOf(extractor, repId)
+                    StreamCatalog.urlOf(extractor, repId)
                 } else {
                     resolveDirectUrl(extractor, requestedItag, requestedTrackId, mediaType, params)
                 }
@@ -364,43 +364,6 @@ internal fun fetchFromCdn(
     }
 
     return LocalServerCaches.httpClient.newCall(reqBuilder.build()).execute()
-}
-
-@Throws(Exception::class)
-internal fun ClientHandler.handleManifestProxy(
-    os: OutputStream,
-    params: Map<String, String>,
-) {
-    val serviceId = getServiceId(params)
-    val mediaUrl = params["id"] ?: throw BadRequestException("Missing 'id' parameter")
-
-    // Cached: shares its extraction with the watch handlers.
-    val extractor = LocalServerSource.streams(dbHelper.appContext, serviceId, mediaUrl, fresh = false)
-    // Synchronized: extractor getters are not thread-safe.
-    val durationSec = synchronized(extractor) { extractor.length.toDouble() }
-    val catalog = DashCatalog.of(extractor, preferredTrack = params["audio_track"], highest = params["prefer"] == "hd")
-
-    // The player asks /stream for each representation by id, and the address it was given is already good for an hour.
-    fun warm(repId: String) {
-        catalog.urlOf(repId)?.let { LocalServerCaches.streamUrlCache.put(repCacheKey(serviceId, mediaUrl, repId), it, 3600000) }
-    }
-    catalog.videos.forEach { warm(it.id) }
-    catalog.audioTracks.forEach { track -> track.audios.forEach { warm(it.id) } }
-
-    val manifestXml = DashManifest.write(catalog, durationSec) { repId -> DashManifest.streamPath(serviceId, mediaUrl, repId) }
-    serverLog("Generated local DASH manifest:\n$manifestXml")
-
-    val bodyBytes = manifestXml.toByteArray(Charsets.UTF_8)
-
-    val responseHeaders =
-        "HTTP/1.1 200 OK\r\n" +
-            "Content-Type: application/dash+xml; charset=UTF-8\r\n" +
-            "Content-Length: " + bodyBytes.size + "\r\n" +
-            "Access-Control-Allow-Origin: *\r\n" +
-            "Connection: close\r\n\r\n"
-    os.write(responseHeaders.toByteArray(Charsets.UTF_8))
-    os.write(bodyBytes)
-    os.flush()
 }
 
 internal fun repCacheKey(

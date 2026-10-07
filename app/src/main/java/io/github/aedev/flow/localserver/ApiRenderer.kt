@@ -67,7 +67,7 @@ object ApiRenderer {
     }
 
     // Full watch-page detail: videoJson() plus StreamInfo-only fields (description, like count,
-    // related videos, playback URLs). Points at the existing /stream, /manifest, /subtitles proxy
+    // related videos, playback URLs). Points at the existing /stream, /hlsvod, /subtitles proxy
     // routes rather than re-resolving URLs itself.
     @JvmStatic
     fun videoDetailJson(
@@ -122,13 +122,13 @@ object ApiRenderer {
         val hasVideo = info.videoStreams.isNotEmpty() || info.videoOnlyStreams.isNotEmpty() || !info.hlsUrl.isNullOrEmpty()
         val isBilibiliLive =
             LocalServerBilibili.isBilibili(serviceId) && info.streamType == StreamType.LIVE_STREAM && !info.hlsUrl.isNullOrEmpty()
-        playback.put("isDash", hasVideo && !isBilibiliLive)
+        playback.put("isAdaptive", hasVideo && !isBilibiliLive)
         if (isBilibiliLive) {
             // The room's playlist goes through the relay: its CDN needs a Referer a browser cannot send.
             playback.put("hlsUrl", hlsRelayPath(info.hlsUrl.orEmpty()))
             playback.put("liveRoom", info.id)
         }
-        playback.put("manifestUrl", "/manifest?serviceId=$serviceId&id=$infoUrlEncoded")
+        playback.put("playlistUrl", "/hlsvod?serviceId=$serviceId&id=$infoUrlEncoded")
         playback.put("streamUrl", "/stream?serviceId=$serviceId&id=$infoUrlEncoded")
 
         // Download formats: progressive (video+audio combined) streams only - each a direct
