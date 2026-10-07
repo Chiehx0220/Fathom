@@ -39,4 +39,16 @@ class HlsRelayTest {
         assertThat(out).doesNotContain("STEERING")
         assertThat(out).contains(hlsRelayPath("https://other.bilivideo.com/live/a.m3u8"))
     }
+
+    @Test
+    fun `the live gateway that hands out a room's master playlist is relayed, and nothing else on its host`() {
+        val gateway = "https://api.live.bilibili.com/xlive/play-gateway/master/url?cid=545068&qn=250"
+
+        assertThat(isLiveGateway(gateway)).isTrue()
+        assertThat(isLiveGateway("https://api.live.bilibili.com/room/v1/Room/get_info?room_id=1")).isFalse()
+        assertThat(isLiveGateway("http://api.live.bilibili.com/xlive/play-gateway/master/url")).isFalse()
+        assertThat(isLiveGateway("https://evil.example/xlive/play-gateway/master/url")).isFalse()
+        assertThat(isLiveGateway("https://api.live.bilibili.com.evil.example/xlive/play-gateway/master/url")).isFalse()
+        assertThat(isLiveGateway("not a url")).isFalse()
+    }
 }

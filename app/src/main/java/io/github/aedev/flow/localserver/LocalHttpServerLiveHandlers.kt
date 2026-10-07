@@ -1,6 +1,7 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliCdn
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONObject
 import java.io.IOException
 import java.io.OutputStream
@@ -36,14 +37,23 @@ internal fun rewriteHlsPlaylist(
         }
 }
 
-/** Relays one HLS playlist or segment of a Bilibili CDN, refusing any other address so this is not an open proxy. */
+/**
+ * The address a live room's master playlist comes from. It names the stream's CDN nodes, which are the only hosts
+ * the segments are fetched from, so this one path of one Bilibili host is let through alongside them.
+ */
+internal fun isLiveGateway(url: String): Boolean {
+    val parsed = url.toHttpUrlOrNull() ?: return false
+    return parsed.scheme == "https" && parsed.host == "api.live.bilibili.com" && parsed.encodedPath.startsWith("/xlive/play-gateway/")
+}
+
+/** Relays one HLS playlist or segment of a Bilibili CDN or live gateway, refusing any other address so this is not an open proxy. */
 @Throws(Exception::class)
 internal fun ClientHandler.handleHlsProxy(
     os: OutputStream,
     params: Map<String, String>,
 ) {
     val url = params["u"]
-    if (url.isNullOrEmpty() || !url.startsWith("https://") || !BilibiliCdn.isCdnUrl(url)) {
+    if (url.isNullOrEmpty() || !url.startsWith("https://") || !(BilibiliCdn.isCdnUrl(url) || isLiveGateway(url))) {
         sendResponse(os, 404, "Not a Bilibili live address.", "text/plain; charset=UTF-8")
         return
     }
