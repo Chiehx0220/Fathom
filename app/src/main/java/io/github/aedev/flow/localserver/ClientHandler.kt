@@ -65,6 +65,8 @@ internal class ClientHandler(
                     val route = ROUTES[path]
                     if (route != null) {
                         route(this, os, params, requestHeaders)
+                    } else if (path.startsWith("/vendor/")) {
+                        handleVendorAsset(os, path)
                     } else {
                         sendResponse(os, 404, "Page Not Found", "text/plain; charset=UTF-8")
                     }

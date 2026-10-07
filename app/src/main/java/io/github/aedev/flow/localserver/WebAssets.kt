@@ -58,13 +58,15 @@ object WebAssets {
             val appCss = join(app, APP_CSS_FILES)
             val appJs = join(app, APP_JS_FILES)
             val appShell = join(app, listOf("app/index.html"))
+            // The vendored player is part of the version too: its entry files are asked for with it, so a new player is fetched anew.
+            val vendorVersion = join(app, listOf("vendor/videojs/VERSION"))
             bundle =
                 Bundle(
                     appCss,
                     appJs,
                     appShell,
-                    // A hash of the content: a change to either file changes the ?v= of both URLs, so they can be cached forever.
-                    Integer.toHexString(appCss.hashCode() * 31 + appJs.hashCode()),
+                    // A hash of the content: a change to either file, or to the vendored player, changes the ?v= of the URLs, so they can be cached forever.
+                    Integer.toHexString((appCss.hashCode() * 31 + appJs.hashCode()) * 31 + vendorVersion.hashCode()),
                 )
         }
     }
