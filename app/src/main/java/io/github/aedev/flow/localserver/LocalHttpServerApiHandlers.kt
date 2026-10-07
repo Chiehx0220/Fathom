@@ -1,14 +1,13 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.data.recommendation.InteractionType
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import java.io.OutputStream
 
 // /api/v1/... JSON API handlers - split from LocalHttpServer.kt, no behavior change. Independent
 // of the HTML handlers (see ApiRenderer.kt's header). Companion calls (fetchInitialOrPage,
-// fetchKioskPage, etc.) need LocalHttpServer. qualification: outside lexical scope across files.
+// fetchKioskPage, etc.) live in LocalServerMedia.
 
 internal fun ClientHandler.handleApiSearch(
     os: OutputStream,
@@ -41,7 +40,7 @@ internal fun ClientHandler.handleApiHome(
         var items: List<InfoItem>
         var next: Page?
         val feedMode = dbHelper.homeFeedMode
-        if (serviceId != LocalHttpServer.SERVICE_YOUTUBE) {
+        if (serviceId != LocalServerMedia.SERVICE_YOUTUBE) {
             // homeFeedMode is YouTube-only.
             val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
             items = page.items
@@ -82,7 +81,7 @@ internal fun ClientHandler.handleApiRecommendations(
         var alreadyRanked = false
         var hasMore = false
         val feedMode = dbHelper.homeFeedMode
-        if (serviceId != LocalHttpServer.SERVICE_YOUTUBE) {
+        if (serviceId != LocalServerMedia.SERVICE_YOUTUBE) {
             // homeFeedMode is YouTube-only. alreadyRanked stays false so applyFlowNeuroRanking()
             // below still reorders these. This service's own paging (nextPage) covers "more" here.
             val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
@@ -237,7 +236,7 @@ internal fun ClientHandler.handleApiWatchProgress(
             val info = LocalServerSource.streamInfo(dbHelper.appContext, serviceId, videoUrl)
             dbHelper.reportFlowNeuroInteraction(info, serviceId, InteractionType.WATCHED, percent / 100f)
         } catch (e: Exception) {
-            LocalHttpServer.log("FlowNeuro watch-signal error: " + e.message)
+            serverLog("FlowNeuro watch-signal error: " + e.message)
         }
     }
 
@@ -361,9 +360,9 @@ internal fun ClientHandler.handleApiSponsor(
     val serviceId = getServiceId(params)
     val videoUrl = params["id"].orEmpty()
     val array = org.json.JSONArray()
-    if (serviceId == LocalHttpServer.SERVICE_YOUTUBE && videoUrl.isNotEmpty()) {
+    if (serviceId == LocalServerMedia.SERVICE_YOUTUBE && videoUrl.isNotEmpty()) {
         try {
-            for (segment in SponsorBlockClient.fetchSegments(LocalHttpServer.getVideoId(videoUrl))) {
+            for (segment in SponsorBlockClient.fetchSegments(LocalServerMedia.getVideoId(videoUrl))) {
                 val label =
                     when (segment.category) {
                         "sponsor" -> "sponsor"
@@ -382,7 +381,7 @@ internal fun ClientHandler.handleApiSponsor(
                 array.put(item)
             }
         } catch (e: Exception) {
-            LocalHttpServer.log("SponsorBlock error: " + e.message)
+            serverLog("SponsorBlock error: " + e.message)
         }
     }
     val json = org.json.JSONObject()

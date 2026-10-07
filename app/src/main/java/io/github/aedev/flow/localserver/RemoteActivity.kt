@@ -46,8 +46,8 @@ class RemoteActivity : ComponentActivity() {
                 KeyEvent.KEYCODE_VOLUME_DOWN -> -VOLUME_STEP
                 else -> return super.onKeyDown(keyCode, event)
             }
-        if (!LocalHttpServer.remoteLock.value.locked) return super.onKeyDown(keyCode, event)
-        LocalHttpServer.addPendingCommand("volume:$step")
+        if (!RemoteSession.remoteLock.value.locked) return super.onKeyDown(keyCode, event)
+        RemoteSession.addPendingCommand("volume:$step")
         return true
     }
 }

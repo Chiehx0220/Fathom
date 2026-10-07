@@ -1,6 +1,5 @@
 package io.github.aedev.flow.localserver
 
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
 
 /** A request handler: runs on the connection's [ClientHandler] with the response stream, the query and the request headers. */

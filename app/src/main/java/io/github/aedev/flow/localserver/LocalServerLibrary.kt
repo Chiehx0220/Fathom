@@ -51,7 +51,7 @@ fun HistoryDbHelper.nativeBookmarkedPlaylists(): List<InfoItem> =
     }
 
 fun HistoryDbHelper.nativeIsWatchLater(videoUrl: String): Boolean {
-    val videoId = LocalHttpServer.getVideoId(videoUrl)
+    val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return false
     return runBlocking { playlistRepository().isInWatchLater(videoId) }
 }
@@ -84,7 +84,7 @@ fun HistoryDbHelper.nativeAddWatchLater(
     thumbnailUrl: String?,
     uploaderUrl: String?,
 ) {
-    val videoId = LocalHttpServer.getVideoId(url)
+    val videoId = LocalServerMedia.getVideoId(url)
     if (videoId.isEmpty()) return
     val video = buildFlowVideoFromParams(videoId, title, uploader, thumbnailUrl, uploaderUrl)
     runBlocking {
@@ -93,13 +93,13 @@ fun HistoryDbHelper.nativeAddWatchLater(
         try {
             FlowNeuroEngine.onVideoInteraction(video, InteractionType.SAVED)
         } catch (e: Exception) {
-            LocalHttpServer.log("FlowNeuro SAVED signal error: " + e.message)
+            serverLog("FlowNeuro SAVED signal error: " + e.message)
         }
     }
 }
 
 fun HistoryDbHelper.nativeRemoveWatchLater(url: String) {
-    val videoId = LocalHttpServer.getVideoId(url)
+    val videoId = LocalServerMedia.getVideoId(url)
     if (videoId.isEmpty()) return
     runBlocking { playlistRepository().removeFromWatchLater(videoId) }
 }
@@ -116,7 +116,7 @@ private fun HistoryDbHelper.likedVideosRepository() = LikedVideosRepository.getI
  * `VideoPlayerViewModel.likeVideo/dislikeVideo`. Same `-1`/empty convention as
  * [nativeAddWatchLater] for fields HTTP params don't carry. */
 fun HistoryDbHelper.nativeLikeState(videoUrl: String): String? {
-    val videoId = LocalHttpServer.getVideoId(videoUrl)
+    val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return null
     return runBlocking { likedVideosRepository().getLikeState(videoId).first() }
 }
@@ -129,7 +129,7 @@ fun HistoryDbHelper.nativeLikeVideo(
     uploaderUrl: String?,
     serviceId: Int,
 ) {
-    val videoId = LocalHttpServer.getVideoId(url)
+    val videoId = LocalServerMedia.getVideoId(url)
     if (videoId.isEmpty()) return
     runBlocking {
         likedVideosRepository().likeVideo(
@@ -146,7 +146,7 @@ fun HistoryDbHelper.nativeDislikeVideo(
     thumbnailUrl: String?,
     uploaderUrl: String?,
 ) {
-    val videoId = LocalHttpServer.getVideoId(url)
+    val videoId = LocalServerMedia.getVideoId(url)
     if (videoId.isEmpty()) return
     runBlocking {
         likedVideosRepository().dislikeVideo(videoId)
@@ -155,7 +155,7 @@ fun HistoryDbHelper.nativeDislikeVideo(
 }
 
 fun HistoryDbHelper.nativeRemoveLikeState(url: String) {
-    val videoId = LocalHttpServer.getVideoId(url)
+    val videoId = LocalServerMedia.getVideoId(url)
     if (videoId.isEmpty()) return
     runBlocking { likedVideosRepository().removeLikeState(videoId) }
 }
@@ -173,6 +173,6 @@ private suspend fun HistoryDbHelper.reportRatingSignal(
         val video = buildFlowVideoFromParams(videoId, title, uploader, thumbnailUrl, uploaderUrl)
         FlowNeuroEngine.onVideoInteraction(video, type)
     } catch (e: Exception) {
-        LocalHttpServer.log("FlowNeuro $type signal error: " + e.message)
+        serverLog("FlowNeuro $type signal error: " + e.message)
     }
 }

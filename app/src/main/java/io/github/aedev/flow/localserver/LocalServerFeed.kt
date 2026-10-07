@@ -313,7 +313,7 @@ fun HistoryDbHelper.rankWithFlowNeuro(
             rankedItems + leftovers
         }
     } catch (e: Exception) {
-        LocalHttpServer.log("FlowNeuro ranking failed, falling back to original order: " + e.message)
+        serverLog("FlowNeuro ranking failed, falling back to original order: " + e.message)
         items
     }
 }
@@ -331,7 +331,7 @@ fun HistoryDbHelper.reportFlowNeuroInteraction(
             FlowNeuroEngine.onVideoInteraction(info.toFlowVideo(serviceId), type, percentWatched)
         }
     } catch (e: Exception) {
-        LocalHttpServer.log("FlowNeuro interaction-signal error: " + e.message)
+        serverLog("FlowNeuro interaction-signal error: " + e.message)
     }
 }
 
@@ -344,7 +344,7 @@ fun HistoryDbHelper.nativeRelatedVideos(
     info: StreamInfo,
     serviceId: Int,
 ): List<StreamInfoItem> {
-    val videoId = LocalHttpServer.getVideoId(info.url)
+    val videoId = LocalServerMedia.getVideoId(info.url)
     val repo = youTubeRepository()
     val shortsEnabled = !nativeHideShorts()
     val primary = repo.getRelatedVideosFromStreamInfo(info)

@@ -66,7 +66,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
-import io.github.aedev.flow.localserver.LocalHttpServer
+import io.github.aedev.flow.localserver.RemoteState
 
 /**
  * A playing video, top to bottom: what it is, then the seek bar and transport keys in the middle where the thumb
@@ -74,7 +74,7 @@ import io.github.aedev.flow.localserver.LocalHttpServer
  */
 @Composable
 internal fun PlaybackMode(
-    state: LocalHttpServer.RemoteState,
+    state: RemoteState,
     send: (String) -> Unit,
 ) {
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -105,7 +105,7 @@ internal fun PlaybackMode(
 // One row, one height: chapter keys only when the video has chapters, and play the widest.
 @Composable
 private fun TransportKeys(
-    state: LocalHttpServer.RemoteState,
+    state: RemoteState,
     send: (String) -> Unit,
 ) {
     val hasChapters = state.chapters.isNotEmpty()
@@ -144,7 +144,7 @@ private fun TransportKeys(
 // shows the finger, not the (still moving) page; the jump is sent on release.
 @Composable
 private fun SeekBar(
-    state: LocalHttpServer.RemoteState,
+    state: RemoteState,
     send: (String) -> Unit,
 ) {
     var dragging by remember { mutableStateOf(false) }
@@ -212,7 +212,7 @@ private fun SeekBar(
 
 @Composable
 private fun NowPlaying(
-    state: LocalHttpServer.RemoteState,
+    state: RemoteState,
     send: (String) -> Unit,
 ) {
     var showChapters by remember { mutableStateOf(false) }

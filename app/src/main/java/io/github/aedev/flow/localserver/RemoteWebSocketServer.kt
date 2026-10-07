@@ -22,7 +22,7 @@ class RemoteWebSocketServer(
         handshake: ClientHandshake,
     ) {
         connections.add(conn)
-        LocalHttpServer.log("WebSocket client connected: " + conn.remoteSocketAddress)
+        serverLog("WebSocket client connected: " + conn.remoteSocketAddress)
     }
 
     override fun onClose(
@@ -32,7 +32,7 @@ class RemoteWebSocketServer(
         remote: Boolean,
     ) {
         connections.remove(conn)
-        LocalHttpServer.log("WebSocket client disconnected: " + conn.remoteSocketAddress)
+        serverLog("WebSocket client disconnected: " + conn.remoteSocketAddress)
     }
 
     override fun onMessage(
@@ -42,12 +42,12 @@ class RemoteWebSocketServer(
         if (message != null && message.startsWith("register_client:")) {
             val clientName = message.substring("register_client:".length)
             conn.setAttachment(clientName)
-            LocalHttpServer.log("Registered client: $clientName for IP " + conn.remoteSocketAddress)
+            serverLog("Registered client: $clientName for IP " + conn.remoteSocketAddress)
             return
         }
 
         // Forward the message to LocalHttpServer pending commands queue
-        LocalHttpServer.addPendingCommand(message)
+        RemoteSession.addPendingCommand(message)
 
         // Broadcast immediately to other connected clients (like the TV browser)
         broadcastCommand(message, conn)
@@ -60,14 +60,14 @@ class RemoteWebSocketServer(
         ex: Exception,
     ) {
         // conn == null means the server itself failed (typically it could not bind its port), so nothing can connect.
-        LocalHttpServer.log(if (conn == null) "WebSocket server failed on port $port: $ex" else "WebSocket error: " + ex.message)
+        serverLog(if (conn == null) "WebSocket server failed on port $port: $ex" else "WebSocket error: " + ex.message)
         if (conn != null) {
             connections.remove(conn)
         }
     }
 
     override fun onStart() {
-        LocalHttpServer.log("WebSocket server started on port $port")
+        serverLog("WebSocket server started on port $port")
     }
 
     @JvmOverloads
@@ -80,7 +80,7 @@ class RemoteWebSocketServer(
                 try {
                     conn.send(command)
                 } catch (e: Exception) {
-                    LocalHttpServer.log("Failed to send WS command: " + e.message)
+                    serverLog("Failed to send WS command: " + e.message)
                 }
             }
         }

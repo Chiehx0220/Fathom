@@ -1,6 +1,5 @@
 package io.github.aedev.flow.localserver
 
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import java.io.OutputStream
 import java.util.UUID
 
@@ -152,17 +151,17 @@ internal fun ClientHandler.handleSendLink(
         return
     }
 
-    synchronized(LocalHttpServer::class.java) {
+    synchronized(RemoteSession) {
         var hasLock = false
-        var currentLockCode = LocalHttpServer.getActiveLockCode()
+        var currentLockCode = RemoteSession.getActiveLockCode()
 
         if (currentLockCode == null) {
             val newLockCode = UUID.randomUUID().toString()
-            LocalHttpServer.tryLock(newLockCode, clientIp ?: "", videoTitle)
+            RemoteSession.tryLock(newLockCode, clientIp ?: "", videoTitle)
             currentLockCode = newLockCode
             hasLock = true
         } else if (currentLockCode == clientReleaseCode) {
-            LocalHttpServer.tryLock(currentLockCode, clientIp ?: "", videoTitle)
+            RemoteSession.tryLock(currentLockCode, clientIp ?: "", videoTitle)
             hasLock = true
         }
 
@@ -170,18 +169,18 @@ internal fun ClientHandler.handleSendLink(
             // "__connect_only__": cast button on a non-video page (Home, Subscriptions) - pairs for
             // remote control without a play_video command that would 404 as a /watch link.
             if ("__connect_only__" != videoUrl) {
-                LocalHttpServer.log("Casting link: $videoUrl from client IP $clientIp")
-                LocalHttpServer.addPendingCommand("play_video:$videoUrl")
+                serverLog("Casting link: $videoUrl from client IP $clientIp")
+                RemoteSession.addPendingCommand("play_video:$videoUrl")
             } else {
-                LocalHttpServer.log("Remote connected (pairing only) from client IP $clientIp")
+                serverLog("Remote connected (pairing only) from client IP $clientIp")
             }
 
             val json = "{\"status\":\"success\",\"release_code\":\"" + currentLockCode + "\"}"
             sendResponse(os, 200, json, "application/json; charset=UTF-8")
         } else {
-            var busyMsg = "Server is currently controlled by device at IP " + LocalHttpServer.getActiveClientIp()
-            if (LocalHttpServer.getActiveVideoTitle() != null) {
-                busyMsg += " playing: " + LocalHttpServer.getActiveVideoTitle()
+            var busyMsg = "Server is currently controlled by device at IP " + RemoteSession.getActiveClientIp()
+            if (RemoteSession.getActiveVideoTitle() != null) {
+                busyMsg += " playing: " + RemoteSession.getActiveVideoTitle()
             }
             val json = "{\"status\":\"busy\",\"message\":\"" + busyMsg.replace("\"", "\\\"") + "\"}"
             sendResponse(os, 200, json, "application/json; charset=UTF-8")
@@ -199,11 +198,11 @@ internal fun ClientHandler.handleReleaseLock(
         return
     }
 
-    synchronized(LocalHttpServer::class.java) {
-        val currentLockCode = LocalHttpServer.getActiveLockCode()
+    synchronized(RemoteSession) {
+        val currentLockCode = RemoteSession.getActiveLockCode()
         if (currentLockCode != null && currentLockCode == clientReleaseCode) {
-            LocalHttpServer.releaseLock()
-            LocalHttpServer.log("Lock released by client.")
+            RemoteSession.releaseLock()
+            serverLog("Lock released by client.")
             sendResponse(os, 200, "{\"status\":\"success\"}", "application/json; charset=UTF-8")
         } else {
             sendResponse(os, 200, "{\"status\":\"error\",\"message\":\"Invalid or expired lock code\"}", "application/json; charset=UTF-8")
@@ -222,10 +221,10 @@ internal fun ClientHandler.handleSendCommand(
         return
     }
 
-    synchronized(LocalHttpServer::class.java) {
-        val currentLockCode = LocalHttpServer.getActiveLockCode()
+    synchronized(RemoteSession) {
+        val currentLockCode = RemoteSession.getActiveLockCode()
         if (currentLockCode != null && currentLockCode == clientReleaseCode) {
-            LocalHttpServer.addPendingCommand(cmd)
+            RemoteSession.addPendingCommand(cmd)
             sendResponse(os, 200, "{\"status\":\"success\"}", "application/json; charset=UTF-8")
         } else {
             sendResponse(os, 200, "{\"status\":\"error\",\"message\":\"Not authorized / lock expired\"}", "application/json; charset=UTF-8")
@@ -249,14 +248,14 @@ internal fun ClientHandler.handleRemoteState(
     os: OutputStream,
     params: Map<String, String>,
 ) {
-    val code = LocalHttpServer.getActiveLockCode()
+    val code = RemoteSession.getActiveLockCode()
     if (code == null || code != params["release_code"]) {
         sendResponse(os, 200, "{\"status\":\"error\"}", "application/json; charset=UTF-8")
         return
     }
     val watching = params["watching"] == "1"
-    LocalHttpServer.updateRemoteState(
-        LocalHttpServer.RemoteState(
+    RemoteSession.updateRemoteState(
+        RemoteState(
             watching = watching,
             minimized = params["mini"] == "1",
             title = params["title"]?.takeIf { it.isNotEmpty() },
@@ -281,7 +280,7 @@ internal fun ClientHandler.handleRemoteState(
 }
 
 internal fun ClientHandler.handlePollCommands(os: OutputStream) {
-    val cmds = LocalHttpServer.getAndClearPendingCommands()
+    val cmds = RemoteSession.getAndClearPendingCommands()
     val sb = StringBuilder()
     sb.append("{\"commands\":[")
     for (i in cmds.indices) {

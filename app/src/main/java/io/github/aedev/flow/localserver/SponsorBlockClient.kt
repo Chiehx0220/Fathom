@@ -29,7 +29,7 @@ object SponsorBlockClient {
                     .map { Segment((it.startTime * 1000).toLong(), (it.endTime * 1000).toLong(), it.category) }
             }
         } catch (e: Exception) {
-            LocalHttpServer.log("SponsorBlock fetch failed for $videoId: ${e.message}")
+            serverLog("SponsorBlock fetch failed for $videoId: ${e.message}")
             emptyList()
         }
     }

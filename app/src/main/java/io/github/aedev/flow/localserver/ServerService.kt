@@ -95,7 +95,7 @@ class ServerService : Service() {
                 e.printStackTrace()
             }
 
-            LocalHttpServer.log("Local server running at: $localAddress")
+            serverLog("Local server running at: $localAddress")
         } catch (e: Exception) {
             e.printStackTrace()
             stopSelf()
@@ -121,7 +121,7 @@ class ServerService : Service() {
         startId: Int,
         fgsType: Int,
     ) {
-        LocalHttpServer.log("Foreground service time limit reached, stopping local server")
+        serverLog("Foreground service time limit reached, stopping local server")
         stopSelf(startId)
     }
 

@@ -39,7 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
-import io.github.aedev.flow.localserver.LocalHttpServer
+import io.github.aedev.flow.localserver.RemoteState
 import kotlin.math.hypot
 import kotlin.math.min
 
@@ -52,7 +52,7 @@ private const val TAP_MAX_MS = 250L
 /** A touchpad for anything small on the page: one finger moves the pointer, a tap clicks, two fingers scroll. */
 @Composable
 internal fun TouchpadMode(
-    state: LocalHttpServer.RemoteState,
+    state: RemoteState,
     send: (String) -> Unit,
 ) {
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

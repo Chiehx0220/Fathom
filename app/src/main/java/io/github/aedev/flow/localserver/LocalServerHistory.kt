@@ -29,7 +29,7 @@ fun HistoryDbHelper.nativeSaveToHistory(
     uploaderUrl: String?,
     @Suppress("UNUSED_PARAMETER") uploaderAvatar: String?,
 ) {
-    val videoId = LocalHttpServer.getVideoId(url)
+    val videoId = LocalServerMedia.getVideoId(url)
     if (videoId.isEmpty()) return
     runBlocking {
         viewHistory().touchHistoryEntry(
@@ -49,7 +49,7 @@ fun HistoryDbHelper.nativeUpdateWatchProgress(
     percentWatched: Int,
     durationSeconds: Int,
 ) {
-    val videoId = LocalHttpServer.getVideoId(videoUrl)
+    val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return
     val durationMs = durationSeconds.toLong() * 1000
     val positionMs = (durationMs * percentWatched.coerceIn(0, 100)) / 100
@@ -71,7 +71,7 @@ fun HistoryDbHelper.nativeHistory(): List<InfoItem> =
     }
 
 fun HistoryDbHelper.nativeRemoveFromHistory(videoUrl: String) {
-    val videoId = LocalHttpServer.getVideoId(videoUrl)
+    val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return
     runBlocking { viewHistory().clearVideoHistory(videoId) }
 }

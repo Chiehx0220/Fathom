@@ -46,7 +46,7 @@ fun StreamInfoItem.toFlowVideo(
 ): FlowVideo {
     val durationSeconds = this.duration.coerceAtLeast(0).toInt()
     return FlowVideo(
-        id = LocalHttpServer.getVideoId(this.url),
+        id = LocalServerMedia.getVideoId(this.url),
         title = this.name ?: "",
         channelName = this.uploaderName ?: this.name ?: "",
         channelId = channelUrlToId(this.uploaderUrl) ?: "",
@@ -70,7 +70,7 @@ fun StreamInfo.toFlowVideo(
 ): FlowVideo {
     val durationSeconds = this.duration.coerceAtLeast(0).toInt()
     return FlowVideo(
-        id = LocalHttpServer.getVideoId(this.url),
+        id = LocalServerMedia.getVideoId(this.url),
         title = this.name ?: "",
         channelName = this.uploaderName ?: "",
         channelId = channelUrlToId(this.uploaderUrl) ?: "",

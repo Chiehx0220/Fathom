@@ -76,8 +76,8 @@ internal object LocalServerSource {
         nextPage: Page?,
     ): ListPage {
         if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibili.search(context, query, nextPage)
-        val extractor = LocalHttpServer.getDefaultSearchExtractor(NewPipe.getService(serviceId), query)
-        val page = LocalHttpServer.fetchInitialOrPage(extractor, nextPage)
+        val extractor = LocalServerMedia.getDefaultSearchExtractor(NewPipe.getService(serviceId), query)
+        val page = LocalServerMedia.fetchInitialOrPage(extractor, nextPage)
         return ListPage(page.items, page.nextPage)
     }
 
@@ -102,11 +102,11 @@ internal object LocalServerSource {
             if (sort != null) {
                 service.channelTabLHFactory.fromQuery(channelExtractor.id, listOf(tab), sort, channelExtractor.baseUrl)
             } else {
-                LocalHttpServer.resolveChannelTabHandler(channelExtractor, tab)
+                LocalServerMedia.resolveChannelTabHandler(channelExtractor, tab)
             }
         val tabExtractor = service.getChannelTabExtractor(tabHandler)
-        val page = LocalHttpServer.fetchInitialOrPage(tabExtractor, nextPage)
-        LocalHttpServer.backfillUploaderUrl(page.items, channelUrl)
+        val page = LocalServerMedia.fetchInitialOrPage(tabExtractor, nextPage)
+        LocalServerMedia.backfillUploaderUrl(page.items, channelUrl)
 
         val avatar =
             HtmlRendererCommon.getThumbnailUrl(channelExtractor.avatars).takeIf {
@@ -136,7 +136,7 @@ internal object LocalServerSource {
     ): PlaylistPage {
         if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibili.playlist(context, playlistUrl, nextPage)
         val extractor = NewPipe.getService(serviceId).getPlaylistExtractor(playlistUrl)
-        val page = LocalHttpServer.fetchInitialOrPage(extractor, nextPage)
+        val page = LocalServerMedia.fetchInitialOrPage(extractor, nextPage)
         val header = PlaylistHeader(extractor.name, extractor.linkHandler.url, extractor.uploaderName ?: "", extractor.streamCount)
         return PlaylistPage(header, page.items, page.nextPage)
     }
@@ -209,7 +209,7 @@ internal fun LocalServerSource.streams(
     val service = NewPipe.getService(serviceId)
     val extractorStreams =
         if (!fresh) {
-            ExtractorStreams(LocalHttpServer.getCachedExtractor(service, serviceId, mediaUrl))
+            ExtractorStreams(LocalServerMedia.getCachedExtractor(service, serviceId, mediaUrl))
         } else {
             val extractor = service.getStreamExtractor(mediaUrl)
             extractor.fetchPage()
@@ -227,7 +227,7 @@ internal fun LocalServerSource.streamInfo(
     mediaUrl: String,
 ): StreamInfo {
     if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibiliStreams.streamInfo(context, mediaUrl)
-    val extractor = LocalHttpServer.getCachedExtractor(NewPipe.getService(serviceId), serviceId, mediaUrl)
+    val extractor = LocalServerMedia.getCachedExtractor(NewPipe.getService(serviceId), serviceId, mediaUrl)
     val info = synchronized(extractor) { StreamInfo.getInfo(extractor) }
     if (InnerTubeVideoStreamExtractor.supportsService(serviceId)) {
         youtubeVideoIdFromUrl(mediaUrl)?.let { LocalServerYouTubeStreams.overlay(info, it) }

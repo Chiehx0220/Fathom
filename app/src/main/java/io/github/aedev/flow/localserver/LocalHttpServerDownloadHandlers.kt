@@ -3,7 +3,6 @@ package io.github.aedev.flow.localserver
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.entity.DownloadItemStatus
 import io.github.aedev.flow.data.video.downloader.request.toDownloadRequest
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import java.io.OutputStream
@@ -84,7 +83,7 @@ internal fun ClientHandler.handleApiDownload(
         return
     }
     val serviceId = getServiceId(params)
-    val videoId = LocalHttpServer.getVideoId(mediaUrl)
+    val videoId = LocalServerMedia.getVideoId(mediaUrl)
     if (videoId.isEmpty()) {
         sendResponse(os, 400, ApiRenderer.errorJson("Could not determine video id"), "application/json")
         return
@@ -100,7 +99,7 @@ internal fun ClientHandler.handleApiDownload(
                 try {
                     dbHelper.startNativeDownload(serviceId, mediaUrl, videoId)
                 } catch (e: Exception) {
-                    LocalHttpServer.log("Download start failed: " + e.message)
+                    serverLog("Download start failed: " + e.message)
                     "Could not start download: " + (e.message ?: "unknown error")
                 }
             if (error != null) {

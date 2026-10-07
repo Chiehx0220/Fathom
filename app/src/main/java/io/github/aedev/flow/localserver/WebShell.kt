@@ -5,7 +5,7 @@ object WebShell {
     /** A complete HTML document: the template with this phone's colours and sources filled in. */
     fun appPage(): String {
         val services =
-            LocalHttpServer.SUPPORTED_SERVICE_IDS.joinToString(",") { id ->
+            LocalServerMedia.SUPPORTED_SERVICE_IDS.joinToString(",") { id ->
                 "[$id,${HtmlRendererCommon.jsonString(HtmlRendererCommon.getServiceName(id))}]"
             }
         return WebAssets.appShell

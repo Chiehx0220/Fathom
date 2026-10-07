@@ -31,7 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
-import io.github.aedev.flow.localserver.LocalHttpServer
+import io.github.aedev.flow.localserver.RemoteState
 
 /**
  * Browsing, top to bottom in order of how rarely it is reached for: the source switch, the search, the two places
@@ -39,7 +39,7 @@ import io.github.aedev.flow.localserver.LocalHttpServer
  */
 @Composable
 internal fun DirectionsMode(
-    state: LocalHttpServer.RemoteState,
+    state: RemoteState,
     send: (String) -> Unit,
 ) {
     Column(

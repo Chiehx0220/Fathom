@@ -1,6 +1,5 @@
 package io.github.aedev.flow.localserver
 
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import org.schabi.newpipe.extractor.stream.Frameset
 import java.io.OutputStream
 import java.net.URI
@@ -107,7 +106,7 @@ internal fun ClientHandler.handleImageProxy(
             .url(url)
             .header("User-Agent", "Mozilla/5.0")
     extraHeaders.forEach { (name, value) -> reqBuilder.header(name, value) }
-    LocalHttpServer.httpClient.newCall(reqBuilder.build()).execute().use { response ->
+    LocalServerCaches.httpClient.newCall(reqBuilder.build()).execute().use { response ->
         val body = response.body?.bytes() ?: ByteArray(0)
         if (!response.isSuccessful) {
             sendResponse(os, 502, "Image unavailable.", "text/plain; charset=UTF-8")

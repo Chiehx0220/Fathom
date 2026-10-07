@@ -67,7 +67,7 @@ internal class DashCatalog(
 
         /**
          * Reads the catalog out of [streams]. [preferredTrack] is the audio track to start on (the player takes the first);
-         * without one, the best track by [LocalHttpServer.audioTrackPriorityComparator].
+         * without one, the best track by [LocalServerMedia.audioTrackPriorityComparator].
          *
          * All the video sits in one AdaptationSet, and a player cannot move between codecs inside one set, so only one codec
          * family is offered. Normally that is H.264, which every device plays; with [highest] it is whichever family reaches the
@@ -153,7 +153,7 @@ internal class DashCatalog(
         ): List<AudioTrack> {
             val m4a = streams.filter { it.format == MediaFormat.M4A && it.hasIndex() }
             if (m4a.isEmpty()) return emptyList()
-            val byPriority = m4a.sortedWith(LocalHttpServer.audioTrackPriorityComparator())
+            val byPriority = m4a.sortedWith(LocalServerMedia.audioTrackPriorityComparator())
             val order = LinkedHashSet<String>()
             order.add(preferredTrack ?: (byPriority[0].audioTrackId ?: ""))
             for (stream in byPriority) order.add(stream.audioTrackId ?: "")
@@ -175,7 +175,7 @@ internal class DashCatalog(
                             id,
                             url,
                             bandwidth,
-                            LocalHttpServer.normalizeAudioCodec(stream.codec),
+                            LocalServerMedia.normalizeAudioCodec(stream.codec),
                             ByteRange(stream.initStart.toLong(), stream.initEnd.toLong()),
                             ByteRange(stream.indexStart.toLong(), stream.indexEnd.toLong()),
                         )
@@ -185,7 +185,7 @@ internal class DashCatalog(
                     trackId = trackId,
                     language = first.audioLocale?.toString() ?: trackId.takeIf { it.isNotEmpty() }?.substringBefore('.'),
                     label = first.audioTrackName?.takeIf { it.isNotEmpty() },
-                    original = LocalHttpServer.isOriginalAudioTrack(first),
+                    original = LocalServerMedia.isOriginalAudioTrack(first),
                     hasRole = first.audioTrackId != null,
                     audios = audios,
                 )

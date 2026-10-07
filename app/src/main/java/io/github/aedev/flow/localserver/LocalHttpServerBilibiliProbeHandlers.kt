@@ -4,7 +4,6 @@ import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliPlayback
 import io.github.aedev.flow.bilibili.BilibiliSession
 import io.github.aedev.flow.bilibili.BilibiliStreamFormat
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -143,7 +142,7 @@ internal fun ClientHandler.handleApiBilibiliProbe(
                 put("ok", true)
                 put("playback", probePlayback(http, playback))
             } catch (e: Exception) {
-                LocalHttpServer.log("Bilibili probe failed: " + e.message)
+                serverLog("Bilibili probe failed: " + e.message)
                 put("ok", false)
                 put("error", e.describe())
             }

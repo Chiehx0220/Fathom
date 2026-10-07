@@ -1,7 +1,6 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliCdn
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import io.github.aedev.flow.player.error.StreamDenialClassifier
 import io.github.aedev.flow.player.error.StreamDenialKind
 import io.github.aedev.flow.player.stream.ClientGateTracker
@@ -13,7 +12,7 @@ import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.IOException
 import java.io.OutputStream
 
-// Stream, manifest and subtitle proxying plus static assets, split from LocalHttpServer.kt. Companion members are referenced with the LocalHttpServer. qualifier.
+// Stream, manifest and subtitle proxying plus static assets, split from LocalHttpServer.kt. Shared helpers come from LocalServerMedia, LocalServerCaches and RemoteSession.
 
 /** Picks the stream URL a `/stream` request wants out of [extractor]'s lists. */
 private fun ClientHandler.resolveDirectUrl(
@@ -62,14 +61,14 @@ private fun ClientHandler.resolveDirectUrl(
     }
 
     val targetQuality = params["quality"] ?: dbHelper.nativeVideoQuality()
-    val targetHeight = LocalHttpServer.getResolutionHeight(targetQuality)
+    val targetHeight = LocalServerMedia.getResolutionHeight(targetQuality)
 
     val progressiveStreams = extractor.videoStreams
     if (progressiveStreams.isNotEmpty()) {
         var selectedStream: VideoStream? = null
         var bestHeight = -1
         for (stream in progressiveStreams) {
-            val height = LocalHttpServer.getResolutionHeight(stream.resolution)
+            val height = LocalServerMedia.getResolutionHeight(stream.resolution)
             if (height <= targetHeight && height > bestHeight) {
                 bestHeight = height
                 selectedStream = stream
@@ -77,7 +76,7 @@ private fun ClientHandler.resolveDirectUrl(
         }
         if (selectedStream == null) {
             for (stream in progressiveStreams) {
-                val height = LocalHttpServer.getResolutionHeight(stream.resolution)
+                val height = LocalServerMedia.getResolutionHeight(stream.resolution)
                 if (height > bestHeight) {
                     bestHeight = height
                     selectedStream = stream
@@ -97,7 +96,7 @@ private fun ClientHandler.resolveDirectUrl(
     if (rawAudioStreams.isNotEmpty()) {
         // Best track first; "original" is marked by an "(original)" suffix in audioTrackName.
         var audioStreams: MutableList<AudioStream> = ArrayList(rawAudioStreams)
-        audioStreams.sortWith(LocalHttpServer.audioTrackPriorityComparator())
+        audioStreams.sortWith(LocalServerMedia.audioTrackPriorityComparator())
         val bestTrackId = audioStreams[0].audioTrackId
         val filteredStreams = audioStreams.filter { it.audioTrackId == bestTrackId }
         if (filteredStreams.isNotEmpty()) {
@@ -115,7 +114,7 @@ private fun cdnUserAgent(
 ): String {
     val default = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     if (!directUrl.contains("googlevideo.com")) return default
-    LocalHttpServer.streamUaCache.get(cacheKey)?.let { return it }
+    LocalServerCaches.streamUaCache.get(cacheKey)?.let { return it }
     // No InnerTube-sourced User-Agent cached (older cache entry, or extraction fell back to NewPipe) -
     // guess it back out of the URL's own client marker.
     return try {
@@ -152,7 +151,7 @@ private fun reportStreamDenial(
 ) {
     val kind = StreamDenialClassifier.classify(directUrl)
     val client = StreamDenialClassifier.clientOf(directUrl)
-    LocalHttpServer.log("CDN denial kind=$kind client=$client url=$directUrl")
+    serverLog("CDN denial kind=$kind client=$client url=$directUrl")
     when (kind) {
         StreamDenialKind.ATTESTATION_GATED -> {
             ClientGateTracker.reportGated(client)
@@ -165,8 +164,8 @@ private fun reportStreamDenial(
         else -> {}
     }
     videoId?.let { LocalServerYouTubeStreams.invalidate(it) }
-    LocalHttpServer.streamUrlCache.remove(cacheKey)
-    LocalHttpServer.streamUaCache.remove(cacheKey)
+    LocalServerCaches.streamUrlCache.remove(cacheKey)
+    LocalServerCaches.streamUaCache.remove(cacheKey)
 }
 
 @Throws(Exception::class)
@@ -187,7 +186,7 @@ internal fun ClientHandler.handleStreamProxy(
         }
     }
 
-    LocalHttpServer.log("STREAM REQUEST itag=$itagParam range=$rangeHeader id=$mediaUrl")
+    serverLog("STREAM REQUEST itag=$itagParam range=$rangeHeader id=$mediaUrl")
 
     var requestedItag = -1
     if (itagParam != null) {
@@ -216,7 +215,7 @@ internal fun ClientHandler.handleStreamProxy(
     // LocalServerSource.streams is always asked fresh here: a stream request wants its own extractor
     // fetch, not the one the manifest/watch page's cache is sharing.
     fun resolve(useCache: Boolean): String? {
-        if (useCache) LocalHttpServer.streamUrlCache.get(cacheKey)?.let { return it }
+        if (useCache) LocalServerCaches.streamUrlCache.get(cacheKey)?.let { return it }
         val extractor = LocalServerSource.streams(dbHelper.appContext, serviceId, resolvedMediaUrl, fresh = true)
         val url =
             (
@@ -229,10 +228,10 @@ internal fun ClientHandler.handleStreamProxy(
                 }
             )
                 ?: return null
-        LocalHttpServer.streamUrlCache.put(cacheKey, url, 3600000)
+        LocalServerCaches.streamUrlCache.put(cacheKey, url, 3600000)
         if (videoId != null) {
             LocalServerYouTubeStreams.extractionFor(videoId)?.usedClient?.userAgent?.let {
-                LocalHttpServer.streamUaCache.put(cacheKey, it, 3600000)
+                LocalServerCaches.streamUaCache.put(cacheKey, it, 3600000)
             }
         }
         return url
@@ -244,26 +243,26 @@ internal fun ClientHandler.handleStreamProxy(
         return
     }
 
-    LocalHttpServer.log("Proxying stream from: $directUrl")
+    serverLog("Proxying stream from: $directUrl")
 
     var response = fetchFromCdn(directUrl, cacheKey, rangeHeader)
     if (response.code !in 200..299 && directUrl.contains("googlevideo.com")) {
-        LocalHttpServer.log("CDN status=${response.code} on first attempt, re-extracting and retrying once")
+        serverLog("CDN status=${response.code} on first attempt, re-extracting and retrying once")
         response.close()
         reportStreamDenial(directUrl, cacheKey, videoId)
         // A fresh URL to retry, or - when re-extraction found nothing better - the same one again, so
         // the response forwarded below is always a live, unconsumed one rather than the closed one above.
         directUrl = resolve(useCache = false) ?: directUrl
-        LocalHttpServer.log("Retrying stream from: $directUrl")
+        serverLog("Retrying stream from: $directUrl")
         response = fetchFromCdn(directUrl, cacheKey, rangeHeader)
     }
 
     response.use { r ->
         val code = r.code
-        LocalHttpServer.log("Incoming Range = $rangeHeader CDN status=$code itag=$requestedItag")
+        serverLog("Incoming Range = $rangeHeader CDN status=$code itag=$requestedItag")
 
         if (rangeHeader != null && code != 206) {
-            LocalHttpServer.log("WARNING: Range requested ($rangeHeader) but CDN returned $code")
+            serverLog("WARNING: Range requested ($rangeHeader) but CDN returned $code")
         }
 
         val headBuilder = StringBuilder()
@@ -319,7 +318,7 @@ internal fun ClientHandler.handleStreamProxy(
         headBuilder.append("Access-Control-Expose-Headers: *\r\n")
         headBuilder.append("\r\n")
 
-        if (code == 206) LocalHttpServer.log("Successfully returning 206 Partial Content to client")
+        if (code == 206) serverLog("Successfully returning 206 Partial Content to client")
 
         os.write(headBuilder.toString().toByteArray(Charsets.UTF_8))
         os.flush()
@@ -336,7 +335,7 @@ internal fun ClientHandler.handleStreamProxy(
                 }
             } catch (e: IOException) {
                 // Client disconnected (pause/seek).
-                LocalHttpServer.log("Stream proxy: Client connection closed.")
+                serverLog("Stream proxy: Client connection closed.")
             }
         }
         os.flush()
@@ -361,10 +360,10 @@ private fun fetchFromCdn(
     if (rangeHeader != null) {
         reqBuilder.removeHeader("Range")
         reqBuilder.addHeader("Range", rangeHeader)
-        LocalHttpServer.log("Forwarding Range to CDN: $rangeHeader")
+        serverLog("Forwarding Range to CDN: $rangeHeader")
     }
 
-    return LocalHttpServer.httpClient.newCall(reqBuilder.build()).execute()
+    return LocalServerCaches.httpClient.newCall(reqBuilder.build()).execute()
 }
 
 @Throws(Exception::class)
@@ -383,13 +382,13 @@ internal fun ClientHandler.handleManifestProxy(
 
     // The player asks /stream for each representation by id, and the address it was given is already good for an hour.
     fun warm(repId: String) {
-        catalog.urlOf(repId)?.let { LocalHttpServer.streamUrlCache.put(repCacheKey(serviceId, mediaUrl, repId), it, 3600000) }
+        catalog.urlOf(repId)?.let { LocalServerCaches.streamUrlCache.put(repCacheKey(serviceId, mediaUrl, repId), it, 3600000) }
     }
     catalog.videos.forEach { warm(it.id) }
     catalog.audioTracks.forEach { track -> track.audios.forEach { warm(it.id) } }
 
     val manifestXml = DashManifest.write(catalog, durationSec) { repId -> DashManifest.streamPath(serviceId, mediaUrl, repId) }
-    LocalHttpServer.log("Generated local DASH manifest:\n$manifestXml")
+    serverLog("Generated local DASH manifest:\n$manifestXml")
 
     val bodyBytes = manifestXml.toByteArray(Charsets.UTF_8)
 
@@ -457,7 +456,7 @@ internal fun ClientHandler.handleSubtitlesProxy(
                 .url(subUrl!!)
                 .header("User-Agent", "Mozilla/5.0")
                 .build()
-        LocalHttpServer.httpClient.newCall(req).execute().use { response ->
+        LocalServerCaches.httpClient.newCall(req).execute().use { response ->
             val bodyBytes = (response.body?.string() ?: "").withoutCueSettings().toByteArray(Charsets.UTF_8)
             val contentType = "text/vtt"
             val headers =

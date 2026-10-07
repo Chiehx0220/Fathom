@@ -1,7 +1,6 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliCdn
-import io.github.aedev.flow.localserver.LocalHttpServer.ClientHandler
 import org.json.JSONObject
 import java.io.IOException
 import java.io.OutputStream
@@ -54,7 +53,7 @@ internal fun ClientHandler.handleHlsProxy(
             .url(url)
             .apply { BilibiliCdn.headers().forEach { (name, value) -> header(name, value) } }
             .build()
-    LocalHttpServer.httpClient.newCall(request).execute().use { response ->
+    LocalServerCaches.httpClient.newCall(request).execute().use { response ->
         val body = response.body
         if (!response.isSuccessful) {
             sendResponse(os, 502, "The live server answered ${response.code}.", "text/plain; charset=UTF-8")

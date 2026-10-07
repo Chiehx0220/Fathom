@@ -28,7 +28,7 @@ object ApiRenderer {
     ): JSONObject {
         val json = JSONObject()
         val streamItem = item as? StreamInfoItem
-        json.put("id", LocalHttpServer.getVideoId(item.url))
+        json.put("id", LocalServerMedia.getVideoId(item.url))
         json.put("url", item.url ?: "")
         json.put("serviceId", item.serviceId)
         json.put("title", item.name ?: "")
@@ -76,7 +76,7 @@ object ApiRenderer {
     ): JSONObject {
         val json = JSONObject()
         val infoUrlEncoded = HtmlRendererCommon.encodeUrl(info.url)
-        json.put("id", LocalHttpServer.getVideoId(info.url))
+        json.put("id", LocalServerMedia.getVideoId(info.url))
         json.put("url", info.url ?: "")
         json.put("serviceId", serviceId)
         json.put("title", info.name ?: "")

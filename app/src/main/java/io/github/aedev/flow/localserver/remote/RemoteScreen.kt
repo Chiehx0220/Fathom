@@ -40,7 +40,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import io.github.aedev.flow.R
-import io.github.aedev.flow.localserver.LocalHttpServer
+import io.github.aedev.flow.localserver.RemoteSession
 
 private enum class RemoteMode(
     val label: Int,
@@ -54,8 +54,8 @@ private enum class RemoteMode(
 /** The remote: a top bar with the connection, the page for the chosen way of driving, and the switch between them. */
 @Composable
 internal fun RemoteScreen(onBack: () -> Unit) {
-    val lock by LocalHttpServer.remoteLock.collectAsState()
-    val state by LocalHttpServer.remoteState.collectAsState()
+    val lock by RemoteSession.remoteLock.collectAsState()
+    val state by RemoteSession.remoteState.collectAsState()
     var mode by rememberSaveable { mutableStateOf(RemoteMode.DIRECTIONS) }
 
     // Follow the page: a video opening jumps to playback keys, leaving it goes back to browsing. Tapping a tab still wins until the page changes again.
@@ -90,7 +90,7 @@ internal fun RemoteScreen(onBack: () -> Unit) {
                 },
                 actions = {
                     if (lock.locked) {
-                        IconButton(onClick = { LocalHttpServer.releaseLock() }) {
+                        IconButton(onClick = { RemoteSession.releaseLock() }) {
                             Icon(Icons.Default.LinkOff, contentDescription = stringResource(R.string.remote_disconnect))
                         }
                     }
