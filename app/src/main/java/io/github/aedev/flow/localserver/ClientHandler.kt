@@ -50,6 +50,12 @@ internal class ClientHandler(
             this.requestHeaders = requestHeaders
 
             socket.getOutputStream().use { os ->
+                val refusal = refusalFor(method, path, requestHeaders)
+                if (refusal != null) {
+                    serverLog("Refused $method $path: $refusal")
+                    sendResponse(os, 403, refusal, "text/plain; charset=UTF-8")
+                    return
+                }
                 if ("OPTIONS".equals(method, ignoreCase = true)) {
                     os.write(CORS_PREFLIGHT.toByteArray(Charsets.UTF_8))
                     os.flush()
@@ -62,10 +68,12 @@ internal class ClientHandler(
                     } else {
                         sendResponse(os, 404, "Page Not Found", "text/plain; charset=UTF-8")
                     }
+                } catch (e: BadRequestException) {
+                    sendResponse(os, 400, "Bad Request: " + e.message, "text/plain; charset=UTF-8")
                 } catch (e: Exception) {
                     e.printStackTrace()
                     serverLog("Error during route handling: " + e.message)
-                    sendResponse(os, 500, "Internal Server Error:\n" + e.toString(), "text/plain; charset=UTF-8")
+                    sendResponse(os, 500, "Internal Server Error", "text/plain; charset=UTF-8")
                 }
             }
         } catch (e: IOException) {
@@ -212,7 +220,7 @@ internal class ClientHandler(
         cacheControl: String?,
     ) {
         var bytes = content.toByteArray(Charsets.UTF_8)
-        val status = if (code == 200) "OK" else (if (code == 404) "Not Found" else "Internal Server Error")
+        val status = statusText(code)
 
         // gzip for HTML/CSS/JS responses; not for media (already compressed) or bodies under 512 bytes.
         var contentEncodingHeader = ""

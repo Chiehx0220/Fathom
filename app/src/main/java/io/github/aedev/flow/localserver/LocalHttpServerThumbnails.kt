@@ -80,7 +80,7 @@ internal fun ClientHandler.handleThumbnailsProxy(
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
-    val mediaUrl = requireNotNull(params["id"]) { "Missing 'id' parameter" }
+    val mediaUrl = params["id"] ?: throw BadRequestException("Missing 'id' parameter")
     val frameset = LocalServerSource.streamInfo(dbHelper.appContext, serviceId, mediaUrl).previewFrames.bestForSeekBar()
     if (frameset == null) {
         sendResponse(os, 404, "No preview thumbnails.", "text/plain; charset=UTF-8")

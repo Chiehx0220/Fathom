@@ -201,7 +201,7 @@ internal fun ClientHandler.handleStreamProxy(
     val repId = params["rep"]
     // mtype is part of the cache key: itag-less services (Bilibili) share itag=-1 between video and audio.
     val mediaType = params["mtype"] ?: repId?.let { if (it.startsWith("a")) "audio" else "video" }
-    val resolvedMediaUrl = requireNotNull(mediaUrl) { "Missing 'id' parameter" }
+    val resolvedMediaUrl = mediaUrl ?: throw BadRequestException("Missing 'id' parameter")
     val videoId = youtubeVideoIdFromUrl(resolvedMediaUrl)
     val cacheKey =
         if (repId != null) {
@@ -372,7 +372,7 @@ internal fun ClientHandler.handleManifestProxy(
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
-    val mediaUrl = params["id"]!!
+    val mediaUrl = params["id"] ?: throw BadRequestException("Missing 'id' parameter")
 
     // Cached: shares its extraction with the watch handlers.
     val extractor = LocalServerSource.streams(dbHelper.appContext, serviceId, mediaUrl, fresh = false)
@@ -419,7 +419,7 @@ internal fun ClientHandler.handleSubtitlesProxy(
     val lang = params["lang"]
     val isAuto = "true" == params["auto"]
 
-    val info = LocalServerSource.streamInfo(dbHelper.appContext, serviceId, requireNotNull(mediaUrl) { "Missing 'id' parameter" })
+    val info = LocalServerSource.streamInfo(dbHelper.appContext, serviceId, mediaUrl ?: throw BadRequestException("Missing 'id' parameter"))
 
     var targetStream: SubtitlesStream? = null
     var subs: List<SubtitlesStream>? = null
