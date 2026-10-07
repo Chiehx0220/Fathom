@@ -13,6 +13,7 @@ internal val CREDITS =
     listOf(
         Credit("PipePipeExtractor", R.string.about_credit_pipepipe, "https://github.com/InfinityLoop1308/PipePipeExtractor"),
         Credit("localtube", R.string.about_credit_localtube, "https://github.com/diekaiju/localtube"),
-        Credit("Vidstack", R.string.about_credit_vidstack, "https://vidstack.io"),
+        Credit("Video.js", R.string.about_credit_videojs, "https://videojs.org"),
         Credit("dash.js", R.string.about_credit_dashjs, "https://github.com/Dash-Industry-Forum/dash.js"),
+        Credit("hls.js", R.string.about_credit_hlsjs, "https://github.com/video-dev/hls.js"),
     )

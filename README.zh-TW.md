@@ -91,7 +91,7 @@
 - **同一個 Wi-Fi 下的任何裝置:** `http://<手機IP>:8080`,不需安裝任何東西
 
 - 搜尋、頻道、播放清單、訂閱、觀看紀錄、稍後觀看
-- [Vidstack](https://vidstack.io) 播放器:畫質選單、章節、進度條縮圖、字幕、純音訊模式、快捷鍵、接續播放
+- [Video.js](https://videojs.org) 10 播放器(由裝置本身提供,不需要外部 CDN):畫質選單、章節、進度條縮圖、字幕、純音訊模式、快捷鍵、接續播放
 - 支援 YouTube 和 Bilibili,Bilibili 也能顯示彈幕
 
 <p align="center">
@@ -133,7 +133,7 @@ cd Fathom
 | `bilibili/` | 用戶端本體:API、請求簽章、登入狀態、直播、留言、彈幕、影片 ID、連結開啟 |
 | `data/paging/`、`player/stream/`、`ui/screens/playlists/`(`Bilibili*`) | 把 Bilibili 接進搜尋、播放和播放清單的轉換與銜接程式碼 |
 | `di/BilibiliModule.kt` | 整個 App 共用同一個登入狀態 |
-| `localserver/` | 網頁伺服器、Bilibili 轉接層,以及 Vidstack 播放頁面 |
+| `localserver/` | 網頁伺服器、Bilibili 轉接層,以及網頁播放器頁面 |
 | 約 110 個上游檔案 | 小幅改動,多半只是多傳一個服務代碼 |
 
 原則:新程式碼一律放在新檔案,上游檔案只加一行呼叫,這樣同步上游時衝突會少很多。[FORK-DIFF.md](FORK-DIFF.md) 列出所有改動過的上游檔案(由 `node scripts/fork-diff.js` 產生);`bilibili/PPE-REFERENCE.md` 記錄用戶端是從 PipePipeExtractor 的哪個版本移植而來。
@@ -142,7 +142,7 @@ Flow 原有的功能(SponsorBlock、DeArrow、音樂、Shorts、下載、主題)
 
 ## 🙏 致謝
 
-[Flow](https://github.com/A-EDev/Flow) 與 FlowNeuro,A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor),InfinityLoop1308(Bilibili 用戶端以它為基礎) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube),diekaiju · [Vidstack](https://vidstack.io) 與 [dash.js](https://github.com/Dash-Industry-Forum/dash.js)
+[Flow](https://github.com/A-EDev/Flow) 與 FlowNeuro,A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor),InfinityLoop1308(Bilibili 用戶端以它為基礎) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube),diekaiju · [Video.js](https://videojs.org)、[dash.js](https://github.com/Dash-Industry-Forum/dash.js) 與 [hls.js](https://github.com/video-dev/hls.js)
 
 ## 📄 授權
 

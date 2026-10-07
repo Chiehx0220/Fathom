@@ -1,7 +1,13 @@
 /* The stage (the one player, kept for the whole visit) and the watch screen around it. */
 .stage { position: absolute; z-index: 5; top: var(--bar-h); left: 0; right: 0; height: var(--stage-h, 56vw); background: #000; overflow: hidden; }
-.stage-player { width: 100%; height: 100%; --media-brand: var(--acc); }
-.stage-player video { object-fit: contain; }
+.stage-player { width: 100%; height: 100%; }
+/* The Video.js skin and the media component inside it fill the stage; the skin's own look follows the app's accent. */
+.stage-player video-skin, .stage-player live-video-skin {
+    display: block; width: 100%; height: 100%;
+    --media-accent-color: var(--acc); --media-accent-text-color: var(--on-acc);
+    --media-border-radius: 0; --media-border-color: transparent;
+    --media-object-fit: contain;
+}
 
 /* Audio-only mode: the same stream keeps playing behind this, just not rendered. */
 .audio-art { position: absolute; inset: 0; z-index: 2; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #000; color: #fff; text-align: center; padding: 0 32px; }
@@ -15,7 +21,7 @@
  * to real pixel values, which is why right/bottom (not left/top) are what CSS resets on undock. */
 .stage.mini { position: fixed; top: auto; left: auto; right: 24px; bottom: 24px; width: clamp(280px, 24vw, 420px); height: auto; aspect-ratio: 16 / 9; border-radius: 16px; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5); cursor: grab; touch-action: none; user-select: none; }
 .stage.mini.dragging { cursor: grabbing; transition: none; }
-.stage.mini media-video-layout { display: none; }
+/* The mini player has no controls of its own, only the .mini-ctrl buttons below: player.js sets data-mini on the skin and hides its controls (see SKIN_STYLE there). */
 /* Shared chrome for the mini player's controls (close/expand/play - see player.js's MINI_CTRL);
  * each subclass below only overrides position and icon size. Hidden until hovered, like YouTube's
  * own mini player, so the picture itself is what shows the rest of the time. */
@@ -37,12 +43,7 @@ body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
 .skip-btn { position: absolute; right: 24px; bottom: 96px; z-index: 12; height: 44px; padding: 0 22px; border: 0; border-radius: 22px; background: var(--acc); color: var(--on-acc); font-weight: 500; }
 .hud { position: absolute; top: 24px; left: 50%; z-index: 12; display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 22px; background: rgba(0, 0, 0, 0.8); color: #fff; transform: translateX(-50%); font-weight: 500; }
 
-/* Seek-bar marks: SponsorBlock segments over the time slider. */
-.sb-mark { position: absolute; top: 0; height: 100%; min-width: 3px; border-radius: 2px; pointer-events: none; background: #00D400; opacity: 0.85; }
-.sb-mark.intro, .sb-mark.outro { background: #00FFFF; }
-.sb-mark.interaction { background: #CC00FF; }
-.sb-mark.selfpromo { background: #FFFF00; }
-.sb-mark.music_offtopic { background: #FF9900; }
+/* The SponsorBlock marks on the seek bar are drawn inside the skin, so their rules are in player.js (SKIN_STYLE). */
 
 /* The watch screen: room for the stage, then the details. */
 .watch-slot { height: var(--stage-h, 56vw); }

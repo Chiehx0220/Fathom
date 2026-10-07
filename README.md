@@ -93,7 +93,7 @@ Once it is on, the phone serves a web app on port 8080.
 In the web app:
 
 - Search, channels, playlists, subscriptions, history, watch-later
-- A [Vidstack](https://vidstack.io) player: quality menu, chapters, seek-bar thumbnails, subtitles, audio-only mode, shortcuts, resume
+- A [Video.js](https://videojs.org) 10 player, served from the device itself: quality menu, chapters, seek-bar thumbnails, subtitles, audio-only mode, shortcuts, resume
 - YouTube and Bilibili playback, with danmaku
 
 <p align="center">
@@ -135,7 +135,7 @@ Paths are under `app/src/main/java/io/github/aedev/flow/`.
 | `bilibili/` | The client: API, request signing, sessions, live rooms, comments, danmaku, ids, deep links |
 | `data/paging/`, `player/stream/`, `ui/screens/playlists/` (`Bilibili*`) | Mappers and glue that plug it into search, playback, and playlists |
 | `di/BilibiliModule.kt` | One shared session for the whole app |
-| `localserver/` | The web server, its Bilibili adapters, and the Vidstack pages |
+| `localserver/` | The web server, its Bilibili adapters, and the web player pages |
 | about 110 upstream files | Small hooks, mostly passing a service id through |
 
 The rule: new code goes in new files, and upstream files only get a call into it. That keeps merges from upstream small. [FORK-DIFF.md](FORK-DIFF.md) lists every upstream file touched (`node scripts/fork-diff.js`), and `bilibili/PPE-REFERENCE.md` records which PipePipeExtractor revision the client was ported from.
@@ -144,7 +144,7 @@ Everything else in Flow (SponsorBlock, DeArrow, music, Shorts, downloads, themes
 
 ## 🙏 Credits
 
-[Flow](https://github.com/A-EDev/Flow) and FlowNeuro by A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor) by InfinityLoop1308 (the Bilibili client is based on it) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube) by diekaiju · [Vidstack](https://vidstack.io) and [dash.js](https://github.com/Dash-Industry-Forum/dash.js)
+[Flow](https://github.com/A-EDev/Flow) and FlowNeuro by A-EDev · [PipePipeExtractor](https://github.com/InfinityLoop1308/PipePipeExtractor) by InfinityLoop1308 (the Bilibili client is based on it) · [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) · [localtube](https://github.com/diekaiju/localtube) by diekaiju · [Video.js](https://videojs.org), [dash.js](https://github.com/Dash-Industry-Forum/dash.js) and [hls.js](https://github.com/video-dev/hls.js)
 
 ## 📄 License
 

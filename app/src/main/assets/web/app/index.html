@@ -8,9 +8,9 @@
   <!-- The Fathom mark: cream badge, water waves, navy depth ruler, gold play arrow - the app's own launcher icon. The page header draws the same image. -->
   <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48Y2xpcFBhdGggaWQ9ImZ3Ij48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4Ii8+PC9jbGlwUGF0aD48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIxOCIgZmlsbD0iI0YyRURFMCIvPjxwYXRoIGNsaXAtcGF0aD0idXJsKCNmdykiIGZpbGw9IiM1QjhERUYiIGZpbGwtb3BhY2l0eT0iMC4zNSIgZD0iTTAsNTggUTYuMjUsNTMgMTIuNSw1OCBUMjUsNTggVDM3LjUsNTggVDUwLDU4IFQ2Mi41LDU4IFQ3NSw1OCBUODcuNSw1OCBUMTAwLDU4IEwxMDAsMTAwIEwwLDEwMCBaIi8+PGcgc3Ryb2tlPSIjMEYxRDMzIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PGxpbmUgeDE9IjM3IiB5MT0iMTgiIHgyPSIzNyIgeTI9Ijc4Ii8+PGxpbmUgeDE9IjM3IiB5MT0iMjIiIHgyPSI3NiIgeTI9IjIyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNDIiIHgyPSI1MCIgeTI9IjQyIi8+PGxpbmUgeDE9IjM3IiB5MT0iNjIiIHgyPSI1MCIgeTI9IjYyIi8+PC9nPjxwb2x5Z29uIHBvaW50cz0iNTgsNDIgNTgsNjIgNzUsNTIiIGZpbGw9IiNDOTlBMzQiLz48cmVjdCB4PSIxIiB5PSIxIiB3aWR0aD0iOTgiIGhlaWdodD0iOTgiIHJ4PSIxNyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMEYxRDMzIiBzdHJva2Utb3BhY2l0eT0iMC4xNCIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+">
   <link rel="stylesheet" href="/app.css?v={{version}}">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vidstack@1.15.6/player/styles/default/theme.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vidstack@1.15.6/player/styles/default/layouts/video.css">
-  <script type="module" src="https://cdn.jsdelivr.net/npm/vidstack@1.15.6/cdn/with-layouts/vidstack.js"></script>
+  <!-- The player is Video.js 10, served from this device (assets/web/vendor/videojs; scripts/vendor-videojs.js updates it). Its modules are loaded by
+       player.js when the first video opens; only the stylesheet that reserves the player's space is linked here. -->
+  <link rel="stylesheet" href="/vendor/videojs/global.css?v={{version}}">
   <style>
 {{deviceColors}}
   </style>
@@ -35,16 +35,17 @@
   <header id="top"></header>
   <main id="screen" tabindex="-1"></main>
   <div id="stage" class="stage" hidden>
-    <media-player id="player" class="stage-player" storage="fathom-player" crossorigin playsinline>
-      <media-provider></media-provider>
-      <media-video-layout></media-video-layout>
-      <button type="button" id="skip-btn" class="skip-btn" hidden></button>
-      <div id="hud" class="hud" hidden></div>
-    </media-player>
+    <!-- player.js builds the player of the open video in here: a Video.js player, its skin and the media component that fits the stream. -->
+    <div id="player" class="stage-player"></div>
     <div class="audio-art"><span class="i">music_note</span><strong id="audio-art-title"></strong></div>
     <button type="button" id="mini-close" class="mini-ctrl mini-close" aria-label="Close mini player" hidden><span class="i">close</span></button>
     <button type="button" id="mini-expand" class="mini-ctrl mini-expand" aria-label="Open full player" hidden><span class="i">fullscreen</span></button>
     <button type="button" id="mini-play" class="mini-ctrl mini-play" aria-label="Play/Pause" hidden></button>
+  </div>
+  <!-- The skip button and the HUD sit inside the player's skin while a video is open, so they show in fullscreen; here between videos. -->
+  <div id="overlay-holder" hidden>
+    <button type="button" id="skip-btn" class="skip-btn" hidden></button>
+    <div id="hud" class="hud" hidden></div>
   </div>
   <div id="layer">
     <div id="vptr" class="vptr" hidden><div class="vptr-halo"></div><div class="vptr-disc"><i></i></div></div>

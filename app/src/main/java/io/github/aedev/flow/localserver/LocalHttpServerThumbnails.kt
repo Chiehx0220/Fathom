@@ -8,7 +8,7 @@ import java.util.Locale
 
 /*
  * The seek bar's preview thumbnails. YouTube publishes a video's frames as storyboards: sprite
- * sheets with a grid of small frames each. Vidstack reads them from a WebVTT file whose cues point
+ * sheets with a grid of small frames each. The web player reads them from a WebVTT file whose cues point
  * at a region of a sheet (`url#xywh=x,y,w,h`), so this builds that file from the storyboard.
  */
 

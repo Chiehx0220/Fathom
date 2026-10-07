@@ -142,7 +142,8 @@ FT.command = (name) => {
 };
 
 document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    // A key the player's own shortcuts already used (it has focus) is theirs; handling it here too would do it twice.
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
     const inField = e.target && e.target.matches && e.target.matches('input, textarea, select');
     const dir = DIRECTIONS[e.key];
     if (inField) {

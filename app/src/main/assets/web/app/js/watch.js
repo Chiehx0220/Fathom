@@ -243,7 +243,8 @@ FT.command.hook = (name) => {
 
 // Keyboard shortcuts for the video, on this screen only and never while typing.
 document.addEventListener('keydown', (e) => {
-    if (FT.route.name !== 'watch' || e.ctrlKey || e.metaKey || e.altKey || FT.menu.isOpen()) return;
+    // A key the player's own shortcuts already used (it has focus) is theirs; handling it here too would do it twice.
+    if (e.defaultPrevented || FT.route.name !== 'watch' || e.ctrlKey || e.metaKey || e.altKey || FT.menu.isOpen()) return;
     if (e.target && e.target.matches && e.target.matches('input, textarea, select')) return;
     const key = e.key.toLowerCase();
     if (key === ' ' || key === 'k') FT.player.toggle();

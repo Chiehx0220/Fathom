@@ -3,7 +3,16 @@
 (() => {
 const h = FT.h;
 const stageEl = () => FT.$('#stage');
-const playerEl = () => FT.$('#player');
+
+// The player of the open video is built per video (build() below): a Video.js player, its skin and the media component that fits the stream,
+// all inside #player. playerEl() is the media element, which has the HTMLMediaElement API (paused, currentTime, play(), events);
+// tree.host is the <video-player>, whose store carries fullscreen, renditions and tracks. Before anything is open there is only IDLE.
+let tree = null; // { host, skin, media, live, chapterUrl }
+const IDLE = {
+    paused: true, currentTime: 0, duration: 0, volume: 1, muted: false,
+    play: () => Promise.resolve(), pause() {}, addEventListener() {}, removeEventListener() {},
+};
+const playerEl = () => (tree ? tree.media : IDLE);
 
 let current = null; // { service, url, info, chapters, segments }
 let dockMode = 'off';
@@ -98,10 +107,8 @@ const paintMiniPlay = () => {
     btn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
 };
 
-const isFullscreen = () => {
-    const p = playerEl();
-    return document.body.classList.contains('remote-fs') || !!document.fullscreenElement || !!document.webkitFullscreenElement || !!(p && p.state && p.state.fullscreen);
-};
+const isFullscreen = () => document.body.classList.contains('remote-fs') || !!document.fullscreenElement || !!document.webkitFullscreenElement
+    || !!(tree && tree.host.store && tree.host.store.isFullscreen);
 
 // ---- Chapters, SponsorBlock and the comment overlay ----
 
@@ -111,7 +118,7 @@ const vttTime = (sec) => {
     return `${pad(Math.floor(ms / 3600000), 2)}:${pad(Math.floor(ms / 60000) % 60, 2)}:${pad(Math.floor(ms / 1000) % 60, 2)}.${pad(ms % 1000, 3)}`;
 };
 
-// Vidstack draws chapter gaps and the chapter name on the seek bar from a chapters text track built from the list.
+// The skin draws chapter gaps and the chapter name on the seek bar from a chapters text track built from the list.
 const addChapterTrack = () => {
     const p = playerEl();
     if (!current || !current.chapters.length || current.chapterTrack || !p.duration || !isFinite(p.duration)) return;
@@ -122,17 +129,21 @@ const addChapterTrack = () => {
         const end = i + 1 < list.length ? list[i + 1].s : p.duration;
         if (end > ch.s) vtt += `${vttTime(ch.s)} --> ${vttTime(end)}\n${ch.t.replace(/[\r\n]+/g, ' ')}\n\n`;
     });
-    try { p.textTracks.add({ kind: 'chapters', label: 'Chapters', language: 'en-US', type: 'vtt', default: true, content: vtt }); } catch (e) {}
+    if (!tree) return;
+    tree.chapterUrl = URL.createObjectURL(new Blob([vtt], { type: 'text/vtt' }));
+    p.append(track('chapters', 'Chapters', 'en', tree.chapterUrl, true));
 };
 
+// The marks go into the skin's time slider, which lives in the skin's open shadow root (their rules are in SKIN_STYLE). That is inside the
+// packaged skin, which Video.js does not promise to keep, so a new Video.js version means checking this still finds the slider.
 const placeMarks = () => {
     const p = playerEl();
-    if (!current || !current.segments.length || !p.duration) return;
-    const track = FT.$('media-time-slider .vds-slider-track', p) || FT.$('media-time-slider', p);
-    if (!track) return;
-    FT.$$('.sb-mark', p).forEach((m) => m.remove());
+    if (!tree || !current || !current.segments.length || !p.duration) return;
+    const slider = tree.skin.shadowRoot && tree.skin.shadowRoot.querySelector('media-time-slider');
+    if (!slider) return;
+    slider.querySelectorAll('.sb-mark').forEach((m) => m.remove());
     for (const seg of current.segments) {
-        track.append(h('div', { class: 'sb-mark ' + seg.c, style: `left:${(seg.s / p.duration) * 100}%;width:${(Math.max(seg.e - seg.s, 0) / p.duration) * 100}%` }));
+        slider.append(h('div', { class: 'sb-mark ' + seg.c, style: `left:${(seg.s / p.duration) * 100}%;width:${(Math.max(seg.e - seg.s, 0) / p.duration) * 100}%` }));
     }
 };
 
@@ -162,8 +173,8 @@ const startDanmaku = (url, live = false) => {
     const p = playerEl();
     stopDanmaku();
     const layer = h('div', { class: 'danmaku-layer' });
-    p.append(layer);
-    const state = { layer, items: [], next: 0, on: true, lanes: new Array(14).fill(0) };
+    (tree ? tree.skin : stageEl()).append(layer);
+    const state = { layer, media: p, items: [], next: 0, on: true, lanes: new Array(14).fill(0) };
     danmaku = state;
     const spawn = (item) => {
         const width = layer.clientWidth || 800;
@@ -201,7 +212,7 @@ const startDanmaku = (url, live = false) => {
     };
     state.pause = () => layer.classList.add('paused');
     state.play = () => layer.classList.remove('paused');
-    p.addEventListener('time-update', state.tick);
+    p.addEventListener('timeupdate', state.tick);
     p.addEventListener('seeking', state.resync);
     p.addEventListener('pause', state.pause);
     p.addEventListener('play', state.play);
@@ -230,8 +241,8 @@ const startDanmaku = (url, live = false) => {
 const stopDanmaku = () => {
     if (!danmaku) return;
     if (danmaku.stop) danmaku.stop();
-    const p = playerEl();
-    p.removeEventListener('time-update', danmaku.tick);
+    const p = danmaku.media;
+    p.removeEventListener('timeupdate', danmaku.tick);
     p.removeEventListener('seeking', danmaku.resync);
     p.removeEventListener('pause', danmaku.pause);
     p.removeEventListener('play', danmaku.play);
@@ -288,6 +299,142 @@ const canPlayHighest = () => highestQuality || (highestQuality = (async () => {
     } catch (e) { return false; }
 })());
 
+// ---- Building the player ----
+
+// The player's modules come with the first video that opens, not with the page: the player, the live player and the media components are
+// 1.8 MB between them, and a visit that only browses needs none of it. The page's version goes on the entry files, as for /app.js.
+const APP_VERSION = new URL(document.currentScript.src).searchParams.get('v') || '';
+const vendor = (path) => `/vendor/videojs/${path}?v=${APP_VERSION}`;
+const loadPlayer = (way) => Promise.all([
+    import(vendor(way.live ? 'live-video.js' : 'video.js')),
+    way.tag === 'video' ? null : import(vendor(`media/${way.tag}.js`)),
+]);
+
+// Rules for the skin's shadow root, which the page's CSS cannot reach: the mini player has no controls of its own (its buttons are the .mini-ctrl
+// ones in the page), and the SponsorBlock marks on the seek bar.
+const SKIN_STYLE = `
+:host([data-mini]) media-controls, :host([data-mini]) media-title { display: none !important; }
+.sb-mark { position: absolute; top: 0; height: 100%; min-width: 3px; border-radius: 2px; pointer-events: none; background: #00D400; opacity: 0.85; }
+.sb-mark.intro, .sb-mark.outro { background: #00FFFF; }
+.sb-mark.interaction { background: #CC00FF; }
+.sb-mark.selfpromo { background: #FFFF00; }
+.sb-mark.music_offtopic { background: #FF9900; }`;
+
+// dash.js 5 settings. A longer buffer than its default (bufferTimeDefault, 18 s), so a stall on a slow link does not drain it; and a high first
+// rung (kbps) instead of the lowest one, which the estimate corrects within a few segments if the link cannot hold it.
+const DASH_SETTINGS = {
+    streaming: {
+        abr: { initialBitrate: { video: 6000 } },
+        buffer: { bufferTimeDefault: 60, bufferTimeAtTopQuality: 90, bufferTimeAtTopQualityLongForm: 120, bufferToKeep: 30, avoidCurrentTimeRangePruning: true },
+    },
+};
+
+// Which media component plays what /api/v1/video describes, and whether the live skin (a Live button, no time slider) fits it. A live room is an
+// HLS playlist, video streams come as a DASH manifest, and anything else (audio only) is one stream the browser plays as it is.
+const planFor = async (info) => {
+    const pb = info.playback;
+    if (pb.hlsUrl) return { live: !!pb.liveRoom, tag: 'hlsjs-video', src: pb.hlsUrl };
+    if (pb.isDash) return { live: false, tag: 'dash-video', src: pb.manifestUrl + ((await canPlayHighest()) ? '&prefer=hd' : '') };
+    return { live: false, tag: 'video', src: pb.streamUrl };
+};
+
+const track = (kind, label, lang, src, isDefault) => {
+    const el = document.createElement('track');
+    el.kind = kind;
+    el.label = label;
+    el.srclang = lang;
+    el.src = src;
+    el.default = !!isDefault;
+    return el;
+};
+
+// Video.js keeps nothing between visits, so the volume, mute and speed the viewer chose are kept here.
+const PREFS_KEY = 'fathom-player';
+const loadPrefs = () => { try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch (e) { return {}; } };
+const savePrefs = (media) => {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify({ volume: media.volume, muted: media.muted, rate: media.playbackRate })); } catch (e) {}
+};
+const restorePrefs = (media) => {
+    const prefs = loadPrefs();
+    if (typeof prefs.volume === 'number') media.volume = prefs.volume;
+    if (typeof prefs.muted === 'boolean') media.muted = prefs.muted;
+    if (typeof prefs.rate === 'number') media.playbackRate = prefs.rate;
+};
+
+// Video.js does not set the browser's media session, which is what lock screens and keyboard media keys show.
+const publishMediaSession = (info) => {
+    if (!('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
+    try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: info.title || '', artist: info.channelName || '', artwork: info.thumbnailUrl ? [{ src: info.thumbnailUrl }] : [],
+        });
+    } catch (e) {}
+};
+
+const bindMedia = (media) => {
+    let restored = false;
+    media.addEventListener('loadedmetadata', () => { addChapterTrack(); placeMarks(); });
+    media.addEventListener('loadedmetadata', () => { restorePrefs(media); restored = true; }, { once: true });
+    media.addEventListener('durationchange', addChapterTrack);
+    media.addEventListener('timeupdate', watchSegments);
+    media.addEventListener('pause', reportProgress);
+    media.addEventListener('ended', scheduleNext);
+    media.addEventListener('play', paintMiniPlay);
+    media.addEventListener('pause', paintMiniPlay);
+    media.addEventListener('volumechange', () => { if (restored) savePrefs(media); });
+    media.addEventListener('ratechange', () => { if (restored) savePrefs(media); });
+    media.addEventListener('canplay', () => { media.play().catch(() => {}); }, { once: true });
+};
+
+const teardown = () => {
+    const holder = FT.$('#overlay-holder');
+    if (holder) holder.append(FT.$('#skip-btn'), FT.$('#hud'));
+    if (tree) {
+        // A removed media element keeps playing unless it is stopped first.
+        try { tree.media.pause(); tree.media.removeAttribute('src'); } catch (e) {}
+        if (tree.chapterUrl) URL.revokeObjectURL(tree.chapterUrl);
+        tree.host.remove();
+        tree = null;
+    }
+    FT.$('#player').replaceChildren();
+};
+
+// The skin builds its shadow root when it is connected; the rules for it go in once that exists.
+const skinReady = (skin) => new Promise((resolve) => {
+    const started = performance.now();
+    const check = () => ((skin.shadowRoot && skin.shadowRoot.firstElementChild) || performance.now() - started > 3000 ? resolve() : requestAnimationFrame(check));
+    check();
+});
+
+// Builds the player for one video, replacing the last. The media component is chosen by the stream, so it is part of what is built. Returns
+// null when another video was opened while this one waited for its components.
+const build = async (info, way, owner) => {
+    teardown();
+    const [playerTag, skinTag] = way.live ? ['live-video-player', 'live-video-skin'] : ['video-player', 'video-skin'];
+    await loadPlayer(way);
+    await Promise.all([playerTag, skinTag, ...(way.tag === 'video' ? [] : [way.tag])].map((tag) => customElements.whenDefined(tag)));
+    if (current !== owner) return null;
+    const host = document.createElement(playerTag);
+    host.setAttribute('content-title', info.title || '');
+    const skin = document.createElement(skinTag);
+    skin.toggleAttribute('data-mini', dockMode === 'mini');
+    const media = document.createElement(way.tag);
+    media.setAttribute('playsinline', '');
+    media.setAttribute('crossorigin', '');
+    skin.append(media, FT.$('#skip-btn'), FT.$('#hud'));
+    host.append(skin);
+    tree = { host, skin, media, live: way.live, chapterUrl: '' };
+    FT.$('#player').replaceChildren(host);
+    await skinReady(skin);
+    if (skin.shadowRoot) {
+        const style = document.createElement('style');
+        style.textContent = SKIN_STYLE;
+        skin.shadowRoot.append(style);
+    }
+    bindMedia(media);
+    return tree;
+};
+
 // ---- The public side ----
 
 FT.player = {
@@ -298,26 +445,27 @@ FT.player = {
     // Loads a video from /api/v1/video's answer. Opening the one that is already loaded changes nothing.
     async open(service, info) {
         if (current && current.url === info.url) return;
-        await customElements.whenDefined('media-player');
-        const p = playerEl();
         cancelNext();
         stopDanmaku();
         reportProgress();
         lastReported = -1;
-        current = { service, url: info.url, info, chapters: info.chapters || [], segments: [], chapterTrack: false };
+        const owner = { service, url: info.url, info, chapters: info.chapters || [], segments: [], chapterTrack: false };
+        current = owner;
         audioOnly = false;
         stageEl().classList.remove('audio-only');
         skipTarget = null;
         FT.$('#skip-btn').hidden = true;
-        FT.$$('.sb-mark', p).forEach((m) => m.remove());
-        try { Array.from(p.textTracks).forEach((t) => p.textTracks.remove(t)); } catch (e) {}
-        p.title = info.title;
-        // A live room is an HLS playlist, video streams come as a DASH manifest; anything else (audio only) is one stream whose type the player works out itself.
-        p.src = info.playback.hlsUrl ? { src: info.playback.hlsUrl, type: 'application/x-mpegurl' } : info.playback.isDash ? { src: info.playback.manifestUrl + ((await canPlayHighest()) ? '&prefer=hd' : ''), type: 'application/dash+xml' } : info.playback.streamUrl;
+        const way = await planFor(info);
+        if (current !== owner || !(await build(info, way, owner))) return;
+        const p = playerEl();
         for (const sub of info.subtitles || []) {
-            try { p.textTracks.add({ src: sub.url, kind: 'subtitles', label: sub.displayName + (sub.isAutoGenerated ? ' (auto)' : ''), language: sub.languageTag || 'en', type: 'vtt' }); } catch (e) {}
+            p.append(track('subtitles', sub.displayName + (sub.isAutoGenerated ? ' (auto)' : ''), sub.languageTag || 'en', sub.url, false));
         }
-        p.addEventListener('can-play', () => { p.play().catch(() => {}); }, { once: true });
+        // The frames shown above the seek bar while it is dragged: a WebVTT track of storyboard regions (a video that has none answers 404).
+        if (!info.playback.liveRoom && !info.isLive) p.append(track('metadata', 'thumbnails', 'en', `/thumbnails?serviceId=${service}&id=${FT.enc(info.url)}`, true));
+        if (way.tag === 'dash-video') p.source = { src: way.src, engine: { dashJs: DASH_SETTINGS } };
+        else p.src = way.src;
+        publishMediaSession(info);
         FT.api.sponsor(service, info.url).then((body) => {
             if (!current || current.url !== info.url) return;
             current.segments = body.segments || [];
@@ -333,18 +481,17 @@ FT.player = {
         const stage = stageEl();
         stage.hidden = dockMode === 'off';
         stage.classList.toggle('mini', dockMode === 'mini');
+        if (tree) tree.skin.toggleAttribute('data-mini', dockMode === 'mini');
         FT.$$(MINI_CTRL).forEach((btn) => { btn.hidden = dockMode !== 'mini'; });
         if (dockMode === 'mini') paintMiniPlay();
         placeMini();
     },
 
     close() {
-        const p = playerEl();
         cancelNext();
         stopDanmaku();
         reportProgress();
-        try { p.pause(); } catch (e) {}
-        p.src = '';
+        teardown();
         current = null;
         audioOnly = false;
         stageEl().classList.remove('audio-only');
@@ -402,18 +549,18 @@ FT.player = {
         hud(p.muted ? 'volume_off' : 'volume_up', p.muted ? 'Muted' : Math.round(p.volume * 100) + '%');
     },
     async fullscreen(want) {
-        const p = playerEl();
         if (!current) return;
         const on = isFullscreen();
         const enter = want === undefined ? !on : want;
+        const store = tree && tree.host.store;
         if (!enter) {
             document.body.classList.remove('remote-fs');
             if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
-            try { const left = p.exitFullscreen && p.exitFullscreen(); if (left && left.catch) left.catch(() => {}); } catch (e) {}
+            try { const left = store && store.isFullscreen && store.exitFullscreen(); if (left && left.catch) left.catch(() => {}); } catch (e) {}
             return;
         }
         // A browser only grants real fullscreen right after a click on the page itself, which a remote never makes; if it is refused, fill the window.
-        try { const asked = p.enterFullscreen && p.enterFullscreen(); if (asked && asked.catch) asked.catch(() => {}); } catch (e) {}
+        try { const asked = store && store.requestFullscreen(); if (asked && asked.catch) asked.catch(() => {}); } catch (e) {}
         setTimeout(() => { if (!isFullscreen()) document.body.classList.add('remote-fs'); }, 300);
     },
     stepChapter(direction) {
@@ -456,29 +603,13 @@ FT.player = {
     chapterIndex,
 };
 
-// Wiring that only needs the element to exist.
+// Wiring that does not depend on the video: the media's own events are bound as each player is built (bindMedia).
 const wire = () => {
-    const p = playerEl();
-    if (!p) return;
-    p.addEventListener('loaded-metadata', () => { addChapterTrack(); placeMarks(); });
-    p.addEventListener('duration-change', addChapterTrack);
-    p.addEventListener('time-update', watchSegments);
-    p.addEventListener('pause', reportProgress);
-    p.addEventListener('ended', scheduleNext);
-    p.addEventListener('play', paintMiniPlay);
-    p.addEventListener('pause', paintMiniPlay);
-    p.addEventListener('fullscreen-change', (e) => {
-        if (!screen.orientation) return;
-        if (e.detail) { if (screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }
+    // Fullscreen: the phone's browsers turn to landscape for it, as the player this replaced did.
+    document.addEventListener('fullscreenchange', () => {
+        if (!current || !screen.orientation) return;
+        if (document.fullscreenElement) { if (screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }
         else if (screen.orientation.unlock) screen.orientation.unlock();
-    });
-    // A longer buffer than dash.js's default, so a stall on a slow link does not drain it.
-    p.addEventListener('provider-change', (event) => {
-        const provider = event.detail;
-        if (provider && provider.type === 'dash') {
-            // Start from a high rung (kbps) instead of the lowest one; the estimate corrects it within a few segments if the link cannot hold it.
-            provider.config = { streaming: { abr: { initialBitrate: { video: 6000 } }, buffer: { stableBufferTime: 60, bufferTimeAtTopQuality: 90, bufferTimeAtTopQualityLongForm: 120, bufferToKeep: 30, avoidCurrentTimeRangePruning: true } } };
-        }
     });
     FT.$('#skip-btn').addEventListener('click', () => FT.player.skip());
     FT.$('#stage').addEventListener('pointerdown', onMiniPointerDown);
