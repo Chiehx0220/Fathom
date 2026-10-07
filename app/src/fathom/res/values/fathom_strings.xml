@@ -85,6 +85,7 @@
     <string name="icon_name_expressive_pill">Depth Gauge</string>
     <string name="home_content_filter_mix">Mix</string>
     <string name="home_content_filter_description">Filter which service Home shows videos from</string>
+    <string name="content_settings_open_links_title">Open YouTube links in Fathom</string>
     <string name="content_settings_show_app_logo_subtitle">Display the Fathom logo icon next to the app name in the home screen top bar</string>
     <string name="content_settings_nav_order_subtitle">Drag to reorder. Choose the tab Fathom opens on.</string>
     <string name="explore_bilibili_popular">Popular</string>

@@ -92,7 +92,8 @@ fun OfflineMonitor(
             route == "downloads" ||
                 route.startsWith("player") ||
                 route.startsWith("musicPlayer") ||
-                route == "settings"
+                route == "settings" ||
+                route == "notes"
         if (isSafeRoute) return@LaunchedEffect
 
         delay(OFFLINE_NOTICE_DELAY_MS)

@@ -76,6 +76,15 @@ NEW FEATURES
 - A channel's Shorts tab can stay visible while Shorts are hidden everywhere else, from Content settings (#1106)
 - Thumbnail quality can be set separately for Wi-Fi and mobile data in Quality settings, to save data on feeds and Shorts (#886)
 - A new Playback setting opens videos paused, so the description and comments can be read before anything plays (#1024)
+- Download videos you open, in Downloads settings: off by default, or on Wi-Fi or any network, at your default quality and codec, with Undo on the snackbar (#771)
+- A video linked from inside a playlist now plays with that playlist as its queue, and a new Content setting shows whether YouTube links open in Flow and opens the system screen to turn them on (#802)
+- The proxy can now step aside while a VPN is on, from Network settings, and comes back when the VPN goes off (#677)
+- A SponsorBlock button in the player turns it off for just the video you are watching, and the next video starts with your setting again; the player settings sheet and the TV player have the same switch (#930)
+- Thumbnails can be turned off, separately for Wi-Fi and mobile data, in Quality settings: feeds, playlists, banners and notifications load no images, while downloads and device files keep their covers (#849)
+- Notes can hold timestamps: times like 12:34 in a video note play from that moment, the note editor inserts the current time, and a new Notes page in Library lists every note with search, filters and its video or channel, side by side on tablets (#843)
+- Subscriptions now show collaborations a channel you follow took part in, even when another channel uploaded them, with every collaborator on the card; turn it off in Content settings (#840)
+- Discover channels in Your taste: search for channels and subscribe as at setup, next to the channels you keep watching without subscribing (#804)
+- Custom theme colours can be translucent again, with an Opacity slider in the colour picker, and such themes still open in Flow Desktop
 
 IMPROVEMENTS
 - Playlist rows give titles more room: the number column is gone, and a row shows when a video was added only while the playlist is sorted by date added, otherwise its views and publish date (#1052)
@@ -127,6 +136,7 @@ IMPROVEMENTS
 - Report on the crash page fills in the whole bug form, so a crash can be sent without answering questions first (#1189)
 - Shorts default quality can now be set to 1440p or 2160p (#1125)
 - Search history keeps each search's filters and applies them again when the entry is tapped, showing them under the entry (#1174)
+- Text in channel posts, a channel's About tab and the video title in the description can be selected and copied, and a long press copies a channel's name (#951)
 
 PERFORMANCE
 - Opening an artist, album or Daily Mix page no longer reloads the entire music home feed behind the scenes — one shared engine serves every music page, cutting Daily Mix opens from up to 30 seconds to about a second and ending a major source of battery drain and heat
@@ -201,6 +211,16 @@ FIXES AND STABILITY
 - Fix the Shorts quality menu listing the same resolution several times without naming the codec of each (#1213)
 - Fix being unable to remove a Short from Saved Shorts: its card menu now has Remove from Saved Shorts, with undo (#1024)
 - Fix a channel page losing its sort and scroll position, and loading again, after picture-in-picture or opening a Short (#1024)
+- Fix a video playing in another language's dub, most often French, when a specific audio language is set: a track now matches only by its language, never by letters in its name (#1223)
+- Fix the Local Media search text and cursor flickering and the grid jumping while typing, mostly on first open or with the mini player showing (#1220)
+- Fix an in-progress download's title shrinking to a few letters on phones: its pause and cancel buttons now sit under the title on narrow screens (#1225)
+- Fix a download freezing at a fixed percentage: when no data arrives for a while it fetches the stream again or stops with Retry (#1224)
+- Fix YouTube links in descriptions, comments and posts opening the browser instead of the video, channel or playlist in Flow, and links to other videos in a description doing nothing at all (#1032)
+- Fix YouTube requests, thumbnails, update checks, song recognition and the music player ignoring the proxy or keeping an old one until a restart
+- Fix notes never syncing from one Android device to another
+- Fix SponsorBlock categories set to Mute playing at full volume, notify-only categories showing nothing, and downloaded videos skipping segments with SponsorBlock turned off
+- Fix a custom theme carried over from an older version losing its colour opacity the first time it was saved
+- Fix a crash when tapping a link on a channel's About tab that has no https:// in front, and show a message instead of crashing when no app can open a link
 
 BUILD AND CI
 - Add offline recommendation and music benchmarks with regression floors, so feed diversity and repetition are verified by tests instead of claims

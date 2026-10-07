@@ -13,7 +13,7 @@ private val RESIZABLE_COVER = Regex("""^https?://[^/@]+\.hdslb\.com/bfs/[^@]+$""
 /**
  * [url] resized for [quality], best first and always ending in [url] itself, or null when [url] is not
  * a Bilibili cover this can resize (another host, or already carrying a size). HIGH is the original,
- * as it was before thumbnail quality was a choice.
+ * as it was before thumbnail quality was a choice. OFF fetches nothing, so nothing is resized either.
  */
 fun bilibiliThumbnailCandidates(
     url: String,
@@ -26,6 +26,7 @@ fun bilibiliThumbnailCandidates(
             ThumbnailQuality.HIGH -> return listOf(url)
             ThumbnailQuality.MEDIUM -> MEDIUM_WIDTH
             ThumbnailQuality.LOW -> if (portrait) PORTRAIT_LOW_WIDTH else LOW_WIDTH
+            ThumbnailQuality.OFF -> return null
         }
     return listOf("$url@${width}w.webp", url)
 }

@@ -20,7 +20,8 @@
     <string name="settings_item_support_subtitle">Contribuisci allo sviluppo di Fathom</string>
     <string name="appearance_subtitle">Personalizza la tua esperienza in Fathom</string>
     <string name="app_icon_picker_warning">Cambiare icona potrebbe rimuovere momentaneamente Fathom dalla schermata home. Aggiungila nuovamente dal drawer delle app, se necessario.</string>
-    <string name="content_settings_show_app_logo_subtitle">Mostra l\'icona del logo Fathom accanto al nome dell\'app nella barra superiore della schermata home</string>
+    <string name="content_settings_show_app_logo_subtitle">Mostra il logo Fathom nella barra superiore della schermata home</string>
+    <string name="content_settings_nav_order_subtitle">Trascina per riordinare. Scegli la scheda in cui si apre Fathom.</string>
     <string name="player_settings_subtitle_language_dialog_body">I sottotitoli si aprono in questa lingua quando disponibili. Se il video non ha una traccia al suo interno, Fathom utilizza la traduzione di YouTube di una traccia esistente. La selezione di un sottotitolo durante la riproduzione aggiorna anche questo.</string>
     <string name="donation_prompt_title">Ti piace Fathom?</string>
     <string name="donation_prompt_message">Fathom è gratuito, open-source e creato senza pubblicità o tracciamenti. Se ha trovato spazio sul tuo dispositivo, considera di sostenerne lo svilupp e aiuta concretamente a mantenere in vita il progetto.</string>

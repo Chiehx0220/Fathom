@@ -17,6 +17,7 @@ import io.github.aedev.flow.ui.components.videoplayer.subtitle.SubtitleStyle
 import io.github.aedev.flow.utils.DateContextMode
 import io.github.aedev.flow.utils.DateDisplayMode
 import io.github.aedev.flow.utils.DateFormatStyle
+import io.github.aedev.flow.utils.NetworkState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -129,12 +130,14 @@ class PlayerPreferences(
         val LAST_DOWNLOAD_AUDIO_LABEL = stringPreferencesKey("last_download_audio_label")
         val LAST_DOWNLOAD_SUBTITLE_LANGUAGE = stringPreferencesKey("last_download_subtitle_language")
         val DOWNLOAD_SUBTITLE_FILE = booleanPreferencesKey("download_subtitle_file")
+        val AUTO_DOWNLOAD_OPENED_VIDEOS = stringPreferencesKey("auto_download_opened_videos")
         val PROXY_ENABLED = booleanPreferencesKey("proxy_enabled")
         val PROXY_TYPE = stringPreferencesKey("proxy_type")
         val PROXY_HOST = stringPreferencesKey("proxy_host")
         val PROXY_PORT = intPreferencesKey("proxy_port")
         val PROXY_USERNAME = stringPreferencesKey("proxy_username")
         val PROXY_PASSWORD = stringPreferencesKey("proxy_password")
+        val PROXY_BYPASS_ON_VPN = booleanPreferencesKey("proxy_bypass_on_vpn")
         val SURFACE_READY_TIMEOUT_MS = longPreferencesKey("surface_ready_timeout_ms")
 
         // Audio track preference
@@ -174,6 +177,8 @@ class PlayerPreferences(
         val PLAYLISTS_SHOW_MUSIC = booleanPreferencesKey("playlists_show_music")
         val HOME_SHORTS_SHELF_ENABLED = booleanPreferencesKey("home_shorts_shelf_enabled")
         val HOME_SUBSCRIPTIONS_ENABLED = booleanPreferencesKey("home_subscriptions_enabled")
+        val SUBSCRIPTION_COLLABORATIONS_ENABLED = booleanPreferencesKey("subscription_collaborations_enabled")
+        val NOTES_SORT = stringPreferencesKey("notes_sort")
         val SHOW_WATCH_PROGRESS = booleanPreferencesKey("show_watch_progress")
         val WATCH_HISTORY_PAUSED = booleanPreferencesKey("watch_history_paused")
         val HOME_NAVIGATION_ENABLED = booleanPreferencesKey("home_navigation_enabled")
@@ -260,6 +265,7 @@ class PlayerPreferences(
         val OVERLAY_LOCK_MODE_ENABLED = booleanPreferencesKey("overlay_lock_mode_enabled")
         val OVERLAY_SPEED_INDICATOR_ENABLED = booleanPreferencesKey("overlay_speed_indicator_enabled")
         val OVERLAY_COMMENTS_ENABLED = booleanPreferencesKey("overlay_comments_enabled")
+        val OVERLAY_SPONSORBLOCK_ENABLED = booleanPreferencesKey("overlay_sponsorblock_enabled")
 
         // Fullscreen Player
         val ADAPTIVE_PLAYER_SIZE_ENABLED = booleanPreferencesKey("adaptive_player_size_enabled")
@@ -668,6 +674,7 @@ class PlayerPreferences(
             speedIndicatorEnabled =
                 this[Keys.OVERLAY_SPEED_INDICATOR_ENABLED] ?: overlayDefaults.speedIndicatorEnabled,
             commentsEnabled = this[Keys.OVERLAY_COMMENTS_ENABLED] ?: overlayDefaults.commentsEnabled,
+            sponsorBlockEnabled = this[Keys.OVERLAY_SPONSORBLOCK_ENABLED] ?: overlayDefaults.sponsorBlockEnabled,
             showControlsWhileLoading =
                 this[Keys.SHOW_CONTROLS_WHILE_LOADING] ?: overlayDefaults.showControlsWhileLoading,
             fullscreenSeekbarHorizontalPaddingDp =
@@ -1036,6 +1043,27 @@ class PlayerPreferences(
     suspend fun setHomeSubscriptionsEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.HOME_SUBSCRIPTIONS_ENABLED] = enabled
+        }
+    }
+
+    /** Collaborations of followed channels that someone else uploaded, in Subscriptions (#840). */
+    val subscriptionCollaborationsEnabled: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.SUBSCRIPTION_COLLABORATIONS_ENABLED] ?: true }
+            .distinctUntilChanged()
+
+    suspend fun setSubscriptionCollaborationsEnabled(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SUBSCRIPTION_COLLABORATIONS_ENABLED] = enabled
+        }
+    }
+
+    /** The Notes page's sort, by enum name; kept so a hand-made order is still there next visit. */
+    val notesSort: Flow<String?> = context.playerPreferencesDataStore.data.map { preferences -> preferences[Keys.NOTES_SORT] }
+
+    suspend fun setNotesSort(name: String) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.NOTES_SORT] = name
         }
     }
 
@@ -1453,6 +1481,10 @@ class PlayerPreferences(
         }
     }
 
+    /** The level for the network the device is on now, for work that has no composition to read it from. */
+    suspend fun currentThumbnailQuality(): ThumbnailQuality =
+        ThumbnailQuality.effective(NetworkState.isOnWifi(context), thumbnailQualityWifi.first(), thumbnailQualityCellular.first())
+
     val musicAudioQuality: Flow<MusicAudioQuality> =
         context.playerPreferencesDataStore.data
             .map { preferences ->
@@ -1719,6 +1751,15 @@ class PlayerPreferences(
     suspend fun setOverlayCommentsEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.OVERLAY_COMMENTS_ENABLED] = enabled
+        }
+    }
+
+    val overlaySponsorBlockEnabled: Flow<Boolean> =
+        overlayPreferences.map { it.sponsorBlockEnabled }.distinctUntilChanged()
+
+    suspend fun setOverlaySponsorBlockEnabled(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.OVERLAY_SPONSORBLOCK_ENABLED] = enabled
         }
     }
 
@@ -2916,6 +2957,20 @@ class PlayerPreferences(
         }
     }
 
+    /** Whether a video the viewer opens is also saved for offline, and on which networks. */
+    val autoDownloadOpenedVideos: Flow<AutoDownloadMode> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                runCatching { AutoDownloadMode.valueOf(preferences[Keys.AUTO_DOWNLOAD_OPENED_VIDEOS] ?: AutoDownloadMode.OFF.name) }
+                    .getOrDefault(AutoDownloadMode.OFF)
+            }.distinctUntilChanged()
+
+    suspend fun setAutoDownloadOpenedVideos(mode: AutoDownloadMode) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.AUTO_DOWNLOAD_OPENED_VIDEOS] = mode.name
+        }
+    }
+
     // Remembered last-used download options (used by the compact dialog to preselect).
     val lastDownloadType: Flow<String?> =
         context.playerPreferencesDataStore.data
@@ -3142,6 +3197,7 @@ class PlayerPreferences(
                     port = preferences[Keys.PROXY_PORT] ?: 8080,
                     username = preferences[Keys.PROXY_USERNAME].orEmpty(),
                     password = KeystoreSecretBox.open(preferences[Keys.PROXY_PASSWORD]),
+                    bypassOnVpn = preferences[Keys.PROXY_BYPASS_ON_VPN] ?: false,
                 )
             }.flowOn(Dispatchers.IO)
 
@@ -3155,6 +3211,7 @@ class PlayerPreferences(
             preferences[Keys.PROXY_HOST] = config.host.trim()
             preferences[Keys.PROXY_PORT] = config.port
             preferences[Keys.PROXY_USERNAME] = config.username.trim()
+            preferences[Keys.PROXY_BYPASS_ON_VPN] = config.bypassOnVpn
             if (config.password.isEmpty()) {
                 preferences.remove(Keys.PROXY_PASSWORD)
             } else {
@@ -3616,6 +3673,13 @@ enum class SliderStyle {
 enum class DownloadDialogStyle {
     FULL,
     COMPACT,
+}
+
+/** When an opened video is downloaded on its own: never, only on Wi-Fi, or on any network. */
+enum class AutoDownloadMode {
+    OFF,
+    WIFI,
+    ALWAYS,
 }
 
 /** Control colors for the music player when artwork colors are off. */

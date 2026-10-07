@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,6 +41,8 @@ internal fun ContentSettingsScreen(
     val hideWatchedShorts by viewModel.hideWatchedShorts.collectAsStateWithLifecycle()
     val removeWatchedWatchLater by viewModel.removeWatchedWatchLater.collectAsStateWithLifecycle()
     val notes by viewModel.notes.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val linkHandlingLabel = rememberLinkHandlingLabel()
     var showThresholdDialog by rememberSaveable { mutableStateOf(false) }
 
     SettingsPage(
@@ -66,6 +69,7 @@ internal fun ContentSettingsScreen(
             switch(ContentIndex.subsShorts, viewModel.subsShorts, viewModel::setSubsShorts, enabled = shortsContent)
             switch(ContentIndex.subsShortsShelf, viewModel.subsShortsShelf, viewModel::setSubsShortsShelf, enabled = shortsContent)
             switch(ContentIndex.subsLive, viewModel.subsLive, viewModel::setSubsLive)
+            switch(ContentIndex.subsCollaborations, viewModel.subsCollaborations, viewModel::setSubsCollaborations)
             switch(ContentIndex.hideWatchedSubs, viewModel.hideWatchedSubs, viewModel::setHideWatchedSubs)
             switch(ContentIndex.hideUnplayableSubs, viewModel.hideUnplayableSubs, viewModel::setHideUnplayableSubs)
             switch(ContentIndex.subsRefreshOnStartup, viewModel.subsRefreshOnStartup, viewModel::setSubsRefreshOnStartup)
@@ -103,6 +107,9 @@ internal fun ContentSettingsScreen(
         }
         group(key = "content.sharing", header = R.string.settings_section_sharing) {
             switch(ContentIndex.shareWithoutText, viewModel.shareWithoutText, viewModel::setShareWithoutText)
+        }
+        group(key = "content.links", header = R.string.settings_section_links) {
+            nav(ContentIndex.openLinks, onClick = { openLinkSettings(context) }, value = linkHandlingLabel)
         }
     }
 

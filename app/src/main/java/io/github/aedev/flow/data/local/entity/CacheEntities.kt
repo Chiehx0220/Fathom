@@ -1,5 +1,6 @@
 package io.github.aedev.flow.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -20,6 +21,13 @@ data class SubscriptionFeedEntity(
     val isUpcoming: Boolean = false,
     val cachedAt: Long = System.currentTimeMillis(),
     val serviceId: Int = 0,
+    /**
+     * Blank for a channel's own upload. For a collaboration it is the followed channel that brought
+     * the row in, while [channelId] stays the uploader the viewer may not follow.
+     */
+    @ColumnInfo(defaultValue = "") val feedChannelId: String = "",
+    /** The collaborators as JSON, so a cached row keeps its avatar stack. */
+    @ColumnInfo(defaultValue = "") val collaboratorsJson: String = "",
 )
 
 @Entity(tableName = "music_home_cache")

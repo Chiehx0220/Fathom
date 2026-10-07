@@ -46,6 +46,16 @@ class BilibiliThumbnailsTest {
     }
 
     @Test
+    fun `off fetches no Bilibili cover at all, but one stored on the device still shows`() {
+        assertThat(bilibiliThumbnailCandidates(cover, ThumbnailQuality.OFF, portrait = false)).isNull()
+        assertThat(ThumbnailUrlResolver.resolveVideoThumbnailCandidates("BV1bia36FEuo?p=1", cover, ThumbnailQuality.OFF)).isEmpty()
+
+        val saved = "file:///storage/emulated/0/Download/Flow/cover.jpg"
+        assertThat(ThumbnailUrlResolver.resolveVideoThumbnailCandidates("BV1bia36FEuo?p=1", saved, ThumbnailQuality.OFF))
+            .containsExactly(saved)
+    }
+
+    @Test
     fun `a YouTube thumbnail is untouched`() {
         val low = ThumbnailUrlResolver.resolveVideoThumbnailCandidates("dQw4w9WgXcQ", null, ThumbnailQuality.LOW)
 
