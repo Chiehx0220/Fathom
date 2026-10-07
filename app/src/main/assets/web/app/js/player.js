@@ -331,9 +331,15 @@ const DASH_SETTINGS = {
 
 // Which media component plays what /api/v1/video describes, and whether the live skin (a Live button, no time slider) fits it. A live room is an
 // HLS playlist, video streams come as a DASH manifest, and anything else (audio only) is one stream the browser plays as it is.
+const vodEngine = () => { try { return localStorage.getItem('fathom-vod'); } catch (e) { return null; } };
+
 const planFor = async (info) => {
     const pb = info.playback;
     if (pb.hlsUrl) return { live: !!pb.liveRoom, tag: 'hlsjs-video', src: pb.hlsUrl };
+    // Experiment: localStorage['fathom-vod'] = 'hls' plays on-demand video through the server's HLS playlists instead of the DASH manifest.
+    if (pb.isDash && pb.manifestUrl.startsWith('/manifest') && vodEngine() === 'hls') {
+        return { live: false, tag: 'hlsjs-video', src: pb.manifestUrl.replace('/manifest', '/hlsvod') + ((await canPlayHighest()) ? '&prefer=hd' : '') };
+    }
     if (pb.isDash) return { live: false, tag: 'dash-video', src: pb.manifestUrl + ((await canPlayHighest()) ? '&prefer=hd' : '') };
     return { live: false, tag: 'video', src: pb.streamUrl };
 };

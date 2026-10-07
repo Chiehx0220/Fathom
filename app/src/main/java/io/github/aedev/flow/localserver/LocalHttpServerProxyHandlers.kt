@@ -342,7 +342,7 @@ internal fun ClientHandler.handleStreamProxy(
     }
 }
 
-private fun fetchFromCdn(
+internal fun fetchFromCdn(
     directUrl: String,
     cacheKey: String,
     rangeHeader: String?,
@@ -403,7 +403,7 @@ internal fun ClientHandler.handleManifestProxy(
     os.flush()
 }
 
-private fun repCacheKey(
+internal fun repCacheKey(
     serviceId: Int,
     mediaUrl: String,
     repId: String,
