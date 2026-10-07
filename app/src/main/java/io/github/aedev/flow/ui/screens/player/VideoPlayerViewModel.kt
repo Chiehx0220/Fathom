@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.bilibili.serviceIdOfChannel
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.engagement.FeedInvalidationBus
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
 import io.github.aedev.flow.data.local.*
@@ -13,7 +15,6 @@ import io.github.aedev.flow.data.localmedia.LocalMediaDetails
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.model.resolvedServiceId
 import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.transcript.TranscriptRepository
@@ -42,7 +43,6 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.stream.*
 import javax.inject.Inject
 
@@ -208,17 +208,6 @@ class VideoPlayerViewModel
                 ioDispatcher = ioDispatcher,
             )
 
-        /**
-         * Service (org.schabi.newpipe.extractor.ServiceList id) of the video currently loading/loaded.
-         * Derived from [VideoPlayerUiState.cachedVideo] rather than tracked as its own mutable field -
-         * every path that starts a load (playVideo, syncWithCurrentPlayerVideo, the foreign-video branch
-         * of onPlayerStateChanged) already updates cachedVideo first, so reading it back here can never
-         * go stale the way a separately-assigned field can when a reload/retry/recovery path forgets to
-         * pass serviceId explicitly.
-         */
-        private val currentServiceId: Int
-            get() = _uiState.value.cachedVideo?.resolvedServiceId ?: ServiceList.YouTube.serviceId
-
         val canGoPrevious: StateFlow<Boolean> = loads.canGoPrevious
 
         private val _expandPlayerRequest = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -301,17 +290,11 @@ class VideoPlayerViewModel
                 }
 
             val videoId = _uiState.value.foreignVideoIdNeedingLoad(playerState) ?: return
-            val foreignVideo = GlobalPlayerState.currentVideo.value?.takeIf { it.id == videoId }
-            foreignVideo?.let { currentVideo ->
+            GlobalPlayerState.currentVideo.value?.takeIf { it.id == videoId }?.let { currentVideo ->
                 _uiState.update { it.resetForVideo(currentVideo) }
                 presence.armNotificationFor(currentVideo)
                 watchSessions.saveHistoryEntry(currentVideo)
             }
-            // The player moved here on its own (queue auto-advance, quick-panel skip, restored
-            // session) rather than through playVideo()/syncWithCurrentPlayerVideo(). When foreignVideo
-            // is known, resetForVideo above already made it the current cachedVideo, so the default
-            // serviceId (derived from cachedVideo) already resolves to its service; when it isn't
-            // known, there's nothing more reliable to fall back to than the previous cachedVideo either.
             loadVideoInfo(videoId, isWifi = detectIsWifi(), forceRefresh = true)
         }
 
@@ -360,13 +343,7 @@ class VideoPlayerViewModel
             if (upcomingPremiere.applyCountdown(video)) {
                 return
             }
-            loadVideoInfo(
-                video.id,
-                isWifi = detectIsWifi(),
-                forceRefresh = true,
-                resumePositionOverrideMs = startPositionMs,
-                serviceId = video.resolvedServiceId,
-            )
+            loadVideoInfo(video.id, isWifi = detectIsWifi(), forceRefresh = true, resumePositionOverrideMs = startPositionMs)
         }
 
         fun playLocalVideo(
@@ -422,10 +399,9 @@ class VideoPlayerViewModel
         fun showVideoPlayer() = presence.showVideoPlayer()
 
         fun retryLoadVideo() {
-            val cachedVideo = _uiState.value.cachedVideo ?: return
-            val videoId = cachedVideo.id
+            val videoId = _uiState.value.cachedVideo?.id ?: return
             Log.d("VideoPlayerViewModel", "Retrying video load for $videoId")
-            if (upcomingPremiere.applyCountdown(cachedVideo)) {
+            if (upcomingPremiere.applyCountdown(_uiState.value.cachedVideo ?: return)) {
                 return
             }
             val deviceFileUri = LocalMediaIds.videoUri(videoId)
@@ -495,8 +471,7 @@ class VideoPlayerViewModel
             forceRefresh: Boolean = false,
             escalateToSabr: Boolean = false,
             resumePositionOverrideMs: Long? = null,
-            serviceId: Int = currentServiceId,
-        ) = loads.load(videoId, isWifi, forceRefresh, escalateToSabr, resumePositionOverrideMs, serviceId)
+        ) = loads.load(videoId, isWifi, forceRefresh, escalateToSabr, resumePositionOverrideMs)
 
         fun switchQuality(quality: VideoQuality) = settings.switchQuality(quality)
 
@@ -509,7 +484,7 @@ class VideoPlayerViewModel
             channelName: String = "",
             channelId: String = "",
             isShort: Boolean = false,
-            serviceId: Int = currentServiceId,
+            serviceId: Int = serviceIdOfVideo(videoId),
         ) {
             if (!positionBelongsTo(videoId, playerManager.playerState.value.currentVideoId)) return
             watchSessions.savePlaybackPosition(
@@ -548,7 +523,12 @@ class VideoPlayerViewModel
             channelId: String,
             channelName: String,
             channelThumbnail: String,
-        ) = engagementState.toggleSubscription(channelId, channelName, channelThumbnail, currentServiceId)
+        ) = engagementState.toggleSubscription(
+            channelId,
+            channelName,
+            channelThumbnail,
+            serviceIdOfChannel(channelId),
+        )
 
         fun setNotificationEnabled(
             channelId: String,
@@ -601,7 +581,7 @@ class VideoPlayerViewModel
                 comments.clear()
                 return
             }
-            comments.load(videoId, currentServiceId)
+            comments.load(videoId, serviceIdOfVideo(videoId))
         }
 
         fun loadMoreComments(videoId: String) = comments.loadMore(videoId)

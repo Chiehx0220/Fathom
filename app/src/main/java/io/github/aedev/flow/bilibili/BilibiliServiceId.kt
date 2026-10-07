@@ -23,6 +23,9 @@ fun serviceIdOfVideo(
     saved: Int,
 ): Int = if (BilibiliVideoId.isBilibili(videoId)) BILIBILI_SERVICE_ID else saved
 
+/** For a channel that has no saved service id: YouTube unless [channelId] is a bare number, an uploader's mid. */
+fun serviceIdOfChannel(channelId: String): Int = serviceIdOfChannel(channelId, ServiceList.YouTube.serviceId)
+
 /** [saved] unless [channelId] is a bare number, an uploader's mid. */
 fun serviceIdOfChannel(
     channelId: String,

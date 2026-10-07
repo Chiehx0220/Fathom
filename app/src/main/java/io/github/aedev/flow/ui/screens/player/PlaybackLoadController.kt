@@ -2,12 +2,12 @@ package io.github.aedev.flow.ui.screens.player
 
 import android.content.Context
 import android.util.Log
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.localmedia.LocalMediaDetails
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.model.resolvedServiceId
 import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.video.AutoDownloadResolution
@@ -140,7 +140,6 @@ internal class PlaybackLoadController(
         forceRefresh: Boolean,
         escalateToSabr: Boolean,
         resumePositionOverrideMs: Long?,
-        serviceId: Int,
     ) {
         notes.observe(videoId)
         if (LocalMediaIds.isLocal(videoId)) {
@@ -199,7 +198,7 @@ internal class PlaybackLoadController(
                                 escalateToSabr = escalateToSabr,
                                 resumePositionOverrideMs = resumePositionOverrideMs,
                                 allowShorts = shortsEnabled,
-                                serviceId = serviceId,
+                                serviceId = serviceIdOfVideo(videoId),
                                 blockedChannelIds = exclusions.blockedChannelIds,
                             ),
                         isCurrent = { isCurrent(loadToken) },
@@ -266,7 +265,6 @@ internal class PlaybackLoadController(
             forceRefresh = true,
             escalateToSabr = false,
             resumePositionOverrideMs = null,
-            serviceId = video.resolvedServiceId,
         )
     }
 
