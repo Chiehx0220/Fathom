@@ -169,11 +169,18 @@ const render = async (root, params, isCurrent) => {
     if (!isCurrent()) return;
     FT.player.dock('full');
 
-    // A long description starts folded to a few lines, so the comments are not pushed screens down; the button shows only when there is more.
+    // A long description starts folded to a few lines, so the comments are not pushed screens down. Like a comment with replies, the whole block
+    // is the control (it takes the remote's focus, and OK or a click opens it); the hint line under the text shows only when there is more.
     const aboutText = h('div', { class: 'about-text' }, FT.description(info.description, info.descriptionType));
-    const aboutToggle = h('button', { type: 'button', class: 'btn about-toggle', hidden: true, data: { f: '', key: 'about' },
-        onclick: () => { const open = about.classList.toggle('open'); aboutToggle.textContent = open ? 'Show less' : 'Show more'; } }, 'Show more');
-    const about = h('div', { class: 'about' }, h('b', {}, [FT.views(info.viewCount), info.uploadDate].filter(Boolean).join(' · ') || 'About'), aboutText, aboutToggle);
+    const aboutHint = h('div', { class: 'about-hint', hidden: true }, FT.icon('expand_more'), h('span', {}, 'Show more'));
+    const about = h('div', { class: 'about', tabindex: '-1', data: { f: '', key: 'about' } },
+        h('b', {}, [FT.views(info.viewCount), info.uploadDate].filter(Boolean).join(' · ') || 'About'), aboutText, aboutHint);
+    about.addEventListener('click', () => {
+        if (aboutHint.hidden && !about.classList.contains('open')) return;
+        const open = about.classList.toggle('open');
+        aboutHint.querySelector('.i').textContent = open ? 'expand_less' : 'expand_more';
+        aboutHint.querySelector('span:not(.i)').textContent = open ? 'Show less' : 'Show more';
+    });
     const commentsHolder = h('section', { class: 'comments' }, h('h2', {}, 'Comments'), FT.loading());
     const related = (info.relatedVideos || []).filter((v) => !v.isShort);
     const page = h('div', {},
@@ -189,7 +196,7 @@ const render = async (root, params, isCurrent) => {
     root.replaceChildren(slot, page);
     loadComments(commentsHolder, service, info.url, isCurrent);
     // Measured once the text has a size (the page may not be laid out yet) and again whenever it changes, e.g. when the window is resized.
-    new ResizeObserver(() => { aboutToggle.hidden = !about.classList.contains('open') && aboutText.scrollHeight <= aboutText.clientHeight + 1; }).observe(aboutText);
+    new ResizeObserver(() => { const more = about.classList.contains('open') || aboutText.scrollHeight > aboutText.clientHeight + 1; aboutHint.hidden = !more; about.classList.toggle('foldable', more); }).observe(aboutText);
 
     // The picture shrinks into the corner once it has scrolled out of sight, and comes back when it is in view again.
     if (observer) observer.disconnect();
