@@ -71,7 +71,7 @@ Every recommendation comes from **FlowNeuro**, A-EDev's on-device engine from Fl
 - Spots when you're bored of a topic and mixes in something new
 - Shows exactly what it knows about you, and lets you edit, export, or wipe it
 
-**What Fathom adds:** Bilibili watches train the same profile as YouTube's, and Chinese and Japanese titles are split into topics. Mixed history, one coherent feed.
+**What Fathom adds:** Bilibili watches count toward the same profile as YouTube's, and a filter of Chinese filler words (我们, 这个, 大家 and the like) keeps them from showing up as topics. The engine itself is Flow's.
 
 ## 🎬 Bilibili, natively
 
