@@ -17,7 +17,7 @@ const playerEl = () => (tree ? tree.media : IDLE);
 let current = null; // { service, url, info, chapters, segments }
 let dockMode = 'off';
 let danmaku = null;
-let nextTimer = 0;
+let upNext = null; // the open "Up next" card: { el, timer, endAt, ring, count }
 let lastReported = -1;
 let hudTimer = 0;
 let audioOnly = false;
@@ -263,25 +263,87 @@ const reportProgress = () => {
 setInterval(reportProgress, 15000);
 addEventListener('pagehide', reportProgress);
 
+// ---- Up next: the card shown when a video ends ----
+
+const UP_NEXT_SECONDS = 8;
+const RING = 88; // circumference of the countdown ring's circle (r = 14)
+const svgEl = (tag, attrs) => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+};
+
+const autoplayOn = () => loadPrefs().autoplay !== false;
+const setAutoplay = (on) => {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify({ ...loadPrefs(), autoplay: on })); } catch (e) {}
+};
+
+// Closes the card, stops its countdown and gives the keys back. Safe to call when there is none.
 const cancelNext = () => {
-    clearTimeout(nextTimer);
-    nextTimer = 0;
-    const box = FT.$('#hud');
-    if (box && !box.hidden && box.dataset.next) box.hidden = true;
+    if (!upNext) return;
+    clearInterval(upNext.timer);
+    upNext.el.remove();
+    upNext = null;
+    FT.focus.trap(null);
+    FT.focus.clear();
+};
+
+const playNext = (next) => {
+    cancelNext();
+    location.hash = FT.link.watch(next);
+};
+
+const tickUpNext = (next) => {
+    if (!upNext) return;
+    const left = Math.max(0, upNext.endAt - performance.now());
+    upNext.count.textContent = String(Math.ceil(left / 1000));
+    upNext.ring.style.strokeDashoffset = String(RING * (1 - left / (UP_NEXT_SECONDS * 1000)));
+    if (left <= 0) playNext(next);
 };
 
 const scheduleNext = () => {
     const next = current && current.info.relatedVideos && current.info.relatedVideos[0];
-    if (!next) return;
-    const box = FT.$('#hud');
-    box.dataset.next = '1';
-    box.replaceChildren(FT.icon('skip_next'), 'Up next in 6 s: ' + next.title + '  (Back to cancel)');
-    box.hidden = false;
-    nextTimer = setTimeout(() => {
-        box.hidden = true;
-        delete box.dataset.next;
-        location.hash = FT.link.watch(next);
-    }, 6000);
+    // A video that ends in the mini player, with the viewer elsewhere on the site, does not pull the page away to the next one.
+    if (!next || upNext || !tree || dockMode !== 'full') return;
+    const counting = autoplayOn();
+    const ring = svgEl('circle', { cx: 17, cy: 17, r: 14, fill: 'none', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-dasharray': RING, class: 'upnext-bar' });
+    const count = h('b', {}, String(UP_NEXT_SECONDS));
+    const dial = svgEl('svg', { viewBox: '0 0 34 34' });
+    dial.append(svgEl('circle', { cx: 17, cy: 17, r: 14, fill: 'none', 'stroke-width': 3, class: 'upnext-track' }), ring);
+    const play = h('button', { type: 'button', class: 'upnext-btn primary', data: { f: '', key: 'upnext-play' }, onclick: () => playNext(next) }, counting ? 'Play now' : 'Play next');
+    const cancel = h('button', { type: 'button', class: 'upnext-btn', data: { f: '', key: 'upnext-cancel' }, onclick: cancelNext }, 'Cancel');
+    const auto = h('button', { type: 'button', class: 'upnext-auto', data: { f: '', key: 'upnext-auto' } }, counting ? 'Autoplay on' : 'Autoplay off');
+    auto.addEventListener('click', () => {
+        const on = !autoplayOn();
+        setAutoplay(on);
+        cancelNext();
+        FT.toast(on ? 'Autoplay on' : 'Autoplay off');
+    });
+    const el = h('div', { class: 'upnext', role: 'dialog', 'aria-label': 'Up next' },
+        h('div', { class: 'upnext-top' },
+            h('div', { class: 'upnext-thumb' },
+                next.thumbnailUrl ? h('img', { src: next.thumbnailUrl, alt: '' }) : null,
+                next.duration > 0 ? h('span', { class: 'dur' }, FT.duration(next.duration)) : null),
+            h('div', { class: 'upnext-text' },
+                h('div', { class: 'upnext-kicker' }, 'Up next'),
+                h('div', { class: 'upnext-title' }, next.title),
+                h('div', { class: 'upnext-channel' }, next.channelName || '')),
+            counting ? h('div', { class: 'upnext-ring' }, dial, count) : null),
+        h('div', { class: 'upnext-actions' }, play, cancel, auto));
+    tree.skin.append(el);
+    upNext = { el, ring, count, endAt: performance.now() + UP_NEXT_SECONDS * 1000, timer: 0 };
+    if (counting) upNext.timer = setInterval(() => tickUpNext(next), 200);
+    // The remote's keys stay on the card until it is gone: OK plays now, left and right pick a button, Back cancels.
+    FT.focus.trap(el);
+    FT.focus.select(play, { scroll: false });
+};
+
+// Back (or Escape) closes the card without leaving the page; every other key is the focus engine's. True when it was used.
+const upNextBack = (name) => {
+    if (!upNext) return false;
+    if (name !== 'back') return false;
+    cancelNext();
+    return true;
 };
 
 // YouTube's 1440p and 4K come as AV1. If this browser can decode that smoothly, the playlist is asked for the tallest ladder (up to 4K);
@@ -347,7 +409,7 @@ const track = (kind, label, lang, src, isDefault) => {
 const PREFS_KEY = 'fathom-player';
 const loadPrefs = () => { try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch (e) { return {}; } };
 const savePrefs = (media) => {
-    try { localStorage.setItem(PREFS_KEY, JSON.stringify({ volume: media.volume, muted: media.muted, rate: media.playbackRate })); } catch (e) {}
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify({ ...loadPrefs(), volume: media.volume, muted: media.muted, rate: media.playbackRate })); } catch (e) {}
 };
 const restorePrefs = (media) => {
     const prefs = loadPrefs();
@@ -493,6 +555,7 @@ FT.player = {
 
     dock(mode) {
         dockMode = current ? mode : 'off';
+        if (dockMode !== 'full') cancelNext();
         const stage = stageEl();
         stage.hidden = dockMode === 'off';
         stage.classList.toggle('mini', dockMode === 'mini');
@@ -535,6 +598,8 @@ FT.player = {
 
     // Keys and the phone remote.
     cancelNext,
+    get upNextActive() { return !!upNext; },
+    upNextBack,
     toggle() {
         const p = playerEl();
         if (!current) return;

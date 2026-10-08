@@ -95,3 +95,27 @@ body[data-input="keys"] .comment.sel { background: var(--s2); box-shadow: 0 0 0 
 .who-link:hover { background: var(--s1); }
 body[data-input="keys"] .who-link.sel, body[data-input="keys"] .card.sel .thumb { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc2); }
 body[data-input="keys"].player-mode .stage:not(.mini) { box-shadow: inset 0 0 0 5px var(--acc2); }
+
+/* Up next: the card shown over the picture when a video ends. */
+.upnext { position: absolute; right: 24px; bottom: 96px; z-index: 13; display: flex; flex-direction: column; gap: 12px; width: min(380px, calc(100% - 48px)); padding: 12px; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 18px; background: rgba(14, 17, 24, 0.94); color: #fff; }
+.upnext-top { display: flex; align-items: center; gap: 12px; }
+.upnext-thumb { position: relative; flex: none; width: 112px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 8px; background: #2c3345; }
+.upnext-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.upnext-thumb .dur { right: 4px; bottom: 4px; padding: 1px 5px; font-size: 11px; }
+.upnext-text { flex: 1; min-width: 0; }
+.upnext-kicker { color: #9fb4e8; font-size: 12px; font-weight: 500; }
+.upnext-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500; line-height: 1.3; }
+.upnext-channel { margin-top: 2px; overflow: hidden; color: #aab2c4; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.upnext-ring { position: relative; flex: none; width: 40px; height: 40px; }
+.upnext-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.upnext-ring b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 15px; font-weight: 500; }
+.upnext-track { stroke: rgba(255, 255, 255, 0.2); }
+.upnext-bar { stroke: var(--acc); stroke-dashoffset: 0; transition: stroke-dashoffset 0.2s linear; }
+.upnext-actions { display: flex; align-items: center; gap: 8px; }
+.upnext-btn { height: 36px; padding: 0 18px; border: 0; border-radius: 18px; background: rgba(255, 255, 255, 0.16); color: #fff; font-weight: 500; cursor: pointer; }
+.upnext-btn:hover { background: rgba(255, 255, 255, 0.26); }
+.upnext-btn.primary { background: var(--acc); color: var(--on-acc); }
+.upnext-auto { margin-left: auto; padding: 6px 4px; border: 0; border-radius: 10px; background: none; color: #aab2c4; font-size: 13px; cursor: pointer; }
+.upnext-auto:hover { color: #fff; }
+body[data-input="keys"] .upnext .sel { box-shadow: 0 0 0 3px rgba(14, 17, 24, 0.94), 0 0 0 6px var(--acc2); }
+.stage.mini .upnext { display: none; }

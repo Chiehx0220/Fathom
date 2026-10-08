@@ -219,7 +219,8 @@ FT.register('watch', {
 
 // While the player has the keys: left and right seek, OK pauses (or skips a sponsor segment), Menu toggles fullscreen.
 FT.command.hook = (name) => {
-    FT.player.cancelNext();
+    // While the Up next card is open it holds the keys (see player.js); only Back is handled here.
+    if (FT.player.upNextActive) return FT.player.upNextBack(name);
     if (FT.menu.isOpen() || FT.route.name !== 'watch') return false;
     const el = FT.focus.el;
     if (mode.onPlayer) {
