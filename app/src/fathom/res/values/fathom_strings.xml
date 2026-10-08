@@ -177,4 +177,6 @@
     <string name="discord_presence_playing_fallback">Playing in Fathom</string>
     <string name="export_watch_history_desc">Export as YouTube-history JSON (imports into LibreTube and Fathom)</string>
     <string name="whats_new_in_flow">What\'s new in Fathom</string>
+    <string name="cache_size_applies_on_restart">Applies the next time Fathom starts.</string>
+    <string name="settings_font_summary">The typeface used across Fathom</string>
 </resources>
