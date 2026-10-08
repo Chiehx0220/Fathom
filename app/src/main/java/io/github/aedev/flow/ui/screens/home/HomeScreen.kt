@@ -30,8 +30,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -153,6 +155,13 @@ fun HomeScreen(
             }
     }
 
+    val haptic = LocalHapticFeedback.current
+    val deepFlowLabel = stringResource(R.string.deep_flow_mode_title)
+    val toggleDeepFlow: () -> Unit = {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        coroutineScope.launch { DeepFlowManager.toggle(context) }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0.dp),
@@ -161,6 +170,7 @@ fun HomeScreen(
                 title = {
                     Text(
                         stringResource(R.string.app_name_uppercase),
+                        modifier = Modifier.deepFlowLongPress(deepFlowLabel, toggleDeepFlow),
                         style =
                             MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.ExtraBold,
@@ -173,12 +183,7 @@ fun HomeScreen(
                         {
                             FathomHeaderLogoIcon(
                                 isDeepFlowActive = deepFlowActive,
-                                onToggleDeepFlow = {
-                                    coroutineScope.launch {
-                                        DeepFlowManager.toggle(context)
-                                    }
-                                },
-                                modifier = Modifier.size(26.dp),
+                                modifier = Modifier.size(26.dp).deepFlowLongPress(deepFlowLabel, toggleDeepFlow),
                             )
                         }
                     } else {

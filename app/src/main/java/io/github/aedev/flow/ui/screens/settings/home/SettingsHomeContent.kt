@@ -32,6 +32,7 @@ internal class SettingsHomeActions(
     val onDeepFlowChange: (Boolean) -> Unit,
     val onDurationClick: () -> Unit,
     val onSaveHistoryChange: (Boolean) -> Unit,
+    val onScrobbleChange: (Boolean) -> Unit,
     val onCheckForUpdates: () -> Unit,
 )
 
@@ -83,6 +84,12 @@ internal fun SettingsListScope.homeContent(
             checked = state.deepFlow.saveToHistory,
             onCheckedChange = actions.onSaveHistoryChange,
             icon = HomeRowIcons.DeepFlowHistory,
+        )
+        switch(
+            HomeIndex.deepFlowScrobble,
+            checked = state.deepFlow.scrobble,
+            onCheckedChange = actions.onScrobbleChange,
+            icon = HomeRowIcons.DeepFlowScrobble,
         )
         page(SettingsDestination.TOPICS)
     }

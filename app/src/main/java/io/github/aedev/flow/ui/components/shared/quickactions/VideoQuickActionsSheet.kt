@@ -404,5 +404,6 @@ private fun Video.toDetailsSubject(displayTitle: String) =
         likeCount = likeCount,
         uploadDate = uploadDate,
         timestamp = timestamp,
+        timestampIsExact = timestampIsExact,
         durationSeconds = duration,
     )

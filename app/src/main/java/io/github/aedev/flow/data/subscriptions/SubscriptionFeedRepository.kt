@@ -312,6 +312,7 @@ class SubscriptionFeedRepository
                             isUpcoming = video.isUpcoming,
                             uploadDate = video.uploadDate,
                             timestamp = video.timestamp,
+                            timestampIsExact = video.timestampIsExact,
                         )
                     }
                 }
@@ -397,6 +398,7 @@ private fun SubscriptionFeedEntity.toVideo() =
         viewCount = viewCount,
         uploadDate = uploadDate,
         timestamp = timestamp,
+        timestampIsExact = timestampIsExact,
         channelThumbnailUrl = channelThumbnailUrl,
         collaborators = decodeCollaborators(collaboratorsJson),
         channelThumbnailUrls = decodeCollaborators(collaboratorsJson).map { it.thumbnailUrl }.filter { it.isNotBlank() },
@@ -429,6 +431,7 @@ private fun Video.toEntity(
     serviceId = serviceId,
     feedChannelId = feedChannelId,
     collaboratorsJson = if (collaborators.size > 1) collaboratorJson.encodeToString(collaborators) else "",
+    timestampIsExact = timestampIsExact,
 )
 
 private val collaboratorJson = Json { ignoreUnknownKeys = true }
@@ -460,6 +463,7 @@ private fun ChannelRssEntry.toEntity(
     viewCount = viewCount,
     uploadDate = "",
     timestamp = publishedAtMillis,
+    timestampIsExact = true,
     channelThumbnailUrl = "",
     isShort = isShort,
     isLive = false,

@@ -487,6 +487,11 @@ class EnhancedPlayerManager private constructor() {
     val queueVideos: StateFlow<List<Video>> = queue.videos
     val currentQueueIndexState: StateFlow<Int> = queue.currentIndexState
 
+    private val _firstFrameVideoId = MutableStateFlow<String?>(null)
+
+    /** The video whose picture is on the surface, set by its first rendered frame. */
+    val firstFrameVideoId: StateFlow<String?> = _firstFrameVideoId.asStateFlow()
+
     // Public surface ready state
     val isSurfaceReady: Boolean
         get() = surfaceManager?.isSurfaceReady ?: false
@@ -531,7 +536,7 @@ class EnhancedPlayerManager private constructor() {
 
     private fun initializeComponents(context: Context) {
         // Initialize cache manager
-        cacheManager = PlayerCacheManager(context).also { it.initialize() }
+        cacheManager = PlayerCacheManager(context) { currentVideoId }.also { it.initialize() }
 
         // Initialize surface manager
         surfaceManager = SurfaceManager()
@@ -901,6 +906,7 @@ class EnhancedPlayerManager private constructor() {
 
                 override fun onRenderedFirstFrame() {
                     Log.d(TAG, "First frame rendered - video renderer working")
+                    _firstFrameVideoId.value = currentVideoId
                     surfaceManager?.setSurfaceReady(true)
                     surfaceFirstFrameWatchdog?.cancel()
                     surfaceFirstFrameWatchdog = null
@@ -2929,6 +2935,7 @@ class EnhancedPlayerManager private constructor() {
         val hadManagedSurface = surfaceManager?.getSurfaceHolder() != null
         surfaceManager?.detachVideoSurface(holder, player, appContext)
         if (hadManagedSurface) {
+            _firstFrameVideoId.value = null
             surfaceFirstFrameWatchdog?.cancel()
             surfaceFirstFrameWatchdog = null
             pendingSurfaceFirstFrameStartedAtMs = 0L
@@ -3070,11 +3077,10 @@ class EnhancedPlayerManager private constructor() {
 
     fun getCacheSize(): Long = cacheManager?.getCacheSize() ?: 0L
 
-    fun clearCache() = cacheManager?.clearCache()
-
     suspend fun clearCacheForCurrentVideo() {
-        Log.d(TAG, "Clearing media cache due to persistent stream errors")
-        withContext(Dispatchers.IO) { cacheManager?.clearCache() }
+        val videoId = currentVideoId ?: return
+        Log.d(TAG, "Clearing $videoId from the media cache due to persistent stream errors")
+        withContext(Dispatchers.IO) { cacheManager?.clearVideo(videoId) }
     }
 
     fun startBackgroundService(
