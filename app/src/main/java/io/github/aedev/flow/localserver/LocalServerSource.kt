@@ -148,6 +148,7 @@ internal object LocalServerSource {
         nextPage: Page?,
     ): CommentsResult {
         if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibiliComments.comments(context, videoUrl, nextPage)
+        LocalServerYouTubeComments.comments(context, videoUrl, nextPage)?.let { return it }
         val extractor = NewPipe.getService(serviceId).getCommentsExtractor(videoUrl)
         if (nextPage != null) {
             // getPage() only reads nextPage's continuation token, not fetchPage() state, so it is
