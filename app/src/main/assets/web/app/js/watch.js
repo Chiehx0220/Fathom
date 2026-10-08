@@ -178,7 +178,6 @@ const render = async (root, params, isCurrent) => {
     about.addEventListener('click', () => {
         if (aboutHint.hidden && !about.classList.contains('open')) return;
         const open = about.classList.toggle('open');
-        aboutHint.querySelector('.i').textContent = open ? 'expand_less' : 'expand_more';
         aboutHint.querySelector('span:not(.i)').textContent = open ? 'Show less' : 'Show more';
     });
     const commentsHolder = h('section', { class: 'comments' }, h('h2', {}, 'Comments'), FT.loading());

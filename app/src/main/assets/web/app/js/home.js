@@ -44,10 +44,10 @@ const shelfOf = (title, sub, items, options = {}) => {
     };
     step();
     const head = options.expand
-        ? h('a', { class: 'shelf-head expand', href: options.expand, data: { f: '', key: 'shelf:' + title } },
-            h('h2', {}, title), sub ? h('span', {}, sub) : null, h('span', { class: 'shelf-more' }, 'See all', FT.icon('chevron_right')))
+        ? h('a', { class: 'shelf-head expand', href: options.expand, 'aria-label': 'See all: ' + title, data: { f: '', key: 'shelf:' + title } },
+            h('h2', {}, title), FT.icon('chevron_right', 'shelf-chev'), sub ? h('span', { class: 'shelf-sub' }, sub) : null, h('em', { class: 'shelf-all' }, 'See all'))
         : h('div', { class: 'shelf-head' }, h('h2', {}, title), sub ? h('span', {}, sub) : null);
-    return h('section', { class: 'shelf' }, head, row);
+    return h('section', { class: 'shelf' }, head, FT.scroller(row));
 };
 
 const hero = (v, resuming) => h('div', { class: 'hero' },

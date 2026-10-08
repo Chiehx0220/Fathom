@@ -61,7 +61,8 @@ body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
 body[data-input="keys"] .about.sel { background: var(--s2); box-shadow: 0 0 0 3px var(--acc2); }
 .about-hint { margin-top: 10px; display: flex; gap: 6px; align-items: center; color: var(--mute); font-size: 13px; }
 .about-hint[hidden] { display: none; }
-.about-hint .i { font-size: 18px; }
+.about-hint .i { font-size: 18px; transition: transform 0.15s; }
+.about.open .about-hint .i { transform: rotate(180deg); }
 
 .comments { max-width: 980px; padding: 26px var(--pad-x) 0; }
 .comments h2 { margin-bottom: 12px; font-size: 20px; font-weight: 500; }

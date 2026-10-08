@@ -60,9 +60,27 @@ FT.playlistCard = (p) => {
 // One card for whatever an API list held.
 FT.itemCard = (item) => (item.subscriberCount !== undefined && item.name ? FT.channelCard(item) : item.videoCount !== undefined && item.name ? FT.playlistCard(item) : FT.videoCard(item));
 
+// A sideways row with a hint that it scrolls: its edges fade where there is more, and a pointer user gets an arrow button on each side
+// (CSS shows them only to a mouse; a finger swipes and a remote moves the selection, which scrolls the row by itself). The buttons are
+// not data-f, so the remote never stops on them.
+FT.scroller = (row) => {
+    const wrap = h('div', { class: 'row-wrap' });
+    const arrow = (dir) => h('button', { type: 'button', class: 'row-arrow ' + dir, tabindex: '-1', 'aria-label': dir === 'left' ? 'Scroll left' : 'Scroll right',
+        onclick: () => row.scrollBy({ left: (dir === 'left' ? -1 : 1) * row.clientWidth * 0.85 }) }, FT.icon('chevron_right'));  // the icon font holds only the icons the app uses, so the left arrow is this one mirrored in CSS
+    const update = () => {
+        wrap.classList.toggle('can-left', row.scrollLeft > 4);
+        wrap.classList.toggle('can-right', row.scrollLeft + row.clientWidth < row.scrollWidth - 4);
+    };
+    wrap.append(row, arrow('left'), arrow('right'));
+    row.addEventListener('scroll', update, { passive: true });
+    new ResizeObserver(update).observe(row);
+    new MutationObserver(update).observe(row, { childList: true });
+    return wrap;
+};
+
 FT.shelf = (title, sub, cards, extra = '') => h('section', { class: 'shelf' },
     h('div', { class: 'shelf-head' }, h('h2', {}, title), sub ? h('span', {}, sub) : null),
-    h('div', { class: ('row ' + extra).trim() }, cards));
+    FT.scroller(h('div', { class: ('row ' + extra).trim() }, cards)));
 
 // A button. `onclick` is the action; `variant` is 'primary', 'round' or ''. Stops are found by the focus engine through data-f.
 FT.button = (label, icon, onclick, variant = '', key) => {
