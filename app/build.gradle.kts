@@ -39,8 +39,8 @@ android {
         applicationId = "io.github.chiehx0220.fathom"
         minSdk = 28
         targetSdk = 36
-        versionCode = 21
-        versionName = "0.1.3"
+        versionCode = 22
+        versionName = "0.1.4"
 
         buildConfigField("int", "NIGHTLY_RUN", "0")
         // Last.fm keys come from the CI secrets; builds without them ask the viewer for their own key.
