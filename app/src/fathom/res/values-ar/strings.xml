@@ -22,7 +22,7 @@
     <string name="player_settings_subtitle_language_dialog_body">تُفتح الترجمة بهذا اللغة عند توفرها. وإلا يترجم Fathom مسارًا موجودًا.</string>
     <string name="player_settings_video_codec_dialog_body">برنامج الترميز الذي يختاره Fathom أولًا. يمكنك أيضًا اختيار أي برنامج ترميز من قائمة الجودة. يعمل H.264 بسلاسة أكبر على معظم الأجهزة. يستهلك AV1 وVP9 بيانات أقل، لكنهما يحتاجان إلى طاقة أكبر.</string>
     <string name="stats_disclaimer">استنادًا إلى سجل المشاهدة في Fathom. قد يختلف الاستخدام الفعلي.</string>
-    <string name="location_internal_app_desc">خاص بـ Fathom. يُحذف عند إلغاء تثبيت التطبيق</string>
+    <string name="location_internal_app_desc">خاص بـ Fathom. يُحذف عند إلغاء تثبيت التطبيق.</string>
     <string name="donation_prompt_title">هل تستمتع بFathom؟</string>
     <string name="donation_prompt_message">Fathom مجاني ومفتوح المصدر وخالٍ من الإعلانات. إذا كان Fathom يستحق مكانًا على هاتفك، فإن القليل من الدعم يساعد على استمراره.</string>
     <string name="welcome_to_flow">مرحبا بك في Fathom</string>
@@ -79,6 +79,9 @@
     <string name="whats_new_in_flow">ما الجديد في Fathom</string>
     <string name="cache_size_applies_on_restart">يُطبق في المرة التالية التي يبدأ فيها Fathom.</string>
     <string name="settings_font_summary">نوع الخط المستخدم في جميع أنحاء Fathom</string>
+    <string name="sync_error_qr_not_local">يشير هذا الرمز خارج شبكتك المحلية، لذلك Fathom لن يتصل به. استخدم فقط الرموز التي تظهرها أجهزتك الخاصة.</string>
+    <string name="sync_error_timeout">توقف الجهاز الآخر عن الاستجابة. أبقِ Fathom مفتوحًا على كلا الجهازين وحاول مرة أخرى.</string>
+    <string name="sync_error_protocol">تعذّر على الجهازين الاتفاق على خطوات المزامنة. حدّث Fathom على كلا الجهازين وحاول مرة أخرى.</string>
     <string name="downloads_recover_body">يحفظ Fathom التنزيلات في المجلدين Download/Fathom و Music/Fathom. لعرض الملفات التي حفظها إصدار سابق من التطبيق فيهما، اسمح بالوصول إلى ملفات الفيديو والصوت.</string>
     <string name="location_downloads_label">Downloads / Fathom</string>
     <string name="location_movies_label">Movies / Fathom</string>
