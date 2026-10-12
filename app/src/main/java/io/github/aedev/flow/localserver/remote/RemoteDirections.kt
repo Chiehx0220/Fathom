@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Subscriptions
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -53,7 +53,7 @@ internal fun DirectionsMode(
         SearchField(send)
         ButtonGroup(overflowIndicator = {}, modifier = Modifier.fillMaxWidth()) {
             wideKey(Icons.Default.Subscriptions, R.string.remote_subscriptions) { send("goto:subscriptions") }
-            wideKey(Icons.Default.History, R.string.remote_history) { send("goto:history") }
+            wideKey(Icons.Default.VideoLibrary, R.string.library) { send("goto:library") }
         }
         // The wheel takes what room is left, up to a comfortable size, so a small phone does not push the keys below off screen.
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
