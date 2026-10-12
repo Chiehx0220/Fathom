@@ -312,12 +312,25 @@ const scheduleNext = () => {
     dial.append(svgEl('circle', { cx: 17, cy: 17, r: 14, fill: 'none', 'stroke-width': 3, class: 'upnext-track' }), ring);
     const play = h('button', { type: 'button', class: 'upnext-btn primary', data: { f: '', key: 'upnext-play' }, onclick: () => playNext(next) }, counting ? 'Play now' : 'Play next');
     const cancel = h('button', { type: 'button', class: 'upnext-btn', data: { f: '', key: 'upnext-cancel' }, onclick: cancelNext }, 'Cancel');
-    const auto = h('button', { type: 'button', class: 'upnext-auto', data: { f: '', key: 'upnext-auto' } }, counting ? 'Autoplay on' : 'Autoplay off');
+    const dialBox = h('div', { class: 'upnext-ring' }, dial, count);
+    dialBox.hidden = !counting;
+    // A switch: it flips where it is. Turning autoplay on starts the countdown from the top, turning it off stops it and leaves the card to be answered.
+    const auto = h('button', { type: 'button', class: 'upnext-auto' + (counting ? ' on' : ''), role: 'switch', 'aria-checked': String(counting), data: { f: '', key: 'upnext-auto' } },
+        h('span', {}, 'Autoplay'), h('span', { class: 'upnext-switch' }));
     auto.addEventListener('click', () => {
         const on = !autoplayOn();
         setAutoplay(on);
-        cancelNext();
-        FT.toast(on ? 'Autoplay on' : 'Autoplay off');
+        auto.classList.toggle('on', on);
+        auto.setAttribute('aria-checked', String(on));
+        play.textContent = on ? 'Play now' : 'Play next';
+        dialBox.hidden = !on;
+        if (!upNext) return;
+        clearInterval(upNext.timer);
+        upNext.timer = 0;
+        if (on) {
+            upNext.endAt = performance.now() + UP_NEXT_SECONDS * 1000;
+            upNext.timer = setInterval(() => tickUpNext(next), 200);
+        }
     });
     const el = h('div', { class: 'upnext', role: 'dialog', 'aria-label': 'Up next' },
         h('div', { class: 'upnext-top' },
@@ -328,7 +341,7 @@ const scheduleNext = () => {
                 h('div', { class: 'upnext-kicker' }, 'Up next'),
                 h('div', { class: 'upnext-title' }, next.title),
                 h('div', { class: 'upnext-channel' }, next.channelName || '')),
-            counting ? h('div', { class: 'upnext-ring' }, dial, count) : null),
+            dialBox),
         h('div', { class: 'upnext-actions' }, play, cancel, auto));
     tree.skin.append(el);
     upNext = { el, ring, count, endAt: performance.now() + UP_NEXT_SECONDS * 1000, timer: 0 };
