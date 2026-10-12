@@ -31,7 +31,7 @@ const chooseService = (anchor) => {
     })), { title: 'Source', anchor });
 };
 
-// A video belongs to no tab of its own: while one plays, the tab it was opened from stays lit (Home when the page was opened by its address).
+// the tab the watch page was opened from stays active
 let origin = 'home';
 
 const renderTop = () => {

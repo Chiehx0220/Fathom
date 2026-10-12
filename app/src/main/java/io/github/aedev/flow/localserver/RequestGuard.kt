@@ -39,7 +39,7 @@ internal val MUTATING_PATHS: Set<String> =
         "/api/v1/settings",
     )
 
-/** The user's own files: only the server's own pages (or a program that names no origin) may fetch them. */
+/** Saved downloads: same-origin pages only. */
 internal val OWN_PAGE_ONLY_PATHS: Set<String> = setOf("/downloadfile")
 
 /** Read-only media routes that other devices and players fetch, so they answer cross-origin requests. */

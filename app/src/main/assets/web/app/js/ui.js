@@ -5,7 +5,7 @@ const h = FT.h;
 
 // Where opening a video, channel or playlist goes. Links are real anchors, so the mouse gets them natively.
 FT.link = {
-    // `local` marks a finished download: the player starts from the file on the phone and falls back to streaming if the browser cannot play it.
+    // `local`: finished download, played from the phone's file
     watch: (video) => `#/watch?s=${video.serviceId ?? FT.serviceOfUrl(video.url)}&u=${FT.enc(video.url)}${video.local ? '&local=1' : ''}`,
     channel: (url, service) => `#/channel?s=${service ?? FT.serviceOfUrl(url)}&u=${FT.enc(url)}`,
     playlist: (item) => `#/playlist?s=${item.serviceId ?? FT.store.service}&u=${FT.enc(item.id)}`,
@@ -97,7 +97,7 @@ FT.loading = (text) => h('div', { class: 'loading' }, h('div', { class: 'spinner
 
 FT.empty = (icon, title, text) => h('div', { class: 'empty' }, FT.icon(icon), h('h2', {}, title), text ? h('p', {}, text) : null);
 
-// The browser's own wording for an unreachable server ("Failed to fetch", "Load failed") says nothing to a viewer.
+// fetch network errors carry no useful message
 const UNREACHABLE = /failed to fetch|load failed|networkerror|network request failed/i;
 
 FT.failure = (message, retry) => h('div', { class: 'empty' }, FT.icon('cloud_off'), h('h2', {}, 'Could not load this'),

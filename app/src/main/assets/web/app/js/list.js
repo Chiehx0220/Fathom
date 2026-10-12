@@ -1,4 +1,4 @@
-// Screens that are lists of videos: search, subscriptions, the library and playlists. One list view serves them all:
+// Screens that are lists of videos: search, subscriptions, library, playlists. One list view serves them all:
 // rows on the left, the selected one drawn large on the right, and "load more" that also runs by itself near the end.
 (() => {
 const h = FT.h;
@@ -149,7 +149,7 @@ FT.register('search', {
 
 // ---- History ----
 
-// The viewing history as a list; `continuing` narrows it to what was left part-way (Home's "Continue watching" shelf, opened out).
+// history list; `continuing`: unfinished only (Home shelf)
 const historyList = (root, { before, continuing }, isCurrent) => {
     const service = FT.store.service;
     return FT.listView(root, {
@@ -168,7 +168,7 @@ const historyList = (root, { before, continuing }, isCurrent) => {
 FT.register('history', {
     leave: cleanup,
     async render(root, params, isCurrent) {
-        // The whole history lives in Library now; this address stays for Home's "Continue watching" (?filter=continuing) and old links.
+        // full history is in Library; route kept for ?filter=continuing and old links
         if (params.filter !== 'continuing') { location.replace('#/library?tab=history'); return; }
         await historyList(root, { before: [h('div', { class: 'head' }, h('h1', {}, 'Continue watching'))], continuing: true }, isCurrent);
     },
@@ -197,9 +197,9 @@ FT.register('recommended', {
     },
 });
 
-// ---- Subscriptions: the newest uploads and the channels ----
+// ---- Subscriptions: feed, channels ----
 
-// A screen's tabs as a row of pills; choosing one draws the screen again on that tab.
+// tab pills; selecting re-renders the route with ?tab=
 const tabPills = (route, tabs, active) => h('div', { class: 'pills' }, tabs.map(([id, label, icon]) => FT.pill(label, icon, id === active, () => { location.hash = `#/${route}?tab=${id}`; }, 'pill-' + id)));
 const ofService = (service) => (item) => item.serviceId === undefined || item.serviceId === service;
 
@@ -236,14 +236,14 @@ FT.register('subscriptions', {
     },
 });
 
-// ---- Library: what you watched, saved, bookmarked and downloaded ----
+// ---- Library: history, watch later, playlists, downloads ----
 
 const LIBRARY_TABS = [['history', 'History', 'history'], ['later', 'Watch later', 'schedule'], ['playlists', 'Playlists', 'playlist_play'], ['downloads', 'Downloads', 'download']];
 
 FT.register('library', {
     leave: cleanup,
     async render(root, params, isCurrent) {
-        // The feed and the channels moved to Subscriptions; an old link to them lands there.
+        // legacy ?tab=feed|channels redirect
         if (params.tab === 'feed' || params.tab === 'channels') { location.replace('#/subscriptions?tab=' + params.tab); return; }
         const tab = LIBRARY_TABS.some((t) => t[0] === params.tab) ? params.tab : 'history';
         const service = FT.store.service;

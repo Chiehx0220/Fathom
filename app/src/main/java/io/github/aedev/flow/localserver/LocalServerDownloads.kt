@@ -17,14 +17,10 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
-// The web page's view of the phone's finished downloads: a list, and the files themselves for the player.
-//
-//   GET /api/v1/downloads                          the finished ones, newest first, in the shape of the history list
-//   GET /downloadfile?serviceId=<n>&id=<video url> the file, with byte ranges so the player can seek
-//
-// Neither takes a path: the file is whatever the download's own row says, so the page can only ask for what the app saved.
+// GET /api/v1/downloads: finished downloads, newest first
+// GET /downloadfile?serviceId&id: the saved file, Range supported; the path comes from the download row only
 
-/** The file a finished download plays from: the video, or the track of an audio-only one. */
+/** Video item, else audio item, of a finished download. */
 private fun DownloadWithItems.playableItem(): DownloadItemEntity? =
     items.firstOrNull { it.fileType == DownloadFileType.VIDEO && it.status == DownloadItemStatus.COMPLETED }
         ?: items.firstOrNull { it.fileType == DownloadFileType.AUDIO && it.status == DownloadItemStatus.COMPLETED }
@@ -43,7 +39,7 @@ internal fun ClientHandler.handleApiDownloads(os: OutputStream) {
         for (entry in dbHelper.finishedDownloads()) {
             val download = entry.download
             val id = LocalServerMedia.getVideoId(download.videoId)
-            // Rows recovered from files carry no service; a Bilibili id says whose it is.
+            // recovered rows carry no serviceId; derive it from the id
             val serviceId = serviceIdOfVideo(id, download.serviceId)
             val json = JSONObject()
             json.put("id", id)
@@ -60,7 +56,7 @@ internal fun ClientHandler.handleApiDownloads(os: OutputStream) {
             json.put("isLive", false)
             json.put("isShort", false)
             json.put("progress", 0)
-            // The page opens these from the saved file (watch?...&local=1) instead of streaming them again.
+            // opened from the saved file (watch?...&local=1)
             json.put("local", true)
             json.put("sizeBytes", entry.totalSize)
             array.put(json)
@@ -71,7 +67,7 @@ internal fun ClientHandler.handleApiDownloads(os: OutputStream) {
     }
 }
 
-/** A readable file or document: its size, and a stream that starts at [start]. */
+/** Length and a stream at an offset (file or SAF document). */
 private class DownloadSource(
     val length: Long,
     private val open: (Long) -> InputStream,
@@ -116,7 +112,7 @@ private fun contentTypeOf(path: String): String =
         else -> "application/octet-stream"
     }
 
-/** `bytes=a-b`, `bytes=a-` or `bytes=-n` against a file of [length] bytes, as an inclusive pair; null when it asks for nothing the file has. */
+/** Single range (`a-b`, `a-`, `-n`) as inclusive bounds; null when unsatisfiable. */
 internal fun parseByteRange(
     header: String?,
     length: Long,
@@ -128,7 +124,7 @@ internal fun parseByteRange(
     val from = spec.substring(0, dash).toLongOrNull()
     val to = spec.substring(dash + 1).toLongOrNull()
     if (from == null) {
-        // The last [to] bytes.
+        // suffix range
         return if (to == null || to <= 0) null else maxOf(0, length - to) until length
     }
     if (from >= length) return null
@@ -206,6 +202,6 @@ internal fun ClientHandler.handleDownloadFile(
             os.flush()
         }
     } catch (e: IOException) {
-        // The player stopped reading (a seek or a closed tab); that is how range playback normally ends.
+        // client closed the connection (seek)
     }
 }
