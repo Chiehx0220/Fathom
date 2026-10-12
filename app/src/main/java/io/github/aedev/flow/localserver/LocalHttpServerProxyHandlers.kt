@@ -165,7 +165,7 @@ private fun reportStreamDenial(
 
         else -> {}
     }
-    videoId?.let { LocalServerYouTubeStreams.invalidate(it) }
+    videoId?.let { if (sabrClient) LocalServerYouTubeStreams.markWalled(it) else LocalServerYouTubeStreams.invalidate(it) }
     LocalServerCaches.streamUrlCache.remove(cacheKey)
     LocalServerCaches.streamUaCache.remove(cacheKey)
 }

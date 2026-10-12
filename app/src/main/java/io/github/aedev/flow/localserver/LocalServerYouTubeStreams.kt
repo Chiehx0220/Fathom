@@ -65,14 +65,20 @@ internal object LocalServerYouTubeStreams {
         return result
     }
 
-    // MWEB/WEB direct URLs wall at ~60 s (full stream is SABR, unsupported here); TV_TIZEN is not walled
+    // MWEB/WEB direct URLs wall at ~60 s (the rest is SABR, unsupported here); TV_TIZEN is not walled
     private val WEB_CLIENTS = setOf("MWEB", "WEB")
+    private val walled: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+    /** A web client's URL for [videoId] was refused: it is served from TV_TIZEN from now on. */
+    fun markWalled(videoId: String) {
+        if (walled.add(videoId)) invalidate(videoId)
+    }
 
     private suspend fun walledToTizen(
         result: InnerTubeVideoStreamExtractor.VideoExtractionResult?,
         videoId: String,
     ): InnerTubeVideoStreamExtractor.VideoExtractionResult? {
-        if (result == null || result.usedClient.clientName.uppercase() !in WEB_CLIENTS) return result
+        if (result == null || videoId !in walled || result.usedClient.clientName.uppercase() !in WEB_CLIENTS) return result
         val tizen = TizenStreamResolver.resolve(videoId)
         Log.d(TAG, "walled web streams for $videoId: TV_TIZEN ${if (tizen != null) "answered" else "unavailable"}")
         return tizen ?: result
