@@ -130,6 +130,11 @@ object ApiRenderer {
             playback.put("hlsUrl", hlsRelayPath(info.hlsUrl.orEmpty()))
             playback.put("liveRoom", info.id)
         }
+        val qualities = JSONArray()
+        for (q in downloadQualities(info.videoStreams.orEmpty() + info.videoOnlyStreams.orEmpty())) {
+            qualities.put(JSONObject().put("height", q.height).put("codecs", JSONArray(q.codecs)))
+        }
+        playback.put("qualities", qualities)
         playback.put("playlistUrl", "/hlsvod?serviceId=$serviceId&id=$infoUrlEncoded")
         playback.put("streamUrl", "/stream?serviceId=$serviceId&id=$infoUrlEncoded")
 

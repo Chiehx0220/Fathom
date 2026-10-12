@@ -6,11 +6,14 @@ import io.github.aedev.flow.data.local.entity.DownloadFileType
 import io.github.aedev.flow.data.local.entity.DownloadItemEntity
 import io.github.aedev.flow.data.local.entity.DownloadItemStatus
 import io.github.aedev.flow.data.local.entity.DownloadWithItems
+import io.github.aedev.flow.data.video.DownloadStreamPolicy
 import io.github.aedev.flow.data.video.storage.DownloadFiles
+import io.github.aedev.flow.player.stream.VideoCodecUtils
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
+import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -19,6 +22,25 @@ import java.io.OutputStream
 
 // GET /api/v1/downloads: finished downloads, newest first
 // GET /downloadfile?serviceId&id: the saved file, Range supported; the path comes from the download row only
+
+internal class DownloadQuality(
+    val height: Int,
+    val codecs: List<String>,
+)
+
+/** Heights a download can ask for, tallest first, each with its codec keys in download preference order. */
+internal fun downloadQualities(streams: List<VideoStream>): List<DownloadQuality> {
+    val byHeight = streams.filter { it.height > 0 }.groupBy { it.height }
+    return byHeight.keys.sortedDescending().map { height ->
+        val codecs =
+            byHeight
+                .getValue(height)
+                .map { VideoCodecUtils.codecKeyFromMimeType("video/mp4; codecs=\"${it.codec.orEmpty()}\"") }
+                .distinct()
+                .sortedBy { DownloadStreamPolicy.DOWNLOAD_CODEC_PRIORITY[it] ?: Int.MAX_VALUE }
+        DownloadQuality(height, codecs)
+    }
+}
 
 /** Video item, else audio item, of a finished download. */
 private fun DownloadWithItems.playableItem(): DownloadItemEntity? =

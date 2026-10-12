@@ -57,7 +57,7 @@ FT.api = {
     state: (id, channel) => getJson('/api/v1/state', { id, channel }),
     sponsor: (service, id) => getJson('/api/v1/sponsor', { serviceId: service, id }),
     settings: (changes) => getJson('/api/v1/settings', changes),
-    download: (action, service, id) => getJson('/api/v1/download', { action, serviceId: service, id }),
+    download: (action, service, id, choice = {}) => getJson('/api/v1/download', { action, serviceId: service, id, ...choice }),
 
     progress: (id, service, percent, duration) => fetch('/api/v1/watch_progress?' + new URLSearchParams({ id, serviceId: service, percent, durationSeconds: duration }), { keepalive: true }).catch(() => {}),
 

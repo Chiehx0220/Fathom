@@ -76,12 +76,27 @@ const downloadButton = (service, info) => {
         if (active && !downloadTimer) downloadTimer = setInterval(refresh, 2000);
         if (!active && downloadTimer) { clearInterval(downloadTimer); downloadTimer = 0; }
     };
-    const call = (action) => FT.api.download(action, service, info.url);
+    const call = (action, choice) => FT.api.download(action, service, info.url, choice);
     const refresh = () => call('status').then(paint).catch(() => {});
+    const run = (action, choice) => call(action, choice).then(paint).catch((e) => FT.toast(e.message || 'Download failed'));
+    // [{ height, codecs }] from the video's own streams, tallest first; empty (combined stream only) starts at the default quality
+    const qualities = (info.playback && info.playback.qualities) || [];
+    const CODEC_LABEL = { h264: 'H.264 (most compatible)', vp9: 'VP9 (smaller)', av1: 'AV1 (smallest)', hevc: 'HEVC', vp8: 'VP8' };
+    const pickCodec = (height, codecs) => FT.menu.open(
+        codecs.map((codec) => ({ icon: 'download', label: CODEC_LABEL[codec] || codec.toUpperCase(), run: () => run('start', { height, codec }) })),
+        { title: height + 'p format', anchor: btn });
+    const choose = () => FT.menu.open([
+        { icon: 'download', label: 'Best available', run: () => run('start', { height: 0 }) },
+        ...qualities.map(({ height, codecs }) => ({
+            icon: 'download', label: height + 'p',
+            run: () => (codecs.length > 1 ? pickCodec(height, codecs) : run('start', { height })),
+        })),
+        { icon: 'music_note', label: 'Audio only', run: () => run('start', { audio: 1 }) },
+    ], { title: 'Download quality', anchor: btn });
     btn.addEventListener('click', () => {
-        const action = state === 'none' || state === 'failed' ? 'start' : state === 'completed' ? 'delete' : 'cancel';
-        if (action === 'delete' && !confirm('Delete the downloaded file?')) return;
-        call(action).then(paint).catch((e) => FT.toast(e.message || 'Download failed'));
+        if (state === 'none' || state === 'failed') { if (qualities.length) choose(); else run('start'); return; }
+        if (state === 'completed') { if (confirm('Delete the downloaded file?')) run('delete'); return; }
+        run('cancel');
     });
     paint({ state: 'none' });
     refresh();

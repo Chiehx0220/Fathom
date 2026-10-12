@@ -39,15 +39,34 @@ private fun HistoryDbHelper.downloadStateFor(videoId: String): String {
     return downloadStateJson(state, progress)
 }
 
-// Enqueues at the default download quality. Returns null on success, else a user-facing error.
+/** `height`: tallest wanted (0 = best); `codec`: vp9/h264/av1/...; absent follows the default policy. `audio=1`: audio only. */
+internal class DownloadChoice(
+    val height: Int?,
+    val codec: String?,
+    val audioOnly: Boolean,
+)
+
+internal fun downloadChoice(params: Map<String, String>): DownloadChoice =
+    DownloadChoice(
+        height = params["height"]?.toIntOrNull()?.takeIf { it in 0..MAX_DOWNLOAD_HEIGHT },
+        codec = params["codec"]?.lowercase()?.takeIf { it in DOWNLOAD_CODECS },
+        audioOnly = params["audio"] == "1",
+    )
+
+private val DOWNLOAD_CODECS = setOf("vp9", "h264", "av1", "hevc", "vp8")
+
+private const val MAX_DOWNLOAD_HEIGHT = 4320
+
+// Enqueues at [choice] or the default download quality. Returns null on success, else a user-facing error.
 private fun HistoryDbHelper.startNativeDownload(
     serviceId: Int,
     mediaUrl: String,
     videoId: String,
+    choice: DownloadChoice,
 ): String? {
     val info = LocalServerSource.streamInfo(appContext, serviceId, mediaUrl)
     val prefs = PlayerPreferences(appContext)
-    val targetHeight = runBlocking { prefs.defaultDownloadQuality.first() }.height
+    val targetHeight = choice.height ?: runBlocking { prefs.defaultDownloadQuality.first() }.height
 
     val video =
         FlowVideo(
@@ -66,7 +85,10 @@ private fun HistoryDbHelper.startNativeDownload(
     runBlocking {
         localServerEntryPoint(appContext)
             .downloadController()
-            .enqueue(video.toDownloadRequest(targetHeight = targetHeight), replaceExisting = true)
+            .enqueue(
+                video.toDownloadRequest(audioOnly = choice.audioOnly, targetHeight = targetHeight, videoCodec = choice.codec),
+                replaceExisting = true,
+            )
     }
     return null
 }
@@ -97,7 +119,7 @@ internal fun ClientHandler.handleApiDownload(
             }
             val error =
                 try {
-                    dbHelper.startNativeDownload(serviceId, mediaUrl, videoId)
+                    dbHelper.startNativeDownload(serviceId, mediaUrl, videoId, downloadChoice(params))
                 } catch (e: Exception) {
                     serverLog("Download start failed: " + e.message)
                     "Could not start download: " + (e.message ?: "unknown error")
