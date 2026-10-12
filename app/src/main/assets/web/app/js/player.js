@@ -16,6 +16,7 @@ const playerEl = () => (tree ? tree.media : IDLE);
 
 let current = null; // { service, url, info, chapters, segments }
 let dockMode = 'off';
+let miniDismissed = false; // closed from the corner on the watch page: paused, back in place when scrolled to the top
 let danmaku = null;
 let upNext = null; // the open "Up next" card: { el, timer, endAt, ring, count }
 let lastReported = -1;
@@ -47,7 +48,12 @@ const placeMini = () => {
     stage.style.top = miniPos.y + 'px';
 };
 
-const openFull = () => { if (current) location.hash = FT.link.watch({ url: current.url, serviceId: current.service }); };
+// The hash of this video's own watch page does not change, so there the way back is the top of the page.
+const openFull = () => {
+    if (!current) return;
+    if (FT.route.name === 'watch' && FT.route.params.u === current.url) scrollTo({ top: 0, behavior: 'smooth' });
+    else location.hash = FT.link.watch({ url: current.url, serviceId: current.service });
+};
 
 const onMiniPointerDown = (e) => {
     const stage = stageEl();
@@ -78,7 +84,7 @@ const onMiniClick = (e) => {
     if (drag && drag.moved) { drag = null; return; }
     if (!stageEl().classList.contains('mini')) return;
     if (e.target.closest('#mini-play')) FT.player.toggle();
-    else if (e.target.closest('#mini-close')) FT.player.close();
+    else if (e.target.closest('#mini-close')) FT.player.dismissMini();
     else openFull();
 };
 
@@ -585,14 +591,25 @@ FT.player = {
 
     dock(mode) {
         dockMode = current ? mode : 'off';
+        if (dockMode === 'mini' && miniDismissed && FT.route.name !== 'watch') return FT.player.close();
+        if (dockMode !== 'mini') miniDismissed = false;
         if (dockMode !== 'full') cancelNext();
         const stage = stageEl();
-        stage.hidden = dockMode === 'off';
+        stage.hidden = dockMode === 'off' || (dockMode === 'mini' && miniDismissed);
         stage.classList.toggle('mini', dockMode === 'mini');
         if (tree) tree.skin.toggleAttribute('data-mini', dockMode === 'mini');
         FT.$$(MINI_CTRL).forEach((btn) => { btn.hidden = dockMode !== 'mini'; });
         if (dockMode === 'mini') paintMiniPlay();
         placeMini();
+    },
+
+    // On the watch page the video keeps its place at the top, so the corner is only emptied and the video paused.
+    dismissMini() {
+        if (FT.route.name !== 'watch') return FT.player.close();
+        playerEl().pause();
+        miniDismissed = true;
+        reportProgress();
+        FT.player.dock('mini');
     },
 
     close() {
