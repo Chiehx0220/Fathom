@@ -74,7 +74,7 @@ FT.focus = {
         // A screen opens on its first control; when that is a search box and there are results, on the first result instead.
         const content = all.filter((el) => !inTop(el));
         const lead = content[0];
-        // A row of pills (a screen's tabs) opens on the one that is showing, so the move after choosing a tab starts where the viewer is.
+        // pill row: focus the active tab
         const current = lead && lead.matches('.pill') ? content.find((el) => el.matches('.pill.on')) : null;
         const pick = current || (lead && lead.matches('.field') ? content.find((el) => el.matches('.row-item, .card')) || lead : lead || all[0]);
         if (pick) FT.focus.select(pick);
@@ -93,7 +93,8 @@ FT.focus = {
         const wanted = state.memory.get(routeKey);
         const all = stops();
         const match = wanted && all.find((el) => el.dataset.key === wanted);
-        if (match) FT.focus.select(match);
+        // pills are not restored from memory; the active tab is focused
+        if (match && !match.matches('.pill')) FT.focus.select(match);
         else FT.focus.first();
     },
 
