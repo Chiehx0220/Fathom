@@ -76,4 +76,7 @@
     <string name="discord_presence_playing_fallback">Diputar di Fathom</string>
     <string name="export_watch_history_desc">Ekspor sebagai JSON riwayat YouTube (dapat diimpor ke LibreTube dan Fathom)</string>
     <string name="whats_new_in_flow">Yang baru di Fathom</string>
+    <string name="location_downloads_label">Unduhan / Fathom</string>
+    <string name="location_movies_label">Film / Fathom</string>
+    <string name="settings_music_folder_label">Musik / Fathom</string>
 </resources>

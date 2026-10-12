@@ -45,4 +45,6 @@
     <string name="discord_presence_playing_fallback">Играет в Fathom</string>
     <string name="export_watch_history_desc">Экспорт истории просмотра YouTube в JSON-файл (импорт в LibreTube и Fathom)</string>
     <string name="whats_new_in_flow">Что нового в Fathom</string>
+    <string name="location_downloads_label">Загрузки / Fathom</string>
+    <string name="location_movies_label">Фильмы / Fathom</string>
 </resources>

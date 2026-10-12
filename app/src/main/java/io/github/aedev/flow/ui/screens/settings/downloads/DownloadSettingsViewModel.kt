@@ -211,7 +211,7 @@ class DownloadSettingsViewModel
 
         companion object {
             const val DEFAULT_THREADS = 3
-            private const val APP_FOLDER = "Flow"
+            private const val APP_FOLDER = "Fathom"
             private const val INTERNAL_FOLDER = "downloads"
         }
     }

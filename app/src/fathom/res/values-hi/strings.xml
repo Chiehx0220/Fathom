@@ -9,4 +9,6 @@
     <string name="flow_is_up_to_date">Fathom अपडेटेड है!</string>
     <string name="error_not_supported_hint">इस फ़ॉर्मेट या कंटेंट टाइप को Fathom में नहीं चलाया जा सकता।</string>
     <string name="error_extraction_failed_hint">YouTube ने अपना प्रारूप अपडेट किया होगा। Fathom को जल्द ही अपडेट किया जाएगा —कृपया बाद में फिर से कोशिश करें।</string>
+    <string name="location_downloads_label">डाउनलोड / Fathom</string>
+    <string name="location_movies_label">मूवीज़ / Fathom</string>
 </resources>

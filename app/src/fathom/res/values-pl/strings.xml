@@ -47,4 +47,6 @@
     <string name="discord_presence_playing_fallback">Odtwarzane w Fathom</string>
     <string name="export_watch_history_desc">Eksportuj jako plik JSON zgodnym z YouTube (można zaimportować do LibreTube i Fathom)</string>
     <string name="whats_new_in_flow">Co nowego w Fathom</string>
+    <string name="location_downloads_label">Pobrane / Fathom</string>
+    <string name="location_movies_label">Filmy / Fathom</string>
 </resources>

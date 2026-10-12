@@ -46,4 +46,6 @@
     <string name="discord_presence_playing_fallback">In riproduzione su Fathom</string>
     <string name="export_watch_history_desc">Esporta come JSON della cronologia di YouTube (importabile in LibreTube e Fathom)</string>
     <string name="whats_new_in_flow">Novità in Fathom</string>
+    <string name="location_downloads_label">Downloads / Fathom</string>
+    <string name="location_movies_label">Movies / Fathom</string>
 </resources>

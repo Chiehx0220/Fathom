@@ -27,4 +27,7 @@
     <string name="import_manage_backups">Verwalten Sie Ihre Fathom Backups</string>
     <string name="export_watch_history_desc">Export als YouTube-Verlauf JSON (importierbar in LibreTube und Fathom)</string>
     <string name="whats_new_in_flow">Was gibt es Neues bei Fathom?</string>
+    <string name="downloads_recover_body">Fathom speichert Dowloads in Download/Fathom und Music/Fathom. Um die Dateien aufzulisten, die eine frühere Installation dort gespeichert hat, erlaube Zugriff auf Videos und Musik.</string>
+    <string name="location_downloads_label">Downloads / Fathom</string>
+    <string name="location_movies_label">Movies / Fathom</string>
 </resources>

@@ -32,4 +32,6 @@
     <string name="widget_quick_actions_description">搜索 Fathom 并跳转至下载、历史记录或识别</string>
     <string name="export_watch_history_desc">导出为 YouTube-历史记录 JSON（导入到 LibreTube 和 Fathom）</string>
     <string name="whats_new_in_flow">Fathom 的新功能</string>
+    <string name="location_downloads_label">下载 / Fathom</string>
+    <string name="location_movies_label">电影 / Fathom</string>
 </resources>

@@ -79,4 +79,8 @@
     <string name="whats_new_in_flow">ما الجديد في Fathom</string>
     <string name="cache_size_applies_on_restart">يُطبق في المرة التالية التي يبدأ فيها Fathom.</string>
     <string name="settings_font_summary">نوع الخط المستخدم في جميع أنحاء Fathom</string>
+    <string name="downloads_recover_body">يحفظ Fathom التنزيلات في المجلدين Download/Fathom و Music/Fathom. لعرض الملفات التي حفظها إصدار سابق من التطبيق فيهما، اسمح بالوصول إلى ملفات الفيديو والصوت.</string>
+    <string name="location_downloads_label">Downloads / Fathom</string>
+    <string name="location_movies_label">Movies / Fathom</string>
+    <string name="settings_music_folder_label">الموسيقى / Fathom</string>
 </resources>

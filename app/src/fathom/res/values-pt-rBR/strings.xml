@@ -61,4 +61,7 @@
     <string name="export_watch_history_desc">Exportar como YouTube-history JSON (importa para LibreTube e Fathom)</string>
     <string name="whats_new_in_flow">O que há de novo no Fathom</string>
     <string name="cache_size_applies_on_restart">Aplicado na próxima vez que Fathom iniciar.</string>
+    <string name="downloads_recover_body">Fathom salva downloads em Download/Fathom e Music/Fathom. Para listar os arquivos que uma instalação anterior salvou lá, permita o acesso a vídeos e áudio.</string>
+    <string name="location_downloads_label">Downloads / Fathom</string>
+    <string name="location_movies_label">Filmes / Fathom</string>
 </resources>

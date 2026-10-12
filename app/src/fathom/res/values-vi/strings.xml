@@ -46,4 +46,6 @@
     <string name="discord_presence_playing_fallback">Đang phát trong Fathom</string>
     <string name="export_watch_history_desc">Xuất dưới dạng JSON YouTube-history (có thể nhập vào LibreTube và Fathom)</string>
     <string name="whats_new_in_flow">Có gì mới trong Fathom</string>
+    <string name="location_downloads_label">Tải xuống / Fathom</string>
+    <string name="location_movies_label">Phim / Fathom</string>
 </resources>

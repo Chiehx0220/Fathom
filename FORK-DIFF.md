@@ -23,16 +23,14 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **122** (1973 changed lines). New files: **57** (4967 lines).
+- Modified upstream files: **124** (1768 changed lines). New files: **238** (6817 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| data/local/BackupRepository.kt | 109 | 18 |
 | ui/screens/home/chips/HomeChipFeeds.kt | 59 | 38 |
 | ui/tv/components/TvNavRail.kt | 51 | 45 |
-| data/innertube/RssSubscriptionService.kt | 72 | 3 |
+| data/local/BackupRepository.kt | 59 | 20 |
 | ui/screens/home/HomeViewModel.kt | 60 | 9 |
-| ui/screens/home/FlowHeaderLogoIcon.kt | 60 | 7 |
 | ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
 | player/EnhancedPlayerManager.kt | 52 | 2 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
@@ -41,11 +39,11 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/PlayerPreferences.kt | 39 | 0 |
 | data/local/SubscriptionRecordCodec.kt | 24 | 15 |
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
-| ui/screens/player/VideoPlayerViewModel.kt | 31 | 7 |
-| ui/screens/search/SearchScreen.kt | 38 | 0 |
+| data/innertube/RssSubscriptionService.kt | 28 | 3 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/local/ViewHistory.kt | 28 | 0 |
+| data/video/VideoDownloadManager.kt | 25 | 3 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
 | ui/screens/channel/ChannelViewModel.kt | 23 | 3 |
 | data/comments/CommentsPager.kt | 19 | 6 |
@@ -54,20 +52,19 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/search/SearchViewModel.kt | 21 | 4 |
 | data/paging/SearchPagingSource.kt | 18 | 6 |
 | data/repository/YouTubeRepository.kt | 18 | 6 |
-| data/video/VideoDownloadManager.kt | 23 | 1 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | data/local/dao/WatchHistoryDao.kt | 22 | 0 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 22 | 0 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
 | utils/ShareVideo.kt | 14 | 7 |
 | player/error/VideoErrorMapper.kt | 20 | 0 |
-| ui/screens/player/content/PlayerErrorPanel.kt | 17 | 3 |
 | data/local/entity/VideoEntity.kt | 10 | 9 |
-| ui/FlowApp.kt | 8 | 10 |
+| ui/screens/player/content/PlayerErrorPanel.kt | 16 | 3 |
 | ui/components/shared/quickactions/QuickActionsViewModel.kt | 14 | 3 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 14 | 2 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
+| ui/screens/home/HomeScreen.kt | 12 | 3 |
 | ui/screens/player/WatchSessionTracker.kt | 12 | 3 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 14 | 1 |
 | ui/screens/player/stage/VideoStage.kt | 15 | 0 |
@@ -75,19 +72,22 @@ in it). **New files** never conflict; they are ours alone.
 | player/GlobalPlayerState.kt | 13 | 0 |
 | player/stream/PlaybackLoadResolver.kt | 12 | 1 |
 | ui/components/shared/quickactions/VideoQuickActionsSheet.kt | 11 | 2 |
-| ui/screens/home/HomeScreen.kt | 11 | 2 |
-| ui/FlowNavigation.kt | 7 | 5 |
+| ui/screens/player/VideoPlayerViewModel.kt | 11 | 2 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
+| ui/screens/search/SearchScreen.kt | 12 | 0 |
 | ui/startup/SplashThemes.kt | 0 | 12 |
 | data/local/LikedVideosRepository.kt | 10 | 1 |
+| ui/FlowApp.kt | 2 | 9 |
 | MainActivity.kt | 9 | 1 |
 | player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
+| ui/FlowNavigation.kt | 5 | 5 |
 | ui/screens/channel/ChannelCommunityController.kt | 9 | 1 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
 | ui/AppHooks.kt | 4 | 5 |
-| ... 62 more, each small | | |
+| ui/screens/player/PlaybackLoadController.kt | 8 | 1 |
+| ... 64 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -100,11 +100,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **64** (6991 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **71** (7649 lines).
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **40** (7038 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **62** (8017 lines).
 
 ## Build
 
@@ -116,45 +116,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Resources / strings
 
-- Modified upstream files: **38** (759 changed lines). New files: **4** (76 lines).
-
-| Modified upstream file | + | - |
-|---|---:|---:|
-| app/src/main/res/drawable/ic_launcher_expressive_pill_foreground.xml | 34 | 10 |
-| app/src/main/res/drawable/ic_splash_logo.xml | 32 | 10 |
-| app/src/main/res/drawable/ic_launcher_expressive_pill_monochrome.xml | 34 | 7 |
-| app/src/main/res/drawable/ic_launcher_expressive_sky_foreground.xml | 24 | 10 |
-| app/src/main/res/drawable/splash_icon_expressive_segmented.xml | 0 | 32 |
-| app/src/main/res/drawable/ic_launcher_expressive_sky_monochrome.xml | 24 | 7 |
-| app/src/main/res/drawable/ic_launcher_expressive_oval_foreground.xml | 17 | 10 |
-| app/src/main/res/drawable-xhdpi/tv_banner.xml | 8 | 18 |
-| app/src/main/res/drawable/ic_fg_ghost.xml | 9 | 15 |
-| app/src/main/res/drawable/ic_flow_badge_glyph.xml | 13 | 11 |
-| app/src/main/res/drawable/ic_launcher_expressive_cookie_foreground.xml | 17 | 7 |
-| app/src/main/res/drawable/ic_launcher_expressive_cookie_monochrome.xml | 17 | 7 |
-| app/src/main/res/drawable/ic_launcher_expressive_oval_monochrome.xml | 17 | 7 |
-| app/src/main/res/drawable/ic_launcher_expressive_play_foreground.xml | 14 | 10 |
-| app/src/main/res/drawable/ic_launcher_expressive_scallop_foreground.xml | 14 | 10 |
-| app/src/main/res/drawable/ic_fg_amoled.xml | 9 | 13 |
-| app/src/main/res/drawable/ic_launcher_expressive_segmented_foreground.xml | 0 | 22 |
-| app/src/main/res/drawable/ic_launcher_expressive_segmented_monochrome.xml | 0 | 22 |
-| app/src/main/res/drawable/ic_launcher_expressive_play_monochrome.xml | 14 | 7 |
-| app/src/main/res/drawable/ic_launcher_expressive_scallop_monochrome.xml | 14 | 7 |
-| app/src/main/res/drawable/ic_launcher_foreground.xml | 9 | 12 |
-| app/src/main/res/drawable/ic_fg_monochrome.xml | 9 | 10 |
-| app/src/main/res/drawable/ic_fg_flow_play.xml | 7 | 11 |
-| app/src/main/res/drawable/ic_flow_badge_shape.xml | 6 | 12 |
-| app/src/main/res/values/themes.xml | 0 | 18 |
-| app/src/main/res/drawable/ic_launcher_dynamic_foreground.xml | 8 | 9 |
-| app/src/main/res/drawable/ic_launcher_expressive_mint_foreground.xml | 0 | 13 |
-| app/src/main/res/drawable/ic_notification_logo.xml | 7 | 6 |
-| app/src/main/res/drawable/ic_flow_logo.xml | 0 | 12 |
-| app/src/main/res/values/colors.xml | 5 | 7 |
-| ... 8 more, each small | | |
+- Modified upstream files: **0** (0 changed lines). New files: **3** (62 lines).
 
 ## Tests
 
-- Modified upstream files: **17** (129 changed lines). New files: **7** (472 lines).
+- Modified upstream files: **17** (130 changed lines). New files: **8** (508 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -169,8 +135,8 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/player/stream/VideoCodecUtilsTest.kt | 6 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/shorts/ShortsStreamSelectionTest.kt | 5 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/video/DownloadStreamPolicyTest.kt | 5 | 0 |
+| app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 2 | 1 |
 | app/src/test/java/io/github/aedev/flow/player/stream/PlaybackLoadResolverTest.kt | 3 | 0 |
-| app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/components/shared/quickactions/QuickActionsMessagesTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/home/HomeFeedSourcesSeedTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelHarness.kt | 2 | 0 |

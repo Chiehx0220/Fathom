@@ -31,7 +31,7 @@ const EXTRA_KEYS = [
   'onboarding_ready_subtitle',
 ];
 
-// Keys whose "Flow" stays on purpose (the engine, the original author, folder names on disk, the original theme).
+// Keys whose "Flow" stays on purpose (the engine, the original author, the original theme).
 // --report lists every other untouched "Flow", so a new upstream string is noticed instead of shipped as is.
 const KEEP_KEYS = new Set([
   // the recommendation engine
@@ -49,14 +49,11 @@ const KEEP_KEYS = new Set([
   'settings_reset_brain_body',
   'settings_reset_brain_title',
   'tv_settings_flow_engine',
-  // importing Flow backups, the folders Flow makes on disk, the original theme
+  // importing Flow backups, the original theme
   'import_flow_backup_desc',
   'import_flow_backup_failed_template',
   'import_flow_backup_item_title',
   'import_flow_backup_success',
-  'location_downloads_label',
-  'location_movies_label',
-  'settings_music_folder_label',
   'theme_desc_classic_dark',
   'theme_name_classic_dark',
   // supporting and crediting the original author

@@ -36,4 +36,6 @@
     <string name="import_manage_backups">Fathom ehtiyat nüsxələrinizi idarə edin</string>
     <string name="export_watch_history_desc">YouTube tarixçəsi JSON faylı kimi ixrac edin (LibreTube və Fathom-a idxal olunur)</string>
     <string name="whats_new_in_flow">Fathom-da yeniliklər</string>
+    <string name="location_downloads_label">Endirmələr / Fathom</string>
+    <string name="location_movies_label">Filmlər / Fathom</string>
 </resources>

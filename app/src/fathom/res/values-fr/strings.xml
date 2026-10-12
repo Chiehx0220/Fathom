@@ -45,4 +45,6 @@
     <string name="discord_presence_playing_fallback">Joué dans Fathom</string>
     <string name="export_watch_history_desc">Exporter l\'historique YouTube au format JSON (compatible avec LibreTube et Fathom)</string>
     <string name="whats_new_in_flow">Quoi de neuf dans Fathom</string>
+    <string name="location_downloads_label">Téléchargements / Fathom</string>
+    <string name="location_movies_label">Vidéos / Fathom</string>
 </resources>
