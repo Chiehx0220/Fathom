@@ -15,12 +15,16 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import coil3.memory.MemoryCache
 
-/** Where a video's thumbnail sits in the window, so the player can grow out of it. */
+/**
+ * Where a video's thumbnail sits in the window, so the player can grow out of it. [coversWindow]
+ * says the surface it sits on already fills the window.
+ */
 @Immutable
 data class MediaOpenOrigin(
     val windowBounds: Rect,
     val cornerRadiusPx: Float,
     val imageKey: MemoryCache.Key?,
+    val coversWindow: Boolean = false,
 )
 
 /** One thumbnail's entry: where it is laid out and which cached image it drew. */
@@ -44,8 +48,31 @@ class MediaOpenOrigins {
     }
 
     private val entries = HashMap<String, MutableList<Entry>>()
+    private var held: Pair<String, MediaOpenOrigin>? = null
+
+    /**
+     * Keeps where [videoId]'s thumbnail is now for the next [originFor], for a surface that leaves
+     * the screen in the same moment it opens the player, as the background bar does. [coveringWindowAt]
+     * is where the thumbnail is heading on a surface growing to fill the window.
+     */
+    fun holdOriginFor(
+        videoId: String,
+        coveringWindowAt: Rect? = null,
+    ) {
+        held =
+            visibleOriginFor(videoId)?.let { origin ->
+                videoId to (coveringWindowAt?.let { origin.copy(windowBounds = it, coversWindow = true) } ?: origin)
+            }
+    }
 
     fun originFor(videoId: String): MediaOpenOrigin? {
+        val kept = held
+        held = null
+        if (kept != null && kept.first == videoId) return kept.second
+        return visibleOriginFor(videoId)
+    }
+
+    private fun visibleOriginFor(videoId: String): MediaOpenOrigin? {
         var best: Entry? = null
         var bestVisible = MIN_VISIBLE_FRACTION
         entries[videoId]?.forEach { entry ->

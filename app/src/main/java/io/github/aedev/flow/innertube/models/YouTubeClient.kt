@@ -160,20 +160,6 @@ data class YouTubeClient(
                 useWebPoTokens = true,
             )
 
-        const val ORIGIN_YOUTUBE_CHARTS = "https://charts.youtube.com"
-        const val REFERER_YOUTUBE_CHARTS = "$ORIGIN_YOUTUBE_CHARTS/"
-        const val API_URL_YOUTUBE_CHARTS = "$ORIGIN_YOUTUBE_CHARTS/youtubei/v1/"
-
-        /** The analytics host behind YouTube Charts, which serves the trending video and movie charts. */
-        val WEB_MUSIC_ANALYTICS =
-            YouTubeClient(
-                clientName = "WEB_MUSIC_ANALYTICS",
-                clientVersion = "2.0",
-                clientId = "31",
-                userAgent = USER_AGENT_WEB,
-                originalUrl = ORIGIN_YOUTUBE_CHARTS,
-            )
-
         val WEB_CREATOR =
             YouTubeClient(
                 clientName = "WEB_CREATOR",
@@ -197,6 +183,27 @@ data class YouTubeClient(
                 loginRequired = true,
                 useSignatureTimestamp = true,
                 useWebPoTokens = true,
+            )
+
+        /**
+         * The Samsung Tizen TV app, asked anonymously. Measured by NewTube on visitors GVS had
+         * walled on the app clients (#921): it kept serving past the one-minute wall. Its formats
+         * are all signed, so it needs the remote decoder's signature timestamp and solve, and the
+         * Tizen device fields: without them /player answers "The page needs to be reloaded".
+         */
+        val TV_TIZEN =
+            YouTubeClient(
+                clientName = "TVHTML5",
+                clientVersion = "5.20260707",
+                clientId = "7",
+                userAgent =
+                    "Mozilla/5.0 (SMART-TV; Linux; Tizen 2.4.0) AppleWebKit/538.1 " +
+                        "(KHTML, like Gecko) Version/2.4.0 TV Safari/538.1",
+                osName = "Tizen",
+                osVersion = "2.4.0",
+                deviceMake = "Samsung",
+                deviceModel = "SmartTV",
+                useSignatureTimestamp = true,
             )
 
         val TVHTML5_SIMPLY_EMBEDDED_PLAYER =

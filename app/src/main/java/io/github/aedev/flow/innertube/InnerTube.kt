@@ -57,6 +57,14 @@ class InnerTube {
             field = sanitizeLocale(value)
         }
     var visitorData: String? = null
+        set(value) {
+            if (field == value) return
+            field = value
+            onVisitorDataChanged?.invoke(value)
+        }
+
+    /** Every change of identity, including a refused one dropped to null, so it can be persisted. */
+    var onVisitorDataChanged: ((String?) -> Unit)? = null
     var dataSyncId: String? = null
     var cookie: String? = null
         set(value) {
@@ -422,39 +430,6 @@ class InnerTube {
         url: String,
     ) = mainSitePost(client, "navigation/resolve_url") { requestVisitorData ->
         ResolveUrlBody(context = client.toContext(locale, requestVisitorData, null), url = url)
-    }
-
-    /**
-     * YouTube Charts, on its own host with its own client. The filter rides a top-level `query`
-     * string rather than a protobuf `params`, and an unsupported country code answers 400 — see
-     * [io.github.aedev.flow.innertube.pages.explore.CHARTS_SUPPORTED_COUNTRIES].
-     */
-    suspend fun analyticsChartsBrowse(
-        browseId: String,
-        query: String,
-    ) = withRetry {
-        val client = YouTubeClient.WEB_MUSIC_ANALYTICS
-        httpClient.post("${YouTubeClient.API_URL_YOUTUBE_CHARTS}browse") {
-            headers {
-                append("X-YouTube-Client-Name", client.clientId)
-                append("X-YouTube-Client-Version", client.clientVersion)
-                append(HttpHeaders.Origin, YouTubeClient.ORIGIN_YOUTUBE_CHARTS)
-                append("Referer", YouTubeClient.REFERER_YOUTUBE_CHARTS)
-            }
-            contentType(ContentType.Application.Json)
-            userAgent(client.userAgent)
-            parameter("alt", "json")
-            parameter("prettyPrint", false)
-            setBody(
-                BrowseBody(
-                    context = client.toContext(locale, null, null),
-                    browseId = browseId,
-                    params = null,
-                    continuation = null,
-                    query = query,
-                ),
-            )
-        }
     }
 
     private suspend fun <T> withVisitorDataFallback(

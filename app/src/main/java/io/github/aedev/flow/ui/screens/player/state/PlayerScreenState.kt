@@ -69,7 +69,6 @@ class PlayerScreenState {
     var showZoomIndicator by mutableStateOf(false)
     var zoomIndicatorSequence by mutableIntStateOf(0)
     var exitDragOffsetY by mutableFloatStateOf(0f)
-    var exitDragProgress by mutableFloatStateOf(0f)
 
     // Speed Control
     var isSpeedBoostActive by mutableStateOf(false)
@@ -106,7 +105,6 @@ class PlayerScreenState {
         showZoomIndicator = false
         zoomIndicatorSequence = 0
         exitDragOffsetY = 0f
-        exitDragProgress = 0f
     }
 
     internal fun open(sheet: PlayerSheet) {

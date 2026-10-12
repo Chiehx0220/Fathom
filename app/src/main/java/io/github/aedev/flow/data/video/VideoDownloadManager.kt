@@ -116,6 +116,11 @@ class VideoDownloadManager
             context.getSharedPreferences("flow_file_tombstones", Context.MODE_PRIVATE)
         }
 
+        private val _undeletable = MutableSharedFlow<List<String>>(extraBufferCapacity = 8)
+
+        /** Files a delete left on disk because another install owns them; the screen asks the system instead. */
+        val undeletable: SharedFlow<List<String>> = _undeletable.asSharedFlow()
+
         // Progress updates emitted by DownloadRunner
         private val _progressUpdates = MutableSharedFlow<DownloadProgressUpdate>(extraBufferCapacity = 64)
         val progressUpdates: SharedFlow<DownloadProgressUpdate> = _progressUpdates.asSharedFlow()
@@ -423,6 +428,7 @@ class VideoDownloadManager
                     downloadDao.deleteDownload(videoId)
 
                     ioScope.launch {
+                        val left = mutableListOf<String>()
                         filePaths.forEach { path ->
                             val fileGone = deleteFileFromDisk(path)
                             if (fileGone) {
@@ -433,8 +439,10 @@ class VideoDownloadManager
                             } else {
                                 tombstonePrefs.edit().putBoolean(path, true).apply()
                                 Log.w(TAG, "File not deleted (kept in guard + tombstoned): $path")
+                                if (!DownloadFiles.isDocument(path)) left += path
                             }
                         }
+                        if (left.isNotEmpty()) _undeletable.tryEmit(left)
                         thumbPath?.let { tp ->
                             try {
                                 File(tp).takeIf { it.exists() }?.delete()

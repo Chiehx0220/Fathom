@@ -153,19 +153,8 @@ class VideoPlayerViewModel
                 uiState = _uiState,
                 playerManager = playerManager,
                 playerPreferences = playerPreferences,
-                watchSessions = watchSessions,
                 scope = viewModelScope,
-                isLoadInFlight = { loads.isInFlight },
                 cancelLoad = { loads.cancel(invalidateToken = true) },
-                reloadStreams = { videoId, resumePositionMs ->
-                    loadVideoInfo(
-                        videoId = videoId,
-                        isWifi = detectIsWifi(),
-                        forceRefresh = true,
-                        escalateToSabr = true,
-                        resumePositionOverrideMs = resumePositionMs,
-                    )
-                },
             )
 
         private val settings =
@@ -221,6 +210,8 @@ class VideoPlayerViewModel
         fun stopLiveChat() = liveChat.stop()
 
         fun setLiveChatPanelVisible(visible: Boolean) = liveChat.setPanelVisible(visible)
+
+        fun setAutoplayHold(hold: Boolean) = playerManager.setAutoplayHold(hold)
 
         override fun onCleared() {
             super.onCleared()

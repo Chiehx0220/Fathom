@@ -252,6 +252,7 @@ class PlayerPreferences(
         // Notification preferences
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val NOTIF_NEW_VIDEOS_ENABLED = booleanPreferencesKey("notif_new_videos_enabled")
+        val NOTIF_SHORTS_ENABLED = booleanPreferencesKey("notif_shorts_enabled")
         val NOTIF_DOWNLOADS_ENABLED = booleanPreferencesKey("notif_downloads_enabled")
         val NOTIF_REMINDERS_ENABLED = booleanPreferencesKey("notif_reminders_enabled")
         val NOTIF_UPDATES_ENABLED = booleanPreferencesKey("notif_updates_enabled")
@@ -281,6 +282,8 @@ class PlayerPreferences(
         val MINI_PLAYER_SCALE = floatPreferencesKey("mini_player_scale")
         val MINI_PLAYER_SHOW_SKIP_CONTROLS = booleanPreferencesKey("mini_player_show_skip_controls")
         val MINI_PLAYER_SHOW_NEXT_PREV_CONTROLS = booleanPreferencesKey("mini_player_show_next_prev_controls")
+        val MINI_BAR_SWIPE_LEFT_ACTION = stringPreferencesKey("mini_bar_swipe_left_action")
+        val MINI_BAR_SWIPE_RIGHT_ACTION = stringPreferencesKey("mini_bar_swipe_right_action")
         val MINI_PLAYER_CONTINUE_WATCHING_ENABLED = booleanPreferencesKey("mini_player_continue_watching_enabled")
         val SHOW_RESTORED_MUSIC_MINI_PLAYER = booleanPreferencesKey("show_restored_music_mini_player")
         val OPEN_MUSIC_PLAYER_ON_PLAY = booleanPreferencesKey("open_music_player_on_play")
@@ -1709,6 +1712,16 @@ class PlayerPreferences(
     suspend fun setNotifNewVideosEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.NOTIF_NEW_VIDEOS_ENABLED] = enabled
+        }
+    }
+
+    val notifShortsEnabled: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.NOTIF_SHORTS_ENABLED] ?: true }
+
+    suspend fun setNotifShortsEnabled(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.NOTIF_SHORTS_ENABLED] = enabled
         }
     }
 
@@ -3453,6 +3466,28 @@ class PlayerPreferences(
         }
     }
 
+    /** What swiping the music bar or the background video bar to the left does. */
+    val miniBarSwipeLeftAction: Flow<MiniBarSwipeAction> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> MiniBarSwipeAction.fromString(preferences[Keys.MINI_BAR_SWIPE_LEFT_ACTION]) }
+
+    suspend fun setMiniBarSwipeLeftAction(action: MiniBarSwipeAction) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MINI_BAR_SWIPE_LEFT_ACTION] = action.name
+        }
+    }
+
+    /** What swiping the music bar or the background video bar to the right does. */
+    val miniBarSwipeRightAction: Flow<MiniBarSwipeAction> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> MiniBarSwipeAction.fromString(preferences[Keys.MINI_BAR_SWIPE_RIGHT_ACTION]) }
+
+    suspend fun setMiniBarSwipeRightAction(action: MiniBarSwipeAction) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MINI_BAR_SWIPE_RIGHT_ACTION] = action.name
+        }
+    }
+
     // DEEP FLOW (INCOGNITO / NO-ENGINE) MODE
 
     val deepFlowActive: Flow<Boolean> =
@@ -3752,6 +3787,25 @@ enum class DoubleTapSeekZone(
 ) {
     NORMAL(1f / 3f),
     NARROW(1f / 4f),
+}
+
+/** A mini bar swipe. The music bar only acts on [CLOSE], [NEXT] and [PREVIOUS]; it closes on the rest. */
+enum class MiniBarSwipeAction {
+    CLOSE,
+    NEXT,
+    PREVIOUS,
+    WATCH_LATER,
+    LIKE,
+    DOWNLOAD,
+    NOT_INTERESTED,
+    REMOVE_FROM_QUEUE,
+    ;
+
+    val appliesToMusic: Boolean get() = this == CLOSE || this == NEXT || this == PREVIOUS
+
+    companion object {
+        fun fromString(value: String?): MiniBarSwipeAction = entries.firstOrNull { it.name == value } ?: CLOSE
+    }
 }
 
 /** How the volume and brightness read-outs are drawn mid-gesture. */
