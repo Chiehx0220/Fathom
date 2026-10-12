@@ -28,6 +28,7 @@ const EXTRA_KEYS = [
   'discord_presence_gateway_warning',
   'learning_stats_subtitle',
   'style_default',
+  'onboarding_ready_subtitle',
 ];
 
 // Keys whose "Flow" stays on purpose (the engine, the original author, folder names on disk, the original theme).

@@ -179,4 +179,8 @@
     <string name="whats_new_in_flow">What\'s new in Fathom</string>
     <string name="cache_size_applies_on_restart">Applies the next time Fathom starts.</string>
     <string name="settings_font_summary">The typeface used across Fathom</string>
+    <string name="sync_error_qr_not_local">This code points outside your local network, so Fathom won\'t connect to it. Only use codes shown by your own devices.</string>
+    <string name="sync_error_timeout">The other device stopped responding. Keep Fathom open on both devices and try again.</string>
+    <string name="sync_error_protocol">The two devices couldn\'t agree on the sync steps. Update Fathom on both devices and try again.</string>
+    <string name="downloads_recover_body">Fathom saves downloads in Download/Flow and Music/Flow. To list the files an earlier install saved there, allow access to videos and audio.</string>
 </resources>

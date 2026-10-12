@@ -11,4 +11,5 @@
     <string name="icon_name_expressive_cookie">Night Sea</string>
     <string name="icon_name_expressive_oval">Submarine</string>
     <string name="icon_name_expressive_pill">Depth Gauge</string>
+    <string name="downloads_recover_body">Fathom salva downloads em Download/Flow e Music/Flow. Para listar os arquivos que uma instalação anterior salvou lá, permita o acesso a vídeos e áudio.</string>
 </resources>
