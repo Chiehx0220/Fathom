@@ -51,7 +51,7 @@ body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[da
 .field input::placeholder { color: var(--mute); }
 
 .empty { display: grid; place-items: center; gap: 10px; padding: 12vh 24px; color: var(--mute); text-align: center; }
-.empty .i { font-size: 56px; opacity: 0.6; }
+.empty > .i { font-size: 56px; opacity: 0.6; }
 .empty h2 { color: var(--fg); font-size: 20px; font-weight: 500; }
 .spinner { width: 34px; height: 34px; border: 3px solid var(--s3); border-top-color: var(--acc); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

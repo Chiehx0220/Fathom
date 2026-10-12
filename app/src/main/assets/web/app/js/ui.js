@@ -96,6 +96,10 @@ FT.loading = (text) => h('div', { class: 'loading' }, h('div', { class: 'spinner
 
 FT.empty = (icon, title, text) => h('div', { class: 'empty' }, FT.icon(icon), h('h2', {}, title), text ? h('p', {}, text) : null);
 
-FT.failure = (message, retry) => h('div', { class: 'empty' }, FT.icon('cloud_off'), h('h2', {}, 'Could not load this'), h('p', {}, message || ''),
+// The browser's own wording for an unreachable server ("Failed to fetch", "Load failed") says nothing to a viewer.
+const UNREACHABLE = /failed to fetch|load failed|networkerror|network request failed/i;
+
+FT.failure = (message, retry) => h('div', { class: 'empty' }, FT.icon('cloud_off'), h('h2', {}, 'Could not load this'),
+    h('p', {}, UNREACHABLE.test(message || '') ? 'Fathom is not reachable. Check that the app is running on your phone.' : message || ''),
     retry ? FT.button('Try again', 'refresh', retry, 'primary') : null);
 })();
