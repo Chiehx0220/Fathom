@@ -119,7 +119,9 @@ object ApiRenderer {
 
         // Not part of Flow's Video model - points ExoPlayer at this server's proxy routes.
         val playback = JSONObject()
-        val hasVideo = info.videoStreams.isNotEmpty() || info.videoOnlyStreams.isNotEmpty() || !info.hlsUrl.isNullOrEmpty()
+        // ladder = video-only streams; a combined-only video has no HLS rungs
+        val hasLadder = StreamCatalog.of(InfoStreams(info), highest = true).videos.isNotEmpty()
+        val hasVideo = hasLadder || !info.hlsUrl.isNullOrEmpty()
         val isBilibiliLive =
             LocalServerBilibili.isBilibili(serviceId) && info.streamType == StreamType.LIVE_STREAM && !info.hlsUrl.isNullOrEmpty()
         playback.put("isAdaptive", hasVideo && !isBilibiliLive)

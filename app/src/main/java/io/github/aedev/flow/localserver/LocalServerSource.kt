@@ -190,7 +190,7 @@ private class ExtractorStreams(
     override val hlsUrl: String? get() = synchronized(extractor) { extractor.hlsUrl }
 }
 
-private class InfoStreams(
+internal class InfoStreams(
     private val info: StreamInfo,
 ) : StreamLists {
     override val length: Long get() = info.duration

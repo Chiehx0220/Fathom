@@ -3,7 +3,11 @@ package io.github.aedev.flow.localserver
 import android.util.Log
 import io.github.aedev.flow.player.stream.InnerTubeStreamBridge
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
+import io.github.aedev.flow.player.stream.TizenStreamResolver
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
@@ -17,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal object LocalServerYouTubeStreams {
     private const val TAG = "LocalServerYouTube"
     private const val EXTRACTION_TTL_MS = 50 * 60 * 1000L
+    private const val EXTRACTION_TIMEOUT_MS = 45_000L
 
     // Minting shares the native player's single PoToken WebView - a wait past this is more likely
     // queued behind an in-app playback mint than a slow network, worth telling apart in adb logcat.
@@ -28,19 +33,49 @@ internal object LocalServerYouTubeStreams {
     )
 
     private val extractionCache = ConcurrentHashMap<String, CachedExtraction>()
+    private val extractionLock = Mutex()
 
     /** InnerTube's extraction for [videoId], cached; null when every client failed. */
     fun extractionFor(videoId: String): InnerTubeVideoStreamExtractor.VideoExtractionResult? {
-        extractionCache[videoId]?.takeIf { it.expiresAtMs > System.currentTimeMillis() }?.let { return it.result }
+        cached(videoId)?.let { return it.result }
+        // One extraction at a time: the PoToken WebView and NewPipe's player parser are shared, and parallel calls lose replies.
+        return runBlocking { extractionLock.withLock { cached(videoId)?.result ?: extract(videoId) } }
+    }
+
+    private fun cached(videoId: String): CachedExtraction? =
+        extractionCache[videoId]?.takeIf { it.expiresAtMs > System.currentTimeMillis() }
+
+    private suspend fun extract(videoId: String): InnerTubeVideoStreamExtractor.VideoExtractionResult? {
         val startedMs = System.currentTimeMillis()
-        val result = runBlocking { InnerTubeVideoStreamExtractor.extract(videoId) }
+        var finished = false
+        val result =
+            withTimeoutOrNull(EXTRACTION_TIMEOUT_MS) {
+                walledToTizen(InnerTubeVideoStreamExtractor.extract(videoId), videoId).also { finished = true }
+            }
         val elapsedMs = System.currentTimeMillis() - startedMs
         if (elapsedMs >= SLOW_EXTRACTION_WARNING_MS) {
             Log.w(TAG, "extract($videoId) took ${elapsedMs}ms - likely queued behind the shared PoToken WebView")
         }
+        if (!finished) {
+            Log.w(TAG, "extract($videoId) gave no answer in ${EXTRACTION_TIMEOUT_MS}ms")
+            return null
+        }
         extractionCache[videoId] = CachedExtraction(result, System.currentTimeMillis() + EXTRACTION_TTL_MS)
         extractionCache.entries.removeIf { it.value.expiresAtMs < System.currentTimeMillis() }
         return result
+    }
+
+    // MWEB/WEB direct URLs wall at ~60 s (full stream is SABR, unsupported here); TV_TIZEN is not walled
+    private val WEB_CLIENTS = setOf("MWEB", "WEB")
+
+    private suspend fun walledToTizen(
+        result: InnerTubeVideoStreamExtractor.VideoExtractionResult?,
+        videoId: String,
+    ): InnerTubeVideoStreamExtractor.VideoExtractionResult? {
+        if (result == null || result.usedClient.clientName.uppercase() !in WEB_CLIENTS) return result
+        val tizen = TizenStreamResolver.resolve(videoId)
+        Log.d(TAG, "walled web streams for $videoId: TV_TIZEN ${if (tizen != null) "answered" else "unavailable"}")
+        return tizen ?: result
     }
 
     /** Drops a stale extraction so the next request mints fresh URLs - after GVS denies one. */

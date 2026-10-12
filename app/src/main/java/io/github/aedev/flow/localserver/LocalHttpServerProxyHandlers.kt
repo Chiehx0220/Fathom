@@ -152,13 +152,15 @@ private fun reportStreamDenial(
     val kind = StreamDenialClassifier.classify(directUrl)
     val client = StreamDenialClassifier.clientOf(directUrl)
     serverLog("CDN denial kind=$kind client=$client url=$directUrl")
+    // MWEB/WEB direct URLs wall at ~60 s (the app plays them over SABR); gating would disable them there too
+    val sabrClient = client?.uppercase() in SABR_FAMILY_CLIENTS
     when (kind) {
         StreamDenialKind.ATTESTATION_GATED -> {
-            ClientGateTracker.reportGated(client)
+            if (!sabrClient) ClientGateTracker.reportGated(client)
         }
 
         StreamDenialKind.TOKEN_REJECTED -> {
-            ClientGateTracker.reportRefused(client)
+            if (!sabrClient) ClientGateTracker.reportRefused(client)
         }
 
         else -> {}
@@ -341,6 +343,8 @@ internal fun ClientHandler.handleStreamProxy(
         os.flush()
     }
 }
+
+private val SABR_FAMILY_CLIENTS = setOf("MWEB", "WEB")
 
 internal fun fetchFromCdn(
     directUrl: String,
