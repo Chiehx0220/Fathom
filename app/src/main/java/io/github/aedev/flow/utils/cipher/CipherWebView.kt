@@ -8,7 +8,10 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.File
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -30,6 +33,8 @@ class CipherWebView private constructor(
 ) {
     private val webView = WebView(context)
     private var nContinuation: Continuation<String>? = null
+    private var sigContinuation: Continuation<String>? = null
+    private val sigLock = Mutex()
 
     @Volatile var nFunctionAvailable: Boolean = false
         private set
@@ -172,6 +177,23 @@ function transformN(nValue) {
         CipherBridge.onNResult(String(result));
     } catch (error) {
         CipherBridge.onNError(error + "\n" + (error.stack || ""));
+    }
+}
+function decipherSig(sigValue) {
+    try {
+        var func = window._cipherSigFunc;
+        if (typeof func !== 'function') {
+            CipherBridge.onSigError("Signature func not available (type: " + typeof func + ")");
+            return;
+        }
+        var result = func(sigValue);
+        if (typeof result !== 'string' || result.length === 0) {
+            CipherBridge.onSigError("Signature func returned " + typeof result);
+            return;
+        }
+        CipherBridge.onSigResult(result);
+    } catch (error) {
+        CipherBridge.onSigError(error + "\n" + (error.stack || ""));
     }
 }
 function runNUrlTransform(nValue) {
@@ -319,6 +341,38 @@ function discoverAndInit() {
         nContinuation = null
     }
 
+    /** Runs `_cipherSigFunc` on [sig]; serialized, bounded by [SIGNATURE_TIMEOUT_MS]. */
+    suspend fun decipherSignature(sig: String): String {
+        if (!sigFunctionAvailable) throw CipherException("Signature function not discovered")
+        return sigLock.withLock {
+            try {
+                withTimeout(SIGNATURE_TIMEOUT_MS) {
+                    withContext(Dispatchers.Main) {
+                        suspendCancellableCoroutine { cont ->
+                            sigContinuation = cont
+                            webView.evaluateJavascript("decipherSig('${escapeJsString(sig)}')", null)
+                        }
+                    }
+                }
+            } finally {
+                sigContinuation = null
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun onSigResult(result: String) {
+        sigContinuation?.resume(result)
+        sigContinuation = null
+    }
+
+    @JavascriptInterface
+    fun onSigError(error: String) {
+        Log.e(TAG, "Signature decipher error: $error")
+        sigContinuation?.resumeWithException(CipherException("Signature decipher failed: $error"))
+        sigContinuation = null
+    }
+
     fun close() {
         Log.d(TAG, "Closing CipherWebView...")
         webView.clearHistory()
@@ -341,6 +395,7 @@ function discoverAndInit() {
     companion object {
         private const val TAG = "Flow_CipherWebView"
         private const val JS_INTERFACE = "CipherBridge"
+        private const val SIGNATURE_TIMEOUT_MS = 5_000L
 
         suspend fun create(
             context: Context,

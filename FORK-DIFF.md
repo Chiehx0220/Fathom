@@ -23,7 +23,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **124** (1768 changed lines). New files: **238** (6817 lines).
+- Modified upstream files: **127** (1856 changed lines). New files: **240** (6984 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -32,6 +32,7 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/BackupRepository.kt | 59 | 20 |
 | ui/screens/home/HomeViewModel.kt | 60 | 9 |
 | ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
+| utils/cipher/CipherWebView.kt | 55 | 0 |
 | player/EnhancedPlayerManager.kt | 52 | 2 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
 | ui/screens/home/HomeFeedSources.kt | 42 | 5 |
@@ -56,8 +57,10 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/dao/WatchHistoryDao.kt | 22 | 0 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 22 | 0 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
+| player/stream/InnerTubeVideoStreamExtractor.kt | 20 | 1 |
 | utils/ShareVideo.kt | 14 | 7 |
 | player/error/VideoErrorMapper.kt | 20 | 0 |
+| utils/cipher/CipherDeobfuscator.kt | 20 | 0 |
 | data/local/entity/VideoEntity.kt | 10 | 9 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 16 | 3 |
 | ui/components/shared/quickactions/QuickActionsViewModel.kt | 14 | 3 |
@@ -79,15 +82,12 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/LikedVideosRepository.kt | 10 | 1 |
 | ui/FlowApp.kt | 2 | 9 |
 | MainActivity.kt | 9 | 1 |
-| player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
 | ui/FlowNavigation.kt | 5 | 5 |
 | ui/screens/channel/ChannelCommunityController.kt | 9 | 1 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
-| ui/AppHooks.kt | 4 | 5 |
-| ui/screens/player/PlaybackLoadController.kt | 8 | 1 |
-| ... 64 more, each small | | |
+| ... 67 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -104,7 +104,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **62** (8017 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **64** (8360 lines).
 
 ## Build
 
@@ -116,11 +116,15 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Resources / strings
 
-- Modified upstream files: **0** (0 changed lines). New files: **3** (62 lines).
+- Modified upstream files: **1** (26 changed lines). New files: **3** (62 lines).
+
+| Modified upstream file | + | - |
+|---|---:|---:|
+| app/src/main/res/values-ar/strings.xml | 4 | 22 |
 
 ## Tests
 
-- Modified upstream files: **17** (130 changed lines). New files: **8** (508 lines).
+- Modified upstream files: **17** (130 changed lines). New files: **9** (542 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|

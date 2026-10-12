@@ -93,6 +93,26 @@ object CipherDeobfuscator {
         }
     }
 
+    /** Deciphers `s` with the player's own signature function; null when unavailable or it threw. */
+    suspend fun deobfuscateSignature(sig: String): String? =
+        try {
+            val webView = getOrCreateWebView(forceRefresh = false)
+            if (webView == null || !webView.sigFunctionAvailable) {
+                Log.w(TAG, "No signature function available in the player script")
+                null
+            } else {
+                webView.decipherSignature(sig)
+            }
+        } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            Log.w(TAG, "Signature decipher timed out")
+            null
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Signature decipher failed: ${e.message}", e)
+            null
+        }
+
     private suspend fun transformNInternal(url: String): String {
         val nMatch = Regex("[?&]n=([^&]+)").find(url)
         if (nMatch == null) {

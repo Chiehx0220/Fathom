@@ -204,6 +204,8 @@ object FunctionNameExtractor {
         Log.d(TAG, "========== EXTRACTING SIG FUNCTION ==========")
         Log.d(TAG, "Player.js size: ${playerJs.length} chars")
 
+        SigPreprocessedCall.find(playerJs)?.let { return it }
+
         for ((index, pattern) in SIG_FUNCTION_PATTERNS.withIndex()) {
             Log.v(TAG, "Trying sig pattern $index: ${pattern.pattern.take(60)}...")
             val match = pattern.find(playerJs)

@@ -221,6 +221,15 @@ object InnerTubeVideoStreamExtractor {
                 return@withContext if (liveDetected[0] && !it.isLive) it.copy(isLive = true) else it
             }
 
+            // web clients demoted (60 s wall): TV_TIZEN is the remaining source for web-only videos
+            if (SABR_CLIENTS.any { ClientGateTracker.isGated(it.clientName) }) {
+                TizenStreamResolver.resolve(videoId)?.let {
+                    Log.w(TAG, "Extraction OK for $videoId via TV_TIZEN (mode=DIRECT/web-demoted)")
+                    PlayerDiagnostics.logWarning(TAG, "extract OK $videoId via TV_TIZEN mode=DIRECT/web-demoted")
+                    return@withContext it
+                }
+            }
+
             // 3) Gated direct clients. Playable, but GVS stops serving them ~60s in, so they rank
             // below anything attested and are only reached when the paths above are unavailable.
             tryDirectClients(videoId, GATED_FALLBACK_CLIENTS.ungated(), failureReasons, liveDetected = liveDetected)?.let { direct ->
@@ -948,7 +957,7 @@ object InnerTubeVideoStreamExtractor {
         if (signatureCipher.isNullOrEmpty() && cipher.isNullOrEmpty()) return null
         val resolved =
             try {
-                NewPipeExtractor.getStreamUrl(this, videoId)
+                CipherSignatureFallback.streamUrl(this, viaNewPipe = { NewPipeExtractor.getStreamUrl(this, videoId) })
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
