@@ -79,10 +79,14 @@ class DownloadTransfer
             threads: Int,
         ): FetchOutcome {
             var avoid = emptySet<Int>()
+            var noAudioRetries = 0
             val refusals = mutableMapOf<Int, Int>()
             repeat(MAX_RESOLVES) {
+                val outcome = resolver.resolve(request, avoid)
+                // a TV_TIZEN answer can lack its AAC track when the remote decoder missed it; a new extraction has it
+                if (outcome == ResolveOutcome.NoCompatibleAudio && noAudioRetries++ < NO_AUDIO_RETRIES) return@repeat
                 val streams =
-                    when (val resolved = resolver.resolve(request, avoid)) {
+                    when (val resolved = outcome) {
                         is ResolveOutcome.Resolved -> resolved.streams
                         ResolveOutcome.Unavailable -> return FetchOutcome.Failed(FetchFailure.UNAVAILABLE)
                         ResolveOutcome.NoCompatibleAudio -> return FetchOutcome.Failed(FetchFailure.NO_COMPATIBLE_AUDIO)
@@ -269,6 +273,7 @@ class DownloadTransfer
         private companion object {
             const val TAG = "DownloadTransfer"
             const val MAX_RESOLVES = 4
+            const val NO_AUDIO_RETRIES = 2
             const val PROGRESS_INTERVAL_MS = 1_000L
             const val PERSIST_EVERY_TICKS = 5
             const val DIRECT_STALL_TICKS = 45

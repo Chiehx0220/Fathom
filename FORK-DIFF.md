@@ -23,7 +23,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **127** (1856 changed lines). New files: **240** (6984 lines).
+- Modified upstream files: **127** (1863 changed lines). New files: **240** (6999 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -82,11 +82,11 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/LikedVideosRepository.kt | 10 | 1 |
 | ui/FlowApp.kt | 2 | 9 |
 | MainActivity.kt | 9 | 1 |
+| data/video/downloader/work/DownloadTransfer.kt | 9 | 1 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
 | ui/FlowNavigation.kt | 5 | 5 |
 | ui/screens/channel/ChannelCommunityController.kt | 9 | 1 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
-| player/stream/VideoCodecUtils.kt | 4 | 5 |
 | ... 67 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
@@ -104,7 +104,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **64** (8360 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **64** (8409 lines).
 
 ## Build
 
@@ -124,7 +124,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **17** (130 changed lines). New files: **9** (542 lines).
+- Modified upstream files: **17** (130 changed lines). New files: **10** (629 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
