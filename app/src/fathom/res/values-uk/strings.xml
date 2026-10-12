@@ -77,4 +77,6 @@
     <string name="discord_presence_playing_fallback">Відтворюється у Fathom</string>
     <string name="export_watch_history_desc">Експортувати як JSON історії YouTube (для імпорту в LibreTube та Fathom)</string>
     <string name="whats_new_in_flow">Що нового у Fathom</string>
+    <string name="cache_size_applies_on_restart">Застосовується під час наступного запуску Fathom.</string>
+    <string name="settings_font_summary">Шрифт, що використовується в Fathom</string>
 </resources>

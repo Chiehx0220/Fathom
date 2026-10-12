@@ -40,6 +40,7 @@
     <string name="widget_quick_actions_description">Wyszukuj w Fathom i przechodź do pobranych, historii lub rozpoznawania muzyki</string>
     <string name="ui_crashed_last_session">Awaria aplikacji Fathom</string>
     <string name="update_download_prompt">Dostępna jest nowa wersja Fathom (%1$s). Czy chcesz pobrać najnowszy plik APK?</string>
+    <string name="update_title">Dostępna jest nowa wersja Fathom: %1$s</string>
     <string name="update_permission_notice">Zezwól Fathom na instalowanie aktualizacji. Android wyświetli tę prośbę tylko raz.</string>
     <string name="import_manage_backups">Zarządzaj swoimi kopiami zapasowymi Fathom</string>
     <string name="discord_presence_playing_fallback">Odtwarzane w Fathom</string>

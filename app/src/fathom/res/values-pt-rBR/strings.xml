@@ -38,7 +38,7 @@
     <string name="diagnostics_reset_session_confirm_body">O Fathom criarará uma nova identidade de reprodução. Use isso se os vídeos travarem depois de cerca de um minuto ou se recusam a tocar.\n\nA reprodução pode ficar ruim no próximo minuto ou dois. Nada do que você salvou é afetado.</string>
     <string name="search_in_flow">Procurar em Fathom</string>
     <string name="discord_presence_privacy_body">Fathom compartilha o título, criador, capa do álbum e o tempo de reprodução do que estiver tocando. Essa configuração fica desativada por padrão. Seu token de sessão Discord é criptografado e nunca é registrado.</string>
-    <string name="discord_presence_risk_dialog_body">Conectando através do Discord e fornece ao Fathom seu token de conta do Discord. O Fathom armazena-o com criptografia do Android Keystore e envia apenas para o Discord, mas esse método de self-bot não oficial viola os Termos de Serviço do Discord. O Discord pode suspender ou encerrar sua conta, exigir uma redefinição de senha, mostrar CAPTCHAs ou bloquear a conta exigindo verificação por telefone.</string>
+    <string name="discord_presence_risk_dialog_body">A conexão dá ao Fathom seu token Discord. Ele permanece criptografado neste dispositivo e só é enviado para o Discord. Este método quebra os Termos de Serviço da Discord, então sua conta pode ser limitada ou banida.</string>
     <string name="discord_error_open_flow">Abra Fathom antes de conectar ao Discord.</string>
     <string name="tv_remote_guide_subtitle">Uma forma rápida de navegar no Fathom do sofá</string>
     <string name="widget_now_playing_description">Controle a música que está tocando no Fathom</string>
@@ -56,7 +56,9 @@
     <string name="recap_story_intro">Seu %1$s no Fathom</string>
     <string name="recap_story_share_text">Meu %1$s no Fathom: %2$s</string>
     <string name="recap_story_made_with">Feito com Fathom</string>
+    <string name="subtitle_add_file_failed">Fathom não consegue ler este arquivo como legenda</string>
     <string name="discord_presence_playing_fallback">Tocando no Fathom</string>
     <string name="export_watch_history_desc">Exportar como YouTube-history JSON (importa para LibreTube e Fathom)</string>
     <string name="whats_new_in_flow">O que há de novo no Fathom</string>
+    <string name="cache_size_applies_on_restart">Aplicado na próxima vez que Fathom iniciar.</string>
 </resources>

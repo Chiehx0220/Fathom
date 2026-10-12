@@ -67,6 +67,7 @@ internal fun BilibiliExploreContent(
                     key(state.tab) {
                         CategoryChartGrid(
                             entries = state.videos,
+                            title = null,
                             gridState = rememberLazyGridState(),
                             feedLayout = feedLayout,
                             isListView = isListView,

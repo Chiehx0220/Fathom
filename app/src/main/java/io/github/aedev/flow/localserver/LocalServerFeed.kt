@@ -8,7 +8,6 @@ import io.github.aedev.flow.data.recommendation.NeuroScoring
 import io.github.aedev.flow.data.recommendation.UserBrain
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.innertube.YouTube
-import io.github.aedev.flow.innertube.pages.explore.chartsCountryOrFallback
 import io.github.aedev.flow.player.PlayerRelatedVideosPolicy
 import io.github.aedev.flow.ui.screens.home.FeedTasteProfile
 import io.github.aedev.flow.ui.screens.home.GraphCandidate
@@ -267,11 +266,11 @@ fun HistoryDbHelper.fetchTrendingItems(serviceId: Int): List<StreamInfoItem> =
         trendingVideos().map { it.toStreamInfoItem(serviceId) }
     }
 
-/** YouTube's trending chart for the user's trending region. */
+/** YouTube Music's trending video chart for the user's trending region. */
 private suspend fun HistoryDbHelper.trendingVideos(): List<FlowVideo> {
     val region = playerPreferences().trendingRegion.first()
     return YouTube
-        .videoCharts("TRENDING_VIDEOS", chartsCountryOrFallback(region))
+        .musicVideoChart(region)
         .getOrNull()
         ?.entries
         .orEmpty()
