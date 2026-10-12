@@ -6,12 +6,13 @@ import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebView
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -32,9 +33,13 @@ class CipherWebView private constructor(
     private val initContinuation: Continuation<CipherWebView>,
 ) {
     private val webView = WebView(context)
-    private var nContinuation: Continuation<String>? = null
-    private var sigContinuation: Continuation<String>? = null
-    private val sigLock = Mutex()
+
+    // The bridge answers through one continuation, so calls run one at a time; the id keeps an
+    // answer that arrives after its caller timed out from resuming the next caller.
+    private val callMutex = Mutex()
+    private var nextCallId = 0
+
+    @Volatile private var pendingCall: Pair<Int, CancellableContinuation<String>>? = null
 
     @Volatile var nFunctionAvailable: Boolean = false
         private set
@@ -158,7 +163,7 @@ class CipherWebView private constructor(
     private fun buildDiscoveryHtml(): String =
         """<!DOCTYPE html>
 <html><head><script>
-function transformN(nValue) {
+function transformN(id, nValue) {
     try {
         var func = window._nTransformFunc;
         var result = null;
@@ -167,34 +172,32 @@ function transformN(nValue) {
         } else if (typeof window._nUrlTransformFunc === 'function') {
             result = runNUrlTransform(nValue);
         } else {
-            CipherBridge.onNError("N-transform func not available (n type: " + typeof func + ", url type: " + typeof window._nUrlTransformFunc + ")");
+            CipherBridge.onCallError(id, "N-transform func not available (n type: " + typeof func + ", url type: " + typeof window._nUrlTransformFunc + ")");
             return;
         }
         if (result === undefined || result === null) {
-            CipherBridge.onNError("N-transform returned null/undefined");
+            CipherBridge.onCallError(id, "N-transform returned null/undefined");
             return;
         }
-        CipherBridge.onNResult(String(result));
+        CipherBridge.onCallResult(id, String(result));
     } catch (error) {
-        CipherBridge.onNError(error + "\n" + (error.stack || ""));
+        CipherBridge.onCallError(id, error + "\n" + (error.stack || ""));
     }
 }
-function decipherSig(sigValue) {
+function decipherSignature(id, sig) {
     try {
-        var func = window._cipherSigFunc;
-        if (typeof func !== 'function') {
-            CipherBridge.onSigError("Signature func not available (type: " + typeof func + ")");
-            return;
-        }
-        var result = func(sigValue);
+        var result = window._cipherSigFunc(sig);
         if (typeof result !== 'string' || result.length === 0) {
-            CipherBridge.onSigError("Signature func returned " + typeof result);
+            CipherBridge.onCallError(id, "Signature function returned " + typeof result);
             return;
         }
-        CipherBridge.onSigResult(result);
+        CipherBridge.onCallResult(id, result);
     } catch (error) {
-        CipherBridge.onSigError(error + "\n" + (error.stack || ""));
+        CipherBridge.onCallError(id, error + "\n" + (error.stack || ""));
     }
+}
+function isSignatureTransform(input, output) {
+    return typeof output === 'string' && output !== input && output.length >= input.length - 20 && output.length <= input.length;
 }
 function runNUrlTransform(nValue) {
     var encoded = encodeURIComponent(nValue);
@@ -214,7 +217,18 @@ function discoverAndInit() {
     var sigFuncName = "";
     var info = "";
     if (typeof window._cipherSigFunc === 'function') {
-        sigFuncName = "exported_sig_func";
+        try {
+            var sigInput = "AOq0QJ8wRgIhAKhdt2X3VbN3nk_dS3K1yh0E2D9bY6dQjR0j8XyAq4uiAiEA2n4K3p2s0mZq4f5p0wq5yY8hF0d4yQ6kq1xT6bU0aGw=";
+            if (isSignatureTransform(sigInput, window._cipherSigFunc(sigInput))) {
+                sigFuncName = "exported_sig_func";
+            } else {
+                info = "sig_bad_result;";
+                window._cipherSigFunc = null;
+            }
+        } catch(e) {
+            info = "sig_threw:" + e + ";";
+            window._cipherSigFunc = null;
+        }
     }
     if (typeof window._nTransformFunc === 'function') {
         try {
@@ -222,13 +236,13 @@ function discoverAndInit() {
             var testResult = window._nTransformFunc(testInput);
             if (typeof testResult === 'string' && testResult !== testInput && testResult.length >= 5 && /^[a-zA-Z0-9_-]+${"$"}/.test(testResult)) {
                 nFuncName = "exported_n_func";
-                info = "export_valid";
+                info += "export_valid";
             } else {
-                info = "export_bad_result";
+                info += "export_bad_result";
                 window._nTransformFunc = null;
             }
         } catch(e) {
-            info = "export_threw:" + e;
+            info += "export_threw:" + e;
             window._nTransformFunc = null;
         }
     }
@@ -238,13 +252,13 @@ function discoverAndInit() {
             var testResultUrl = runNUrlTransform(testInputUrl);
             if (typeof testResultUrl === 'string' && testResultUrl !== testInputUrl && testResultUrl.length >= 5 && /^[a-zA-Z0-9_-]+${"$"}/.test(testResultUrl)) {
                 nFuncName = "exported_n_url_func";
-                info = "export_url_valid";
+                info += "export_url_valid";
             } else {
-                info = "export_url_bad_result";
+                info += "export_url_bad_result";
                 window._nUrlTransformFunc = null;
             }
         } catch(e) {
-            info = "export_url_threw:" + e;
+            info += "export_url_threw:" + e;
             window._nUrlTransformFunc = null;
         }
     }
@@ -268,9 +282,9 @@ function discoverAndInit() {
                     }
                 } catch(e) {}
             }
-            info = "brute_force:tested=" + tested;
+            info += "brute_force:tested=" + tested;
         } catch(e) {
-            info = "brute_force_error:" + e;
+            info += "brute_force_error:" + e;
         }
     }
     CipherBridge.onDiscoveryDone(sigFuncName, nFuncName, info);
@@ -319,58 +333,52 @@ function discoverAndInit() {
 
     suspend fun transformN(nValue: String): String {
         if (!nFunctionAvailable) throw CipherException("N-transform function not discovered")
-        return withContext(Dispatchers.Main) {
-            suspendCancellableCoroutine { cont ->
-                nContinuation = cont
-                webView.evaluateJavascript("transformN('${escapeJsString(nValue)}')", null)
-            }
-        }
+        return call("transformN", nValue)
     }
 
-    @JavascriptInterface
-    fun onNResult(result: String) {
-        Log.d(TAG, "N-transform result: $result")
-        nContinuation?.resume(result)
-        nContinuation = null
-    }
-
-    @JavascriptInterface
-    fun onNError(error: String) {
-        Log.e(TAG, "N-transform error: $error")
-        nContinuation?.resumeWithException(CipherException("N-transform failed: $error"))
-        nContinuation = null
-    }
-
-    /** Runs `_cipherSigFunc` on [sig]; serialized, bounded by [SIGNATURE_TIMEOUT_MS]. */
-    suspend fun decipherSignature(sig: String): String {
+    suspend fun decipherSignature(signature: String): String {
         if (!sigFunctionAvailable) throw CipherException("Signature function not discovered")
-        return sigLock.withLock {
-            try {
-                withTimeout(SIGNATURE_TIMEOUT_MS) {
-                    withContext(Dispatchers.Main) {
-                        suspendCancellableCoroutine { cont ->
-                            sigContinuation = cont
-                            webView.evaluateJavascript("decipherSig('${escapeJsString(sig)}')", null)
-                        }
+        return call("decipherSignature", signature)
+    }
+
+    private suspend fun call(
+        function: String,
+        argument: String,
+    ): String =
+        callMutex.withLock {
+            val id = ++nextCallId
+            withTimeoutOrNull(CALL_TIMEOUT_MS) {
+                withContext(Dispatchers.Main) {
+                    suspendCancellableCoroutine { cont ->
+                        pendingCall = id to cont
+                        webView.evaluateJavascript("$function($id, '${escapeJsString(argument)}')", null)
                     }
                 }
-            } finally {
-                sigContinuation = null
-            }
+            } ?: throw CipherException("$function timed out")
         }
+
+    @JavascriptInterface
+    fun onCallResult(
+        id: Int,
+        result: String,
+    ) {
+        takePendingCall(id)?.resume(result)
     }
 
     @JavascriptInterface
-    fun onSigResult(result: String) {
-        sigContinuation?.resume(result)
-        sigContinuation = null
+    fun onCallError(
+        id: Int,
+        error: String,
+    ) {
+        Log.e(TAG, "Cipher call failed: $error")
+        takePendingCall(id)?.resumeWithException(CipherException(error))
     }
 
-    @JavascriptInterface
-    fun onSigError(error: String) {
-        Log.e(TAG, "Signature decipher error: $error")
-        sigContinuation?.resumeWithException(CipherException("Signature decipher failed: $error"))
-        sigContinuation = null
+    private fun takePendingCall(id: Int): CancellableContinuation<String>? {
+        val (pendingId, cont) = pendingCall ?: return null
+        if (pendingId != id) return null
+        pendingCall = null
+        return cont
     }
 
     fun close() {
@@ -395,7 +403,7 @@ function discoverAndInit() {
     companion object {
         private const val TAG = "Flow_CipherWebView"
         private const val JS_INTERFACE = "CipherBridge"
-        private const val SIGNATURE_TIMEOUT_MS = 5_000L
+        private const val CALL_TIMEOUT_MS = 5_000L
 
         suspend fun create(
             context: Context,
