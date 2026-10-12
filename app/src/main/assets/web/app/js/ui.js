@@ -5,7 +5,8 @@ const h = FT.h;
 
 // Where opening a video, channel or playlist goes. Links are real anchors, so the mouse gets them natively.
 FT.link = {
-    watch: (video) => `#/watch?s=${video.serviceId ?? FT.serviceOfUrl(video.url)}&u=${FT.enc(video.url)}`,
+    // `local` marks a finished download: the player starts from the file on the phone and falls back to streaming if the browser cannot play it.
+    watch: (video) => `#/watch?s=${video.serviceId ?? FT.serviceOfUrl(video.url)}&u=${FT.enc(video.url)}${video.local ? '&local=1' : ''}`,
     channel: (url, service) => `#/channel?s=${service ?? FT.serviceOfUrl(url)}&u=${FT.enc(url)}`,
     playlist: (item) => `#/playlist?s=${item.serviceId ?? FT.store.service}&u=${FT.enc(item.id)}`,
 };

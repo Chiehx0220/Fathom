@@ -39,6 +39,9 @@ internal val MUTATING_PATHS: Set<String> =
         "/api/v1/settings",
     )
 
+/** The user's own files: only the server's own pages (or a program that names no origin) may fetch them. */
+internal val OWN_PAGE_ONLY_PATHS: Set<String> = setOf("/downloadfile")
+
 /** Read-only media routes that other devices and players fetch, so they answer cross-origin requests. */
 internal val CROSS_ORIGIN_PATHS: Set<String> =
     setOf("/stream", "/hlsvod", "/hls", "/subtitles", "/thumbnails", "/image-proxy", "/danmaku", "/live_chat")
@@ -95,6 +98,8 @@ internal fun refusalFor(
         ) && path !in CROSS_ORIGIN_PATHS -> "Forbidden: cross-origin requests are not accepted here"
 
         path in MUTATING_PATHS && !isSameOriginRequest(headers) -> "Forbidden: this request did not come from the server's own page"
+
+        path in OWN_PAGE_ONLY_PATHS && !isSameOriginRequest(headers) -> "Forbidden: this file is only served to the server's own page"
 
         else -> null
     }

@@ -99,7 +99,7 @@ const render = async (root, params, isCurrent) => {
         if (!isCurrent()) return;
         const items = (body.videos || []).filter((v) => v.serviceId === service);
         if (!items.length) return;
-        slotSubs.replaceChildren(shelfOf('From your subscriptions', 'Newest first', items, { expand: '#/library?tab=feed' }));
+        slotSubs.replaceChildren(shelfOf('From your subscriptions', 'Newest first', items, { expand: '#/subscriptions?tab=feed' }));
         slotSubs.hidden = false;
     }).catch(() => {});
 

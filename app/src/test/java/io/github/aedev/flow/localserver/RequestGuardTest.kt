@@ -69,6 +69,16 @@ class RequestGuardTest {
     }
 
     @Test
+    fun `saved downloads are served to the server's own page and to programs, not to another site`() {
+        val own = headers("sec-fetch-site" to "same-origin")
+        val other = headers("sec-fetch-site" to "cross-site", "origin" to "https://evil.example")
+        assertThat(refusalFor("GET", "/downloadfile", own)).isNull()
+        assertThat(refusalFor("GET", "/downloadfile", headers())).isNull()
+        assertThat(refusalFor("GET", "/downloadfile", other)).isNotNull()
+        assertThat(refusalFor("GET", "/api/v1/downloads", other)).isNull()
+    }
+
+    @Test
     fun `a request for a rebinding host is refused on every route`() {
         val rebound = mapOf("host" to "evil.example:8080", "sec-fetch-site" to "same-origin")
 

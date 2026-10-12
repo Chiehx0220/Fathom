@@ -17,9 +17,9 @@ const parse = () => {
 };
 
 const TABS = [
-    { name: 'home', label: 'Home', icon: 'home', match: ['home', 'watch'] },
-    { name: 'library', label: 'Subscriptions', icon: 'subscriptions', match: ['library', 'channel', 'playlist'] },
-    { name: 'history', label: 'History', icon: 'history', match: ['history'] },
+    { name: 'home', label: 'Home', icon: 'home', match: ['home'] },
+    { name: 'subscriptions', label: 'Subscriptions', icon: 'subscriptions', match: ['subscriptions', 'channel'] },
+    { name: 'library', label: 'Library', icon: 'video_library', match: ['library', 'playlist', 'history'] },
     { name: 'settings', label: 'Settings', icon: 'settings', match: ['settings'] },
 ];
 
@@ -31,8 +31,11 @@ const chooseService = (anchor) => {
     })), { title: 'Source', anchor });
 };
 
+// A video belongs to no tab of its own: while one plays, the tab it was opened from stays lit (Home when the page was opened by its address).
+let origin = 'home';
+
 const renderTop = () => {
-    const route = FT.route.name;
+    const route = FT.route.name === 'watch' ? origin : FT.route.name;
     const top = FT.$('#top');
     const searching = route === 'search';
     top.replaceChildren(
@@ -64,6 +67,7 @@ const show = async () => {
     const mine = ++token;
     const key = name + '?' + Object.keys(params).sort().map((k) => k + '=' + params[k]).join('&');
     FT.route = { name, params, key };
+    if (name !== 'watch') origin = name;
     document.body.dataset.route = name;
     if (FT.player) FT.player.dock(name === 'watch' ? 'full' : 'mini');
     active = screen;
@@ -100,7 +104,7 @@ FT.setService = (id) => {
     const name = FT.route.name;
     // A channel or playlist belongs to one source, so switching leaves it; screens that follow the source start over; the rest only need the top bar.
     if (name === 'channel' || name === 'playlist') location.hash = '#/home';
-    else if (['home', 'library', 'search'].includes(name)) show();
+    else if (['home', 'subscriptions', 'library', 'search'].includes(name)) show();
     else renderTop();
 };
 

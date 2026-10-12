@@ -1,4 +1,4 @@
-// Screens that are lists of videos: search, history, the library and playlists. One list view serves them all:
+// Screens that are lists of videos: search, subscriptions, the library and playlists. One list view serves them all:
 // rows on the left, the selected one drawn large on the right, and "load more" that also runs by itself near the end.
 (() => {
 const h = FT.h;
@@ -149,24 +149,28 @@ FT.register('search', {
 
 // ---- History ----
 
+// The viewing history as a list; `continuing` narrows it to what was left part-way (Home's "Continue watching" shelf, opened out).
+const historyList = (root, { before, continuing }, isCurrent) => {
+    const service = FT.store.service;
+    return FT.listView(root, {
+        before,
+        empty: continuing
+            ? { icon: 'play_circle', title: 'Nothing in progress', text: "Videos you start but don't finish show up here." }
+            : { icon: 'history', title: 'Nothing watched yet', text: 'Videos you watch show up here.' },
+        decorate: (row) => { row.fromHistory = true; },
+        fetch: async () => {
+            const items = (await FT.api.history()).videos || [];
+            return { items: continuing ? items.filter((v) => v.serviceId === service && v.progress > 2 && v.progress < 95) : items, next: null };
+        },
+    }, isCurrent);
+};
+
 FT.register('history', {
     leave: cleanup,
     async render(root, params, isCurrent) {
-        // ?filter=continuing: Home's "Continue watching" shelf, same source and filter, as a full list.
-        const continuing = params.filter === 'continuing';
-        const service = FT.store.service;
-        const head = h('div', { class: 'head' }, h('h1', {}, continuing ? 'Continue watching' : 'History'));
-        await FT.listView(root, {
-            before: [head],
-            empty: continuing
-                ? { icon: 'play_circle', title: 'Nothing in progress', text: "Videos you start but don't finish show up here." }
-                : { icon: 'history', title: 'Nothing watched yet', text: 'Videos you watch show up here.' },
-            decorate: (row) => { row.fromHistory = true; },
-            fetch: async () => {
-                const items = (await FT.api.history()).videos || [];
-                return { items: continuing ? items.filter((v) => v.serviceId === service && v.progress > 2 && v.progress < 95) : items, next: null };
-            },
-        }, isCurrent);
+        // The whole history lives in Library now; this address stays for Home's "Continue watching" (?filter=continuing) and old links.
+        if (params.filter !== 'continuing') { location.replace('#/library?tab=history'); return; }
+        await historyList(root, { before: [h('div', { class: 'head' }, h('h1', {}, 'Continue watching'))], continuing: true }, isCurrent);
     },
 });
 
@@ -193,29 +197,76 @@ FT.register('recommended', {
     },
 });
 
-// ---- Library: subscriptions feed, channels, playlists, watch later ----
+// ---- Subscriptions: the newest uploads and the channels ----
 
-const TABS = [['feed', 'Feed', 'dynamic_feed'], ['channels', 'Channels', 'group'], ['playlists', 'Playlists', 'playlist_play'], ['later', 'Watch later', 'schedule']];
+// A screen's tabs as a row of pills; choosing one draws the screen again on that tab.
+const tabPills = (route, tabs, active) => h('div', { class: 'pills' }, tabs.map(([id, label, icon]) => FT.pill(label, icon, id === active, () => { location.hash = `#/${route}?tab=${id}`; }, 'pill-' + id)));
+const ofService = (service) => (item) => item.serviceId === undefined || item.serviceId === service;
+
+const SUBSCRIPTIONS_TABS = [['feed', 'Feed', 'dynamic_feed'], ['channels', 'Channels', 'group']];
+
+FT.register('subscriptions', {
+    leave: cleanup,
+    async render(root, params, isCurrent) {
+        const tab = SUBSCRIPTIONS_TABS.some((t) => t[0] === params.tab) ? params.tab : 'feed';
+        const service = FT.store.service;
+        const pills = tabPills('subscriptions', SUBSCRIPTIONS_TABS, tab);
+        const head = h('div', { class: 'head' }, h('h1', {}, 'Subscriptions'));
+        const sameService = ofService(service);
+
+        if (tab === 'feed') {
+            await FT.listView(root, {
+                before: [head, pills],
+                empty: { icon: 'dynamic_feed', title: 'No recent uploads', text: 'Subscribe to channels and their newest videos appear here.' },
+                fetch: async () => ({ items: ((await FT.api.feed(service)).videos || []).filter(sameService), next: null }),
+            }, isCurrent);
+            return;
+        }
+
+        const lib = await FT.api.library(service);
+        if (!isCurrent()) return;
+        const cards = (lib.channels || []).filter(sameService).map((item) => {
+            const card = FT.channelCard(item);
+            card.onRemoved = () => { card.remove(); FT.focus.first(); };
+            return card;
+        });
+        root.replaceChildren(head, pills, cards.length
+            ? h('div', { class: 'grid' }, cards)
+            : FT.empty('group', 'No subscriptions yet', 'Subscribe to a channel and it shows up here.'));
+    },
+});
+
+// ---- Library: what you watched, saved, bookmarked and downloaded ----
+
+const LIBRARY_TABS = [['history', 'History', 'history'], ['later', 'Watch later', 'schedule'], ['playlists', 'Playlists', 'playlist_play'], ['downloads', 'Downloads', 'download']];
 
 FT.register('library', {
     leave: cleanup,
     async render(root, params, isCurrent) {
-        const tab = TABS.some((t) => t[0] === params.tab) ? params.tab : 'feed';
+        // The feed and the channels moved to Subscriptions; an old link to them lands there.
+        if (params.tab === 'feed' || params.tab === 'channels') { location.replace('#/subscriptions?tab=' + params.tab); return; }
+        const tab = LIBRARY_TABS.some((t) => t[0] === params.tab) ? params.tab : 'history';
         const service = FT.store.service;
-        const pills = h('div', { class: 'pills' }, TABS.map(([id, label, icon]) => FT.pill(label, icon, id === tab, () => { location.hash = '#/library?tab=' + id; }, 'pill-' + id)));
-        const head = h('div', { class: 'head' }, h('h1', {}, 'Subscriptions'));
-        const sameService = (item) => item.serviceId === undefined || item.serviceId === service;
+        const pills = tabPills('library', LIBRARY_TABS, tab);
+        const head = h('div', { class: 'head' }, h('h1', {}, 'Library'));
+        const sameService = ofService(service);
+        const before = [head, pills];
 
-        if (tab === 'feed' || tab === 'later') {
+        if (tab === 'history') {
+            await historyList(root, { before, continuing: false }, isCurrent);
+            return;
+        }
+
+        if (tab === 'later' || tab === 'downloads') {
             await FT.listView(root, {
-                before: [head, pills],
-                empty: tab === 'feed'
-                    ? { icon: 'dynamic_feed', title: 'No recent uploads', text: 'Subscribe to channels and their newest videos appear here.' }
-                    : { icon: 'schedule', title: 'Nothing saved', text: 'Use Options on any video to save it for later.' },
-                decorate: (row) => { if (tab === 'later') { row.inWatchLater = true; } },
+                before,
+                empty: tab === 'later'
+                    ? { icon: 'schedule', title: 'Nothing saved', text: 'Use Options on any video to save it for later.' }
+                    : { icon: 'download', title: 'No downloads yet', text: 'Videos you download on the phone, or from the Download button, show up here.' },
+                decorate: (row) => { if (tab === 'later') row.inWatchLater = true; },
                 fetch: async () => {
-                    if (tab === 'feed') return { items: ((await FT.api.feed(service)).videos || []).filter(sameService), next: null };
-                    return { items: ((await FT.api.library(service)).watchLater || []).filter(sameService), next: null };
+                    const items = tab === 'later' ? (await FT.api.library(service)).watchLater : (await FT.api.downloads()).videos;
+                    return { items: (items || []).filter(sameService), next: null };
                 },
             }, isCurrent);
             return;
@@ -223,15 +274,14 @@ FT.register('library', {
 
         const lib = await FT.api.library(service);
         if (!isCurrent()) return;
-        const items = (tab === 'channels' ? lib.channels : lib.playlists).filter(sameService);
-        const cards = items.map((item) => {
-            const card = tab === 'channels' ? FT.channelCard(item) : FT.playlistCard(item);
+        const cards = (lib.playlists || []).filter(sameService).map((item) => {
+            const card = FT.playlistCard(item);
             card.onRemoved = () => { card.remove(); FT.focus.first(); };
             return card;
         });
-        root.replaceChildren(head, pills, cards.length
+        root.replaceChildren(...before, cards.length
             ? h('div', { class: 'grid' }, cards)
-            : FT.empty(tab === 'channels' ? 'group' : 'playlist_play', tab === 'channels' ? 'No subscriptions yet' : 'No bookmarked playlists', tab === 'channels' ? 'Subscribe to a channel and it shows up here.' : 'Bookmark a playlist to keep it here.'));
+            : FT.empty('playlist_play', 'No bookmarked playlists', 'Bookmark a playlist to keep it here.'));
     },
 });
 

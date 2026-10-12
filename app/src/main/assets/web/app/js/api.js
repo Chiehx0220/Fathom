@@ -46,6 +46,7 @@ FT.api = {
     feed: (service) => remembered(`feed:${service}`, 300000, () => getJson('/api/v1/feed', { serviceId: service })),
     history: () => getJson('/api/v1/history'),
     library: (service) => getJson('/api/v1/library', { serviceId: service }),
+    downloads: () => getJson('/api/v1/downloads'),
     search: (service, q, nextPage) => getJson('/api/v1/search', { serviceId: service, q, nextPage }),
     searchHistory: () => getJson('/search-history'),
     forgetSearch: (q) => getJson('/search-history', { delete: q }),

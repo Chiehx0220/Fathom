@@ -75,7 +75,7 @@ const clickPointer = () => {
 // ---- Commands from the phone ----
 
 const KEYS = { up: 'up', down: 'down', left: 'left', right: 'right', ok: 'ok', menu: 'menu' };
-const PAGES = { home: '#/home', subscriptions: '#/library', history: '#/history' };
+const PAGES = { home: '#/home', subscriptions: '#/subscriptions', library: '#/library', history: '#/library?tab=history' };
 
 const handle = (cmd) => {
     wake();
