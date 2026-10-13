@@ -111,11 +111,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Build
 
-- Modified upstream files: **2** (16 changed lines). New files: **0**.
+- Modified upstream files: **2** (14 changed lines). New files: **0**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/build.gradle.kts | 11 | 4 |
+| app/build.gradle.kts | 10 | 3 |
 | build.gradle.kts | 1 | 0 |
 
 ## Resources / strings
