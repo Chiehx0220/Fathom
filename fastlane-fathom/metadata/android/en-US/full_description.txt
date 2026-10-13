@@ -1,0 +1,18 @@
+Fathom brings YouTube and Bilibili into one app, with one search, one feed and one library. A recommender that runs on your phone learns from both services, and nothing leaves the device. There is no account to sign up for, no ads and no tracking.<br><br>
+Fathom is a fork of Flow by A-EDev. Flow's YouTube client, SponsorBlock, DeArrow, downloads and the FlowNeuro engine are all still here.<br><br>
+<b>What Fathom adds</b>
+<ul>
+<li><b>Bilibili, natively.</b> Search, channels, playback, quality, multi-part videos, comments, danmaku, subscriptions, history, likes and playlists, with no web view.</li>
+<li><b>Bilibili live rooms</b> with live chat, in the app and on the web page.</li>
+<li><b>One recommender for both services.</b> Bilibili watches count toward the same on-device profile as YouTube's.</li>
+<li><b>Your phone is the server.</b> Turn on the local web server and open Fathom from any browser on your Wi-Fi: search, channels, playlists, subscriptions, a library with history, watch later and downloads, and a Video.js player with a quality menu, chapters, seek-bar thumbnails, subtitles and audio-only mode. Nothing to install on the computer.</li>
+<li><b>Remote control.</b> Steer a Fathom screen from your phone with an arrow pad, playback controls, a touchpad and search by typing or voice.</li>
+<li><b>Bring your data.</b> Import NewPipe or PipePipe subscriptions, and export them back.</li>
+</ul>
+<b>Privacy</b>
+<ul>
+<li>No account, no ads, no analytics, no tracking.</li>
+<li>Recommendations are computed on the device, and you can inspect, edit or wipe what the engine knows.</li>
+<li>The web server only runs while you have it turned on.</li>
+</ul>
+Fathom is free software under the GPL-3.0. The source code is at github.com/Chiehx0220/Fathom.

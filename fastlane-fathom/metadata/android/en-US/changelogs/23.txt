@@ -1,0 +1,1 @@
+Library page on the web page: history, watch later, playlists and downloads. Pick the download quality, format or audio only from the watch page. Downloads are saved in a Fathom folder. Videos that only the web client opens play again. Downloads no longer fail when an answer has no usable audio track.
