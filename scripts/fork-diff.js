@@ -37,7 +37,8 @@ if(process.argv.includes("--check")||process.argv.includes("--update-budget")){
 const sh=c=>execSync(c,{encoding:"utf8",maxBuffer:1<<26,stdio:["ignore","pipe","ignore"]});
 // The same base as the budget: the document does not change when upstream moves ahead without a merge.
 const BASE=sh(`git merge-base HEAD ${UPSTREAM}`).trim();
-const num=sh(`git diff ${BASE} --numstat --no-renames -- app/src/main app/src/test build.gradle.kts gradle app/build.gradle.kts`).trim().split("\n").filter(Boolean).map(l=>{const [a,d,p]=l.split("\t");return {a:+a||0,d:+d||0,p}});
+// From HEAD, not the working tree: an untracked new file is invisible to `git diff`, and CI sees only what is committed.
+const num=sh(`git diff ${BASE} HEAD --numstat --no-renames -- app/src/main app/src/test build.gradle.kts gradle app/build.gradle.kts`).trim().split("\n").filter(Boolean).map(l=>{const [a,d,p]=l.split("\t");return {a:+a||0,d:+d||0,p}});
 const isNew=p=>{try{sh(`git cat-file -e ${BASE}:${p}`);return false}catch(e){return true}};
 const rows=num.map(r=>({...r,isNew:isNew(r.p)}));
 const area=p=>{
