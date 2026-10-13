@@ -11,12 +11,16 @@
 </p>
 
 <p align="center">
-  <img alt="Android 9+" src="https://img.shields.io/badge/Android-9%2B-3DDC84?logo=android&logoColor=white">
-  <img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF?logo=kotlin&logoColor=white">
-  <img alt="License GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue">
-  <img alt="No tracking" src="https://img.shields.io/badge/tracking-none-success">
-  <a href="https://github.com/A-EDev/Flow"><img alt="Fork of Flow" src="https://img.shields.io/badge/fork%20of-Flow-orange"></a>
-  <a href="https://github.com/Chiehx0220/Fathom/releases"><img alt="GitHub Downloads" src="https://img.shields.io/github/downloads/Chiehx0220/Fathom/total?logo=github&label=GitHub%20Downloads"></a>
+  <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/pill/get-github-dark.svg"><img alt="Get it on GitHub" src="Assets/badges/pill/get-github-light.svg" height="60"></picture></a>
+</p>
+
+<p align="center">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/android-dark.svg"><img alt="Android 9+" src="Assets/badges/split/android-light.svg" height="32"></picture>
+  <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/release-dark.svg"><img alt="Latest release" src="Assets/badges/split/release-light.svg" height="32"></picture></a>
+  <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/downloads-dark.svg"><img alt="Downloads" src="Assets/badges/split/downloads-light.svg" height="32"></picture></a>
+  <a href="License"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/license-dark.svg"><img alt="License: GPL-3.0" src="Assets/badges/split/license-light.svg" height="32"></picture></a>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/tracking-dark.svg"><img alt="Tracking: none" src="Assets/badges/split/tracking-light.svg" height="32"></picture>
+  <a href="https://github.com/Flow-Tube/Flow"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/fork-dark.svg"><img alt="Fork of Flow" src="Assets/badges/split/fork-light.svg" height="32"></picture></a>
 </p>
 
 ---
@@ -92,7 +96,10 @@ Once it is on, the phone serves a web app on port 8080.
 
 In the web app:
 
-- Search, channels, playlists, subscriptions, history, watch-later
+- Search, channels, playlists, subscriptions
+- A Library page: history, watch-later, playlists and downloads
+- Download from the watch page, choosing quality, format or audio only
+- An Up next card that autoplays, with a switch to turn it off
 - A [Video.js](https://videojs.org) 10 player, served from the device itself: quality menu, chapters, seek-bar thumbnails, subtitles, audio-only mode, shortcuts, resume
 - YouTube and Bilibili playback, with danmaku
 
@@ -107,7 +114,7 @@ In the web app:
 Away from the keyboard? Steer a Fathom screen from your phone instead.
 
 - Arrow pad with OK, Back, Home and Options, plus a touchpad
-- Playback controls, and shortcuts to Subscriptions and History
+- Playback controls, and shortcuts to Subscriptions and Library
 - Search by typing or by voice
 - A YouTube / Bilibili switch
 
@@ -136,7 +143,7 @@ Paths are under `app/src/main/java/io/github/aedev/flow/`.
 | `data/paging/`, `player/stream/`, `ui/screens/playlists/` (`Bilibili*`) | Mappers and glue that plug it into search, playback, and playlists |
 | `di/BilibiliModule.kt` | One shared session for the whole app |
 | `localserver/` | The web server, its Bilibili adapters, and the web player pages |
-| about 110 upstream files | Small hooks, mostly passing a service id through |
+| about 130 upstream files | Small hooks, mostly passing a service id through |
 
 The rule: new code goes in new files, and upstream files only get a call into it. That keeps merges from upstream small. [FORK-DIFF.md](FORK-DIFF.md) lists every upstream file touched (`node scripts/fork-diff.js`), and `bilibili/PPE-REFERENCE.md` records which PipePipeExtractor revision the client was ported from.
 

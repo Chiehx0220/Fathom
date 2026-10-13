@@ -11,12 +11,16 @@
 </p>
 
 <p align="center">
-  <img alt="Android 9+" src="https://img.shields.io/badge/Android-9%2B-3DDC84?logo=android&logoColor=white">
-  <img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF?logo=kotlin&logoColor=white">
-  <img alt="授權 GPL-3.0" src="https://img.shields.io/badge/授權-GPL--3.0-blue">
-  <img alt="無追蹤" src="https://img.shields.io/badge/追蹤-無-success">
-  <a href="https://github.com/A-EDev/Flow"><img alt="衍生自 Flow" src="https://img.shields.io/badge/衍生自-Flow-orange"></a>
-  <a href="https://github.com/Chiehx0220/Fathom/releases"><img alt="GitHub Downloads" src="https://img.shields.io/github/downloads/Chiehx0220/Fathom/total?logo=github&label=GitHub%20Downloads"></a>
+  <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/pill/get-github-dark.svg"><img alt="Get it on GitHub" src="Assets/badges/pill/get-github-light.svg" height="60"></picture></a>
+</p>
+
+<p align="center">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/android-dark.svg"><img alt="Android 9+" src="Assets/badges/split/android-light.svg" height="32"></picture>
+  <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/release-dark.svg"><img alt="Latest release" src="Assets/badges/split/release-light.svg" height="32"></picture></a>
+  <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/downloads-dark.svg"><img alt="Downloads" src="Assets/badges/split/downloads-light.svg" height="32"></picture></a>
+  <a href="License"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/license-dark.svg"><img alt="License: GPL-3.0" src="Assets/badges/split/license-light.svg" height="32"></picture></a>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/tracking-dark.svg"><img alt="Tracking: none" src="Assets/badges/split/tracking-light.svg" height="32"></picture>
+  <a href="https://github.com/Flow-Tube/Flow"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/fork-dark.svg"><img alt="Fork of Flow" src="Assets/badges/split/fork-light.svg" height="32"></picture></a>
 </p>
 
 ---
@@ -90,7 +94,10 @@
 - **在手機上:** `http://localhost:8080`
 - **同一個 Wi-Fi 下的任何裝置:** `http://<手機IP>:8080`,不需安裝任何東西
 
-- 搜尋、頻道、播放清單、訂閱、觀看紀錄、稍後觀看
+- 搜尋、頻道、播放清單、訂閱
+- 媒體庫頁面:觀看紀錄、稍後觀看、播放清單和下載
+- 在觀看頁直接下載,可選畫質、格式或純音訊
+- 「接著播放」卡片會自動播放,也能用開關關閉
 - [Video.js](https://videojs.org) 10 播放器(由裝置本身提供,不需要外部 CDN):畫質選單、章節、進度條縮圖、字幕、純音訊模式、快捷鍵、接續播放
 - 支援 YouTube 和 Bilibili,Bilibili 也能顯示彈幕
 
@@ -105,7 +112,7 @@
 不想碰鍵盤和滑鼠?也可以直接用手機來操作 Fathom 的畫面。
 
 - 方向鍵搭配確認、返回、首頁和選項,另有觸控板
-- 播放控制,以及訂閱、觀看紀錄的捷徑
+- 播放控制,以及訂閱、媒體庫的捷徑
 - 可用打字或語音搜尋
 - 能切換 YouTube 與 Bilibili
 
@@ -134,7 +141,7 @@ cd Fathom
 | `data/paging/`、`player/stream/`、`ui/screens/playlists/`(`Bilibili*`) | 把 Bilibili 接進搜尋、播放和播放清單的轉換與銜接程式碼 |
 | `di/BilibiliModule.kt` | 整個 App 共用同一個登入狀態 |
 | `localserver/` | 網頁伺服器、Bilibili 轉接層,以及網頁播放器頁面 |
-| 約 110 個上游檔案 | 小幅改動,多半只是多傳一個服務代碼 |
+| 約 130 個上游檔案 | 小幅改動,多半只是多傳一個服務代碼 |
 
 原則:新程式碼一律放在新檔案,上游檔案只加一行呼叫,這樣同步上游時衝突會少很多。[FORK-DIFF.md](FORK-DIFF.md) 列出所有改動過的上游檔案(由 `node scripts/fork-diff.js` 產生);`bilibili/PPE-REFERENCE.md` 記錄用戶端是從 PipePipeExtractor 的哪個版本移植而來。
 
