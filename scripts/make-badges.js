@@ -104,7 +104,8 @@ function githubValues() {
 }
 
 function compact(n) {
-  if (n < 1000) return String(n);
+  if (n < 10) return String(n);
+  if (n < 1000) return `${Math.floor(n / 10) * 10}+`;
   if (n < 10000) return `${Math.floor(n / 100) / 10}k+`;
   return `${Math.floor(n / 1000)}k+`;
 }

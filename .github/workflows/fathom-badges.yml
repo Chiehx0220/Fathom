@@ -1,11 +1,11 @@
 name: Fathom badges
 
 # Refreshes the release and downloads badges in Assets/badges from the GitHub releases API. It commits only when
-# a value changed. Run it from the Actions tab right after a release; otherwise it runs once a week.
+# a value changed. The release workflow starts it after publishing, and it runs once a day for the download count.
 
 on:
   schedule:
-    - cron: '17 3 * * 1'
+    - cron: '17 3 * * *'
   workflow_dispatch:
 
 permissions:
