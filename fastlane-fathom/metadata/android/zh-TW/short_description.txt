@@ -1,1 +1,1 @@
-YouTube 與 Bilibili 合在同一個隱私動態,推薦演算在手機上完成。
+YouTube 與 Bilibili 合一的隱私動態,手機也能當網頁伺服器,在電腦上直接看。

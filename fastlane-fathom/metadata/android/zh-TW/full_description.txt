@@ -1,4 +1,6 @@
-Fathom 把 YouTube 和 Bilibili 放進同一個 App,共用一個搜尋、一個動態和一個媒體庫。推薦引擎在手機上運算,同時從兩個平台學習,資料不會離開裝置。不用註冊帳號,沒有廣告,也沒有追蹤。<br><br>
+Fathom 把 YouTube 和 Bilibili 放進同一個 App,共用一個搜尋、一個動態和一個媒體庫。推薦引擎在手機上運算,同時從兩個平台學習,學到的內容不會離開裝置。<br><br>
+手機同時也是伺服器。開啟 Fathom 的本機網頁伺服器,就能在同一個 Wi-Fi 下的任何瀏覽器開啟,在電腦或電視上直接觀看,不必安裝任何東西,還能把手機當成遙控器。<br><br>
+不用註冊帳號,沒有廣告,也沒有追蹤。<br><br>
 Fathom 是 A-EDev 的 Flow 的衍生版本,Flow 的 YouTube 用戶端、SponsorBlock、DeArrow、下載功能和 FlowNeuro 引擎都還在。<br><br>
 <b>Fathom 新增的功能</b>
 <ul>

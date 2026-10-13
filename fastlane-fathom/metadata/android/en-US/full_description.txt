@@ -1,4 +1,6 @@
-Fathom brings YouTube and Bilibili into one app, with one search, one feed and one library. A recommender that runs on your phone learns from both services, and nothing leaves the device. There is no account to sign up for, no ads and no tracking.<br><br>
+Fathom brings YouTube and Bilibili into one app, with one search, one feed and one library. A recommender that runs on your phone learns from both services, and what it learns never leaves the device.<br><br>
+The phone is also a server. Turn on Fathom's local web server and open it from any browser on your Wi-Fi to watch on a computer or TV, with nothing to install there, and use your phone as a remote control for it.<br><br>
+There is no account to sign up for, no ads and no tracking.<br><br>
 Fathom is a fork of Flow by A-EDev. Flow's YouTube client, SponsorBlock, DeArrow, downloads and the FlowNeuro engine are all still here.<br><br>
 <b>What Fathom adds</b>
 <ul>

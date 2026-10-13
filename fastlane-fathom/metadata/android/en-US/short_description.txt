@@ -1,1 +1,1 @@
-YouTube and Bilibili in one private feed, with on-device recommendations.
+YouTube and Bilibili in one private feed, plus a web page your phone serves.
