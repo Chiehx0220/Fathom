@@ -98,14 +98,26 @@ jobs:
           cp "$out/app-github-armeabi-v7a-release.apk" dist/fathom-armeabi-v7a.apk
           (cd dist && sha256sum fathom*.apk > checksums.txt && cat checksums.txt)
 
-      - name: Confirm the APKs are signed
+      # Installed copies only update to an APK signed with the same certificate, so a wrong key must stop the release.
+      # The value is the SHA-256 of Fathom's signing certificate; change it only when the key is replaced on purpose.
+      - name: Confirm the APKs are signed with the Fathom key
+        env:
+          EXPECTED_SIGNER_SHA256: 2e3571c4f521f71c655042d9d96fbd11c295b74e288e2f317266cd61932174ea
         run: |
           set -euo pipefail
           apksigner=$(find "$ANDROID_SDK_ROOT/build-tools" -name apksigner -type f | sort -V | tail -1)
+          status=0
           for apk in dist/*.apk; do
             "$apksigner" verify "$apk"
-            echo "$apk: $("$apksigner" verify --print-certs "$apk" | grep -m1 "SHA-256 digest")"
+            actual=$("$apksigner" verify --print-certs "$apk" | grep -m1 "certificate SHA-256 digest" | awk '{print $NF}')
+            if [ "$actual" != "$EXPECTED_SIGNER_SHA256" ]; then
+              echo "::error::$(basename "$apk") is signed with '$actual', expected '$EXPECTED_SIGNER_SHA256'"
+              status=1
+            else
+              echo "OK $(basename "$apk") -> $actual"
+            fi
           done
+          exit $status
 
       - name: Publish the release
         run: |
