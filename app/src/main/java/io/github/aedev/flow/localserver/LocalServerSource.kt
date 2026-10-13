@@ -76,6 +76,7 @@ internal object LocalServerSource {
         nextPage: Page?,
     ): ListPage {
         if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibili.search(context, query, nextPage)
+        if (serviceId == 0) LocalServerYouTubeSearch.search(query, nextPage)?.let { return it }
         val extractor = LocalServerMedia.getDefaultSearchExtractor(NewPipe.getService(serviceId), query)
         val page = LocalServerMedia.fetchInitialOrPage(extractor, nextPage)
         return ListPage(page.items, page.nextPage)
