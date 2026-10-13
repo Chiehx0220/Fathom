@@ -81,22 +81,27 @@ jobs:
       - name: Build the APKs
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleGithubRelease --max-workers=1 --build-cache --stacktrace
+          ./gradlew :app:assembleGithubRelease :app:assembleFossRelease --max-workers=1 --build-cache --stacktrace
         env:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       # The in-app updater picks an APK by these names: fathom.apk is the universal build,
-      # fathom-<abi>.apk the one for a device's CPU. Do not rename them.
-      - name: Name the APKs for the updater
+      # fathom-<abi>.apk the one for a device's CPU. Do not rename them. The foss builds (no updater,
+      # for IzzyOnDroid and other stores) are named fathom-foss*.apk, which the updater never picks.
+      - name: Name the APKs
         run: |
           set -euo pipefail
-          out=app/build/outputs/apk/github/release
+          github=app/build/outputs/apk/github/release
+          foss=app/build/outputs/apk/foss/release
           mkdir dist
-          cp "$out/app-github-universal-release.apk"   dist/fathom.apk
-          cp "$out/app-github-arm64-v8a-release.apk"   dist/fathom-arm64-v8a.apk
-          cp "$out/app-github-armeabi-v7a-release.apk" dist/fathom-armeabi-v7a.apk
+          cp "$github/app-github-universal-release.apk"   dist/fathom.apk
+          cp "$github/app-github-arm64-v8a-release.apk"   dist/fathom-arm64-v8a.apk
+          cp "$github/app-github-armeabi-v7a-release.apk" dist/fathom-armeabi-v7a.apk
+          cp "$foss/app-foss-universal-release.apk"       dist/fathom-foss.apk
+          cp "$foss/app-foss-arm64-v8a-release.apk"       dist/fathom-foss-arm64-v8a.apk
+          cp "$foss/app-foss-armeabi-v7a-release.apk"     dist/fathom-foss-armeabi-v7a.apk
           (cd dist && sha256sum fathom*.apk > checksums.txt && cat checksums.txt)
 
       # Installed copies only update to an APK signed with the same certificate, so a wrong key must stop the release.
@@ -127,7 +132,7 @@ jobs:
           gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA" >/dev/null
           flags=(--repo "$GITHUB_REPOSITORY" --title "Fathom $TAG" --generate-notes)
           if [ "${{ inputs.prerelease }}" = "true" ]; then flags+=(--prerelease); else flags+=(--latest); fi
-          gh release create "$TAG" dist/fathom.apk dist/fathom-arm64-v8a.apk dist/fathom-armeabi-v7a.apk dist/checksums.txt "${flags[@]}"
+          gh release create "$TAG" dist/*.apk dist/checksums.txt "${flags[@]}"
 
       - name: Refresh the badges
         run: gh workflow run fathom-badges.yml --repo "$GITHUB_REPOSITORY" --ref main
