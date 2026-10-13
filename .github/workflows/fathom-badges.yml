@@ -1,0 +1,45 @@
+name: Fathom badges
+
+# Refreshes the release and downloads badges in Assets/badges from the GitHub releases API. It commits only when
+# a value changed. Run it from the Actions tab right after a release; otherwise it runs once a week.
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fathom-badges
+  cancel-in-progress: false
+
+jobs:
+  badges:
+    name: Refresh the badges
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Draw the badges
+        run: node scripts/make-badges.js
+
+      - name: Commit when a value changed
+        run: |
+          if [ -z "$(git status --porcelain -- Assets/badges)" ]; then
+            echo "Badges unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Assets/badges
+          git commit -m "chore(badges): refresh the release and downloads badges"
+          git pull --rebase origin main
+          git push origin HEAD:main
