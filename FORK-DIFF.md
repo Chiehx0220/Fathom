@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **125** (1612 changed lines). New files: **238** (6942 lines).
+- Modified upstream files: **125** (1612 changed lines). New files: **238**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -94,7 +94,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## FlowNeuro (Chinese text handling)
 
-- Modified upstream files: **2** (6 changed lines). New files: **2** (747 lines).
+- Modified upstream files: **2** (6 changed lines). New files: **2**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -103,15 +103,15 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **71** (7649 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **71**.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **66** (8506 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **66**.
 
 ## Build
 
-- Modified upstream files: **2** (16 changed lines). New files: **0** (0 lines).
+- Modified upstream files: **2** (16 changed lines). New files: **0**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -120,11 +120,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Resources / strings
 
-- Modified upstream files: **0** (0 changed lines). New files: **3** (62 lines).
+- Modified upstream files: **0** (0 changed lines). New files: **3**.
 
 ## Tests
 
-- Modified upstream files: **18** (134 changed lines). New files: **9** (550 lines).
+- Modified upstream files: **18** (134 changed lines). New files: **9**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|

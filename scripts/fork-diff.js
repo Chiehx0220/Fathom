@@ -84,7 +84,7 @@ for(const g of order){
  const mod=rs.filter(r=>!r.isNew).sort((a,b)=>(b.a+b.d)-(a.a+a.d));
  const neu=rs.filter(r=>r.isNew);
  const sum=x=>x.reduce((s,r)=>s+r.a+r.d,0);
- md+=`## ${g}\n\n- Modified upstream files: **${mod.length}** (${sum(mod)} changed lines). New files: **${neu.length}** (${sum(neu)} lines).\n\n`;
+ md+=`## ${g}\n\n- Modified upstream files: **${mod.length}** (${sum(mod)} changed lines). New files: **${neu.length}**.\n\n`;
  if(mod.length){
   md+="| Modified upstream file | + | - |\n|---|---:|---:|\n";
   for(const r of mod.slice(0,g.startsWith("Hooks")?60:30)) md+=`| ${r.p.replace("app/src/main/java/io/github/aedev/flow/","").replace("app/src/main/java/","")} | ${r.a} | ${r.d} |\n`;
