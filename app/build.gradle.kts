@@ -37,7 +37,7 @@ android {
 
     defaultConfig {
         applicationId = "io.github.chiehx0220.fathom"
-        minSdk = 28
+        minSdk = 26
         targetSdk = 36
         versionCode = 23
         versionName = "0.1.5"

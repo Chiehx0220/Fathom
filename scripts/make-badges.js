@@ -146,7 +146,7 @@ const BADGES = [
   { kind: 'lang', file: 'english', spec: { label: 'English', current: false } },
   { kind: 'lang', file: 'chinese-current', spec: { label: '繁體中文', current: true } },
   { kind: 'lang', file: 'chinese', spec: { label: '繁體中文', current: false } },
-  { kind: 'split', file: 'android', spec: { label: 'Android', value: '9+', icon: 'android' } },
+  { kind: 'split', file: 'android', spec: { label: 'Android', value: '8.0+', icon: 'android' } },
   { kind: 'split', file: 'release', spec: { label: 'Release', value: values.release, icon: 'rocket_launch' } },
   { kind: 'split', file: 'downloads', spec: { label: 'Downloads', value: compact(values.downloads), icon: 'download' } },
   { kind: 'split', file: 'license', spec: { label: 'License', value: 'GPL-3.0', icon: 'balance' } },
