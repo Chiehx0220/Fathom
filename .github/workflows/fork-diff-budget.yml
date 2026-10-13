@@ -36,3 +36,6 @@ jobs:
 
       - name: Compare with the budget
         run: node scripts/fork-diff.js --check
+
+      - name: Check that FORK-DIFF.md is current
+        run: node scripts/fork-diff.js --check-doc

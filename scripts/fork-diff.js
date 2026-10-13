@@ -35,8 +35,10 @@ if(process.argv.includes("--check")||process.argv.includes("--update-budget")){
  process.exit(0);
 }
 const sh=c=>execSync(c,{encoding:"utf8",maxBuffer:1<<26,stdio:["ignore","pipe","ignore"]});
-const num=sh("git diff upstream/main --numstat --no-renames -- app/src/main app/src/test build.gradle.kts gradle app/build.gradle.kts").trim().split("\n").filter(Boolean).map(l=>{const [a,d,p]=l.split("\t");return {a:+a||0,d:+d||0,p}});
-const isNew=p=>{try{sh(`git cat-file -e upstream/main:${p}`);return false}catch(e){return true}};
+// The same base as the budget: the document does not change when upstream moves ahead without a merge.
+const BASE=sh(`git merge-base HEAD ${UPSTREAM}`).trim();
+const num=sh(`git diff ${BASE} --numstat --no-renames -- app/src/main app/src/test build.gradle.kts gradle app/build.gradle.kts`).trim().split("\n").filter(Boolean).map(l=>{const [a,d,p]=l.split("\t");return {a:+a||0,d:+d||0,p}});
+const isNew=p=>{try{sh(`git cat-file -e ${BASE}:${p}`);return false}catch(e){return true}};
 const rows=num.map(r=>({...r,isNew:isNew(r.p)}));
 const area=p=>{
  if(/\/bilibili\//.test(p)||/Bilibili/.test(p)) return "Bilibili (native client, mappers, player/paging glue)";
@@ -51,7 +53,7 @@ const groups={};
 for(const r of rows){const g=area(r.p);(groups[g]=groups[g]||[]).push(r);}
 let md=`# Where this fork differs from upstream
 
-Generated from \`git diff upstream/main\`. Regenerate before a merge with:
+Generated from the diff to the last upstream commit this branch contains. Regenerate it after a merge with:
 
 \`\`\`
 node scripts/fork-diff.js > FORK-DIFF.md
@@ -70,7 +72,8 @@ in it). **New files** never conflict; they are ours alone.
 4. Rules that keep the surface small: new code goes in a new file and upstream files only get a call to it;
    no reformatting or import reordering of upstream files.
 5. \`node scripts/fork-diff.js --check\` compares the size of that surface with \`scripts/fork-diff-budget.json\`
-   and fails when it grew; \`--update-budget\` lowers the budget after a cleanup.
+   and fails when it grew; \`--update-budget\` lowers the budget after a cleanup. \`--check-doc\` fails when this
+   file is out of date.
 
 `;
 const order=["Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)","FlowNeuro (Chinese text handling)","Bilibili (native client, mappers, player/paging glue)","Local server (fork-only feature)","Build","Resources / strings","Tests"];
@@ -86,5 +89,10 @@ for(const g of order){
   if(mod.length>(g.startsWith("Hooks")?60:30)) md+=`| ... ${mod.length-(g.startsWith("Hooks")?60:30)} more, each small | | |\n`;
   md+="\n";
  }
+}
+if(process.argv.includes("--check-doc")){
+ const file=path.join(__dirname,"..","FORK-DIFF.md");
+ if(fs.existsSync(file)&&fs.readFileSync(file,"utf8")===md){console.log("FORK-DIFF.md is up to date.");process.exit(0);}
+ console.error("FORK-DIFF.md is out of date: run node scripts/fork-diff.js > FORK-DIFF.md");process.exit(1);
 }
 process.stdout.write(md);
