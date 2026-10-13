@@ -137,6 +137,7 @@ internal object LocalServerSource {
         nextPage: Page?,
     ): PlaylistPage {
         if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibili.playlist(context, playlistUrl, nextPage)
+        if (serviceId == 0) LocalServerYouTubePlaylist.page(context, playlistUrl, nextPage)?.let { return it }
         val extractor = NewPipe.getService(serviceId).getPlaylistExtractor(playlistUrl)
         val page = LocalServerMedia.fetchInitialOrPage(extractor, nextPage)
         val header = PlaylistHeader(extractor.name, extractor.linkHandler.url, extractor.uploaderName ?: "", extractor.streamCount)

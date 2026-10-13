@@ -5,6 +5,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import io.github.aedev.flow.data.repository.YouTubePlaylistRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionWatchedVideos
 import io.github.aedev.flow.data.video.VideoDownloadManager
@@ -32,6 +33,8 @@ interface LocalServerEntryPoint {
     fun downloadController(): DownloadController
 
     fun okHttpClient(): OkHttpClient
+
+    fun youTubePlaylistRepository(): YouTubePlaylistRepository
 }
 
 fun localServerEntryPoint(context: Context): LocalServerEntryPoint =

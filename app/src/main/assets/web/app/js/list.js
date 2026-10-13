@@ -308,7 +308,7 @@ FT.register('playlist', {
                             bookmark.classList.toggle('on', on);
                         }).catch(() => FT.toast('Could not change that'));
                     }, meta.isBookmarked ? 'on' : '', 'bookmark');
-                    return { items: body.videos, next: body.nextPage, extra: [h('div', { class: 'head' }, h('h1', {}, meta.name), h('span', { class: 'card-meta' }, [meta.uploaderName, meta.videoCount + ' videos'].filter(Boolean).join(' · ')), h('span', { class: 'grow' }), bookmark)] };
+                    return { items: body.videos, next: body.nextPage, extra: [h('div', { class: 'head' }, h('h1', {}, meta.name), h('span', { class: 'card-meta' }, [meta.uploaderName, meta.videoCount >= 0 ? meta.videoCount + ' videos' : ''].filter(Boolean).join(' · ')), h('span', { class: 'grow' }), bookmark)] };
                 }
                 return { items: body.videos, next: body.nextPage };
             },

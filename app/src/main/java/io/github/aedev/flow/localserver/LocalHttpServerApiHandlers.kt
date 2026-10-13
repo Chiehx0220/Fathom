@@ -325,7 +325,8 @@ internal fun ClientHandler.handleApiPlaylist(
         header.put("id", playlist.header.url)
         header.put("name", playlist.header.name)
         header.put("uploaderName", playlist.header.uploaderName)
-        header.put("videoCount", playlist.header.streamCount.coerceAtLeast(0))
+        // -1 when the source does not say; the page then leaves the count out
+        header.put("videoCount", playlist.header.streamCount.coerceAtLeast(-1))
         header.put("isBookmarked", dbHelper.nativeIsPlaylistBookmarked(playlistUrl))
         json.put("playlist", header)
         json.put("videos", ApiRenderer.infoItemsToJson(filterItems(playlist.items), serviceId))
