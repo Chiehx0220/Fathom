@@ -3,15 +3,13 @@
 </p>
 
 <p align="center">
-  <b>English</b> · <a href="README.zh-TW.md">繁體中文</a>
-</p>
-
-<p align="center">
-  A fork of <a href="https://github.com/A-EDev/Flow">Flow</a> by A-EDev
+  <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/lang/english-current-dark.svg"><img alt="English" src="Assets/badges/lang/english-current-light.svg" height="32"></picture>
+  <a href="README.zh-TW.md"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/lang/chinese-dark.svg"><img alt="繁體中文" src="Assets/badges/lang/chinese-light.svg" height="32"></picture></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/pill/get-github-dark.svg"><img alt="Get it on GitHub" src="Assets/badges/pill/get-github-light.svg" height="60"></picture></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22io.github.chiehx0220.fathom%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FChiehx0220%2FFathom%22%2C%22author%22%3A%22Chiehx0220%22%2C%22name%22%3A%22Fathom%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/pill/get-obtainium-dark.svg"><img alt="Get it on Obtainium" src="Assets/badges/pill/get-obtainium-light.svg" height="60"></picture></a>
 </p>
 
 <p align="center">
@@ -19,6 +17,7 @@
   <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/release-dark.svg"><img alt="Latest release" src="Assets/badges/split/release-light.svg" height="32"></picture></a>
   <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/downloads-dark.svg"><img alt="Downloads" src="Assets/badges/split/downloads-light.svg" height="32"></picture></a>
   <a href="License"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/license-dark.svg"><img alt="License: GPL-3.0" src="Assets/badges/split/license-light.svg" height="32"></picture></a>
+  <a href="#cert"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/signed-dark.svg"><img alt="Signed: SHA-256 certificate" src="Assets/badges/split/signed-light.svg" height="32"></picture></a>
   <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/tracking-dark.svg"><img alt="Tracking: none" src="Assets/badges/split/tracking-light.svg" height="32"></picture>
   <a href="https://github.com/Flow-Tube/Flow"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/fork-dark.svg"><img alt="Fork of Flow" src="Assets/badges/split/fork-light.svg" height="32"></picture></a>
 </p>
@@ -53,13 +52,13 @@
 
 | | Flow | Fathom |
 |---|:---:|:---:|
-| YouTube, FlowNeuro, SponsorBlock, downloads | ✅ | ✅ |
-| Bilibili search, playback, comments, danmaku, live rooms | ❌ | ✅ |
-| One recommender trained on both services | ❌ | ✅ |
-| Web page served by the phone, no desktop app | ❌ | ✅ |
-| Import and export NewPipe / PipePipe subscriptions | 🟡 | ✅ |
+| YouTube, FlowNeuro, SponsorBlock, downloads | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
+| Bilibili search, playback, comments, danmaku, live rooms | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
+| One recommender trained on both services | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
+| Web page served by the phone, no desktop app | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
+| Import and export NewPipe / PipePipe subscriptions | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="Partly" src="Assets/badges/mark/partial-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
 
-<sub>🟡 Flow can only import from NewPipe.</sub>
+<sub><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="Partly" src="Assets/badges/mark/partial-light.svg" height="14"></picture> Flow can only import from NewPipe.</sub>
 
 ## 🏗 How it fits together
 
@@ -123,6 +122,22 @@ Away from the keyboard? Steer a Fathom screen from your phone instead.
 - **Import** NewPipe or PipePipe subscription JSON. Bilibili channels and avatars come along.
 - **Export** the same JSON back to either app.
 
+<a id="cert"></a>
+
+## 🔏 Verify the download
+
+Every APK on the [releases page](https://github.com/Chiehx0220/Fathom/releases) is signed with the same key, and the release workflow refuses to publish one signed with any other. To check that a file is Fathom's, compare its signing certificate with this fingerprint using [AppVerifier](https://github.com/soupslurpr/AppVerifier) or `apksigner`:
+
+**Signing certificate SHA-256 fingerprint**
+
+`2E:35:71:C4:F5:21:F7:1C:65:50:42:D9:D9:6F:BD:11:C2:95:B7:4E:28:8E:2F:31:72:66:CD:61:93:21:74:EA`
+
+```bash
+apksigner verify --print-certs fathom.apk
+```
+
+Each release also carries `checksums.txt`, so `sha256sum -c checksums.txt` confirms a download is whole.
+
 ## 🛠 Build
 
 ```bash
@@ -131,7 +146,7 @@ cd Fathom
 ./gradlew assembleGithubDebug
 ```
 
-No signed releases yet. Variants: `foss` (no updater), `nightly` (installs beside debug).
+Signed APKs are on the [releases page](https://github.com/Chiehx0220/Fathom/releases), marked as pre-releases for now. Variants: `foss` (no updater), `nightly` (installs beside debug).
 
 ## 🧩 Under the hood
 

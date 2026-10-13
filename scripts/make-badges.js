@@ -5,8 +5,9 @@
 //   node scripts/make-badges.js                              read the values with `gh`
 //   node scripts/make-badges.js --release v0.1.5 --downloads 1200   use these values instead
 //
-// glyphs.json is Roboto Bold (Apache-2.0) and icons.json is Material Symbols Rounded (Apache-2.0) plus the
-// GitHub mark from Simple Icons (CC0), both cut down to what the badges use.
+// glyphs.json is Roboto Bold (Apache-2.0) with the four Noto Sans TC Bold characters the language chips use (OFL-1.1),
+// and icons.json is Material Symbols Rounded (Apache-2.0) plus the
+// GitHub and Obtainium marks from Simple Icons (CC0), both cut down to what the badges use.
 
 const fs = require('fs');
 const path = require('path');
@@ -19,8 +20,8 @@ const icons = JSON.parse(fs.readFileSync(path.join(__dirname, 'badges', 'icons.j
 const REPO = process.env.FATHOM_REPO || 'Chiehx0220/Fathom';
 
 const THEMES = {
-  light: { primary: '#3F6188', onPrimary: '#F7F9FF', container: '#AFD2FF', onContainer: '#23476D' },
-  dark: { primary: '#AFC9EB', onPrimary: '#28425E', container: '#3B5472', onContainer: '#D3E5FF' },
+  light: { primary: '#3F6188', onPrimary: '#F7F9FF', container: '#AFD2FF', onContainer: '#23476D', outline: '#73777F' },
+  dark: { primary: '#AFC9EB', onPrimary: '#28425E', container: '#3B5472', onContainer: '#D3E5FF', outline: '#8D9199' },
 };
 
 const num = (v) => String(Math.round(v * 100) / 100);
@@ -91,6 +92,28 @@ function pill({ small, big, icon: iconName }, t) {
   ].join(''));
 }
 
+// A language chip, 32 px high: filled with a check when it is the page being read, outlined when it links away.
+function chip({ label, current }, t) {
+  const H = 32;
+  const size = 14;
+  const baseline = (H + (font.capHeight * size) / font.unitsPerEm) / 2;
+  const lead = current ? 24 : 0;
+  const width = 14 + lead + textWidth(label, size) + 14;
+  const shape = current
+    ? `<rect width="${num(width)}" height="${H}" rx="16" fill="${t.primary}"/>`
+    : `<rect x="0.75" y="0.75" width="${num(width - 1.5)}" height="${H - 1.5}" rx="15.25" fill="none" stroke="${t.primary}" stroke-width="1.5"/>`;
+  return svg(width, H, label, [
+    shape,
+    current ? icon('check', 10, 7, 18, t.onPrimary) : '',
+    text(label, 14 + lead - (current ? 4 : 0), baseline, size, current ? t.onPrimary : t.primary),
+  ].join(''));
+}
+
+// A 24 px symbol for the comparison table.
+function mark({ icon: iconName, tone, label }, t) {
+  return svg(24, 24, label, icon(iconName, 0, 0, 24, t[tone]));
+}
+
 function flag(name) {
   const at = process.argv.indexOf(`--${name}`);
   return at > 0 ? process.argv[at + 1] : undefined;
@@ -115,10 +138,19 @@ const values = given.release && given.downloads ? { release: given.release, down
 
 const BADGES = [
   { kind: 'pill', file: 'get-github', spec: { small: 'Get it on', big: 'GitHub', icon: 'github' } },
+  { kind: 'pill', file: 'get-obtainium', spec: { small: 'Get it on', big: 'Obtainium', icon: 'obtainium' } },
+  { kind: 'mark', file: 'yes', spec: { icon: 'check_circle', tone: 'primary', label: 'Yes' } },
+  { kind: 'mark', file: 'no', spec: { icon: 'cancel', tone: 'outline', label: 'No' } },
+  { kind: 'mark', file: 'partial', spec: { icon: 'partial_circle', tone: 'primary', label: 'Partly' } },
+  { kind: 'lang', file: 'english-current', spec: { label: 'English', current: true } },
+  { kind: 'lang', file: 'english', spec: { label: 'English', current: false } },
+  { kind: 'lang', file: 'chinese-current', spec: { label: '繁體中文', current: true } },
+  { kind: 'lang', file: 'chinese', spec: { label: '繁體中文', current: false } },
   { kind: 'split', file: 'android', spec: { label: 'Android', value: '9+', icon: 'android' } },
   { kind: 'split', file: 'release', spec: { label: 'Release', value: values.release, icon: 'rocket_launch' } },
   { kind: 'split', file: 'downloads', spec: { label: 'Downloads', value: compact(values.downloads), icon: 'download' } },
   { kind: 'split', file: 'license', spec: { label: 'License', value: 'GPL-3.0', icon: 'balance' } },
+  { kind: 'split', file: 'signed', spec: { label: 'Signed', value: 'SHA-256', icon: 'verified' } },
   { kind: 'split', file: 'tracking', spec: { label: 'Tracking', value: 'none', icon: 'visibility_off' } },
   { kind: 'split', file: 'fork', spec: { label: 'Fork of', value: 'Flow', icon: 'fork_right' } },
 ];
@@ -126,7 +158,8 @@ const BADGES = [
 for (const { kind, file, spec } of BADGES) {
   fs.mkdirSync(path.join(OUT, kind), { recursive: true });
   for (const [name, theme] of Object.entries(THEMES)) {
-    const body = kind === 'pill' ? pill(spec, theme) : split(spec, theme);
+    const draw = { pill, split, lang: chip, mark }[kind];
+    const body = draw(spec, theme);
     fs.writeFileSync(path.join(OUT, kind, `${file}-${name}.svg`), body);
   }
 }

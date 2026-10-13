@@ -3,15 +3,13 @@
 </p>
 
 <p align="center">
-  <a href="README.md">English</a> · <b>繁體中文</b>
-</p>
-
-<p align="center">
-  衍生自 A-EDev 的 <a href="https://github.com/A-EDev/Flow">Flow</a>
+  <a href="README.md"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/lang/english-dark.svg"><img alt="English" src="Assets/badges/lang/english-light.svg" height="32"></picture></a>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/lang/chinese-current-dark.svg"><img alt="繁體中文" src="Assets/badges/lang/chinese-current-light.svg" height="32"></picture>
 </p>
 
 <p align="center">
   <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/pill/get-github-dark.svg"><img alt="Get it on GitHub" src="Assets/badges/pill/get-github-light.svg" height="60"></picture></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22io.github.chiehx0220.fathom%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FChiehx0220%2FFathom%22%2C%22author%22%3A%22Chiehx0220%22%2C%22name%22%3A%22Fathom%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/pill/get-obtainium-dark.svg"><img alt="Get it on Obtainium" src="Assets/badges/pill/get-obtainium-light.svg" height="60"></picture></a>
 </p>
 
 <p align="center">
@@ -19,6 +17,7 @@
   <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/release-dark.svg"><img alt="Latest release" src="Assets/badges/split/release-light.svg" height="32"></picture></a>
   <a href="https://github.com/Chiehx0220/Fathom/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/downloads-dark.svg"><img alt="Downloads" src="Assets/badges/split/downloads-light.svg" height="32"></picture></a>
   <a href="License"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/license-dark.svg"><img alt="License: GPL-3.0" src="Assets/badges/split/license-light.svg" height="32"></picture></a>
+  <a href="#cert"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/signed-dark.svg"><img alt="Signed: SHA-256 certificate" src="Assets/badges/split/signed-light.svg" height="32"></picture></a>
   <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/tracking-dark.svg"><img alt="Tracking: none" src="Assets/badges/split/tracking-light.svg" height="32"></picture>
   <a href="https://github.com/Flow-Tube/Flow"><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/split/fork-dark.svg"><img alt="Fork of Flow" src="Assets/badges/split/fork-light.svg" height="32"></picture></a>
 </p>
@@ -53,13 +52,13 @@
 
 | | Flow | Fathom |
 |---|:---:|:---:|
-| YouTube、FlowNeuro、SponsorBlock、下載 | ✅ | ✅ |
-| Bilibili 搜尋、播放、留言、彈幕、直播 | ❌ | ✅ |
-| 兩個平台共用同一個推薦引擎 | ❌ | ✅ |
-| 由手機提供的網頁版,不必裝桌面程式 | ❌ | ✅ |
-| 匯入、匯出 NewPipe / PipePipe 訂閱 | 🟡 | ✅ |
+| YouTube、FlowNeuro、SponsorBlock、下載 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
+| Bilibili 搜尋、播放、留言、彈幕、直播 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
+| 兩個平台共用同一個推薦引擎 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
+| 由手機提供的網頁版,不必裝桌面程式 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
+| 匯入、匯出 NewPipe / PipePipe 訂閱 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="Partly" src="Assets/badges/mark/partial-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
 
-<sub>🟡 Flow 僅支援從 NewPipe 匯入。</sub>
+<sub><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="部分支援" src="Assets/badges/mark/partial-light.svg" height="14"></picture> Flow 僅支援從 NewPipe 匯入。</sub>
 
 ## 🏗 運作方式
 
@@ -121,6 +120,22 @@
 - **匯入** NewPipe 或 PipePipe 的訂閱 JSON,Bilibili 頻道和頭像也會一起帶進來。
 - **匯出**成相同格式的 JSON,可以再匯回這兩個 App。
 
+<a id="cert"></a>
+
+## 🔏 驗證下載的檔案
+
+[Releases 頁面](https://github.com/Chiehx0220/Fathom/releases)上的每個 APK 都用同一把金鑰簽署,發布流程遇到其他金鑰簽的檔案會直接拒絕發布。想確認檔案真的是 Fathom 的,可以用 [AppVerifier](https://github.com/soupslurpr/AppVerifier) 或 `apksigner`,把簽署憑證與下面的指紋比對:
+
+**簽署憑證 SHA-256 指紋**
+
+`2E:35:71:C4:F5:21:F7:1C:65:50:42:D9:D9:6F:BD:11:C2:95:B7:4E:28:8E:2F:31:72:66:CD:61:93:21:74:EA`
+
+```bash
+apksigner verify --print-certs fathom.apk
+```
+
+每個版本也附有 `checksums.txt`,用 `sha256sum -c checksums.txt` 可以確認下載的檔案完整。
+
 ## 🛠 建置
 
 ```bash
@@ -129,7 +144,7 @@ cd Fathom
 ./gradlew assembleGithubDebug
 ```
 
-目前尚未提供已簽署的發行版。可選的建置變體:`foss`(不含自動更新)、`nightly`(可與 debug 版並存安裝)。
+已簽署的 APK 放在 [Releases 頁面](https://github.com/Chiehx0220/Fathom/releases),目前都標為預發行版。可選的建置變體:`foss`(不含自動更新)、`nightly`(可與 debug 版並存安裝)。
 
 ## 🧩 程式碼結構
 
