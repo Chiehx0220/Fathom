@@ -1,0 +1,51 @@
+name: Fathom CI
+
+# Formatting, unit tests for both flavors and a compile of the instrumentation tests on every push and pull
+# request. Upstream's "Android CI/CD" stays disabled here: it builds and publishes with Flow's signing keys.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Format, test, compile
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Check Kotlin formatting
+        run: |
+          chmod +x gradlew
+          ./gradlew spotlessCheck --build-cache --stacktrace
+
+      - name: Run unit tests
+        run: ./gradlew :app:testGithubDebugUnitTest :app:testFossDebugUnitTest --max-workers=1 --build-cache --stacktrace
+
+      # Not executed in CI, but breakage there otherwise lands on main unnoticed.
+      - name: Compile instrumentation tests
+        run: ./gradlew :app:compileGithubDebugAndroidTestKotlin --build-cache --stacktrace
