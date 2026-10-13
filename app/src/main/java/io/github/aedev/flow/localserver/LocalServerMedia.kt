@@ -48,7 +48,7 @@ object LocalServerMedia {
     internal fun serviceIdOfUrl(url: String): Int = runCatching { NewPipe.getServiceByUrl(url).serviceId }.getOrDefault(0)
 
     internal fun fetchChannelUploads(channelUrl: String): List<InfoItem> =
-        fetchChannelUploads(NewPipe.getServiceByUrl(channelUrl), channelUrl)
+        LocalServerYouTubeChannel.uploads(channelUrl) ?: fetchChannelUploads(NewPipe.getServiceByUrl(channelUrl), channelUrl)
 
     internal fun fetchChannelUploads(
         service: StreamingService,

@@ -91,6 +91,7 @@ internal object LocalServerSource {
         nextPage: Page?,
     ): ChannelPage {
         if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibili.channel(context, channelUrl, tab, nextPage)
+        if (serviceId == 0) LocalServerYouTubeChannel.videos(channelUrl, tab, sort, nextPage)?.let { return it }
 
         val service = NewPipe.getService(serviceId)
         val channelExtractor = service.getChannelExtractor(channelUrl)
