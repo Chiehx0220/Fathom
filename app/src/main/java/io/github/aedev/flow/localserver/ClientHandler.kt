@@ -3,7 +3,6 @@ package io.github.aedev.flow.localserver
 import io.github.aedev.flow.bilibili.BilibiliLink
 import io.github.aedev.flow.data.recommendation.InteractionType
 import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
@@ -114,7 +113,7 @@ internal class ClientHandler(
                                     subscribedAvatarUrl.orEmpty(),
                                 )
                             } else {
-                                LocalServerMedia.fetchChannelUploads(NewPipe.getServiceByUrl(url), url)
+                                LocalServerMedia.fetchChannelUploads(url)
                             }
                         if (!subscribedAvatarUrl.isNullOrEmpty()) {
                             for (upload in uploads) {

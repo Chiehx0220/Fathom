@@ -4,6 +4,7 @@ import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.ListExtractor
 import org.schabi.newpipe.extractor.ListExtractor.InfoItemsPage
+import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelExtractor
@@ -42,6 +43,12 @@ object LocalServerMedia {
                 .fromUrl(url)
             ?: url
     }
+
+    /** The service that owns [url]; YouTube's id when none does. */
+    internal fun serviceIdOfUrl(url: String): Int = runCatching { NewPipe.getServiceByUrl(url).serviceId }.getOrDefault(0)
+
+    internal fun fetchChannelUploads(channelUrl: String): List<InfoItem> =
+        fetchChannelUploads(NewPipe.getServiceByUrl(channelUrl), channelUrl)
 
     internal fun fetchChannelUploads(
         service: StreamingService,

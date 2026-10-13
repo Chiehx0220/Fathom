@@ -7,7 +7,6 @@ import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 
 /**
@@ -46,7 +45,7 @@ fun HistoryDbHelper.nativeAddSubscription(
         if (BilibiliLink.isBilibili(channelUrl)) {
             LocalServerBilibili.serviceId
         } else {
-            runCatching { NewPipe.getServiceByUrl(channelUrl).serviceId }.getOrDefault(0)
+            LocalServerMedia.serviceIdOfUrl(channelUrl)
         }
     runBlocking {
         subscriptionRepository().subscribeOrUpdateInfo(channelId, channelName ?: "", channelAvatar ?: "", serviceId)
