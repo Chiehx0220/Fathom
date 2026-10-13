@@ -1,9 +1,8 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliCdn
+import io.github.aedev.flow.player.datasource.GoogleVideoRequestPolicy
 import io.github.aedev.flow.player.error.StreamDenialClassifier
-import io.github.aedev.flow.player.error.StreamDenialKind
-import io.github.aedev.flow.player.stream.ClientGateTracker
 import io.github.aedev.flow.utils.youtubeVideoIdFromUrl
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.stream.AudioStream
@@ -114,6 +113,17 @@ private fun cdnUserAgent(
 ): String {
     val default = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     if (!directUrl.contains("googlevideo.com")) return default
+    return GoogleVideoRequestPolicy.userAgent(
+        StreamDenialClassifier.clientOf(directUrl),
+        cachedOrGuessedUserAgent(directUrl, cacheKey, default),
+    )
+}
+
+private fun cachedOrGuessedUserAgent(
+    directUrl: String,
+    cacheKey: String,
+    default: String,
+): String {
     LocalServerCaches.streamUaCache.get(cacheKey)?.let { return it }
     // No InnerTube-sourced User-Agent cached (older cache entry, or extraction fell back to NewPipe) -
     // guess it back out of the URL's own client marker.
@@ -140,32 +150,23 @@ private fun cdnUserAgent(
 }
 
 /**
- * GVS refused [directUrl] (403/404/410). Reads why from the URL itself, remembers it so the ladder
- * skips a gated/refused client next time, and drops every cache tied to this video so the retry
- * re-extracts instead of handing back the same denied URL.
+ * GVS refused [directUrl] and no same-file replacement could be recorded: moves a web-client video to TV_TIZEN
+ * and drops every cache tied to this video so the retry re-extracts instead of handing back the same URL.
  */
-private fun reportStreamDenial(
+private fun dropAfterDenial(
     directUrl: String,
     cacheKey: String,
     videoId: String?,
 ) {
-    val kind = StreamDenialClassifier.classify(directUrl)
     val client = StreamDenialClassifier.clientOf(directUrl)
-    serverLog("CDN denial kind=$kind client=$client url=$directUrl")
-    // MWEB/WEB direct URLs wall at ~60 s (the app plays them over SABR); gating would disable them there too
-    val sabrClient = client?.uppercase() in SABR_FAMILY_CLIENTS
-    when (kind) {
-        StreamDenialKind.ATTESTATION_GATED -> {
-            if (!sabrClient) ClientGateTracker.reportGated(client)
+    serverLog("CDN denial kind=${StreamDenialClassifier.classify(directUrl)} client=$client url=$directUrl")
+    videoId?.let {
+        if (client?.uppercase() in LocalServerYouTubeStreams.WEB_CLIENTS) {
+            LocalServerYouTubeStreams.markWalled(it)
+        } else {
+            LocalServerYouTubeStreams.invalidate(it)
         }
-
-        StreamDenialKind.TOKEN_REJECTED -> {
-            if (!sabrClient) ClientGateTracker.reportRefused(client)
-        }
-
-        else -> {}
     }
-    videoId?.let { if (sabrClient) LocalServerYouTubeStreams.markWalled(it) else LocalServerYouTubeStreams.invalidate(it) }
     LocalServerCaches.streamUrlCache.remove(cacheKey)
     LocalServerCaches.streamUaCache.remove(cacheKey)
 }
@@ -247,14 +248,19 @@ internal fun ClientHandler.handleStreamProxy(
 
     serverLog("Proxying stream from: $directUrl")
 
+    directUrl = LocalServerYouTubeStreams.swapped(directUrl)
     var response = fetchFromCdn(directUrl, cacheKey, rangeHeader)
     if (response.code !in 200..299 && directUrl.contains("googlevideo.com")) {
-        serverLog("CDN status=${response.code} on first attempt, re-extracting and retrying once")
+        serverLog("CDN status=${response.code} on first attempt, retrying once")
         response.close()
-        reportStreamDenial(directUrl, cacheKey, videoId)
-        // A fresh URL to retry, or - when re-extraction found nothing better - the same one again, so
-        // the response forwarded below is always a live, unconsumed one rather than the closed one above.
-        directUrl = resolve(useCache = false) ?: directUrl
+        if (LocalServerYouTubeStreams.swapRefused(directUrl)) {
+            directUrl = LocalServerYouTubeStreams.swapped(directUrl)
+        } else {
+            dropAfterDenial(directUrl, cacheKey, videoId)
+            // A fresh URL to retry, or - when re-extraction found nothing better - the same one again, so
+            // the response forwarded below is always a live, unconsumed one rather than the closed one above.
+            directUrl = resolve(useCache = false) ?: directUrl
+        }
         serverLog("Retrying stream from: $directUrl")
         response = fetchFromCdn(directUrl, cacheKey, rangeHeader)
     }
@@ -344,8 +350,6 @@ internal fun ClientHandler.handleStreamProxy(
     }
 }
 
-private val SABR_FAMILY_CLIENTS = setOf("MWEB", "WEB")
-
 internal fun fetchFromCdn(
     directUrl: String,
     cacheKey: String,
@@ -356,6 +360,12 @@ internal fun fetchFromCdn(
             .Builder()
             .url(directUrl)
             .header("User-Agent", cdnUserAgent(directUrl, cacheKey))
+
+    if (directUrl.contains("googlevideo.com")) {
+        StreamDenialClassifier.clientOf(directUrl)?.let { client ->
+            GoogleVideoRequestPolicy.headers(client).forEach { (name, value) -> reqBuilder.header(name, value) }
+        }
+    }
 
     if (BilibiliCdn.isCdnUrl(directUrl) || directUrl.contains("bilibili.com")) {
         BilibiliCdn.headers().forEach { (name, value) -> reqBuilder.header(name, value) }

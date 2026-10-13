@@ -1,6 +1,17 @@
+@file:OptIn(UnstableApi::class)
+
 package io.github.aedev.flow.localserver
 
+import android.net.Uri
 import android.util.Log
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSpec
+import io.github.aedev.flow.innertube.models.response.PlayerResponse
+import io.github.aedev.flow.player.datasource.RefusedStreamSwapper
+import io.github.aedev.flow.player.datasource.StreamSwapTable
+import io.github.aedev.flow.player.error.StreamDenialClassifier
+import io.github.aedev.flow.player.error.StreamDenialKind
+import io.github.aedev.flow.player.stream.ClientGateTracker
 import io.github.aedev.flow.player.stream.InnerTubeStreamBridge
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
 import io.github.aedev.flow.player.stream.TizenStreamResolver
@@ -60,14 +71,51 @@ internal object LocalServerYouTubeStreams {
             Log.w(TAG, "extract($videoId) gave no answer in ${EXTRACTION_TIMEOUT_MS}ms")
             return null
         }
+        result?.let { swapper.register(videoId, (it.videoFormats + it.audioFormats).map { format -> format.url }) }
         extractionCache[videoId] = CachedExtraction(result, System.currentTimeMillis() + EXTRACTION_TTL_MS)
         extractionCache.entries.removeIf { it.value.expiresAtMs < System.currentTimeMillis() }
         return result
     }
 
     // MWEB/WEB direct URLs wall at ~60 s (the rest is SABR, unsupported here); TV_TIZEN is not walled
-    private val WEB_CLIENTS = setOf("MWEB", "WEB")
+    val WEB_CLIENTS = setOf("MWEB", "WEB")
     private val walled: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
+    // The player's own swap: a refused URL is reopened at the byte-identical file of a source that still serves it.
+    private val swapTable = StreamSwapTable()
+    private val swapper = RefusedStreamSwapper(swapTable, reportDenied = ::reportDenied, resolve = ::replacementsFor)
+
+    /** Classifies a refused [url] and, like the player, demotes the client that minted it; MWEB/WEB are left alone here. */
+    private fun reportDenied(url: String?): StreamDenialKind =
+        if (StreamDenialClassifier.clientOf(url)?.uppercase() in WEB_CLIENTS) {
+            StreamDenialClassifier.classify(url)
+        } else {
+            ClientGateTracker.reportDenied(url)
+        }
+
+    private suspend fun replacementsFor(
+        videoId: String,
+        kind: StreamDenialKind,
+    ): List<PlayerResponse.StreamingData.Format>? {
+        val result =
+            when (kind) {
+                StreamDenialKind.URL_EXPIRED -> InnerTubeVideoStreamExtractor.extract(videoId)
+                else -> TizenStreamResolver.resolve(videoId)
+            } ?: return null
+        return result.videoFormats + result.audioFormats
+    }
+
+    /** The URL that serves [url]'s file once a swap is recorded for it, else [url]. */
+    fun swapped(url: String): String = swapTable.rewrite(url) ?: url
+
+    /** True when a replacement for the refused [url] is now recorded; the caller then fetches [swapped]. */
+    fun swapRefused(url: String): Boolean {
+        if (swapTable.videoFor(url) == null) {
+            reportDenied(url)
+            return false
+        }
+        return swapper.onRefused(DataSpec(Uri.parse(url)), url)
+    }
 
     /** A web client's URL for [videoId] was refused: it is served from TV_TIZEN from now on. */
     fun markWalled(videoId: String) {
