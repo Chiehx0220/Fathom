@@ -1,6 +1,7 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
+import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.InteractionType
@@ -27,6 +28,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
@@ -335,9 +337,9 @@ fun HistoryDbHelper.reportFlowNeuroInteraction(
 }
 
 /**
- * Related videos via `PlayerRelatedVideosPolicy`, same as native's watch page - never raw
- * `StreamInfo.relatedItems`. `primary` is the extractor's own list (no network call); falls back
- * to `getRelatedCandidates()` (InnerTube `/next`) only if `primary` sanitizes to empty.
+ * Related videos via `PlayerRelatedVideosPolicy`, in the order the app's watch page uses: InnerTube's `/next`
+ * first, and the extractor's own list (no network call) only when that gives nothing. Never raw
+ * `StreamInfo.relatedItems`. A Bilibili video keeps the extractor's list, as YouTube's feed knows nothing of it.
  */
 fun HistoryDbHelper.nativeRelatedVideos(
     info: StreamInfo,
@@ -346,17 +348,24 @@ fun HistoryDbHelper.nativeRelatedVideos(
     val videoId = LocalServerMedia.getVideoId(info.url)
     val repo = youTubeRepository()
     val shortsEnabled = !nativeHideShorts()
-    val primary = repo.getRelatedVideosFromStreamInfo(info)
-    val sanitizedPrimary = PlayerRelatedVideosPolicy.sanitize(videoId, primary, shortsEnabled)
-    val selected =
-        if (sanitizedPrimary.isNotEmpty()) {
-            sanitizedPrimary
+    val fromStreamInfo = repo.getRelatedVideosFromStreamInfo(info)
+    val fromInnerTube =
+        if (serviceId.isYouTubeServiceId) {
+            runBlocking {
+                runCatching { withTimeoutOrNull(RELATED_TIMEOUT_MS) { repo.getRelatedCandidates(videoId) } }.getOrNull().orEmpty()
+            }
         } else {
-            val fallback =
-                runBlocking {
-                    runCatching { repo.getRelatedCandidates(videoId) }.getOrDefault(emptyList())
-                }
-            PlayerRelatedVideosPolicy.select(videoId, primary, fallback, current = emptyList(), shortsEnabled = shortsEnabled)
+            emptyList()
         }
+    val selected =
+        PlayerRelatedVideosPolicy.select(
+            videoId,
+            primary = fromInnerTube,
+            fallback = fromStreamInfo,
+            current = emptyList(),
+            shortsEnabled = shortsEnabled,
+        )
     return selected.map { it.toStreamInfoItem(serviceId) }
 }
+
+private const val RELATED_TIMEOUT_MS = 10_000L
