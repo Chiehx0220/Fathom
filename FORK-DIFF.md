@@ -17,22 +17,22 @@ in it). **New files** never conflict; they are ours alone.
 3. After a merge, compile (`gradlew.bat compileGithubNightlyKotlin`). The likely breakage is in the
    "Hooks in upstream files" group below, not in the Bilibili or local server files.
 4. Rules that keep the surface small: new code goes in a new file and upstream files only get a call to it;
-   no reformatting or import reordering of upstream files.
+   no reformatting or import reordering of upstream files. The formatter only checks files changed since its
+   ratchet commit, so an upstream file it has never seen would be reformatted by our edit: list it in
+   `scripts/spotless-keep-format.txt` and keep upstream's text.
 5. `node scripts/fork-diff.js --check` compares the size of that surface with `scripts/fork-diff-budget.json`
    and fails when it grew; `--update-budget` lowers the budget after a cleanup. `--check-doc` fails when this
    file is out of date.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **125** (1777 changed lines). New files: **238** (6942 lines).
+- Modified upstream files: **125** (1612 changed lines). New files: **238** (6942 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | ui/screens/home/chips/HomeChipFeeds.kt | 59 | 38 |
-| ui/tv/components/TvNavRail.kt | 51 | 45 |
 | data/local/BackupRepository.kt | 59 | 20 |
 | ui/screens/home/HomeViewModel.kt | 60 | 9 |
-| ui/tv/screens/TvSettingsScreen.kt | 38 | 25 |
 | player/EnhancedPlayerManager.kt | 52 | 2 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
 | ui/screens/home/HomeFeedSources.kt | 42 | 5 |
@@ -59,7 +59,6 @@ in it). **New files** never conflict; they are ours alone.
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
 | utils/ShareVideo.kt | 14 | 7 |
 | player/error/VideoErrorMapper.kt | 20 | 0 |
-| data/local/entity/VideoEntity.kt | 10 | 9 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 16 | 3 |
 | ui/components/shared/quickactions/QuickActionsViewModel.kt | 14 | 3 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
@@ -86,8 +85,11 @@ in it). **New files** never conflict; they are ours alone.
 | ui/FlowNavigation.kt | 5 | 5 |
 | ui/screens/channel/ChannelCommunityController.kt | 9 | 1 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
+| data/local/entity/VideoEntity.kt | 6 | 3 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
 | ui/AppHooks.kt | 4 | 5 |
+| ui/screens/player/PlaybackLoadController.kt | 8 | 1 |
+| sync/merge/CollectionMergers.kt | 4 | 4 |
 | ... 65 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
@@ -109,11 +111,12 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Build
 
-- Modified upstream files: **1** (15 changed lines). New files: **0** (0 lines).
+- Modified upstream files: **2** (16 changed lines). New files: **0** (0 lines).
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | app/build.gradle.kts | 11 | 4 |
+| build.gradle.kts | 1 | 0 |
 
 ## Resources / strings
 

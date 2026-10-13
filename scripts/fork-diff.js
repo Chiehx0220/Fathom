@@ -70,7 +70,9 @@ in it). **New files** never conflict; they are ours alone.
 3. After a merge, compile (\`gradlew.bat compileGithubNightlyKotlin\`). The likely breakage is in the
    "Hooks in upstream files" group below, not in the Bilibili or local server files.
 4. Rules that keep the surface small: new code goes in a new file and upstream files only get a call to it;
-   no reformatting or import reordering of upstream files.
+   no reformatting or import reordering of upstream files. The formatter only checks files changed since its
+   ratchet commit, so an upstream file it has never seen would be reformatted by our edit: list it in
+   \`scripts/spotless-keep-format.txt\` and keep upstream's text.
 5. \`node scripts/fork-diff.js --check\` compares the size of that surface with \`scripts/fork-diff-budget.json\`
    and fails when it grew; \`--update-budget\` lowers the budget after a cleanup. \`--check-doc\` fails when this
    file is out of date.

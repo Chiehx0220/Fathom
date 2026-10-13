@@ -1,0 +1,6 @@
+# Upstream files that upstream has not touched since its formatter was introduced, so they are not in its
+# formatter's style. They keep upstream's text so the fork's edit stays a few lines; spotless skips them.
+app/src/main/java/io/github/aedev/flow/ui/tv/components/TvNavRail.kt
+app/src/main/java/io/github/aedev/flow/ui/tv/screens/TvSettingsScreen.kt
+app/src/main/java/io/github/aedev/flow/data/local/entity/VideoEntity.kt
+app/src/main/java/io/github/aedev/flow/data/local/entity/HomeFeedCacheEntity.kt

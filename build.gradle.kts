@@ -38,6 +38,7 @@ spotless {
         targetExclude(
             "**/build/**",
             "**/generated/**",
+            *file("scripts/spotless-keep-format.txt").readLines().filter { it.isNotBlank() && !it.startsWith("#") }.toTypedArray(),
         )
         ktlint("1.8.0").editorConfigOverride(ktlintConfig)
     }
