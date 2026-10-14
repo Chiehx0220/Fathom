@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Assets/fathom-banner.png" alt="Fathom: YouTube + Bilibili. One feed. Zero tracking.">
+  <img src="Assets/fathom-banner.png" alt="Fathom: Your phone, your server, your feed.">
 </p>
 
 <p align="center">
@@ -26,14 +26,16 @@
 
 <table>
   <tr>
-    <td width="33%"><b>📺 Two services, one app</b><br>YouTube and Bilibili share one search, one feed and one library.</td>
-    <td width="33%"><b>🧠 Recommends on the phone</b><br>FlowNeuro learns from both services. Nothing leaves the device.</td>
-    <td width="33%"><b>🔒 Nothing to sign up for</b><br>No account, no ads, no tracking.</td>
+    <td width="50%" valign="top"><b>🌐 Your phone is the server</b><br>Open it in any browser on your Wi-Fi. Nothing to install.</td>
+    <td width="50%" valign="top"><b>📱 Your phone is the remote</b><br>Arrow pad, touchpad, quality, speed and voice search.</td>
   </tr>
   <tr>
-    <td><b>🎬 Native Bilibili</b><br>Search, playback, comments, danmaku and subscriptions. No web view.</td>
-    <td><b>📡 Bilibili live rooms</b><br>Watch live streams with live chat, in the app and on the web page.</td>
-    <td><b>🌐 Your phone is the server</b><br>Open it from any browser on your Wi-Fi, and steer it with your phone as a remote. No desktop app to install.</td>
+    <td width="50%" valign="top"><b>🎬 Native Bilibili</b><br>Search, playback, comments, danmaku and live rooms. No web view.</td>
+    <td width="50%" valign="top"><b>🧠 Recommends on the phone</b><br>FlowNeuro learns on the device. Nothing leaves it.</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><b>🧩 Everything from Flow</b><br>YouTube, SponsorBlock, DeArrow and downloads.</td>
+    <td width="50%" valign="top"><b>🔒 Nothing to sign up for</b><br>No account, no ads, no tracking.</td>
   </tr>
 </table>
 
@@ -41,10 +43,10 @@
 
 <table>
   <tr>
-    <td width="25%" align="center"><img src="Assets/screenshots/home.png" alt="Home feed mixing YouTube and Bilibili"><br><sub>One feed for YouTube and Bilibili</sub></td>
-    <td width="25%" align="center"><img src="Assets/screenshots/watch.png" alt="Watch page"><br><sub>Watch page</sub></td>
-    <td width="25%" align="center"><img src="Assets/screenshots/live.png" alt="Bilibili live room"><br><sub>Bilibili live with danmaku</sub></td>
-    <td width="25%" align="center"><img src="Assets/screenshots/remote.png" alt="Remote control screen"><br><sub>Phone as a remote control</sub></td>
+    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/home.png" alt="Home feed mixing YouTube and Bilibili"><br><sub>One feed for YouTube and Bilibili</sub></td>
+    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/watch.png" alt="Watch page"><br><sub>Watch page</sub></td>
+    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/live.png" alt="Bilibili live room"><br><sub>Bilibili live with danmaku</sub></td>
+    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/remote.png" alt="Remote control screen"><br><sub>Phone as a remote control</sub></td>
   </tr>
 </table>
 
@@ -53,9 +55,8 @@
 | | Flow | Fathom |
 |---|:---:|:---:|
 | YouTube, FlowNeuro, SponsorBlock, downloads | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-| Bilibili search, playback, comments, danmaku, live rooms | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-| One recommender trained on both services | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
 | Web page served by the phone, no desktop app | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
+| Bilibili search, playback, comments, danmaku, live rooms | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
 | Import and export NewPipe / PipePipe subscriptions | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="Partly" src="Assets/badges/mark/partial-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
 
 <sub><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="Partly" src="Assets/badges/mark/partial-light.svg" height="14"></picture> Flow can only import from NewPipe.</sub>
@@ -65,24 +66,6 @@
 <p align="center">
   <img src="Assets/how-it-works.svg" alt="How Fathom fits together" width="90%">
 </p>
-
-## 🧠 FlowNeuro
-
-Every recommendation comes from **FlowNeuro**, A-EDev's on-device engine from Flow.
-
-- Learns from watches, skips, likes, searches, and how long you stay
-- Spots when you're bored of a topic and mixes in something new
-- Shows exactly what it knows about you, and lets you edit, export, or wipe it
-
-**What Fathom adds:** Bilibili watches count toward the same profile as YouTube's, and a filter of Chinese filler words (我们, 这个, 大家 and the like) keeps them from showing up as topics. The engine itself is Flow's.
-
-## 🎬 Bilibili, natively
-
-No web view. A Kotlin client talks to Bilibili's web API directly.
-
-- Search, channels (uploads, series, seasons), playback, quality, multi-part videos
-- Comments and danmaku, the comments that scroll across the video
-- Subscriptions, history, likes and playlists, alongside YouTube's
 
 ## 🌐 Local web server
 
@@ -116,6 +99,24 @@ Away from the keyboard? Steer a Fathom screen from your phone instead.
 - Playback controls, and shortcuts to Subscriptions and Library
 - Search by typing or by voice
 - A YouTube / Bilibili switch
+
+## 🎬 Bilibili, natively
+
+No web view. A Kotlin client talks to Bilibili's web API directly.
+
+- Search, channels (uploads, series, seasons), playback, quality, multi-part videos
+- Comments and danmaku, the comments that scroll across the video
+- Subscriptions, history, likes and playlists, alongside YouTube's
+
+## 🧠 FlowNeuro
+
+Every recommendation comes from **FlowNeuro**, A-EDev's on-device engine from Flow.
+
+- Learns from watches, skips, likes, searches, and how long you stay
+- Spots when you're bored of a topic and mixes in something new
+- Shows exactly what it knows about you, and lets you edit, export, or wipe it
+
+**What Fathom adds:** Bilibili watches count toward the same profile as YouTube's, and a filter of Chinese filler words (我们, 这个, 大家 and the like) keeps them from showing up as topics. The engine itself is Flow's.
 
 ## 🔁 Bring your data
 

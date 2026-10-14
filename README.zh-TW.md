@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Assets/fathom-banner.png" alt="Fathom:YouTube + Bilibili,同一個首頁,零追蹤">
+  <img src="Assets/fathom-banner.png" alt="Fathom:你的手機、你的伺服器、你的動態。">
 </p>
 
 <p align="center">
@@ -26,14 +26,16 @@
 
 <table>
   <tr>
-    <td width="33%"><b>📺 兩個平台,一個 App</b><br>YouTube 與 Bilibili 共用同一個搜尋、首頁和媒體庫。</td>
-    <td width="33%"><b>🧠 在手機上推薦</b><br>FlowNeuro 同時學習兩邊的觀看習慣,資料不會離開裝置。</td>
-    <td width="33%"><b>🔒 免註冊</b><br>免登入、無廣告、不追蹤。</td>
+    <td width="50%" valign="top"><b>🌐 手機就是伺服器</b><br>同一個 Wi-Fi 下任何瀏覽器都能開，電腦不用裝程式。</td>
+    <td width="50%" valign="top"><b>📱 手機就是遙控器</b><br>方向鍵、觸控板、畫質、倍速與語音搜尋。</td>
   </tr>
   <tr>
-    <td><b>🎬 原生 Bilibili</b><br>搜尋、播放、留言、彈幕、訂閱,不是內嵌網頁。</td>
-    <td><b>📡 Bilibili 直播</b><br>可看直播與即時聊天,App 和網頁版都支援。</td>
-    <td><b>🌐 手機就是伺服器</b><br>同一個 Wi-Fi 下任何瀏覽器都能開,還能用手機當遙控器,電腦不用裝程式。</td>
+    <td width="50%" valign="top"><b>🎬 原生 Bilibili</b><br>搜尋、播放、留言、彈幕與直播間，不是內嵌網頁。</td>
+    <td width="50%" valign="top"><b>🧠 在手機上推薦</b><br>FlowNeuro 在裝置上學習，資料不會離開。</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><b>🧩 Flow 的功能都在</b><br>YouTube、SponsorBlock、DeArrow 與下載。</td>
+    <td width="50%" valign="top"><b>🔒 免註冊</b><br>免登入、無廣告、不追蹤。</td>
   </tr>
 </table>
 
@@ -41,10 +43,10 @@
 
 <table>
   <tr>
-    <td width="25%" align="center"><img src="Assets/screenshots/home.png" alt="混合 YouTube 與 Bilibili 的首頁"><br><sub>YouTube 與 Bilibili 同一個首頁</sub></td>
-    <td width="25%" align="center"><img src="Assets/screenshots/watch.png" alt="播放頁"><br><sub>播放頁</sub></td>
-    <td width="25%" align="center"><img src="Assets/screenshots/live.png" alt="Bilibili 直播間"><br><sub>Bilibili 直播與彈幕</sub></td>
-    <td width="25%" align="center"><img src="Assets/screenshots/remote.png" alt="遙控器畫面"><br><sub>手機變遙控器</sub></td>
+    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/home.png" alt="混合 YouTube 與 Bilibili 的首頁"><br><sub>YouTube 與 Bilibili 同一個首頁</sub></td>
+    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/watch.png" alt="播放頁"><br><sub>播放頁</sub></td>
+    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/live.png" alt="Bilibili 直播間"><br><sub>Bilibili 直播與彈幕</sub></td>
+    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/remote.png" alt="遙控器畫面"><br><sub>手機變遙控器</sub></td>
   </tr>
 </table>
 
@@ -53,9 +55,8 @@
 | | Flow | Fathom |
 |---|:---:|:---:|
 | YouTube、FlowNeuro、SponsorBlock、下載 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-| Bilibili 搜尋、播放、留言、彈幕、直播 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-| 兩個平台共用同一個推薦引擎 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
 | 由手機提供的網頁版,不必裝桌面程式 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
+| Bilibili 搜尋、播放、留言、彈幕、直播 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
 | 匯入、匯出 NewPipe / PipePipe 訂閱 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="Partly" src="Assets/badges/mark/partial-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
 
 <sub><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="部分支援" src="Assets/badges/mark/partial-light.svg" height="14"></picture> Flow 僅支援從 NewPipe 匯入。</sub>
@@ -65,24 +66,6 @@
 <p align="center">
   <img src="Assets/how-it-works.zh-TW.svg" alt="Fathom 的運作方式" width="90%">
 </p>
-
-## 🧠 FlowNeuro
-
-所有推薦都由 **FlowNeuro** 產生。它是 A-EDev 為 Flow 開發的推薦引擎,直接在手機上運算。
-
-- 從你的觀看、跳過、按讚、搜尋和停留時間學習喜好
-- 發現你對某個主題看膩了,就改推其他內容
-- 它記錄了哪些關於你的資料,你都看得到,並且能自行編輯、匯出或一鍵清除
-
-**Fathom 新增的部分:** 在 Bilibili 看的內容會和 YouTube 一起計入同一份個人檔案,另外加了一份中文虛詞過濾表(我們、這個、大家等),避免這些詞被當成主題。推薦引擎本身是 Flow 的。
-
-## 🎬 原生 Bilibili
-
-不是內嵌網頁。由 Kotlin 寫成的用戶端直接呼叫 Bilibili 的網頁 API。
-
-- 搜尋、頻道(投稿、系列、合集)、播放、畫質切換、多分 P
-- 留言與彈幕
-- 訂閱、觀看紀錄、按讚和播放清單,與 YouTube 並列管理
 
 ## 🌐 本地網頁伺服器
 
@@ -114,6 +97,24 @@
 - 播放控制,以及訂閱、媒體庫的捷徑
 - 可用打字或語音搜尋
 - 能切換 YouTube 與 Bilibili
+
+## 🎬 原生 Bilibili
+
+不是內嵌網頁。由 Kotlin 寫成的用戶端直接呼叫 Bilibili 的網頁 API。
+
+- 搜尋、頻道(投稿、系列、合集)、播放、畫質切換、多分 P
+- 留言與彈幕
+- 訂閱、觀看紀錄、按讚和播放清單,與 YouTube 並列管理
+
+## 🧠 FlowNeuro
+
+所有推薦都由 **FlowNeuro** 產生。它是 A-EDev 為 Flow 開發的推薦引擎,直接在手機上運算。
+
+- 從你的觀看、跳過、按讚、搜尋和停留時間學習喜好
+- 發現你對某個主題看膩了,就改推其他內容
+- 它記錄了哪些關於你的資料,你都看得到,並且能自行編輯、匯出或一鍵清除
+
+**Fathom 新增的部分:** 在 Bilibili 看的內容會和 YouTube 一起計入同一份個人檔案,另外加了一份中文虛詞過濾表(我們、這個、大家等),避免這些詞被當成主題。推薦引擎本身是 Flow 的。
 
 ## 🔁 搬移你的資料
 
