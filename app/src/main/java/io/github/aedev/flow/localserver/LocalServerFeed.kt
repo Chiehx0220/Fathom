@@ -14,13 +14,8 @@ import io.github.aedev.flow.ui.screens.home.FeedTasteProfile
 import io.github.aedev.flow.ui.screens.home.GraphCandidate
 import io.github.aedev.flow.ui.screens.home.assembleHomeFeed
 import io.github.aedev.flow.ui.screens.home.buildHomeFeedLanes
-import io.github.aedev.flow.ui.screens.home.demoteByFit
 import io.github.aedev.flow.ui.screens.home.dynamicFreshSubSlots
-import io.github.aedev.flow.ui.screens.home.enrichAvatars
 import io.github.aedev.flow.ui.screens.home.feedTasteProfile
-import io.github.aedev.flow.ui.screens.home.filterValid
-import io.github.aedev.flow.ui.screens.home.filterWatched
-import io.github.aedev.flow.ui.screens.home.spaceByChannel
 import io.github.aedev.flow.ui.screens.home.storedSubscriptionVideos
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -34,7 +29,7 @@ import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
-// 5-minute cache of the assembled home feed, keyed by serviceId + feedMode.
+// 5-minute cache of the assembled home feed, keyed by serviceId.
 private const val HOME_FEED_CACHE_TTL_MS = 5 * 60 * 1000L
 
 private data class HomeFeedCacheEntry(
@@ -42,7 +37,7 @@ private data class HomeFeedCacheEntry(
     val timestampMs: Long,
 )
 
-private val homeFeedCache = java.util.concurrent.ConcurrentHashMap<String, HomeFeedCacheEntry>()
+private val homeFeedCache = java.util.concurrent.ConcurrentHashMap<Int, HomeFeedCacheEntry>()
 
 /** One round of FlowNeuro discovery queries, fetched concurrently. `resetDepth`: fresh session
  * vs. load-more. Query count matches native's wave-1. Shared by [buildAndRankHomeFeed] and
@@ -113,9 +108,8 @@ private suspend fun HistoryDbHelper.rankAndConvert(
  * quota-balanced source blending, same-channel spacing, duration/format-fit demotion,
  * fresh-upload pinning, and the related-video (/next graph) lane.
  *
- * UPSTREAM COUPLING: [buildHomeFeedLanes], [assembleHomeFeed], [feedTasteProfile], [filterValid],
- * [filterWatched], [demoteByFit], [spaceByChannel], [dynamicFreshSubSlots], [enrichAvatars] are
- * upstream-owned (`HomeFeedAssembly.kt`/`HomeFeedFilters.kt`/`HomeFeedRanking.kt`, PR #1040). A
+ * UPSTREAM COUPLING: [buildHomeFeedLanes], [assembleHomeFeed], [feedTasteProfile],
+ * [dynamicFreshSubSlots] are upstream-owned (`HomeFeedAssembly.kt`/`HomeFeedRanking.kt`, PR #1040). A
  * signature/behavior change there on upstream sync won't surface as a merge conflict (different
  * file) - re-verify this function compiles and the home feed renders after every sync.
  *
@@ -131,12 +125,9 @@ private suspend fun HistoryDbHelper.rankAndConvert(
  * Page involved - `YoutubeTrendingExtractor` has no continuation, so "load more" is a deeper
  * discovery-query round.
  */
-fun HistoryDbHelper.buildAndRankHomeFeed(
-    serviceId: Int,
-    feedMode: String,
-): Pair<List<InfoItem>, Boolean> =
+fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int): Pair<List<InfoItem>, Boolean> =
     runBlocking {
-        val cacheKey = "$serviceId:$feedMode"
+        val cacheKey = serviceId
         val cached = homeFeedCache[cacheKey]
         val now = System.currentTimeMillis()
         if (cached != null && now - cached.timestampMs < HOME_FEED_CACHE_TTL_MS) {
@@ -176,7 +167,7 @@ fun HistoryDbHelper.buildAndRankHomeFeed(
         }
 
         // Home has no separate trending lane any more, so trending joins discovery.
-        val rawSubs = if (feedMode == "mix" && subIds.isNotEmpty()) rssFeed.storedSubscriptionVideos(now) else emptyList()
+        val rawSubs = if (subIds.isNotEmpty()) rssFeed.storedSubscriptionVideos(now) else emptyList()
         val lanes =
             buildHomeFeedLanes(
                 rawSubs = rawSubs,
@@ -207,42 +198,6 @@ fun HistoryDbHelper.buildAndRankHomeFeed(
 
         homeFeedCache[cacheKey] = HomeFeedCacheEntry(result, now)
         result to true
-    }
-
-/** `feedMode == "subs"`: the stored subscription uploads via `filterValid`/`filterWatched`/`demoteByFit`/
- * `spaceByChannel`, but NOT through [buildHomeFeedLanes]/[assembleHomeFeed] - that pipeline caps
- * the subs lane at 15 and the mix at 40 (`HOME_TARGET_SIZE`), which would truncate this mode's
- * "just my subscriptions" contract. Deliberate, not an oversight. */
-fun HistoryDbHelper.buildSubsOnlyFeed(serviceId: Int): List<InfoItem> =
-    runBlocking {
-        val cacheKey = "$serviceId:subs"
-        val cached = homeFeedCache[cacheKey]
-        val now = System.currentTimeMillis()
-        if (cached != null && now - cached.timestampMs < HOME_FEED_CACHE_TTL_MS) {
-            return@runBlocking cached.items
-        }
-
-        ensureFlowNeuroInitialized()
-        val subIds = subscriptionRepository().getAllSubscriptionIds()
-        if (subIds.isEmpty()) return@runBlocking emptyList()
-
-        val context = buildHomeFeedContext()
-        val pool =
-            storedSubscriptionFeed()
-                .storedSubscriptionVideos(now)
-                .filter { it.serviceId == serviceId }
-                .filterValid()
-                .filterWatched(context.watched)
-                .filterNot(context.exclusions::hidesFromRecommendations)
-                .enrichAvatars(context.subAvatarMap)
-        if (pool.isEmpty()) return@runBlocking emptyList()
-
-        val ranked = runCatching { FlowNeuroEngine.rank(pool, subIds) }.getOrDefault(pool)
-        val spaced = spaceByChannel(demoteByFit(ranked, context.taste), gap = 1)
-
-        val result = spaced.map { it.toStreamInfoItem(serviceId) }
-        homeFeedCache[cacheKey] = HomeFeedCacheEntry(result, now)
-        result
     }
 
 /** "Load more": deeper discovery-query round, ranked like [buildAndRankHomeFeed]. Uncached, no

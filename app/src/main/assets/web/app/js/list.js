@@ -204,35 +204,69 @@ const tabPills = (route, tabs, active) => h('div', { class: 'pills' }, tabs.map(
 const ofService = (service) => (item) => item.serviceId === undefined || item.serviceId === service;
 
 const SUBSCRIPTIONS_TABS = [['feed', FT.t('tab_feed'), 'dynamic_feed'], ['channels', FT.t('channels'), 'group']];
+const SOURCE_KEY = 'fathom-subs-source';
+
+// Source filter of the subscriptions screen: 'all' or a service id, independent of the app-wide source.
+// `used`: the services that have a subscription.
+const subsSource = (params, used) => {
+    let saved = null;
+    try { saved = localStorage.getItem(SOURCE_KEY); } catch (e) {}
+    const raw = params.src ?? saved;
+    return used.some((s) => String(s.id) === raw) ? raw : 'all';
+};
+
+const subsPills = (tab, src, used) => {
+    const go = (nextTab, nextSrc) => () => {
+        try { localStorage.setItem(SOURCE_KEY, nextSrc); } catch (e) {}
+        location.hash = `#/subscriptions?tab=${nextTab}&src=${nextSrc}`;
+    };
+    const sources = used.length > 1
+        ? [h('span', { class: 'sep' }), FT.pill(FT.t('source_mix'), null, src === 'all', go(tab, 'all'), 'src-all'),
+            ...used.map((s) => FT.pill(s.name, null, src === String(s.id), go(tab, String(s.id)), 'src-' + s.id))]
+        : [];
+    return h('div', { class: 'pills' }, [...SUBSCRIPTIONS_TABS.map(([id, label, icon]) => FT.pill(label, icon, id === tab, go(id, src), 'pill-' + id)), ...sources]);
+};
 
 FT.register('subscriptions', {
     leave: cleanup,
     async render(root, params, isCurrent) {
         const tab = SUBSCRIPTIONS_TABS.some((t) => t[0] === params.tab) ? params.tab : 'feed';
-        const service = FT.store.service;
-        const pills = tabPills('subscriptions', SUBSCRIPTIONS_TABS, tab);
+        const lib = await FT.api.library(FT.store.service);
+        if (!isCurrent()) return;
+        const serviceOf = (item) => item.serviceId ?? FT.services[0].id;
+        const used = FT.services.filter((s) => (lib.channels || []).some((c) => serviceOf(c) === s.id));
+        const src = subsSource(params, used);
+        const pills = subsPills(tab, src, used);
         const head = h('div', { class: 'head' }, h('h1', {}, FT.t('tab_subscriptions')));
-        const sameService = ofService(service);
+        const wanted = (item) => src === 'all' || String(serviceOf(item)) === src;
 
         if (tab === 'feed') {
             await FT.listView(root, {
                 before: [head, pills],
                 empty: { icon: 'dynamic_feed', title: FT.t('no_recent_uploads'), text: FT.t('no_recent_uploads_hint') },
-                fetch: async () => ({ items: ((await FT.api.feed(service)).videos || []).filter(sameService), next: null }),
+                fetch: async () => ({ items: ((await FT.api.feed(FT.store.service)).videos || []).filter(wanted), next: null }),
             }, isCurrent);
             return;
         }
 
-        const lib = await FT.api.library(service);
-        if (!isCurrent()) return;
-        const cards = (lib.channels || []).filter(sameService).map((item) => {
-            const card = FT.channelCard(item);
-            card.onRemoved = () => { card.remove(); FT.focus.first(); };
-            return card;
+        const channels = (lib.channels || []).filter(wanted);
+        if (!channels.length) {
+            root.replaceChildren(head, pills, FT.empty('group', FT.t('no_subscriptions'), FT.t('no_subscriptions_hint')));
+            return;
+        }
+        const titled = src === 'all' && used.length > 1;
+        const sections = used.map((service) => {
+            const own = channels.filter((c) => serviceOf(c) === service.id);
+            if (!own.length) return null;
+            const grid = h('div', { class: 'grid channels' }, own.map((item) => {
+                const card = FT.channelCard(item);
+                card.onRemoved = () => { card.remove(); if (!grid.children.length) section.remove(); FT.focus.first(); };
+                return card;
+            }));
+            const section = h('section', { class: 'subs-group' }, titled ? h('h2', {}, service.name) : null, grid);
+            return section;
         });
-        root.replaceChildren(head, pills, cards.length
-            ? h('div', { class: 'grid' }, cards)
-            : FT.empty('group', FT.t('no_subscriptions'), FT.t('no_subscriptions_hint')));
+        root.replaceChildren(head, pills, ...sections.filter(Boolean));
     },
 });
 

@@ -2,6 +2,7 @@ package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliLink
 import io.github.aedev.flow.data.recommendation.InteractionType
+import io.github.aedev.flow.data.subscriptions.SubscriptionFeedTimestamps
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -92,7 +93,7 @@ internal class ClientHandler(
     // Merges subscribed channels' uploads into one newest-first feed (capped at 60).
     // Each channel is resolved by its own URL, since subscriptions mix services.
     internal fun fetchSubscriptionFeed(channels: List<InfoItem>?): List<InfoItem> {
-        var feed = ArrayList<InfoItem>()
+        val feed = ArrayList<InfoItem>()
         if (channels == null || channels.isEmpty()) {
             return feed
         }
@@ -139,36 +140,22 @@ internal class ClientHandler(
                 serverLog("Future timeout/error fetching subscription feed: " + e.message)
             }
         }
-        feed.sortWith(
-            Comparator { a, b ->
-                val dateA = uploadDateOf(a)
-                val dateB = uploadDateOf(b)
-                if (dateA == null && dateB == null) {
-                    0
-                } else if (dateA == null) {
-                    1
-                } else if (dateB == null) {
-                    -1
-                } else {
-                    dateB.compareTo(dateA)
-                }
-            },
-        )
-        if (feed.size > 60) {
-            feed = ArrayList(feed.subList(0, 60))
-        }
+        val now = System.currentTimeMillis()
         return feed
+            .map { it to uploadTimeOf(it, now) }
+            .sortedByDescending { it.second ?: Long.MIN_VALUE }
+            .take(60)
+            .map { it.first }
     }
 
-    // getUploadDate() is null without a precise timestamp; items without one sort last.
-    private fun uploadDateOf(item: InfoItem): java.time.OffsetDateTime? {
-        if (item is StreamInfoItem) {
-            val dw = item.uploadDate
-            if (dw != null) {
-                return dw.offsetDateTime()
-            }
-        }
-        return null
+    /** Upload time in epoch ms: the exact date when present, else the relative text resolved against [now]. Null sorts last. */
+    private fun uploadTimeOf(
+        item: InfoItem,
+        now: Long,
+    ): Long? {
+        val stream = item as? StreamInfoItem ?: return null
+        stream.uploadDate?.let { return it.offsetDateTime().toInstant().toEpochMilli() }
+        return stream.textualUploadDate?.let { SubscriptionFeedTimestamps.parseRelativeTime(it, now) }
     }
 
     internal fun getServiceId(params: Map<String, String>): Int {

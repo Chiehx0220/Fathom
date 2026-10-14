@@ -39,15 +39,10 @@ internal fun ClientHandler.handleApiHome(
     try {
         var items: List<InfoItem>
         var next: Page?
-        val feedMode = dbHelper.homeFeedMode
         if (serviceId != LocalServerMedia.SERVICE_YOUTUBE) {
-            // homeFeedMode is YouTube-only.
             val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
             items = page.items
             next = page.next
-        } else if ("subs" == feedMode) {
-            items = dbHelper.buildSubsOnlyFeed(serviceId)
-            next = null
         } else {
             // fetchTrendingItems(): no pagination available.
             items = dbHelper.fetchTrendingItems(serviceId)
@@ -80,18 +75,12 @@ internal fun ClientHandler.handleApiRecommendations(
         var items: List<InfoItem>
         var alreadyRanked = false
         var hasMore = false
-        val feedMode = dbHelper.homeFeedMode
         if (serviceId != LocalServerMedia.SERVICE_YOUTUBE) {
-            // homeFeedMode is YouTube-only. alreadyRanked stays false so applyFlowNeuroRanking()
-            // below still reorders these. This service's own paging (nextPage) covers "more" here.
+            // alreadyRanked stays false so applyFlowNeuroRanking() below still reorders these.
+            // This service's own paging (nextPage) covers "more" here.
             val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
             items = page.items
             hasMore = page.next != null
-        } else if ("subs" == feedMode) {
-            // Uncapped "just my subscriptions" pool (see buildSubsOnlyFeed's own doc) - first-load
-            // only, matching native: there is no deeper round to fetch for this mode.
-            items = dbHelper.buildSubsOnlyFeed(serviceId)
-            alreadyRanked = true
         } else if (loadMore) {
             val (feedItems, more) = dbHelper.continueDiscoveryFeed(serviceId)
             items = feedItems
@@ -100,7 +89,7 @@ internal fun ClientHandler.handleApiRecommendations(
         } else {
             // buildAndRankHomeFeed(): trending + discovery + subs, ranked. Its own "more" flag
             // just means "non-empty" - continueDiscoveryFeed's own flag governs later rounds.
-            val (feedItems, more) = dbHelper.buildAndRankHomeFeed(serviceId, feedMode)
+            val (feedItems, more) = dbHelper.buildAndRankHomeFeed(serviceId)
             items = feedItems
             alreadyRanked = true
             hasMore = more
@@ -390,7 +379,7 @@ internal fun ClientHandler.handleApiSponsor(
     sendResponse(os, 200, json.toString(), "application/json")
 }
 
-// Reads the filter settings; any of hideWatched, hideShorts and homeFeedMode in the query are saved first.
+// Reads the filter settings; hideWatched and hideShorts in the query are saved first.
 internal fun ClientHandler.handleApiSettings(
     os: OutputStream,
     params: Map<String, String>,
@@ -399,11 +388,8 @@ internal fun ClientHandler.handleApiSettings(
     if (hideWatched != null) dbHelper.nativeSetHideWatched(hideWatched == "true")
     val hideShorts = params["hideShorts"]
     if (hideShorts != null) dbHelper.nativeSetHideShorts(hideShorts == "true")
-    val feedMode = params["homeFeedMode"]
-    if (feedMode != null && (feedMode == "mix" || feedMode == "subs" || feedMode == "recs")) dbHelper.homeFeedMode = feedMode
     val json = org.json.JSONObject()
     json.put("hideWatched", dbHelper.nativeHideWatched())
     json.put("hideShorts", dbHelper.nativeHideShorts())
-    json.put("homeFeedMode", dbHelper.homeFeedMode)
     sendResponse(os, 200, json.toString(), "application/json")
 }

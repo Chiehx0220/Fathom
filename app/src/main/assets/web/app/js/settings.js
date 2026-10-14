@@ -1,8 +1,6 @@
-// Settings: the theme, what the home feed shows, and the phone remote. Theme changes apply at once; the rest is saved on the phone.
+// Settings: the theme, list filters, and the phone remote. Theme changes apply at once; the rest is saved on the phone.
 (() => {
 const h = FT.h;
-
-const FEED_MODES = [['mix', FT.t('feed_mix'), FT.t('feed_mix_note')], ['subs', FT.t('tab_subscriptions'), FT.t('feed_subs_note')], ['recs', FT.t('recommendations'), FT.t('feed_recs_note')]];
 
 // A palette's swatch is drawn by the stylesheet itself: it carries the same attributes as <html>, so it shows the palette in the current mode.
 const syncArt = (art) => {
@@ -50,23 +48,11 @@ FT.register('settings', {
         const values = await FT.api.settings().catch(() => null);
         if (!isCurrent()) return;
 
-        const modes = h('div', { class: 'seg' }, FEED_MODES.map(([id, label]) => {
-            const pill = FT.pill(label, null, values && values.homeFeedMode === id, () => {
-                FT.api.settings({ homeFeedMode: id }).then(() => {
-                    FT.$$('.pill', modes).forEach((p) => p.classList.toggle('on', p === pill));
-                    FT.api.forget();
-                    FT.toast(FT.t('feed_changed', { name: label }));
-                }).catch(() => FT.toast(FT.t('could_not_save')));
-            }, 'mode-' + id);
-            return pill;
-        }));
-
         const sections = [
             h('section', {}, h('h2', {}, FT.t('settings_theme')), h('p', { class: 'hint' }, FT.t('settings_theme_hint')),
                 h('div', { style: 'margin-top:12px' }, modePills()), h('div', { class: 'swatches' }, FT.palettes.map(swatch))),
         ];
         if (values) {
-            sections.push(h('section', {}, h('h2', {}, FT.t('settings_feed')), h('p', { class: 'hint' }, FT.t('settings_feed_hint')), h('div', { style: 'margin-top:12px' }, modes)));
             sections.push(h('section', { style: 'display:flex;flex-direction:column;gap:10px' }, h('h2', {}, FT.t('settings_filters')),
                 toggle(FT.t('filter_hide_watched'), FT.t('filter_hide_watched_hint'), !!values.hideWatched, (on) => FT.api.settings({ hideWatched: on }), 'hide-watched'),
                 toggle(FT.t('filter_hide_shorts'), FT.t('filter_hide_shorts_hint'), !!values.hideShorts, (on) => FT.api.settings({ hideShorts: on }), 'hide-shorts')));

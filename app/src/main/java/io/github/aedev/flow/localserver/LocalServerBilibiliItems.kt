@@ -6,10 +6,14 @@ import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliLiveItem
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
+import org.schabi.newpipe.extractor.localization.DateWrapper
 import org.schabi.newpipe.extractor.stream.Description
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -65,7 +69,10 @@ internal fun BilibiliChannelVideo.toStreamItem(
         this.uploaderAvatarUrl = uploaderAvatarUrl
         setDuration(video.durationSec.toLong())
         setViewCount(video.viewCount)
-        if (video.uploadTimeSec > 0) setTextualUploadDate(formatBilibiliDate(video.uploadTimeSec))
+        if (video.uploadTimeSec > 0) {
+            setTextualUploadDate(formatBilibiliDate(video.uploadTimeSec))
+            setUploadDate(DateWrapper(OffsetDateTime.ofInstant(Instant.ofEpochSecond(video.uploadTimeSec), ZoneOffset.UTC)))
+        }
     }
 }
 

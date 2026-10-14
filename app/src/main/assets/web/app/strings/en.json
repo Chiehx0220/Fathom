@@ -57,16 +57,8 @@
   "mode_dark": "Dark",
   "mode_oled": "OLED",
   "mode_auto": "Auto",
-  "feed_mix": "Mix",
-  "feed_mix_note": "Recommendations and subscriptions",
-  "feed_subs_note": "Only your channels",
-  "recommendations": "Recommendations",
-  "feed_recs_note": "Only suggested videos",
   "settings_theme": "Theme",
   "settings_theme_hint": "Applies to this browser only.",
-  "settings_feed": "Home feed",
-  "settings_feed_hint": "What the recommendations shelf is made of.",
-  "feed_changed": "Home feed: {name}",
   "settings_filters": "Filters",
   "filter_hide_watched": "Hide watched videos",
   "filter_hide_watched_hint": "Leave videos you have already watched out of lists.",
@@ -197,5 +189,6 @@
   "mini_play": "Play/Pause",
   "state_on": "On",
   "state_off": "Off",
-  "danmaku_hint": "The danmaku switch is in the settings menu (or press D)."
+  "danmaku_hint": "The danmaku switch is in the settings menu (or press D).",
+  "source_mix": "Mix"
 }

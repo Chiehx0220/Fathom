@@ -21,7 +21,9 @@
 .head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 18px var(--pad-x) 8px; }
 .head h1 { font-size: clamp(22px, 2vw, 30px); font-weight: 500; }
 .head .grow { flex: 1; }
-.pills { display: flex; gap: 8px; flex-wrap: wrap; padding: 6px var(--pad-x) 12px; }
+.pills { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 6px var(--pad-x) 12px; }
+.pills .sep { width: 1px; height: 22px; margin: 0 6px; background: var(--mute); opacity: .4; }
+.subs-group > h2 { padding: 14px var(--pad-x) 0; font-size: 20px; font-weight: 500; }
 .pill { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 18px; border: 0; border-radius: 20px; background: var(--s1); color: var(--mute); font-weight: 500; }
 .pill:hover { background: var(--s2); color: var(--fg); }
 /* A full-height inset shadow on a stadium shape (radius = half the height) rides the curve at
