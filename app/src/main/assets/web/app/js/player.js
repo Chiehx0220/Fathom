@@ -392,9 +392,10 @@ const loadPlayer = (way) => Promise.all([
 ]);
 
 // Rules for the skin's shadow root, which the page's CSS cannot reach: the mini player has no controls of its own (its buttons are the .mini-ctrl
-// ones in the page), and the SponsorBlock marks on the seek bar.
+// ones in the page), the skin's cast button (this page casts through the phone remote in the top bar), and the SponsorBlock marks on the seek bar.
 const SKIN_STYLE = `
 :host([data-mini]) media-controls, :host([data-mini]) media-title { display: none !important; }
+media-cast-button { display: none !important; }
 .sb-mark { position: absolute; top: 50%; height: 4px; transform: translateY(-50%); min-width: 3px; border-radius: 2px; pointer-events: none; background: #00D400; opacity: 0.9; }
 .sb-mark.intro, .sb-mark.outro { background: #00FFFF; }
 .sb-mark.interaction { background: #CC00FF; }
