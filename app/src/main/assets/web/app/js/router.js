@@ -48,7 +48,7 @@ const renderTop = () => {
                 h('span', {}, FT.store.serviceName(FT.store.service)), FT.icon('expand_more')),
             h('a', { class: 'rbtn' + (searching ? ' on' : ''), href: '#/search', 'aria-label': 'Search', data: { f: '', key: 'search' } }, FT.icon('search')),
             h('button', { type: 'button', class: 'rbtn' + (FT.remote.active ? ' on' : ''), id: 'cast-btn', 'aria-label': 'Connect phone remote', data: { f: '', key: 'cast' }, onclick: () => FT.remote.toggle() },
-                FT.icon(FT.remote.active ? 'cast_connected' : 'cast'))));
+                FT.icon('cast', FT.remote.active ? 'fill' : ''))));
 };
 FT.renderTop = renderTop;
 

@@ -21,7 +21,7 @@ const paintState = () => {
     document.body.classList.toggle('remote-active', on);
     const banner = FT.$('#remote-banner');
     banner.hidden = !on;
-    if (on) banner.replaceChildren(FT.icon('cast_connected'), 'Remote connected', FT.h('button', { type: 'button', onclick: () => FT.remote.release() }, 'Disconnect'));
+    if (on) banner.replaceChildren(FT.icon('cast', 'fill'), 'Remote connected', FT.h('button', { type: 'button', onclick: () => FT.remote.release() }, 'Disconnect'));
     const hints = FT.$('#keyhints');
     hints.hidden = !on;
     if (on) {

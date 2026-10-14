@@ -74,7 +74,7 @@ FT.register('settings', {
         sections.push(h('section', {}, h('h2', {}, 'Phone remote'),
             h('p', { class: 'hint' }, FT.remote.active ? 'Connected. Open the remote on your phone to control this screen.' : 'Use your phone as a remote: press connect here, then open the remote on the phone.'),
             h('div', { class: 'btns', style: 'margin-top:12px' },
-                FT.button(FT.remote.active ? 'Disconnect' : 'Connect phone remote', FT.remote.active ? 'cast_connected' : 'cast', () => { FT.remote.toggle(); setTimeout(() => FT.reload(), 600); }, 'primary', 'remote'))));
+                FT.button(FT.remote.active ? 'Disconnect' : 'Connect phone remote', 'cast', () => { FT.remote.toggle(); setTimeout(() => FT.reload(), 600); }, 'primary', 'remote'))));
         sections.push(h('section', {}, h('h2', {}, 'Full screen'),
             h('p', { class: 'hint' }, 'A remote cannot start real full screen: the browser only allows it from a click on the page. Press F11 once in your browser (or use its full screen option) and it stays on as you move between videos.')));
 
