@@ -124,7 +124,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **18** (134 changed lines). New files: **9**.
+- Modified upstream files: **18** (134 changed lines). New files: **11**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
