@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **125** (1612 changed lines). New files: **242**.
+- Modified upstream files: **125** (1597 changed lines). New files: **242**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -48,7 +48,6 @@ in it). **New files** never conflict; they are ours alone.
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
 | ui/screens/channel/ChannelViewModel.kt | 23 | 3 |
 | data/comments/CommentsPager.kt | 19 | 6 |
-| ui/components/shared/card/VideoCardStacked.kt | 15 | 10 |
 | ui/screens/player/PlaybackSessionApplier.kt | 25 | 0 |
 | ui/screens/search/SearchViewModel.kt | 21 | 4 |
 | data/paging/SearchPagingSource.kt | 18 | 6 |
@@ -59,12 +58,12 @@ in it). **New files** never conflict; they are ours alone.
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
 | utils/ShareVideo.kt | 14 | 7 |
 | player/error/VideoErrorMapper.kt | 20 | 0 |
+| ui/screens/home/HomeScreen.kt | 16 | 4 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 16 | 3 |
 | ui/components/shared/quickactions/QuickActionsViewModel.kt | 14 | 3 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 14 | 2 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
-| ui/screens/home/HomeScreen.kt | 12 | 3 |
 | ui/screens/player/WatchSessionTracker.kt | 12 | 3 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 14 | 1 |
 | ui/screens/player/stage/VideoStage.kt | 15 | 0 |
@@ -90,6 +89,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/AppHooks.kt | 4 | 5 |
 | ui/screens/player/PlaybackLoadController.kt | 8 | 1 |
 | sync/merge/CollectionMergers.kt | 4 | 4 |
+| ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
 | ... 65 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
