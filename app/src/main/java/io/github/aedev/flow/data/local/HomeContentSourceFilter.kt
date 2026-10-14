@@ -23,6 +23,8 @@ enum class HomeContentSourceFilter {
                 BILIBILI -> BILIBILI_SERVICE_ID
             }
 
+    val isMix: Boolean get() = this == MIX
+
     fun allows(serviceId: Int): Boolean = this.serviceId?.let { it == serviceId } ?: true
 
     fun allows(video: Video): Boolean = allows(video.serviceId)

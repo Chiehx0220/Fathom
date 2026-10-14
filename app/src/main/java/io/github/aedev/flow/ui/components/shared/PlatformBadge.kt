@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,7 +30,6 @@ import io.github.aedev.flow.ui.theme.YouTubeRed
 
 private val PlatformBadgeDotSize = 5.dp
 private val PlatformBadgeFontSize = 9.sp
-private val MinimumTouchTarget = 48.dp
 
 /** Whether cards name their service. A feed that already shows one service turns it off. */
 val LocalShowPlatformBadge = compositionLocalOf { true }
@@ -87,7 +87,7 @@ fun PlatformBadge(
     }
 }
 
-/** A channel avatar with its service's badge beneath it. */
+/** A channel avatar with its service's badge beneath it. [modifier] applies to the avatar. */
 @Composable
 fun ChannelAvatarWithBadge(
     urls: List<String>,
@@ -104,7 +104,7 @@ fun ChannelAvatarWithBadge(
             modifier = modifier,
         )
         // Reports the avatar's width, so a badge wider than it overhangs both sides instead of pushing the title over.
-        val columnWidth = maxOf(avatarSize, MinimumTouchTarget)
+        val columnWidth = maxOf(avatarSize, LocalMinimumInteractiveComponentSize.current)
         PlatformBadge(
             serviceId = serviceId,
             modifier =

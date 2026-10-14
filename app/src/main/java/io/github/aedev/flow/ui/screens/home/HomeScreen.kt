@@ -229,7 +229,7 @@ fun HomeScreen(
                 resetKey = uiState.isLoading && uiState.videos.isEmpty(),
                 isRefreshing = if (chips.isAll) uiState.isRefreshing else chips.isRefreshing,
                 onRefresh = { if (chips.isAll) viewModel.refreshFeed() else viewModel.refreshSelectedChip() },
-                showPlatformBadge = contentSourceFilter.serviceId == null,
+                showPlatformBadge = contentSourceFilter.isMix,
                 modifier =
                     Modifier
                         .fillMaxSize()
