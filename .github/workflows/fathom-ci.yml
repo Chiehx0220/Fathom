@@ -46,6 +46,16 @@ jobs:
       - name: Run unit tests
         run: ./gradlew :app:testGithubDebugUnitTest :app:testFossDebugUnitTest --max-workers=1 --build-cache --stacktrace
 
+      - name: Upload unit test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: unit-test-results
+          path: |
+            app/build/reports/tests
+            app/build/test-results
+          retention-days: 7
+
       # Not executed in CI, but breakage there otherwise lands on main unnoticed.
       - name: Compile instrumentation tests
         run: ./gradlew :app:compileGithubDebugAndroidTestKotlin --build-cache --stacktrace
