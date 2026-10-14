@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// Checks the words of the local web UI (app/src/main/assets/web/app/strings/<language>.json).
+// Validates app/src/main/assets/web/app/strings/<language>.json against the web UI.
 //
 //   node scripts/check-web-strings.js           exit 1 on a problem
-//   node scripts/check-web-strings.js --report  also list what each language has not translated
+//   node scripts/check-web-strings.js --report  also list untranslated keys per language
 //
-// en.json is the base: every key the page asks for (FT.t / FT.tn / data-t / data-t-label) must be there, every key there must
-// be asked for, and the other languages may only hold keys en.json has, with the same {values} in each. A plural key is
-// written name_one, name_other (and the forms a language needs); the page asks for the name.
+// en.json is the base. Every key referenced via FT.t / FT.tn / data-t-label must exist in it, every key in it must be
+// referenced, and other languages may only contain en.json keys with identical {placeholders}. Plural keys use CLDR
+// suffixes (_one, _other, ...) and are referenced by their stem.
 
 const fs = require('fs');
 const path = require('path');
@@ -25,15 +25,15 @@ const problems = [];
 const values = (text) => [...String(text).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
 const plural = (key) => key.replace(PLURAL, '');
 
-// ---- What the page asks for ----
-const literal = new Set();   // 'a_key'
-const prefixes = new Set();  // 'segment_' + ...
+// ---- References in the UI ----
+const literal = new Set();   // FT.t('key')
+const prefixes = new Set();  // FT.t('prefix_' + x)
 const sources = fs.readdirSync(path.join(APP, 'js')).filter((name) => name.endsWith('.js')).map((name) => path.join(APP, 'js', name));
 for (const file of sources) {
   const text = fs.readFileSync(file, 'utf8');
   for (const call of text.matchAll(/\bFT\.tn?\(([^)]*)\)/g)) {
-    // Both branches of a condition, and the first word of a key built from a variable.
-    const args = call[1].replace(/[!=]==?\s*'[^']*'/g, ''); // a word compared with, as in dir === 'left', is no key
+    // Drop comparison operands (x === 'left'); both branches of a ternary count as references.
+    const args = call[1].replace(/[!=]==?\s*'[^']*'/g, '');
     for (const token of args.matchAll(/'([a-z0-9_]+)'(\s*\+)?/g)) {
       if (token[2]) prefixes.add(token[1]); else literal.add(token[1]);
     }
@@ -52,7 +52,7 @@ for (const key of Object.keys(base)) {
   if (!asked) problems.push(`en.json has "${key}", which nothing asks for`);
 }
 
-// ---- The other languages ----
+// ---- Other languages ----
 for (const [code, words] of Object.entries(languages)) {
   if (code === 'en') continue;
   for (const [key, text] of Object.entries(words)) {

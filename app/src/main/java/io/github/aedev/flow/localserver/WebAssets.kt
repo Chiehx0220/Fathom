@@ -3,10 +3,8 @@ package io.github.aedev.flow.localserver
 import android.content.Context
 
 /**
- * The single-page app's stylesheet and script. They are real files under `assets/web/app` (so they can be edited,
- * syntax-checked and opened in a browser like any web project), joined here in a fixed order and served as
- * `/app.css` and `/app.js`. The words are `assets/web/app/strings/<language>.json` (one file per language, flat keys), put
- * into the page as one object keyed by language; a language added there needs no change here.
+ * Stylesheet and script of the single-page app, joined from `assets/web/app` in a fixed order and served as `/app.css`
+ * and `/app.js`. `assets/web/app/strings/<language>.json` are embedded in the page as one object keyed by language.
  */
 object WebAssets {
     // The single-page app served at /app: its own stylesheet and script, and the HTML shell they are opened from.
@@ -69,7 +67,7 @@ object WebAssets {
                     appJs,
                     appShell,
                     appStrings,
-                    // A hash of the content: a change to a file, to the words or to the vendored player changes the ?v= of the URLs, so they can be cached forever.
+                    // Content hash: any change to the files, strings or vendored player busts the ?v= cache key.
                     Integer.toHexString(
                         ((appCss.hashCode() * 31 + appJs.hashCode()) * 31 + vendorVersion.hashCode()) * 31 + appStrings.hashCode(),
                     ),
@@ -81,7 +79,7 @@ object WebAssets {
     val appJs: String get() = requireBundle().appJs
     val appShell: String get() = requireBundle().appShell
 
-    /** The words of every language as one JSON object, safe to write inside a script element. */
+    /** All language files as one JSON object, safe inside a script element. */
     val appStrings: String get() = requireBundle().appStrings
 
     /** Cache-busting tag for /app.css and /app.js. */

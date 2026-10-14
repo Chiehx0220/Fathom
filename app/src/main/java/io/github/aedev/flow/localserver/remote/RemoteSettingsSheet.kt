@@ -47,15 +47,12 @@ import kotlin.math.abs
 
 private enum class SettingsPage { MAIN, QUALITY, SPEED }
 
-/** Quality needs a choice of pictures and speed a video with an end, which a live stream has not; danmaku needs a source that has it. */
+/** Quality needs renditions, speed needs a finite duration, danmaku needs a source that provides it. */
 internal fun hasSettings(state: RemoteState): Boolean = state.qualities.isNotEmpty() || state.durationSec > 0.0 || state.danmaku != null
 
 private val Speeds = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
 
-/**
- * What the player lets the viewer choose, in one sheet so the keys under the seek bar stay few. Choosing goes back to
- * the settings page, where the row shows the choice.
- */
+/** Player settings in a bottom sheet; a selection returns to the main page. */
 @Composable
 internal fun RemoteSettingsSheet(
     state: RemoteState,
@@ -71,7 +68,7 @@ internal fun RemoteSettingsSheet(
         sheetState = sheetState,
         properties = ModalBottomSheetProperties(shouldDismissOnBackPress = false),
     ) {
-        // The sheet's own back handling is off: stacked under this one it stays stuck after the first press.
+        // Sheet back handling is disabled: a stacked BackHandler otherwise swallows the first press.
         BackHandler {
             if (page != SettingsPage.MAIN) toMain() else scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
         }

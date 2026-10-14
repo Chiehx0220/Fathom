@@ -177,7 +177,7 @@ const qualitySnapshot = () => {
         qchosen: chosenQuality,
     };
 };
-// SponsorBlock's categories come from the server in English; the ones this page has words for are shown in its language.
+// Server labels are English; translated via segment_* keys when present.
 const segmentName = (label) => FT.t('segment_' + String(label).replace(/[ -]/g, '_'), null, label);
 
 const watchSegments = () => {
@@ -200,10 +200,10 @@ const chapterIndex = () => {
     return index;
 };
 
-// The switch for them is a row in the player's own settings menu, with Quality and Speed. The menu is the skin's, in its open shadow root;
-// the row is made from one of its rows so it looks the same, and is put back whenever the skin draws the menu again.
+// Danmaku switch: a row appended to the skin's settings menu (open shadow root), cloned from a native row for styling.
 const DANMAKU_ROW = 'danmaku-row';
 const CHAT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg>';
+const DANMAKU_HINT_KEY = 'fathom-hint-danmaku';
 let danmakuRowWatch = null;
 
 const buildDanmakuRow = (content) => {
@@ -219,12 +219,12 @@ const buildDanmakuRow = (content) => {
     label.textContent = FT.t('danmaku');
     const chevron = row.querySelector('media-icon[name="chevron"]');
     if (chevron) chevron.remove();
-    // The skin draws its icons by name and a chat bubble is not among them: a plain element of the same class takes the same place.
+    // <media-icon> resolves icons by name; no built-in chat glyph, so a same-class element carries the SVG.
     const icon = row.querySelector('media-icon');
     if (icon) {
-        const bubble = h('span', { class: icon.className });
-        bubble.innerHTML = CHAT_ICON;
-        icon.replaceWith(bubble);
+        const glyph = h('span', { class: icon.className });
+        glyph.innerHTML = CHAT_ICON;
+        icon.replaceWith(glyph);
     }
     row.addEventListener('click', (e) => { e.stopPropagation(); FT.player.toggleDanmaku(); });
     return row;
@@ -247,7 +247,7 @@ const paintDanmaku = () => {
     if (value && value.textContent !== text) value.textContent = text;
 };
 
-// The row may be asked for before the menu is drawn, and the skin may draw it again: watch for it instead of timing it.
+// The skin renders the menu lazily and may re-render it; re-assert the row on every child-list mutation.
 const watchDanmakuRow = () => {
     if (danmakuRowWatch) danmakuRowWatch.disconnect();
     danmakuRowWatch = null;
@@ -257,8 +257,7 @@ const watchDanmakuRow = () => {
     danmakuRowWatch.observe(root, { childList: true, subtree: true });
 };
 
-// Said once, the first time a video has danmaku, because the switch is not where a picture's controls usually are.
-const DANMAKU_HINT_KEY = 'fathom-hint-danmaku';
+// One-time callout (persisted in localStorage) pointing at the menu.
 const hintDanmaku = () => {
     let seen = true;
     try { seen = !!localStorage.getItem(DANMAKU_HINT_KEY); } catch (e) {}
@@ -270,7 +269,7 @@ const hintDanmaku = () => {
     setTimeout(() => tip.remove(), 8000);
 };
 
-// Comments flying across the picture (Bilibili). Each one is a CSS animation, so pausing the video pauses them too.
+// Bilibili danmaku overlay: one CSS animation per comment, so pausing the media pauses them.
 const startDanmaku = (url, live = false) => {
     const p = playerEl();
     stopDanmaku();

@@ -38,11 +38,11 @@ FT.duration = (seconds) => {
     return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
 };
 
-// ---- Words ----
-// window.FT_STRINGS holds every language the app ships (strings/<code>.json, flat keys, {name} marks a value). English is
-// the base: a key a language has not translated yet shows in English.
+// ---- i18n ----
+// window.FT_STRINGS: { <language code>: { key: text } } from strings/*.json; `en` is the fallback for missing keys.
 const STRINGS = window.FT_STRINGS || {};
-// The code of a browser language tag as the files name it: zh-TW is zh_Hant, zh-CN zh_Hans, pt-BR pt_BR (then pt).
+
+// BCP 47 tag -> file code: zh-TW -> zh_Hant, zh-CN -> zh_Hans, pt-BR -> pt_BR, pt.
 const codesFor = (tag) => {
     const parts = String(tag).split('-');
     const base = parts[0].toLowerCase();
@@ -61,25 +61,23 @@ FT.lang = pickLang();
 document.documentElement.lang = FT.lang.replace('_', '-');
 const WORDS = STRINGS[FT.lang] || {};
 const BASE = STRINGS.en || {};
+const BCP47 = FT.lang.replace('_', '-');
 const fill = (text, values) => (values ? text.replace(/\{(\w+)\}/g, (all, name) => (name in values ? values[name] : all)) : text);
 
-// A phrase by its key, with its values filled in; a key nobody wrote shows as `fallback`, or as itself so the gap is seen.
+FT.hasT = (key) => key in WORDS || key in BASE;
+// Text for `key` with {name} placeholders filled; a missing key yields `fallback`, else the key itself.
 FT.t = (key, values, fallback) => fill(WORDS[key] ?? BASE[key] ?? fallback ?? key, values);
-
-// A phrase that depends on a number (keys end in _one, _other, ...); the language says which form n takes.
-const plurals = new Intl.PluralRules(FT.lang.replace('_', '-'));
+// Plural form by CLDR category: key_one, key_other, ...; {count} is filled in.
+const plurals = new Intl.PluralRules(BCP47);
 FT.tn = (key, n, values) => {
     const form = `${key}_${plurals.select(n)}`;
     return FT.t(FT.hasT(form) ? form : `${key}_other`, { count: n, ...values });
 };
 
-// Whether a phrase exists, for the few words the server sends in English that have a translation here.
-FT.hasT = (key) => key in WORDS || key in BASE;
-
-const compact = new Intl.NumberFormat(FT.lang.replace('_', '-'), { notation: 'compact', maximumFractionDigits: 1 });
+const compact = new Intl.NumberFormat(BCP47, { notation: 'compact', maximumFractionDigits: 1 });
 FT.count = (n) => (n === undefined || n === null || n < 0 ? '' : compact.format(n));
 
-// A count of zero is what the phone reports when the source gave no number, so it is left out rather than shown as "0 views".
+// 0 means the source gave no count.
 FT.views = (n) => (n > 0 ? FT.t('count_views', { count: FT.count(n) }) : '');
 
 // The service a video or channel address belongs to (the list of services comes from the server).

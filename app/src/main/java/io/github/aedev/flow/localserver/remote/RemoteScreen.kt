@@ -57,7 +57,7 @@ private enum class RemoteMode(
     TOUCHPAD(R.string.remote_tab_touchpad, Icons.Default.TouchApp),
 }
 
-/** The remote: a top bar with the connection, the page for the chosen way of driving, and the switch between them. */
+/** Remote screen: connection top bar, mode pages, and the mode switch. */
 @Composable
 internal fun RemoteScreen(onBack: () -> Unit) {
     val lock by RemoteSession.remoteLock.collectAsState()
@@ -67,7 +67,7 @@ internal fun RemoteScreen(onBack: () -> Unit) {
     val keysFocus = remember { FocusRequester() }
     LaunchedEffect(lock.locked) { if (lock.locked) keysFocus.requestFocus() }
 
-    // Follow the page: a video opening jumps to playback keys, leaving it goes back to browsing. Tapping a tab still wins until the page changes again.
+    // Follows the page state (video open -> playback); a manual tab choice holds until it changes again.
     LaunchedEffect(lock.locked, state.watching) {
         if (lock.locked) mode = if (state.watching) RemoteMode.PLAYBACK else RemoteMode.DIRECTIONS
     }
@@ -132,7 +132,7 @@ internal fun RemoteScreen(onBack: () -> Unit) {
         Box(Modifier.fillMaxSize().padding(padding)) {
             VolumeHud(volumeHud, state, Modifier.align(BiasAlignment(0f, -0.72f)).zIndex(1f))
             val motion = MaterialTheme.motionScheme
-            // Pages slide sideways the way the tabs are laid out: to the right for a tab further right, to the left for one further left.
+            // Slide direction follows tab order.
             AnimatedContent(
                 targetState = if (lock.locked) mode else null,
                 transitionSpec = {

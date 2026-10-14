@@ -17,7 +17,7 @@ data class RemoteQuality(
     val label: String,
 )
 
-/** What the viewer has said of the video: kept on the phone, where it only weighs the recommendations. */
+/** Local like state of the video; feeds the recommendation ranking only. */
 enum class RemoteRating { NONE, LIKED, DISLIKED }
 
 /** What the paired page last reported: whether a video is open and how it is playing. */
@@ -46,9 +46,9 @@ data class RemoteState(
     val quality: String? = null,
     val chosenQuality: String = "auto",
     val rate: Float = 1f,
-    /** Whether the comments flying over the picture are on; null for a video that has none. */
+    /** Danmaku overlay on/off; null when the source has none. */
     val danmaku: Boolean? = null,
-    /** What the viewer has said of the video; null when the page does not report it. */
+    /** Null when the page does not report it. */
     val rating: RemoteRating? = null,
 ) {
     /** Whether there is a video to control, on its own page or in the mini player. */

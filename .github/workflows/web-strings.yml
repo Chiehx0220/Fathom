@@ -1,8 +1,6 @@
 name: Web strings
 
-# Fails when the words of the local web UI (app/src/main/assets/web/app/strings/<language>.json) and the page that asks
-# for them disagree: a key the page uses that en.json lacks, a key nobody asks for, or a translation with other {values}.
-# Run it before committing a change to the web UI:
+# Validates the local web UI strings (app/src/main/assets/web/app/strings/*.json) against the scripts that use them.
 #   node scripts/check-web-strings.js --report
 
 on:

@@ -35,7 +35,7 @@ import io.github.aedev.flow.localserver.RemoteState
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
-/** Takes the phone's volume keys while the remote is on screen: [onStep] gets the change for each press and the system never sees the key. */
+/** Consumes the hardware volume keys while focused; [onStep] receives the delta per press. */
 internal fun Modifier.remoteVolumeKeys(onStep: (Float) -> Unit): Modifier =
     onPreviewKeyEvent { event ->
         val delta =
@@ -48,7 +48,7 @@ internal fun Modifier.remoteVolumeKeys(onStep: (Float) -> Unit): Modifier =
         true
     }
 
-/** Whether the volume indicator shows; every key press shows it for a moment and a new press starts the moment over. */
+/** Visibility of the volume HUD; each press (re)starts the hide timeout. */
 @Stable
 internal class VolumeHudState {
     var shown by mutableStateOf(false)
@@ -77,7 +77,7 @@ internal fun rememberVolumeHud(): VolumeHudState {
     return hud
 }
 
-/** The page's volume as it is now; the page reports it back within a tenth of a second of a key press. */
+/** Page volume, refreshed by the report that follows each key press. */
 @Composable
 internal fun VolumeHud(
     hud: VolumeHudState,

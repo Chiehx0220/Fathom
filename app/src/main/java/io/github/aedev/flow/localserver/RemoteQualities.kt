@@ -2,7 +2,7 @@ package io.github.aedev.flow.localserver
 
 import org.json.JSONArray
 
-/** The page's quality list arrives as a JSON array of [id, label] pairs; anything else is no list. */
+/** Parses a JSON array of [id, label] pairs; malformed input yields an empty list. */
 internal fun parseQualities(raw: String?): List<RemoteQuality> {
     if (raw.isNullOrEmpty()) return emptyList()
     return try {

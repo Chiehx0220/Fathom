@@ -1,5 +1,5 @@
-// The phone remote, on the screen it controls: pairing, receiving the phone's commands, and telling the phone how things are going.
-// The pairing code is kept under the same name the classic pages use, so switching between the two interfaces stays connected.
+// Phone-remote endpoint of the page: pairing, command handling (WebSocket) and state reporting (HTTP).
+// The pairing code shares its storage key with the classic pages so both UIs stay paired.
 (() => {
 const KEY = 'server_play_release_code';
 let socket = null;
@@ -40,9 +40,7 @@ const wake = () => {
     idleTimer = setTimeout(() => hints.classList.add('idle'), 4000);
 };
 
-// The connection banner hides for fullscreen video instead of idle-fading - that is exactly when
-// it would sit on top of the picture. isFullscreen() also covers the manual "remote-fs" fallback
-// for a browser that refused real fullscreen (see player.js's fullscreen()).
+// The banner hides in fullscreen; isFullscreen() includes the manual "remote-fs" fallback.
 const updateBannerFullscreen = () => {
     FT.$('#remote-banner').classList.toggle('fs-hidden', FT.player.isFullscreen());
 };
@@ -115,7 +113,7 @@ const handle = (cmd) => {
     } else if (cmd.startsWith('service:')) {
         FT.setService(parseInt(cmd.slice('service:'.length), 10));
     } else if (cmd.startsWith('goto:')) {
-        // Named screens only, never an address taken from the command.
+        // Whitelisted routes only.
         const target = PAGES[cmd.slice('goto:'.length)];
         if (target) location.hash = target;
     } else if (cmd.startsWith('seek_to:')) {
@@ -137,7 +135,7 @@ const handle = (cmd) => {
     } else if (cmd === 'expand') {
         FT.player.expand();
     }
-    // Tell the phone how the page ended up now, not at the next once-a-second report.
+    // Report immediately instead of waiting for the periodic report.
     if (!cmd.startsWith('pointer_')) setTimeout(report, 100);
 };
 
@@ -148,7 +146,7 @@ const report = () => {
     if (!lock) return;
     const snap = FT.player.snapshot();
     const watching = FT.route.name === 'watch' && snap.open;
-    // A video shrunk to the mini player is still playing and still needs its keys, even though the page has moved on.
+    // A mini-player video is still controllable.
     const q = new URLSearchParams({
         release_code: lock, watching: watching ? 1 : 0, mini: snap.open && !watching ? 1 : 0, fs: snap.fs ? 1 : 0,
         svc: FT.store.service, svcs: FT.services.map((s) => s.id + ':' + s.name).join(','),
@@ -172,7 +170,7 @@ const report = () => {
         }
     }
     fetch('/remote-state?' + q).then((res) => res.json()).then((body) => {
-        // The phone no longer recognises this lock (released there): behave as if disconnected here too.
+        // Lock released on the phone: disconnect here too.
         if (body.status === 'error') FT.remote.end();
     }).catch(() => {});
 };
@@ -183,7 +181,7 @@ const connect = () => {
     socket.onmessage = (event) => handle(String(event.data));
     socket.onclose = () => {
         socket = null;
-        // The server may have restarted: try again while we still hold a lock.
+        // Server may have restarted: retry while the lock is held.
         setTimeout(() => { if (code()) connect(); }, 1500);
     };
     clearInterval(reportTimer);

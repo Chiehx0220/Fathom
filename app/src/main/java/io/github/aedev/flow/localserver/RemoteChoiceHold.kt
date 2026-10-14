@@ -4,12 +4,12 @@ import java.util.concurrent.ConcurrentHashMap
 
 internal const val CHOICE_HOLD_MS = 2500L
 
-/** The things the phone can choose for the page, each shown on the phone at once. */
+/** Settings that the phone changes and shows optimistically. */
 internal enum class RemoteChoice { QUALITY, RATE, DANMAKU, RATING }
 
 /**
- * A choice made on the phone is shown at once, but the page's next report may still carry the old value (it was sent
- * before the command arrived). While a choice is held, that field of the report is ignored.
+ * Optimistic-update guard: for [CHOICE_HOLD_MS] after a command, the matching field of the page's report is ignored,
+ * since a report already in flight predates the command.
  */
 internal class RemoteChoiceHold(
     private val now: () -> Long = System::currentTimeMillis,
@@ -20,38 +20,40 @@ internal class RemoteChoiceHold(
         until[choice] = now() + CHOICE_HOLD_MS
     }
 
-    private fun held(choice: RemoteChoice): Boolean = now() < (until[choice] ?: 0L)
+    private fun <T> resolve(
+        choice: RemoteChoice,
+        shown: T,
+        reported: T,
+    ): T = if (now() < (until[choice] ?: 0L)) shown else reported
 
     fun chosenQuality(
         reported: String?,
         shown: String,
-    ): String = if (held(RemoteChoice.QUALITY)) shown else reported?.takeIf { it.isNotEmpty() } ?: "auto"
+    ): String = resolve(RemoteChoice.QUALITY, shown, reported?.takeIf { it.isNotEmpty() } ?: "auto")
 
     fun rate(
         reported: String?,
         shown: Float,
-    ): Float = if (held(RemoteChoice.RATE)) shown else reported?.toFloatOrNull()?.takeIf { it > 0f && it.isFinite() } ?: 1f
+    ): Float = resolve(RemoteChoice.RATE, shown, reported?.toFloatOrNull()?.takeIf { it > 0f && it.isFinite() } ?: 1f)
 
-    /** Null when the page reports no danmaku, which a held choice does not override: a video without any has none to show. */
+    /** Null when the page does not report danmaku (the source has none). */
     fun danmaku(
         reported: String?,
         shown: Boolean?,
-    ): Boolean? =
-        when {
-            reported == null -> null
-            held(RemoteChoice.DANMAKU) -> shown
-            else -> reported == "1"
-        }
+    ): Boolean? = reported?.let { resolve(RemoteChoice.DANMAKU, shown, it == "1") }
 
+    /** Null when the page does not report a rating. */
     fun rating(
         reported: String?,
         shown: RemoteRating?,
     ): RemoteRating? =
-        when {
-            reported == null -> null
-            held(RemoteChoice.RATING) -> shown
-            reported == "like" -> RemoteRating.LIKED
-            reported == "dislike" -> RemoteRating.DISLIKED
-            else -> RemoteRating.NONE
+        reported?.let {
+            val value =
+                when (it) {
+                    "like" -> RemoteRating.LIKED
+                    "dislike" -> RemoteRating.DISLIKED
+                    else -> RemoteRating.NONE
+                }
+            resolve(RemoteChoice.RATING, shown, value)
         }
 }

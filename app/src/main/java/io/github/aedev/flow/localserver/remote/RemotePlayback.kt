@@ -2,6 +2,7 @@
 
 package io.github.aedev.flow.localserver.remote
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -52,6 +53,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.IconToggleButtonColors
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -67,6 +69,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -75,10 +78,7 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.localserver.RemoteRating
 import io.github.aedev.flow.localserver.RemoteState
 
-/**
- * A playing video, top to bottom: what it is, then the seek bar and transport keys in the middle where the thumb
- * rests, then the volume and screen switches, and the way back to the page last.
- */
+/** Playback mode: now playing, seek bar and transport, tool row, back. */
 @Composable
 internal fun PlaybackMode(
     state: RemoteState,
@@ -115,7 +115,7 @@ internal fun PlaybackMode(
     if (showSettings) RemoteSettingsSheet(state, send, onDismiss = { showSettings = false })
 }
 
-// One row, one height: chapter keys only when the video has chapters, and play the widest.
+// Chapter keys appear only when the video has chapters.
 @Composable
 private fun TransportKeys(
     state: RemoteState,
@@ -153,8 +153,7 @@ private fun TransportKeys(
     }
 }
 
-// The seek bar: a wavy line that ripples while the video plays and goes flat when it pauses. While the thumb is held it
-// shows the finger, not the (still moving) page; the jump is sent on release.
+// Wavy seek bar: amplitude follows playback. While dragging it tracks the pointer; the seek is sent on release.
 @Composable
 private fun SeekBar(
     state: RemoteState,
@@ -250,7 +249,6 @@ private fun NowPlaying(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        // The title and, at its end, what the viewer says of the video: where a media player puts "like".
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 state.title.orEmpty(),
@@ -261,7 +259,7 @@ private fun NowPlaying(
             )
             state.rating?.let { RatingKeys(it, send) }
         }
-        // In the mini player the video is off its page: one key brings the page back.
+        // Mini player: restores the video page.
         if (state.minimized) {
             FilledTonalButton(onClick = { send("expand") }, shapes = ButtonDefaults.shapes(), modifier = Modifier.padding(top = 2.dp)) {
                 Icon(Icons.Default.OpenInFull, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -303,7 +301,7 @@ private fun NowPlaying(
                 },
             )
         }
-        // Mirrors watch.js's skip button: visible only while inside a SponsorBlock segment.
+        // Mirrors the web skip button: shown only inside a SponsorBlock segment.
         state.skipLabel?.let { label ->
             FilledTonalButton(onClick = { send("skip") }, shapes = ButtonDefaults.shapes(), modifier = Modifier.padding(top = 4.dp)) {
                 Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -360,14 +358,11 @@ private fun formatTime(seconds: Float): String {
     return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
 }
 
-// What the viewer says of the video; it only weighs the recommendations. Pressing the lit one takes it back.
 @Composable
 private fun RatingKeys(
     rating: RemoteRating,
     send: (String) -> Unit,
 ) {
-    val liked = rating == RemoteRating.LIKED
-    val disliked = rating == RemoteRating.DISLIKED
     val colors =
         IconButtonDefaults.iconToggleButtonColors(
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -375,14 +370,23 @@ private fun RatingKeys(
             checkedContentColor = MaterialTheme.colorScheme.onPrimary,
         )
     Row {
-        IconToggleButton(checked = liked, onCheckedChange = { send(LIKE) }, colors = colors) {
-            Icon(if (liked) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp, contentDescription = stringResource(R.string.remote_like))
+        RatingKey(rating == RemoteRating.LIKED, Icons.Filled.ThumbUp, Icons.Outlined.ThumbUp, R.string.remote_like, colors) { send(LIKE) }
+        RatingKey(rating == RemoteRating.DISLIKED, Icons.Filled.ThumbDown, Icons.Outlined.ThumbDown, R.string.remote_dislike, colors) {
+            send(DISLIKE)
         }
-        IconToggleButton(checked = disliked, onCheckedChange = { send(DISLIKE) }, colors = colors) {
-            Icon(
-                if (disliked) Icons.Filled.ThumbDown else Icons.Outlined.ThumbDown,
-                contentDescription = stringResource(R.string.remote_dislike),
-            )
-        }
+    }
+}
+
+@Composable
+private fun RatingKey(
+    checked: Boolean,
+    filled: ImageVector,
+    outlined: ImageVector,
+    @StringRes description: Int,
+    colors: IconToggleButtonColors,
+    onClick: () -> Unit,
+) {
+    IconToggleButton(checked = checked, onCheckedChange = { onClick() }, colors = colors) {
+        Icon(if (checked) filled else outlined, contentDescription = stringResource(description))
     }
 }
