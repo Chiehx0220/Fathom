@@ -56,7 +56,7 @@ internal class ChipFeedContext(
     val filters: suspend () -> HomeFeedCacheFilters,
     val exclusions: suspend () -> FeedExclusions,
     val watched: () -> Set<String>,
-    val source: suspend () -> HomeContentSourceFilter = { HomeContentSourceFilter.MIX },
+    val source: suspend () -> HomeContentSourceFilter = { HomeContentSourceFilter.YOUTUBE },
 )
 
 /**

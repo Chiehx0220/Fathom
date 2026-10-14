@@ -28,6 +28,6 @@ enum class HomeContentSourceFilter {
     fun allows(video: Video): Boolean = allows(video.serviceId)
 
     companion object {
-        fun fromStoredName(name: String?): HomeContentSourceFilter = entries.firstOrNull { it.name == name } ?: MIX
+        fun fromStoredName(name: String?): HomeContentSourceFilter = entries.firstOrNull { it.name == name } ?: YOUTUBE
     }
 }

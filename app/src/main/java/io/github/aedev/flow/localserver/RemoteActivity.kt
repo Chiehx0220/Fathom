@@ -28,7 +28,7 @@ class RemoteActivity : ComponentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val dataManager = LocalDataManager(applicationContext)
         setContent {
-            val themeMode by dataManager.themeMode.collectAsState(initial = ThemeMode.MATERIAL_YOU)
+            val themeMode by dataManager.themeMode.collectAsState(initial = ThemeMode.NORDIC_HORIZON)
             val themeVariant by dataManager.themeVariant.collectAsState(initial = ThemeVariant.DARK)
             FlowTheme(themeMode = themeMode, themeVariant = themeVariant) {
                 RemoteScreen(onBack = { finish() })

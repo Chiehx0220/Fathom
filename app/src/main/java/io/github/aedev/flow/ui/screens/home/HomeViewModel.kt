@@ -131,7 +131,7 @@ class HomeViewModel
                 .stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(UI_STATE_SUBSCRIPTION_TIMEOUT_MS),
-                    initialValue = io.github.aedev.flow.data.local.HomeContentSourceFilter.MIX,
+                    initialValue = io.github.aedev.flow.data.local.HomeContentSourceFilter.YOUTUBE,
                 )
 
         /** Persists the filter and reloads immediately so the change is visible without a manual refresh. */

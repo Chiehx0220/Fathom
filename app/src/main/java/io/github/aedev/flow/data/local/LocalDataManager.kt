@@ -120,7 +120,7 @@ class LocalDataManager
         // Theme Settings
         val themeMode: Flow<ThemeMode> =
             context.dataStore.data.map { prefs ->
-                parseThemeMode(prefs[THEME_MODE], ThemeMode.MATERIAL_YOU)
+                parseThemeMode(prefs[THEME_MODE], ThemeMode.NORDIC_HORIZON)
             }
 
         suspend fun setThemeMode(mode: ThemeMode) {
@@ -534,7 +534,7 @@ class LocalDataManager
                 }
             }
 
-            strings[THEME_MODE.name] = parseThemeMode(prefs[THEME_MODE], ThemeMode.MATERIAL_YOU).name
+            strings[THEME_MODE.name] = parseThemeMode(prefs[THEME_MODE], ThemeMode.NORDIC_HORIZON).name
             strings[THEME_VARIANT.name] =
                 parseThemeVariant(
                     prefs[THEME_VARIANT],
