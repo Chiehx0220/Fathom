@@ -148,7 +148,7 @@ const actionRow = (service, info) => {
     const buttons = [subscribe, like, dislike, later, share, audio];
     if (service === 0) buttons.push(downloadButton(service, info));
     if (FT.player.danmaku) {
-        const overlay = FT.button('Comments overlay', 'chat', () => overlay.classList.toggle('on', FT.player.toggleDanmaku()), 'on', 'overlay');
+        const overlay = FT.button('Danmaku', 'chat', () => overlay.classList.toggle('on', FT.player.toggleDanmaku()), 'on', 'overlay');
         buttons.push(overlay);
     }
     buttons.forEach((b, i) => { if (i < 4) b.dataset.first = '1'; });
