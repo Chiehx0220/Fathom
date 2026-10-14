@@ -58,33 +58,33 @@ FT.menu = {
 
     itemsFor(el) {
         const it = el.item;
-        const items = [{ icon: 'open_in_new', label: 'Open', run: () => el.click() }];
+        const items = [{ icon: 'open_in_new', label: FT.t('open'), run: () => el.click() }];
         if (el.kind === 'video') {
             const later = !!el.inWatchLater;
             items.push({
-                icon: later ? 'bookmark_remove' : 'bookmark_add', label: later ? 'Remove from Watch later' : 'Save to Watch later',
+                icon: later ? 'bookmark_remove' : 'bookmark_add', label: FT.t(later ? 'remove_from_later' : 'save_to_later'),
                 run: () => FT.api.watchLater(it, !later).then(() => {
                     el.inWatchLater = !later;
-                    FT.toast(later ? 'Removed from Watch later' : 'Saved to Watch later');
+                    FT.toast(FT.t(later ? 'removed_from_later' : 'saved_to_later'));
                     if (later && el.onRemoved) el.onRemoved();
-                }).catch(() => FT.toast('Could not save that')),
+                }).catch(() => FT.toast(FT.t('could_not_save'))),
             });
-            if (it.channelId) items.push({ icon: 'account_circle', label: 'Go to channel', run: () => { location.hash = FT.link.channel(it.channelId, it.serviceId); } });
+            if (it.channelId) items.push({ icon: 'account_circle', label: FT.t('go_to_channel'), run: () => { location.hash = FT.link.channel(it.channelId, it.serviceId); } });
             if (el.onRemoved && el.fromHistory) {
                 items.push({
-                    icon: 'delete', label: 'Remove from history', danger: true,
-                    run: () => FT.api.removeFromHistory(it).then(() => { FT.toast('Removed from history'); el.onRemoved(); }).catch(() => FT.toast('Could not remove that')),
+                    icon: 'delete', label: FT.t('remove_from_history'), danger: true,
+                    run: () => FT.api.removeFromHistory(it).then(() => { FT.toast(FT.t('removed_from_history')); el.onRemoved(); }).catch(() => FT.toast(FT.t('could_not_remove'))),
                 });
             }
         } else if (el.kind === 'channel') {
             items.push({
-                icon: 'person_remove', label: 'Unsubscribe', danger: true,
-                run: () => FT.api.subscribe(it, false).then(() => { FT.toast('Unsubscribed'); if (el.onRemoved) el.onRemoved(); }).catch(() => FT.toast('Could not unsubscribe')),
+                icon: 'person_remove', label: FT.t('unsubscribe'), danger: true,
+                run: () => FT.api.subscribe(it, false).then(() => { FT.toast(FT.t('unsubscribed')); if (el.onRemoved) el.onRemoved(); }).catch(() => FT.toast(FT.t('could_not_unsubscribe'))),
             });
         } else if (el.kind === 'playlist') {
             items.push({
-                icon: 'star_border', label: 'Remove bookmark', danger: true,
-                run: () => FT.api.bookmarkPlaylist(it, false).then(() => { FT.toast('Bookmark removed'); if (el.onRemoved) el.onRemoved(); }).catch(() => FT.toast('Could not remove that')),
+                icon: 'star_border', label: FT.t('remove_bookmark'), danger: true,
+                run: () => FT.api.bookmarkPlaylist(it, false).then(() => { FT.toast(FT.t('bookmark_removed')); if (el.onRemoved) el.onRemoved(); }).catch(() => FT.toast(FT.t('could_not_remove'))),
             });
         }
         return items;

@@ -6,18 +6,18 @@ const save = (key, value) => { try { localStorage.setItem(key, value); } catch (
 const root = document.documentElement;
 
 FT.palettes = [
-    { id: 'fathom', name: 'Fathom', note: 'Ivory, steel blue, deep navy' },
-    { id: 'graphite', name: 'Graphite', note: 'Neutral, no colour' },
-    { id: 'ember', name: 'Ember', note: 'Terracotta, espresso' },
-    { id: 'moss', name: 'Moss', note: 'Sage, forest' },
-    { id: 'lagoon', name: 'Lagoon', note: 'Seafoam, deep teal' },
-    { id: 'orchid', name: 'Orchid', note: 'Lilac, aubergine' },
-    { id: 'rose', name: 'Rose', note: 'Blush, wine' },
-    { id: 'citrus', name: 'Citrus', note: 'Lime cream, olive' },
-    { id: 'device', name: 'Phone colours', note: 'Follows the phone' },
+    { id: 'fathom', name: FT.t('palette_fathom_name'), note: FT.t('palette_fathom_note') },
+    { id: 'graphite', name: FT.t('palette_graphite_name'), note: FT.t('palette_graphite_note') },
+    { id: 'ember', name: FT.t('palette_ember_name'), note: FT.t('palette_ember_note') },
+    { id: 'moss', name: FT.t('palette_moss_name'), note: FT.t('palette_moss_note') },
+    { id: 'lagoon', name: FT.t('palette_lagoon_name'), note: FT.t('palette_lagoon_note') },
+    { id: 'orchid', name: FT.t('palette_orchid_name'), note: FT.t('palette_orchid_note') },
+    { id: 'rose', name: FT.t('palette_rose_name'), note: FT.t('palette_rose_note') },
+    { id: 'citrus', name: FT.t('palette_citrus_name'), note: FT.t('palette_citrus_note') },
+    { id: 'device', name: FT.t('palette_device_name'), note: FT.t('palette_device_note') },
 ];
 
-FT.modes = [['light', 'Light'], ['dark', 'Dark'], ['oled', 'OLED'], ['auto', 'Auto']];
+FT.modes = [['light', FT.t('mode_light')], ['dark', FT.t('mode_dark')], ['oled', FT.t('mode_oled')], ['auto', FT.t('mode_auto')]];
 
 FT.theme = {
     palette: () => root.dataset.palette,

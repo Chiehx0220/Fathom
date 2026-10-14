@@ -1,0 +1,32 @@
+name: Web strings
+
+# Fails when the words of the local web UI (app/src/main/assets/web/app/strings/<language>.json) and the page that asks
+# for them disagree: a key the page uses that en.json lacks, a key nobody asks for, or a translation with other {values}.
+# Run it before committing a change to the web UI:
+#   node scripts/check-web-strings.js --report
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  strings:
+    name: Check the web strings
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+
+      - name: Compare the strings with the page
+        run: node scripts/check-web-strings.js --report

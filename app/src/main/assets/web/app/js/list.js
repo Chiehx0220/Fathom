@@ -11,9 +11,9 @@ const paneFor = (el) => {
         h('h2', {}, v.title),
         h('p', {}, FT.meta(v)),
         h('div', { class: 'btns' },
-            FT.button('Play', 'play_arrow', () => { location.hash = FT.link.watch(v); }, 'primary', 'pane-play'),
-            FT.button(el.inWatchLater ? 'Saved' : 'Watch later', 'schedule', () => FT.api.watchLater(v, !el.inWatchLater).then(() => { el.inWatchLater = !el.inWatchLater; FT.toast(el.inWatchLater ? 'Saved to Watch later' : 'Removed from Watch later'); }).catch(() => FT.toast('Could not save that')), '', 'pane-later'),
-            v.channelId ? FT.button('Channel', 'account_circle', () => { location.hash = FT.link.channel(v.channelId, v.serviceId); }, '', 'pane-channel') : null),
+            FT.button(FT.t('play'), 'play_arrow', () => { location.hash = FT.link.watch(v); }, 'primary', 'pane-play'),
+            FT.button(FT.t(el.inWatchLater ? 'saved' : 'watch_later'), 'schedule', () => FT.api.watchLater(v, !el.inWatchLater).then(() => { el.inWatchLater = !el.inWatchLater; FT.toast(FT.t(el.inWatchLater ? 'saved_to_later' : 'removed_from_later')); }).catch(() => FT.toast(FT.t('could_not_save'))), '', 'pane-later'),
+            v.channelId ? FT.button(FT.t('channel'), 'account_circle', () => { location.hash = FT.link.channel(v.channelId, v.serviceId); }, '', 'pane-channel') : null),
     ];
 };
 
@@ -63,13 +63,13 @@ FT.listView = async (root, options, isCurrent) => {
             done = !cursor;
             more.hidden = done;
         } catch (error) {
-            if (isCurrent()) FT.toast('Could not load more');
+            if (isCurrent()) FT.toast(FT.t('could_not_load_more'));
         } finally {
             loading = false;
         }
     }
 
-    more.append(FT.button('Load more', 'expand_more', loadMore, '', 'load-more'));
+    more.append(FT.button(FT.t('load_more'), 'expand_more', loadMore, '', 'load-more'));
     const first = await options.fetch(null);
     if (!isCurrent()) return;
     if (!first.items.length && !(first.extra && first.extra.length)) {
@@ -90,7 +90,7 @@ const cleanup = () => { FT.screenSelect = null; };
 // ---- Search ----
 
 const searchField = (value) => {
-    const input = h('input', { type: 'search', placeholder: 'Search videos, channels, playlists', value: value || '', enterkeyhint: 'search', autocomplete: 'off' });
+    const input = h('input', { type: 'search', placeholder: FT.t('search_placeholder'), value: value || '', enterkeyhint: 'search', autocomplete: 'off' });
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && input.value.trim()) { e.preventDefault(); input.blur(); location.hash = '#/search?q=' + FT.enc(input.value.trim()); }
     });
@@ -102,7 +102,7 @@ const suggestions = (history, onChange) => {
     return h('div', { class: 'suggest' }, history.map((q) => {
         const row = h('div', { class: 'suggest-row' },
             h('button', { type: 'button', class: 'suggest-item', data: { f: '', key: 'q:' + q }, onclick: () => { location.hash = '#/search?q=' + FT.enc(q); } }, FT.icon('history'), h('span', {}, q)),
-            h('button', { type: 'button', class: 'suggest-del', 'aria-label': 'Remove ' + q, data: { f: '', key: 'del:' + q }, onclick: () => FT.api.forgetSearch(q).then(() => { row.remove(); onChange(); }) }, FT.icon('close')));
+            h('button', { type: 'button', class: 'suggest-del', 'aria-label': FT.t('remove_query', { query: q }), data: { f: '', key: 'del:' + q }, onclick: () => FT.api.forgetSearch(q).then(() => { row.remove(); onChange(); }) }, FT.icon('close')));
         return row;
     }));
 };
@@ -116,13 +116,13 @@ FT.register('search', {
         if (!q) {
             const history = await FT.api.searchHistory().catch(() => []);
             if (!isCurrent()) return;
-            root.replaceChildren(...[field, suggestions(history, () => {}), history.length ? null : FT.empty('search', 'Search ' + FT.store.serviceName(service), 'Type here, or type on your phone when the remote is connected.')].filter(Boolean));
+            root.replaceChildren(...[field, suggestions(history, () => {}), history.length ? null : FT.empty('search', FT.t('search_service', { name: FT.store.serviceName(service) }), FT.t('search_empty_hint'))].filter(Boolean));
             return;
         }
         // The first page decides which kinds of result exist; videos come first, channels and playlists are one press away.
         const first = await FT.api.search(service, q, null);
         if (!isCurrent()) return;
-        const kinds = [['videos', 'Videos', 'play_circle', first.videos], ['channels', 'Channels', 'group', first.channels], ['playlists', 'Playlists', 'playlist_play', first.playlists]]
+        const kinds = [['videos', FT.t('videos'), 'play_circle', first.videos], ['channels', FT.t('channels'), 'group', first.channels], ['playlists', FT.t('playlists'), 'playlist_play', first.playlists]]
             .filter(([id, , , list]) => id === 'videos' || (list && list.length));
         const firstKind = kinds.find((k) => k[3] && k[3].length);
         const type = kinds.some((k) => k[0] === params.type) ? params.type : firstKind ? firstKind[0] : 'videos';
@@ -137,7 +137,7 @@ FT.register('search', {
         let served = false;
         await FT.listView(root, {
             before,
-            empty: { icon: 'search_off', title: 'No results', text: 'Nothing found for "' + q + '".' },
+            empty: { icon: 'search_off', title: FT.t('no_results'), text: FT.t('no_results_hint', { query: q }) },
             async fetch(cursor) {
                 if (!cursor && !served) { served = true; return { items: first.videos || [], next: first.nextPage }; }
                 const body = await FT.api.search(service, q, cursor);
@@ -155,8 +155,8 @@ const historyList = (root, { before, continuing }, isCurrent) => {
     return FT.listView(root, {
         before,
         empty: continuing
-            ? { icon: 'play_circle', title: 'Nothing in progress', text: "Videos you start but don't finish show up here." }
-            : { icon: 'history', title: 'Nothing watched yet', text: 'Videos you watch show up here.' },
+            ? { icon: 'play_circle', title: FT.t('nothing_in_progress'), text: FT.t('nothing_in_progress_hint') }
+            : { icon: 'history', title: FT.t('nothing_watched'), text: FT.t('nothing_watched_hint') },
         decorate: (row) => { row.fromHistory = true; },
         fetch: async () => {
             const items = (await FT.api.history()).videos || [];
@@ -170,7 +170,7 @@ FT.register('history', {
     async render(root, params, isCurrent) {
         // full history is in Library; route kept for ?filter=continuing and old links
         if (params.filter !== 'continuing') { location.replace('#/library?tab=history'); return; }
-        await historyList(root, { before: [h('div', { class: 'head' }, h('h1', {}, 'Continue watching'))], continuing: true }, isCurrent);
+        await historyList(root, { before: [h('div', { class: 'head' }, h('h1', {}, FT.t('continue_watching')))], continuing: true }, isCurrent);
     },
 });
 
@@ -181,11 +181,11 @@ FT.register('recommended', {
     async render(root, params, isCurrent) {
         const service = FT.store.service;
         const known = new Set();
-        const head = h('div', { class: 'head' }, h('h1', {}, 'Recommended'));
+        const head = h('div', { class: 'head' }, h('h1', {}, FT.t('recommended')));
         let served = false;
         await FT.listView(root, {
             before: [head],
-            empty: { icon: 'video_library', title: 'Nothing to show yet', text: 'Search for something to get started.' },
+            empty: { icon: 'video_library', title: FT.t('nothing_yet'), text: FT.t('nothing_yet_hint') },
             async fetch(cursor) {
                 const body = !cursor && !served ? await FT.api.recommendations(service) : await FT.api.recommendations(service, true);
                 served = true;
@@ -203,7 +203,7 @@ FT.register('recommended', {
 const tabPills = (route, tabs, active) => h('div', { class: 'pills' }, tabs.map(([id, label, icon]) => FT.pill(label, icon, id === active, () => { location.hash = `#/${route}?tab=${id}`; }, 'pill-' + id)));
 const ofService = (service) => (item) => item.serviceId === undefined || item.serviceId === service;
 
-const SUBSCRIPTIONS_TABS = [['feed', 'Feed', 'dynamic_feed'], ['channels', 'Channels', 'group']];
+const SUBSCRIPTIONS_TABS = [['feed', FT.t('tab_feed'), 'dynamic_feed'], ['channels', FT.t('channels'), 'group']];
 
 FT.register('subscriptions', {
     leave: cleanup,
@@ -211,13 +211,13 @@ FT.register('subscriptions', {
         const tab = SUBSCRIPTIONS_TABS.some((t) => t[0] === params.tab) ? params.tab : 'feed';
         const service = FT.store.service;
         const pills = tabPills('subscriptions', SUBSCRIPTIONS_TABS, tab);
-        const head = h('div', { class: 'head' }, h('h1', {}, 'Subscriptions'));
+        const head = h('div', { class: 'head' }, h('h1', {}, FT.t('tab_subscriptions')));
         const sameService = ofService(service);
 
         if (tab === 'feed') {
             await FT.listView(root, {
                 before: [head, pills],
-                empty: { icon: 'dynamic_feed', title: 'No recent uploads', text: 'Subscribe to channels and their newest videos appear here.' },
+                empty: { icon: 'dynamic_feed', title: FT.t('no_recent_uploads'), text: FT.t('no_recent_uploads_hint') },
                 fetch: async () => ({ items: ((await FT.api.feed(service)).videos || []).filter(sameService), next: null }),
             }, isCurrent);
             return;
@@ -232,13 +232,13 @@ FT.register('subscriptions', {
         });
         root.replaceChildren(head, pills, cards.length
             ? h('div', { class: 'grid' }, cards)
-            : FT.empty('group', 'No subscriptions yet', 'Subscribe to a channel and it shows up here.'));
+            : FT.empty('group', FT.t('no_subscriptions'), FT.t('no_subscriptions_hint')));
     },
 });
 
 // ---- Library: history, watch later, playlists, downloads ----
 
-const LIBRARY_TABS = [['history', 'History', 'history'], ['later', 'Watch later', 'schedule'], ['playlists', 'Playlists', 'playlist_play'], ['downloads', 'Downloads', 'download']];
+const LIBRARY_TABS = [['history', FT.t('tab_history'), 'history'], ['later', FT.t('watch_later'), 'schedule'], ['playlists', FT.t('playlists'), 'playlist_play'], ['downloads', FT.t('tab_downloads'), 'download']];
 
 FT.register('library', {
     leave: cleanup,
@@ -248,7 +248,7 @@ FT.register('library', {
         const tab = LIBRARY_TABS.some((t) => t[0] === params.tab) ? params.tab : 'history';
         const service = FT.store.service;
         const pills = tabPills('library', LIBRARY_TABS, tab);
-        const head = h('div', { class: 'head' }, h('h1', {}, 'Library'));
+        const head = h('div', { class: 'head' }, h('h1', {}, FT.t('tab_library')));
         const sameService = ofService(service);
         const before = [head, pills];
 
@@ -261,8 +261,8 @@ FT.register('library', {
             await FT.listView(root, {
                 before,
                 empty: tab === 'later'
-                    ? { icon: 'schedule', title: 'Nothing saved', text: 'Use Options on any video to save it for later.' }
-                    : { icon: 'download', title: 'No downloads yet', text: 'Videos you download on the phone, or from the Download button, show up here.' },
+                    ? { icon: 'schedule', title: FT.t('nothing_saved'), text: FT.t('nothing_saved_hint') }
+                    : { icon: 'download', title: FT.t('no_downloads'), text: FT.t('no_downloads_hint') },
                 decorate: (row) => { if (tab === 'later') row.inWatchLater = true; },
                 fetch: async () => {
                     const items = tab === 'later' ? (await FT.api.library(service)).watchLater : (await FT.api.downloads()).videos;
@@ -281,7 +281,7 @@ FT.register('library', {
         });
         root.replaceChildren(...before, cards.length
             ? h('div', { class: 'grid' }, cards)
-            : FT.empty('playlist_play', 'No bookmarked playlists', 'Bookmark a playlist to keep it here.'));
+            : FT.empty('playlist_play', FT.t('no_bookmarks'), FT.t('no_bookmarks_hint')));
     },
 });
 
@@ -295,18 +295,18 @@ FT.register('playlist', {
         let meta = null;
         await FT.listView(root, {
             before: [],
-            empty: { icon: 'playlist_remove', title: 'Empty playlist', text: 'There are no videos here.' },
+            empty: { icon: 'playlist_remove', title: FT.t('playlist_empty'), text: FT.t('playlist_empty_hint') },
             fetch: async (cursor) => {
                 const body = await FT.api.playlist(service, id, cursor);
                 if (!meta) {
                     meta = body.playlist;
-                    const bookmark = FT.button(meta.isBookmarked ? 'Bookmarked' : 'Bookmark', 'star', () => {
+                    const bookmark = FT.button(FT.t(meta.isBookmarked ? 'bookmarked' : 'bookmark'), 'star', () => {
                         const on = !meta.isBookmarked;
                         FT.api.bookmarkPlaylist({ id, name: meta.name }, on).then(() => {
                             meta.isBookmarked = on;
-                            FT.toast(on ? 'Playlist bookmarked' : 'Bookmark removed');
+                            FT.toast(FT.t(on ? 'playlist_bookmarked' : 'bookmark_removed'));
                             bookmark.classList.toggle('on', on);
-                        }).catch(() => FT.toast('Could not change that'));
+                        }).catch(() => FT.toast(FT.t('could_not_change')));
                     }, meta.isBookmarked ? 'on' : '', 'bookmark');
                     return { items: body.videos, next: body.nextPage, extra: [h('div', { class: 'head' }, h('h1', {}, meta.name), h('span', { class: 'card-meta' }, [meta.uploaderName, meta.videoCount >= 0 ? meta.videoCount + ' videos' : ''].filter(Boolean).join(' · ')), h('span', { class: 'grow' }), bookmark)] };
                 }

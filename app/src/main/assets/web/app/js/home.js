@@ -44,8 +44,8 @@ const shelfOf = (title, sub, items, options = {}) => {
     };
     step();
     const head = options.expand
-        ? h('a', { class: 'shelf-head expand', href: options.expand, 'aria-label': 'See all: ' + title, data: { f: '', key: 'shelf:' + title } },
-            h('h2', {}, title), FT.icon('chevron_right', 'shelf-chev'), sub ? h('span', { class: 'shelf-sub' }, sub) : null, h('em', { class: 'shelf-all' }, 'See all'))
+        ? h('a', { class: 'shelf-head expand', href: options.expand, 'aria-label': FT.t('see_all_named', { title }), data: { f: '', key: 'shelf:' + title } },
+            h('h2', {}, title), FT.icon('chevron_right', 'shelf-chev'), sub ? h('span', { class: 'shelf-sub' }, sub) : null, h('em', { class: 'shelf-all' }, FT.t('see_all')))
         : h('div', { class: 'shelf-head' }, h('h2', {}, title), sub ? h('span', {}, sub) : null);
     return h('section', { class: 'shelf' }, head, FT.scroller(row));
 };
@@ -53,12 +53,12 @@ const shelfOf = (title, sub, items, options = {}) => {
 const hero = (v, resuming) => h('div', { class: 'hero' },
     v.thumbnailUrl ? h('img', { src: v.thumbnailUrl, alt: '' }) : null,
     h('div', { class: 'hero-cap' },
-        h('div', { class: 'hero-kicker' }, resuming ? `Continue watching · ${100 - v.progress}% left` : 'Featured'),
+        h('div', { class: 'hero-kicker' }, resuming ? FT.t('continue_left', { percent: 100 - v.progress }) : FT.t('featured')),
         h('h1', {}, v.title),
         h('div', { class: 'card-meta' }, [FT.meta(v), v.duration > 0 ? FT.duration(v.duration) : ''].filter(Boolean).join(' · ')),
         h('div', { class: 'btns' },
-            FT.button(resuming ? 'Resume' : 'Play', 'play_arrow', () => { location.hash = FT.link.watch(v); }, 'primary', 'hero-play'),
-            FT.button('Watch later', 'schedule', () => FT.api.watchLater(v, true).then(() => FT.toast('Saved to Watch later')).catch(() => FT.toast('Could not save that')), '', 'hero-later'))));
+            FT.button(FT.t(resuming ? 'resume' : 'play'), 'play_arrow', () => { location.hash = FT.link.watch(v); }, 'primary', 'hero-play'),
+            FT.button(FT.t('watch_later'), 'schedule', () => FT.api.watchLater(v, true).then(() => FT.toast(FT.t('saved_to_later'))).catch(() => FT.toast(FT.t('could_not_save'))), '', 'hero-later'))));
 
 const render = async (root, params, isCurrent) => {
     const service = FT.store.service;
@@ -71,7 +71,7 @@ const render = async (root, params, isCurrent) => {
     const seen = (hist.videos || []).filter((v) => v.serviceId === service && v.progress > 2 && v.progress < 95);
     const picks = (recs.videos || []).filter((v) => !v.isShort);
     const lead = seen[0] || picks[0];
-    if (!lead) { root.replaceChildren(FT.empty('video_library', 'Nothing to show yet', 'Search for something to get started.')); return; }
+    if (!lead) { root.replaceChildren(FT.empty('video_library', FT.t('nothing_yet'), FT.t('nothing_yet_hint'))); return; }
 
     // Slots for the shelves that arrive later, so they land in the right place whenever they do.
     const slotSubs = h('div', { hidden: true });
@@ -88,8 +88,8 @@ const render = async (root, params, isCurrent) => {
 
     const page = [
         hero(lead, seen[0] === lead),
-        seen.length ? shelfOf('Continue watching', 'From your history', seen, { expand: '#/history?filter=continuing' }) : null,
-        picks.length ? shelfOf('Recommended', 'For you', picks, { ...(loadMoreRecs ? { loadMore: loadMoreRecs } : {}), expand: '#/recommended' }) : null,
+        seen.length ? shelfOf(FT.t('continue_watching'), FT.t('from_history'), seen, { expand: '#/history?filter=continuing' }) : null,
+        picks.length ? shelfOf(FT.t('recommended'), FT.t('for_you'), picks, { ...(loadMoreRecs ? { loadMore: loadMoreRecs } : {}), expand: '#/recommended' }) : null,
         slotSubs,
         slotLater,
     ];
@@ -99,7 +99,7 @@ const render = async (root, params, isCurrent) => {
         if (!isCurrent()) return;
         const items = (body.videos || []).filter((v) => v.serviceId === service);
         if (!items.length) return;
-        slotSubs.replaceChildren(shelfOf('From your subscriptions', 'Newest first', items, { expand: '#/subscriptions?tab=feed' }));
+        slotSubs.replaceChildren(shelfOf(FT.t('from_subscriptions'), FT.t('newest_first'), items, { expand: '#/subscriptions?tab=feed' }));
         slotSubs.hidden = false;
     }).catch(() => {});
 
@@ -107,7 +107,7 @@ const render = async (root, params, isCurrent) => {
         if (!isCurrent()) return;
         const items = (lib.watchLater || []).filter((v) => v.serviceId === service);
         if (!items.length) return;
-        slotLater.replaceChildren(shelfOf('Watch later', 'Saved by you', items, { later: true, expand: '#/library?tab=later' }));
+        slotLater.replaceChildren(shelfOf(FT.t('watch_later'), FT.t('saved_by_you'), items, { later: true, expand: '#/library?tab=later' }));
         slotLater.hidden = false;
     }).catch(() => {});
 };

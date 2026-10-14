@@ -16,6 +16,7 @@
   </style>
   <script>
     window.FT_CONFIG = { services: {{services}} };
+    window.FT_STRINGS = {{strings}};
     // The theme is on <html> before anything paints, so the chosen one never flashes the default. theme.js changes it later
     // through the same function.
     window.FT_setTheme = function (palette, mode) {
@@ -38,9 +39,9 @@
     <!-- player.js builds the player of the open video in here: a Video.js player, its skin and the media component that fits the stream. -->
     <div id="player" class="stage-player"></div>
     <div class="audio-art"><span class="i">music_note</span><strong id="audio-art-title"></strong></div>
-    <button type="button" id="mini-close" class="mini-ctrl mini-close" aria-label="Close mini player" hidden><span class="i">close</span></button>
-    <button type="button" id="mini-expand" class="mini-ctrl mini-expand" aria-label="Open full player" hidden><span class="i">fullscreen</span></button>
-    <button type="button" id="mini-play" class="mini-ctrl mini-play" aria-label="Play/Pause" hidden></button>
+    <button type="button" id="mini-close" class="mini-ctrl mini-close" aria-label="Close mini player" data-t-label="mini_close" hidden><span class="i">close</span></button>
+    <button type="button" id="mini-expand" class="mini-ctrl mini-expand" aria-label="Open full player" data-t-label="mini_expand" hidden><span class="i">fullscreen</span></button>
+    <button type="button" id="mini-play" class="mini-ctrl mini-play" aria-label="Play/Pause" data-t-label="mini_play" hidden></button>
   </div>
   <!-- The skip button and the HUD sit inside the player's skin while a video is open, so they show in fullscreen; here between videos. -->
   <div id="overlay-holder" hidden>

@@ -12,5 +12,6 @@ object WebShell {
             .replace("{{version}}", WebAssets.appVersion)
             .replace("{{deviceColors}}", WebTheme.deviceColors(":root[data-scheme=\"light\"]", ":root[data-scheme=\"dark\"]"))
             .replace("{{services}}", "[$services]")
+            .replace("{{strings}}", WebAssets.appStrings)
     }
 }

@@ -14,14 +14,14 @@ const setCode = (value) => { try { if (value) localStorage.setItem(KEY, value); 
 
 // ---- The banner, the pointer and the key hints ----
 
-const HINTS = [['open_with', 'Move'], ['OK', 'Open'], ['menu', 'Options'], ['undo', 'Back']];
+const HINTS = [['open_with', FT.t('hint_move')], ['OK', FT.t('open')], ['menu', FT.t('options')], ['undo', FT.t('hint_back')]];
 
 const paintState = () => {
     const on = FT.remote.active;
     document.body.classList.toggle('remote-active', on);
     const banner = FT.$('#remote-banner');
     banner.hidden = !on;
-    if (on) banner.replaceChildren(FT.icon('cast', 'fill'), 'Remote connected', FT.h('button', { type: 'button', onclick: () => FT.remote.release() }, 'Disconnect'));
+    if (on) banner.replaceChildren(FT.icon('cast', 'fill'), FT.t('remote_connected'), FT.h('button', { type: 'button', onclick: () => FT.remote.release() }, FT.t('disconnect')));
     const hints = FT.$('#keyhints');
     hints.hidden = !on;
     if (on) {
@@ -199,14 +199,14 @@ Object.assign(FT.remote, {
                 paintState();
                 connect();
                 wake();
-                FT.toast('Remote connected. Open the remote on your phone.');
+                FT.toast(FT.t('remote_connected_toast'));
             } else if (body.status === 'busy') {
-                FT.toast(body.message || 'Another device is connected');
+                FT.toast(body.message || FT.t('remote_other_device'));
             } else {
-                FT.toast(body.message || 'Could not connect');
+                FT.toast(body.message || FT.t('remote_could_not_connect'));
             }
         } catch (e) {
-            FT.toast('Could not reach the phone');
+            FT.toast(FT.t('remote_unreachable'));
         }
     },
 

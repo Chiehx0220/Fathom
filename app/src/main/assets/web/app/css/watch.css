@@ -41,6 +41,11 @@ body.remote-fs .stage { position: fixed; inset: 0; z-index: 2000; width: auto; h
 body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
 
 .skip-btn { position: absolute; right: 24px; bottom: 96px; z-index: 12; height: 44px; padding: 0 22px; border: 0; border-radius: 22px; background: var(--acc); color: var(--on-acc); font-weight: 500; }
+/* A one-time note over the player that says where the danmaku switch is: in the settings menu, above the gear. */
+.dm-hint { position: absolute; right: 12px; bottom: 72px; z-index: 12; display: flex; align-items: center; gap: 8px; max-width: 260px; padding: 10px 14px; border-radius: 14px; background: rgba(14, 17, 24, 0.94); color: #fff; font-size: 13px; line-height: 1.35; }
+.dm-hint::after { content: ''; position: absolute; right: 89px; bottom: -6px; width: 12px; height: 12px; background: inherit; transform: rotate(45deg); }
+.dm-hint .i { font-size: 18px; }
+.stage.mini .dm-hint { display: none; }
 .hud { position: absolute; top: 24px; left: 50%; z-index: 12; display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 22px; background: rgba(0, 0, 0, 0.8); color: #fff; transform: translateX(-50%); font-weight: 500; }
 
 /* The SponsorBlock marks on the seek bar are drawn inside the skin, so their rules are in player.js (SKIN_STYLE). */

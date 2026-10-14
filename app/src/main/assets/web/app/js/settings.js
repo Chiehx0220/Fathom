@@ -2,7 +2,7 @@
 (() => {
 const h = FT.h;
 
-const FEED_MODES = [['mix', 'Mix', 'Recommendations and subscriptions'], ['subs', 'Subscriptions', 'Only your channels'], ['recs', 'Recommendations', 'Only suggested videos']];
+const FEED_MODES = [['mix', FT.t('feed_mix'), FT.t('feed_mix_note')], ['subs', FT.t('tab_subscriptions'), FT.t('feed_subs_note')], ['recs', FT.t('recommendations'), FT.t('feed_recs_note')]];
 
 // A palette's swatch is drawn by the stylesheet itself: it carries the same attributes as <html>, so it shows the palette in the current mode.
 const syncArt = (art) => {
@@ -40,7 +40,7 @@ const toggle = (title, hint, on, save, key) => {
         on = !on;
         sw.classList.toggle('on', on);
         sw.setAttribute('aria-checked', String(on));
-        save(on).then(() => { FT.api.forget(); }).catch(() => { on = !on; sw.classList.toggle('on', on); FT.toast('Could not save that'); });
+        save(on).then(() => { FT.api.forget(); }).catch(() => { on = !on; sw.classList.toggle('on', on); FT.toast(FT.t('could_not_save')); });
     } });
     return h('div', { class: 'setting' }, h('div', {}, h('b', {}, title), h('span', { class: 'hint' }, hint)), sw);
 };
@@ -55,30 +55,30 @@ FT.register('settings', {
                 FT.api.settings({ homeFeedMode: id }).then(() => {
                     FT.$$('.pill', modes).forEach((p) => p.classList.toggle('on', p === pill));
                     FT.api.forget();
-                    FT.toast('Home feed: ' + label);
-                }).catch(() => FT.toast('Could not save that'));
+                    FT.toast(FT.t('feed_changed', { name: label }));
+                }).catch(() => FT.toast(FT.t('could_not_save')));
             }, 'mode-' + id);
             return pill;
         }));
 
         const sections = [
-            h('section', {}, h('h2', {}, 'Theme'), h('p', { class: 'hint' }, 'Applies to this browser only.'),
+            h('section', {}, h('h2', {}, FT.t('settings_theme')), h('p', { class: 'hint' }, FT.t('settings_theme_hint')),
                 h('div', { style: 'margin-top:12px' }, modePills()), h('div', { class: 'swatches' }, FT.palettes.map(swatch))),
         ];
         if (values) {
-            sections.push(h('section', {}, h('h2', {}, 'Home feed'), h('p', { class: 'hint' }, 'What the recommendations shelf is made of.'), h('div', { style: 'margin-top:12px' }, modes)));
-            sections.push(h('section', { style: 'display:flex;flex-direction:column;gap:10px' }, h('h2', {}, 'Filters'),
-                toggle('Hide watched videos', 'Leave videos you have already watched out of lists.', !!values.hideWatched, (on) => FT.api.settings({ hideWatched: on }), 'hide-watched'),
-                toggle('Hide Shorts', 'Leave out vertical videos shorter than two minutes.', !!values.hideShorts, (on) => FT.api.settings({ hideShorts: on }), 'hide-shorts')));
+            sections.push(h('section', {}, h('h2', {}, FT.t('settings_feed')), h('p', { class: 'hint' }, FT.t('settings_feed_hint')), h('div', { style: 'margin-top:12px' }, modes)));
+            sections.push(h('section', { style: 'display:flex;flex-direction:column;gap:10px' }, h('h2', {}, FT.t('settings_filters')),
+                toggle(FT.t('filter_hide_watched'), FT.t('filter_hide_watched_hint'), !!values.hideWatched, (on) => FT.api.settings({ hideWatched: on }), 'hide-watched'),
+                toggle(FT.t('filter_hide_shorts'), FT.t('filter_hide_shorts_hint'), !!values.hideShorts, (on) => FT.api.settings({ hideShorts: on }), 'hide-shorts')));
         }
-        sections.push(h('section', {}, h('h2', {}, 'Phone remote'),
-            h('p', { class: 'hint' }, FT.remote.active ? 'Connected. Open the remote on your phone to control this screen.' : 'Use your phone as a remote: press connect here, then open the remote on the phone.'),
+        sections.push(h('section', {}, h('h2', {}, FT.t('settings_remote')),
+            h('p', { class: 'hint' }, FT.t(FT.remote.active ? 'remote_hint_connected' : 'remote_hint_idle')),
             h('div', { class: 'btns', style: 'margin-top:12px' },
-                FT.button(FT.remote.active ? 'Disconnect' : 'Connect phone remote', 'cast', () => { FT.remote.toggle(); setTimeout(() => FT.reload(), 600); }, 'primary', 'remote'))));
-        sections.push(h('section', {}, h('h2', {}, 'Full screen'),
-            h('p', { class: 'hint' }, 'A remote cannot start real full screen: the browser only allows it from a click on the page. Press F11 once in your browser (or use its full screen option) and it stays on as you move between videos.')));
+                FT.button(FT.t(FT.remote.active ? 'disconnect' : 'connect_remote'), 'cast', () => { FT.remote.toggle(); setTimeout(() => FT.reload(), 600); }, 'primary', 'remote'))));
+        sections.push(h('section', {}, h('h2', {}, FT.t('settings_fullscreen')),
+            h('p', { class: 'hint' }, FT.t('settings_fullscreen_hint'))));
 
-        root.replaceChildren(h('div', { class: 'head' }, h('h1', {}, 'Settings')), h('div', { class: 'settings' }, sections));
+        root.replaceChildren(h('div', { class: 'head' }, h('h1', {}, FT.t('tab_settings'))), h('div', { class: 'settings' }, sections));
     },
 });
 })();

@@ -16,10 +16,10 @@ FT.meta = meta;
 
 const thumb = (v, badge) => {
     const box = h('div', { class: 'thumb' }, v.thumbnailUrl ? h('img', { src: v.thumbnailUrl, alt: '', loading: 'lazy' }) : null);
-    if (v.isLive) box.append(h('span', { class: 'dur live' }, 'LIVE'));
+    if (v.isLive) box.append(h('span', { class: 'dur live' }, FT.t('live')));
     else if (v.duration > 0) box.append(h('span', { class: 'dur' }, FT.duration(v.duration)));
     if (v.progress > 0 && v.progress < 100) box.append(h('div', { class: 'prog' }, h('i', { style: `width:${v.progress}%` })));
-    if (badge !== false) box.append(h('span', { class: 'opt' }, FT.icon('menu'), 'Options'));
+    if (badge !== false) box.append(h('span', { class: 'opt' }, FT.icon('menu'), FT.t('options')));
     return box;
 };
 
@@ -44,14 +44,14 @@ FT.videoRow = (v, key) => {
 FT.channelCard = (c) => {
     const box = h('div', { class: 'thumb' }, c.thumbnailUrl ? h('img', { src: c.thumbnailUrl, alt: '', loading: 'lazy' }) : null);
     const el = h('a', { class: 'card channel', href: FT.link.channel(c.id, c.serviceId), tabindex: '-1', data: { f: '', key: c.id } },
-        box, h('div', { class: 'card-title' }, c.name), h('div', { class: 'card-meta' }, c.subscriberCount >= 0 ? FT.count(c.subscriberCount) + ' subscribers' : ''));
+        box, h('div', { class: 'card-title' }, c.name), h('div', { class: 'card-meta' }, c.subscriberCount >= 0 ? FT.t('count_subscribers', { count: FT.count(c.subscriberCount) }) : ''));
     el.item = c;
     el.kind = 'channel';
     return el;
 };
 
 FT.playlistCard = (p) => {
-    const box = h('div', { class: 'thumb' }, p.thumbnailUrl ? h('img', { src: p.thumbnailUrl, alt: '', loading: 'lazy' }) : null, p.videoCount ? h('span', { class: 'dur' }, p.videoCount + ' videos') : null);
+    const box = h('div', { class: 'thumb' }, p.thumbnailUrl ? h('img', { src: p.thumbnailUrl, alt: '', loading: 'lazy' }) : null, p.videoCount ? h('span', { class: 'dur' }, FT.tn('count_videos', p.videoCount)) : null);
     const el = h('a', { class: 'card', href: FT.link.playlist(p), tabindex: '-1', data: { f: '', key: p.id } }, box, h('div', { class: 'card-title' }, p.name));
     el.item = p;
     el.kind = 'playlist';
@@ -66,7 +66,7 @@ FT.itemCard = (item) => (item.subscriberCount !== undefined && item.name ? FT.ch
 // not data-f, so the remote never stops on them.
 FT.scroller = (row) => {
     const wrap = h('div', { class: 'row-wrap' });
-    const arrow = (dir) => h('button', { type: 'button', class: 'row-arrow ' + dir, tabindex: '-1', 'aria-label': dir === 'left' ? 'Scroll left' : 'Scroll right',
+    const arrow = (dir) => h('button', { type: 'button', class: 'row-arrow ' + dir, tabindex: '-1', 'aria-label': FT.t(dir === 'left' ? 'scroll_left' : 'scroll_right'),
         onclick: () => row.scrollBy({ left: (dir === 'left' ? -1 : 1) * row.clientWidth * 0.85 }) }, FT.icon('chevron_right'));  // the icon font holds only the icons the app uses, so the left arrow is this one mirrored in CSS
     const update = () => {
         wrap.classList.toggle('can-left', row.scrollLeft > 4);
@@ -100,7 +100,7 @@ FT.empty = (icon, title, text) => h('div', { class: 'empty' }, FT.icon(icon), h(
 // fetch network errors carry no useful message
 const UNREACHABLE = /failed to fetch|load failed|networkerror|network request failed/i;
 
-FT.failure = (message, retry) => h('div', { class: 'empty' }, FT.icon('cloud_off'), h('h2', {}, 'Could not load this'),
-    h('p', {}, UNREACHABLE.test(message || '') ? 'Fathom is not reachable. Check that the app is running on your phone.' : message || ''),
-    retry ? FT.button('Try again', 'refresh', retry, 'primary') : null);
+FT.failure = (message, retry) => h('div', { class: 'empty' }, FT.icon('cloud_off'), h('h2', {}, FT.t('load_failed_title')),
+    h('p', {}, UNREACHABLE.test(message || '') ? FT.t('unreachable') : message || ''),
+    retry ? FT.button(FT.t('try_again'), 'refresh', retry, 'primary') : null);
 })();

@@ -17,10 +17,10 @@ const parse = () => {
 };
 
 const TABS = [
-    { name: 'home', label: 'Home', icon: 'home', match: ['home'] },
-    { name: 'subscriptions', label: 'Subscriptions', icon: 'subscriptions', match: ['subscriptions', 'channel'] },
-    { name: 'library', label: 'Library', icon: 'video_library', match: ['library', 'playlist', 'history'] },
-    { name: 'settings', label: 'Settings', icon: 'settings', match: ['settings'] },
+    { name: 'home', label: FT.t('tab_home'), icon: 'home', match: ['home'] },
+    { name: 'subscriptions', label: FT.t('tab_subscriptions'), icon: 'subscriptions', match: ['subscriptions', 'channel'] },
+    { name: 'library', label: FT.t('tab_library'), icon: 'video_library', match: ['library', 'playlist', 'history'] },
+    { name: 'settings', label: FT.t('tab_settings'), icon: 'settings', match: ['settings'] },
 ];
 
 // ---- The top bar ----
@@ -28,7 +28,7 @@ const TABS = [
 const chooseService = (anchor) => {
     FT.menu.open(FT.services.map((s) => ({
         icon: s.id === FT.store.service ? 'radio_button_checked' : 'radio_button_unchecked', label: s.name, run: () => FT.setService(s.id),
-    })), { title: 'Source', anchor });
+    })), { title: FT.t('source'), anchor });
 };
 
 // the tab the watch page was opened from stays active
@@ -39,15 +39,15 @@ const renderTop = () => {
     const top = FT.$('#top');
     const searching = route === 'search';
     top.replaceChildren(
-        h('a', { class: 'brand', href: '#/home', 'aria-label': 'Fathom home' }, FT.brandMark(), h('span', {}, 'Fathom')),
+        h('a', { class: 'brand', href: '#/home', 'aria-label': FT.t('brand_home') }, FT.brandMark(), h('span', {}, 'Fathom')),
         h('nav', { class: 'tabs' }, TABS.map((tab) => h('a', {
             class: 'tab' + (tab.match.includes(route) ? ' on' : ''), href: '#/' + tab.name, data: { f: '', key: 'tab-' + tab.name },
         }, FT.icon(tab.icon, tab.match.includes(route) ? 'fill' : ''), h('span', {}, tab.label)))),
         h('div', { class: 'tools' },
             h('button', { type: 'button', class: 'chip', data: { f: '', key: 'source' }, onclick: (e) => chooseService(e.currentTarget) },
                 h('span', {}, FT.store.serviceName(FT.store.service)), FT.icon('expand_more')),
-            h('a', { class: 'rbtn' + (searching ? ' on' : ''), href: '#/search', 'aria-label': 'Search', data: { f: '', key: 'search' } }, FT.icon('search')),
-            h('button', { type: 'button', class: 'rbtn' + (FT.remote.active ? ' on' : ''), id: 'cast-btn', 'aria-label': 'Connect phone remote', data: { f: '', key: 'cast' }, onclick: () => FT.remote.toggle() },
+            h('a', { class: 'rbtn' + (searching ? ' on' : ''), href: '#/search', 'aria-label': FT.t('search'), data: { f: '', key: 'search' } }, FT.icon('search')),
+            h('button', { type: 'button', class: 'rbtn' + (FT.remote.active ? ' on' : ''), id: 'cast-btn', 'aria-label': FT.t('connect_remote'), data: { f: '', key: 'cast' }, onclick: () => FT.remote.toggle() },
                 FT.icon('cast', FT.remote.active ? 'fill' : ''))));
 };
 FT.renderTop = renderTop;
@@ -100,7 +100,7 @@ FT.onSelect = (el) => {
 FT.setService = (id) => {
     if (id === FT.store.service) return;
     FT.store.setService(id);
-    FT.toast('Source: ' + FT.store.serviceName(id));
+    FT.toast(FT.t('source_changed', { name: FT.store.serviceName(id) }));
     const name = FT.route.name;
     // A channel or playlist belongs to one source, so switching leaves it; screens that follow the source start over; the rest only need the top bar.
     if (name === 'channel' || name === 'playlist') location.hash = '#/home';

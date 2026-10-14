@@ -16,7 +16,7 @@ const comment = (c, service, url) => {
             h('div', { class: 'comment-text' }, FT.description(c.text, c.textType)),
             h('div', { class: 'comment-foot' },
                 c.likeCount > 0 ? h('span', {}, FT.icon('thumb_up'), ' ' + FT.count(c.likeCount)) : null,
-                c.replyCount > 0 && c.continuationToken ? h('span', {}, FT.icon('expand_more'), ' ' + c.replyCount + (c.replyCount === 1 ? ' reply' : ' replies')) : null)));
+                c.replyCount > 0 && c.continuationToken ? h('span', {}, FT.icon('expand_more'), ' ' + FT.tn('count_replies', c.replyCount)) : null)));
     if (c.replyCount > 0 && c.continuationToken) {
         let opened = false;
         const replies = h('div', { class: 'replies' });
@@ -28,7 +28,7 @@ const comment = (c, service, url) => {
                 try {
                     const body = await FT.api.comments(service, url, c.continuationToken);
                     replies.replaceChildren(...(body.comments || []).map((r) => comment(r, service, url)));
-                } catch (e) { FT.toast('Could not load replies'); opened = false; replies.hidden = true; }
+                } catch (e) { FT.toast(FT.t('could_not_load_replies')); opened = false; replies.hidden = true; }
             }
         });
     }
@@ -42,34 +42,34 @@ const loadComments = async (holder, service, url, isCurrent) => {
     const page = async () => {
         const body = await FT.api.comments(service, url, cursor);
         if (!isCurrent()) return;
-        if (body.commentsDisabled) { holder.replaceChildren(h('h2', {}, 'Comments'), h('p', { class: 'card-meta' }, 'Comments are turned off for this video.')); return; }
+        if (body.commentsDisabled) { holder.replaceChildren(h('h2', {}, FT.t('comments')), h('p', { class: 'card-meta' }, FT.t('comments_off'))); return; }
         list.append(...(body.comments || []).map((c) => comment(c, service, url)));
         cursor = body.nextPage || null;
         more.hidden = !cursor;
     };
-    more.append(FT.button('Load more comments', 'expand_more', () => page().catch(() => FT.toast('Could not load more')), '', 'more-comments'));
+    more.append(FT.button(FT.t('load_more_comments'), 'expand_more', () => page().catch(() => FT.toast(FT.t('could_not_load_more'))), '', 'more-comments'));
     try {
         await page();
-        if (isCurrent() && !holder.querySelector('p')) holder.replaceChildren(h('h2', {}, 'Comments'), list, more);
+        if (isCurrent() && !holder.querySelector('p')) holder.replaceChildren(h('h2', {}, FT.t('comments')), list, more);
     } catch (e) {
-        if (isCurrent()) holder.replaceChildren(h('h2', {}, 'Comments'), h('p', { class: 'card-meta' }, 'Could not load comments.'));
+        if (isCurrent()) holder.replaceChildren(h('h2', {}, FT.t('comments')), h('p', { class: 'card-meta' }, FT.t('could_not_load_comments')));
     }
 };
 
 // Download button: the phone is the source of truth; the button polls while a download runs.
 const downloadButton = (service, info) => {
     let state = 'none';
-    const label = h('span', {}, 'Download');
+    const label = h('span', {}, FT.t('download'));
     const icon = h('span', {});
     const btn = h('button', { type: 'button', class: 'btn', data: { f: '', key: 'download', first: '1' } }, icon, label);
     const paint = (s) => {
         state = s.state;
         btn.classList.toggle('primary', state === 'completed');
         const map = {
-            pending: ['downloading', 'Downloading ' + (s.progress || 0) + '%'], downloading: ['downloading', 'Downloading ' + (s.progress || 0) + '%'],
-            paused: ['pause_circle', 'Paused ' + (s.progress || 0) + '%'], completed: ['download_done', 'Downloaded'], failed: ['error', 'Retry download'],
+            pending: ['downloading', FT.t('downloading', { percent: s.progress || 0 })], downloading: ['downloading', FT.t('downloading', { percent: s.progress || 0 })],
+            paused: ['pause_circle', FT.t('paused_at', { percent: s.progress || 0 })], completed: ['download_done', FT.t('downloaded')], failed: ['error', FT.t('retry_download')],
         };
-        const [ic, text] = map[state] || ['download', 'Download'];
+        const [ic, text] = map[state] || ['download', FT.t('download')];
         icon.replaceChildren(FT.icon(ic));
         label.textContent = text;
         const active = state === 'pending' || state === 'downloading' || state === 'paused';
@@ -78,24 +78,24 @@ const downloadButton = (service, info) => {
     };
     const call = (action, choice) => FT.api.download(action, service, info.url, choice);
     const refresh = () => call('status').then(paint).catch(() => {});
-    const run = (action, choice) => call(action, choice).then(paint).catch((e) => FT.toast(e.message || 'Download failed'));
+    const run = (action, choice) => call(action, choice).then(paint).catch((e) => FT.toast(e.message || FT.t('download_failed')));
     // [{ height, codecs }] from the video's own streams, tallest first; empty (combined stream only) starts at the default quality
     const qualities = (info.playback && info.playback.qualities) || [];
-    const CODEC_LABEL = { h264: 'H.264 (most compatible)', vp9: 'VP9 (smaller)', av1: 'AV1 (smallest)', hevc: 'HEVC', vp8: 'VP8' };
+    const CODEC_LABEL = { h264: FT.t('codec_h264'), vp9: FT.t('codec_vp9'), av1: FT.t('codec_av1'), hevc: 'HEVC', vp8: 'VP8' };
     const pickCodec = (height, codecs) => FT.menu.open(
         codecs.map((codec) => ({ icon: 'download', label: CODEC_LABEL[codec] || codec.toUpperCase(), run: () => run('start', { height, codec }) })),
-        { title: height + 'p format', anchor: btn });
+        { title: FT.t('download_format', { height }), anchor: btn });
     const choose = () => FT.menu.open([
-        { icon: 'download', label: 'Best available', run: () => run('start', { height: 0 }) },
+        { icon: 'download', label: FT.t('download_best'), run: () => run('start', { height: 0 }) },
         ...qualities.map(({ height, codecs }) => ({
             icon: 'download', label: height + 'p',
             run: () => (codecs.length > 1 ? pickCodec(height, codecs) : run('start', { height })),
         })),
-        { icon: 'music_note', label: 'Audio only', run: () => run('start', { audio: 1 }) },
-    ], { title: 'Download quality', anchor: btn });
+        { icon: 'music_note', label: FT.t('audio_only'), run: () => run('start', { audio: 1 }) },
+    ], { title: FT.t('download_quality'), anchor: btn });
     btn.addEventListener('click', () => {
         if (state === 'none' || state === 'failed') { if (qualities.length) choose(); else run('start'); return; }
-        if (state === 'completed') { if (confirm('Delete the downloaded file?')) run('delete'); return; }
+        if (state === 'completed') { if (confirm(FT.t('confirm_delete_download'))) run('delete'); return; }
         run('cancel');
     });
     paint({ state: 'none' });
@@ -108,19 +108,19 @@ const actionRow = (service, info) => {
     const channel = { id: info.channelId, name: info.channelName, thumbnailUrl: info.channelThumbnailUrl };
     const st = { subscribed: false, later: false, like: null };
 
-    const subscribe = FT.button('Subscribe', 'notifications', null, 'primary', 'subscribe');
-    const like = FT.button(info.likeCount > 0 ? FT.count(info.likeCount) : 'Like', 'thumb_up', null, '', 'like');
-    const dislike = FT.button('Dislike', 'thumb_down', null, 'round', 'dislike');
-    const later = FT.button('Watch later', 'schedule', null, '', 'later');
+    const subscribe = FT.button(FT.t('subscribe'), 'notifications', null, 'primary', 'subscribe');
+    const like = FT.button(info.likeCount > 0 ? FT.count(info.likeCount) : FT.t('like'), 'thumb_up', null, '', 'like');
+    const dislike = FT.button(FT.t('dislike'), 'thumb_down', null, 'round', 'dislike');
+    const later = FT.button(FT.t('watch_later'), 'schedule', null, '', 'later');
     const paint = () => {
-        subscribe.replaceChildren(FT.icon(st.subscribed ? 'notifications_active' : 'notifications'), st.subscribed ? 'Subscribed' : 'Subscribe');
+        subscribe.replaceChildren(FT.icon(st.subscribed ? 'notifications_active' : 'notifications'), FT.t(st.subscribed ? 'subscribed' : 'subscribe'));
         subscribe.classList.toggle('primary', !st.subscribed);
         like.classList.toggle('on', st.like === 'LIKED' || st.like === 'like');
         dislike.classList.toggle('on', st.like === 'DISLIKED' || st.like === 'dislike');
-        later.replaceChildren(FT.icon(st.later ? 'bookmark_added' : 'schedule'), st.later ? 'Saved' : 'Watch later');
+        later.replaceChildren(FT.icon(st.later ? 'bookmark_added' : 'schedule'), FT.t(st.later ? 'saved' : 'watch_later'));
         later.classList.toggle('on', st.later);
     };
-    const flip = (key, request) => { const was = st[key]; st[key] = !was; paint(); request(!was).catch(() => { st[key] = was; paint(); FT.toast('That did not go through'); }); };
+    const flip = (key, request) => { const was = st[key]; st[key] = !was; paint(); request(!was).catch(() => { st[key] = was; paint(); FT.toast(FT.t('action_failed')); }); };
     subscribe.onclick = () => { if (channel.id) flip('subscribed', (on) => FT.api.subscribe(channel, on)); };
     later.onclick = () => flip('later', (on) => FT.api.watchLater(video, on));
     const rate = (kind) => {
@@ -130,27 +130,23 @@ const actionRow = (service, info) => {
         const active = kind === 'like' ? wasLiked : wasDisliked;
         st.like = active ? null : kind;
         paint();
-        FT.api.rate(video, active ? 'remove' : kind).catch(() => { st.like = was; paint(); FT.toast('That did not go through'); });
+        FT.api.rate(video, active ? 'remove' : kind).catch(() => { st.like = was; paint(); FT.toast(FT.t('action_failed')); });
     };
     like.onclick = () => rate('like');
     dislike.onclick = () => rate('dislike');
 
     // navigator.share() rejects without a trusted user gesture (a phone-remote press is a WebSocket
     // message, not a click); falls through to FT.copyText so that press still does something.
-    const share = FT.button('Share', 'share', async () => {
+    const share = FT.button(FT.t('share'), 'share', async () => {
         const link = info.url;
         if (navigator.share) {
             try { await navigator.share({ title: info.title, url: link }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
         }
-        FT.toast(await FT.copyText(link) ? 'Link copied' : link);
+        FT.toast(await FT.copyText(link) ? FT.t('link_copied') : link);
     }, '', 'share');
-    const audio = FT.button('Audio only', 'music_note', () => audio.classList.toggle('on', FT.player.toggleAudioOnly()), '', 'audio');
+    const audio = FT.button(FT.t('audio_only'), 'music_note', () => audio.classList.toggle('on', FT.player.toggleAudioOnly()), '', 'audio');
     const buttons = [subscribe, like, dislike, later, share, audio];
     if (service === 0) buttons.push(downloadButton(service, info));
-    if (FT.player.danmaku) {
-        const overlay = FT.button('Danmaku', 'chat', () => overlay.classList.toggle('on', FT.player.toggleDanmaku()), 'on', 'overlay');
-        buttons.push(overlay);
-    }
     buttons.forEach((b, i) => { if (i < 4) b.dataset.first = '1'; });
     paint();
 
@@ -187,15 +183,15 @@ const render = async (root, params, isCurrent) => {
     // A long description starts folded to a few lines, so the comments are not pushed screens down. Like a comment with replies, the whole block
     // is the control (it takes the remote's focus, and OK or a click opens it); the hint line under the text shows only when there is more.
     const aboutText = h('div', { class: 'about-text' }, FT.description(info.description, info.descriptionType));
-    const aboutHint = h('div', { class: 'about-hint', hidden: true }, FT.icon('expand_more'), h('span', {}, 'Show more'));
+    const aboutHint = h('div', { class: 'about-hint', hidden: true }, FT.icon('expand_more'), h('span', {}, FT.t('show_more')));
     const about = h('div', { class: 'about', tabindex: '-1', data: { f: '', key: 'about' } },
-        h('b', {}, [FT.views(info.viewCount), info.uploadDate].filter(Boolean).join(' · ') || 'About'), aboutText, aboutHint);
+        h('b', {}, [FT.views(info.viewCount), info.uploadDate].filter(Boolean).join(' · ') || FT.t('about')), aboutText, aboutHint);
     about.addEventListener('click', () => {
         if (aboutHint.hidden && !about.classList.contains('open')) return;
         const open = about.classList.toggle('open');
-        aboutHint.querySelector('span:not(.i)').textContent = open ? 'Show less' : 'Show more';
+        aboutHint.querySelector('span:not(.i)').textContent = FT.t(open ? 'show_less' : 'show_more');
     });
-    const commentsHolder = h('section', { class: 'comments' }, h('h2', {}, 'Comments'), FT.loading());
+    const commentsHolder = h('section', { class: 'comments' }, h('h2', {}, FT.t('comments')), FT.loading());
     const related = (info.relatedVideos || []).filter((v) => !v.isShort);
     const page = h('div', {},
         h('div', { class: 'watch-info' },
@@ -203,9 +199,9 @@ const render = async (root, params, isCurrent) => {
             h('a', { class: 'who-link', href: info.channelId ? FT.link.channel(info.channelId, service) : '#', tabindex: '-1', data: { f: '', key: 'channel', first: '1' } },
                 FT.avatar(info.channelName, info.channelThumbnailUrl), h('div', { class: 'grow' }, h('div', { class: 'who' }, info.channelName))),
             actionRow(service, info)),
-        info.chapters.length ? FT.shelf('Chapters', 'Left and right to jump, OK to play from there', chapterCards(info), 'chapters') : null,
+        info.chapters.length ? FT.shelf(FT.t('chapters'), FT.t('chapters_hint'), chapterCards(info), 'chapters') : null,
         about,
-        related.length ? FT.shelf('Related', 'More like this', related.slice(0, 16).map((v) => FT.videoCard(v))) : null,
+        related.length ? FT.shelf(FT.t('related'), FT.t('related_hint'), related.slice(0, 16).map((v) => FT.videoCard(v))) : null,
         commentsHolder);
     root.replaceChildren(slot, page);
     loadComments(commentsHolder, service, info.url, isCurrent);
@@ -277,6 +273,7 @@ document.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     if (key === ' ' || key === 'k') FT.player.toggle();
     else if (key === 'f') FT.player.fullscreen();
+    else if (key === 'd') FT.player.toggleDanmaku();
     else if (key === 'j') FT.player.seek(-10);
     else if (key === 'l') FT.player.seek(10);
     else if (key === '+' || key === '=') FT.player.volume(0.1);

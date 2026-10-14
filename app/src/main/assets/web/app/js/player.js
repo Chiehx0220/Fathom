@@ -110,7 +110,7 @@ const paintMiniPlay = () => {
     if (!btn) return;
     const paused = playerEl().paused;
     btn.replaceChildren(FT.icon(paused ? 'play_arrow' : 'pause'));
-    btn.setAttribute('aria-label', paused ? 'Play' : 'Pause');
+    btn.setAttribute('aria-label', FT.t(paused ? 'play' : 'pause'));
 };
 
 const isFullscreen = () => document.body.classList.contains('remote-fs') || !!document.fullscreenElement || !!document.webkitFullscreenElement
@@ -137,7 +137,7 @@ const addChapterTrack = () => {
     });
     if (!tree) return;
     tree.chapterUrl = URL.createObjectURL(new Blob([vtt], { type: 'text/vtt' }));
-    p.append(track('chapters', 'Chapters', 'en', tree.chapterUrl, true));
+    p.append(track('chapters', FT.t('chapters'), 'en', tree.chapterUrl, true));
 };
 
 // The marks go into the skin's time slider, which lives in the skin's open shadow root (their rules are in SKIN_STYLE). That is inside the
@@ -177,6 +177,9 @@ const qualitySnapshot = () => {
         qchosen: chosenQuality,
     };
 };
+// SponsorBlock's categories come from the server in English; the ones this page has words for are shown in its language.
+const segmentName = (label) => FT.t('segment_' + String(label).replace(/[ -]/g, '_'), null, label);
+
 const watchSegments = () => {
     const p = playerEl();
     const btn = FT.$('#skip-btn');
@@ -186,7 +189,7 @@ const watchSegments = () => {
     if (seg === skipTarget) return;
     skipTarget = seg;
     btn.hidden = !seg;
-    if (seg) btn.textContent = 'Skip ' + seg.l;
+    if (seg) btn.textContent = FT.t('skip', { label: segmentName(seg.l) });
 };
 
 const chapterIndex = () => {
@@ -197,6 +200,76 @@ const chapterIndex = () => {
     return index;
 };
 
+// The switch for them is a row in the player's own settings menu, with Quality and Speed. The menu is the skin's, in its open shadow root;
+// the row is made from one of its rows so it looks the same, and is put back whenever the skin draws the menu again.
+const DANMAKU_ROW = 'danmaku-row';
+const CHAT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg>';
+let danmakuRowWatch = null;
+
+const buildDanmakuRow = (content) => {
+    const model = content.querySelector(':scope > media-menu-item');
+    if (!model) return null;
+    const row = model.cloneNode(true);
+    ['commandfor', 'aria-haspopup', 'aria-expanded', 'data-has-submenu', 'data-highlighted', 'data-availability', 'disabled', 'aria-disabled', 'hidden']
+        .forEach((name) => row.removeAttribute(name));
+    row.id = DANMAKU_ROW;
+    row.setAttribute('role', 'menuitemcheckbox');
+    const label = row.querySelector('media-text');
+    label.removeAttribute('token');
+    label.textContent = FT.t('danmaku');
+    const chevron = row.querySelector('media-icon[name="chevron"]');
+    if (chevron) chevron.remove();
+    // The skin draws its icons by name and a chat bubble is not among them: a plain element of the same class takes the same place.
+    const icon = row.querySelector('media-icon');
+    if (icon) {
+        const bubble = h('span', { class: icon.className });
+        bubble.innerHTML = CHAT_ICON;
+        icon.replaceWith(bubble);
+    }
+    row.addEventListener('click', (e) => { e.stopPropagation(); FT.player.toggleDanmaku(); });
+    return row;
+};
+
+const paintDanmaku = () => {
+    const root = tree && tree.skin.shadowRoot;
+    const content = root && root.querySelector('media-menu-content');
+    if (!content) return;
+    let row = root.getElementById(DANMAKU_ROW);
+    if (!danmaku) { if (row) row.remove(); return; }
+    if (!row) {
+        row = buildDanmakuRow(content);
+        if (!row) return;
+        content.append(row);
+    }
+    row.setAttribute('aria-checked', String(danmaku.on));
+    const value = row.querySelector('[data-part="value"]');
+    const text = FT.t(danmaku.on ? 'state_on' : 'state_off');
+    if (value && value.textContent !== text) value.textContent = text;
+};
+
+// The row may be asked for before the menu is drawn, and the skin may draw it again: watch for it instead of timing it.
+const watchDanmakuRow = () => {
+    if (danmakuRowWatch) danmakuRowWatch.disconnect();
+    danmakuRowWatch = null;
+    const root = tree && tree.skin.shadowRoot;
+    if (!root) return;
+    danmakuRowWatch = new MutationObserver(paintDanmaku);
+    danmakuRowWatch.observe(root, { childList: true, subtree: true });
+};
+
+// Said once, the first time a video has danmaku, because the switch is not where a picture's controls usually are.
+const DANMAKU_HINT_KEY = 'fathom-hint-danmaku';
+const hintDanmaku = () => {
+    let seen = true;
+    try { seen = !!localStorage.getItem(DANMAKU_HINT_KEY); } catch (e) {}
+    if (seen || !tree) return;
+    try { localStorage.setItem(DANMAKU_HINT_KEY, '1'); } catch (e) {}
+    const tip = h('div', { class: 'dm-hint', role: 'status' }, FT.icon('chat'), FT.t('danmaku_hint'));
+    tip.addEventListener('click', () => tip.remove());
+    tree.skin.append(tip);
+    setTimeout(() => tip.remove(), 8000);
+};
+
 // Comments flying across the picture (Bilibili). Each one is a CSS animation, so pausing the video pauses them too.
 const startDanmaku = (url, live = false) => {
     const p = playerEl();
@@ -205,6 +278,9 @@ const startDanmaku = (url, live = false) => {
     (tree ? tree.skin : stageEl()).append(layer);
     const state = { layer, media: p, items: [], next: 0, on: true, lanes: new Array(14).fill(0) };
     danmaku = state;
+    watchDanmakuRow();
+    paintDanmaku();
+    hintDanmaku();
     const spawn = (item) => {
         const width = layer.clientWidth || 800;
         const size = Math.max(14, Math.min(30, Math.round(width * (item.size || 1) * 0.028)));
@@ -277,6 +353,8 @@ const stopDanmaku = () => {
     p.removeEventListener('play', danmaku.play);
     danmaku.layer.remove();
     danmaku = null;
+    paintDanmaku();
+    if (danmakuRowWatch) { danmakuRowWatch.disconnect(); danmakuRowWatch = null; }
 };
 
 // ---- Progress and what comes next ----
@@ -339,19 +417,19 @@ const scheduleNext = () => {
     const count = h('b', {}, String(UP_NEXT_SECONDS));
     const dial = svgEl('svg', { viewBox: '0 0 34 34' });
     dial.append(svgEl('circle', { cx: 17, cy: 17, r: 14, fill: 'none', 'stroke-width': 3, class: 'upnext-track' }), ring);
-    const play = h('button', { type: 'button', class: 'upnext-btn primary', data: { f: '', key: 'upnext-play' }, onclick: () => playNext(next) }, counting ? 'Play now' : 'Play next');
-    const cancel = h('button', { type: 'button', class: 'upnext-btn', data: { f: '', key: 'upnext-cancel' }, onclick: cancelNext }, 'Cancel');
+    const play = h('button', { type: 'button', class: 'upnext-btn primary', data: { f: '', key: 'upnext-play' }, onclick: () => playNext(next) }, FT.t(counting ? 'play_now' : 'play_next'));
+    const cancel = h('button', { type: 'button', class: 'upnext-btn', data: { f: '', key: 'upnext-cancel' }, onclick: cancelNext }, FT.t('cancel'));
     const dialBox = h('div', { class: 'upnext-ring' }, dial, count);
     dialBox.hidden = !counting;
     // switch: on restarts the countdown, off stops it
     const auto = h('button', { type: 'button', class: 'upnext-auto' + (counting ? ' on' : ''), role: 'switch', 'aria-checked': String(counting), data: { f: '', key: 'upnext-auto' } },
-        h('span', {}, 'Autoplay'), h('span', { class: 'upnext-switch' }));
+        h('span', {}, FT.t('autoplay')), h('span', { class: 'upnext-switch' }));
     auto.addEventListener('click', () => {
         const on = !autoplayOn();
         setAutoplay(on);
         auto.classList.toggle('on', on);
         auto.setAttribute('aria-checked', String(on));
-        play.textContent = on ? 'Play now' : 'Play next';
+        play.textContent = FT.t(on ? 'play_now' : 'play_next');
         dialBox.hidden = !on;
         if (!upNext) return;
         clearInterval(upNext.timer);
@@ -361,13 +439,13 @@ const scheduleNext = () => {
             upNext.timer = setInterval(() => tickUpNext(next), 200);
         }
     });
-    const el = h('div', { class: 'upnext', role: 'dialog', 'aria-label': 'Up next' },
+    const el = h('div', { class: 'upnext', role: 'dialog', 'aria-label': FT.t('up_next') },
         h('div', { class: 'upnext-top' },
             h('div', { class: 'upnext-thumb' },
                 next.thumbnailUrl ? h('img', { src: next.thumbnailUrl, alt: '' }) : null,
                 next.duration > 0 ? h('span', { class: 'dur' }, FT.duration(next.duration)) : null),
             h('div', { class: 'upnext-text' },
-                h('div', { class: 'upnext-kicker' }, 'Up next'),
+                h('div', { class: 'upnext-kicker' }, FT.t('up_next')),
                 h('div', { class: 'upnext-title' }, next.title),
                 h('div', { class: 'upnext-channel' }, next.channelName || '')),
             dialBox),
@@ -582,7 +660,7 @@ FT.player = {
             if (current !== owner || !(await build(info, way, owner))) return null;
             const p = playerEl();
             for (const sub of info.subtitles || []) {
-                p.append(track('subtitles', sub.displayName + (sub.isAutoGenerated ? ' (auto)' : ''), sub.languageTag || 'en', sub.url, false));
+                p.append(track('subtitles', sub.isAutoGenerated ? FT.t('subtitle_auto', { name: sub.displayName }) : sub.displayName, sub.languageTag || 'en', sub.url, false));
             }
             // seek-bar preview: WebVTT storyboard track (404 when absent)
             if (!info.playback.liveRoom && !info.isLive) p.append(track('metadata', 'thumbnails', 'en', `/thumbnails?serviceId=${service}&id=${FT.enc(info.url)}`, true));
@@ -597,7 +675,7 @@ FT.player = {
             const media = tree.media;
             media.addEventListener('error', async () => {
                 if (current !== owner || tree.media !== media) return;
-                FT.toast('This download cannot be played here, streaming it instead');
+                FT.toast(FT.t('download_not_playable'));
                 const replay = await start(await planFor(info, service, false));
                 if (replay) resumeFromHistory(owner, replay, info, service);
             }, { once: true });
@@ -665,6 +743,7 @@ FT.player = {
         danmaku.on = on;
         if (!on) danmaku.layer.replaceChildren();
         else danmaku.resync();
+        paintDanmaku();
         return on;
     },
     toggleDanmaku() {
@@ -679,14 +758,14 @@ FT.player = {
         const p = playerEl();
         if (!current) return;
         if (p.paused) p.play().catch(() => {}); else p.pause();
-        hud(p.paused ? 'play_arrow' : 'pause', p.paused ? 'Play' : 'Pause');
+        hud(p.paused ? 'play_arrow' : 'pause', FT.t(p.paused ? 'play' : 'pause'));
     },
     seek(delta) {
         const p = playerEl();
         if (!current) return;
         const limit = current.info.duration || p.duration || 0;
         p.currentTime = Math.max(0, Math.min(limit || Infinity, p.currentTime + delta));
-        hud(delta > 0 ? 'fast_forward' : 'fast_rewind', (delta > 0 ? '+' : '') + delta + ' s');
+        hud(delta > 0 ? 'fast_forward' : 'fast_rewind', FT.t('hud_seconds', { value: (delta > 0 ? '+' : '') + delta }));
     },
     seekTo(sec) {
         const p = playerEl();
@@ -701,7 +780,7 @@ FT.player = {
     mute() {
         const p = playerEl();
         p.muted = !p.muted;
-        hud(p.muted ? 'volume_off' : 'volume_up', p.muted ? 'Muted' : Math.round(p.volume * 100) + '%');
+        hud(p.muted ? 'volume_off' : 'volume_up', p.muted ? FT.t('muted') : Math.round(p.volume * 100) + '%');
     },
     async fullscreen(want) {
         if (!current) return;
@@ -743,7 +822,7 @@ FT.player = {
             open: !!current, title: current ? current.info.title : '', t: p.currentTime || 0, d: p.duration || 0, paused: !!p.paused,
             vol: p.volume == null ? 1 : p.volume, muted: !!p.muted, fs: isFullscreen(),
             chapters: current ? current.chapters.map((c) => c.t) : [], chapi: chapterIndex(),
-            skip: skipTarget ? skipTarget.l : '',
+            skip: skipTarget ? segmentName(skipTarget.l) : '',
             rate: p.playbackRate || 1,
             danmaku: danmaku ? danmaku.on : null,
             ...qualitySnapshot(),
