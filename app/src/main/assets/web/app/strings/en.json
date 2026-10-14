@@ -190,5 +190,21 @@
   "state_on": "On",
   "state_off": "Off",
   "danmaku_hint": "The danmaku switch is in the settings menu (or press D).",
-  "source_mix": "Mix"
+  "source_mix": "Mix",
+  "hud_danmaku": "Danmaku {state}",
+  "shortcuts_title": "Keyboard shortcuts",
+  "shortcut_play_pause": "Play / pause",
+  "shortcut_fullscreen": "Fullscreen",
+  "shortcut_mute": "Mute",
+  "shortcut_captions": "Captions",
+  "shortcut_pip": "Picture in picture",
+  "shortcut_back": "Back 10 seconds",
+  "shortcut_forward": "Forward 10 seconds",
+  "shortcut_percent": "Jump to 0–90%",
+  "shortcut_edges": "Start / end",
+  "shortcut_volume": "Volume",
+  "shortcut_speed": "Slower / faster",
+  "shortcut_help": "This list",
+  "key_space": "Space",
+  "close": "Close"
 }

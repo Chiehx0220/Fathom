@@ -200,46 +200,63 @@ const chapterIndex = () => {
     return index;
 };
 
-// Danmaku switch: a row appended to the skin's settings menu (open shadow root), cloned from a native row for styling.
+// Rows appended to the skin's settings menu (open shadow root), cloned from a native row for styling.
 const DANMAKU_ROW = 'danmaku-row';
+const SHORTCUTS_ROW = 'shortcuts-row';
 const CHAT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg>';
+const KEYBOARD_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/></svg>';
 const DANMAKU_HINT_KEY = 'fathom-hint-danmaku';
-let danmakuRowWatch = null;
+let menuRowsWatch = null;
 
-const buildDanmakuRow = (content) => {
+// `valued`: a switch row keeping the native value slot (On/Off); otherwise a plain action row.
+const buildMenuRow = (content, { id, svg, label, valued, onSelect }) => {
     const model = content.querySelector(':scope > media-menu-item');
     if (!model) return null;
     const row = model.cloneNode(true);
     ['commandfor', 'aria-haspopup', 'aria-expanded', 'data-has-submenu', 'data-highlighted', 'data-availability', 'disabled', 'aria-disabled', 'hidden']
         .forEach((name) => row.removeAttribute(name));
-    row.id = DANMAKU_ROW;
-    row.setAttribute('role', 'menuitemcheckbox');
-    const label = row.querySelector('media-text');
-    label.removeAttribute('token');
-    label.textContent = FT.t('danmaku');
+    row.id = id;
+    const text = row.querySelector('media-text');
+    text.removeAttribute('token');
+    text.textContent = label;
     const chevron = row.querySelector('media-icon[name="chevron"]');
     if (chevron) chevron.remove();
-    // <media-icon> resolves icons by name; no built-in chat glyph, so a same-class element carries the SVG.
+    if (!valued) {
+        const hint = row.querySelector('.media-menu-hint');
+        if (hint) hint.remove();
+    }
+    // <media-icon> resolves icons by name and has none of these, so a same-class element carries the SVG.
     const icon = row.querySelector('media-icon');
     if (icon) {
         const glyph = h('span', { class: icon.className });
-        glyph.innerHTML = CHAT_ICON;
+        glyph.innerHTML = svg;
         icon.replaceWith(glyph);
     }
-    row.addEventListener('click', (e) => { e.stopPropagation(); FT.player.toggleDanmaku(); });
+    row.addEventListener('select', onSelect);
     return row;
 };
 
-const paintDanmaku = () => {
+const paintMenuRows = () => {
     const root = tree && tree.skin.shadowRoot;
     const content = root && root.querySelector('media-menu-content');
     if (!content) return;
+
+    let shortcuts = root.getElementById(SHORTCUTS_ROW);
+    if (!shortcuts) {
+        shortcuts = buildMenuRow(content, { id: SHORTCUTS_ROW, svg: KEYBOARD_ICON, label: FT.t('shortcuts_title'), onSelect: () => FT.shortcuts.open() });
+        if (shortcuts) content.append(shortcuts);
+    }
+
     let row = root.getElementById(DANMAKU_ROW);
     if (!danmaku) { if (row) row.remove(); return; }
     if (!row) {
-        row = buildDanmakuRow(content);
+        // Cancelling `select` keeps the menu open, so the switch flips in place.
+        row = buildMenuRow(content, {
+            id: DANMAKU_ROW, svg: CHAT_ICON, label: FT.t('danmaku'), valued: true,
+            onSelect: (e) => { e.preventDefault(); FT.player.toggleDanmaku(); },
+        });
         if (!row) return;
-        content.append(row);
+        content.insertBefore(row, shortcuts || null);
     }
     row.setAttribute('aria-checked', String(danmaku.on));
     const value = row.querySelector('[data-part="value"]');
@@ -247,14 +264,15 @@ const paintDanmaku = () => {
     if (value && value.textContent !== text) value.textContent = text;
 };
 
-// The skin renders the menu lazily and may re-render it; re-assert the row on every child-list mutation.
-const watchDanmakuRow = () => {
-    if (danmakuRowWatch) danmakuRowWatch.disconnect();
-    danmakuRowWatch = null;
+// The skin renders the menu lazily and may re-render it; re-assert the rows on every mutation.
+const watchMenuRows = () => {
+    if (menuRowsWatch) menuRowsWatch.disconnect();
+    menuRowsWatch = null;
     const root = tree && tree.skin.shadowRoot;
     if (!root) return;
-    danmakuRowWatch = new MutationObserver(paintDanmaku);
-    danmakuRowWatch.observe(root, { childList: true, subtree: true });
+    menuRowsWatch = new MutationObserver(paintMenuRows);
+    menuRowsWatch.observe(root, { childList: true, subtree: true });
+    paintMenuRows();
 };
 
 // One-time callout (persisted in localStorage) pointing at the menu.
@@ -277,8 +295,7 @@ const startDanmaku = (url, live = false) => {
     (tree ? tree.skin : stageEl()).append(layer);
     const state = { layer, media: p, items: [], next: 0, on: true, lanes: new Array(14).fill(0) };
     danmaku = state;
-    watchDanmakuRow();
-    paintDanmaku();
+    paintMenuRows();
     hintDanmaku();
     const spawn = (item) => {
         const width = layer.clientWidth || 800;
@@ -352,8 +369,7 @@ const stopDanmaku = () => {
     p.removeEventListener('play', danmaku.play);
     danmaku.layer.remove();
     danmaku = null;
-    paintDanmaku();
-    if (danmakuRowWatch) { danmakuRowWatch.disconnect(); danmakuRowWatch = null; }
+    paintMenuRows();
 };
 
 // ---- Progress and what comes next ----
@@ -568,6 +584,7 @@ const bindMedia = (media) => {
 const teardown = () => {
     const holder = FT.$('#overlay-holder');
     if (holder) holder.append(FT.$('#skip-btn'), FT.$('#hud'));
+    if (menuRowsWatch) { menuRowsWatch.disconnect(); menuRowsWatch = null; }
     if (tree) {
         // A removed media element keeps playing unless it is stopped first.
         try { tree.media.pause(); tree.media.removeAttribute('src'); } catch (e) {}
@@ -610,6 +627,7 @@ const build = async (info, way, owner) => {
         style.textContent = SKIN_STYLE;
         skin.shadowRoot.append(style);
     }
+    watchMenuRows();
     bindMedia(media);
     return tree;
 };
@@ -742,7 +760,8 @@ FT.player = {
         danmaku.on = on;
         if (!on) danmaku.layer.replaceChildren();
         else danmaku.resync();
-        paintDanmaku();
+        paintMenuRows();
+        hud('chat', FT.t('hud_danmaku', { state: FT.t(on ? 'state_on' : 'state_off') }));
         return on;
     },
     toggleDanmaku() {

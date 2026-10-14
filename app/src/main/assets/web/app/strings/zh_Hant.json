@@ -188,5 +188,21 @@
   "state_on": "開",
   "state_off": "關",
   "danmaku_hint": "彈幕開關在設定選單裡，也可以按 D 鍵。",
-  "source_mix": "混合"
+  "source_mix": "混合",
+  "hud_danmaku": "彈幕 {state}",
+  "shortcuts_title": "鍵盤快捷鍵",
+  "shortcut_play_pause": "播放／暫停",
+  "shortcut_fullscreen": "全螢幕",
+  "shortcut_mute": "靜音",
+  "shortcut_captions": "字幕",
+  "shortcut_pip": "子母畫面",
+  "shortcut_back": "倒轉 10 秒",
+  "shortcut_forward": "快轉 10 秒",
+  "shortcut_percent": "跳到 0–90% 處",
+  "shortcut_edges": "開頭／結尾",
+  "shortcut_volume": "音量",
+  "shortcut_speed": "放慢／加速",
+  "shortcut_help": "顯示這份清單",
+  "key_space": "空白鍵",
+  "close": "關閉"
 }

@@ -270,6 +270,31 @@ FT.command.hook = (name) => {
     return false;
 };
 
+// The skin's hotkeys plus the keys handled below; listed by `?` and the player's settings menu.
+const SHORTCUTS = [
+    [['Space', 'K'], FT.t('shortcut_play_pause')],
+    [['F'], FT.t('shortcut_fullscreen')],
+    [['M'], FT.t('shortcut_mute')],
+    [['D'], FT.t('danmaku')],
+    [['C'], FT.t('shortcut_captions')],
+    [['I'], FT.t('shortcut_pip')],
+    [['\u2190', 'J'], FT.t('shortcut_back')],
+    [['\u2192', 'L'], FT.t('shortcut_forward')],
+    [['0', '\u2013', '9'], FT.t('shortcut_percent')],
+    [['Home', 'End'], FT.t('shortcut_edges')],
+    [['\u2191', '\u2193', '+', '-'], FT.t('shortcut_volume')],
+    [['<', '>'], FT.t('shortcut_speed')],
+    [['?'], FT.t('shortcut_help')],
+];
+
+FT.shortcuts = {
+    open() {
+        const cap = (key) => h('kbd', {}, key === 'Space' ? FT.t('key_space') : key);
+        const rows = SHORTCUTS.map(([keys, label]) => h('div', { class: 'shortcut' }, h('span', { class: 'shortcut-keys' }, keys.map(cap)), h('span', {}, label)));
+        FT.menu.panel(FT.t('shortcuts_title'), h('div', { class: 'shortcuts' }, rows));
+    },
+};
+
 // Keyboard shortcuts for the video, on this screen only and never while typing.
 document.addEventListener('keydown', (e) => {
     // A key the player's own shortcuts already used (it has focus) is theirs; handling it here too would do it twice.
@@ -279,6 +304,7 @@ document.addEventListener('keydown', (e) => {
     if (key === ' ' || key === 'k') FT.player.toggle();
     else if (key === 'f') FT.player.fullscreen();
     else if (key === 'd') FT.player.toggleDanmaku();
+    else if (key === '?') FT.shortcuts.open();
     else if (key === 'j') FT.player.seek(-10);
     else if (key === 'l') FT.player.seek(10);
     else if (key === '+' || key === '=') FT.player.volume(0.1);

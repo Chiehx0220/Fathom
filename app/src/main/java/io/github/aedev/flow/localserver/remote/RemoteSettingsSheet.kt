@@ -142,7 +142,7 @@ private fun SettingRow(
         leadingContent = { Icon(icon, contentDescription = null) },
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(value, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(value, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
             }
         },

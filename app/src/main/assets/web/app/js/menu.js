@@ -18,24 +18,35 @@ const place = (panel, anchor) => {
     panel.style.top = top + 'px';
 };
 
+// Shows `panel` over a scrim and traps focus in it; `position` runs once the panel is in the document.
+const present = (panel, focus, position) => {
+    opener = FT.focus.el;
+    const menu = root();
+    menu.replaceChildren(h('div', { class: 'menu-scrim', onclick: () => FT.menu.close() }), panel);
+    menu.hidden = false;
+    if (position) position();
+    FT.focus.trap(panel);
+    FT.focus.select(focus, { scroll: false });
+};
+
 FT.menu = {
     isOpen: () => !root().hidden,
 
     // items: [{ icon, label, run, danger }]
     open(items, options = {}) {
         if (!items.length) return;
-        opener = FT.focus.el;
-        const menu = root();
         const list = items.map((item, i) => h('button', {
             type: 'button', class: 'menu-item' + (item.danger ? ' danger' : ''), data: { f: '', key: 'menu-' + i },
             onclick: () => { FT.menu.close(); item.run(); },
         }, FT.icon(item.icon), item.label));
         const panel = h('div', { class: 'menu-panel', role: 'menu' }, options.title ? h('div', { class: 'menu-title' }, options.title) : null, list);
-        menu.replaceChildren(h('div', { class: 'menu-scrim', onclick: () => FT.menu.close() }), panel);
-        menu.hidden = false;
-        place(panel, options.anchor);
-        FT.focus.trap(panel);
-        FT.focus.select(FT.$('[data-f]', panel), { scroll: false });
+        present(panel, FT.$('[data-f]', panel), () => place(panel, options.anchor));
+    },
+
+    // A dialog with the caller's content, closed like a menu (scrim, Back, the button).
+    panel(title, body) {
+        const close = h('button', { type: 'button', class: 'menu-item', data: { f: '', key: 'panel-close' }, onclick: () => FT.menu.close() }, FT.icon('close'), FT.t('close'));
+        present(h('div', { class: 'menu-panel wide', role: 'dialog', 'aria-label': title }, h('div', { class: 'menu-title' }, title), body, close), close);
     },
 
     close() {
