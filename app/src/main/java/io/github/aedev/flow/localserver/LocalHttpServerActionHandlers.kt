@@ -279,6 +279,7 @@ internal fun ClientHandler.handleRemoteState(
             quality = params["quality"]?.takeIf { it.isNotEmpty() },
             chosenQuality = RemoteSession.choiceHold.chosenQuality(params["qchosen"], previous.chosenQuality),
             rate = RemoteSession.choiceHold.rate(params["rate"], previous.rate),
+            danmaku = RemoteSession.choiceHold.danmaku(params["danmaku"], previous.danmaku),
         ),
     )
     sendResponse(os, 200, "{\"status\":\"success\"}", "application/json; charset=UTF-8")

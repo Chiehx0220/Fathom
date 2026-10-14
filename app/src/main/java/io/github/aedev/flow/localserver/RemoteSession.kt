@@ -43,6 +43,8 @@ data class RemoteState(
     val quality: String? = null,
     val chosenQuality: String = "auto",
     val rate: Float = 1f,
+    /** Whether the comments flying over the picture are on; null for a video that has none. */
+    val danmaku: Boolean? = null,
 ) {
     /** Whether there is a video to control, on its own page or in the mini player. */
     val hasVideo: Boolean get() = watching || minimized

@@ -55,6 +55,11 @@ class RemoteQualitiesTest {
     }
 
     @Test
+    fun `a live room with danmaku has a setting to offer`() {
+        assertThat(hasSettings(RemoteState(durationSec = 0.0, danmaku = true))).isTrue()
+    }
+
+    @Test
     fun `a held choice ignores the page's report until the hold ends`() {
         var clock = 1_000L
         val hold = RemoteChoiceHold { clock }
@@ -80,5 +85,22 @@ class RemoteQualitiesTest {
         clock += CHOICE_HOLD_MS + 1
         assertThat(hold.rate("1.25", 1.5f)).isEqualTo(1.25f)
         assertThat(hold.rate("junk", 1.5f)).isEqualTo(1f)
+    }
+
+    @Test
+    fun `danmaku is held like a choice and absent when the page has none`() {
+        var clock = 0L
+        val hold = RemoteChoiceHold { clock }
+
+        assertThat(hold.danmaku(null, true)).isNull()
+        assertThat(hold.danmaku("1", null)).isTrue()
+        assertThat(hold.danmaku("0", true)).isFalse()
+
+        hold.holdDanmaku()
+        assertThat(hold.danmaku("1", false)).isFalse()
+        assertThat(hold.danmaku(null, false)).isNull()
+
+        clock += CHOICE_HOLD_MS + 1
+        assertThat(hold.danmaku("1", false)).isTrue()
     }
 }

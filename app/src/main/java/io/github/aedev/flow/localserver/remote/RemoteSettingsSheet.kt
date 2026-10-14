@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Speed
@@ -23,6 +25,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -35,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.localserver.RemoteState
@@ -43,8 +47,8 @@ import kotlin.math.abs
 
 private enum class SettingsPage { MAIN, QUALITY, SPEED }
 
-/** Quality needs a choice of pictures and speed a video with an end, which a live stream has not. */
-internal fun hasSettings(state: RemoteState): Boolean = state.qualities.isNotEmpty() || state.durationSec > 0.0
+/** Quality needs a choice of pictures and speed a video with an end, which a live stream has not; danmaku needs a source that has it. */
+internal fun hasSettings(state: RemoteState): Boolean = state.qualities.isNotEmpty() || state.durationSec > 0.0 || state.danmaku != null
 
 private val Speeds = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
 
@@ -74,7 +78,7 @@ internal fun RemoteSettingsSheet(
         Column(Modifier.navigationBarsPadding().padding(bottom = 12.dp)) {
             when (page) {
                 SettingsPage.MAIN -> {
-                    MainPage(state, onOpen = { page = it })
+                    MainPage(state, onOpen = { page = it }, onDanmaku = { send("danmaku:${if (it) 1 else 0}") })
                 }
 
                 SettingsPage.QUALITY -> {
@@ -99,6 +103,7 @@ internal fun RemoteSettingsSheet(
 private fun MainPage(
     state: RemoteState,
     onOpen: (SettingsPage) -> Unit,
+    onDanmaku: (Boolean) -> Unit,
 ) {
     Text(
         stringResource(R.string.remote_settings),
@@ -117,6 +122,14 @@ private fun MainPage(
     }
     if (state.durationSec > 0.0) {
         SettingRow(Icons.Default.Speed, stringResource(R.string.remote_speed), speedLabel(state.rate)) { onOpen(SettingsPage.SPEED) }
+    }
+    state.danmaku?.let { on ->
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.remote_danmaku)) },
+            leadingContent = { Icon(Icons.Default.ChatBubble, contentDescription = null) },
+            trailingContent = { Switch(checked = on, onCheckedChange = null) },
+            modifier = Modifier.toggleable(value = on, role = Role.Switch, onValueChange = onDanmaku),
+        )
     }
 }
 

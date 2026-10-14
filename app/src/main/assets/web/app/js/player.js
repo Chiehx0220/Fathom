@@ -660,12 +660,15 @@ FT.player = {
     },
 
     get danmaku() { return danmaku; },
-    toggleDanmaku() {
+    setDanmaku(on) {
         if (!danmaku) return false;
-        danmaku.on = !danmaku.on;
-        if (!danmaku.on) danmaku.layer.replaceChildren();
+        danmaku.on = on;
+        if (!on) danmaku.layer.replaceChildren();
         else danmaku.resync();
-        return danmaku.on;
+        return on;
+    },
+    toggleDanmaku() {
+        return !!danmaku && FT.player.setDanmaku(!danmaku.on);
     },
 
     // Keys and the phone remote.
@@ -742,6 +745,7 @@ FT.player = {
             chapters: current ? current.chapters.map((c) => c.t) : [], chapi: chapterIndex(),
             skip: skipTarget ? skipTarget.l : '',
             rate: p.playbackRate || 1,
+            danmaku: danmaku ? danmaku.on : null,
             ...qualitySnapshot(),
         };
     },

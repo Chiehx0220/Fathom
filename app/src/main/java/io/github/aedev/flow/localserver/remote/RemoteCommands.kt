@@ -31,6 +31,11 @@ internal fun sendRemoteCommand(command: String) {
                 }
             }
 
+            command.startsWith("danmaku:") -> {
+                RemoteSession.choiceHold.holdDanmaku()
+                now.copy(danmaku = command.endsWith(":1"))
+            }
+
             else -> {
                 null
             }
