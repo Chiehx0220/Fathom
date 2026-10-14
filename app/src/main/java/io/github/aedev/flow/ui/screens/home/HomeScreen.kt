@@ -55,6 +55,7 @@ import io.github.aedev.flow.ui.components.rememberFeedGridLayout
 import io.github.aedev.flow.ui.components.shared.FeedGridSkeleton
 import io.github.aedev.flow.ui.components.shared.FlowErrorState
 import io.github.aedev.flow.ui.components.shared.FlowPullToRefreshBox
+import io.github.aedev.flow.ui.components.shared.ProvidePlatformBadge
 import io.github.aedev.flow.ui.screens.home.chips.HomeChipContent
 import io.github.aedev.flow.ui.screens.home.chips.HomeChipRow
 import kotlinx.coroutines.FlowPreview
@@ -228,6 +229,7 @@ fun HomeScreen(
                 resetKey = uiState.isLoading && uiState.videos.isEmpty(),
                 isRefreshing = if (chips.isAll) uiState.isRefreshing else chips.isRefreshing,
                 onRefresh = { if (chips.isAll) viewModel.refreshFeed() else viewModel.refreshSelectedChip() },
+                showPlatformBadge = contentSourceFilter.serviceId == null,
                 modifier =
                     Modifier
                         .fillMaxSize()
@@ -325,6 +327,7 @@ private fun ResettableHomePullToRefreshBox(
     resetKey: Boolean,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
+    showPlatformBadge: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
@@ -333,7 +336,7 @@ private fun ResettableHomePullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = onRefresh,
             modifier = modifier,
-            content = content,
+            content = { ProvidePlatformBadge(showPlatformBadge) { content() } },
         )
     }
 }

@@ -11,14 +11,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.ui.components.shared.ChannelAvatarStack
-import io.github.aedev.flow.ui.components.shared.PlatformBadge
+import io.github.aedev.flow.ui.components.shared.ChannelAvatarWithBadge
 import io.github.aedev.flow.ui.components.shared.videoMetadataLine
 
 /** The thumbnail across the full width with the details beneath: feeds and grids. */
@@ -59,19 +57,17 @@ internal fun VideoCardStacked(
             horizontalArrangement = Arrangement.spacedBy(if (showChannel) 8.dp else 12.dp),
         ) {
             if (showChannel) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    ChannelAvatarStack(
-                        urls = state.avatarUrls,
-                        contentDescription = state.channelName,
-                        avatarSize = VideoCardDefaults.AvatarSize,
-                        modifier =
-                            Modifier
-                                .minimumInteractiveComponentSize()
-                                .clip(CircleShape)
-                                .videoCardChannelClickable(state),
-                    )
-                    PlatformBadge(serviceId = video.serviceId)
-                }
+                ChannelAvatarWithBadge(
+                    urls = state.avatarUrls,
+                    contentDescription = state.channelName,
+                    avatarSize = VideoCardDefaults.AvatarSize,
+                    serviceId = video.serviceId,
+                    modifier =
+                        Modifier
+                            .minimumInteractiveComponentSize()
+                            .clip(CircleShape)
+                            .videoCardChannelClickable(state),
+                )
             }
 
             Column(
