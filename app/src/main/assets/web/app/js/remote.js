@@ -128,6 +128,8 @@ const handle = (cmd) => {
         FT.player.setRate(cmd.slice('rate:'.length));
     } else if (cmd.startsWith('danmaku:')) {
         FT.player.setDanmaku(cmd.endsWith(':1'));
+    } else if (cmd === 'like' || cmd === 'dislike') {
+        if (FT.rating) FT.rating.toggle(cmd);
     } else if (cmd === 'mute') {
         FT.player.mute();
     } else if (cmd === 'fullscreen') {
@@ -161,6 +163,7 @@ const report = () => {
         if (snap.chapters.length) { q.set('chapters', JSON.stringify(snap.chapters)); q.set('chapi', snap.chapi); }
         if (snap.skip) q.set('skip', snap.skip);
         q.set('rate', snap.rate);
+        if (FT.rating) q.set('like', FT.rating.state());
         if (snap.danmaku !== null) q.set('danmaku', snap.danmaku ? 1 : 0);
         if (snap.qualities.length) {
             q.set('qualities', JSON.stringify(snap.qualities));

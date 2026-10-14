@@ -3,10 +3,13 @@ package io.github.aedev.flow.localserver
 import android.app.Application
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.localserver.remote.DISLIKE
+import io.github.aedev.flow.localserver.remote.LIKE
 import io.github.aedev.flow.localserver.remote.danmakuCommand
 import io.github.aedev.flow.localserver.remote.hasSettings
 import io.github.aedev.flow.localserver.remote.qualityCommand
 import io.github.aedev.flow.localserver.remote.rateCommand
+import io.github.aedev.flow.localserver.remote.sendRemoteCommand
 import io.github.aedev.flow.localserver.remote.volumeCommand
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -115,5 +118,39 @@ class RemoteQualitiesTest {
         assertThat(danmakuCommand(true)).isEqualTo("danmaku:1")
         assertThat(danmakuCommand(false)).isEqualTo("danmaku:0")
         assertThat(volumeCommand(-0.1f)).isEqualTo("volume:-0.1")
+    }
+
+    @Test
+    fun `a rating is held like a choice, absent when the page says none and read from its words`() {
+        var clock = 0L
+        val hold = RemoteChoiceHold { clock }
+
+        assertThat(hold.rating(null, RemoteRating.LIKED)).isNull()
+        assertThat(hold.rating("like", null)).isEqualTo(RemoteRating.LIKED)
+        assertThat(hold.rating("dislike", null)).isEqualTo(RemoteRating.DISLIKED)
+        assertThat(hold.rating("none", null)).isEqualTo(RemoteRating.NONE)
+
+        hold.hold(RemoteChoice.RATING)
+        assertThat(hold.rating("none", RemoteRating.LIKED)).isEqualTo(RemoteRating.LIKED)
+
+        clock += CHOICE_HOLD_MS + 1
+        assertThat(hold.rating("none", RemoteRating.LIKED)).isEqualTo(RemoteRating.NONE)
+    }
+
+    @Test
+    fun `pressing like twice takes it back and dislike after like replaces it`() {
+        RemoteSession.updateRemoteState(RemoteState(watching = true, rating = RemoteRating.NONE))
+
+        sendRemoteCommand(LIKE)
+        assertThat(RemoteSession.remoteState.value.rating).isEqualTo(RemoteRating.LIKED)
+
+        sendRemoteCommand(DISLIKE)
+        assertThat(RemoteSession.remoteState.value.rating).isEqualTo(RemoteRating.DISLIKED)
+
+        sendRemoteCommand(DISLIKE)
+        assertThat(RemoteSession.remoteState.value.rating).isEqualTo(RemoteRating.NONE)
+
+        RemoteSession.getAndClearPendingCommands()
+        RemoteSession.updateRemoteState(RemoteState())
     }
 }

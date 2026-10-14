@@ -1,6 +1,7 @@
 package io.github.aedev.flow.localserver.remote
 
 import io.github.aedev.flow.localserver.RemoteChoice
+import io.github.aedev.flow.localserver.RemoteRating
 import io.github.aedev.flow.localserver.RemoteSession
 
 // The words of the protocol that the page's remote.js understands; keep them in step with its handle().
@@ -8,6 +9,8 @@ private const val QUALITY = "quality:"
 private const val RATE = "rate:"
 private const val DANMAKU = "danmaku:"
 private const val VOLUME = "volume:"
+internal const val LIKE = "like"
+internal const val DISLIKE = "dislike"
 
 internal fun qualityCommand(id: String) = QUALITY + id
 
@@ -50,6 +53,13 @@ internal fun sendRemoteCommand(command: String) {
             command.startsWith(DANMAKU) -> {
                 hold.hold(RemoteChoice.DANMAKU)
                 now.copy(danmaku = command == danmakuCommand(true))
+            }
+
+            command == LIKE || command == DISLIKE -> {
+                hold.hold(RemoteChoice.RATING)
+                val said = if (command == LIKE) RemoteRating.LIKED else RemoteRating.DISLIKED
+                // The same word again takes it back, as on the page.
+                now.copy(rating = if (now.rating == said) RemoteRating.NONE else said)
             }
 
             else -> {

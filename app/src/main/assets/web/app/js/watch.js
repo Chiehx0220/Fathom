@@ -134,6 +134,11 @@ const actionRow = (service, info) => {
     };
     like.onclick = () => rate('like');
     dislike.onclick = () => rate('dislike');
+    // The phone remote presses these too (remote.js): what has been said of this video, and a way to say it.
+    FT.rating = {
+        state: () => (st.like === 'LIKED' || st.like === 'like' ? 'like' : st.like === 'DISLIKED' || st.like === 'dislike' ? 'dislike' : 'none'),
+        toggle: rate,
+    };
 
     // navigator.share() rejects without a trusted user gesture (a phone-remote press is a WebSocket
     // message, not a click); falls through to FT.copyText so that press still does something.

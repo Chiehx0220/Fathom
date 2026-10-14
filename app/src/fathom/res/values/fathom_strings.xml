@@ -70,6 +70,8 @@
     <string name="remote_speed">Playback speed</string>
     <string name="remote_speed_normal">Normal</string>
     <string name="remote_danmaku">Danmaku</string>
+    <string name="remote_like">Like</string>
+    <string name="remote_dislike">Dislike</string>
     <string name="remote_volume_hint_title">Use your phone\'s volume keys</string>
     <string name="remote_volume_hint_body">They change the screen\'s volume, not this phone\'s.</string>
     <string name="remote_hint_dismiss">Got it</string>

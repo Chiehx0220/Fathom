@@ -36,9 +36,13 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.ThumbDown
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.outlined.ThumbDown
+import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroup
@@ -46,6 +50,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -66,6 +72,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
+import io.github.aedev.flow.localserver.RemoteRating
 import io.github.aedev.flow.localserver.RemoteState
 
 /**
@@ -243,7 +250,17 @@ private fun NowPlaying(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Text(state.title.orEmpty(), style = MaterialTheme.typography.titleLarge, maxLines = 3, overflow = TextOverflow.Ellipsis)
+        // The title and, at its end, what the viewer says of the video: where a media player puts "like".
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                state.title.orEmpty(),
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            state.rating?.let { RatingKeys(it, send) }
+        }
         // In the mini player the video is off its page: one key brings the page back.
         if (state.minimized) {
             FilledTonalButton(onClick = { send("expand") }, shapes = ButtonDefaults.shapes(), modifier = Modifier.padding(top = 2.dp)) {
@@ -341,4 +358,31 @@ private fun formatTime(seconds: Float): String {
     val m = total % 3600 / 60
     val s = total % 60
     return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
+}
+
+// What the viewer says of the video; it only weighs the recommendations. Pressing the lit one takes it back.
+@Composable
+private fun RatingKeys(
+    rating: RemoteRating,
+    send: (String) -> Unit,
+) {
+    val liked = rating == RemoteRating.LIKED
+    val disliked = rating == RemoteRating.DISLIKED
+    val colors =
+        IconButtonDefaults.iconToggleButtonColors(
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            checkedContainerColor = MaterialTheme.colorScheme.primary,
+            checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+        )
+    Row {
+        IconToggleButton(checked = liked, onCheckedChange = { send(LIKE) }, colors = colors) {
+            Icon(if (liked) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp, contentDescription = stringResource(R.string.remote_like))
+        }
+        IconToggleButton(checked = disliked, onCheckedChange = { send(DISLIKE) }, colors = colors) {
+            Icon(
+                if (disliked) Icons.Filled.ThumbDown else Icons.Outlined.ThumbDown,
+                contentDescription = stringResource(R.string.remote_dislike),
+            )
+        }
+    }
 }

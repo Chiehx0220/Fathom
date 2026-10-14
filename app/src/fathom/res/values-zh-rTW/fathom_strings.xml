@@ -69,6 +69,8 @@
     <string name="remote_speed">播放速度</string>
     <string name="remote_speed_normal">正常</string>
     <string name="remote_danmaku">彈幕</string>
+    <string name="remote_like">讚</string>
+    <string name="remote_dislike">倒讚</string>
     <string name="remote_volume_hint_title">用手機的音量鍵調整音量</string>
     <string name="remote_volume_hint_body">音量鍵調整的是螢幕的音量，不是這支手機的。</string>
     <string name="remote_hint_dismiss">知道了</string>

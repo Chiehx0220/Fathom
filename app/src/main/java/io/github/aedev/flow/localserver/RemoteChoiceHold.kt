@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal const val CHOICE_HOLD_MS = 2500L
 
 /** The things the phone can choose for the page, each shown on the phone at once. */
-internal enum class RemoteChoice { QUALITY, RATE, DANMAKU }
+internal enum class RemoteChoice { QUALITY, RATE, DANMAKU, RATING }
 
 /**
  * A choice made on the phone is shown at once, but the page's next report may still carry the old value (it was sent
@@ -41,5 +41,17 @@ internal class RemoteChoiceHold(
             reported == null -> null
             held(RemoteChoice.DANMAKU) -> shown
             else -> reported == "1"
+        }
+
+    fun rating(
+        reported: String?,
+        shown: RemoteRating?,
+    ): RemoteRating? =
+        when {
+            reported == null -> null
+            held(RemoteChoice.RATING) -> shown
+            reported == "like" -> RemoteRating.LIKED
+            reported == "dislike" -> RemoteRating.DISLIKED
+            else -> RemoteRating.NONE
         }
 }
