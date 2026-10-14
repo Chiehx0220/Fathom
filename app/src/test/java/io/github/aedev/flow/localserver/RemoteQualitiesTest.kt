@@ -3,7 +3,11 @@ package io.github.aedev.flow.localserver
 import android.app.Application
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.localserver.remote.danmakuCommand
 import io.github.aedev.flow.localserver.remote.hasSettings
+import io.github.aedev.flow.localserver.remote.qualityCommand
+import io.github.aedev.flow.localserver.remote.rateCommand
+import io.github.aedev.flow.localserver.remote.volumeCommand
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -66,7 +70,7 @@ class RemoteQualitiesTest {
 
         assertThat(hold.chosenQuality("auto", "auto")).isEqualTo("auto")
 
-        hold.holdQuality()
+        hold.hold(RemoteChoice.QUALITY)
         assertThat(hold.chosenQuality("auto", "4")).isEqualTo("4")
 
         clock += CHOICE_HOLD_MS + 1
@@ -79,7 +83,7 @@ class RemoteQualitiesTest {
         var clock = 0L
         val hold = RemoteChoiceHold { clock }
 
-        hold.holdRate()
+        hold.hold(RemoteChoice.RATE)
         assertThat(hold.rate("1.0", 1.5f)).isEqualTo(1.5f)
 
         clock += CHOICE_HOLD_MS + 1
@@ -96,11 +100,20 @@ class RemoteQualitiesTest {
         assertThat(hold.danmaku("1", null)).isTrue()
         assertThat(hold.danmaku("0", true)).isFalse()
 
-        hold.holdDanmaku()
+        hold.hold(RemoteChoice.DANMAKU)
         assertThat(hold.danmaku("1", false)).isFalse()
         assertThat(hold.danmaku(null, false)).isNull()
 
         clock += CHOICE_HOLD_MS + 1
         assertThat(hold.danmaku("1", false)).isTrue()
+    }
+
+    @Test
+    fun `the commands are the words remote js handles`() {
+        assertThat(qualityCommand("h4")).isEqualTo("quality:h4")
+        assertThat(rateCommand(1.5f)).isEqualTo("rate:1.5")
+        assertThat(danmakuCommand(true)).isEqualTo("danmaku:1")
+        assertThat(danmakuCommand(false)).isEqualTo("danmaku:0")
+        assertThat(volumeCommand(-0.1f)).isEqualTo("volume:-0.1")
     }
 }

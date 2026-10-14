@@ -78,19 +78,19 @@ internal fun RemoteSettingsSheet(
         Column(Modifier.navigationBarsPadding().padding(bottom = 12.dp)) {
             when (page) {
                 SettingsPage.MAIN -> {
-                    MainPage(state, onOpen = { page = it }, onDanmaku = { send("danmaku:${if (it) 1 else 0}") })
+                    MainPage(state, onOpen = { page = it }, onDanmaku = { send(danmakuCommand(it)) })
                 }
 
                 SettingsPage.QUALITY -> {
                     QualityPage(state, onBack = toMain) { id ->
-                        send("quality:$id")
+                        send(qualityCommand(id))
                         toMain()
                     }
                 }
 
                 SettingsPage.SPEED -> {
                     SpeedPage(state, onBack = toMain) { speed ->
-                        send("rate:$speed")
+                        send(rateCommand(speed))
                         toMain()
                     }
                 }

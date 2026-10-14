@@ -79,7 +79,7 @@ internal fun RemoteScreen(onBack: () -> Unit) {
                 .focusable()
                 .remoteVolumeKeys { delta ->
                     if (lock.locked) {
-                        sendRemoteCommand("volume:$delta")
+                        sendRemoteCommand(volumeCommand(delta))
                         volumeHud.press()
                     }
                 },

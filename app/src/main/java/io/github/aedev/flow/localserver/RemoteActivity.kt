@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.localserver.remote.RemoteScreen
 import io.github.aedev.flow.localserver.remote.VOLUME_STEP
+import io.github.aedev.flow.localserver.remote.volumeCommand
 import io.github.aedev.flow.ui.theme.FlowTheme
 import io.github.aedev.flow.ui.theme.ThemeMode
 import io.github.aedev.flow.ui.theme.ThemeVariant
@@ -47,7 +48,7 @@ class RemoteActivity : ComponentActivity() {
                 else -> return super.onKeyDown(keyCode, event)
             }
         if (!RemoteSession.remoteLock.value.locked) return super.onKeyDown(keyCode, event)
-        RemoteSession.addPendingCommand("volume:$step")
+        RemoteSession.addPendingCommand(volumeCommand(step))
         return true
     }
 }
