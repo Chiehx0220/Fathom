@@ -122,6 +122,10 @@ const handle = (cmd) => {
         FT.player.seekTo(parseFloat(cmd.slice('seek_to:'.length)));
     } else if (cmd.startsWith('volume:')) {
         FT.player.volume(parseFloat(cmd.slice('volume:'.length)) || 0);
+    } else if (cmd.startsWith('quality:')) {
+        FT.player.setQuality(cmd.slice('quality:'.length));
+    } else if (cmd.startsWith('rate:')) {
+        FT.player.setRate(cmd.slice('rate:'.length));
     } else if (cmd === 'mute') {
         FT.player.mute();
     } else if (cmd === 'fullscreen') {
@@ -154,6 +158,12 @@ const report = () => {
         q.set('muted', snap.muted ? 1 : 0);
         if (snap.chapters.length) { q.set('chapters', JSON.stringify(snap.chapters)); q.set('chapi', snap.chapi); }
         if (snap.skip) q.set('skip', snap.skip);
+        q.set('rate', snap.rate);
+        if (snap.qualities.length) {
+            q.set('qualities', JSON.stringify(snap.qualities));
+            q.set('quality', snap.quality);
+            q.set('qchosen', snap.qchosen);
+        }
     }
     fetch('/remote-state?' + q).then((res) => res.json()).then((body) => {
         // The phone no longer recognises this lock (released there): behave as if disconnected here too.

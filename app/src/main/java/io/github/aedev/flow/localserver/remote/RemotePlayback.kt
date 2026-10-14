@@ -36,7 +36,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.filled.VolumeDown
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
@@ -77,6 +77,7 @@ internal fun PlaybackMode(
     state: RemoteState,
     send: (String) -> Unit,
 ) {
+    var showSettings by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         NowPlaying(state, send)
 
@@ -85,11 +86,15 @@ internal fun PlaybackMode(
             TransportKeys(state, send)
         }
 
+        VolumeKeysHint()
+
         ButtonGroup(overflowIndicator = {}, modifier = Modifier.fillMaxWidth()) {
-            toolKey(Icons.Default.VolumeDown, R.string.remote_volume_down) { send("volume:-$VOLUME_STEP") }
-            toolKey(Icons.Default.VolumeUp, R.string.remote_volume_up) { send("volume:$VOLUME_STEP") }
-            // Lit while muted, so it reads as a switch and not as a second volume key.
-            toolKey(Icons.Default.VolumeOff, R.string.remote_mute, toggled = state.muted) { send("mute") }
+            toolKey(
+                if (state.muted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                R.string.remote_mute,
+                toggled = state.muted,
+            ) { send("mute") }
+            if (hasSettings(state)) toolKey(Icons.Default.Tune, R.string.remote_settings) { showSettings = true }
             toolKey(
                 if (state.fullscreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
                 R.string.remote_fullscreen,
@@ -100,6 +105,7 @@ internal fun PlaybackMode(
             wideKey(Icons.AutoMirrored.Filled.ArrowBack, R.string.remote_back) { send("back") }
         }
     }
+    if (showSettings) RemoteSettingsSheet(state, send, onDismiss = { showSettings = false })
 }
 
 // One row, one height: chapter keys only when the video has chapters, and play the widest.

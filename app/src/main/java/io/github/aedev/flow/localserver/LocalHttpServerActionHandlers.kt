@@ -254,6 +254,7 @@ internal fun ClientHandler.handleRemoteState(
         return
     }
     val watching = params["watching"] == "1"
+    val previous = RemoteSession.remoteState.value
     RemoteSession.updateRemoteState(
         RemoteState(
             watching = watching,
@@ -274,6 +275,10 @@ internal fun ClientHandler.handleRemoteState(
                     if (colon <= 0) null else entry.substring(0, colon).toIntOrNull()?.let { it to entry.substring(colon + 1) }
                 },
             activeService = params["svc"]?.toIntOrNull(),
+            qualities = parseQualities(params["qualities"]),
+            quality = params["quality"]?.takeIf { it.isNotEmpty() },
+            chosenQuality = RemoteSession.choiceHold.chosenQuality(params["qchosen"], previous.chosenQuality),
+            rate = RemoteSession.choiceHold.rate(params["rate"], previous.rate),
         ),
     )
     sendResponse(os, 200, "{\"status\":\"success\"}", "application/json; charset=UTF-8")

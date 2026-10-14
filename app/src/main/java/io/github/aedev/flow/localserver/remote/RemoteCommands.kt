@@ -2,16 +2,39 @@ package io.github.aedev.flow.localserver.remote
 
 import io.github.aedev.flow.localserver.RemoteSession
 
-/**
- * Sends a command to the paired page. The toggles show their result on the phone at once; the page's next report
- * (it sends one right after every command) confirms or corrects it.
- */
+/** Sends a command to the paired page, showing the result of a switch or a choice on the phone at once; the page's next report confirms it. */
 internal fun sendRemoteCommand(command: String) {
     val now = RemoteSession.remoteState.value
-    when (command) {
-        "play_pause" -> RemoteSession.updateRemoteState(now.copy(paused = !now.paused))
-        "mute" -> RemoteSession.updateRemoteState(now.copy(muted = !now.muted))
-        "fullscreen" -> RemoteSession.updateRemoteState(now.copy(fullscreen = !now.fullscreen))
-    }
+    val shown =
+        when {
+            command == "play_pause" -> {
+                now.copy(paused = !now.paused)
+            }
+
+            command == "mute" -> {
+                now.copy(muted = !now.muted)
+            }
+
+            command == "fullscreen" -> {
+                now.copy(fullscreen = !now.fullscreen)
+            }
+
+            command.startsWith("quality:") -> {
+                RemoteSession.choiceHold.holdQuality()
+                now.copy(chosenQuality = command.removePrefix("quality:"))
+            }
+
+            command.startsWith("rate:") -> {
+                command.removePrefix("rate:").toFloatOrNull()?.let { rate ->
+                    RemoteSession.choiceHold.holdRate()
+                    now.copy(rate = rate)
+                }
+            }
+
+            else -> {
+                null
+            }
+        }
+    shown?.let(RemoteSession::updateRemoteState)
     RemoteSession.addPendingCommand(command)
 }

@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,12 +34,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.zIndex
 import io.github.aedev.flow.R
 import io.github.aedev.flow.localserver.RemoteSession
 
@@ -57,6 +63,9 @@ internal fun RemoteScreen(onBack: () -> Unit) {
     val lock by RemoteSession.remoteLock.collectAsState()
     val state by RemoteSession.remoteState.collectAsState()
     var mode by rememberSaveable { mutableStateOf(RemoteMode.DIRECTIONS) }
+    val volumeHud = rememberVolumeHud()
+    val keysFocus = remember { FocusRequester() }
+    LaunchedEffect(lock.locked) { if (lock.locked) keysFocus.requestFocus() }
 
     // Follow the page: a video opening jumps to playback keys, leaving it goes back to browsing. Tapping a tab still wins until the page changes again.
     LaunchedEffect(lock.locked, state.watching) {
@@ -64,6 +73,16 @@ internal fun RemoteScreen(onBack: () -> Unit) {
     }
 
     Scaffold(
+        modifier =
+            Modifier
+                .focusRequester(keysFocus)
+                .focusable()
+                .remoteVolumeKeys { delta ->
+                    if (lock.locked) {
+                        sendRemoteCommand("volume:$delta")
+                        volumeHud.press()
+                    }
+                },
         topBar = {
             TopAppBar(
                 title = {
@@ -111,6 +130,7 @@ internal fun RemoteScreen(onBack: () -> Unit) {
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
+            VolumeHud(volumeHud, state, Modifier.align(BiasAlignment(0f, -0.72f)).zIndex(1f))
             val motion = MaterialTheme.motionScheme
             // Pages slide sideways the way the tabs are laid out: to the right for a tab further right, to the left for one further left.
             AnimatedContent(

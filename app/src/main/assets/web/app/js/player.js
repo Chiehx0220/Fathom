@@ -154,6 +154,29 @@ const placeMarks = () => {
 };
 
 let skipTarget = null;
+// The rendition id the viewer picked, or 'auto'; the player itself only says which one is playing.
+let chosenQuality = 'auto';
+
+// The qualities the remote can choose between, tallest first and one per label; fewer than two is nothing to choose.
+const qualityLabel = (r) => (r.height ? r.height + 'p' + (r.frameRate > 30 ? Math.round(r.frameRate) : '') : '');
+const qualitySnapshot = () => {
+    const store = tree && tree.host.store;
+    const list = (store && store.videoRenditionList) || [];
+    const seen = new Map();
+    list.forEach((r) => {
+        const label = qualityLabel(r);
+        if (label && (!seen.has(label) || (r.bitrate || 0) > (seen.get(label).bitrate || 0))) seen.set(label, r);
+    });
+    const options = [...seen.entries()]
+        .sort((a, b) => (b[1].height || 0) - (a[1].height || 0) || (b[1].frameRate || 0) - (a[1].frameRate || 0))
+        .map(([label, r]) => [String(r.id), label]);
+    const active = store && store.activeVideoRendition;
+    return {
+        qualities: options.length > 1 ? options : [],
+        quality: active ? qualityLabel(active) : '',
+        qchosen: chosenQuality,
+    };
+};
 const watchSegments = () => {
     const p = playerEl();
     const btn = FT.$('#skip-btn');
@@ -552,6 +575,7 @@ FT.player = {
         audioOnly = false;
         stageEl().classList.remove('audio-only');
         skipTarget = null;
+        chosenQuality = 'auto';
         FT.$('#skip-btn').hidden = true;
         // null when another video was opened meanwhile
         const start = async (way) => {
@@ -717,7 +741,22 @@ FT.player = {
             vol: p.volume == null ? 1 : p.volume, muted: !!p.muted, fs: isFullscreen(),
             chapters: current ? current.chapters.map((c) => c.t) : [], chapi: chapterIndex(),
             skip: skipTarget ? skipTarget.l : '',
+            rate: p.playbackRate || 1,
+            ...qualitySnapshot(),
         };
+    },
+    setQuality(id) {
+        const store = tree && tree.host.store;
+        if (!store || typeof store.selectVideoRendition !== 'function') return;
+        chosenQuality = id === 'auto' ? 'auto' : String(id);
+        try { store.selectVideoRendition(chosenQuality); } catch (e) {}
+    },
+    setRate(rate) {
+        const value = parseFloat(rate);
+        if (!(value >= 0.25 && value <= 4)) return;
+        const p = playerEl();
+        p.playbackRate = value;
+        hud('speed', value + 'x');
     },
     skip() {
         const btn = FT.$('#skip-btn');

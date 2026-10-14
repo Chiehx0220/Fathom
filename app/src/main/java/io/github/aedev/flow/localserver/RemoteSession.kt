@@ -11,6 +11,12 @@ data class RemoteLock(
     val title: String?,
 )
 
+/** One picture quality the page can switch to: the player's id for it and the label to show. */
+data class RemoteQuality(
+    val id: String,
+    val label: String,
+)
+
 /** What the paired page last reported: whether a video is open and how it is playing. */
 data class RemoteState(
     val watching: Boolean = false,
@@ -31,6 +37,12 @@ data class RemoteState(
     /** The sources the page can switch between (id to name) and which one it is on. */
     val services: List<Pair<Int, String>> = emptyList(),
     val activeService: Int? = null,
+    /** The picture qualities of the video, tallest first; empty when there is nothing to choose between. */
+    val qualities: List<RemoteQuality> = emptyList(),
+    /** The label of the quality playing now, and the id the viewer chose ("auto" when the player picks by itself). */
+    val quality: String? = null,
+    val chosenQuality: String = "auto",
+    val rate: Float = 1f,
 ) {
     /** Whether there is a video to control, on its own page or in the mini player. */
     val hasVideo: Boolean get() = watching || minimized
@@ -40,6 +52,8 @@ data class RemoteState(
 object RemoteSession {
     private val remoteLockState = MutableStateFlow(RemoteLock(false, null, null))
     val remoteLock: StateFlow<RemoteLock> = remoteLockState.asStateFlow()
+
+    internal val choiceHold = RemoteChoiceHold()
 
     private val remoteStateFlow = MutableStateFlow(RemoteState())
     val remoteState: StateFlow<RemoteState> = remoteStateFlow.asStateFlow()
