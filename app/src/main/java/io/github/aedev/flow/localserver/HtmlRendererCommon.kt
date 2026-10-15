@@ -117,44 +117,41 @@ object HtmlRendererCommon {
         }
     }
 
-    // getThumbnailUrl() overloads always return a non-empty fallback: check the raw field for null/empty to test for an image.
-    private const val NO_THUMBNAIL_PLACEHOLDER =
-        "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=300&auto=format&fit=crop"
+    // The stock image earlier builds substituted for a missing thumbnail; history and library entries saved
+    // then still carry it, so it reads as "no image" like an empty URL does.
+    private const val LEGACY_PLACEHOLDER_ID = "photo-1611162617213-7d7a39e9b1d7"
+
+    private fun isUsableImageUrl(url: String?): Boolean = !url.isNullOrBlank() && !url.contains(LEGACY_PLACEHOLDER_ID)
 
     private fun normalizeImageUrl(url: String): String {
         val trimmed = url.trim()
         return if (trimmed.startsWith("//")) "https:$trimmed" else trimmed
     }
 
+    /** The largest usable image URL, or "" when there is none: the web client then draws no image at all. */
     @JvmStatic
     fun getThumbnailUrl(thumbnails: List<Image>?): String {
         if (thumbnails != null && thumbnails.isNotEmpty()) {
             for (i in thumbnails.indices.reversed()) {
                 val img = thumbnails[i]
-                if (img != null && !img.url.isNullOrBlank()) {
+                if (img != null && isUsableImageUrl(img.url)) {
                     return normalizeImageUrl(img.url)
                 }
             }
         }
-        return NO_THUMBNAIL_PLACEHOLDER
+        return ""
     }
 
-    /** Raw presence check, unlike [getThumbnailUrl]'s placeholder-substituted output. */
     @JvmStatic
-    fun hasThumbnail(thumbnails: List<Image>?): Boolean = thumbnails != null && thumbnails.any { it != null && !it.url.isNullOrBlank() }
+    fun hasThumbnail(thumbnails: List<Image>?): Boolean = thumbnails != null && thumbnails.any { it != null && isUsableImageUrl(it.url) }
 
     // Image shape differs by source: items carry a URL string, StreamInfo/ChannelExtractor a List<Image>. This overload takes the URL.
     @JvmStatic
-    fun getThumbnailUrl(url: String?): String {
-        if (!url.isNullOrBlank()) {
-            return normalizeImageUrl(url)
-        }
-        return NO_THUMBNAIL_PLACEHOLDER
-    }
+    fun getThumbnailUrl(url: String?): String = if (isUsableImageUrl(url)) normalizeImageUrl(url!!) else ""
 
-    /** Raw presence check for the singular-URL shape, matching [hasThumbnail]'s list overload. */
+    /** Presence check for the singular-URL shape, matching [hasThumbnail]'s list overload. */
     @JvmStatic
-    fun hasThumbnail(url: String?): Boolean = !url.isNullOrBlank()
+    fun hasThumbnail(url: String?): Boolean = isUsableImageUrl(url)
 
     // YoutubeService forces hl=zu, so the textual upload date is Zulu; DateWrapper is still reliable, so the date is formatted here.
     @JvmStatic

@@ -107,7 +107,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **76**.
+- Modified upstream files: **0** (0 changed lines). New files: **77**.
 
 ## Build
 

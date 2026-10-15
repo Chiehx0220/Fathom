@@ -2,6 +2,16 @@
 .card { position: relative; display: block; color: inherit; outline: none; }
 .thumb { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius); background: var(--s2); transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease); }
 .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* No picture (the server sends an empty address): a tonal cookie with a rounded play mark - the expressive shape the app
+ * wears for its action badges - instead of a bare block. The cookie is a tint of the accent over the surface, the mark is
+ * the accent itself. */
+.thumb:not(:has(img))::before, .thumb:not(:has(img))::after { content: ''; position: absolute; left: 50%; top: 50%; aspect-ratio: 1; transform: translate(-50%, -50%); }
+.thumb:not(:has(img))::before { width: 38%; max-width: 104px; background: color-mix(in srgb, var(--acc) 22%, var(--s2)); -webkit-mask: var(--cookie) center / contain no-repeat; mask: var(--cookie) center / contain no-repeat; }
+.thumb:not(:has(img))::after { width: 15%; max-width: 42px; background: var(--acc); -webkit-mask: var(--play) center / contain no-repeat; mask: var(--play) center / contain no-repeat; }
+:root {
+  --cookie: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10.86 2.25Q12 1 13.14 2.25Q14.28 3.5 15.89 2.99Q17.5 2.47 17.86 4.13Q18.22 5.78 19.87 6.14Q21.53 6.5 21.01 8.11Q20.5 9.72 21.75 10.86Q23 12 21.75 13.14Q20.5 14.28 21.01 15.89Q21.53 17.5 19.87 17.86Q18.22 18.22 17.86 19.87Q17.5 21.53 15.89 21.01Q14.28 20.5 13.14 21.75Q12 23 10.86 21.75Q9.72 20.5 8.11 21.01Q6.5 21.53 6.14 19.87Q5.78 18.22 4.13 17.86Q2.47 17.5 2.99 15.89Q3.5 14.28 2.25 13.14Q1 12 2.25 10.86Q3.5 9.72 2.99 8.11Q2.47 6.5 4.13 6.14Q5.78 5.78 6.14 4.13Q6.5 2.47 8.11 2.99Q9.72 3.5 10.86 2.25z'/%3E%3C/svg%3E");
+  --play: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9.4 6.9v10.2l8.4-5.1z' stroke='%23000' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
 .card:hover .thumb { transform: scale(1.02); }
 body[data-input="keys"] .card.sel .thumb, body[data-input="keys"] .row-item.sel .thumb { box-shadow: 0 0 0 4px var(--bg), 0 0 0 7px var(--acc2); transform: scale(1.04); }
 .dur { position: absolute; right: 8px; bottom: 8px; padding: 2px 7px; border-radius: 7px; background: rgba(0, 0, 0, 0.75); color: #fff; font-size: 12px; font-weight: 500; }
