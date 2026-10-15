@@ -124,7 +124,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **18** (134 changed lines). New files: **11**.
+- Modified upstream files: **19** (135 changed lines). New files: **11**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -145,5 +145,6 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/ui/components/shared/quickactions/QuickActionsMessagesTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/home/HomeFeedSourcesSeedTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelHarness.kt | 2 | 0 |
+| app/src/test/java/io/github/aedev/flow/data/backup/BackupRulesTest.kt | 1 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/home/chips/HomeChipFeedsTest.kt | 1 | 0 |
 
