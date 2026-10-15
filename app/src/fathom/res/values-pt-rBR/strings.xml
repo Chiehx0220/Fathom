@@ -57,6 +57,7 @@
     <string name="recap_story_share_text">Meu %1$s no Fathom: %2$s</string>
     <string name="recap_story_made_with">Feito com Fathom</string>
     <string name="subtitle_add_file_failed">Fathom não consegue ler este arquivo como legenda</string>
+    <string name="scrobbling_import_offer_body">Fathom adiciona seus 20 artistas mais tocados do ano passado aos seus artistas favoritos. Você pode remover qualquer um deles mais tarde.</string>
     <string name="discord_presence_playing_fallback">Tocando no Fathom</string>
     <string name="export_watch_history_desc">Exportar como YouTube-history JSON (importa para LibreTube e Fathom)</string>
     <string name="whats_new_in_flow">O que há de novo no Fathom</string>

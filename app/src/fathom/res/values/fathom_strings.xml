@@ -173,6 +173,7 @@
     <string name="taste_card_hint">See how Fathom sees you</string>
     <string name="taste_reset_video_body">This clears what Fathom learned from your videos and starts again from zero. Your recap and hidden channels, topics and videos stay.</string>
     <string name="taste_reset_music_body">This clears what Fathom learned from your music and starts again from zero. Your recap stays.</string>
+    <string name="taste_starter_searches_detail">%1$s. Used until Fathom learns what you watch.</string>
     <string name="recap_title">Fathom Recap</string>
     <string name="recap_total_time">Time in Fathom</string>
     <string name="recap_empty_body">Fathom keeps these stats on this device only. Watch and listen for a while and they fill in.</string>
