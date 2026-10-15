@@ -27,6 +27,7 @@ internal fun VideoCardStacked(
     showChannel: Boolean,
     useInternalPadding: Boolean,
     reason: String?,
+    relatedTo: String?,
     modifier: Modifier = Modifier,
 ) {
     val state = rememberVideoCardState(video)
@@ -128,5 +129,5 @@ internal fun VideoCardStacked(
         }
     }
 
-    VideoCardSheets(state = state, showChannel = showChannel)
+    VideoCardSheets(state = state, showChannel = showChannel, relatedTo = relatedTo)
 }
