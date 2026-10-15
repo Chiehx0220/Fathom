@@ -89,7 +89,7 @@ jobs:
 
       # The in-app updater picks an APK by these names: fathom.apk is the universal build,
       # fathom-<abi>.apk the one for a device's CPU. Do not rename them. The foss builds (no updater,
-      # for IzzyOnDroid and other stores) are named fathom-foss*.apk, which the updater never picks.
+      # no Discord) are named fathom-foss*.apk, which the updater never picks.
       - name: Name the APKs
         run: |
           set -euo pipefail

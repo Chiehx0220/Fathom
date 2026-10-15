@@ -50,17 +50,6 @@
   </tr>
 </table>
 
-## 🆚 Fathom 比 Flow 多了什麼
-
-| | Flow | Fathom |
-|---|:---:|:---:|
-| YouTube、FlowNeuro、SponsorBlock、下載 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-| 由手機提供的網頁版,不必裝桌面程式 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-| Bilibili 搜尋、播放、留言、彈幕、直播 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-| 匯入、匯出 NewPipe / PipePipe 訂閱 | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="Partly" src="Assets/badges/mark/partial-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-
-<sub><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="部分支援" src="Assets/badges/mark/partial-light.svg" height="14"></picture> Flow 僅支援從 NewPipe 匯入。</sub>
-
 ## 🏗 運作方式
 
 <p align="center">
@@ -69,7 +58,7 @@
 
 ## 🌐 本地網頁伺服器
 
-想在電腦上看片,不必下載 Flow 的桌面版 [Flow-Desktop](https://github.com/Flow-Tube/Flow-Desktop)。開啟伺服器後,用任何瀏覽器就能看,不需要安裝或更新任何程式。訂閱、觀看紀錄和稍後觀看都直接取自 App。
+想在電腦上看片,開啟伺服器後用任何瀏覽器就能看,不需要安裝任何程式。如果你比較喜歡專用的桌面應用程式,也可以使用 Flow 官方的 [Flow-Desktop](https://github.com/Flow-Tube/Flow-Desktop)。訂閱、觀看紀錄和稍後觀看都直接取自 App。
 
 開啟後,手機會在 8080 連接埠提供網頁版 App。
 
@@ -145,7 +134,7 @@ cd Fathom
 ./gradlew assembleGithubDebug
 ```
 
-已簽署的 APK 放在 [Releases 頁面](https://github.com/Chiehx0220/Fathom/releases),目前都標為預發行版。可選的建置變體:`foss`(不含自動更新)、`nightly`(可與 debug 版並存安裝)。
+已簽署的 APK 放在 [Releases 頁面](https://github.com/Chiehx0220/Fathom/releases),最新的穩定版標示為 Latest。可選的建置變體:`foss`(不含自動更新)、`nightly`(可與 debug 版並存安裝)。
 
 ## 🧩 程式碼結構
 
@@ -162,6 +151,14 @@ cd Fathom
 原則:新程式碼一律放在新檔案,上游檔案只加一行呼叫,這樣同步上游時衝突會少很多。[FORK-DIFF.md](FORK-DIFF.md) 列出所有改動過的上游檔案(由 `node scripts/fork-diff.js` 產生);`bilibili/PPE-REFERENCE.md` 記錄用戶端是從 PipePipeExtractor 的哪個版本移植而來。
 
 Flow 原有的功能(SponsorBlock、DeArrow、音樂、Shorts、下載、主題)全部保留,詳見[上游說明](https://github.com/A-EDev/Flow#features)。
+
+## 🤖 開發方式
+
+本專案自開發之初即採用 AI 輔助,全程使用 Claude Code(Anthropic)協助開發。
+
+專案方向與品質由我負責:開發目標與設計決策由我決定,各項變更由我審查,合併與發布亦由我裁定。未經我的指示,不會進行任何提交、推送或發布。
+
+品質把關方面:每次推送皆執行單元測試與 CodeQL 檢查;並以 CI 預算限制 Fathom 對上游 Flow 程式碼的改動幅度(詳見 [FORK-DIFF.md](FORK-DIFF.md));凡使用者可見的變更,於發布前均會在實體手機上實際測試。
 
 ## 🙏 致謝
 

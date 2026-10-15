@@ -109,11 +109,6 @@ function chip({ label, current }, t) {
   ].join(''));
 }
 
-// A 24 px symbol for the comparison table.
-function mark({ icon: iconName, tone, label }, t) {
-  return svg(24, 24, label, icon(iconName, 0, 0, 24, t[tone]));
-}
-
 function flag(name) {
   const at = process.argv.indexOf(`--${name}`);
   return at > 0 ? process.argv[at + 1] : undefined;
@@ -139,9 +134,6 @@ const values = given.release && given.downloads ? { release: given.release, down
 const BADGES = [
   { kind: 'pill', file: 'get-github', spec: { small: 'Get it on', big: 'GitHub', icon: 'github' } },
   { kind: 'pill', file: 'get-obtainium', spec: { small: 'Get it on', big: 'Obtainium', icon: 'obtainium' } },
-  { kind: 'mark', file: 'yes', spec: { icon: 'check_circle', tone: 'primary', label: 'Yes' } },
-  { kind: 'mark', file: 'no', spec: { icon: 'cancel', tone: 'outline', label: 'No' } },
-  { kind: 'mark', file: 'partial', spec: { icon: 'partial_circle', tone: 'primary', label: 'Partly' } },
   { kind: 'lang', file: 'english-current', spec: { label: 'English', current: true } },
   { kind: 'lang', file: 'english', spec: { label: 'English', current: false } },
   { kind: 'lang', file: 'chinese-current', spec: { label: '繁體中文', current: true } },
@@ -158,7 +150,7 @@ const BADGES = [
 for (const { kind, file, spec } of BADGES) {
   fs.mkdirSync(path.join(OUT, kind), { recursive: true });
   for (const [name, theme] of Object.entries(THEMES)) {
-    const draw = { pill, split, lang: chip, mark }[kind];
+    const draw = { pill, split, lang: chip }[kind];
     const body = draw(spec, theme);
     fs.writeFileSync(path.join(OUT, kind, `${file}-${name}.svg`), body);
   }

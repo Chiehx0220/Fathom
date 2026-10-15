@@ -50,17 +50,6 @@
   </tr>
 </table>
 
-## 🆚 What Fathom adds to Flow
-
-| | Flow | Fathom |
-|---|:---:|:---:|
-| YouTube, FlowNeuro, SponsorBlock, downloads | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-| Web page served by the phone, no desktop app | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-| Bilibili search, playback, comments, danmaku, live rooms | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/no-dark.svg"><img alt="No" src="Assets/badges/mark/no-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-| Import and export NewPipe / PipePipe subscriptions | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="Partly" src="Assets/badges/mark/partial-light.svg" height="20"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/yes-dark.svg"><img alt="Yes" src="Assets/badges/mark/yes-light.svg" height="20"></picture> |
-
-<sub><picture><source media="(prefers-color-scheme: dark)" srcset="Assets/badges/mark/partial-dark.svg"><img alt="Partly" src="Assets/badges/mark/partial-light.svg" height="14"></picture> Flow can only import from NewPipe.</sub>
-
 ## 🏗 How it fits together
 
 <p align="center">
@@ -69,7 +58,7 @@
 
 ## 🌐 Local web server
 
-To watch on a computer, you don't need to download [Flow-Desktop](https://github.com/Flow-Tube/Flow-Desktop), Flow's desktop client. Turn the server on and open it in any browser, with nothing to install or keep updated. Subscriptions, history, and watch-later come straight from the app.
+To watch on a computer, turn the server on and open it in any browser, with nothing to install. If you would rather have a dedicated desktop app, Flow's own [Flow-Desktop](https://github.com/Flow-Tube/Flow-Desktop) is another option. Subscriptions, history, and watch-later come straight from the app.
 
 Once it is on, the phone serves a web app on port 8080.
 
@@ -147,7 +136,7 @@ cd Fathom
 ./gradlew assembleGithubDebug
 ```
 
-Signed APKs are on the [releases page](https://github.com/Chiehx0220/Fathom/releases), marked as pre-releases for now. Variants: `foss` (no updater), `nightly` (installs beside debug).
+Signed APKs are on the [releases page](https://github.com/Chiehx0220/Fathom/releases), the newest stable release is marked Latest. Variants: `foss` (no updater), `nightly` (installs beside debug).
 
 ## 🧩 Under the hood
 
@@ -164,6 +153,14 @@ Paths are under `app/src/main/java/io/github/aedev/flow/`.
 The rule: new code goes in new files, and upstream files only get a call into it. That keeps merges from upstream small. [FORK-DIFF.md](FORK-DIFF.md) lists every upstream file touched (`node scripts/fork-diff.js`), and `bilibili/PPE-REFERENCE.md` records which PipePipeExtractor revision the client was ported from.
 
 Everything else in Flow (SponsorBlock, DeArrow, music, Shorts, downloads, themes) is still here. See [upstream](https://github.com/A-EDev/Flow#features).
+
+## 🤖 How Fathom is built
+
+Fathom has been developed with AI assistance from the outset: Claude Code (Anthropic) has been used throughout development.
+
+Direction and quality remain my responsibility. I define the goals and make the design decisions, I review each change, and I decide what is merged and released. No commit, push or release is made without my instruction.
+
+Quality is safeguarded as follows: unit tests and CodeQL run on every push; a CI budget limits how much of upstream Flow's code Fathom changes (see [FORK-DIFF.md](FORK-DIFF.md)); and every user-visible change is tested on a physical phone before release.
 
 ## 🙏 Credits
 
