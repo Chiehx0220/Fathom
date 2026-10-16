@@ -78,6 +78,7 @@ data class Playlist(
     val videos: List<Video> = emptyList(),
     val isLocal: Boolean = true,
     val serviceId: Int = 0,
+    val isCourse: Boolean = false,
 )
 
 data class Comment(

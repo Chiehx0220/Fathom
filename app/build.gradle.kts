@@ -31,6 +31,24 @@ fun secretValue(
         ?: System.getenv(environment)
         ?: ""
 
+// The in-app picker lists the same languages AGP writes into the generated locale config: every
+// values folder that carries a strings.xml, so a new Weblate language shows up in both at once.
+fun translatedLocaleTags(): List<String> =
+    file("src/main/res")
+        .listFiles()
+        .orEmpty()
+        .filter { it.isDirectory && it.resolve("strings.xml").exists() }
+        .mapNotNull { dir ->
+            val qualifier = dir.name.removePrefix("values-")
+            when {
+                qualifier == dir.name -> null
+                qualifier.startsWith("b+") -> qualifier.removePrefix("b+").replace('+', '-')
+                Regex("[a-z]{2,3}(-r[A-Z]{2})?").matches(qualifier) -> qualifier.replace("-r", "-")
+                else -> null
+            }
+        }.map { if (it == "in" || it.startsWith("in-")) "id" + it.removePrefix("in") else it }
+        .sorted()
+
 android {
     namespace = "io.github.aedev.flow"
     compileSdk = 37
@@ -43,6 +61,7 @@ android {
         versionName = "0.1.6"
 
         buildConfigField("int", "NIGHTLY_RUN", "0")
+        buildConfigField("String", "APP_LANGUAGE_TAGS", "\"${(listOf("en") + translatedLocaleTags()).joinToString(",")}\"")
         // Last.fm keys come from the CI secrets; builds without them ask the viewer for their own key.
         buildConfigField("String", "LASTFM_API_KEY", "\"${secretValue("lastfmApiKey", "lastfm.apiKey", "LASTFM_API_KEY")}\"")
         buildConfigField("String", "LASTFM_API_SECRET", "\"${secretValue("lastfmApiSecret", "lastfm.apiSecret", "LASTFM_API_SECRET")}\"")
@@ -91,6 +110,10 @@ android {
     buildFeatures {
         buildConfig = true
         compose = true
+    }
+
+    androidResources {
+        generateLocaleConfig = true
     }
 
     signingConfigs {
@@ -166,7 +189,6 @@ android {
 
     sourceSets {
         getByName("androidTest").assets.directories.add("$projectDir/schemas")
-        getByName("nightly").baselineProfiles.directories.add("src/githubRelease/generated/baselineProfiles")
         listOf("github", "foss").forEach { getByName(it).res.srcDir("src/fathom/res") }
         listOf("debug", "release", "nightly").forEach { getByName(it).manifest.srcFile("src/fathom/AndroidManifest.xml") }
     }
@@ -200,6 +222,12 @@ android {
             isIncludeAndroidResources = true
         }
     }
+}
+
+// One profile for every shipped variant: foss, nightly and github run the same startup code, and
+// a per-variant profile left foss and nightly with library profiles only (#1301).
+baselineProfile {
+    mergeIntoMain = true
 }
 
 // CI nightlies are numbered by workflow run: versionCode = run, versionName = <next>-nightly.<run>+<sha>.
@@ -366,6 +394,8 @@ dependencies {
     // library AARs (Compose, RecyclerView, ...) at build time; this applies them at runtime,
     // which matters for sideloaded/F-Droid installs that bypass Play's cloud profiles.
     implementation(libs.androidx.profileinstaller)
+    // Trace sections the startup and Home benchmarks measure (#1301); already on the classpath through Compose.
+    implementation(libs.androidx.tracing)
     baselineProfile(project(":benchmark"))
 
     // Desugaring for older Android versions

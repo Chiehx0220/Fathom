@@ -62,8 +62,9 @@
     <string name="import_manage_backups">إدارة نُسخ Fathom الإحتياطية</string>
     <string name="taste_summary">كيف يراك Fathom وما الذي يشكّل خلاصتك</string>
     <string name="taste_card_hint">تعرّف على نظرة Fathom إليك</string>
-    <string name="taste_reset_video_body">سيؤدي هذا إلى مسح ما تعلّمه Fathom من مشاهداتك والبدء من جديد. لن تتأثر صفحة الملخص والقنوات والمواضيع والفيديوهات المخفية.</string>
+    <string name="taste_reset_video_body">ينسى Fathom ما تعلّمه من فيديوهاتك وعمليات بحثك. يظل سجل المشاهدة والإعجابات وقوائم التشغيل والعناصر المخفية محفوظة، وتستمر صفحة «المنزل» في استخدامها.</string>
     <string name="taste_reset_music_body">‏يمسح هذا ما تعلّمه Fathom من موسيقاك ويبدأ من الصفر. يبقى ملخصك كما هو.</string>
+    <string name="taste_starter_searches_detail">%1$s. ستظل مستخدمة إلى أن يتعرّف Fathom على ما تشاهده.</string>
     <string name="recap_title">ملخص Fathom</string>
     <string name="recap_total_time">الوقت في Fathom</string>
     <string name="recap_empty_body">يحتفظ Fathom بهذه الإحصائيات على هذا الجهاز فقط. شاهد واستمع لبعض الوقت وستمتلئ.</string>

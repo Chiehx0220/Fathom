@@ -13,6 +13,7 @@ import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.GraphSeedInput
 import io.github.aedev.flow.data.recommendation.GraphSeedSelector
 import io.github.aedev.flow.data.recommendation.GraphSeedSource
+import io.github.aedev.flow.data.recommendation.NeighbourChannels
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.source.VideoSources
 import kotlinx.coroutines.async
@@ -30,6 +31,9 @@ import javax.inject.Singleton
 private const val RELATED_TTL_MS = 45L * 60L * 1000L
 private const val RELATED_FETCH_CONCURRENCY = 3
 private const val RELATED_FETCH_TIMEOUT_MS = 4_000L
+
+// Related lists of followed uploads fetched per Home load to teach co-watch; each upload is used once.
+private const val FOLLOWED_SOURCES_PER_LOAD = 2
 private const val SAVED_SEED_COOLDOWN_MS = 3L * 60L * 60L * 1000L
 private const val LONG_TERM_HISTORY_MAX = 200
 
@@ -106,7 +110,7 @@ class HomeFeedSources
                     GraphSeedInput(
                         id = it.videoId,
                         title = it.title,
-                        channelId = "",
+                        channelId = it.channelId.orEmpty(),
                         source = GraphSeedSource.LIKED,
                         engagementWeight = 1.0,
                         timestamp = it.likedAt,
@@ -146,18 +150,11 @@ class HomeFeedSources
             seedIds.forEach { savedSeedCooldown[it] = now }
         }
 
-        /** One discovery query asked of every service the filter allows. */
         internal suspend fun searchDiscovery(
             query: String,
             filter: HomeContentSourceFilter,
-        ): List<Video> =
-            coroutineScope {
-                sources
-                    .forFilter(filter)
-                    .map { source -> async { source.search(query) } }
-                    .awaitAll()
-                    .flatten()
-            }
+            youtube: suspend (String) -> List<Video>,
+        ): List<Video> = sources.search(query, filter, youtube)
 
         /** One seed's related list, through the same memory and Room caches the feed uses. */
         internal suspend fun relatedVideos(
@@ -165,6 +162,32 @@ class HomeFeedSources
             filters: suspend () -> HomeFeedCacheFilters,
             serviceId: Int = ServiceList.YouTube.serviceId,
         ): List<Video> = fetchRelatedVideos(seedId, serviceId, filters)
+
+        /**
+         * Lets the related lists of up to two recent uploads of followed channels, each used once, teach
+         * co-watch which channels sit beside the viewer's own ([NeighbourChannels]). Two requests at most.
+         */
+        suspend fun learnFromFollowed(
+            subscriptionFeed: List<Video>,
+            followed: Set<String>,
+            filters: suspend () -> HomeFeedCacheFilters,
+            now: Long = System.currentTimeMillis(),
+        ) {
+            if (followed.isEmpty()) return
+            val known = neuroEngine.coWatchSourceIds()
+            subscriptionFeed
+                .asSequence()
+                .filter { it.channelId in followed && it.id !in known && !it.isShort && !it.isLive && !it.isUpcoming }
+                .filter { now - it.timestamp in 0..NeighbourChannels.UPLOAD_WINDOW_MS }
+                .sortedByDescending { it.timestamp }
+                .distinctBy { it.channelId }
+                .take(FOLLOWED_SOURCES_PER_LOAD)
+                .toList()
+                .forEach { upload ->
+                    val related = fetchRelatedVideos(upload.id, upload.serviceId, filters)
+                    if (related.isNotEmpty()) neuroEngine.noteRelatedOfFollowed(upload, related)
+                }
+        }
 
         private suspend fun fetchRelatedVideos(
             seedId: String,
