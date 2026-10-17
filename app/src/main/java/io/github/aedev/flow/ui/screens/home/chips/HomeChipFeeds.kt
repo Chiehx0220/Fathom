@@ -2,7 +2,6 @@ package io.github.aedev.flow.ui.screens.home.chips
 
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
-import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
@@ -11,7 +10,6 @@ import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.local.dao.VideoDao
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.recommendation.ChannelMemoryRepository
 import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
@@ -232,11 +230,9 @@ class HomeChipFeeds
         /** The feed's own hygiene, then the engine's ranking: no Shorts, nothing watched or hidden. */
         private suspend fun ranked(videos: List<Video>): List<Video> {
             val exclusions = context.exclusions()
-            val source = context.source()
             val pool =
-                videos
-                    .distinctBy { it.id }
-                    .filter { source.allows(it) }
+                context
+                    .inSource(videos.distinctBy { it.id })
                     .filterValid()
                     .filter { !it.isShort }
                     .filterWatched(context.watched())
@@ -320,29 +316,16 @@ class HomeChipFeeds
         private suspend fun search(
             queries: List<String>,
             filter: SearchFilter = SearchFilter.ANY,
-        ): List<Video> =
+        ): List<Video> = sources.searchAll(context.source(), queries, filter)
+
+        private suspend fun related(seedIds: List<String>): List<Video> =
             coroutineScope {
-                sources
-                    .forFilter(context.source())
-                    .flatMap { source -> source.queriesFor(queries, filter).map { query -> async { source.search(query, filter) } } }
+                context
+                    .idsInSource(seedIds)
+                    .map { id -> async { runCatching { feedSources.relatedVideos(id, context.filters) }.getOrDefault(emptyList()) } }
                     .awaitAll()
                     .flatten()
             }
-
-        private suspend fun related(seedIds: List<String>): List<Video> {
-            val source = context.source()
-            return coroutineScope {
-                seedIds
-                    .filter { source.allows(serviceIdOfVideo(it)) }
-                    .map { id ->
-                        async {
-                            runCatching { feedSources.relatedVideos(id, context.filters) }
-                                .getOrDefault(emptyList())
-                        }
-                    }.awaitAll()
-                    .flatten()
-            }
-        }
 
         private fun GraphSeedInput.asVideo() =
             Video(
@@ -502,9 +485,6 @@ class HomeChipFeeds
 
         /** Some stored records lack a thumbnail; every YouTube video has one at a known address. */
         private fun Video.withThumbnail(): Video = if (thumbnailUrl.isNotBlank()) this else withHighQualityThumbnail()
-
-        private fun Video.withHighQualityThumbnail(): Video =
-            if (serviceId.isYouTubeServiceId) copy(thumbnailUrl = ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(id)) else this
 
         private companion object {
             const val TAG = "HomeChipFeeds"
