@@ -23,11 +23,13 @@ internal class ClientHandler(
     internal val dbHelper: HistoryDbHelper,
     private val context: android.content.Context,
     private val executorService: ExecutorService,
+    internal val pairing: Pairing,
 ) : Runnable {
     // Set after run() reads the request; sendResponse() checks Accept-Encoding.
     private var requestHeaders: MutableMap<String, String>? = null
 
     internal val remoteAddress: String? get() = socket.inetAddress.hostAddress
+    internal val remoteIsLoopback: Boolean get() = socket.inetAddress.isLoopbackAddress
 
     override fun run() {
         try {
@@ -56,6 +58,7 @@ internal class ClientHandler(
                     sendResponse(os, 403, refusal, "text/plain; charset=UTF-8")
                     return
                 }
+                if (!admits(os, path, requestHeaders)) return
                 if ("OPTIONS".equals(method, ignoreCase = true)) {
                     os.write(CORS_PREFLIGHT.toByteArray(Charsets.UTF_8))
                     os.flush()
@@ -205,6 +208,7 @@ internal class ClientHandler(
         content: String,
         contentType: String,
         cacheControl: String?,
+        setCookie: String? = null,
     ) {
         var bytes = content.toByteArray(Charsets.UTF_8)
         val status = statusText(code)
@@ -229,6 +233,7 @@ internal class ClientHandler(
                 "Content-Type: " + contentType + "\r\n" +
                 contentEncodingHeader +
                 (if (cacheControl != null) "Cache-Control: $cacheControl\r\n" else "") +
+                (if (setCookie != null) "Set-Cookie: $setCookie\r\n" else "") +
                 "Content-Length: " + bytes.size + "\r\n" +
                 "Connection: close\r\n\r\n"
         os.write(response.toByteArray(Charsets.UTF_8))

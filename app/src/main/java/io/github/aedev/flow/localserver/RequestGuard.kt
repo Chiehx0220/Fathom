@@ -4,7 +4,7 @@ import java.util.Locale
 
 /*
  * Header-level request checks: cross-site state change, DNS rebinding (re-pointed domain), foreign WebSocket origin.
- * Any program on the network can set these headers.
+ * A program on the network can set any header; that is what [Pairing] is for.
  */
 
 /** Request missing a required part; 400 + message, not server error. */
@@ -15,6 +15,7 @@ internal class BadRequestException(
 /** Routes changing device state or taking the remote command queue. */
 internal val MUTATING_PATHS: Set<String> =
     setOf(
+        PAIR_PATH,
         "/send-link",
         "/play",
         "/send-command",
@@ -117,6 +118,7 @@ internal fun statusText(code: Int): String =
         206 -> "Partial Content"
         302 -> "Found"
         400 -> "Bad Request"
+        401 -> "Unauthorized"
         403 -> "Forbidden"
         404 -> "Not Found"
         else -> "Internal Server Error"

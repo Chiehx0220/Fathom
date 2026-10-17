@@ -19,6 +19,7 @@ class LocalHttpServer(
     private var isRunning = false
     private val threadPool: ExecutorService = Executors.newCachedThreadPool()
     private val dbHelper: HistoryDbHelper = HistoryDbHelper.getInstance(context)
+    private val pairing = Pairing.of(context)
 
     @Throws(IOException::class)
     fun startServer() {
@@ -28,7 +29,7 @@ class LocalHttpServer(
         serverLog("Local server started on port $port")
 
         if (wsServer == null) {
-            val server = RemoteWebSocketServer(8081)
+            val server = RemoteWebSocketServer(8081, pairing)
             wsServer = server
             server.start()
             RemoteSession.commandBroadcaster = server::broadcastCommand
@@ -43,7 +44,7 @@ class LocalHttpServer(
                         socket.refuseOutsideNetwork()
                         continue
                     }
-                    threadPool.execute(ClientHandler(socket, dbHelper, context, threadPool))
+                    threadPool.execute(ClientHandler(socket, dbHelper, context, threadPool, pairing))
                 } catch (e: IOException) {
                     if (!isRunning) break
                     serverLog("Socket accept error: " + e.message)

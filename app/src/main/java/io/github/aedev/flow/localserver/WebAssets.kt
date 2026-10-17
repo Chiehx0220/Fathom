@@ -44,6 +44,7 @@ object WebAssets {
         val appShell: String,
         val appStrings: String,
         val appVersion: String,
+        val pairPage: String,
     )
 
     @Volatile
@@ -71,6 +72,7 @@ object WebAssets {
                     Integer.toHexString(
                         ((appCss.hashCode() * 31 + appJs.hashCode()) * 31 + vendorVersion.hashCode()) * 31 + appStrings.hashCode(),
                     ),
+                    join(app, listOf("pair/index.html")),
                 )
         }
     }
@@ -78,6 +80,9 @@ object WebAssets {
     val appCss: String get() = requireBundle().appCss
     val appJs: String get() = requireBundle().appJs
     val appShell: String get() = requireBundle().appShell
+
+    /** Pairing page for an unpaired browser. */
+    val pairPage: String get() = requireBundle().pairPage
 
     /** All language files as one JSON object, safe in a script element. */
     val appStrings: String get() = requireBundle().appStrings

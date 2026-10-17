@@ -9,6 +9,7 @@ internal typealias Route = ClientHandler.(os: OutputStream, params: Map<String, 
 internal val ROUTES: Map<String, Route> =
     mapOf(
         "/" to route { os, _, _ -> handleAppShell(os) },
+        PAIR_PATH to route { os, params, _ -> handlePair(os, params) },
         "/danmaku" to route { os, params, _ -> handleDanmaku(os, params) },
         "/live_chat" to route { os, params, _ -> handleLiveChat(os, params) },
         "/hls" to route { os, params, _ -> handleHlsProxy(os, params) },

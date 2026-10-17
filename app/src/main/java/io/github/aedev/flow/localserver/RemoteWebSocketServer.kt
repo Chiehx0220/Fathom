@@ -8,8 +8,9 @@ import java.net.InetSocketAddress
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
-class RemoteWebSocketServer(
+class RemoteWebSocketServer internal constructor(
     port: Int,
+    private val pairing: Pairing,
 ) : WebSocketServer(InetSocketAddress(port)) {
     private val connections: MutableSet<WebSocket> = Collections.newSetFromMap(ConcurrentHashMap())
 
@@ -36,7 +37,9 @@ class RemoteWebSocketServer(
         handshake: ClientHandshake,
     ): Boolean {
         val peer = conn.remoteSocketAddress?.address ?: return false
-        return isLocalNetworkAddress(peer) && isAllowedWebSocketOrigin(handshake.header("Origin"), handshake.header("Host"))
+        if (!isLocalNetworkAddress(peer)) return false
+        if (!isAllowedWebSocketOrigin(handshake.header("Origin"), handshake.header("Host"))) return false
+        return peer.isLoopbackAddress || pairing.isPaired(handshake.header("Cookie"))
     }
 
     private fun ClientHandshake.header(name: String): String? = getFieldValue(name).ifEmpty { null }

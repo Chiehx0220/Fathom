@@ -67,7 +67,7 @@ Once it is on, the phone serves a web app on port 8080.
 
 > **Private networks only.** The server answers devices on the same local network (your home Wi-Fi, or your phone's hotspot) and nothing else: not the internet, and not a web page of another site. Public Wi-Fi such as a cafe usually blocks devices from reaching each other, so there, connect the computer to your phone's hotspot. To reach it from outside the house, use a VPN such as Tailscale rather than opening a port.
 >
-> **There is no sign-in.** Anyone on the same network can see your history, subscriptions and watch-later, and control playback. Turn it on only on a network you trust, and turn it off when you are done.
+> **Pairing code.** The first time a browser opens the server, it asks for the 6-digit code shown on the phone (in Settings, and on the Remote screen). After that the browser stays paired. The "New code" button signs every browser out. Guessing is limited: a few wrong tries lock that device out for 10 minutes. The connection is plain HTTP, so someone capturing traffic on the same network could still read the code. Use it only on a network you trust, and turn it off when you are done.
 
 In the web app:
 
