@@ -60,6 +60,7 @@ const KEEP_KEYS = new Set([
   'settings_creator_role',
   'support_flow_dev_desc',
   'support_flow_dev_title',
+  'support_flow_open_collective',
   'support_flow_patreon',
 ]);
 
