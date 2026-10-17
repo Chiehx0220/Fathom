@@ -15,15 +15,12 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.OutputStream
 
-// Manual probe for the native Bilibili client (io.github.aedev.flow.bilibili): hits the real
-// Bilibili API through it and reports, step by step, what worked and how fast the CDN answers.
-// Nothing here plays anything; it exists to verify the ported risk-control logic before the
-// player is switched over. Read-only, returns no cookie values.
+// Manual probe of native Bilibili client (io.github.aedev.flow.bilibili): real API, per-step result + CDN latency.
+// Verifies ported risk-control logic; plays nothing. Read-only; no cookie values.
 //
 //   GET /api/v1/bilibili_probe?bvid=BV...&page=1
 
-// One session for the whole process so the cookie set and WBI key are reused between probes, the
-// way real playback would reuse them.
+// One process-wide session: cookies + WBI key reused across probes (as playback).
 private var probeSession: BilibiliSession? = null
 
 private fun probeApi(http: OkHttpClient): BilibiliApi {
@@ -39,7 +36,7 @@ private fun Throwable.describe(): JsonObject =
 
 private const val PROBE_BYTES = 512 * 1024
 
-/** Range-requests the first [PROBE_BYTES] of one media URL and reports status and throughput. */
+/** Range-requests first [PROBE_BYTES] of a media URL; status + throughput. */
 private fun probeCdn(
     http: OkHttpClient,
     url: String,
@@ -98,8 +95,7 @@ private fun probePlayback(
         put("audio", JsonArray(playback.audioFormats.map { it.summary() }))
         put("requestHeaderNames", JsonArray(playback.requestHeaders.keys.map { JsonPrimitive(it) }))
 
-        // The CDN test is the part that matters for "does playback actually work": highest-quality
-        // video and audio, primary URL and every backup, with the same headers playback would send.
+        // CDN test = playback viability: highest-quality video + audio, primary + backups, playback headers.
         val cdn = mutableListOf<JsonElement>()
 
         fun test(

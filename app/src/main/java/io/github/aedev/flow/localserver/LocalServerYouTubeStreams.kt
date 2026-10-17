@@ -25,17 +25,15 @@ import org.schabi.newpipe.extractor.stream.VideoStream
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * The local server's YouTube streams: InnerTube's PoToken-attested, multi-client extraction - the
- * same one the native player uses - instead of NewPipeExtractor's single unattested client. Only the
- * playable URLs move; metadata (title, related, comments, subtitles) stays on NewPipeExtractor.
+ * Local server YouTube streams: InnerTube PoToken-attested multi-client extraction (native player's) instead of NewPipeExtractor's single unattested client.
+ * Playable URLs only; metadata (title, related, comments, subtitles) stays on NewPipeExtractor.
  */
 internal object LocalServerYouTubeStreams {
     private const val TAG = "LocalServerYouTube"
     private const val EXTRACTION_TTL_MS = 50 * 60 * 1000L
     private const val EXTRACTION_TIMEOUT_MS = 45_000L
 
-    // Minting shares the native player's single PoToken WebView - a wait past this is more likely
-    // queued behind an in-app playback mint than a slow network, worth telling apart in adb logcat.
+    // Mint shares native player's single PoToken WebView: wait past this = likely queued behind in-app mint (adb logcat).
     private const val SLOW_EXTRACTION_WARNING_MS = 4000L
 
     private class CachedExtraction(
@@ -46,10 +44,10 @@ internal object LocalServerYouTubeStreams {
     private val extractionCache = ConcurrentHashMap<String, CachedExtraction>()
     private val extractionLock = Mutex()
 
-    /** InnerTube's extraction for [videoId], cached; null when every client failed. */
+    /** InnerTube extraction for [videoId], cached; null if all clients failed. */
     fun extractionFor(videoId: String): InnerTubeVideoStreamExtractor.VideoExtractionResult? {
         cached(videoId)?.let { return it.result }
-        // One extraction at a time: the PoToken WebView and NewPipe's player parser are shared, and parallel calls lose replies.
+        // One extraction at a time: PoToken WebView and NewPipe player parser shared; parallel calls lose replies.
         return runBlocking { extractionLock.withLock { cached(videoId)?.result ?: extract(videoId) } }
     }
 
@@ -77,15 +75,15 @@ internal object LocalServerYouTubeStreams {
         return result
     }
 
-    // MWEB/WEB direct URLs wall at ~60 s (the rest is SABR, unsupported here); TV_TIZEN is not walled
+    // MWEB/WEB direct URLs wall at ~60 s (rest SABR, unsupported); TV_TIZEN not walled
     val WEB_CLIENTS = setOf("MWEB", "WEB")
     private val walled: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
-    // The player's own swap: a refused URL is reopened at the byte-identical file of a source that still serves it.
+    // Player's swap: refused URL reopened at the byte-identical file of a source that still serves it.
     private val swapTable = StreamSwapTable()
     private val swapper = RefusedStreamSwapper(swapTable, reportDenied = ::reportDenied, resolve = ::replacementsFor)
 
-    /** Classifies a refused [url] and, like the player, demotes the client that minted it; MWEB/WEB are left alone here. */
+    /** Classifies refused [url]; demotes minting client as the player does; MWEB/WEB untouched. */
     private fun reportDenied(url: String?): StreamDenialKind =
         if (StreamDenialClassifier.clientOf(url)?.uppercase() in WEB_CLIENTS) {
             StreamDenialClassifier.classify(url)
@@ -105,10 +103,10 @@ internal object LocalServerYouTubeStreams {
         return result.videoFormats + result.audioFormats
     }
 
-    /** The URL that serves [url]'s file once a swap is recorded for it, else [url]. */
+    /** URL serving [url]'s file once a swap is recorded; else [url]. */
     fun swapped(url: String): String = swapTable.rewrite(url) ?: url
 
-    /** True when a replacement for the refused [url] is now recorded; the caller then fetches [swapped]. */
+    /** Replacement for refused [url] recorded; caller fetches [swapped]. */
     fun swapRefused(url: String): Boolean {
         if (swapTable.videoFor(url) == null) {
             reportDenied(url)
@@ -117,7 +115,7 @@ internal object LocalServerYouTubeStreams {
         return swapper.onRefused(DataSpec(Uri.parse(url)), url)
     }
 
-    /** A web client's URL for [videoId] was refused: it is served from TV_TIZEN from now on. */
+    /** Web-client URL for [videoId] refused: TV_TIZEN from now on. */
     fun markWalled(videoId: String) {
         if (walled.add(videoId)) invalidate(videoId)
     }
@@ -132,15 +130,14 @@ internal object LocalServerYouTubeStreams {
         return tizen ?: result
     }
 
-    /** Drops a stale extraction so the next request mints fresh URLs - after GVS denies one. */
+    /** Drops stale extraction: next request mints fresh URLs (after GVS denial). */
     fun invalidate(videoId: String) {
         extractionCache.remove(videoId)
     }
 
     /**
-     * Overlays [info]'s video-only/audio streams with InnerTube's, keeping NewPipe's as a union
-     * rather than a replacement: InnerTube favors AV1/VP9, which some browsers cannot decode, and
-     * NewPipe's H.264 gives [StreamCatalog]'s family picker a fallback.
+     * Overlays [info] video-only/audio streams with InnerTube's, NewPipe's kept as union: InnerTube favors AV1/VP9 (some browsers cannot decode);
+     * NewPipe H.264 = [StreamCatalog] family-picker fallback.
      */
     fun overlay(
         info: StreamInfo,
@@ -156,7 +153,7 @@ internal object LocalServerYouTubeStreams {
     }
 }
 
-/** [preferred] first, then whichever of [fallback] isn't already there under the same itag. */
+/** [preferred] first, then [fallback] entries not present under the same itag. */
 private fun <T> unionByItag(
     preferred: List<T>,
     fallback: List<T>,
@@ -166,7 +163,7 @@ private fun <T> unionByItag(
     return preferred + fallback.filter { itagOf(it) <= 0 || seenItags.add(itagOf(it)) }
 }
 
-/** [base]'s streams unioned with InnerTube's video-only/audio streams for [videoId], InnerTube first. */
+/** [base] streams ∪ InnerTube video-only/audio for [videoId], InnerTube first. */
 internal class MergedYouTubeStreams(
     private val base: StreamLists,
     private val videoId: String,

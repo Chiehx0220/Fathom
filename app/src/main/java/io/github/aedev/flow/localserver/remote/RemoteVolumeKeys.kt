@@ -35,7 +35,7 @@ import io.github.aedev.flow.localserver.RemoteState
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
-/** Consumes the hardware volume keys while focused; [onStep] receives the delta per press. */
+/** Consumes hardware volume keys while focused; [onStep] = delta per press. */
 internal fun Modifier.remoteVolumeKeys(onStep: (Float) -> Unit): Modifier =
     onPreviewKeyEvent { event ->
         val delta =
@@ -48,7 +48,7 @@ internal fun Modifier.remoteVolumeKeys(onStep: (Float) -> Unit): Modifier =
         true
     }
 
-/** Visibility of the volume HUD; each press (re)starts the hide timeout. */
+/** Volume HUD visibility; each press (re)starts hide timeout. */
 @Stable
 internal class VolumeHudState {
     var shown by mutableStateOf(false)
@@ -77,7 +77,7 @@ internal fun rememberVolumeHud(): VolumeHudState {
     return hud
 }
 
-/** Page volume, refreshed by the report that follows each key press. */
+/** Page volume, refreshed by the report after each press. */
 @Composable
 internal fun VolumeHud(
     hud: VolumeHudState,

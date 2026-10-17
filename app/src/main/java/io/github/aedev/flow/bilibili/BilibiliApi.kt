@@ -12,11 +12,10 @@ import kotlinx.serialization.json.Json
 import java.net.URLEncoder
 
 /**
- * Bilibili's web API, the counterpart of InnerTube for YouTube: uploaded videos and live rooms.
- * Bangumi and paid content are not covered yet.
+ * Bilibili web API (InnerTube counterpart): VOD, live. No bangumi, no paid content.
  *
- * @param session holds the cookies, forged device and WBI key, shared by every call.
- * @param loggedInCookie the user's own cookie, if signed in. Without it Bilibili serves 1080p at most.
+ * @param session cookies, forged device, WBI key.
+ * @param loggedInCookie user cookie; anonymous caps at 1080p.
  */
 class BilibiliApi(
     private val session: BilibiliSession,
@@ -35,12 +34,12 @@ class BilibiliApi(
 
     // region Video
 
-    /** [page] is the 1-based part, as in the "?p=" URL parameter. */
+    /** 1-based part (`?p=`). */
     suspend fun videoInfo(
         bvid: String,
         page: Int = 1,
     ): BilibiliVideoInfo {
-        // PipePipe sends this one request with an empty Cookie header.
+        // PipePipe: empty Cookie header.
         val body = session.get("$VIEW_URL?bvid=$bvid", mapOf("Cookie" to ""))
         val response = json.decodeFromString<ViewResponse>(body)
         val data = response.data
@@ -66,7 +65,7 @@ class BilibiliApi(
         )
     }
 
-    /** Metadata plus the playable streams of one part. */
+    /** Metadata + playable streams of one part. */
     suspend fun playback(
         bvid: String,
         page: Int = 1,
@@ -105,7 +104,7 @@ class BilibiliApi(
             throw BilibiliPaidContentException("Paid content")
         }
 
-        // Best audio first, in PipePipe's order: FLAC, Dolby, then the regular tracks.
+        // Audio order (PipePipe): FLAC, Dolby, regular.
         val audioItems = listOfNotNull(dash.flac?.audio) + dash.dolby?.audio.orEmpty() + dash.audio.orEmpty()
         val playback =
             BilibiliPlayback(
@@ -120,7 +119,7 @@ class BilibiliApi(
         return playback
     }
 
-    /** The uploader's chapter marks for one part; empty when there are none. */
+    /** Chapter marks of one part; empty if none. */
     suspend fun chapters(info: BilibiliVideoInfo): List<BilibiliChapter> {
         val params = linkedMapOf("aid" to info.aid.toString(), "cid" to info.cid.toString())
         val headers = session.headers("https://www.bilibili.com/video/${info.bvid}")
@@ -133,14 +132,14 @@ class BilibiliApi(
             .map { BilibiliChapter(it.content, it.from.toInt(), it.imgUrl.takeIf { url -> url.isNotBlank() }) }
     }
 
-    /** All danmaku of one part. A live room's chat is [liveMessages]. */
+    /** Danmaku of one part; live chat: [liveMessages]. */
     suspend fun danmaku(info: BilibiliVideoInfo): List<BilibiliDanmaku> {
         val headers = session.headers("https://www.bilibili.com/video/${info.bvid}")
         val raw = session.getBytes("$DANMAKU_URL${info.cid}", headers)
         return BilibiliDanmakuParser.parse(BilibiliDanmakuParser.decodeBody(raw))
     }
 
-    /** Empty on any error code, so a missing list never fails the playback beside it. */
+    /** Empty on error code. */
     suspend fun related(bvid: String): List<BilibiliRelated> {
         val headers = session.headers("https://www.bilibili.com/video/$bvid")
         val response = json.decodeFromString<RelatedResponse>(session.get("$RELATED_URL$bvid", headers))
@@ -148,7 +147,7 @@ class BilibiliApi(
         return response.data.orEmpty().mapNotNull { it.toRelated() }
     }
 
-    /** The site's popular list, one page (1-based, 20 per page); empty on any error code. */
+    /** Popular list, 1-based page, 20/page; empty on error code. */
     suspend fun popular(page: Int = 1): List<BilibiliRelated> {
         val headers = session.headers("https://www.bilibili.com/v/popular/all")
         val response = json.decodeFromString<PopularResponse>(session.get("$POPULAR_URL?ps=20&pn=$page", headers))
@@ -202,13 +201,13 @@ class BilibiliApi(
 
     // region Comments
 
-    /** [offset] is empty for the first page, else the previous page's `nextOffset`. */
+    /** [offset]: empty = first page, else previous `nextOffset`. */
     suspend fun comments(
         bvid: String,
         offset: String = "",
     ): BilibiliCommentsPage = comments.page(bvid, offset)
 
-    /** One page (1-based, 10 per page) of the replies under the comment [rpid]. */
+    /** Replies to [rpid]; 1-based page, 10/page. */
     suspend fun commentReplies(
         bvid: String,
         rpid: String,
@@ -219,7 +218,7 @@ class BilibiliApi(
 
     // region Search
 
-    /** One page (1-based). Anime and films are skipped for now. */
+    /** 1-based page; anime/films skipped. */
     suspend fun search(
         keyword: String,
         type: BilibiliSearchType,
@@ -239,10 +238,7 @@ class BilibiliApi(
 
     // region Live
 
-    /**
-     * A room and where to watch it. Throws [BilibiliLiveNotStartedException] when it is not live and
-     * [BilibiliLiveRebroadcastException] when it is replaying uploaded videos.
-     */
+    /** Room + playback. Throws [BilibiliLiveNotStartedException] (offline), [BilibiliLiveRebroadcastException] (replay). */
     suspend fun livePlayback(roomId: Long): BilibiliLivePlayback {
         val room = withAvatar(live.room(roomId))
         when (room.status) {
@@ -259,7 +255,7 @@ class BilibiliApi(
 
     suspend fun liveRoom(roomId: Long): BilibiliLiveRoom = withAvatar(live.room(roomId))
 
-    /** A room's own info carries no avatar for its uploader, so it is asked of their channel; the room is as good without it. */
+    /** Room info lacks uploader avatar; fetched from channel, optional. */
     private suspend fun withAvatar(room: BilibiliLiveRoom): BilibiliLiveRoom {
         if (room.uploader.avatarUrl.isNotBlank() || room.uploader.mid <= 0) return room
         val avatar =
@@ -275,7 +271,7 @@ class BilibiliApi(
 
     suspend fun recommendedLives(): List<BilibiliLiveItem> = live.recommended()
 
-    /** The room the uploader [mid] is live in right now; null when they are not, or have no room. */
+    /** Room [mid] is live in; null if offline/no room. */
     suspend fun channelLiveRoom(mid: Long): BilibiliLiveItem? =
         try {
             live.roomOf(mid)
@@ -285,7 +281,7 @@ class BilibiliApi(
             null
         }
 
-    /** The room's chat, reconnecting on its own until the collector stops. [roomId] is the long room number. */
+    /** Room chat; auto-reconnect until collector stops. [roomId]: long room number. */
     fun liveMessages(roomId: Long): Flow<BilibiliLiveMessage> = liveChat.messages(roomId)
 
     // endregion
@@ -304,7 +300,7 @@ class BilibiliApi(
         page: Int,
     ): BilibiliPlaylistPage = userSpace.playlists(mid, page)
 
-    /** One page (1-based, 30 per page) of a series or season. */
+    /** Series/season page, 1-based, 30/page. */
     suspend fun playlistVideos(
         kind: BilibiliPlaylistKind,
         mid: Long,

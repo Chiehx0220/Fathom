@@ -5,9 +5,8 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import java.io.OutputStream
 
-// /api/v1/... JSON API handlers - split from LocalHttpServer.kt, no behavior change. Independent
-// of the HTML handlers (see ApiRenderer.kt's header). Companion calls (fetchInitialOrPage,
-// fetchKioskPage, etc.) live in LocalServerMedia.
+// `/api/v1/...` JSON handlers, split from LocalHttpServer.kt, no behavior change. Independent of HTML handlers (ApiRenderer.kt).
+// Companion calls (fetchInitialOrPage, fetchKioskPage, ...) in LocalServerMedia.
 
 internal fun ClientHandler.handleApiSearch(
     os: OutputStream,
@@ -44,7 +43,7 @@ internal fun ClientHandler.handleApiHome(
             items = page.items
             next = page.next
         } else {
-            // fetchTrendingItems(): no pagination available.
+            // fetchTrendingItems(): no pagination.
             items = dbHelper.fetchTrendingItems(serviceId)
             next = null
         }
@@ -55,15 +54,11 @@ internal fun ClientHandler.handleApiHome(
     }
 }
 
-// Additive route mirroring handleApiHome(), sourced through buildAndRankHomeFeed() for the
-// YouTube path - ranked via FlowNeuroEngine. handleApiHome() itself stays raw/unranked.
+// Additive route mirroring handleApiHome(), via buildAndRankHomeFeed() on YouTube: FlowNeuroEngine-ranked; handleApiHome() stays raw.
 //
-// `more=1` asks for another discovery round instead of rebuilding the ranked mix - the same
-// "load more" native Home uses (continueDiscoveryFeed()), so the web app's home feed is not
-// capped at whatever the first ranked batch happened to contain. There is no NewPipeExtractor
-// Page behind that round (FlowNeuroEngine just goes one query-depth deeper), so it is reported
-// to the client as a plain "hasMore" boolean rather than through the searchResultJson nextPage
-// mechanism the Page-backed callers (search/channel/playlist) use.
+// `more=1`: another discovery round (continueDiscoveryFeed(), as native Home load-more), not rebuild of ranked mix.
+// No NewPipeExtractor Page behind it (FlowNeuroEngine goes one query-depth deeper): reported as boolean "hasMore",
+// not via searchResultJson nextPage.
 internal fun ClientHandler.handleApiRecommendations(
     os: OutputStream,
     params: Map<String, String>,
@@ -76,8 +71,7 @@ internal fun ClientHandler.handleApiRecommendations(
         var alreadyRanked = false
         var hasMore = false
         if (serviceId != LocalServerMedia.SERVICE_YOUTUBE) {
-            // alreadyRanked stays false so applyFlowNeuroRanking() below still reorders these.
-            // This service's own paging (nextPage) covers "more" here.
+            // alreadyRanked false: applyFlowNeuroRanking() below reorders. Service's own nextPage covers "more".
             val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
             items = page.items
             hasMore = page.next != null
@@ -87,8 +81,7 @@ internal fun ClientHandler.handleApiRecommendations(
             alreadyRanked = true
             hasMore = more
         } else {
-            // buildAndRankHomeFeed(): trending + discovery + subs, ranked. Its own "more" flag
-            // just means "non-empty" - continueDiscoveryFeed's own flag governs later rounds.
+            // buildAndRankHomeFeed(): trending + discovery + subs, ranked. "more" = non-empty; later rounds governed by continueDiscoveryFeed.
             val (feedItems, more) = dbHelper.buildAndRankHomeFeed(serviceId)
             items = feedItems
             alreadyRanked = true
@@ -115,8 +108,7 @@ internal fun ClientHandler.handleApiChannel(
         return
     }
     val tab = params.getOrDefault("tab", "videos")
-    // Matches YoutubeChannelTabLinkHandlerFactory's SORT_LATEST/POPULAR/OLDEST literals directly,
-    // no lookup table needed. YouTube "videos" tab only; no-op elsewhere.
+    // Matches YoutubeChannelTabLinkHandlerFactory SORT_LATEST/POPULAR/OLDEST literals. YouTube "videos" tab only; no-op elsewhere.
     val sort = params["sort"]?.takeIf { it.isNotBlank() }
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     try {
@@ -193,8 +185,7 @@ internal fun ClientHandler.handleApiComments(
     }
 }
 
-// Reachability check for the server-address settings screen - no extraction cost, unlike every
-// other /api/v1/... route.
+// Reachability check for server-address settings; no extraction cost.
 internal fun ClientHandler.handleApiPing(os: OutputStream) {
     sendResponse(os, 200, "{\"status\":\"ok\",\"service\":\"fathom\"}", "application/json")
 }
@@ -216,9 +207,7 @@ internal fun ClientHandler.handleApiWatchProgress(
     }
     dbHelper.nativeUpdateWatchProgress(videoUrl, percent, durationSeconds)
 
-    // FlowNeuro WATCHED signal, best-effort (see LocalHttpServer.kt's FlowNeuro section). serviceId
-    // is a newer param (assets/web/js/player.js's initWatchProgressReporting()) - a stale cached page
-    // without it is a silent no-op.
+    // FlowNeuro WATCHED signal, best-effort (LocalHttpServer.kt FlowNeuro section). serviceId: newer param (player.js initWatchProgressReporting()); stale cached page without it: no-op.
     val serviceId = params["serviceId"]?.toIntOrNull()
     if (serviceId != null) {
         try {
@@ -232,8 +221,7 @@ internal fun ClientHandler.handleApiWatchProgress(
     sendResponse(os, 200, "{\"status\":\"ok\"}", "application/json")
 }
 
-// Native-audio-player control dropped with ServerService's ExoPlayer instance (duplicated the
-// host app's player). Kept as no-ops for older clients, not removed outright.
+// Native audio-player control dropped with ServerService ExoPlayer (duplicated host player); no-op kept for older clients.
 internal fun ClientHandler.handleApiPlayerPlay(
     os: OutputStream,
     params: Map<String, String>,
@@ -253,7 +241,7 @@ internal fun ClientHandler.handleApiPlayerStop(os: OutputStream) {
     sendResponse(os, 200, "{\"status\":\"unsupported\"}", "application/json")
 }
 
-// The endpoints below feed the single-page web app (/app). They return what the HTML pages used to embed, as JSON.
+// Single-page web app (/app) endpoints: JSON of what HTML pages embedded.
 
 internal fun ClientHandler.handleApiHistory(os: OutputStream) {
     try {
@@ -265,7 +253,7 @@ internal fun ClientHandler.handleApiHistory(os: OutputStream) {
     }
 }
 
-// Subscribed channels, bookmarked playlists and the watch-later list in one response (the Library screen shows all three).
+// Subscriptions + bookmarked playlists + watch-later (Library screen).
 internal fun ClientHandler.handleApiLibrary(
     os: OutputStream,
     params: Map<String, String>,
@@ -282,7 +270,7 @@ internal fun ClientHandler.handleApiLibrary(
     }
 }
 
-// Newest uploads of the subscribed channels; slow (one request per channel), so the app asks for it separately.
+// Newest uploads of subscribed channels; one request per channel: separate call.
 internal fun ClientHandler.handleApiFeed(
     os: OutputStream,
     params: Map<String, String>,
@@ -314,7 +302,7 @@ internal fun ClientHandler.handleApiPlaylist(
         header.put("id", playlist.header.url)
         header.put("name", playlist.header.name)
         header.put("uploaderName", playlist.header.uploaderName)
-        // -1 when the source does not say; the page then leaves the count out
+        // -1 when source omits it; page omits the count
         header.put("videoCount", playlist.header.streamCount.coerceAtLeast(-1))
         header.put("isBookmarked", dbHelper.nativeIsPlaylistBookmarked(playlistUrl))
         json.put("playlist", header)
@@ -326,7 +314,7 @@ internal fun ClientHandler.handleApiPlaylist(
     }
 }
 
-// What the watch screen's buttons need to show: is the channel subscribed or blocked, is the video saved, liked or disliked.
+// Watch-screen button state: channel subscribed/blocked, video saved/liked/disliked.
 internal fun ClientHandler.handleApiState(
     os: OutputStream,
     params: Map<String, String>,
@@ -342,7 +330,7 @@ internal fun ClientHandler.handleApiState(
     sendResponse(os, 200, json.toString(), "application/json")
 }
 
-// SponsorBlock segments (seconds) for the skip button and seek-bar marks; YouTube only.
+// SponsorBlock segments (seconds): skip button + seek-bar marks; YouTube only.
 internal fun ClientHandler.handleApiSponsor(
     os: OutputStream,
     params: Map<String, String>,
@@ -379,7 +367,7 @@ internal fun ClientHandler.handleApiSponsor(
     sendResponse(os, 200, json.toString(), "application/json")
 }
 
-// Reads the filter settings; hideWatched and hideShorts in the query are saved first.
+// Reads filter settings; hideWatched, hideShorts in query saved first.
 internal fun ClientHandler.handleApiSettings(
     os: OutputStream,
     params: Map<String, String>,

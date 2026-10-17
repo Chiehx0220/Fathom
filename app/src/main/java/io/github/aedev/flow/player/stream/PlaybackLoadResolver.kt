@@ -144,8 +144,7 @@ class PlaybackLoadResolver
             val videoId = request.videoId
             Log.d(TAG, "Loading video $videoId with preferred quality: ${preferences.quality.label} (isWifi=${request.isWifi})")
 
-            // InnerTube is YouTube's own API; every other service resolves through its own native
-            // client, which produces its own step type rather than an InnerTube result.
+            // InnerTube = YouTube-only; other services via native client, own step type.
             if (!InnerTubeVideoStreamExtractor.supportsVideo(videoId)) {
                 nonYouTube.resolve(request, preferences, isCurrent, onStep)
                 return

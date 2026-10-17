@@ -17,14 +17,14 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
-// Handler groups are extension functions in sibling files.
+// Handler groups: extension functions in sibling files.
 internal class ClientHandler(
     private val socket: Socket,
     internal val dbHelper: HistoryDbHelper,
     private val context: android.content.Context,
     private val executorService: ExecutorService,
 ) : Runnable {
-    // Set once run() has read the request, so sendResponse() can check Accept-Encoding.
+    // Set after run() reads the request; sendResponse() checks Accept-Encoding.
     private var requestHeaders: MutableMap<String, String>? = null
 
     internal val remoteAddress: String? get() = socket.inetAddress.hostAddress
@@ -32,7 +32,7 @@ internal class ClientHandler(
     override fun run() {
         try {
             socket.tcpNoDelay = true
-            // A browser opens spare connections it never sends on; without a limit each would hold a thread for good.
+            // Browsers open idle spare connections; unlimited → thread held forever.
             socket.soTimeout = REQUEST_READ_TIMEOUT_MS
             val head = readRequestHead(socket.getInputStream()) ?: return
             socket.soTimeout = 0
@@ -79,7 +79,7 @@ internal class ClientHandler(
                 }
             }
         } catch (e: IOException) {
-            // The client went away, or never sent a request.
+            // Client gone or no request sent.
         } catch (e: Exception) {
             serverLog("Request failed: $e")
         } finally {
@@ -90,8 +90,7 @@ internal class ClientHandler(
         }
     }
 
-    // Merges subscribed channels' uploads into one newest-first feed (capped at 60).
-    // Each channel is resolved by its own URL, since subscriptions mix services.
+    // Subscribed channels' uploads → one newest-first feed (cap 60); channel resolved by own URL (subscriptions mix services).
     internal fun fetchSubscriptionFeed(channels: List<InfoItem>?): List<InfoItem> {
         val feed = ArrayList<InfoItem>()
         if (channels == null || channels.isEmpty()) {
@@ -100,7 +99,7 @@ internal class ClientHandler(
         val futures = ArrayList<Future<List<InfoItem>>>()
         for (channel in channels) {
             val url = channel.url
-            // Backfill the avatar from the subscription; upload listings carry none.
+            // Avatar from subscription; upload listings carry none.
             val subscribedAvatarUrl = channel.thumbnailUrl?.takeIf { it.isNotBlank() }
             futures.add(
                 executorService.submit(
@@ -130,7 +129,7 @@ internal class ClientHandler(
         }
         for ((index, future) in futures.withIndex()) {
             try {
-                // Bilibili's first request of a session sets up cookies and a signing key, which takes longer.
+                // Bilibili first request of a session: cookies + signing key setup, slower.
                 val waitSeconds = if (BilibiliLink.isBilibili(channels[index].url)) 20L else 5L
                 val res = future.get(waitSeconds, TimeUnit.SECONDS)
                 if (res != null) {
@@ -148,7 +147,7 @@ internal class ClientHandler(
             .map { it.first }
     }
 
-    /** Upload time in epoch ms: the exact date when present, else the relative text resolved against [now]. Null sorts last. */
+    /** Upload time, epoch ms: exact date, else relative text against [now]. Null sorts last. */
     private fun uploadTimeOf(
         item: InfoItem,
         now: Long,
@@ -198,7 +197,7 @@ internal class ClientHandler(
         sendResponse(os, code, content, contentType, null)
     }
 
-    // cacheControl: header value, or null to omit; only the static handlers pass one.
+    // cacheControl: header value or null; static handlers only.
     @Throws(IOException::class)
     internal fun sendResponse(
         os: OutputStream,
@@ -210,7 +209,7 @@ internal class ClientHandler(
         var bytes = content.toByteArray(Charsets.UTF_8)
         val status = statusText(code)
 
-        // gzip for HTML/CSS/JS responses; not for media (already compressed) or bodies under 512 bytes.
+        // gzip for HTML/CSS/JS; not media or bodies < 512 bytes.
         var contentEncodingHeader = ""
         val currentRequestHeaders = requestHeaders
         if (bytes.size > 512 && currentRequestHeaders != null) {
@@ -304,8 +303,7 @@ internal class ClientHandler(
         return filtered
     }
 
-    // FlowNeuro signals: reported from handleApiVideo and the progress endpoint.
-    // Best-effort: failures never affect playback or the DB write.
+    // FlowNeuro signals from handleApiVideo and progress endpoint; best-effort, never affects playback/DB write.
     internal fun reportFlowNeuroClick(
         info: StreamInfo,
         serviceId: Int,
@@ -313,7 +311,7 @@ internal class ClientHandler(
         dbHelper.reportFlowNeuroInteraction(info, serviceId, InteractionType.CLICK)
     }
 
-    // Ranking delegates to the native FlowNeuroEngine (rankWithFlowNeuro()); used by handleApiRecommendations(), not handleApiHome().
+    // Ranking: native FlowNeuroEngine (rankWithFlowNeuro()), used by handleApiRecommendations(), not handleApiHome().
     internal fun applyFlowNeuroRanking(
         items: List<InfoItem>,
         serviceId: Int,

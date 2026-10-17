@@ -24,9 +24,8 @@ internal class ActiveDanmaku(
 )
 
 /**
- * The comments on screen and the lanes they travel in, on whatever clock its layer keeps: playback
- * position for a video's danmaku, an accumulated play time for a live room's. [active] is snapshot
- * state read only while drawing, so a comment appearing or leaving redraws without recomposing.
+ * On-screen comments + lanes, on the layer's clock: playback position (video danmaku), accumulated play time (live room).
+ * [active] = snapshot state read in draw only: appear/leave redraws without recomposition.
  */
 internal class DanmakuField {
     val active = mutableStateListOf<ActiveDanmaku>()
@@ -112,7 +111,7 @@ internal class DanmakuField {
     private fun durationOf(comment: DanmakuComment) =
         if (comment.position == DanmakuPosition.SCROLL) SCROLL_DURATION_MS else FIXED_DURATION_MS
 
-    /** The first free lane, else the one that frees up soonest. */
+    /** First free lane, else soonest to free. */
     private fun pickLane(
         untilArr: LongArray,
         now: Long,

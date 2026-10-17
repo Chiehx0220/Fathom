@@ -49,7 +49,7 @@ private const val SCROLL_SPEED = 3f
 private const val SEND_INTERVAL_MS = 24L
 private const val TAP_MAX_MS = 250L
 
-/** A touchpad for anything small on the page: one finger moves the pointer, a tap clicks, two fingers scroll. */
+/** Touchpad: one finger = pointer, tap = click, two fingers = scroll. */
 @Composable
 internal fun TouchpadMode(
     state: RemoteState,
@@ -103,9 +103,8 @@ private fun Touchpad(
 }
 
 /**
- * One gesture loop for the whole pad, so a tap, a drag and a two-finger scroll can never fight over the same touch.
- * Travel is sent in batches and the fractions carried over, so slow movement is not lost to rounding and the last
- * bit of a stroke is sent when the finger lifts.
+ * One gesture loop for the pad: tap, drag, two-finger scroll never contend for a touch.
+ * Travel sent in batches, fractions carried (no rounding loss), final bit sent on lift.
  */
 private fun Modifier.touchpadGestures(
     send: (String) -> Unit,
@@ -146,18 +145,18 @@ private fun Modifier.touchpadGestures(
                 val event = awaitPointerEvent()
                 val pressed = event.changes.filter { it.pressed }
                 if (pressed.size >= 2) twoFingers = true
-                // The event that lifts the last finger has nothing pressed: averaging it would give NaN and void the tap.
+                // Last-finger-up event has nothing pressed: average = NaN, voids tap.
                 val dx = if (pressed.isEmpty()) 0f else pressed.map { it.positionChange().x }.average().toFloat()
                 val dy = if (pressed.isEmpty()) 0f else pressed.map { it.positionChange().y }.average().toFloat()
                 onTouch(pressed.map { it.position })
                 travelled += hypot(dx, dy)
                 if (travelled > slop) {
                     if (twoFingers) {
-                        // Dragging up moves the page up under the fingers, like a phone: that is scrolling down.
+                        // Drag up moves page up under fingers (phone-like) = scroll down.
                         pendingScroll -= dy * SCROLL_SPEED
                         scrolled = true
                     } else {
-                        // Faster strokes travel further, so a flick crosses the page and a nudge stays precise.
+                        // Faster strokes travel further: flick crosses page, nudge stays precise.
                         val speed = hypot(dx, dy)
                         val gain = POINTER_GAIN_MIN + (POINTER_GAIN_MAX - POINTER_GAIN_MIN) * min(speed / 24f, 1f)
                         pendingX += dx * gain

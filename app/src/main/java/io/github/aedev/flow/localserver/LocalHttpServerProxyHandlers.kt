@@ -11,9 +11,9 @@ import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.IOException
 import java.io.OutputStream
 
-// Stream, manifest and subtitle proxying plus static assets, split from LocalHttpServer.kt. Shared helpers come from LocalServerMedia, LocalServerCaches and RemoteSession.
+// Stream, manifest, subtitle proxying + static assets, split from LocalHttpServer.kt. Helpers: LocalServerMedia, LocalServerCaches, RemoteSession.
 
-/** Picks the stream URL a `/stream` request wants out of [extractor]'s lists. */
+/** Stream URL a `/stream` request wants from [extractor]'s lists. */
 private fun ClientHandler.resolveDirectUrl(
     extractor: StreamLists,
     requestedItag: Int,
@@ -21,7 +21,7 @@ private fun ClientHandler.resolveDirectUrl(
     mediaType: String?,
     params: Map<String, String>,
 ): String? {
-    // Bilibili reports itag=-1 for everything; the manifest tags each Representation with mtype instead.
+    // Bilibili itag=-1 for all; manifest tags each Representation with mtype.
     if (requestedItag == -1 && mediaType != null) {
         if ("audio" == mediaType) {
             val audioOnly = extractor.audioStreams
@@ -93,7 +93,7 @@ private fun ClientHandler.resolveDirectUrl(
 
     val rawAudioStreams = extractor.audioStreams
     if (rawAudioStreams.isNotEmpty()) {
-        // Best track first; "original" is marked by an "(original)" suffix in audioTrackName.
+        // Best track first; "original" = "(original)" suffix in audioTrackName.
         var audioStreams: MutableList<AudioStream> = ArrayList(rawAudioStreams)
         audioStreams.sortWith(LocalServerMedia.audioTrackPriorityComparator())
         val bestTrackId = audioStreams[0].audioTrackId
@@ -106,7 +106,7 @@ private fun ClientHandler.resolveDirectUrl(
     return null
 }
 
-/** The User-Agent to fetch [directUrl] with: the client that minted it, matched exactly. */
+/** User-Agent for [directUrl]: minting client, exact match. */
 private fun cdnUserAgent(
     directUrl: String,
     cacheKey: String,
@@ -125,8 +125,7 @@ private fun cachedOrGuessedUserAgent(
     default: String,
 ): String {
     LocalServerCaches.streamUaCache.get(cacheKey)?.let { return it }
-    // No InnerTube-sourced User-Agent cached (older cache entry, or extraction fell back to NewPipe) -
-    // guess it back out of the URL's own client marker.
+    // No cached InnerTube User-Agent (older entry or NewPipe fallback): guess from URL's client marker.
     return try {
         when {
             directUrl.contains("c=IOS") || directUrl.contains("c=ios") -> {
@@ -150,8 +149,7 @@ private fun cachedOrGuessedUserAgent(
 }
 
 /**
- * GVS refused [directUrl] and no same-file replacement could be recorded: moves a web-client video to TV_TIZEN
- * and drops every cache tied to this video so the retry re-extracts instead of handing back the same URL.
+ * GVS refused [directUrl], no same-file replacement recorded: web-client video → TV_TIZEN, video's caches dropped; retry re-extracts.
  */
 private fun dropAfterDenial(
     directUrl: String,
@@ -200,9 +198,9 @@ internal fun ClientHandler.handleStreamProxy(
     }
 
     val requestedTrackId = params["trackId"]
-    // A representation of the manifest is asked for by its own id; itag and mtype are for the other callers (downloads, the plain player URL).
+    // Manifest Representation asked by own id; itag/mtype for other callers (downloads, plain player URL).
     val repId = params["rep"]
-    // mtype is part of the cache key: itag-less services (Bilibili) share itag=-1 between video and audio.
+    // mtype in cache key: itag-less services (Bilibili) share itag=-1 for video and audio.
     val mediaType = params["mtype"] ?: repId?.let { if (it.startsWith("a")) "audio" else "video" }
     val resolvedMediaUrl = mediaUrl ?: throw BadRequestException("Missing 'id' parameter")
     val videoId = youtubeVideoIdFromUrl(resolvedMediaUrl)
@@ -215,8 +213,7 @@ internal fun ClientHandler.handleStreamProxy(
                 (if (mediaType != null) "_$mediaType" else "")
         }
 
-    // LocalServerSource.streams is always asked fresh here: a stream request wants its own extractor
-    // fetch, not the one the manifest/watch page's cache is sharing.
+    // LocalServerSource.streams always fresh: stream request needs own extractor fetch, not the manifest/watch cache's.
     fun resolve(useCache: Boolean): String? {
         if (useCache) LocalServerCaches.streamUrlCache.get(cacheKey)?.let { return it }
         val extractor = LocalServerSource.streams(dbHelper.appContext, serviceId, resolvedMediaUrl, fresh = true)
@@ -257,8 +254,7 @@ internal fun ClientHandler.handleStreamProxy(
             directUrl = LocalServerYouTubeStreams.swapped(directUrl)
         } else {
             dropAfterDenial(directUrl, cacheKey, videoId)
-            // A fresh URL to retry, or - when re-extraction found nothing better - the same one again, so
-            // the response forwarded below is always a live, unconsumed one rather than the closed one above.
+            // Fresh retry URL, or same one if re-extraction found nothing better: forwarded response always live, unconsumed.
             directUrl = resolve(useCache = false) ?: directUrl
         }
         serverLog("Retrying stream from: $directUrl")
@@ -304,7 +300,7 @@ internal fun ClientHandler.handleStreamProxy(
         if (r.header("Content-Type") == null) {
             var defaultType = if (requestedItag == 140) "audio/mp4" else "video/mp4"
             if (requestedItag == -1) {
-                // Itag-less services: the manifest's mtype decides.
+                // Itag-less services: manifest mtype decides.
                 defaultType =
                     if ("audio" == mediaType) {
                         "audio/mp4"
@@ -452,14 +448,11 @@ internal fun ClientHandler.handleSubtitlesProxy(
 }
 
 /**
- * YouTube's WebVTT puts placement on every cue's timing line ("align:start position:0%"), which the
- * player obeys, pinning captions to the left. Dropping it leaves them centred by the player.
+ * YouTube WebVTT: placement on every cue timing line ("align:start position:0%") pins captions left in the player. Dropped → centred.
  */
 private fun String.withoutCueSettings(): String = replace(Regex("""^(\S+ --> \S+)[ \t]+\S.*$""", RegexOption.MULTILINE), "$1")
 
-// The single-page app: its HTML shell, and its stylesheet and script. The ?v= cache-busting
-// parameter is ignored: a content change changes WebAssets.appVersion and so the URL itself,
-// making max-age=31536000 immutable safe.
+// Single-page app: HTML shell, stylesheet, script. ?v= ignored: content change changes WebAssets.appVersion (URL), so max-age=31536000 immutable is safe.
 @Throws(Exception::class)
 internal fun ClientHandler.handleAppShell(os: OutputStream) {
     sendResponse(os, 200, WebShell.appPage(), "text/html; charset=UTF-8")

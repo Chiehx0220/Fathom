@@ -1,12 +1,11 @@
 package io.github.aedev.flow.player.datasource
 
 /**
- * The mirror URLs of each Bilibili stream (its own CDN and Akamai). The player holds one URL per
- * stream, so [BilibiliHttpDataSource] looks the others up here. Mirrors are tried fastest first, by the
- * transfer speed measured on each host ([recordSpeed]); which one answered first last time breaks ties.
+ * Mirror URLs per Bilibili stream (own CDN, Akamai). Player holds one URL per stream; [BilibiliHttpDataSource] looks up the rest here.
+ * Fastest first by measured host transfer speed ([recordSpeed]); last first-answerer breaks ties.
  */
 object BilibiliMirrors {
-    /** The mirrors of one stream, in the order they were listed, plus the one that last won. */
+    /** Mirrors of one stream in listed order + last winner. */
     class Group internal constructor(
         val urls: List<String>,
     ) {
@@ -14,8 +13,8 @@ object BilibiliMirrors {
         private var preferred = 0
 
         /**
-         * Mirrors in the order to try them: fastest measured host first. A host with no fresh measurement
-         * goes ahead of measured ones so that it gets measured, and the last winner comes first among equals.
+         * Mirrors in try order: fastest measured host first. Host without a fresh measurement goes before measured ones (gets measured);
+         * last winner first among equals.
          */
         fun order(nowMs: Long = System.currentTimeMillis()): List<String> {
             val start = preferred
@@ -32,13 +31,12 @@ object BilibiliMirrors {
 
     private const val MAX_GROUPS = 1024
 
-    // A sample is bytes read over the time spent waiting inside reads, so it is the network's rate
-    // and not how fast the player chose to consume. Short transfers say little and are ignored.
+    // Sample = bytes / time waiting inside reads: network rate, not player consumption rate. Short transfers ignored.
     private const val MIN_SAMPLE_BYTES = 128L * 1024
     private const val MIN_SAMPLE_NANOS = 100_000_000L
     private const val SMOOTHING = 0.5
 
-    // Older than this a host's speed is stale, and the host is measured again the next time it is tried.
+    // Older: host speed stale, remeasured on next try.
     private const val SPEED_TTL_MS = 90_000L
 
     private class Speed(
@@ -50,7 +48,7 @@ object BilibiliMirrors {
 
     private fun hostOf(url: String): String? = runCatching { java.net.URI(url).host }.getOrNull()
 
-    /** Folds one finished transfer of [bytes] read over [readNanos] into the speed of [url]'s host. */
+    /** Folds a finished transfer ([bytes] over [readNanos]) into [url] host speed. */
     fun recordSpeed(
         url: String,
         bytes: Long,
@@ -68,7 +66,7 @@ object BilibiliMirrors {
         }
     }
 
-    /** Bytes per second last measured on [url]'s host, or null when it has no fresh measurement. */
+    /** Bytes/s last measured on [url] host; null if no fresh measurement. */
     fun speedOf(
         url: String,
         nowMs: Long = System.currentTimeMillis(),
@@ -78,13 +76,13 @@ object BilibiliMirrors {
         return speed.bytesPerSecond.takeIf { nowMs - speed.updatedMs <= SPEED_TTL_MS }
     }
 
-    // Access-ordered so the streams a player is actually reading stay and old videos age out.
+    // Access-ordered: streams being read stay, old videos age out.
     private val groups =
         object : LinkedHashMap<String, Group>(64, 0.75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Group>?): Boolean = size > MAX_GROUPS
         }
 
-    /** Registers one stream's [primary] URL and its [backups]; a stream with no backup needs no group. */
+    /** Registers a stream's [primary] URL + [backups]; no backup, no group. */
     fun register(
         primary: String,
         backups: List<String>,
@@ -95,7 +93,7 @@ object BilibiliMirrors {
         synchronized(groups) { urls.forEach { groups[it] = group } }
     }
 
-    /** The group [url] belongs to, whichever of its mirrors [url] is; null when it has no other mirror. */
+    /** Group of [url] (any of its mirrors); null if no other mirror. */
     fun groupFor(url: String): Group? = synchronized(groups) { groups[url] }
 
     internal fun clearForTest() {

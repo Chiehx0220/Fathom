@@ -121,11 +121,8 @@ object InnerTubeVideoStreamExtractor {
     )
 
     /**
-     * InnerTube is YouTube's own private web API - it has no notion of any other NewPipeExtractor
-     * service and will always fail (after wasting a full client-ladder timeout) for a non-YouTube id
-     * like Bilibili's "BVxxxxxxxxxx". Every caller that races this against the generic extractor
-     * path should check this first and skip straight to null off-YouTube, instead of each one
-     * re-deriving the same service check.
+     * InnerTube = YouTube-only API: no other NewPipeExtractor service; fails (after full client-ladder timeout) for non-YouTube ids (Bilibili "BVxxxxxxxxxx").
+     * Callers racing it against the generic extractor path check this first, skip to null off-YouTube.
      */
     fun supportsService(serviceId: Int): Boolean = serviceId.isYouTubeServiceId
 

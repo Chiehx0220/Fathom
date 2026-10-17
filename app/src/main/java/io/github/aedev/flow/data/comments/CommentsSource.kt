@@ -2,7 +2,7 @@ package io.github.aedev.flow.data.comments
 
 import io.github.aedev.flow.data.repository.YouTubeRepository
 
-/** Where [CommentsPager] gets pages from; each service adapts its own API to this one shape. */
+/** [CommentsPager] page source; each service adapts its API to this shape. */
 internal interface CommentsSource {
     suspend fun first(
         videoId: String,

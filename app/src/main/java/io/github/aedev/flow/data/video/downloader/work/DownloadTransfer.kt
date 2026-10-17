@@ -83,7 +83,7 @@ class DownloadTransfer
             val refusals = mutableMapOf<Int, Int>()
             repeat(MAX_RESOLVES) {
                 val outcome = resolver.resolve(request, avoid)
-                // a TV_TIZEN answer can lack its AAC track when the remote decoder missed it; a new extraction has it
+                // TV_TIZEN answer can lack AAC track (remote decoder missed it); new extraction has it
                 if (outcome == ResolveOutcome.NoCompatibleAudio && noAudioRetries++ < NO_AUDIO_RETRIES) return@repeat
                 val streams =
                     when (val resolved = outcome) {
@@ -160,7 +160,7 @@ class DownloadTransfer
                     }
                 }
             }
-            // SABR is YouTube's streaming protocol; a Bilibili URL that stays refused has nothing to fall back to.
+            // SABR = YouTube streaming protocol; refused Bilibili URL has no fallback.
             if (BilibiliVideoId.isBilibili(request.videoId)) return FetchOutcome.Failed(FetchFailure.REFUSED)
             return viaSabr(request, staging, itemId)
         }

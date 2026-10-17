@@ -26,49 +26,48 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (1398 changed lines). New files: **242**.
+- Modified upstream files: **113** (1376 changed lines). New files: **242**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | ui/screens/home/chips/HomeChipFeeds.kt | 50 | 34 |
-| ui/screens/home/HomeViewModel.kt | 48 | 11 |
+| ui/screens/home/HomeViewModel.kt | 47 | 11 |
 | player/EnhancedPlayerManager.kt | 52 | 2 |
 | ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
 | data/local/PlayerPreferences.kt | 39 | 0 |
-| player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
 | data/local/SubscriptionRecordCodec.kt | 23 | 15 |
+| player/resolver/VideoPlaybackResolver.kt | 35 | 3 |
 | data/local/BackupRepository.kt | 20 | 17 |
-| data/innertube/RssSubscriptionService.kt | 28 | 3 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
+| data/innertube/RssSubscriptionService.kt | 27 | 3 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
-| data/video/VideoDownloadManager.kt | 25 | 3 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
-| data/local/ViewHistory.kt | 26 | 0 |
+| data/video/VideoDownloadManager.kt | 23 | 3 |
 | ui/screens/channel/ChannelViewModel.kt | 22 | 3 |
 | ui/screens/player/PlaybackSessionApplier.kt | 25 | 0 |
+| data/local/ViewHistory.kt | 24 | 0 |
 | data/repository/YouTubeRepository.kt | 18 | 6 |
 | ui/screens/search/SearchViewModel.kt | 20 | 4 |
 | data/paging/SearchPagingSource.kt | 17 | 6 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | ui/screens/home/HomeFeedSources.kt | 20 | 3 |
-| data/local/dao/WatchHistoryDao.kt | 22 | 0 |
-| ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 19 | 3 |
-| data/subscriptions/SubscriptionFeedRepository.kt | 21 | 0 |
+| ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 18 | 3 |
 | utils/ShareVideo.kt | 14 | 7 |
+| data/local/dao/WatchHistoryDao.kt | 20 | 0 |
 | player/error/VideoErrorMapper.kt | 20 | 0 |
 | ui/screens/home/HomeScreen.kt | 16 | 4 |
+| data/subscriptions/SubscriptionFeedRepository.kt | 19 | 0 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 16 | 3 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 14 | 4 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
-| ui/screens/player/effects/PlayerLoadEffects.kt | 14 | 2 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 14 | 1 |
+| ui/screens/player/effects/PlayerLoadEffects.kt | 13 | 2 |
 | ui/screens/player/stage/VideoStage.kt | 15 | 0 |
 | data/update/GitHubRelease.kt | 7 | 7 |
-| player/GlobalPlayerState.kt | 13 | 0 |
-| player/stream/InnerTubeVideoStreamExtractor.kt | 13 | 0 |
-| player/stream/PlaybackLoadResolver.kt | 12 | 1 |
 | data/comments/CommentsPager.kt | 9 | 3 |
+| player/GlobalPlayerState.kt | 12 | 0 |
+| player/stream/PlaybackLoadResolver.kt | 11 | 1 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
 | ui/screens/search/SearchScreen.kt | 12 | 0 |
 | ui/startup/SplashThemes.kt | 0 | 12 |
@@ -78,6 +77,7 @@ in it). **New files** never conflict; they are ours alone.
 | utils/ThumbnailUrlResolver.kt | 6 | 5 |
 | MainActivity.kt | 9 | 1 |
 | data/video/downloader/work/DownloadTransfer.kt | 9 | 1 |
+| player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
 | ui/FlowNavigation.kt | 5 | 5 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
@@ -89,7 +89,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/components/shared/quickactions/VideoQuickActionsSheet.kt | 6 | 2 |
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
 | utils/YouTubeLink.kt | 8 | 0 |
-| data/local/AppDatabase.kt | 6 | 1 |
+| ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
 | ... 53 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)

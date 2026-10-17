@@ -13,11 +13,11 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-/** Bilibili counterpart of [InnerTubeVideoMapper]: the native client's metadata as a [Video]. */
+/** Bilibili counterpart of [InnerTubeVideoMapper]: native metadata → [Video]. */
 object BilibiliVideoMapper {
     private val DATE = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneOffset.UTC)
 
-    /** A related-lane entry; ids carry "?p=1" like every other Bilibili id the screen holds. */
+    /** Related-lane entry; ids carry "?p=1" like all Bilibili screen ids. */
     fun videoFromRelated(item: BilibiliRelated): Video =
         Video(
             id = "${item.bvid}?p=1",
@@ -37,7 +37,7 @@ object BilibiliVideoMapper {
             serviceId = BILIBILI_SERVICE_ID,
         )
 
-    /** A row of an uploader's video list; the list itself does not say who the uploader is. */
+    /** Uploader video-list row; list lacks uploader identity. */
     fun videoFromChannel(
         video: BilibiliChannelVideo,
         mid: Long,
@@ -80,9 +80,7 @@ object BilibiliVideoMapper {
         )
 
     /**
-     * [videoId] is the id the screen already uses for this video ("BV...?p=N"), kept as is so the
-     * queue, history and preload bookkeeping keep matching it; [fallback] supplies whatever the
-     * screen knew before this load (a search result's thumbnail, say) when Bilibili has nothing.
+     * [videoId]: screen's id ("BV...?p=N"), kept for queue/history/preload matching; [fallback]: prior screen data (e.g. search-result thumbnail) when Bilibili has none.
      */
     fun videoFromInfo(
         videoId: String,
@@ -111,7 +109,7 @@ object BilibiliVideoMapper {
             serviceId = BILIBILI_SERVICE_ID,
         )
 
-    /** A live room as a [Video]. [videoId] is the id the screen already uses ("live:<roomId>"), kept as is. */
+    /** Live room as [Video]; [videoId] = screen id ("live:<roomId>"), kept. */
     fun videoFromLive(
         videoId: String,
         room: BilibiliLiveRoom,
@@ -135,7 +133,7 @@ object BilibiliVideoMapper {
             serviceId = BILIBILI_SERVICE_ID,
         )
 
-    /** A live room from a list (recommendations, search); it is playing now, so it has no duration. */
+    /** Live room from a list (recommendations, search); playing now: no duration. */
     fun videoFromLiveItem(item: BilibiliLiveItem): Video =
         Video(
             id = BilibiliLiveId.of(item.roomId),
@@ -152,8 +150,7 @@ object BilibiliVideoMapper {
         )
 
     /**
-     * What Bilibili knows about a video's subject, as the tags the recommender learns from: the
-     * partition it is filed under and the uploader's own tags.
+     * Subject tags for the recommender: partition + uploader tags.
      */
     private fun tagsOf(
         category: String,

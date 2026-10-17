@@ -15,15 +15,13 @@ import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 
 /**
- * The local server's Bilibili side, on the native client: ids and links, and the lists (home,
- * search, uploader, playlist). The server's pages are built from NewPipe's item and page types, so
- * results are handed back in those shapes. Comments, danmaku and one video's streams are in
- * [LocalServerBilibiliComments] and [LocalServerBilibiliStreams], the rows in LocalServerBilibiliItems.kt.
+ * Local server Bilibili side (native client): ids, links, lists (home, search, uploader, playlist). Pages are built from NewPipe
+ * item/page types; results returned in those shapes. Comments, danmaku, streams: [LocalServerBilibiliComments],
+ * [LocalServerBilibiliStreams]; rows: LocalServerBilibiliItems.kt.
  *
- * Every function blocks: the server serves each request on its own thread.
+ * All functions block (one thread per request).
  *
- * Continuation tokens travel as a [Page] whose url holds the token, so they survive the server's
- * page serialisation unchanged: a page number ("2") or "<page>:<lastAid>" for an uploader's videos.
+ * Continuation token = [Page] url: page number ("2") or "<page>:<lastAid>" for uploader videos; survives page serialisation.
  */
 internal object LocalServerBilibili {
     private const val POPULAR_PAGES = 5
@@ -102,10 +100,7 @@ internal object LocalServerBilibili {
         return ListPage(items, Page((page + 1).toString()).takeIf { result.hasMore })
     }
 
-    /**
-     * The uploader's own videos, newest first, for the subscription feed. The name and avatar come
-     * from the subscription, so this is one request instead of two.
-     */
+    /** Uploader videos, newest first, for the subscription feed. Name/avatar from the subscription: one request. */
     fun uploads(
         context: Context,
         channelLink: String,

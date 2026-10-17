@@ -4,7 +4,7 @@ import io.github.aedev.flow.localserver.RemoteChoice
 import io.github.aedev.flow.localserver.RemoteRating
 import io.github.aedev.flow.localserver.RemoteSession
 
-// Command wire format; the receiver is handle() in remote.js.
+// Command wire format; receiver: handle() in remote.js.
 private const val QUALITY = "quality:"
 private const val RATE = "rate:"
 private const val DANMAKU = "danmaku:"
@@ -20,7 +20,7 @@ internal fun danmakuCommand(on: Boolean) = DANMAKU + if (on) 1 else 0
 
 internal fun volumeCommand(step: Float) = VOLUME + step
 
-/** Queues [command] for the paired page and applies its expected result to the local state; the next report confirms it. */
+/** Queues [command] for paired page, applies expected result to local state; next report confirms. */
 internal fun sendRemoteCommand(command: String) {
     val now = RemoteSession.remoteState.value
     val hold = RemoteSession.choiceHold

@@ -12,15 +12,11 @@ import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
 
 /**
- * JSON serialization for `/api/v1/...`. Field names mirror
- * `io.github.aedev.flow.data.model.Models.kt` (`Video`/`Channel`/`Playlist`/`Comment`/
- * `SearchResult`) as closely as extractor data allows.
- *
- * Deliberately independent of `HtmlRenderer*.kt` - no shared functions, own extraction calls
- * against the same stable extractor APIs.
+ * `/api/v1/...` JSON. Field names mirror `Models.kt` (`Video`/`Channel`/`Playlist`/`Comment`/`SearchResult`).
+ * Independent of `HtmlRenderer*.kt`: no shared functions, own extraction calls.
  */
 object ApiRenderer {
-    // channelId is the full channel URL, not a bare id.
+    // channelId = full channel URL.
     @JvmStatic
     fun videoJson(
         item: InfoItem,
@@ -35,10 +31,7 @@ object ApiRenderer {
         json.put("channelName", streamItem?.uploaderName ?: item.name ?: "")
         json.put("channelId", streamItem?.uploaderUrl ?: "")
         json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(item.thumbnailUrl))
-        // Empty, not the placeholder URL, when there's no real avatar - same as commentJson's
-        // authorThumbnail. A missing video thumbnail is fine as a generic placeholder photo; a
-        // missing channel avatar should fall back to FT.avatar()'s own initial-letter circle
-        // instead of an unrelated stock photo standing in for someone's face.
+        // Empty (not placeholder) without a real avatar, as commentJson authorThumbnail; client falls back to FT.avatar() initial circle.
         json.put(
             "channelThumbnailUrl",
             if (HtmlRendererCommon.hasThumbnail(
@@ -66,9 +59,7 @@ object ApiRenderer {
         return json
     }
 
-    // Full watch-page detail: videoJson() plus StreamInfo-only fields (description, like count,
-    // related videos, playback URLs). Points at the existing /stream, /hlsvod, /subtitles proxy
-    // routes rather than re-resolving URLs itself.
+    // Watch-page detail: videoJson() + StreamInfo fields (description, like count, related, playback URLs); points at /stream, /hlsvod, /subtitles proxies.
     @JvmStatic
     fun videoDetailJson(
         info: StreamInfo,
@@ -83,7 +74,7 @@ object ApiRenderer {
         json.put("channelName", info.uploaderName ?: "")
         json.put("channelId", info.uploaderUrl ?: "")
         json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(info.thumbnails))
-        // See videoJson()'s channelThumbnailUrl: empty, not the placeholder, when there's no real avatar.
+        // See videoJson() channelThumbnailUrl: empty without a real avatar.
         json.put(
             "channelThumbnailUrl",
             if (HtmlRendererCommon.hasThumbnail(
@@ -100,9 +91,7 @@ object ApiRenderer {
         json.put("likeCount", info.likeCount.coerceAtLeast(0))
         json.put("uploadDate", info.textualUploadDate ?: "")
         json.put("description", info.description?.content ?: "")
-        // Tells the client whether "description" is markup to render or plain text to escape.
-        // YouTube gives HTML (links, line breaks); Bilibili's description is built as PLAIN_TEXT
-        // (see LocalServerBilibiliStreams.kt).
+        // "description" markup flag: YouTube HTML; Bilibili PLAIN_TEXT (LocalServerBilibiliStreams.kt).
         json.put("descriptionType", if (info.description?.type == org.schabi.newpipe.extractor.stream.Description.HTML) "html" else "text")
         json.put("isLive", info.streamType == StreamType.LIVE_STREAM || info.streamType == StreamType.AUDIO_LIVE_STREAM)
         json.put("isShort", info.duration in 1..120)
@@ -117,16 +106,16 @@ object ApiRenderer {
         }
         json.put("relatedVideos", related)
 
-        // Not part of Flow's Video model - points ExoPlayer at this server's proxy routes.
+        // Not in Video model: ExoPlayer → this server's proxy routes.
         val playback = JSONObject()
-        // ladder = video-only streams; a combined-only video has no HLS rungs
+        // ladder = video-only streams; combined-only video: no HLS rungs
         val hasLadder = StreamCatalog.of(InfoStreams(info), highest = true).videos.isNotEmpty()
         val hasVideo = hasLadder || !info.hlsUrl.isNullOrEmpty()
         val isBilibiliLive =
             LocalServerBilibili.isBilibili(serviceId) && info.streamType == StreamType.LIVE_STREAM && !info.hlsUrl.isNullOrEmpty()
         playback.put("isAdaptive", hasVideo && !isBilibiliLive)
         if (isBilibiliLive) {
-            // The room's playlist goes through the relay: its CDN needs a Referer a browser cannot send.
+            // Room playlist via relay: CDN needs a Referer browsers cannot send.
             playback.put("hlsUrl", hlsRelayPath(info.hlsUrl.orEmpty()))
             playback.put("liveRoom", info.id)
         }
@@ -138,9 +127,8 @@ object ApiRenderer {
         playback.put("playlistUrl", "/hlsvod?serviceId=$serviceId&id=$infoUrlEncoded")
         playback.put("streamUrl", "/stream?serviceId=$serviceId&id=$infoUrlEncoded")
 
-        // Download formats: progressive (video+audio combined) streams only - each a direct
-        // /stream?itag=<itag> URL needing no muxing, via handleStreamProxy's existing itag
-        // selection. Plus one highest-bitrate audio-only entry for an audio-only option.
+        // Download formats: progressive (muxed) streams only, direct `/stream?itag=<itag>` (handleStreamProxy itag selection),
+        // plus highest-bitrate audio-only entry.
         val formats = JSONArray()
         for (stream in info.videoStreams) {
             if (stream.isVideoOnly) continue
@@ -165,8 +153,7 @@ object ApiRenderer {
 
         json.put("playback", playback)
 
-        // Caption track list for a client picker menu - points at the existing handleSubtitlesProxy
-        // route, no new extraction.
+        // Caption track list for client picker; handleSubtitlesProxy route.
         val subtitles = JSONArray()
         try {
             for (sub in info.subtitles.orEmpty()) {
@@ -183,12 +170,11 @@ object ApiRenderer {
                 subtitles.put(track)
             }
         } catch (e: Exception) {
-            // info.subtitles throws for services/videos with no captions - same best-effort
-            // handling as handleSubtitlesProxy.
+            // info.subtitles throws without captions; best-effort, as handleSubtitlesProxy.
         }
         json.put("subtitles", subtitles)
 
-        // Chapters with their preview pictures, for a client's chapter strip and seek-bar marks.
+        // Chapters + preview pictures (chapter strip, seek-bar marks).
         val chapters = JSONArray()
         for (segment in info.streamSegments.orEmpty()) {
             val chapter = JSONObject()
@@ -248,7 +234,7 @@ object ApiRenderer {
         val json = JSONObject()
         json.put("id", item.commentId ?: "")
         json.put("author", item.uploaderName ?: "")
-        // Empty, not the placeholder URL, when there's no real avatar.
+        // Empty without a real avatar.
         json.put(
             "authorThumbnail",
             if (HtmlRendererCommon.hasThumbnail(
@@ -261,7 +247,7 @@ object ApiRenderer {
             },
         )
         json.put("text", item.commentText.content ?: "")
-        // Mirrors videoDetailJson's descriptionType - comment text can be HTML too.
+        // As videoDetailJson descriptionType: comment text may be HTML.
         json.put("textType", if (item.commentText.type == org.schabi.newpipe.extractor.stream.Description.HTML) "html" else "text")
         json.put("likeCount", item.likeCount.coerceAtLeast(0))
         json.put("publishedTime", item.textualUploadDate ?: "")
@@ -272,8 +258,7 @@ object ApiRenderer {
         return json
     }
 
-    // Reuses HtmlRendererCommon's Base64 serializePage()/deserializePage() round-trip, same as
-    // every HTML listing page's "Load More" link.
+    // HtmlRendererCommon Base64 serializePage()/deserializePage() round-trip, as HTML "Load More".
     @JvmStatic
     fun serializePageOrNull(page: Page?): String? = HtmlRendererCommon.serializePage(page)
 
@@ -294,8 +279,7 @@ object ApiRenderer {
         return array
     }
 
-    // Mirrors Flow's SearchResult(videos, channels, playlists) shape - splits a mixed InfoItem
-    // list into the three buckets by type rather than leaving the caller to do it.
+    // Flow SearchResult(videos, channels, playlists): mixed InfoItem list split by type.
     @JvmStatic
     fun searchResultJson(
         items: List<InfoItem>,

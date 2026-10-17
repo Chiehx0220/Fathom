@@ -9,7 +9,7 @@ private const val MAX_HEAD_BYTES = 32 * 1024
 private const val CRLF_CRLF = 0x0D0A0D0A
 private const val LF_LF = 0x0A0A
 
-/** Milliseconds a connection has to send its request line and headers. */
+/** Millis for request line + headers. */
 internal const val REQUEST_READ_TIMEOUT_MS = 15_000
 
 internal const val CORS_PREFLIGHT =
@@ -22,8 +22,8 @@ internal const val CORS_PREFLIGHT =
         "\r\n"
 
 /**
- * The request line and header lines, read up to the blank line that ends them; null when the connection ends
- * or sends more than [MAX_HEAD_BYTES] first. Read as bytes, so nothing past the head is consumed as text.
+ * Request line + header lines up to the blank line; null on close or > [MAX_HEAD_BYTES].
+ * Read as bytes: nothing past the head consumed as text.
  */
 internal fun readRequestHead(socketInput: InputStream): List<String>? {
     val input = BufferedInputStream(socketInput)
@@ -42,7 +42,7 @@ internal fun readRequestHead(socketInput: InputStream): List<String>? {
     return null
 }
 
-/** The header lines of [head] by lower-cased name. */
+/** Header lines of [head] by lower-cased name. */
 internal fun parseRequestHeaders(head: List<String>): MutableMap<String, String> {
     val headers = HashMap<String, String>()
     for (line in head.drop(1)) {

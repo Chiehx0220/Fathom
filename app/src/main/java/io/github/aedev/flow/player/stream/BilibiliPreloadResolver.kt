@@ -14,12 +14,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.stream.StreamType
 
-/** Resolves the next Bilibili video for the gapless preload, into the same data the YouTube side produces. */
+/** Next Bilibili video for gapless preload, same data as YouTube side. */
 internal object BilibiliPreloadResolver {
     private const val TAG = "BilibiliPreload"
     private const val RESOLVE_TIMEOUT_MS = 25_000L
 
-    /** Null when [video] is not a Bilibili video, is a live room (never preloaded) or could not be resolved. */
+    /** Null: [video] not Bilibili, live room (never preloaded) or unresolved. */
     suspend fun resolveOrNull(
         video: Video,
         context: Context,
@@ -56,7 +56,7 @@ internal object BilibiliPreloadResolver {
                 resumePositionOverrideMs = null,
                 allowShorts = false,
             )
-        // The same source the player screen loads through, so a preloaded video is the one playback would have built.
+        // Same source as player screen: preloaded = what playback would build.
         val step =
             withTimeoutOrNull(RESOLVE_TIMEOUT_MS) { BilibiliPlaybackSource(bilibiliApi(context)).resolve(request, preferences) }
                 ?: return null

@@ -42,7 +42,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
 import kotlin.math.max
 
-// Finger travel (dp) that counts as one press while swiping over the wheel.
+// Finger travel (dp) = one press while swiping the wheel.
 private const val SWIPE_STEP_DP = 40f
 
 private enum class WheelKey(
@@ -55,9 +55,8 @@ private enum class WheelKey(
 }
 
 /**
- * The direction wheel. The whole disc is the touch surface, so it can be used without looking: a tap presses the direction
- * nearest the touch, a swipe presses the way it points once per step so a long swipe keeps moving, and holding opens the
- * selected card's options. The OK key in the middle is a standard button and behaves like every other key.
+ * Direction wheel: whole disc is touch surface (eyes-free): tap = nearest direction, swipe = direction per step (long swipe keeps moving),
+ * hold = selected card's options. Centre OK = standard button.
  */
 @Composable
 internal fun DirectionWheel(
@@ -147,14 +146,14 @@ internal fun DirectionWheel(
     }
 }
 
-/** The direction the touch is furthest along from the centre. */
+/** Direction furthest along from centre. */
 private fun wheelKeyAt(fromCentre: Offset): WheelKey =
     when {
         abs(fromCentre.x) > abs(fromCentre.y) -> if (fromCentre.x > 0) WheelKey.RIGHT else WheelKey.LEFT
         else -> if (fromCentre.y > 0) WheelKey.DOWN else WheelKey.UP
     }
 
-/** A direction mark: still, so the wheel does not flicker under a moving finger. */
+/** Direction mark; static (no flicker under moving finger). */
 @Composable
 private fun Arrow(
     icon: ImageVector,
@@ -169,7 +168,7 @@ private fun Arrow(
     )
 }
 
-/** OK is a standard filled icon button: the scalloped disc relaxes to a plain circle under the finger. */
+/** OK: standard filled icon button; scalloped disc relaxes to circle under finger. */
 @Composable
 private fun OkKey(
     send: (String) -> Unit,

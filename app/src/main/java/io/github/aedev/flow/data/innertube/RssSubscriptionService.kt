@@ -64,8 +64,7 @@ class RssSubscriptionService
         private val bilibili: BilibiliSubscriptionFeed,
     ) {
         /**
-         * @param serviceIdByChannel a channel missing from here is YouTube's. Bilibili has no RSS feed and
-         * no channel tabs: its channels are read from its own API once the YouTube phases are done.
+         * @param serviceIdByChannel missing = YouTube. Bilibili: no RSS, no channel tabs; own API after the YouTube phases.
          */
         fun fetchSubscriptionVideos(
             channelIds: List<String>,

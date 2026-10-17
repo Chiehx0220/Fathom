@@ -23,19 +23,16 @@ data class BilibiliDanmaku(
     val relativeFontSize: Float,
 )
 
-/** Parses the XML of `x/v1/dm/list.so`, the same way PipePipe's VOD bullet-comment extractor does. */
+/** Parser for `x/v1/dm/list.so` XML (PipePipe VOD bullet-comment extractor). */
 internal object BilibiliDanmakuParser {
-    // PipePipe shifts every comment by 2.5s "for sync".
+    // PipePipe sync shift: 2.5s.
     private const val SYNC_OFFSET_MS = 2_500L
     private const val POOL_VOTING = 3
 
     private val ITEM = Regex("<d\\s+p=\"([^\"]*)\"[^>]*>(.*?)</d>", RegexOption.DOT_MATCHES_ALL)
     private val json = Json { isLenient = true }
 
-    /**
-     * The endpoint answers with raw deflate (no zlib header), which is what PipePipe inflates. A
-     * response that is already plain XML, e.g. because a proxy decoded it, is passed through.
-     */
+    /** Raw deflate (no zlib header), as PipePipe; plain XML (proxy-decoded) passed through. */
     fun decodeBody(raw: ByteArray): String {
         if (raw.isEmpty()) return ""
         if (raw[0] == '<'.code.toByte()) return String(raw, Charsets.UTF_8)
@@ -97,7 +94,7 @@ internal object BilibiliDanmakuParser {
         )
     }
 
-    /** Special (advanced) danmaku carry a JSON array whose 5th element is the text; others are plain. */
+    /** Special danmaku: JSON array, text at index 4. */
     private fun commentText(text: String): String {
         if (!text.startsWith("[")) return text
         return try {

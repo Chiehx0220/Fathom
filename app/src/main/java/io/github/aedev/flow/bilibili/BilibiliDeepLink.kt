@@ -6,9 +6,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
-/** What an external Bilibili link opens in Flow. */
+/** External Bilibili link target. */
 sealed interface BilibiliLinkTarget {
-    /** [videoId] in Flow's form: "BV1xx?p=2", or "live:<roomId>" for a live room. */
+    /** [videoId] form: "BV1xx?p=2" or "live:<roomId>". */
     data class Video(
         val videoId: String,
     ) : BilibiliLinkTarget
@@ -18,10 +18,7 @@ sealed interface BilibiliLinkTarget {
     ) : BilibiliLinkTarget
 }
 
-/**
- * Reads Bilibili links out of a VIEW intent's URL or a shared text. Bilibili's share sheet puts the
- * title and a link (often a b23.tv short link) in one string, so the first link in it is used.
- */
+/** VIEW intent URL / shared text → link; first link wins (share sheet: title + link, often b23.tv). */
 object BilibiliDeepLink {
     private val URL = Regex("""https?://[^\s]+""")
     private val SHORT_HOST = Regex("""^https?://b23\.tv/""", RegexOption.IGNORE_CASE)
@@ -36,7 +33,7 @@ object BilibiliDeepLink {
             .build()
     }
 
-    /** The video, live room or uploader a link points at; null for anything else, including a short link (see [resolve]). */
+    /** Video, live room or uploader; null otherwise, incl. short link ([resolve]). */
     fun parse(text: String): BilibiliLinkTarget? {
         val url = firstLink(text) ?: return null
         if (!BilibiliLink.isBilibili(url)) return null
@@ -50,7 +47,7 @@ object BilibiliDeepLink {
 
     fun isShortLink(text: String): Boolean = firstLink(text)?.let(SHORT_HOST::containsMatchIn) == true
 
-    /** [parse], first following a b23.tv short link to where it redirects. Blocking network: call off the main thread. */
+    /** [parse] after following b23.tv redirect. Blocking network IO. */
     suspend fun resolve(text: String): BilibiliLinkTarget? {
         parse(text)?.let { return it }
         var url = firstLink(text)?.takeIf { SHORT_HOST.containsMatchIn(it) } ?: return null

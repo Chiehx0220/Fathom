@@ -11,19 +11,18 @@ import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
 import kotlinx.coroutines.CancellationException
 
 /*
- * What BackupRepository needs to carry a non-YouTube service (Bilibili) through an import or export, kept
- * here so that upstream file only calls these. Other services don't share YouTube's URL shapes, so their
- * ids and links go through the service's own link handler instead of guessing at URL structure.
+ * Non-YouTube (Bilibili) carriage for BackupRepository imports/exports; upstream file only calls these.
+ * Other services' ids/links go through the service link handler, not YouTube URL shapes.
  */
 
-/** The video id in an imported [url] of [serviceId]: YouTube's through [youtube] (upstream's own parser), another service's through its link handler. */
+/** Video id of imported [url] for [serviceId]: YouTube via [youtube] (upstream parser), else link handler. */
 internal fun importedVideoId(
     url: String,
     serviceId: Int,
     youtube: (String) -> String?,
 ): String? = if (serviceId.isYouTubeServiceId) youtube(url) else nonYouTubeVideoId(url, serviceId)
 
-/** The channel id in an imported uploader [url] of [serviceId], blank when the link names none. */
+/** Channel id of imported uploader [url] for [serviceId]; blank if none. */
 internal fun importedChannelId(
     url: String?,
     serviceId: Int,
@@ -35,7 +34,7 @@ internal fun importedChannelId(
         else -> resolveNonYouTubeChannelId(url, serviceId) { "" }
     }
 
-/** The channel link a Takeout history entry carries: YouTube's from a `UC` id in [channelId], another service's from its own id. */
+/** Takeout history channel link: YouTube from `UC` id in [channelId], else service-specific. */
 internal fun takeoutChannelUrl(
     channelId: String,
     serviceId: Int,
@@ -51,25 +50,25 @@ internal fun takeoutChannelUrl(
         nonYouTubeChannelUrlOrHome(channelId, serviceId)
     }
 
-/** The watch link a Takeout history entry carries. */
+/** Takeout history watch link. */
 internal fun takeoutVideoUrl(
     videoId: String,
     serviceId: Int,
 ): String = videoIdToUrl(videoId, serviceId)
 
-/** The video id in [url], a link of a non-YouTube [serviceId], or null when it is none of that service's. */
+/** Video id of [url] for non-YouTube [serviceId]; null if not that service's. */
 internal fun nonYouTubeVideoId(
     url: String,
     serviceId: Int,
 ): String? = resolveNonYouTubeStreamId(url, serviceId) { "" }.ifEmpty { null }
 
-/** The channel link of a non-YouTube channel, or YouTube's home when the id is not one the service knows. */
+/** Non-YouTube channel link; YouTube home if id unknown to the service. */
 internal fun nonYouTubeChannelUrlOrHome(
     channelId: String,
     serviceId: Int,
 ): String = resolveNonYouTubeChannelUrl(channelId, serviceId) { "" }.ifEmpty { "https://www.youtube.com/" }
 
-/** A Bilibili uploader imported from a NewPipe export, named from the export and given its avatar by Bilibili when it answers. */
+/** Bilibili uploader from NewPipe export: name from export, avatar from Bilibili if it answers. */
 internal suspend fun bilibiliSubscriptionFromNewPipe(
     context: Context,
     mid: Long,

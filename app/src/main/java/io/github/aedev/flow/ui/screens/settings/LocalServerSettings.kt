@@ -45,9 +45,7 @@ private val EmblemSize = 56.dp
 private val OnlineColor = Color(0xFF2E9E5B)
 
 /**
- * The local server card of the settings list, sitting beside the taste card in the same Material 3 Expressive form.
- * It is kept out of the upstream settings files so their edits do not collide with it, and it follows the service's
- * actual state rather than the saved on/off preference.
+ * Settings-list local server card, beside taste card (Material 3 Expressive). Outside upstream settings files (no edit collision); follows actual service state, not saved on/off preference.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

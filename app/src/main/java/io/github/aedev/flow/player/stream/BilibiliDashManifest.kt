@@ -14,12 +14,11 @@ import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.VideoStream
 
 /**
- * A one-representation DASH manifest for one Bilibili stream, built from the init and index ranges
- * the API reports, as PipePipe does. Played as a plain file, one long request gets throttled by the
- * CDN; through DASH the player asks for short ranges, which the CDN serves fast.
+ * One-representation DASH manifest per Bilibili stream from API init/index ranges (as PipePipe). Plain file: one long request throttled by CDN;
+ * DASH: short ranges served fast.
  */
 object BilibiliDashManifest {
-    /** [forVideo] plus building the actual [MediaSource]; null under the same conditions as [forVideo]. */
+    /** [forVideo] + [MediaSource]; null as [forVideo]. */
     fun buildVideoSource(
         dataSourceFactory: DataSource.Factory,
         stream: VideoStream,
@@ -30,7 +29,7 @@ object BilibiliDashManifest {
         return MediaSourceBuilder.buildDashSource(dataSourceFactory, manifest, Uri.parse(stream.content), mediaItem)
     }
 
-    /** [forAudio] plus building the actual [MediaSource]; null under the same conditions as [forAudio]. */
+    /** [forAudio] + [MediaSource]; null as [forAudio]. */
     fun buildAudioSource(
         dataSourceFactory: DataSource.Factory,
         stream: AudioStream,
@@ -82,7 +81,7 @@ object BilibiliDashManifest {
             durationSeconds = durationSeconds,
         )
 
-    /** Null when the stream carries no usable ranges, i.e. it is not one of Bilibili's DASH files. */
+    /** Null without usable ranges (not a Bilibili DASH file). */
     @Suppress("LongParameterList")
     private fun build(
         stream: Stream,

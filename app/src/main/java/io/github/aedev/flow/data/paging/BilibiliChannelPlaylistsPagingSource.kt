@@ -12,7 +12,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** A Bilibili uploader's Playlists tab (series and seasons) through the native client; the key is the 1-based page. */
+/** Bilibili uploader Playlists tab (series, seasons), native client; key = 1-based page. */
 class BilibiliChannelPlaylistsPagingSource(
     private val api: BilibiliApi,
     private val mid: Long,

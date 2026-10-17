@@ -5,8 +5,7 @@ import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.model.Video
 
 /**
- * A pasted Bilibili video or b23.tv short link's video id, or null: [parseYouTubeLink] already
- * covers every YouTube link shape, so this only needs to catch what it does not.
+ * Video id of a pasted Bilibili video / b23.tv link, or null; [parseYouTubeLink] covers YouTube shapes: only the rest here.
  */
 internal fun resolvePastedBilibiliVideoLink(url: String): String? {
     if (!url.startsWith("http")) return null

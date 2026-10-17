@@ -6,8 +6,7 @@ import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.model.Video
 
 /**
- * A VOD from Bilibili's native client. Bilibili has no live/SABR/upcoming variants here, so one
- * step carries everything: the metadata and streams in [playback], and the related lane.
+ * Bilibili VOD via native client. No live/SABR/upcoming variants: one step = metadata + streams ([playback]) + related lane.
  */
 data class VodFromBilibili(
     val playback: BilibiliPlayback,
@@ -18,7 +17,7 @@ data class VodFromBilibili(
     val resumePositionOverrideMs: Long?,
 ) : ResolvedPlayback
 
-/** A live room from Bilibili's native client: one step, since it has no premiere or SABR variants. */
+/** Bilibili live room via native client: one step (no premiere/SABR variants). */
 data class LiveFromBilibili(
     val playback: BilibiliLivePlayback,
 ) : ResolvedPlayback

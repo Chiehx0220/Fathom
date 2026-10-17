@@ -78,7 +78,7 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.localserver.RemoteRating
 import io.github.aedev.flow.localserver.RemoteState
 
-/** Playback mode: now playing, seek bar and transport, tool row, back. */
+/** Playback mode: now playing, seek bar + transport, tool row, back. */
 @Composable
 internal fun PlaybackMode(
     state: RemoteState,
@@ -115,7 +115,7 @@ internal fun PlaybackMode(
     if (showSettings) RemoteSettingsSheet(state, send, onDismiss = { showSettings = false })
 }
 
-// Chapter keys appear only when the video has chapters.
+// Chapter keys only with chapters.
 @Composable
 private fun TransportKeys(
     state: RemoteState,
@@ -153,7 +153,7 @@ private fun TransportKeys(
     }
 }
 
-// Wavy seek bar: amplitude follows playback. While dragging it tracks the pointer; the seek is sent on release.
+// Wavy seek bar: amplitude follows playback; dragging tracks pointer; seek sent on release.
 @Composable
 private fun SeekBar(
     state: RemoteState,
@@ -259,7 +259,7 @@ private fun NowPlaying(
             )
             state.rating?.let { RatingKeys(it, send) }
         }
-        // Mini player: restores the video page.
+        // Mini player: restores video page.
         if (state.minimized) {
             FilledTonalButton(onClick = { send("expand") }, shapes = ButtonDefaults.shapes(), modifier = Modifier.padding(top = 2.dp)) {
                 Icon(Icons.Default.OpenInFull, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -301,7 +301,7 @@ private fun NowPlaying(
                 },
             )
         }
-        // Mirrors the web skip button: shown only inside a SponsorBlock segment.
+        // As web skip button: only inside a SponsorBlock segment.
         state.skipLabel?.let { label ->
             FilledTonalButton(onClick = { send("skip") }, shapes = ButtonDefaults.shapes(), modifier = Modifier.padding(top = 4.dp)) {
                 Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(18.dp))

@@ -134,7 +134,7 @@ fun parseYouTubeLink(text: String): YouTubeLink? {
     }
 }
 
-/** The video id [parseYouTubeLink] finds in [url] (a watch, Short or front-end link), or null. */
+/** Video id [parseYouTubeLink] finds in [url] (watch, Short, front-end link); null if none. */
 fun youtubeVideoIdFromUrl(url: String): String? =
     when (val link = parseYouTubeLink(url)) {
         is YouTubeLink.Video -> link.id

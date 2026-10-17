@@ -3,11 +3,11 @@ package io.github.aedev.flow.bilibili
 import kotlinx.serialization.json.Json
 
 /**
- * Up to two tries. An HTML page or code -352 means risk control, so the next try uses a fresh
- * device and cookies. The body is read whatever the HTTP status, since a block is a 412.
+ * Up to 2 tries; HTML or code -352 = risk control, retry with fresh device and cookies.
+ * Body read regardless of HTTP status (block = 412).
  *
- * @param referer the page the request claims to come from.
- * @param okCodes response codes that are an answer rather than a block (0, plus e.g. "comments closed").
+ * @param referer claimed origin page.
+ * @param okCodes codes that are answers, not blocks (0, "comments closed").
  */
 internal suspend fun BilibiliSession.guardedGet(
     json: Json,

@@ -12,9 +12,9 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.util.Locale
 
-// Shared page toolbox: formatting, escaping, thumbnails, and page (de)serialization.
+// Shared page toolbox: formatting, escaping, thumbnails, page (de)serialization.
 object HtmlRendererCommon {
-    // Fallback avatar palette, picked by name hash (avatarColorFor()).
+    // Fallback avatar palette by name hash (avatarColorFor()).
     @JvmField
     val AVATAR_COLORS =
         arrayOf(
@@ -34,7 +34,7 @@ object HtmlRendererCommon {
             "#ff9800",
         )
 
-    // Leading "@" is trimmed: comment authors are often handles.
+    // Leading "@" trimmed (comment authors are handles).
     @JvmStatic
     fun avatarInitial(name: String?): String {
         val trimmed = name?.trimStart('@')
@@ -44,7 +44,7 @@ object HtmlRendererCommon {
     @JvmStatic
     fun avatarColorFor(name: String): String = AVATAR_COLORS[Math.abs(name.hashCode()) % AVATAR_COLORS.size]
 
-    /** Service display name: Bilibili's is fixed, everything else comes from the registered extractor service. */
+    /** Service display name: Bilibili fixed, others from registered extractor service. */
     @JvmStatic
     fun getServiceName(serviceId: Int): String {
         if (LocalServerBilibili.isBilibili(serviceId)) return "Bilibili"
@@ -74,7 +74,7 @@ object HtmlRendererCommon {
         }
     }
 
-    // serializePage() + escapeJs() in one step for a load-more onclick. Null when there is no next page or serialization failed.
+    // serializePage() + escapeJs() for load-more onclick; null if no next page or serialization failed.
     @JvmStatic
     fun serializePageJs(page: Page?): String? {
         val serialized = serializePage(page) ?: return null
@@ -98,9 +98,8 @@ object HtmlRendererCommon {
     }
 
     /**
-     * Subscriptions, bookmarked playlists and watch-later can mix items from several services, but the page-level serviceId only
-     * reflects the active tab. Linking every item with it sent a Bilibili channel to "/channel?serviceId=0&id=...", which the
-     * YouTube service rejects. So each item's real service is worked out from its own URL, falling back to the page's.
+     * Subscriptions, bookmarked playlists, watch-later mix services; page-level serviceId = active tab only
+     * (Bilibili channel → "/channel?serviceId=0&id=..." rejected by YouTube). Item service derived from own URL, page's as fallback.
      */
     @JvmStatic
     fun serviceOf(
@@ -117,8 +116,7 @@ object HtmlRendererCommon {
         }
     }
 
-    // The stock image earlier builds substituted for a missing thumbnail; history and library entries saved
-    // then still carry it, so it reads as "no image" like an empty URL does.
+    // Stock placeholder image of earlier builds; saved history/library entries still carry it: treated as no image.
     private const val LEGACY_PLACEHOLDER_ID = "photo-1611162617213-7d7a39e9b1d7"
 
     private fun isUsableImageUrl(url: String?): Boolean = !url.isNullOrBlank() && !url.contains(LEGACY_PLACEHOLDER_ID)
@@ -128,7 +126,7 @@ object HtmlRendererCommon {
         return if (trimmed.startsWith("//")) "https:$trimmed" else trimmed
     }
 
-    /** The largest usable image URL, or "" when there is none: the web client then draws no image at all. */
+    /** Largest usable image URL; "" → web client draws no image. */
     @JvmStatic
     fun getThumbnailUrl(thumbnails: List<Image>?): String {
         if (thumbnails != null && thumbnails.isNotEmpty()) {
@@ -145,15 +143,15 @@ object HtmlRendererCommon {
     @JvmStatic
     fun hasThumbnail(thumbnails: List<Image>?): Boolean = thumbnails != null && thumbnails.any { it != null && isUsableImageUrl(it.url) }
 
-    // Image shape differs by source: items carry a URL string, StreamInfo/ChannelExtractor a List<Image>. This overload takes the URL.
+    // Image shape: items = URL string; StreamInfo/ChannelExtractor = List<Image>. This overload: URL.
     @JvmStatic
     fun getThumbnailUrl(url: String?): String = if (isUsableImageUrl(url)) normalizeImageUrl(url!!) else ""
 
-    /** Presence check for the singular-URL shape, matching [hasThumbnail]'s list overload. */
+    /** Presence check, singular-URL shape (as [hasThumbnail] list overload). */
     @JvmStatic
     fun hasThumbnail(url: String?): Boolean = isUsableImageUrl(url)
 
-    // YoutubeService forces hl=zu, so the textual upload date is Zulu; DateWrapper is still reliable, so the date is formatted here.
+    // YoutubeService forces hl=zu: textual upload date is Zulu; DateWrapper reliable → date formatted here.
     @JvmStatic
     fun formatUploadDate(
         uploadDate: DateWrapper?,
@@ -198,7 +196,7 @@ object HtmlRendererCommon {
             url ?: ""
         }
 
-    // Also escapes the apostrophe: most call sites wrap this in a single-quoted JS literal.
+    // Also escapes apostrophe (single-quoted JS literals).
     @JvmStatic
     fun escapeJs(str: String?): String {
         if (str == null) return ""
@@ -210,7 +208,7 @@ object HtmlRendererCommon {
             .replace("\r", "\\r")
     }
 
-    // For raw titles and names used as HTML text. Also escapes '"' for attributes. Not for getDescription(), which is already HTML.
+    // Raw titles/names as HTML text; escapes '"' for attributes. Not for getDescription() (already HTML).
     @JvmStatic
     fun escapeHtml(str: String?): String {
         if (str == null) return ""
@@ -221,7 +219,7 @@ object HtmlRendererCommon {
             .replace("\"", "&quot;")
     }
 
-    /** A JSON string literal. `<`, `>` and `&` are escaped so the text can sit inside a <script> without ending it. */
+    /** JSON string literal; `<`, `>`, `&` escaped (safe inside <script>). */
     @JvmStatic
     fun jsonString(text: String?): String {
         val sb = StringBuilder("\"")

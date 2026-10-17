@@ -1,12 +1,11 @@
 package io.github.aedev.flow.localserver
 
 /**
- * The colours the phone's Material You palette gives the web UI. The stylesheet defines every colour as a role
- * (`--md-primary`, `--md-surface`, ...) with a default; this only overrides those roles with the device's scheme, so a page
- * opened from the phone matches the app. The fixed accent presets (purple, green, ...) are plain CSS in themes.css.
+ * Material You palette → web UI. Stylesheet defines every colour as a role (`--md-primary`, `--md-surface`, ...) with default;
+ * this overrides roles with the device scheme. Fixed accent presets (purple, green, ...): plain CSS in themes.css.
  */
 object WebTheme {
-    // CSS variable -> key in the scheme map handed over by ServerService, per role.
+    // CSS variable → scheme-map key (from ServerService), per role.
     private val ROLES =
         listOf(
             "md-primary" to "primary",
@@ -27,7 +26,7 @@ object WebTheme {
             "md-on-error-container" to "onErrorContainer",
         )
 
-    /** The `<style>` body: the light scheme on `:root`, the dark one under `[data-theme="dark"]`. Empty when the app gave none. */
+    /** `<style>` body: light scheme on `:root`, dark under `[data-theme="dark"]`. Empty if app gave none. */
     fun deviceColors(
         lightSelector: String = ":root",
         darkSelector: String = "[data-theme=\"dark\"]",
@@ -46,20 +45,20 @@ object WebTheme {
         for ((variable, key) in ROLES) {
             scheme[key]?.let { sb.append("  --$variable: $it;\n") }
         }
-        // Hover and pressed overlays are the text colour at 8% and 12%; computed here because a TV browser may not know color-mix().
+        // Hover/pressed overlays = text colour at 8%/12%; computed here (TV browser may lack color-mix()).
         scheme["onSurface"]?.let {
             sb.append("  --md-state-hover: ${rgba(it, 0.08)};\n")
             sb.append("  --md-state-press: ${rgba(it, 0.12)};\n")
         }
         scheme["onPrimary"]?.let {
-            // For controls that sit on a primary fill (the "remote connected" banner).
+            // Controls on a primary fill ("remote connected" banner).
             sb.append("  --md-on-primary-state: ${rgba(it, 0.16)};\n")
             sb.append("  --md-on-primary-outline: ${rgba(it, 0.3)};\n")
         }
         return sb.append("}\n").toString()
     }
 
-    /** #RRGGBB -> rgba(r, g, b, alpha). */
+    /** #RRGGBB → rgba(r, g, b, alpha). */
     private fun rgba(
         hex: String,
         alpha: Double,

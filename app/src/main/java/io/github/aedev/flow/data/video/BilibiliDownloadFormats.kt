@@ -13,9 +13,8 @@ private const val AUDIO_CHANNELS = 2
 internal typealias DownloadFormats = List<PlayerResponse.StreamingData.Format>
 
 /**
- * Bilibili's tracks in the shape the download dialogs already read, so a Bilibili video is offered the same quality,
- * codec and style choices as a YouTube one and downloads through the same pipeline. Bilibili's quality ids are not
- * unique per track, so each track gets its own number.
+ * Bilibili tracks as download-dialog formats: same quality/codec/style choices and pipeline as YouTube.
+ * Quality ids are not unique per track: each track numbered separately.
  */
 internal fun BilibiliPlayback.toDownloadFormats(): Pair<DownloadFormats, DownloadFormats> {
     val durationMs = (info.durationSec * 1_000L).toString()
@@ -24,7 +23,7 @@ internal fun BilibiliPlayback.toDownloadFormats(): Pair<DownloadFormats, Downloa
     return video to audio
 }
 
-/** The video with whatever the card left blank filled in from what Bilibili reports. */
+/** Video with card-blank fields filled from Bilibili. */
 internal fun Video.filledFrom(playback: BilibiliPlayback): Video =
     copy(
         title = title.ifBlank { playback.info.title },

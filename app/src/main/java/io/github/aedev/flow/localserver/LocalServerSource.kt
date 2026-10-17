@@ -19,7 +19,7 @@ internal class ListPage(
     val next: Page?,
 )
 
-/** What a channel page shows about the channel. Image urls are null when there is none. */
+/** Channel page info. Image urls null if none. */
 class ChannelHeader(
     val name: String,
     val url: String,
@@ -55,11 +55,10 @@ internal class CommentsResult(
 )
 
 /**
- * Where the local server's lists come from: Bilibili from the native client, YouTube from
- * NewPipe's extractors. A handler asks for a page here and never needs to know which one answered.
+ * Local server list sources: Bilibili native client, YouTube NewPipe extractors. Handlers ask a page here, service-agnostic.
  */
 internal object LocalServerSource {
-    /** The feed of a service that has no personalised one. Only Bilibili is such a service. */
+    /** Feed of a service without a personalised one; Bilibili only. */
     fun home(
         context: Context,
         serviceId: Int,
@@ -82,7 +81,7 @@ internal object LocalServerSource {
         return ListPage(page.items, page.nextPage)
     }
 
-    /** [sort] only applies to a YouTube channel's videos tab. */
+    /** [sort]: YouTube channel videos tab only. */
     fun channel(
         context: Context,
         serviceId: Int,
@@ -98,8 +97,7 @@ internal object LocalServerSource {
         val channelExtractor = service.getChannelExtractor(channelUrl)
         channelExtractor.fetchPage()
 
-        // A non-default sort needs the tab's link handler built by hand; the tab list's own
-        // handlers carry the default order.
+        // Non-default sort: tab link handler built by hand (tab list handlers carry default order).
         val tabHandler: ListLinkHandler =
             if (sort != null) {
                 service.channelTabLHFactory.fromQuery(channelExtractor.id, listOf(tab), sort, channelExtractor.baseUrl)
@@ -154,8 +152,7 @@ internal object LocalServerSource {
         LocalServerYouTubeComments.comments(context, videoUrl, nextPage)?.let { return it }
         val extractor = NewPipe.getService(serviceId).getCommentsExtractor(videoUrl)
         if (nextPage != null) {
-            // getPage() only reads nextPage's continuation token, not fetchPage() state, so it is
-            // safe on a fresh extractor.
+            // getPage() reads only nextPage continuation token, not fetchPage() state: safe on fresh extractor.
             val page = extractor.getPage(nextPage)
             return CommentsResult(page.items, page.nextPage)
         }
@@ -165,7 +162,7 @@ internal object LocalServerSource {
         return CommentsResult(page.items, page.nextPage)
     }
 
-    /** Only Bilibili has danmaku, and only for uploaded videos, not live streams. */
+    /** Bilibili only, uploaded videos only (no live). */
     fun danmaku(
         context: Context,
         serviceId: Int,
@@ -173,7 +170,7 @@ internal object LocalServerSource {
     ): JSONArray = if (LocalServerBilibili.isBilibili(serviceId)) LocalServerBilibiliComments.danmaku(context, mediaUrl) else JSONArray()
 }
 
-/** The stream lists the proxy and the DASH manifest choose from, whichever service they came from. */
+/** Stream lists for proxy and DASH manifest, any service. */
 internal interface StreamLists {
     val length: Long
     val videoStreams: List<VideoStream>
@@ -185,7 +182,7 @@ internal interface StreamLists {
 private class ExtractorStreams(
     private val extractor: StreamExtractor,
 ) : StreamLists {
-    // The extractor's getters are not thread-safe, and a watch page may be reading the same one.
+    // Extractor getters not thread-safe; watch page may read the same one.
     override val length: Long get() = synchronized(extractor) { extractor.length }
     override val videoStreams: List<VideoStream> get() = synchronized(extractor) { extractor.videoStreams.orEmpty() }
     override val videoOnlyStreams: List<VideoStream> get() = synchronized(extractor) { extractor.videoOnlyStreams.orEmpty() }
@@ -224,7 +221,7 @@ internal fun LocalServerSource.streams(
     return MergedYouTubeStreams(extractorStreams, videoId)
 }
 
-/** Everything about one video that the watch page, downloads and subtitles read. */
+/** One video's data for watch page, downloads, subtitles. */
 internal fun LocalServerSource.streamInfo(
     context: Context,
     serviceId: Int,
@@ -239,7 +236,7 @@ internal fun LocalServerSource.streamInfo(
     return info
 }
 
-/** [streamInfo] with the related list a watch page shows: Bilibili's own, or YouTube's ranked one. */
+/** [streamInfo] + watch-page related list: Bilibili's own or YouTube's ranked. */
 internal fun LocalServerSource.watchInfo(
     dbHelper: HistoryDbHelper,
     serviceId: Int,

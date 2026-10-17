@@ -6,12 +6,9 @@ import io.github.aedev.flow.ui.youtubeChannelRoute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-/** Opens a Bilibili link for [MainActivity], so that upstream file only carries a call. */
+/** [MainActivity] hook. */
 internal object BilibiliLinks {
-    /**
-     * Opens a Bilibili video or uploader link, also inside a shared text or behind a b23.tv short link.
-     * Returns false when [text] has none.
-     */
+    /** Bilibili video/uploader link handler: shared text, b23.tv short links. */
     fun open(
         text: String,
         scope: CoroutineScope,

@@ -7,7 +7,7 @@ import io.github.aedev.flow.data.repository.RemotePlaylistPage
 import io.github.aedev.flow.di.bilibiliApi
 import kotlinx.coroutines.CancellationException
 
-/** A Bilibili series or season, shaped as the page YouTube playlists arrive in; it is loaded whole, so nothing follows it. */
+/** Bilibili series/season in YouTube-playlist page shape; loaded whole, no continuation. */
 internal suspend fun bilibiliPlaylistPage(
     context: Context,
     playlistId: String,

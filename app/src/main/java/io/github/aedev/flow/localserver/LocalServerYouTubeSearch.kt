@@ -12,12 +12,9 @@ import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 
 /**
- * YouTube's search results through the app's own InnerTube search, so the page lists what the app's search
- * lists and follows the app's fixes instead of the extractor's.
+ * YouTube search via app InnerTube search: page lists what app search lists, follows its fixes.
  *
- * The continuation of a page is a [Page] whose url holds "yt:s:<token>"; a page from the extractor has no such
- * prefix, so it keeps going there. Only the plain search runs here: shelves (Shorts, posts) are left out, which is
- * also what the extractor lists.
+ * Continuation = [Page] url "yt:s:<token>"; extractor pages lack the prefix: stay there. Plain search only: shelves (Shorts, posts) omitted, as extractor.
  */
 internal object LocalServerYouTubeSearch {
     private const val MORE = "yt:s:"
@@ -25,10 +22,10 @@ internal object LocalServerYouTubeSearch {
     private val VIDEO_ID = Regex("[A-Za-z0-9_-]{11}")
     private val PLAYLIST_ID = Regex("(PL|OLAK5uy_|RD|UU|FL)[A-Za-z0-9_-]+")
 
-    /** True for a continuation this object made, so [LocalServerSource] does not hand it to the extractor. */
+    /** Continuation made by this object; [LocalServerSource] does not hand it to the extractor. */
     fun owns(page: Page?): Boolean = page?.url?.startsWith(MORE) == true
 
-    /** One page, or null when the extractor should answer: a page of its own, a failure, or nothing found on a first page. */
+    /** One page; null → extractor answers (own page, failure, empty first page). */
     fun search(
         query: String,
         nextPage: Page?,
@@ -48,12 +45,12 @@ internal object LocalServerYouTubeSearch {
             throw e
         } catch (e: Exception) {
             serverLog("InnerTube search failed: ${e.message}")
-            // A continuation that fails ends the list; a first page that fails goes to the extractor.
+            // Failed continuation ends the list; failed first page → extractor.
             if (owns(nextPage)) ListPage(emptyList(), null) else null
         }
     }
 
-    /** A "Course" arrives as a video whose id is a playlist's; opened as a video it would not play. */
+    /** "Course": video whose id is a playlist's; unplayable as video. */
     private fun Video.asPlaylist(): InfoItem? =
         if (PLAYLIST_ID.matches(id)) {
             PlaylistInfoItem(YOUTUBE, playlistIdToUrl(id), title).also {

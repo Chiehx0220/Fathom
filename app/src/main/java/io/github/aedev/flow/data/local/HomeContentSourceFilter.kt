@@ -4,17 +4,14 @@ import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.data.model.Video
 import org.schabi.newpipe.extractor.ServiceList
 
-/**
- * Which service's uploads Home's fresh-subs/recommendation lanes show. Subscriptions and search
- * are unaffected - this only narrows what Home itself surfaces.
- */
+/** Service whose uploads Home's fresh-subs/recommendation lanes show. Subscriptions, search unaffected. */
 enum class HomeContentSourceFilter {
     MIX,
     YOUTUBE,
     BILIBILI,
     ;
 
-    /** Null means no filtering (MIX) - every service's videos pass. */
+    /** Null = MIX, no filtering. */
     val serviceId: Int?
         get() =
             when (this) {

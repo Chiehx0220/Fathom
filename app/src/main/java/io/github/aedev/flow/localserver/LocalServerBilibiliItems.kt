@@ -18,9 +18,9 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-// Bilibili's rows as the NewPipe item types the local server's pages are built from.
+// Bilibili rows as NewPipe item types.
 
-/** A video row of a list, from the fields every Bilibili list carries. */
+/** List video row, from fields every Bilibili list carries. */
 internal fun bilibiliVideoItem(
     id: String,
     title: String,
@@ -40,7 +40,7 @@ internal fun bilibiliVideoItem(
         setViewCount(views)
     }
 
-/** A live room's row: opens the room, and shows as live in a list. */
+/** Live room row: opens the room, shown live. */
 internal fun bilibiliLiveItem(room: BilibiliLiveItem): StreamInfoItem =
     StreamInfoItem(
         LocalServerBilibili.serviceId,
@@ -54,13 +54,13 @@ internal fun bilibiliLiveItem(room: BilibiliLiveItem): StreamInfoItem =
         setViewCount(room.viewerCount)
     }
 
-/** A row of an uploader's video list; the name and avatar come from the caller, the list has neither. */
+/** Uploader video-list row; name/avatar from caller (list has neither). */
 internal fun BilibiliChannelVideo.toStreamItem(
     uploaderName: String,
     uploaderAvatarUrl: String,
     uploaderUrl: String,
 ): StreamInfoItem {
-    // Read up front: inside apply, the item's own properties of the same names win.
+    // Read up front: inside apply, the item's own same-named properties win.
     val video = this
     return StreamInfoItem(LocalServerBilibili.serviceId, LocalServerBilibili.videoUrl("$bvid?p=1"), title, StreamType.VIDEO_STREAM).apply {
         thumbnailUrl = video.thumbnailUrl
@@ -76,7 +76,7 @@ internal fun BilibiliChannelVideo.toStreamItem(
     }
 }
 
-/** A comment; [hasReplies] is false for a reply, which has none of its own to open. */
+/** Comment; [hasReplies] false for a reply (none of its own). */
 internal fun BilibiliComment.toCommentItem(
     videoUrl: String,
     hasReplies: Boolean,

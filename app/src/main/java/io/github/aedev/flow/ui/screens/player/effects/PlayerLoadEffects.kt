@@ -130,8 +130,7 @@ internal fun ShortVideoPromptEffect(
             return@LaunchedEffect
         }
 
-        // The Shorts player only knows how to play back YouTube streams; other services have no
-        // equivalent, so suggesting it there just leads to a dead end.
+        // Shorts player: YouTube streams only; elsewhere suggestion = dead end.
         val isYouTube = videoServiceId.isYouTubeServiceId
         if (isYouTube && !isInQueue && !screenState.hasShownShortsPrompt && videoDuration > 0 && videoDuration <= 80) {
             delay(1000)

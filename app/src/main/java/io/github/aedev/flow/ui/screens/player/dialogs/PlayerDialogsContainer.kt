@@ -41,7 +41,7 @@ internal fun PlayerDialogsContainer(
         io.github.aedev.flow.bilibili.BilibiliVideoId
             .isBilibili(video.id)
     ) {
-        // Bilibili's streams are not in the player's InnerTube state, so the card menu's loader offers them.
+        // Bilibili streams not in player InnerTube state: card menu loader offers them.
         val quickActions =
             io.github.aedev.flow.ui.components.shared.quickactions
                 .sharedQuickActionsViewModel()

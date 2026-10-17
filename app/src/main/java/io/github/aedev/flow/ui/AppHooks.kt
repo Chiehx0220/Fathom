@@ -64,7 +64,7 @@ fun HandleDeepLinks(
             // is on top and keep its old queue instead of opening the linked short.
             navController.openShorts(ShortsQueueSource.SeededFeed(videoId))
         } else {
-            // navigateToPlayer (PlayerNavigation.kt) encodes the id: a raw Bilibili id can contain "?p=1".
+            // navigateToPlayer (PlayerNavigation.kt) encodes the id: raw Bilibili id may contain "?p=1".
             navController.navigateToPlayer(videoId)
         }
         onDeeplinkConsumed()

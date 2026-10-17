@@ -3,12 +3,10 @@ package io.github.aedev.flow.localserver
 import java.io.OutputStream
 import java.util.UUID
 
-// Toggle-style DB action endpoints (subscribe/block/bookmark/history/watch-later/like-dislike) and
-// TV remote-control endpoints (send-link/release-lock/send-command/poll-commands). Requires
-// ClientHandler/dbHelper/sendResponse/getServiceId internal, not private.
+// Toggle DB action endpoints (subscribe/block/bookmark/history/watch-later/like-dislike) + TV remote-control endpoints
+// (send-link/release-lock/send-command/poll-commands). ClientHandler/dbHelper/sendResponse/getServiceId internal.
 
-// Shared "share this video" field set/fallback defaults for handleWatchLaterAction and
-// handleRateVideoAction - server never saw this video before, only client-page metadata.
+// Shared "share this video" field set/defaults for handleWatchLaterAction, handleRateVideoAction: video unseen by server, client-page metadata only.
 private data class SharedVideoParams(
     val title: String,
     val uploader: String,
@@ -24,8 +22,7 @@ private fun parseSharedVideoParams(params: Map<String, String>): SharedVideoPara
     return SharedVideoParams(title, uploader, thumbnail, uploaderUrl)
 }
 
-// Every caller is the web app's fetch-based FT.api (see app/js/api.js's act()), which only cares
-// whether the request went through - so every toggle-style action handler below answers the same way.
+// Callers: web app fetch-based FT.api (app/js/api.js act()), success-only: all toggle handlers answer alike.
 private fun ClientHandler.sendActionResult(os: OutputStream) {
     sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
 }
@@ -166,8 +163,7 @@ internal fun ClientHandler.handleSendLink(
         }
 
         if (hasLock) {
-            // "__connect_only__": cast button on a non-video page (Home, Subscriptions) - pairs for
-            // remote control without a play_video command that would 404 as a /watch link.
+            // "__connect_only__": cast on non-video page (Home, Subscriptions): pairs remote control, no play_video command (would 404 as /watch).
             if ("__connect_only__" != videoUrl) {
                 serverLog("Casting link: $videoUrl from client IP $clientIp")
                 RemoteSession.addPendingCommand("play_video:$videoUrl")
@@ -232,7 +228,7 @@ internal fun ClientHandler.handleSendCommand(
     }
 }
 
-// Chapter titles arrive as a JSON array (a title is arbitrary text, so no delimiter is safe).
+// Chapter titles as JSON array (arbitrary text: no safe delimiter).
 private fun parseChapterTitles(raw: String?): List<String> {
     if (raw.isNullOrEmpty()) return emptyList()
     return try {
@@ -243,7 +239,7 @@ private fun parseChapterTitles(raw: String?): List<String> {
     }
 }
 
-// The paired page reports how it is playing (about once a second) so the phone remote can show progress and pick a mode.
+// Paired page reports playback ~1/s: phone remote progress + mode.
 internal fun ClientHandler.handleRemoteState(
     os: OutputStream,
     params: Map<String, String>,

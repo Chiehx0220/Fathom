@@ -137,9 +137,7 @@ class ViewHistory private constructor(
     suspend fun getSavedPosition(videoId: String): Long = dao.getPosition(videoId) ?: 0L
 
     /**
-     * Update just the progress columns of an already-existing entry (e.g. a periodic
-     * watch-progress ping that has no title/thumbnail/channel to report). No-ops if the
-     * video has no history row yet - callers that might hit that should [touchHistoryEntry] first.
+     * Progress columns of an existing entry only (e.g. periodic watch-progress ping without title/thumbnail/channel). No-op without a history row: [touchHistoryEntry] first.
      */
     suspend fun updatePlaybackProgress(
         videoId: String,
@@ -149,10 +147,10 @@ class ViewHistory private constructor(
         dao.updateProgress(videoId, position, duration, System.currentTimeMillis())
     }
 
-    /** Bare IDs of every non-music, non-local video the user has watched (any progress > 0). */
+    /** Bare IDs of watched non-music non-local videos (progress > 0). */
     suspend fun getAllWatchedVideoIds(): Set<String> = dao.getAllWatchedVideoIds().toHashSet()
 
-    /** Same as [getAllWatchedVideoIds], paired with each video's serviceId. */
+    /** [getAllWatchedVideoIds] + serviceId. */
     suspend fun getAllWatchedVideoIdentities(): List<WatchedVideoIdentity> =
         dao.getAllWatchedVideoIdentities().map { it.copy(serviceId = serviceIdOfVideo(it.videoId, it.serviceId)) }
 

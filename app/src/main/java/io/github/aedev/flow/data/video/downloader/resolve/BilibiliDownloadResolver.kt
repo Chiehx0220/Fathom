@@ -10,9 +10,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Resolves the downloads of Bilibili ids through Bilibili's own API; [DownloadStreamResolver] hands it every
- * request first and carries on with InnerTube when this answers `null`. The tracks are plain MP4 URLs, offered
- * to the same selection as YouTube's.
+ * Bilibili download resolution via Bilibili API; [DownloadStreamResolver] asks first, falls back to InnerTube on `null`.
+ * Plain MP4 URLs, same selection as YouTube.
  */
 @Singleton
 class BilibiliDownloadResolver

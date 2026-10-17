@@ -13,7 +13,7 @@ class RemoteWebSocketServer(
     private val connections: MutableSet<WebSocket> = Collections.newSetFromMap(ConcurrentHashMap())
 
     init {
-        // Restarting the server (or the app) soon after a stop would otherwise fail to bind while the old sockets linger.
+        // Restart soon after stop: bind fails while old sockets linger.
         isReuseAddr = true
     }
 
@@ -46,10 +46,10 @@ class RemoteWebSocketServer(
             return
         }
 
-        // Forward the message to LocalHttpServer pending commands queue
+        // Forward to LocalHttpServer pending-commands queue
         RemoteSession.addPendingCommand(message)
 
-        // Broadcast immediately to other connected clients (like the TV browser)
+        // Broadcast to other connected clients (e.g. TV browser)
         broadcastCommand(message, conn)
     }
 
@@ -59,7 +59,7 @@ class RemoteWebSocketServer(
         conn: WebSocket?,
         ex: Exception,
     ) {
-        // conn == null means the server itself failed (typically it could not bind its port), so nothing can connect.
+        // conn == null: server failed (typically port bind): nothing can connect.
         serverLog(if (conn == null) "WebSocket server failed on port $port: $ex" else "WebSocket error: " + ex.message)
         if (conn != null) {
             connections.remove(conn)

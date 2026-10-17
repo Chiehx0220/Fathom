@@ -1,7 +1,6 @@
 /*
- * Live chat over Bilibili's WebSocket, after PipePipeExtractor (GPL-3.0) BilibiliWebSocketClient.java.
- * Built on OkHttp's WebSocket and coroutines instead of a second WebSocket library: the heartbeat is a
- * coroutine that ends with the flow, and a dropped socket is reopened with a growing delay.
+ * Live chat over Bilibili WebSocket, after PipePipeExtractor (GPL-3.0) BilibiliWebSocketClient.java.
+ * OkHttp WebSocket + coroutines; heartbeat coroutine bound to the flow; reconnect with growing delay.
  */
 package io.github.aedev.flow.bilibili
 
@@ -30,7 +29,7 @@ internal class BilibiliLiveChat(
     private val live: BilibiliLive,
     private val json: Json,
 ) {
-    /** The room's chat until the collector stops, across dropped connections. */
+    /** Room chat across reconnects, until collector stops. */
     fun messages(roomId: Long): Flow<BilibiliLiveMessage> =
         flow {
             var failures = 0
@@ -38,7 +37,7 @@ internal class BilibiliLiveChat(
             while (currentCoroutineContext().isActive) {
                 try {
                     val access = live.chatAccess(roomId)
-                    // Each retry tries the next host, so one that is down or far does not hold the room's chat.
+                    // Retry rotates host.
                     connect(access, access.endpoints[attempt++ % access.endpoints.size]).collect {
                         failures = 0
                         emit(it)
@@ -53,7 +52,7 @@ internal class BilibiliLiveChat(
             }
         }
 
-    /** One connection; ends when the socket closes or fails. */
+    /** One connection; ends on close/failure. */
     private fun connect(
         access: BilibiliLiveChatAccess,
         endpoint: String,

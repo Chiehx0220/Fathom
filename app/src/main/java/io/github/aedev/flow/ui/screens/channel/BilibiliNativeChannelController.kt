@@ -19,9 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
-/**
- * A Bilibili channel's header and tabs through the native client: both tabs read [BilibiliApi].
- */
+/** Bilibili channel header + tabs via native client ([BilibiliApi]). */
 internal class BilibiliNativeChannelController(
     private val scope: CoroutineScope,
     apiProvider: () -> BilibiliApi,

@@ -8,11 +8,10 @@ import kotlinx.coroutines.runBlocking
 import java.io.OutputStream
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
-// Web "Download" button -> DownloadController, the same queue as the app's Quick Actions download.
-// The queue worker re-extracts and selects the stream; this only describes the video and quality.
-// YouTube only: the button is not rendered for other services (app/js/watch.js).
+// Web "Download" button → DownloadController (queue shared with Quick Actions download). Worker re-extracts + selects stream;
+// this describes video + quality only. YouTube only (button hidden otherwise, app/js/watch.js).
 
-// Web-facing state names for the button. "none" also covers CANCELLED (nothing left to show).
+// Web button state names. "none" also covers CANCELLED.
 private fun DownloadItemStatus.webState(): String =
     when (this) {
         DownloadItemStatus.PENDING -> "pending"
@@ -32,14 +31,13 @@ private fun HistoryDbHelper.downloadStateFor(videoId: String): String {
     val manager = localServerEntryPoint(appContext).videoDownloadManager()
     val download = runBlocking { manager.getDownloadWithItems(videoId) } ?: return downloadStateJson("none", 0)
     val state = download.overallStatus.webState()
-    // Room's byte counts are stale mid-download (see VideoDownloadManager.latestProgress); use the
-    // live cache while active, else fall back to the persisted (and by then correct) progress.
+    // Room byte counts stale mid-download (VideoDownloadManager.latestProgress): live cache while active, else persisted progress.
     val live = if (state == "downloading" || state == "pending") manager.latestProgress(videoId) else null
     val progress = ((live?.progress ?: download.progress) * 100).toInt().coerceIn(0, 100)
     return downloadStateJson(state, progress)
 }
 
-/** `height`: tallest wanted (0 = best); `codec`: vp9/h264/av1/...; absent follows the default policy. `audio=1`: audio only. */
+/** `height`: tallest wanted (0 = best); `codec`: vp9/h264/av1/...; absent: default policy. `audio=1`: audio only. */
 internal class DownloadChoice(
     val height: Int?,
     val codec: String?,
@@ -57,7 +55,7 @@ private val DOWNLOAD_CODECS = setOf("vp9", "h264", "av1", "hevc", "vp8")
 
 private const val MAX_DOWNLOAD_HEIGHT = 4320
 
-// Enqueues at [choice] or the default download quality. Returns null on success, else a user-facing error.
+// Enqueue at [choice] or default download quality. Null on success, else user-facing error.
 private fun HistoryDbHelper.startNativeDownload(
     serviceId: Int,
     mediaUrl: String,
@@ -94,7 +92,7 @@ private fun HistoryDbHelper.startNativeDownload(
 }
 
 // GET /api/v1/download?action=status|start|cancel|delete&id=<video url>&serviceId=<n>
-// Every action answers with the current {"state","progress"} so the button re-renders from one shape.
+// Every action answers current {"state","progress"}.
 internal fun ClientHandler.handleApiDownload(
     os: OutputStream,
     params: Map<String, String>,
@@ -128,8 +126,7 @@ internal fun ClientHandler.handleApiDownload(
                 sendResponse(os, 500, ApiRenderer.errorJson(error), "application/json")
                 return
             }
-            // Service creates its DB rows asynchronously - report "pending" rather than "none" so
-            // the button flips immediately instead of waiting for the first poll.
+            // Service creates DB rows async: report "pending", not "none" (button flips before first poll).
             sendResponse(os, 200, downloadStateJson("pending", 0), "application/json")
         }
 

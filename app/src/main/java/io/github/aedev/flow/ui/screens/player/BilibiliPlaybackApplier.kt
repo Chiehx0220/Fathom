@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** The Bilibili steps of [PlaybackSessionApplier], kept out of that upstream file so merges stay clean. */
+/** Bilibili steps of [PlaybackSessionApplier]; outside the upstream file (clean merges). */
 internal class BilibiliPlaybackApplier(
     private val context: Context,
     private val uiState: MutableStateFlow<VideoPlayerUiState>,
@@ -73,8 +73,7 @@ internal class BilibiliPlaybackApplier(
     }
 
     /**
-     * Bilibili's live room: an HLS master through the same player path as a YouTube live stream. A room
-     * has no related lane, and its chat is opened by the danmaku layer, only while that is on screen.
+     * Bilibili live room: HLS master via the YouTube live-stream player path. No related lane; chat opened by danmaku layer only while on screen.
      */
     private suspend fun prepareLiveStreamFromBilibili(
         load: LoadContext,
@@ -113,8 +112,7 @@ internal class BilibiliPlaybackApplier(
     }
 
     /**
-     * The Bilibili counterpart of [prepareVodStreamFromInnerTube]. Bilibili has no watch-response
-     * metadata (heatmap, chapters, category, watch info), so only the lanes it can fill are armed.
+     * Bilibili counterpart of [prepareVodStreamFromInnerTube]. No watch-response metadata (heatmap, chapters, category, watch info): only fillable lanes armed.
      */
     private suspend fun prepareVodStreamFromBilibili(
         load: LoadContext,
@@ -181,7 +179,7 @@ internal class BilibiliPlaybackApplier(
         playerManager.loadDanmaku(bilibiliApi(context), playback.info)
     }
 
-    /** Off the playback path: a slow or failing chapter request must never delay the first frame. */
+    /** Off playback path: slow/failing chapter request never delays first frame. */
     private fun loadChapters(
         load: LoadContext,
         info: BilibiliVideoInfo,

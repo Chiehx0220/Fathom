@@ -41,7 +41,7 @@ enum class TransferStatus {
     FINISHED,
 }
 
-/** What one run of [RangeDownloader] ended on. */
+/** End state of one [RangeDownloader] run. */
 sealed interface TransferResult {
     data object Completed : TransferResult
 

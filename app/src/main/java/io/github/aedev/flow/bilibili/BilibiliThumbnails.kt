@@ -4,20 +4,18 @@ import io.github.aedev.flow.data.local.ThumbnailQuality
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 
 /*
- * Bilibili's image host (hdslb.com) resizes on request: "<cover url>@320w.webp" is the same cover at
- * 320 px wide, in the original aspect ratio. A cover is often a PNG of a megabyte or more, so the
- * thumbnail quality setting has to reach it the way it reaches YouTube's tiers.
+ * hdslb.com resizes on request: "<cover url>@320w.webp" = same cover, 320 px wide, aspect kept.
+ * Covers are often multi-MB PNGs; thumbnail quality setting must apply like YouTube tiers.
  */
 
-/** Whether [id] has no `i.ytimg.com` thumbnail to build a link to: a device file, or a Bilibili video, whose cover only Bilibili knows. */
+/** No `i.ytimg.com` thumbnail exists: device file, or Bilibili video (cover known only to Bilibili). */
 fun hasNoYoutubeThumbnail(id: String): Boolean = LocalMediaIds.isLocal(id) || BilibiliVideoId.isBilibili(id)
 
 private val RESIZABLE_COVER = Regex("""^https?://[^/@]+\.hdslb\.com/bfs/[^@]+$""", RegexOption.IGNORE_CASE)
 
 /**
- * [url] resized for [quality], best first and always ending in [url] itself, or null when [url] is not
- * a Bilibili cover this can resize (another host, or already carrying a size). HIGH is the original,
- * as it was before thumbnail quality was a choice. OFF fetches nothing, so nothing is resized either.
+ * [url] resized for [quality], best first, ending in [url]; null if [url] is not a resizable Bilibili cover
+ * (other host, or size already set). HIGH = original. OFF = no fetch, no resize.
  */
 fun bilibiliThumbnailCandidates(
     url: String,

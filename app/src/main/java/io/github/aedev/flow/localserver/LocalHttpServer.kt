@@ -6,7 +6,7 @@ import java.net.Socket
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-/** Serves the local web UI and its API, and the WebSocket the remote-control pages listen on. */
+/** Local web UI + API + remote-control WebSocket. */
 class LocalHttpServer(
     private val context: android.content.Context,
     private val port: Int,

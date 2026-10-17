@@ -3,17 +3,14 @@ package io.github.aedev.flow.localserver
 import org.schabi.newpipe.extractor.stream.StreamExtractor
 import java.util.concurrent.TimeUnit
 
-/** Process-wide caches the proxy handlers share, and the HTTP client they fetch with. */
+/** Process-wide proxy-handler caches + fetch HTTP client. */
 internal object LocalServerCaches {
     internal val streamUrlCache = StreamUrlCache()
 
-    // The InnerTube client that minted each cached URL, keyed the same way - a googlevideo CDN
-    // 403s if the fetching User-Agent does not match the client, so this replaces guessing it
-    // back out of the URL's own query string.
+    // InnerTube client that minted each cached URL (same key): googlevideo CDN 403s on User-Agent/client mismatch; replaces guessing from URL query.
     internal val streamUaCache = StreamUrlCache()
 
-    // One extraction per video, shared by the watch and manifest handlers.
-    // Smaller than streamUrlCache: entries hold parsed extractor state.
+    // One extraction per video, shared by watch + manifest handlers. Smaller than streamUrlCache (parsed extractor state).
     internal val extractorCache = ExtractorCache()
     internal val httpClient: okhttp3.OkHttpClient =
         okhttp3.OkHttpClient

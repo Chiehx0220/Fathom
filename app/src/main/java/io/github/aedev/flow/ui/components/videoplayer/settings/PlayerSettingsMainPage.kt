@@ -149,8 +149,7 @@ internal fun PlayerSettingsMainPage(
 
     FlowSectionHeader(stringResource(R.string.captions))
     FlowRowGroup {
-        // Bilibili-only: danmaku has no equivalent for any other service (see
-        // StreamingService.getBulletCommentsExtractor()), so this row only exists on that page.
+        // Bilibili only: danmaku has no equivalent elsewhere (StreamingService.getBulletCommentsExtractor()).
         if (showDanmakuOption) {
             FlowSwitchRow(
                 leadingIcon = Icons.Filled.ChatBubble,

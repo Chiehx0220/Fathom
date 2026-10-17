@@ -148,7 +148,7 @@ class HomeViewModel
                     initialValue = io.github.aedev.flow.data.local.HomeContentSourceFilter.YOUTUBE,
                 )
 
-        /** Persists the filter and reloads immediately so the change is visible without a manual refresh. */
+        /** Persists filter, reloads immediately. */
         fun setContentSourceFilter(filter: io.github.aedev.flow.data.local.HomeContentSourceFilter) {
             viewModelScope.launch(PerformanceDispatcher.diskIO) {
                 playerPreferences.setHomeContentSourceFilter(filter)
@@ -589,7 +589,7 @@ class HomeViewModel
 
                         val discoveryPairs = results.discovery
                         val bilibili = bilibiliFeeds.await()
-                        // Bilibili's trending joins discovery: the feed no longer has a separate viral lane.
+                        // Bilibili trending joins discovery: no separate viral lane.
                         val rawDiscovery = discoveryPairs.flatMap { it.second } + bilibili.viral
                         val relatedFetch = results.related
                         val rawRelated = relatedFetch.candidates
@@ -692,9 +692,8 @@ class HomeViewModel
                                 subCount = userSubs.size,
                                 totalInteractions = brain.totalInteractions,
                             )
-                        // Home-only source filter (YouTube/Bilibili/mix) - Subscriptions and Search are
-                        // untouched. Applied after assembly, not per-lane, since only the fresh-subs
-                        // lane can ever contain a non-YouTube video right now (see HomeContentSourceFilter).
+                        // Home-only source filter (YouTube/Bilibili/mix); Subscriptions, Search untouched. Applied after assembly, not per lane:
+                        // only the fresh-subs lane can hold a non-YouTube video (HomeContentSourceFilter).
                         val sourceFilterServiceId = sourceFilter.serviceId
                         val finalMix =
                             sourceFilterServiceId?.let { id -> mix.videos.filter { it.serviceId == id } } ?: mix.videos.spreadByService()

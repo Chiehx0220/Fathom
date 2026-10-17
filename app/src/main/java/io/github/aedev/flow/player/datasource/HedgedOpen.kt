@@ -8,14 +8,13 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Opens one resource on several mirrors and keeps the first to answer. The first mirror starts alone;
- * the next starts if it is slow past the hedge delay or fails. The others are cancelled once one wins.
+ * Opens a resource on several mirrors, keeps first answer. First mirror alone; next starts if slow past hedge delay or failed; others cancelled on win.
  */
 internal object HedgedOpen {
     class Winner<T>(
         val value: T,
         val url: String,
-        /** True when the winner was not the first mirror tried, i.e. a slow or failed start was covered. */
+        /** Winner was not first mirror: slow/failed start covered. */
         val hedged: Boolean,
     )
 
@@ -31,12 +30,11 @@ internal object HedgedOpen {
     }
 
     /**
-     * @param urls the mirrors, best first.
-     * @param open opens one mirror and returns what it opened; may block, may throw.
-     * @param close releases something [open] returned but that lost the race.
-     * @throws InterruptedIOException if the calling thread is interrupted while waiting, after
-     *   cancelling every attempt.
-     * @throws Throwable the first failure, when every mirror failed.
+     * @param urls mirrors, best first.
+     * @param open opens one mirror; may block, may throw.
+     * @param close releases what [open] returned for a race loser.
+     * @throws InterruptedIOException on calling-thread interrupt while waiting, after cancelling every attempt.
+     * @throws Throwable first failure when all mirrors failed.
      */
     fun <T> race(
         urls: List<String>,
@@ -70,7 +68,7 @@ internal object HedgedOpen {
         fun cancelAll() {
             decided.set(true)
             futures.forEach { it.cancel(true) }
-            // An attempt can finish between the last poll and now; release what it opened.
+            // Attempt may finish between last poll and now: release what it opened.
             while (true) {
                 val late = outcomes.poll() ?: break
                 if (late is Outcome.Opened<T>) close(late.value)

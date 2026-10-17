@@ -6,8 +6,7 @@ import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 
 /**
- * The server's pages show one image per item. NewPipeExtractor keeps a list of sizes; these read the
- * biggest one and write a single-entry list, so the pages need not know about the list.
+ * One image per item. NewPipeExtractor keeps a size list; these read the biggest, write a single-entry list.
  */
 internal var InfoItem.thumbnailUrl: String?
     get() = thumbnails.bestUrl()

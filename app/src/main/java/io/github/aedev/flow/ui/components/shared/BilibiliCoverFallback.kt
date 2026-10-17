@@ -23,14 +23,12 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
 
 /*
- * A Bilibili cover cannot be derived from the video id the way YouTube's can, so a Bilibili card that was
- * saved without one (an import whose export lacked covers) asks Bilibili for it when the card is shown:
- * only the covers on screen are ever asked for, each once, and a card that already has its cover never asks.
+ * Bilibili cover not derivable from video id: a card saved without one (e.g. import lacking covers) asks Bilibili on display:
+ * visible covers only, once each, never when a cover exists.
  */
 
 /**
- * The thumbnail candidates of a card: [this] when it has any, otherwise, for a Bilibili video, those of the cover
- * Bilibili gives it once it has answered (the card shows its placeholder until then).
+ * Card thumbnail candidates: [this] if any; else for Bilibili, the cover Bilibili returns (placeholder until then).
  */
 @Composable
 internal fun List<Any>.orBilibiliCover(
@@ -52,9 +50,8 @@ internal fun List<Any>.orBilibiliCover(
 }
 
 /**
- * Covers asked of Bilibili: one request per video however many cards want it, at most [MAX_PARALLEL] at once,
- * and a video that could not be answered is left alone for [RETRY_MS] instead of being asked again by every recomposition.
- * The requests run on [scope], so a card scrolling away does not cancel the answer the next card is waiting for.
+ * Bilibili covers: one request per video (shared across cards), max [MAX_PARALLEL] concurrent, failures skipped for [RETRY_MS] (no per-recomposition retry).
+ * Runs on [scope]: card scroll-away does not cancel another card's pending answer.
  */
 internal class BilibiliCoverCache(
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
@@ -67,7 +64,7 @@ internal class BilibiliCoverCache(
     private val inFlight = ConcurrentHashMap<String, Deferred<String?>>()
     private val gate = Semaphore(MAX_PARALLEL)
 
-    /** The cover of [bvid], or null when Bilibili has none to give right now. */
+    /** Cover of [bvid]; null if none available now. */
     suspend fun coverOf(
         context: Context,
         bvid: String,

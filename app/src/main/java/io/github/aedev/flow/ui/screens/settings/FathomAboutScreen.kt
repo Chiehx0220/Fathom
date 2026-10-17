@@ -62,7 +62,7 @@ private val LogoSize = 72.dp
 private val HeaderPadding = 24.dp
 private val HeaderSpacing = 8.dp
 
-/** Fathom's About page, laid out like the upstream one but with Fathom's own project and credits. */
+/** Fathom About page; layout as upstream, Fathom project + credits. */
 @Composable
 internal fun FathomAboutScreen(onBack: (() -> Unit)?) {
     val uriHandler = LocalUriHandler.current
@@ -173,7 +173,7 @@ internal fun FathomAboutScreen(onBack: (() -> Unit)?) {
     }
 }
 
-/** One row of the page: a title, a line under it, a leading icon, no chevron. */
+/** Page row: title, subline, leading icon, no chevron. */
 private fun SettingsGroupScope.link(
     key: String,
     title: @Composable () -> String,
@@ -226,7 +226,7 @@ private fun FathomAboutHeader() {
     }
 }
 
-/** A person's card at the top of the page: avatar, what they are to the project, their name and role. */
+/** Person card: avatar, project role, name, role. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun CreatorRow(

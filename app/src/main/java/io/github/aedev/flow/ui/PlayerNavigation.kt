@@ -13,6 +13,6 @@ import io.github.aedev.flow.player.stream.PlaybackPrefetcher
  */
 internal fun NavHostController.navigateToPlayer(videoId: String) {
     PlaybackPrefetcher.prefetch(videoId)
-    // Encoded because a Bilibili id can hold "?" or ":" (e.g. "BVxxxx?p=1", "live:123"), which would break the route.
+    // Encoded: Bilibili id may hold "?" or ":" ("BVxxxx?p=1", "live:123"): breaks the route.
     navigate("player/${Uri.encode(videoId)}")
 }

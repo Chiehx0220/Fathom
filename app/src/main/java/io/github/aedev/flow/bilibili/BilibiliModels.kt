@@ -1,7 +1,6 @@
 /*
- * What Flow's code gets back from [BilibiliApi]. The JSON shapes live in BilibiliWire.kt.
- * Modelled on the data PipePipeExtractor (GPL-3.0, commit aef9726d5b1172213066f60bc338eb4278651d61)
- * reads from Bilibili.
+ * [BilibiliApi] results; JSON shapes in BilibiliWire.kt.
+ * Modelled on PipePipeExtractor (GPL-3.0, commit aef9726d5b1172213066f60bc338eb4278651d61).
  */
 package io.github.aedev.flow.bilibili
 
@@ -23,7 +22,7 @@ data class BilibiliPage(
 data class BilibiliVideoInfo(
     val bvid: String,
     val aid: Long,
-    /** cid of the requested part; playback and danmaku are keyed on it. */
+    /** cid of the part; keys playback and danmaku. */
     val cid: Long,
     val title: String,
     val description: String,
@@ -34,15 +33,15 @@ data class BilibiliVideoInfo(
     val likeCount: Long,
     val uploadTimeSec: Long,
     val pages: List<BilibiliPage>,
-    /** True when the video needs payment; its [BilibiliPlayback] may come back empty. */
+    /** Paid video; [BilibiliPlayback] may be empty. */
     val isPaid: Boolean,
-    /** The partition the uploader filed it under, "" when unknown. */
+    /** Uploader's partition; "" if unknown. */
     val category: String = "",
 )
 
-/** One DASH stream. [initRange] and [indexRange] are inclusive byte ranges into [url]. */
+/** DASH stream; [initRange], [indexRange]: inclusive byte ranges into [url]. */
 data class BilibiliStreamFormat(
-    /** Bilibili's quality id: 120 = 4K, 80 = 1080p, 30280 = 192k audio, and so on. */
+    /** Bilibili quality id: 120 = 4K, 80 = 1080p, 30280 = 192k audio. */
     val id: Int,
     val url: String,
     val backupUrls: List<String>,
@@ -59,7 +58,7 @@ data class BilibiliPlayback(
     val info: BilibiliVideoInfo,
     val videoFormats: List<BilibiliStreamFormat>,
     val audioFormats: List<BilibiliStreamFormat>,
-    /** Bilibili's CDN refuses media requests without a bilibili.com Referer. */
+    /** CDN requires bilibili.com Referer. */
     val requestHeaders: Map<String, String>,
 )
 
@@ -102,7 +101,7 @@ sealed interface BilibiliSearchItem {
         val uploader: BilibiliUploader,
         val uploadTimeSec: Long,
         val category: String = "",
-        /** The tags the uploader gave it. */
+        /** Uploader tags. */
         val tags: List<String> = emptyList(),
     ) : BilibiliSearchItem
 
@@ -131,21 +130,21 @@ data class BilibiliSearchPage(
 
 enum class BilibiliLiveStatus { OFFLINE, LIVE, REBROADCAST }
 
-/** A live room's page: who is streaming, what, and since when. */
+/** Room page: uploader, title, start time. */
 data class BilibiliLiveRoom(
-    /** The long room number; the one in a link may be a short alias of it. */
+    /** Long room number (link may carry a short alias). */
     val roomId: Long,
     val title: String,
     val coverUrl: String,
     val uploader: BilibiliUploader,
     val viewerCount: Long,
-    /** Epoch seconds the stream started, 0 when unknown. */
+    /** Stream start, epoch seconds; 0 unknown. */
     val startedAtSec: Long,
     val tags: List<String>,
     val status: BilibiliLiveStatus,
 )
 
-/** What a live room can be played from: an HLS master playlist with every quality, or a single FLV. */
+/** Room playback source: HLS master playlist (all qualities) or single FLV. */
 data class BilibiliLiveStreams(
     val hlsMasterUrl: String?,
     val flvUrl: String?,
@@ -156,7 +155,7 @@ data class BilibiliLivePlayback(
     val streams: BilibiliLiveStreams,
 )
 
-/** A live room in a list: recommendations and search results. */
+/** Room list item: recommendations, search. */
 data class BilibiliLiveItem(
     val roomId: Long,
     val title: String,
@@ -167,16 +166,16 @@ data class BilibiliLiveItem(
     val startedAtSec: Long = 0,
 )
 
-/** Where and how to open a room's chat socket. */
+/** Chat socket endpoint + auth. */
 data class BilibiliLiveChatAccess(
     val roomId: Long,
     val token: String,
-    /** Full "wss://host:port/sub" addresses, best first. */
+    /** "wss://host:port/sub", best first. */
     val endpoints: List<String>,
     val buvid: String?,
 )
 
-/** One event of a room's chat. */
+/** Chat event. */
 sealed interface BilibiliLiveMessage {
     data class Chat(
         val text: String,
@@ -218,11 +217,11 @@ data class BilibiliChannelVideo(
 data class BilibiliChannelVideosPage(
     val videos: List<BilibiliChannelVideo>,
     val hasMore: Boolean,
-    /** The app API pages by the aid of the last video. */
+    /** App API pages by last video's aid. */
     val lastAid: Long,
 )
 
-/** Position in an uploader's video list: the web APIs page by number, the app API by aid. */
+/** Uploader video-list position: web API by number, app API by aid. */
 data class BilibiliChannelPageKey(
     val page: Int,
     val lastAid: Long,
@@ -230,7 +229,7 @@ data class BilibiliChannelPageKey(
 
 enum class BilibiliPlaylistKind { SERIES, SEASON }
 
-/** A series or season an uploader published. */
+/** Series/season. */
 data class BilibiliPlaylistRef(
     val kind: BilibiliPlaylistKind,
     val mid: Long,
@@ -267,13 +266,13 @@ data class BilibiliComment(
     val isLikedByUploader: Boolean,
 )
 
-/** [nextOffset] is null on the last page. */
+/** [nextOffset] null on last page. */
 data class BilibiliCommentsPage(
     val comments: List<BilibiliComment>,
     val nextOffset: String?,
 )
 
-/** [nextPage] is null on the last page. */
+/** [nextPage] null on last page. */
 data class BilibiliRepliesPage(
     val replies: List<BilibiliComment>,
     val nextPage: Int?,
@@ -283,7 +282,7 @@ data class BilibiliRepliesPage(
 
 // region Failures
 
-/** Lets callers tell a Bilibili failure from a plain network error. */
+/** Distinguishes Bilibili failure from plain network error. */
 sealed class BilibiliException(
     message: String,
 ) : Exception(message)
@@ -304,7 +303,7 @@ class BilibiliLiveNotStartedException(
     message: String,
 ) : BilibiliException(message)
 
-/** The room is replaying uploaded videos, which the live player does not cover. */
+/** Room replays uploaded videos; unsupported by the live player. */
 class BilibiliLiveRebroadcastException(
     message: String,
 ) : BilibiliException(message)

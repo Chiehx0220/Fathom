@@ -275,9 +275,7 @@ class SubscriptionFeedRepository
         }
 
         /**
-         * Same as [seedFromNotificationCheck] above, for services with no RSS shortcut at all
-         * (e.g. Bilibili) whose background check already resolved full [Video] rows via the
-         * channel-tabs path rather than parsing a feed.
+         * As [seedFromNotificationCheck], for services without RSS (e.g. Bilibili): background check already resolved [Video] rows via channel-tabs.
          */
         suspend fun seedFromNotificationCheck(videos: List<Video>) {
             if (videos.isEmpty()) return

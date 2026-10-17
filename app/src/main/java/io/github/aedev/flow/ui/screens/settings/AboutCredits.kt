@@ -8,7 +8,7 @@ internal data class Credit(
     val url: String,
 )
 
-// What this fork's own features are built on. NewPipe Extractor, which YouTube runs on, is listed by the About screen itself.
+// Libraries behind fork features. NewPipe Extractor (YouTube) listed by About screen itself.
 internal val CREDITS =
     listOf(
         Credit("PipePipeExtractor", R.string.about_credit_pipepipe, "https://github.com/InfinityLoop1308/PipePipeExtractor"),

@@ -12,16 +12,15 @@ import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** A few Bilibili uploaders' uploads read together, and the reason for each one that could not be read. */
+/** Uploads of several Bilibili uploaders + per-uploader failure reasons. */
 internal data class BilibiliFeedChunk(
     val videos: List<Video>,
     val failureReasons: Map<String, String>,
 )
 
 /**
- * Bilibili's side of a subscription refresh, kept out of RssSubscriptionService so that upstream file only
- * carries a call. Bilibili has no RSS feed and no channel tabs: an uploader's latest uploads come from its
- * own API, once the YouTube phases are done.
+ * Bilibili half of subscription refresh; upstream RssSubscriptionService only calls it.
+ * No RSS, no channel tabs: latest uploads via native API, after the YouTube phases.
  */
 @Singleton
 class BilibiliSubscriptionFeed
@@ -29,7 +28,7 @@ class BilibiliSubscriptionFeed
     constructor(
         private val bilibiliApi: BilibiliApi,
     ) {
-        /** The latest uploads of one Bilibili uploader, [channelId] being their numeric id; [label] is the subscribed name and avatar. */
+        /** Latest uploads of one Bilibili uploader; [channelId] = numeric id, [label] = subscribed name + avatar. */
         suspend fun latestVideos(
             channelId: String,
             limit: Int = 5,
@@ -39,10 +38,7 @@ class BilibiliSubscriptionFeed
             return bilibiliApi.latestVideos(mid, limit, channelName = label?.name.orEmpty(), channelAvatarUrl = label?.avatarUrl.orEmpty())
         }
 
-        /**
-         * Reads [channelIds] a few at a time, handing each group to [onChunk] as soon as it is read. Uploads
-         * older than [minimumDateMillis] are dropped.
-         */
+        /** Reads [channelIds] in chunks, each chunk to [onChunk]. Uploads older than [minimumDateMillis] dropped. */
         internal suspend fun readInChunks(
             channelIds: List<String>,
             labelByChannel: Map<String, ChannelLabel>,
@@ -83,7 +79,7 @@ class BilibiliSubscriptionFeed
         private companion object {
             const val TAG = "BilibiliSubscriptionFeed"
 
-            /** Bilibili blocks bursts, so its uploaders are read a few at a time. */
+            /** Bilibili rate-limits bursts: chunked reads. */
             const val CHUNK_SIZE = 3
             const val MAX_VIDEOS_PER_CHANNEL = 60
         }

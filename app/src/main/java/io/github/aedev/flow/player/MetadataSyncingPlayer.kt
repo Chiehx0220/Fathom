@@ -10,16 +10,12 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
- * A [ForwardingPlayer] whose media session can be told that [getMediaMetadata] now answers differently.
+ * [ForwardingPlayer] letting the media session re-read [getMediaMetadata].
  *
- * Media3's session attaches its own Player.Listener straight to whatever player this wraps (that's
- * ForwardingPlayer's default addListener/removeListener), and only re-asks getMediaMetadata() when that
- * real player fires an event - a transition, a timeline change. GlobalPlayerState.currentVideo finishes
- * enriching well after that event already fired for this video, so overriding the getter alone is
- * invisible to the session: it's stuck on whatever it read at that first ask. Tracking the session's
- * listener here too (still forwarded to the real player as before, so normal playback events are
- * untouched) lets [notifyMediaMetadataChanged] push the corrected value through it directly once
- * GlobalPlayerState actually has it.
+ * Media3 session attaches its Player.Listener to the wrapped player (ForwardingPlayer default addListener/removeListener) and re-asks
+ * getMediaMetadata() only on real-player events (transition, timeline change). GlobalPlayerState.currentVideo enriches after that event:
+ * overriding the getter alone is invisible (session keeps first read). Tracking the session listener here (still forwarded)
+ * lets [notifyMediaMetadataChanged] push the corrected value once available.
  */
 internal open class MetadataSyncingPlayer(
     wrapped: Player,
@@ -54,7 +50,7 @@ internal open class MetadataSyncingPlayer(
         }
     }
 
-    /** Pushes the session's metadata again whenever [currentVideo] changes, until the returned job is cancelled. */
+    /** Re-pushes session metadata on every [currentVideo] change, until returned job cancelled. */
     fun syncMetadataWith(
         scope: CoroutineScope,
         currentVideo: Flow<Video?>,

@@ -8,17 +8,17 @@ import java.io.OutputStream
 import java.net.URI
 import java.net.URLEncoder
 
-// Bilibili live rooms for the web page: the HLS relay, whose CDN wants a Referer a browser cannot send, and the chat poll.
+// Bilibili live rooms for the web page: HLS relay (CDN needs a Referer browsers cannot send) + chat poll.
 
 private const val PLAYLIST_TYPE = "application/vnd.apple.mpegurl"
 private val URI_ATTRIBUTE = Regex("""URI="([^"]*)"""")
 
-/** The relay path for [url], the address a playlist or segment is fetched from through this server. */
+/** Relay path for [url] (playlist/segment fetched through this server). */
 internal fun hlsRelayPath(url: String): String = "/hls?u=" + URLEncoder.encode(url, "UTF-8")
 
 /**
- * A playlist with every address it holds pointed back at the relay, made absolute against [base] first.
- * The content-steering tag is dropped: it names a steering server the browser would reach without the Referer.
+ * Playlist with all addresses pointed at the relay, absolutized against [base].
+ * Content-steering tag dropped (steering server reached without Referer).
  */
 internal fun rewriteHlsPlaylist(
     playlist: String,
@@ -38,15 +38,14 @@ internal fun rewriteHlsPlaylist(
 }
 
 /**
- * The address a live room's master playlist comes from. It names the stream's CDN nodes, which are the only hosts
- * the segments are fetched from, so this one path of one Bilibili host is let through alongside them.
+ * Origin of a live room's master playlist. Segment hosts = stream CDN nodes only; this one path of one Bilibili host allowed alongside.
  */
 internal fun isLiveGateway(url: String): Boolean {
     val parsed = url.toHttpUrlOrNull() ?: return false
     return parsed.scheme == "https" && parsed.host == "api.live.bilibili.com" && parsed.encodedPath.startsWith("/xlive/play-gateway/")
 }
 
-/** Relays one HLS playlist or segment of a Bilibili CDN or live gateway, refusing any other address so this is not an open proxy. */
+/** Relays one HLS playlist/segment of a Bilibili CDN or live gateway; other addresses refused (not an open proxy). */
 @Throws(Exception::class)
 internal fun ClientHandler.handleHlsProxy(
     os: OutputStream,
@@ -93,14 +92,14 @@ internal fun ClientHandler.handleHlsProxy(
             try {
                 body.byteStream().copyTo(os)
             } catch (e: IOException) {
-                // The player closed the connection: it moved on to a newer segment.
+                // Player closed the connection (moved to newer segment).
             }
         }
         os.flush()
     }
 }
 
-/** The chat of a live room since the position the last poll returned; the first poll, with no position, only learns it. */
+/** Room chat since last poll's position; first poll (no position) only learns it. */
 @Throws(Exception::class)
 internal fun ClientHandler.handleLiveChat(
     os: OutputStream,

@@ -20,16 +20,13 @@ import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.danmaku.toDanmakuComment
 
-// A hot room posts far more than a screen can show; past this many on screen, newcomers are dropped.
+// Hot room exceeds screen capacity: newcomers dropped past this on-screen count.
 private const val MAX_ON_SCREEN = 60
 
 /**
- * A live Bilibili room's chat over the video. Live messages have no playback position, so the field
- * runs on a play clock that only advances while the player is playing: pausing freezes the comments,
- * and messages that arrive meanwhile are dropped rather than queued into a burst on resume.
+ * Live Bilibili room chat over video. No playback position: play clock advances only while playing; pause freezes, messages arriving meanwhile dropped (no resume burst).
  *
- * The chat socket is opened by the collection below and closed with it, so it is open only while this
- * layer is composed and enabled, and the frame loop runs only while something is on screen and playing.
+ * Chat socket opened/closed by the collection below: open only while composed + enabled; frame loop only while something on screen and playing.
  */
 @Composable
 internal fun BoxScope.LiveDanmakuLayer(

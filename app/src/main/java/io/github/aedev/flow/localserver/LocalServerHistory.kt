@@ -9,16 +9,14 @@ import org.schabi.newpipe.extractor.stream.StreamType
 
 internal fun HistoryDbHelper.viewHistory() = ViewHistory.getInstance(appContext)
 
-/** Bare video IDs the user has watched, as full watch URLs - matches old `getWatchedUrls()` shape. */
+/** Watched bare video IDs as full watch URLs (old `getWatchedUrls()` shape). */
 fun HistoryDbHelper.nativeWatchedUrls(): Set<String> =
     runBlocking {
         viewHistory().getAllWatchedVideoIdentities().map { videoIdToUrl(it.videoId, it.serviceId) }.toSet()
     }
 
 /**
- * Create-or-touch a history entry's metadata without disturbing a saved playback position.
- * `uploaderAvatar` is dropped - no column for it in native's history table, and native's history
- * screen doesn't render one either.
+ * Create-or-touch history entry metadata, saved position kept. `uploaderAvatar` dropped (no column in native history table; native history screen shows none).
  */
 fun HistoryDbHelper.nativeSaveToHistory(
     title: String,
@@ -42,7 +40,7 @@ fun HistoryDbHelper.nativeSaveToHistory(
     }
 }
 
-/** Updates only the progress columns (position/duration) - never clobbers title/thumbnail/channel. */
+/** Progress columns only (position/duration); title/thumbnail/channel untouched. */
 fun HistoryDbHelper.nativeUpdateWatchProgress(
     videoUrl: String,
     percentWatched: Int,
@@ -79,11 +77,11 @@ fun HistoryDbHelper.nativeClearHistory() {
     runBlocking { viewHistory().clearAllHistory() }
 }
 
-/** History rows for the JSON API: the fields of a video, plus how far the viewer got (0-100). */
+/** History rows for the JSON API: video fields + progress (0-100). */
 fun HistoryDbHelper.nativeHistoryJson(): org.json.JSONArray =
     runBlocking {
         val array = org.json.JSONArray()
-        // A video can sit in two rows (one under a whole link, written by the web page before ids were normalised): the most recent one stands.
+        // Video may have two rows (one under a whole link, from web page before id normalisation): most recent wins.
         val seen = HashSet<String>()
         for (entry in viewHistory().getAllHistory().first()) {
             val url = videoIdToUrl(entry.videoId, entry.serviceId)

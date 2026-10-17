@@ -12,10 +12,8 @@ import java.util.TreeMap
 import kotlin.random.Random
 
 /**
- * Everything that is pure computation in Bilibili's request validation: the av/bv id codec, the WBI
- * signature, and the fake "danmaku image" telemetry (dm_img_*) the web player attaches. Nothing
- * here touches the network, so it is all unit-testable; the WBI mixin key itself is fetched by
- * [BilibiliSession].
+ * Pure computation of Bilibili request validation: av/bv codec, WBI signature, fake dm_img_* danmaku-image telemetry.
+ * No network; unit-testable. WBI mixin key fetched by [BilibiliSession].
  */
 object BilibiliSigning {
     // region av <-> bv
@@ -39,7 +37,7 @@ object BilibiliSigning {
         return String(bytes)
     }
 
-    /** The bvid of a row that may carry only the av number, as PipePipe does; null when it has neither. */
+    /** bvid of a row that may carry only av (as PipePipe); null if neither. */
     fun bvidOf(
         bvid: String,
         aid: Long,
@@ -126,7 +124,7 @@ object BilibiliSigning {
             52,
         )
 
-    /** The 32-char mixin key, shuffled out of the two file-name stems in the nav API's wbi_img. */
+    /** 32-char mixin key from the two file-name stems of the nav API's wbi_img. */
     fun mixinKey(
         imgValue: String,
         subValue: String,
@@ -138,9 +136,8 @@ object BilibiliSigning {
     fun percentSpaceEncode(value: String): String = URLEncoder.encode(value, "UTF-8").replace("+", "%20")
 
     /**
-     * Adds w_rid and wts to [params] and returns the query string, in the shape PipePipe sends it:
-     * the hash is over the percent-encoded, key-sorted query, but the query that goes on the wire is
-     * the plain "key=value" join of the insertion-ordered params - the HTTP layer does the escaping.
+     * Adds w_rid, wts to [params]; returns query string in PipePipe's shape:
+     * hash over percent-encoded key-sorted query; wire query is plain insertion-ordered "key=value" join (HTTP layer escapes).
      */
     fun signWbi(
         params: LinkedHashMap<String, String>,
@@ -162,7 +159,7 @@ object BilibiliSigning {
     private const val APP_KEY = "1d8b6e7d45233436"
     private const val APP_SEC = "560c52ccd288fed045859ed18bffd973"
 
-    /** Adds appkey and sign to [params] and returns the query string. */
+    /** Adds appkey, sign to [params]; returns query string. */
     fun signApp(params: LinkedHashMap<String, String>): String {
         params["appkey"] = APP_KEY
         val toSign =

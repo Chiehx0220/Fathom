@@ -8,9 +8,8 @@ import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource
 
 /**
- * The data source [YouTubeHttpDataSource.Factory] hands out: Bilibili CDN URLs go to a
- * [BilibiliHttpDataSource], everything else to [youTube], which is upstream's own class untouched.
- * It is chosen per [open], so one instance can serve a YouTube range and then a Bilibili one.
+ * Data source of [YouTubeHttpDataSource.Factory]: Bilibili CDN URLs → [BilibiliHttpDataSource], else [youTube] (upstream class, untouched).
+ * Chosen per [open]: one instance serves YouTube then Bilibili ranges.
  */
 @UnstableApi
 internal class BilibiliRoutingDataSource(
@@ -59,7 +58,7 @@ internal class BilibiliRoutingDataSource(
     ) {}
 
     companion object {
-        /** [youTube] for everything but Bilibili's CDN, which gets a [BilibiliHttpDataSource] carrying [requestProperties]. */
+        /** [youTube] except Bilibili CDN → [BilibiliHttpDataSource] with [requestProperties]. */
         fun around(
             youTube: HttpDataSource,
             requestProperties: Map<String, String>,

@@ -6,11 +6,10 @@ import io.github.aedev.flow.data.model.isYouTubeServiceId
 import org.schabi.newpipe.extractor.ServiceList
 
 /*
- * Converts between the local server's URL-keyed InfoItems and native storage's bare-id keys, for the
- * two services Flow has: YouTube and Bilibili.
+ * Local-server URL-keyed InfoItems ↔ native bare-id keys; YouTube and Bilibili.
  */
 
-/** Bare channel id -> URL: YouTube's canonical form, or a Bilibili space page for its numeric id. */
+/** Bare channel id → URL: YouTube canonical, or Bilibili space page for numeric id. */
 fun channelIdToUrl(
     channelId: String,
     serviceId: Int = ServiceList.YouTube.serviceId,
@@ -22,8 +21,7 @@ fun channelIdToUrl(
     }
 
 /**
- * Channel URL -> bare id. Parses `/channel/UC...`, `/@handle`, `/c/name` and `/user/name` for
- * YouTube, and a Bilibili space page or bare number for Bilibili. Null for anything else.
+ * Channel URL → bare id. YouTube: `/channel/UC...`, `/@handle`, `/c/name`, `/user/name`; Bilibili: space page or bare number. Else null.
  */
 fun channelUrlToId(url: String?): String? {
     if (url == null) return null
@@ -43,14 +41,13 @@ fun channelUrlToId(url: String?): String? {
 }
 
 /**
- * Bare video id -> URL: YouTube's canonical form, or a Bilibili video link. Rendering keys
- * everything off `item.url`, so it must be a link the server can read the id back out of.
+ * Bare video id → URL: YouTube canonical or Bilibili video link. Rendering keys off `item.url`: must be readable back to the id.
  */
 fun videoIdToUrl(
     videoId: String,
     serviceId: Int = ServiceList.YouTube.serviceId,
 ): String {
-    // Rows the web page wrote before ids were normalised hold a whole Bilibili link as the id; that reads as its id here.
+    // Rows from before id normalisation hold a whole Bilibili link as id: reads as its id.
     val id = LocalServerMedia.getVideoId(videoId)
     val isYouTube = serviceIdOfVideo(id, serviceId).isYouTubeServiceId
     return if (isYouTube) "https://www.youtube.com/watch?v=$id" else LocalServerBilibili.videoUrl(id)
@@ -58,7 +55,7 @@ fun videoIdToUrl(
 
 fun playlistIdToUrl(playlistId: String): String = "https://www.youtube.com/playlist?list=$playlistId"
 
-/** Bare `list=` id from a playlist URL - matches NewPipeExtractor's own playlist id for it. */
+/** Bare `list=` id of a playlist URL; matches NewPipeExtractor's playlist id. */
 fun playlistUrlToId(url: String?): String? {
     if (url == null) return null
     val idx = url.indexOf("list=")

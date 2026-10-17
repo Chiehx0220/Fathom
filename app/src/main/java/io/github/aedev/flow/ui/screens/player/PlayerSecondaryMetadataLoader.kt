@@ -356,7 +356,7 @@ internal class PlayerSecondaryMetadataLoader(
                     return@launch
                 }
 
-                // YouTube's related feed knows nothing of a Bilibili video.
+                // YouTube related feed: nothing for a Bilibili video.
                 val fallbackCandidates =
                     if (BilibiliVideoId.isBilibili(videoId)) {
                         emptyList()

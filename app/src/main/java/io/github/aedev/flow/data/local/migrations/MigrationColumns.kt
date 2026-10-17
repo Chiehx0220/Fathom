@@ -3,11 +3,10 @@ package io.github.aedev.flow.data.local.migrations
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
- * True if [table] already has a column named [column].
+ * [table] already has [column].
  *
- * Devices that ran this fork's migrations under an earlier numbering (see Migration28To10001,
- * Migration10001To10002) may already have the column; a blind ALTER TABLE would fail with
- * "duplicate column name" and leave the database unopenable.
+ * Earlier-numbered fork migrations (Migration28To10001, Migration10001To10002) may have added it;
+ * blind ALTER TABLE → "duplicate column name", database unopenable.
  */
 internal fun SupportSQLiteDatabase.hasColumn(
     table: String,
@@ -23,7 +22,7 @@ internal fun SupportSQLiteDatabase.hasColumn(
         found
     }
 
-/** Adds [column] to [table] via [columnDef] only if it is not already there. */
+/** Adds [column] to [table] via [columnDef] if absent. */
 internal fun SupportSQLiteDatabase.addColumnIfMissing(
     table: String,
     column: String,
@@ -35,11 +34,10 @@ internal fun SupportSQLiteDatabase.addColumnIfMissing(
 }
 
 /**
- * Creates the `notes` table if it is missing.
+ * Creates `notes` if missing.
  *
- * Normally created by upstream's AutoMigration(26, 27), which a device already past this fork's
- * old version 27 never runs (Room only walks forward). Both fork migrations call this first;
- * it is a no-op once the table exists.
+ * Upstream AutoMigration(26, 27) never runs past fork's old v27 (Room walks forward only).
+ * Called first by both fork migrations; no-op if present.
  */
 internal fun SupportSQLiteDatabase.ensureNotesTable() {
     execSQL(

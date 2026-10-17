@@ -62,10 +62,10 @@ internal object BilibiliSearchParser {
         )
     }
 
-    /** Result images come as "//i0.hdslb.com/...". */
+    /** Image URLs: "//i0.hdslb.com/...". */
     private fun absolute(url: String): String = if (url.startsWith("//")) "https:$url" else url.toHttps()
 
-    /** Matched words come wrapped in an em tag, and the text is HTML-escaped. */
+    /** Matched words wrapped in em tags; text HTML-escaped. */
     fun cleanTitle(raw: String): String = unescapeHtml(raw.replace("<em class=\"keyword\">", "").replace("</em>", ""))
 
     fun unescapeHtml(s: String): String {
@@ -85,7 +85,7 @@ internal object BilibiliSearchParser {
         return numeric.replace("&amp;", "&")
     }
 
-    /** "3:25" or "1:02:03" (seconds from the right); anything unreadable is 0. */
+    /** "3:25" or "1:02:03" (seconds from right); unreadable → 0. */
     fun parseDuration(text: String): Int {
         if (text.isBlank()) return 0
         return text.split(':').fold(0) { acc, part -> acc * 60 + (part.trim().toIntOrNull() ?: return 0) }

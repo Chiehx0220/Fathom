@@ -270,7 +270,7 @@ class HistoryViewModel
                     stubs.chunked(ENRICHMENT_CHUNK_SIZE).forEach { chunk ->
                         chunk.forEach { stub ->
                             try {
-                                // YouTube's lookup cannot fill in a Bilibili row.
+                                // YouTube lookup cannot fill a Bilibili row.
                                 if (BilibiliVideoId.isBilibili(stub.videoId)) return@forEach
                                 val video = youTubeRepository.getVideo(stub.videoId) ?: return@forEach
                                 val entity = VideoEntity.fromDomain(video)

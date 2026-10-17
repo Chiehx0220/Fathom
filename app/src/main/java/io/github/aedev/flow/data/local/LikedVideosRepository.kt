@@ -208,7 +208,7 @@ private val LikeJson =
 internal fun deserializeVideo(data: String): LikedVideoInfo? {
     if (data.startsWith("{")) return runCatching { LikeJson.decodeFromString(LikedVideoInfo.serializer(), data) }.getOrNull()
     val fields = data.split("|")
-    // This fork briefly wrote `...|isMusic|serviceId`; the trailing number is that service.
+    // Fork briefly wrote `...|isMusic|serviceId`: trailing number = service.
     val hasServiceSuffix =
         fields.size > LEGACY_MIN_PARTS + 1 &&
             fields.last().toIntOrNull() != null &&

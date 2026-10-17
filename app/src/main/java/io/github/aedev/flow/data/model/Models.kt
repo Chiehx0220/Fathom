@@ -51,7 +51,7 @@ data class Video(
     // Transient: when this video was added to the playlist currently being viewed. Not persisted
     // on the video row — populated only by playlist-scoped queries.
     val addedAtInPlaylist: Long? = null,
-    // The service the id belongs to (see serviceIdOfVideo): YouTube unless the id has Bilibili's shape.
+    // Service of the id (serviceIdOfVideo): YouTube unless Bilibili id shape.
     val serviceId: Int = serviceIdOfVideo(id),
 )
 

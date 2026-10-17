@@ -9,10 +9,9 @@ import io.github.aedev.flow.player.stream.VideoQualityOptions
 import io.github.aedev.flow.player.stream.VodFromBilibili
 import io.github.aedev.flow.player.stream.buildStreams
 
-// The Bilibili halves of PlaybackStreamPreparer and PlaybackPreparer. They are extensions so those
-// upstream files stay free of Bilibili code; the members there handle the InnerTube variants.
+// Bilibili halves of PlaybackStreamPreparer, PlaybackPreparer: extensions (upstream files Bilibili-free); members there handle InnerTube variants.
 
-/** Bilibili's counterpart: its streams and identity arrive without a watch response to read them from. */
+/** Bilibili counterpart: streams + identity without a watch response. */
 internal fun PlaybackStreamPreparer.assembleVod(
     videoId: String,
     cached: Video?,
@@ -45,7 +44,7 @@ internal fun PlaybackStreamPreparer.assembleVod(
     )
 }
 
-/** Bilibili's counterpart: the room's HLS master playlist, or its FLV stream when it publishes no HLS. */
+/** Bilibili counterpart: room HLS master, or FLV if no HLS. */
 internal fun PlaybackStreamPreparer.assembleLive(
     videoId: String,
     cached: Video?,
@@ -70,7 +69,7 @@ internal fun PlaybackStreamPreparer.assembleLive(
     )
 }
 
-/** The Bilibili VOD assembly on the same hand-off; it has no SABR session and no InnerTube formats. */
+/** Bilibili VOD assembly, same hand-off; no SABR session, no InnerTube formats. */
 internal suspend fun PlaybackPreparer.prepareBilibiliVodStreams(
     videoId: String,
     streams: PlaybackStreamPreparer.VodStreams,

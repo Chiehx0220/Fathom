@@ -14,7 +14,7 @@ import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Bilibili's search has no time filter and no live filter, so both are done on what it returns. */
+/** No time/live filter in Bilibili search; both applied to results. */
 @Singleton
 class BilibiliVideoSource
     @Inject
@@ -47,7 +47,7 @@ class BilibiliVideoSource
             filter: SearchFilter,
         ): List<String> = if (filter == SearchFilter.LIVE) queries.take(1) else queries.take(MAX_QUERIES)
 
-        /** The site's popular list: [pages] pages fetched together, one that fails costs only its own videos. */
+        /** Popular list: [pages] fetched together; a failed page costs only its videos. */
         suspend fun popular(pages: Int = POPULAR_PAGES): List<Video> =
             coroutineScope {
                 (1..pages)
@@ -78,7 +78,7 @@ class BilibiliVideoSource
                     .map(::withUploadTime)
             }
 
-        // The mapper stamps "now"; the upload time is what a freshness filter needs.
+        // Mapper stamps "now"; freshness filter needs upload time.
         private fun withUploadTime(item: BilibiliSearchItem.Video): Video {
             val video = BilibiliVideoMapper.videoFromSearch(item)
             return if (item.uploadTimeSec > 0) video.copy(timestamp = item.uploadTimeSec * MILLIS_PER_SECOND) else video

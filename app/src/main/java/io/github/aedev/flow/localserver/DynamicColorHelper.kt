@@ -9,8 +9,7 @@ import io.github.aedev.flow.R
 import com.google.android.material.R as MaterialR
 
 object DynamicColorHelper {
-    // Single source of truth for the MD3 baseline palette: per-attr resolve fallback, and full
-    // override when the resolved dynamic palette is internally inconsistent (see isColorDark).
+    // Single source of MD3 baseline palette: per-attr resolve fallback; full override when resolved dynamic palette is inconsistent (isColorDark).
     private fun baselinePalette(dark: Boolean): Map<String, String> {
         val p = HashMap<String, String>()
         p["primary"] = if (dark) "#d0bcff" else "#6750A4"
@@ -25,14 +24,13 @@ object DynamicColorHelper {
         p["surfaceContainerLow"] = if (dark) "#1d1b20" else "#f7f2fa"
         p["surfaceContainerHigh"] = if (dark) "#2b2930" else "#ece6f0"
         p["outline"] = if (dark) "#938f99" else "#79747e"
-        // Roles needed so every CSS variable derives from one tonal scheme, not a hardcoded
-        // baseline-purple fallback that clashes with a neutral dynamic palette.
+        // Roles: every CSS variable derives from one tonal scheme (no hardcoded baseline-purple fallback clashing with neutral dynamic palette).
         p["onPrimary"] = if (dark) "#381e72" else "#ffffff"
         p["onSecondaryContainer"] = if (dark) "#e8def8" else "#1d192b"
         p["onSurfaceVariant"] = if (dark) "#cac4d0" else "#49454f"
         p["outlineVariant"] = if (dark) "#49454f" else "#cac4d0"
         p["surfaceContainerHighest"] = if (dark) "#36343b" else "#e6e0e9"
-        // MD3 baseline error tones - avoids hardcoded red hex that never adapted to dark mode.
+        // MD3 baseline error tones.
         p["error"] = if (dark) "#f2b8b5" else "#b3261e"
         p["onError"] = if (dark) "#601410" else "#ffffff"
         p["errorContainer"] = if (dark) "#8c1d18" else "#f9dedc"

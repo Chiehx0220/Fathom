@@ -31,7 +31,7 @@ import io.github.aedev.flow.ui.theme.YouTubeRed
 private val PlatformBadgeDotSize = 5.dp
 private val PlatformBadgeFontSize = 9.sp
 
-/** Whether cards name their service. A feed that already shows one service turns it off. */
+/** Cards name their service; off when the feed shows one service. */
 val LocalShowPlatformBadge = compositionLocalOf { true }
 
 @Composable
@@ -40,7 +40,7 @@ fun ProvidePlatformBadge(
     content: @Composable () -> Unit,
 ) = CompositionLocalProvider(LocalShowPlatformBadge provides show, content = content)
 
-/** The service's brand color, for anything that wants to color-code by source. */
+/** Service brand color (source color-coding). */
 fun serviceBrandColor(serviceId: Int): Color =
     when (serviceId) {
         BILIBILI_SERVICE_ID -> BilibiliPink
@@ -53,7 +53,7 @@ private fun serviceDisplayName(serviceId: Int): String =
         else -> "YouTube"
     }
 
-/** A neutral pill with the service's brand color as a dot, so the label stays readable on any theme. */
+/** Neutral pill, brand-color dot: readable on any theme. */
 @Composable
 fun PlatformBadge(
     serviceId: Int,
@@ -87,7 +87,7 @@ fun PlatformBadge(
     }
 }
 
-/** A channel avatar with its service's badge beneath it. [modifier] applies to the avatar. */
+/** Avatar + service badge below. [modifier] applies to the avatar. */
 @Composable
 fun ChannelAvatarWithBadge(
     urls: List<String>,
@@ -103,7 +103,7 @@ fun ChannelAvatarWithBadge(
             avatarSize = avatarSize,
             modifier = modifier,
         )
-        // Reports the avatar's width, so a badge wider than it overhangs both sides instead of pushing the title over.
+        // Reports avatar width: wider badge overhangs both sides (title not pushed).
         val columnWidth = maxOf(avatarSize, LocalMinimumInteractiveComponentSize.current)
         PlatformBadge(
             serviceId = serviceId,

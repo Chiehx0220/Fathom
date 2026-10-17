@@ -7,10 +7,9 @@
 package io.github.aedev.flow.data.recommendation
 
 /**
- * Chinese pronouns, demonstratives, question words, auxiliaries, conjunctions, fillers and the calls to
- * like, follow and subscribe, in Simplified and Traditional forms, with colloquial Taiwanese and
- * Cantonese. The dictionary word breaker returns them as ordinary two-character words, and left in
- * they become topics ("我们", "这个") that say nothing about what a title is about.
+ * Chinese function words (pronouns, demonstratives, question words, auxiliaries, conjunctions, fillers, like/follow/subscribe calls),
+ * Simplified + Traditional, colloquial Taiwanese + Cantonese. Dictionary word breaker returns them as two-character words;
+ * unfiltered they become topics ("我们", "这个").
  */
 internal object ChineseFunctionWords {
     private val words =

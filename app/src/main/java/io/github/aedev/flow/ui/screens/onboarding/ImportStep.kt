@@ -181,7 +181,7 @@ private fun SourceTile(
 @Composable
 private fun SourceGlyph(source: ImportSource) {
     if (source == ImportSource.FLOW) {
-        // A Flow backup comes from Flow or from Fathom itself, so the tile shows both icons.
+        // Flow backup from Flow or Fathom: tile shows both icons.
         Row(horizontalArrangement = Arrangement.spacedBy(GlyphGap)) {
             GlyphDisc(R.drawable.ic_flow_upstream_logo, Color.Unspecified)
             GlyphDisc(R.drawable.ic_fathom_logo, Color.Unspecified)

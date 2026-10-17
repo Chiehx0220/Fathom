@@ -5,7 +5,7 @@ import io.github.aedev.flow.bilibili.BilibiliChannelPageKey
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 
-/** The newest uploads of one Bilibili uploader; the subscription feed and the home feed both read them here. */
+/** Newest uploads of one Bilibili uploader; shared by subscription feed and home feed. */
 internal suspend fun BilibiliApi.latestVideos(
     mid: Long,
     limit: Int,

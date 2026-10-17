@@ -3,7 +3,7 @@ package io.github.aedev.flow.ui.screens.settings
 import androidx.annotation.StringRes
 import io.github.aedev.flow.R
 
-/** Every external address the About and donation screens link to, shared by the phone and TV versions. */
+/** External addresses of About + donation screens (phone, TV). */
 internal object AboutLinks {
     const val FATHOM_GITHUB = "https://github.com/Chiehx0220/Fathom"
     const val FATHOM_RELEASES = "https://github.com/Chiehx0220/Fathom/releases"
@@ -23,7 +23,7 @@ internal data class DonationLink(
     val address: String get() = url.removePrefix("https://")
 }
 
-/** Fathom's own ways to donate, main one first. */
+/** Fathom donation channels, main first. */
 internal val FATHOM_DONATIONS =
     listOf(
         DonationLink("GitHub Sponsors", R.string.support_fathom_sponsors, "https://github.com/sponsors/Chiehx0220"),

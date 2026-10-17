@@ -21,14 +21,14 @@ import java.io.InputStream
 import java.io.OutputStream
 
 // GET /api/v1/downloads: finished downloads, newest first
-// GET /downloadfile?serviceId&id: the saved file, Range supported; the path comes from the download row only
+// GET /downloadfile?serviceId&id: saved file, Range supported; path from download row only
 
 internal class DownloadQuality(
     val height: Int,
     val codecs: List<String>,
 )
 
-/** Heights a download can ask for, tallest first, each with its codec keys in download preference order. */
+/** Downloadable heights, tallest first, each with codec keys in preference order. */
 internal fun downloadQualities(streams: List<VideoStream>): List<DownloadQuality> {
     val byHeight = streams.filter { it.height > 0 }.groupBy { it.height }
     return byHeight.keys.sortedDescending().map { height ->
@@ -61,7 +61,7 @@ internal fun ClientHandler.handleApiDownloads(os: OutputStream) {
         for (entry in dbHelper.finishedDownloads()) {
             val download = entry.download
             val id = LocalServerMedia.getVideoId(download.videoId)
-            // recovered rows carry no serviceId; derive it from the id
+            // recovered rows lack serviceId: derived from id
             val serviceId = serviceIdOfVideo(id, download.serviceId)
             val json = JSONObject()
             json.put("id", id)
@@ -78,7 +78,7 @@ internal fun ClientHandler.handleApiDownloads(os: OutputStream) {
             json.put("isLive", false)
             json.put("isShort", false)
             json.put("progress", 0)
-            // opened from the saved file (watch?...&local=1)
+            // opened from saved file (watch?...&local=1)
             json.put("local", true)
             json.put("sizeBytes", entry.totalSize)
             array.put(json)
@@ -89,7 +89,7 @@ internal fun ClientHandler.handleApiDownloads(os: OutputStream) {
     }
 }
 
-/** Length and a stream at an offset (file or SAF document). */
+/** Length + stream at offset (file or SAF document). */
 private class DownloadSource(
     val length: Long,
     private val open: (Long) -> InputStream,
@@ -134,7 +134,7 @@ private fun contentTypeOf(path: String): String =
         else -> "application/octet-stream"
     }
 
-/** Single range (`a-b`, `a-`, `-n`) as inclusive bounds; null when unsatisfiable. */
+/** Single range (`a-b`, `a-`, `-n`) as inclusive bounds; null if unsatisfiable. */
 internal fun parseByteRange(
     header: String?,
     length: Long,

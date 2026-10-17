@@ -3,16 +3,13 @@ package io.github.aedev.flow.bilibili
 import java.net.URLDecoder
 import java.net.URLEncoder
 
-/**
- * An uploader is identified by a number (the "mid"). Flow's channel code often holds just that
- * string, and a YouTube channel is never all digits, so this is how the two are told apart.
- */
+/** Uploader id ("mid"): all-digit string; a YouTube channel id never is. */
 object BilibiliChannelId {
     private val SPACE_URL = Regex("""(?:space\.bilibili\.com|bilibili\.com/space)/(\d+)""")
 
     fun isMid(value: String): Boolean = value.isNotEmpty() && value.all(Char::isDigit)
 
-    /** The mid from a bare number or a space.bilibili.com link; null for anything else. */
+    /** mid from bare number or space.bilibili.com link; else null. */
     fun midOf(value: String): Long? {
         val trimmed = value.trim()
         if (isMid(trimmed)) return trimmed.toLongOrNull()
@@ -24,11 +21,7 @@ object BilibiliChannelId {
     }
 }
 
-/**
- * How a series or season is named inside Flow: "bilibili:series:<mid>:<id>:<name>". Playlist routes
- * and stores hold one string per playlist; this one is safe in a route and says which service owns
- * it. The name is included because the series endpoint does not return one.
- */
+/** Series/season id: "bilibili:series:<mid>:<id>:<name>". Route-safe, names owning service; name included (series endpoint returns none). */
 object BilibiliPlaylistId {
     private const val PREFIX = "bilibili"
 
@@ -57,10 +50,7 @@ object BilibiliPlaylistId {
     }
 }
 
-/**
- * How a live room is named inside Flow: "live:<roomId>". Rooms and videos share every place a video
- * id goes (routes, history, the player), and neither shape can be a YouTube id.
- */
+/** Live room id: "live:<roomId>". Shares video-id slots (routes, history, player); never a YouTube id. */
 object BilibiliLiveId {
     private const val PREFIX = "live:"
     private val PATTERN = Regex("""^live:\d+$""")
@@ -70,10 +60,10 @@ object BilibiliLiveId {
 
     fun of(roomId: Long): String = "$PREFIX$roomId"
 
-    /** The room number in a "live:<roomId>" id; null for any other id. */
+    /** Room number of a "live:<roomId>" id; else null. */
     fun roomIdOf(videoId: String): Long? = if (isLive(videoId)) videoId.removePrefix(PREFIX).toLongOrNull() else null
 
-    /** The id in a live-room link ("https://live.bilibili.com/21452505?spm=1"); null when [url] is not one. */
+    /** Id of a live-room link; else null. */
     fun fromUrl(url: String): String? =
         LINK
             .find(url.trim())
@@ -85,23 +75,16 @@ object BilibiliLiveId {
     fun toUrl(videoId: String): String = "https://live.bilibili.com/${videoId.removePrefix(PREFIX)}"
 }
 
-/**
- * How a video is named inside Flow: "BV1xx?p=2", the bvid and the 1-based part. Everything that has
- * to read or build such an id does it here.
- */
+/** Video id: "BV1xx?p=2" (bvid + 1-based part). */
 object BilibiliVideoId {
     private val PATTERN = Regex("""^BV[0-9A-Za-z]{10}(\?p=\d+)?$""")
     private val LINK = Regex("""/video/(BV[0-9A-Za-z]{10})""")
     private val PART = Regex("""[?&]p=(\d+)""")
 
-    /**
-     * True for a Bilibili video or live-room id. Older saved rows can carry the wrong service id, so
-     * the id itself is the surer test: no YouTube id looks like either (they are eleven characters
-     * and never contain "?" or ":"). Use [BilibiliLiveId.isLive] to tell a room from a video.
-     */
+    /** Bilibili video or live-room id. Id is the reliable test (saved service id may be stale); no YouTube id has "?" or ":". [BilibiliLiveId.isLive] separates rooms. */
     fun isBilibili(videoId: String): Boolean = PATTERN.matches(videoId) || BilibiliLiveId.isLive(videoId)
 
-    /** "BV1xx?p=3" -> ("BV1xx", 3). A missing or unreadable part number means the first part. */
+    /** "BV1xx?p=3" → ("BV1xx", 3); missing/invalid part = 1. */
     fun parse(videoId: String): Pair<String, Int> {
         val bvid = videoId.substringBefore('?')
         val page =
@@ -116,10 +99,7 @@ object BilibiliVideoId {
         return bvid to page
     }
 
-    /**
-     * The id in a video link, ignoring share-tracking parameters: "https://www.bilibili.com/video/BV1xx/?p=2&spm=1"
-     * -> "BV1xx?p=2", and "BV1xx" when the link names no part. Null when [url] is not a video link.
-     */
+    /** Id of a video link, share-tracking params dropped: ".../BV1xx/?p=2&spm=1" → "BV1xx?p=2"; no part → "BV1xx". Null if not a video link. */
     fun fromUrl(url: String): String? {
         val bvid = LINK.find(url)?.groupValues?.get(1) ?: return null
         val page =
@@ -132,20 +112,20 @@ object BilibiliVideoId {
         return if (page != null) "$bvid?p=$page" else bvid
     }
 
-    /** The id of one part in its canonical "BV1xx?p=N" form, which is how Flow stores and compares video ids. */
+    /** Canonical "BV1xx?p=N" id (storage/comparison form). */
     fun of(
         bvid: String,
         page: Int = 1,
     ): String = "$bvid?p=$page"
 
-    /** The link of a video, or of a live room for a "live:<roomId>" id. */
+    /** Video link; live room link for "live:<roomId>". */
     fun toUrl(videoId: String): String =
         if (BilibiliLiveId.isLive(videoId)) BilibiliLiveId.toUrl(videoId) else "https://www.bilibili.com$VIDEO_PATH$videoId"
 
     private const val VIDEO_PATH = "/video/"
 }
 
-/** Whether a link points at Bilibili, of any kind (video, uploader space). */
+/** Any Bilibili link (video, uploader space). */
 object BilibiliLink {
     private val HOST = Regex("""^https?://(?:[\w-]+\.)*bilibili\.com(?:[/?#:]|$)""", RegexOption.IGNORE_CASE)
 

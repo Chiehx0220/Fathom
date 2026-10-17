@@ -17,12 +17,10 @@ import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import java.util.concurrent.TimeUnit
 
 /**
- * The background check for a non-YouTube subscription (e.g. Bilibili), kept out of
- * [SubscriptionCheckWorker] so that upstream file only carries one call.
+ * Background check of a non-YouTube subscription (e.g. Bilibili); [SubscriptionCheckWorker] only calls it.
  *
- * The RSS client only speaks YouTube's feed format, so this path is a full channel-tabs fetch.
- * It is floored to [MIN_CHECK_INTERVAL_MS] regardless of the user's overall interval, which is tuned
- * for YouTube's cheap RSS ping; a short setting there must not hammer Bilibili into risk control.
+ * RSS client is YouTube-only: full channel-tabs fetch here. Floored to [MIN_CHECK_INTERVAL_MS] regardless of user interval
+ * (tuned for cheap YouTube RSS ping; short interval would hammer Bilibili into risk control).
  */
 internal object NonYouTubeChannelCheck {
     private val MIN_CHECK_INTERVAL_MS = TimeUnit.HOURS.toMillis(2)
@@ -36,7 +34,7 @@ internal object NonYouTubeChannelCheck {
         fun subscriptionFeedRepository(): SubscriptionFeedRepository
     }
 
-    /** Null when [subscription] is a YouTube channel, which the worker checks through RSS itself. */
+    /** Null for a YouTube channel (worker checks via RSS). */
     suspend fun checkOrNull(
         context: Context,
         subscription: ChannelSubscription,
@@ -65,7 +63,7 @@ internal object NonYouTubeChannelCheck {
                 )
         val latestVideo = videos.firstOrNull() ?: return emptyList()
 
-        // Shorts have no Bilibili equivalent, so no reel verdict is needed here.
+        // No Bilibili shorts: no reel verdict.
         dependencies.subscriptionFeedRepository().seedFromNotificationCheck(videos)
 
         val newVideos = newVideosSince(videos, subscription.lastVideoId)
@@ -85,7 +83,7 @@ internal object NonYouTubeChannelCheck {
         }
     }
 
-    /** Mirrors [ChannelRssParser.newEntriesSince] for a plain [Video] list from the channel-tabs path. */
+    /** As [ChannelRssParser.newEntriesSince] for a plain [Video] list from channel-tabs. */
     private fun newVideosSince(
         videos: List<Video>,
         lastVideoId: String?,

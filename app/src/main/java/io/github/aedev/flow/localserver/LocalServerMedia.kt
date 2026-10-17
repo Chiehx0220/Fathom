@@ -16,7 +16,7 @@ import org.schabi.newpipe.extractor.stream.StreamExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import java.util.Locale
 
-/** Helpers for reading media and channel data through the extractors, shared by the handlers. */
+/** Media/channel data via extractors, shared by handlers. */
 object LocalServerMedia {
     fun getVideoId(url: String?): String {
         if (url == null) return ""
@@ -35,8 +35,7 @@ object LocalServerMedia {
             val end = url.indexOf("?", start)
             return if (end == -1) url.substring(start) else url.substring(start, end)
         }
-        // A Bilibili video or live room is stored under "BV1xx?p=1" / "live:123", the ids the app's own history uses; kept as a whole link
-        // here it became a second row, and its url a link inside a link.
+        // Bilibili video/live room stored as "BV1xx?p=1" / "live:123" (app history ids); a whole link → second row, link inside link.
         return io.github.aedev.flow.bilibili.BilibiliVideoId
             .fromUrl(url)
             ?: io.github.aedev.flow.bilibili.BilibiliLiveId
@@ -44,7 +43,7 @@ object LocalServerMedia {
             ?: url
     }
 
-    /** The service that owns [url]; YouTube's id when none does. */
+    /** Service owning [url]; YouTube id if none. */
     internal fun serviceIdOfUrl(url: String): Int = runCatching { NewPipe.getServiceByUrl(url).serviceId }.getOrDefault(0)
 
     internal fun fetchChannelUploads(channelUrl: String): List<InfoItem> =
@@ -76,7 +75,7 @@ object LocalServerMedia {
         }
     }
 
-    // Backfill the uploader link: an empty one 404s the channel route, and every item here already belongs to channelUrl.
+    // Backfill uploader link: empty → channel route 404; items belong to channelUrl.
     internal fun backfillUploaderUrl(
         items: List<InfoItem>,
         channelUrl: String,
@@ -91,7 +90,7 @@ object LocalServerMedia {
         }
     }
 
-    // The channel's handler for [tab] ("videos", "playlists", ...), else its first tab.
+    // Channel handler for [tab] ("videos", "playlists", ...), else first tab.
     internal fun resolveChannelTabHandler(
         channelExtractor: ChannelExtractor,
         tab: String,
@@ -100,7 +99,7 @@ object LocalServerMedia {
             ?: channelExtractor.tabs.firstOrNull()
             ?: throw ExtractionException("Channel exposes no tabs: ${channelExtractor.url}")
 
-    // Resume from the nextPage token, else fetch the first page. getPage() reads only the token, so a fresh extractor can resume.
+    // Resume from nextPage token, else first page. getPage() reads only the token: fresh extractor can resume.
     internal fun <R : InfoItem> fetchInitialOrPage(
         extractor: ListExtractor<R>,
         nextPage: Page?,
@@ -128,10 +127,8 @@ object LocalServerMedia {
     ): SearchExtractor = service.getSearchExtractor(query)
 
     /**
-     * Normalizes an audio codec string for a DASH manifest. Bilibili reports bare `"mp4a"`,
-     * an invalid RFC 6381 string that fails `MediaSource.isTypeSupported()` and drops the
-     * audio Representation - maps to AAC-LC (`mp4a.40.2`), what Bilibili actually serves.
-     * YouTube's already-qualified strings pass through untouched.
+     * Normalizes audio codec for DASH manifest. Bilibili's bare `"mp4a"` is invalid RFC 6381 (fails `MediaSource.isTypeSupported()`,
+     * drops the audio Representation) → AAC-LC (`mp4a.40.2`). Qualified YouTube strings unchanged.
      */
     fun normalizeAudioCodec(codec: String?): String {
         if (codec == null || codec.trim().isEmpty()) {
@@ -147,8 +144,7 @@ object LocalServerMedia {
     fun isOriginalAudioTrack(stream: AudioStream): Boolean =
         stream.audioTrackType == org.schabi.newpipe.extractor.stream.AudioTrackType.ORIGINAL
 
-    // Default audio-track priority: original, then device locale, then English, then highest bitrate.
-    // Shared by the stream proxy, the manifest and the track picker.
+    // Default audio-track priority: original, device locale, English, highest bitrate. Shared: stream proxy, manifest, track picker.
     fun audioTrackPriorityComparator(): Comparator<AudioStream> {
         val langCode = Locale.getDefault().language
         return Comparator { a, b ->
@@ -178,7 +174,7 @@ object LocalServerMedia {
     fun getResolutionHeight(resolution: String?): Int {
         if (resolution == null || resolution.isEmpty()) return 0
         try {
-            // Split by 'p' (e.g. "720p60" -> "720") to ignore frame rate
+            // Split by 'p' ("720p60" -> "720"): ignore frame rate
             val parts = resolution.split(Regex("(?i)p"))
             if (parts.isNotEmpty()) {
                 val numeric = parts[0].replace(Regex("[^0-9]"), "")
@@ -189,7 +185,7 @@ object LocalServerMedia {
         return 0
     }
 
-    // One extractor and page fetch per video, whichever handler runs first.
+    // One extractor + page fetch per video, first handler wins.
     @Throws(Exception::class)
     fun getCachedExtractor(
         service: StreamingService,

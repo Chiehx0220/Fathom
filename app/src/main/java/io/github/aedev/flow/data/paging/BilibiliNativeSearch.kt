@@ -19,9 +19,8 @@ internal class BilibiliSearchPage(
 )
 
 /**
- * Bilibili search through the native client. The paging key is the next page number as a string.
- * It only produces the page; deduplication and blocked-channel filtering are [SearchPagingSource]'s,
- * shared with YouTube.
+ * Bilibili search, native client; paging key = next page number (string).
+ * Page only; dedup and blocked-channel filtering in [SearchPagingSource], shared with YouTube.
  */
 internal object BilibiliNativeSearch {
     private const val SECONDS_PER_HOUR = 3_600L
@@ -40,7 +39,7 @@ internal object BilibiliNativeSearch {
 
                 ContentType.LIVE -> BilibiliSearchType.LIVE
 
-                // Bilibili has no shorts or playlist tab in this client yet.
+                // No shorts/playlist tab yet.
                 else -> return BilibiliSearchPage(emptyList(), nextKey = null)
             }
         val page = continuation?.toIntOrNull() ?: 1

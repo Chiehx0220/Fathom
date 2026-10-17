@@ -29,7 +29,7 @@ import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
-// 5-minute cache of the assembled home feed, keyed by serviceId.
+// 5-min cache of assembled home feed, keyed by serviceId.
 private const val HOME_FEED_CACHE_TTL_MS = 5 * 60 * 1000L
 
 private data class HomeFeedCacheEntry(
@@ -39,9 +39,8 @@ private data class HomeFeedCacheEntry(
 
 private val homeFeedCache = java.util.concurrent.ConcurrentHashMap<Int, HomeFeedCacheEntry>()
 
-/** One round of FlowNeuro discovery queries, fetched concurrently. `resetDepth`: fresh session
- * vs. load-more. Query count matches native's wave-1. Shared by [buildAndRankHomeFeed] and
- * [continueDiscoveryFeed]. */
+/** One round of FlowNeuro discovery queries, concurrent. `resetDepth`: fresh session vs load-more. Query count = native wave-1.
+ * Shared by [buildAndRankHomeFeed], [continueDiscoveryFeed]. */
 private suspend fun CoroutineScope.fetchDiscoveryVideos(
     repo: YouTubeRepository,
     resetDepth: Boolean,
@@ -56,9 +55,8 @@ private suspend fun CoroutineScope.fetchDiscoveryVideos(
             .flatten()
     }.getOrDefault(emptyList())
 
-/** Shared inputs for the home-feed builders: watched-video gating (`hideWatchedVideosFromHome`),
- * FlowNeuroEngine block/suppress lists, brain snapshot + taste profile, subscribed-channel
- * avatars. */
+/** Home-feed builder inputs: watched gating (`hideWatchedVideosFromHome`), FlowNeuroEngine block/suppress lists,
+ * brain snapshot + taste profile, subscribed-channel avatars. */
 private data class HomeFeedContext(
     val watched: Set<String>,
     val exclusions: FeedExclusions,
@@ -84,14 +82,13 @@ private suspend fun HistoryDbHelper.buildHomeFeedContext(): HomeFeedContext {
     return HomeFeedContext(watched, exclusions, brain, taste, subAvatarMap)
 }
 
-/** Dedupes by video id, ranks via FlowNeuroEngine (falls back to unranked order on failure),
- * converts to [StreamInfoItem]. Used by [continueDiscoveryFeed]. */
+/** Dedup by video id, rank via FlowNeuroEngine (unranked on failure), convert to [StreamInfoItem]. Used by [continueDiscoveryFeed]. */
 private suspend fun HistoryDbHelper.rankAndConvert(
     videos: List<FlowVideo>,
     serviceId: Int,
 ): List<StreamInfoItem> {
     val deduped = LinkedHashMap<String, FlowVideo>()
-    // Only this page's serviceId: watch and channel links are built for one service.
+    // This page's serviceId only: watch/channel links built for one service.
     for (v in videos) if (v.id.isNotBlank() && v.serviceId == serviceId) deduped.putIfAbsent(v.id, v)
     if (deduped.isEmpty()) return emptyList()
 
@@ -103,27 +100,19 @@ private suspend fun HistoryDbHelper.rankAndConvert(
 }
 
 /**
- * Assembles/ranks the home feed via the SAME pipeline as native's wave-1: [buildHomeFeedLanes]/
- * [assembleHomeFeed] from `io.github.aedev.flow.ui.screens.home`, not a ported copy. Gets
- * quota-balanced source blending, same-channel spacing, duration/format-fit demotion,
- * fresh-upload pinning, and the related-video (/next graph) lane.
+ * Assembles/ranks home feed through native wave-1 pipeline ([buildHomeFeedLanes]/[assembleHomeFeed], `ui.screens.home`), not a port:
+ * quota-balanced source blending, same-channel spacing, duration/format-fit demotion, fresh-upload pinning, related (/next graph) lane.
  *
- * UPSTREAM COUPLING: [buildHomeFeedLanes], [assembleHomeFeed], [feedTasteProfile],
- * [dynamicFreshSubSlots] are upstream-owned (`HomeFeedAssembly.kt`/`HomeFeedRanking.kt`, PR #1040). A
- * signature/behavior change there on upstream sync won't surface as a merge conflict (different
- * file) - re-verify this function compiles and the home feed renders after every sync.
+ * UPSTREAM COUPLING: [buildHomeFeedLanes], [assembleHomeFeed], [feedTasteProfile], [dynamicFreshSubSlots] are upstream-owned
+ * (`HomeFeedAssembly.kt`/`HomeFeedRanking.kt`, PR #1040); changes there are not merge conflicts here: re-verify compile + home feed after every sync.
  *
- * `rssFeed`/`homeFeedSources()`/`youTubeRepository()` resolve to the SAME Hilt singletons native
- * Home uses (via [localServerEntryPoint]/[YouTubeRepository.getInstance]), not separate instances.
+ * `rssFeed`/`homeFeedSources()`/`youTubeRepository()`: same Hilt singletons as native Home ([localServerEntryPoint]/[YouTubeRepository.getInstance]).
  *
- * Deliberate divergence from native:
+ * Divergence from native:
  * - YouTube-only; no Bilibili lane.
- * - No wave-2 enrichment / persistent feed cache / reserve page (those smooth a long-lived
- *   Compose screen, not a single request/response cycle).
+ * - No wave-2 enrichment / persistent feed cache / reserve page (long-lived Compose screen concerns).
  *
- * Second return value: whether [continueDiscoveryFeed] has more to fetch. No NewPipeExtractor
- * Page involved - `YoutubeTrendingExtractor` has no continuation, so "load more" is a deeper
- * discovery-query round.
+ * Second return value: [continueDiscoveryFeed] has more. No NewPipeExtractor Page: `YoutubeTrendingExtractor` has no continuation; "load more" = deeper discovery-query round.
  */
 fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int): Pair<List<InfoItem>, Boolean> =
     runBlocking {
@@ -166,7 +155,7 @@ fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int): Pair<List<InfoItem>, B
             rssFeed = rssDeferred.await()
         }
 
-        // Home has no separate trending lane any more, so trending joins discovery.
+        // No separate trending lane: trending joins discovery.
         val rawSubs = if (subIds.isNotEmpty()) rssFeed.storedSubscriptionVideos(now) else emptyList()
         val lanes =
             buildHomeFeedLanes(
@@ -192,7 +181,7 @@ fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int): Pair<List<InfoItem>, B
                 totalInteractions = context.brain.totalInteractions,
             )
 
-        // Subscriptions and history span all services; filter to this page's serviceId first (ServiceIdHelpers.kt).
+        // Subscriptions/history span services; filter to this page's serviceId first (ServiceIdHelpers.kt).
         val result = mix.videos.filter { it.serviceId == serviceId }.map { it.toStreamInfoItem(serviceId) }
         if (result.isEmpty()) return@runBlocking emptyList<InfoItem>() to false
 
@@ -200,9 +189,8 @@ fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int): Pair<List<InfoItem>, B
         result to true
     }
 
-/** "Load more": deeper discovery-query round, ranked like [buildAndRankHomeFeed]. Uncached, no
- * subscription-feed re-pull (subs lane is first-load only, matching native). Shares
- * FlowNeuroEngine's discovery-depth counter with native. */
+/** Load more: deeper discovery-query round, ranked as [buildAndRankHomeFeed]. Uncached, no subscription-feed re-pull (subs lane first-load only, as native).
+ * Shares FlowNeuroEngine discovery-depth counter with native. */
 fun HistoryDbHelper.continueDiscoveryFeed(serviceId: Int): Pair<List<InfoItem>, Boolean> =
     runBlocking {
         ensureFlowNeuroInitialized()
@@ -213,17 +201,16 @@ fun HistoryDbHelper.continueDiscoveryFeed(serviceId: Int): Pair<List<InfoItem>, 
         result to result.isNotEmpty()
     }
 
-// The Shorts feed is not served here. Native equivalents: ShortsRepository and ShortsDiscoveryEngine.
+// Shorts feed not served here; native: ShortsRepository, ShortsDiscoveryEngine.
 
-/** Trending kiosk, unranked - `handleApiHome()`'s raw JSON feed (vs. `handleApiRecommendations()`,
- * which uses [buildAndRankHomeFeed]'s ranked pool). No pagination (`YoutubeTrendingExtractor`
- * has no next page). */
+/** Trending kiosk, unranked: `handleApiHome()` raw JSON feed (vs `handleApiRecommendations()`: ranked pool of [buildAndRankHomeFeed]).
+ * No pagination (`YoutubeTrendingExtractor` has no next page). */
 fun HistoryDbHelper.fetchTrendingItems(serviceId: Int): List<StreamInfoItem> =
     runBlocking {
         trendingVideos().map { it.toStreamInfoItem(serviceId) }
     }
 
-/** YouTube Music's trending video chart for the user's trending region. */
+/** YouTube Music trending video chart for the user's trending region. */
 private suspend fun HistoryDbHelper.trendingVideos(): List<FlowVideo> {
     val region = playerPreferences().trendingRegion.first()
     return YouTube
@@ -234,8 +221,7 @@ private suspend fun HistoryDbHelper.trendingVideos(): List<FlowVideo> {
 }
 
 /**
- * Reorders `items` via FlowNeuroEngine - never changes composition, only order. Falls back to
- * original order on failure.
+ * Reorders `items` via FlowNeuroEngine; order only, never composition. Original order on failure.
  */
 fun HistoryDbHelper.rankWithFlowNeuro(
     items: List<InfoItem>,
@@ -274,7 +260,7 @@ fun HistoryDbHelper.rankWithFlowNeuro(
     }
 }
 
-/** Reports a click/watch/etc. signal to FlowNeuroEngine. Best-effort. */
+/** Click/watch signal → FlowNeuroEngine. Best-effort. */
 fun HistoryDbHelper.reportFlowNeuroInteraction(
     info: StreamInfo,
     serviceId: Int,
@@ -292,9 +278,8 @@ fun HistoryDbHelper.reportFlowNeuroInteraction(
 }
 
 /**
- * Related videos via `PlayerRelatedVideosPolicy`, in the order the app's watch page uses: InnerTube's `/next`
- * first, and the extractor's own list (no network call) only when that gives nothing. Never raw
- * `StreamInfo.relatedItems`. A Bilibili video keeps the extractor's list, as YouTube's feed knows nothing of it.
+ * Related via `PlayerRelatedVideosPolicy`, app watch-page order: InnerTube `/next` first, extractor list (no network) only if empty.
+ * Never raw `StreamInfo.relatedItems`. Bilibili keeps the extractor list (YouTube feed unaware).
  */
 fun HistoryDbHelper.nativeRelatedVideos(
     info: StreamInfo,

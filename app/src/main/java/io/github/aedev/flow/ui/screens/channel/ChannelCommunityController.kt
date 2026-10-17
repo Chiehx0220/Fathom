@@ -52,7 +52,7 @@ internal class ChannelCommunityController(
         _state.value = ChannelCommunityUiState()
     }
 
-    /** Community Posts is a YouTube-only concept - other services have no equivalent here. */
+    /** Community Posts: YouTube-only. */
     fun isSupportedForCurrentChannel(): Boolean = channel?.serviceId?.isYouTubeServiceId == true
 
     fun ensurePostsLoaded() {

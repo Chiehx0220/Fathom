@@ -11,8 +11,7 @@ import org.json.JSONObject
 import org.schabi.newpipe.extractor.Page
 
 /**
- * The local server's Bilibili comments and danmaku. The continuation of a comment page is a [Page]
- * whose url holds "c:<offset>", and the one of the replies under a comment "r:<rpid>:<page>".
+ * Local server Bilibili comments + danmaku. Comment page continuation: [Page] url "c:<offset>"; replies: "r:<rpid>:<page>".
  */
 internal object LocalServerBilibiliComments {
     fun comments(
@@ -36,7 +35,7 @@ internal object LocalServerBilibiliComments {
         return CommentsResult(page.comments.map { it.toCommentItem(videoUrl, hasReplies = true) }, page.nextOffset?.let { Page("c:$it") })
     }
 
-    /** The video's danmaku as the client-side overlay reads it; empty when there is none. */
+    /** Video danmaku for the client-side overlay; empty if none. */
     fun danmaku(
         context: Context,
         mediaUrl: String,

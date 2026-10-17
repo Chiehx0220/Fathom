@@ -2,10 +2,10 @@ package io.github.aedev.flow.localserver
 
 import java.io.OutputStream
 
-/** A request handler: runs on the connection's [ClientHandler] with the response stream, the query and the request headers. */
+/** Request handler on the connection's [ClientHandler]: response stream, query, request headers. */
 internal typealias Route = ClientHandler.(os: OutputStream, params: Map<String, String>, requestHeaders: Map<String, String>) -> Unit
 
-/** Every path the server answers, built once. */
+/** All served paths, built once. */
 internal val ROUTES: Map<String, Route> =
     mapOf(
         "/" to route { os, _, _ -> handleAppShell(os) },

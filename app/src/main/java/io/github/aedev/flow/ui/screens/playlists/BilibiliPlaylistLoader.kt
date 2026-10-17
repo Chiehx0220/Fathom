@@ -10,7 +10,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-/** Loads a whole Bilibili series or season, following its 30-per-page listing to the end. */
+/** Whole Bilibili series/season, 30/page to the end. */
 internal object BilibiliPlaylistLoader {
     private const val MAX_PAGES = 40
     private val DATE = DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneOffset.UTC)

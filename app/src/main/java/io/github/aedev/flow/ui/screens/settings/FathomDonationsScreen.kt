@@ -40,7 +40,7 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
 import io.github.aedev.flow.ui.screens.settings.about.DonationsScreen
 
-/** The support page: Fathom first, then the Flow project it is built on, each with its own way to give. */
+/** Support page: Fathom, then upstream Flow; each with own donation way. */
 @Composable
 fun FathomDonationsScreen(
     onNavigateBack: () -> Unit,

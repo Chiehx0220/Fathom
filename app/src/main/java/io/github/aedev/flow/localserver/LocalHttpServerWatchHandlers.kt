@@ -2,8 +2,7 @@ package io.github.aedev.flow.localserver
 
 import java.io.OutputStream
 
-// Bilibili danmaku ("bullet comments"), fetched async by the watch page's player. Only Bilibili
-// exposes a BulletCommentsExtractor (null elsewhere) - other services get an empty result.
+// Bilibili danmaku, async from the watch page's player. Only Bilibili has a BulletCommentsExtractor (null elsewhere): empty result.
 @Throws(Exception::class)
 internal fun ClientHandler.handleDanmaku(
     os: OutputStream,

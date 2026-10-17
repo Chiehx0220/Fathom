@@ -4,7 +4,7 @@ import io.github.aedev.flow.utils.youtubeVideoIdFromUrl
 import java.io.OutputStream
 import java.net.URLEncoder
 
-// Video on demand as HLS: the representations of a video, as an HLS master playlist and a media playlist per file.
+// VOD as HLS: master playlist + media playlist per file.
 
 private const val HLS_TYPE = "application/vnd.apple.mpegurl"
 
@@ -27,7 +27,7 @@ internal fun ClientHandler.handleHlsVod(
         return
     }
 
-    // Any quality of the file, not only the ones the default offer lists.
+    // Any quality of the file, not only default-offer ones.
     val catalog = StreamCatalog.of(extractor, highest = true)
     val ranges =
         catalog.videos.firstOrNull { it.id == repId }?.let { it.init to it.index }
@@ -65,9 +65,7 @@ private class IndexFetch(
     val bytes: ByteArray?,
 )
 
-/**
- * Range fetch; a fresh web-client URL answers 403 for ~1-2 s, so 403 is retried.
- */
+/** Range fetch; fresh web-client URL answers 403 for ~1-2 s: retried. */
 private fun fetchIndex(
     url: String,
     key: String,

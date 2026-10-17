@@ -32,6 +32,6 @@ internal data class ResolvedStreamData(
     val itAudioFormats: List<PlayerResponse.StreamingData.Format>,
     val hlsUrl: String? = null,
     val sabrInfo: SabrStreamInfo? = null,
-    /** Bilibili only: what its danmaku is loaded by once this preload becomes the current video. */
+    /** Bilibili only: danmaku load key once preload becomes current. */
     val bilibiliInfo: BilibiliVideoInfo? = null,
 )

@@ -14,9 +14,8 @@ import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.VideoStream
 
 /**
- * Bilibili's leg of [PlaybackLoadResolver]: what [InnerTubeVideoStreamExtractor] is for YouTube.
- * Fetches a video's streams and its related lane (or a live room's stream) through the native
- * client, and hands them back as one [ResolvedPlayback] step.
+ * Bilibili leg of [PlaybackLoadResolver] (YouTube: [InnerTubeVideoStreamExtractor]). Streams + related lane (or live room stream) via native client
+ * → one [ResolvedPlayback] step.
  */
 internal class BilibiliPlaybackSource(
     private val api: BilibiliApi,
@@ -27,7 +26,7 @@ internal class BilibiliPlaybackSource(
     ): VodFromBilibili =
         coroutineScope {
             val (bvid, page) = BilibiliVideoId.parse(request.videoId)
-            // Started first so the two requests overlap; a failure here only costs the related lane.
+            // Started first: requests overlap; failure costs only related lane.
             val related =
                 async {
                     try {
@@ -52,7 +51,7 @@ internal class BilibiliPlaybackSource(
             )
         }
 
-    /** A live room, which has no related lane or parts: what plays is the room's own stream. */
+    /** Live room: no related lane, no parts; plays the room's stream. */
     suspend fun resolveLive(request: PlaybackResolutionRequest): LiveFromBilibili {
         val roomId = BilibiliLiveId.roomIdOf(request.videoId) ?: throw BilibiliContentNotAvailableException("Not a live room id")
         return LiveFromBilibili(api.livePlayback(roomId))
@@ -62,7 +61,7 @@ internal class BilibiliPlaybackSource(
         private const val TAG = "BilibiliPlaybackSource"
         private const val RELATED_TIMEOUT_MS = 6_000L
 
-        /** The related lane as screen [Video]s, without the video itself and without repeats. */
+        /** Related lane as screen [Video]s, minus the video, deduplicated. */
         internal suspend fun relatedVideos(
             api: BilibiliApi,
             bvid: String,
@@ -75,7 +74,7 @@ internal class BilibiliPlaybackSource(
     }
 }
 
-/** A Bilibili step's streams in the player's types, and the pair its preferences select. */
+/** Step streams in player types + preference-selected pair. */
 internal class BilibiliStreams(
     val videoStreams: List<VideoStream>,
     val audioStreams: List<AudioStream>,
@@ -83,7 +82,7 @@ internal class BilibiliStreams(
     val selectedAudio: AudioStream?,
 )
 
-/** Shared by the player screen and the gapless preload, so both pick the same streams for the same preferences. */
+/** Shared by player screen + gapless preload: same preferences → same streams. */
 internal fun VodFromBilibili.buildStreams(): BilibiliStreams {
     val bvid = playback.info.bvid
     val videoStreams = BilibiliStreamBridge.convertVideoFormats(bvid, playback.videoFormats)

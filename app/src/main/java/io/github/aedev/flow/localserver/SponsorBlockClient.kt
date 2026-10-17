@@ -4,20 +4,18 @@ import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import kotlinx.coroutines.runBlocking
 
 /**
- * Bridges to native `SponsorBlockRepository` instead of a separate HTTP client - inherits
- * AppProxyManager's proxy handling. Fetches 6/8 categories (no preview/filler); POI (single-
- * instant) segments are filtered out since the marker/skip-button UI expects real ranges.
+ * Bridge to native `SponsorBlockRepository` (inherits AppProxyManager proxy handling). 6/8 categories (no preview/filler);
+ * POI (single-instant) segments dropped (marker/skip-button UI expects ranges).
  */
 object SponsorBlockClient {
     data class Segment(
         val startMs: Long,
         val endMs: Long,
-        // SponsorBlock's own category id (e.g. "sponsor", "selfpromo", "interaction") - matches
-        // what the web app's marker-color CSS classes and category labels key off of.
+        // SponsorBlock category id ("sponsor", "selfpromo", "interaction"): key of web app marker-color CSS classes + labels.
         val category: String,
     )
 
-    /** Blocking - call from a background thread (every LocalHttpServer request already is one). */
+    /** Blocking: background thread only (every LocalHttpServer request is one). */
     @JvmStatic
     fun fetchSegments(videoId: String): List<Segment> {
         if (videoId.isBlank()) return emptyList()

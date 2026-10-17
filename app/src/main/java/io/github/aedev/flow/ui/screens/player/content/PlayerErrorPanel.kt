@@ -97,7 +97,7 @@ internal fun PlayerErrorPanel(
                     Text(stringResource(R.string.copy_logs), fontSize = 13.sp)
                 }
             }
-            // Row 2: Open in the source service's own site/app (full width)
+            // Row 2: open in source service site/app (full width)
             OutlinedButton(
                 onClick = {
                     val intent =

@@ -10,9 +10,8 @@ import java.util.Locale
 import kotlin.random.Random
 
 /**
- * The browser fingerprint Bilibili's risk control sees: a frozen-UA modern Chrome on Windows plus a
- * WebGL vendor/renderer pair and a window size. One is forged per process and reused, so every
- * request in a session presents the same device.
+ * Browser fingerprint seen by risk control: frozen-UA Chrome on Windows, WebGL vendor/renderer, window size.
+ * One per process, reused across requests.
  */
 object DeviceForger {
     class Device(
@@ -132,14 +131,14 @@ object DeviceForger {
             GraphicCard("NVIDIA", "NVIDIA Quadro P2000 (0x00001C30)"),
         )
 
-    /** Base64 with the trailing "==" cut off, the way the web client sends dm_img_str. */
+    /** Base64 minus trailing "==" (web client dm_img_str). */
     internal fun encodeToBase64SubString(raw: String): String {
         val encoded = Base64.getEncoder().encodeToString(raw.toByteArray(Charsets.UTF_8))
         return encoded.substring(0, encoded.length - 2)
     }
 
     internal fun forgeDevice(random: Random): Device {
-        // Modern Chrome (frozen UA) on Windows 10/11 x64 only.
+        // Frozen-UA Chrome, Windows 10/11 x64 only.
         val chromiumVersion = random.nextInt(8) + 130
         val card = cards[random.nextInt(cards.size)]
         return Device(

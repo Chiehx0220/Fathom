@@ -24,7 +24,7 @@ import io.github.aedev.flow.ui.components.shared.FeedGridSkeleton
 import io.github.aedev.flow.ui.components.shared.FlowErrorState
 import io.github.aedev.flow.ui.components.shared.FlowFilterChip
 
-/** Explore with Bilibili as the source: its own tabs over the same grid the YouTube tabs use. */
+/** Explore with Bilibili source: own tabs over the YouTube-tab grid. */
 @Composable
 internal fun BilibiliExploreContent(
     onVideoClick: (Video) -> Unit,

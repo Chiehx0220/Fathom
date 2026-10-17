@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.localserver.ServerService
 
-/** Nothing paired yet: says what to do, and shows the address to open so it does not have to be looked up. */
+/** Nothing paired: instruction + address to open. */
 @Composable
 internal fun NotConnected() {
     val serverRunning by ServerService.runningState.collectAsState()

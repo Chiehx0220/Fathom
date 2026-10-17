@@ -12,7 +12,7 @@ import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Which service answers for a video, and which services a Home source filter asks. */
+/** Per-video service dispatch; services asked per Home source filter. */
 @Singleton
 class VideoSources(
     private val sources: List<VideoSource>,
@@ -24,7 +24,7 @@ class VideoSources(
 
     fun forFilter(filter: HomeContentSourceFilter): List<VideoSource> = sources.filter { filter.allows(it.serviceId) }
 
-    /** One discovery query asked of every service the Home filter allows; YouTube answers through [youtube]. */
+    /** One discovery query to every service the Home filter allows; YouTube via [youtube]. */
     suspend fun search(
         query: String,
         youtube: suspend (String) -> List<Video>,
@@ -39,7 +39,7 @@ class VideoSources(
 
     fun forService(serviceId: Int): VideoSource? = sources.firstOrNull { it.serviceId == serviceId }
 
-    /** A saved service id can be wrong; the id's own shape wins. */
+    /** Saved service id may be wrong; id shape wins. */
     fun forVideo(
         videoId: String,
         savedServiceId: Int = ServiceList.YouTube.serviceId,

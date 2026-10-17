@@ -10,22 +10,19 @@ import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.stream.Description
 
 /**
- * YouTube's comments through the app's own InnerTube client, the way the player screen reads them. The
- * extractor leaves out the avatars of YouTube's newer comment format, and InnerTube carries them.
+ * YouTube comments via the app InnerTube client (as player screen). Extractor omits avatars of the newer comment format; InnerTube has them.
  *
- * The continuation of a comment page is a [Page] whose url holds "yt:c:<token>", and the one of the replies
- * under a comment "yt:r:<token>". A page from the extractor has neither prefix, so it keeps going there.
+ * Continuation = [Page] url "yt:c:<token>"; replies "yt:r:<token>". Extractor pages have neither prefix: stay there.
  */
 internal object LocalServerYouTubeComments {
     private const val MORE = "yt:c:"
     private const val REPLIES = "yt:r:"
 
-    /** True for a continuation this object made, so [LocalServerSource] does not hand it to the extractor. */
+    /** Continuation made by this object; [LocalServerSource] does not hand it to the extractor. */
     fun owns(page: Page?): Boolean = page?.url?.startsWith("yt:") == true
 
     /**
-     * One page, or null when InnerTube gave nothing to show for a first page, so the extractor answers (it also knows
-     * whether comments are turned off). A continuation that fails ends the list instead.
+     * One page; null if InnerTube gave nothing on a first page → extractor answers (also knows comments-off). Failed continuation ends the list.
      */
     fun comments(
         context: Context,
@@ -66,7 +63,7 @@ internal object LocalServerYouTubeComments {
 
                     else -> {
                         val page = repo.getVideoComments(videoId)
-                        // legacyPage is the repository's own fall back to the extractor: those comments have no avatars either.
+                        // legacyPage = repository fallback to the extractor: no avatars either.
                         if (page.legacyPage != null || page.comments.isEmpty()) {
                             null
                         } else {
@@ -87,7 +84,7 @@ internal object LocalServerYouTubeComments {
     }
 }
 
-/** A comment as the item type the local server's pages are built from; [hasReplies] is false for a reply. */
+/** Comment as local-server page item; [hasReplies] false for a reply. */
 internal fun Comment.toCommentItem(
     videoUrl: String,
     hasReplies: Boolean,

@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.vector.PathParser
 import kotlin.math.PI
 import kotlin.math.cos
 
-// The Fathom badge, its water and ruler mark, in a 24-unit box; the launcher icon's drawing in one colour.
+// Fathom badge, water + ruler mark, 24-unit box; launcher icon drawing, one colour.
 private const val FLOW_LOGO_BG_PATH = "M7,2 L17,2 C20,2 22,4 22,7 L22,17 C22,20 20,22 17,22 L7,22 C4,22 2,20 2,17 L2,7 C2,4 4,2 7,2 Z"
 private const val FLOW_LOGO_RULER_PATH = "M8.88,4.32 L8.88,18.72 M8.88,5.28 L18.24,5.28 M8.88,10.08 L12,10.08 M8.88,14.88 L12,14.88"
 private const val FLOW_LOGO_TRIANGLE_PATH = "M16.44,12.96 L12.36,10.56 L12.36,15.36 Z"
@@ -31,7 +31,7 @@ private const val WAVE_BOTTOM = 24f
 private const val WAVE_FILL_ALPHA = 0.3f
 private const val WAVE_LINE_ALPHA = 0.85f
 
-/** The water across the badge: the crest line, and the water below it closed off at the bottom. */
+/** Water across the badge: crest line + water below, closed at bottom. */
 private fun wavePaths(): Pair<Path, Path> {
     val line = Path()
     var x = WAVE_LEFT

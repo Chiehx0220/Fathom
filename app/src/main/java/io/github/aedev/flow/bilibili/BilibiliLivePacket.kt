@@ -17,8 +17,8 @@ import java.nio.ByteBuffer
 import java.util.zip.InflaterInputStream
 
 /**
- * A chat packet is a 16-byte header (length, header length, version, operation, sequence) and a body.
- * The server batches messages into one zlib-compressed packet, which itself holds packets.
+ * Chat packet: 16-byte header (length, header length, version, operation, sequence) + body.
+ * Batches arrive as one zlib packet containing packets.
  */
 internal object BilibiliLivePacket {
     const val OP_HEARTBEAT = 2
@@ -29,7 +29,7 @@ internal object BilibiliLivePacket {
     private const val VERSION_JSON = 1
     private const val VERSION_ZLIB = 2
 
-    /** The version asked for in the auth packet; brotli (3) would need a decoder Flow does not carry. */
+    /** Auth packet version; brotli (3) unsupported (no decoder). */
     const val PROTOCOL_VERSION = VERSION_ZLIB
 
     private const val WHITE = 0xFFFFFF
@@ -67,7 +67,7 @@ internal object BilibiliLivePacket {
             "\"clientver\":\"1.4.0\",\"type\":2,\"key\":\"$token\"$buvidField}"
     }
 
-    /** Every packet in [frame], the ones inside a compressed packet included. */
+    /** All packets in [frame], incl. those inside a compressed packet. */
     fun decode(frame: ByteArray): List<Packet> {
         val packets = ArrayList<Packet>()
         val buffer = ByteBuffer.wrap(frame)
@@ -90,7 +90,7 @@ internal object BilibiliLivePacket {
         return packets
     }
 
-    /** The events in [frame]; other packets (auth reply, popularity) carry none. */
+    /** Events in [frame]; other packets (auth reply, popularity) yield none. */
     fun messages(
         frame: ByteArray,
         json: Json,
@@ -113,7 +113,7 @@ internal object BilibiliLivePacket {
             }
         }.getOrNull()
 
-    /** info[0] holds the style (mode at 1, colour at 3), info[1] the text. */
+    /** info[0]: style (mode at 1, colour at 3); info[1]: text. */
     private fun chat(info: JsonArray?): BilibiliLiveMessage.Chat? {
         val style = info?.getOrNull(0)?.jsonArray ?: return null
         val text =

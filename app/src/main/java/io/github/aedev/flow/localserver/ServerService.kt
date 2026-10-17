@@ -20,9 +20,8 @@ import java.net.InetAddress
 import java.net.NetworkInterface
 
 /**
- * Foreground promotion + notification for the embedded local web server. Assumes NewPipe.init()
- * already ran via FlowApplication - re-initializing here would race the app's own extraction
- * pipeline (process-global state).
+ * Foreground promotion + notification for the embedded local web server. Assumes NewPipe.init() ran via FlowApplication:
+ * re-init races the app's extraction pipeline (process-global state).
  */
 class ServerService : Service() {
     private var server: LocalHttpServer? = null
@@ -112,11 +111,8 @@ class ServerService : Service() {
         stopSelf()
     }
 
-    // Android 15+ caps dataSync foreground services (~6h); the system then calls this and
-    // expects stopSelf() within seconds, or throws ForegroundServiceDidNotStopInTimeException
-    // (the crash this fixes). stopSelf() -> onDestroy() -> stopServer() releases the locks and
-    // the notification. Restarting from here isn't allowed (background FGS start restriction),
-    // so the server stays down until the user re-enables it in Settings.
+    // Android 15+ caps dataSync FGS (~6h); system calls this, expects stopSelf() within seconds or ForegroundServiceDidNotStopInTimeException.
+    // stopSelf() → onDestroy() → stopServer() releases locks + notification. No restart (background FGS start restriction): server stays down until re-enabled in Settings.
     override fun onTimeout(
         startId: Int,
         fgsType: Int,
@@ -157,10 +153,8 @@ class ServerService : Service() {
 
         private val mutableRunning = MutableStateFlow(false)
 
-        // True only while the socket is actually bound (set after startServer() succeeds, cleared
-        // in stopServer()) - the Settings UI observes this instead of the saved "enabled"
-        // preference, which stays true after the system stops the service (e.g. dataSync timeout)
-        // or the process dies, so it used to keep showing "online" for a dead server.
+        // True only while socket bound (after startServer(), cleared in stopServer()): Settings UI observes this, not saved "enabled"
+        // (stays true after system stop, e.g. dataSync timeout, or process death → stale "online").
         val runningState: StateFlow<Boolean> = mutableRunning.asStateFlow()
 
         val isRunning: Boolean

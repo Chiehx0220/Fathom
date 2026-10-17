@@ -42,7 +42,7 @@ import io.github.aedev.flow.ui.tv.components.TvNavRow
 import io.github.aedev.flow.ui.tv.components.TvSectionHeader
 import io.github.aedev.flow.ui.tv.focus.ProvideTvColumnPivot
 
-/** TV counterpart of the mobile About screen, adapted for remote focus and scrolling. */
+/** TV counterpart of mobile About screen (remote focus, scrolling). */
 @Composable
 fun TvFathomAboutPane(modifier: Modifier = Modifier) {
     val context = LocalContext.current

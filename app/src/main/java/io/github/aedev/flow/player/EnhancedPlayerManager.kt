@@ -570,7 +570,7 @@ class EnhancedPlayerManager private constructor() {
         // Initialize sponsor block handler
         sponsorBlockHandler = SponsorBlockHandler(scope)
 
-        // Initialize danmaku (Bilibili bullet comments) handler
+        // Danmaku (Bilibili bullet comments) handler init
         danmakuHandler = DanmakuHandler(scope)
 
         // Initialize audio features manager
@@ -1010,7 +1010,7 @@ class EnhancedPlayerManager private constructor() {
         publishSubtitles()
         startPlaybackTracker()
 
-        // A local file has no Bilibili danmaku - clear out whatever the previous video left loaded.
+        // Local file: no Bilibili danmaku; clear previous video's.
         danmakuHandler?.reset()
 
         // Stored segments win even when empty (looked up, none found); a device file has none to look up.
@@ -2935,7 +2935,7 @@ class EnhancedPlayerManager private constructor() {
 
     fun resetDanmaku() = danmakuHandler?.reset()
 
-    /** Marks [roomId] as the live room whose chat the danmaku layer should show. */
+    /** [roomId]: live room whose chat the danmaku layer shows. */
     fun startLiveDanmaku(roomId: Long) = danmakuHandler?.startLive(roomId)
 
     val liveDanmakuRoom: StateFlow<Long?>

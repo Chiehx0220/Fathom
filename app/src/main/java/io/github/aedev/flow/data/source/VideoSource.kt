@@ -10,7 +10,7 @@ enum class SearchFilter {
     LIVE,
 }
 
-/** One service's video catalogue. A call that times out or fails yields no videos. */
+/** One service's video catalogue. Timeout/failure → no videos. */
 interface VideoSource {
     val serviceId: Int
 
@@ -21,7 +21,7 @@ interface VideoSource {
 
     suspend fun related(videoId: String): List<Video>
 
-    /** The queries this service wants for [filter]; a service that ignores the query for it takes one. */
+    /** Queries this service wants for [filter]; a service ignoring the query takes one. */
     fun queriesFor(
         queries: List<String>,
         filter: SearchFilter,

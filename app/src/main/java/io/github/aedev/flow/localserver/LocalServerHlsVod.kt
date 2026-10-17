@@ -3,7 +3,7 @@ package io.github.aedev.flow.localserver
 import java.nio.ByteBuffer
 import java.util.Locale
 
-/** One media segment of an fMP4 file: where it sits in the file and how long it plays. */
+/** fMP4 media segment: file offset + duration. */
 internal class FragmentSpan(
     val offset: Long,
     val length: Long,
@@ -11,8 +11,8 @@ internal class FragmentSpan(
 )
 
 /**
- * Reads a `sidx` box (the segment index at the `indexRange` of an MP4 with a segment index) into the byte spans of its segments.
- * [indexEnd] is the last byte of the box in the file: the first segment follows it, plus the box's own first offset.
+ * Reads `sidx` box (segment index at `indexRange` of an MP4) into segment byte spans.
+ * [indexEnd]: last byte of the box; first segment follows it, plus the box's first offset.
  */
 internal object SidxParser {
     fun parse(
@@ -40,7 +40,7 @@ internal object SidxParser {
         val spans = ArrayList<FragmentSpan>(count)
         repeat(count) {
             val word = buf.getInt(pos)
-            // A reference to another sidx (top bit set) is not a media segment; players of this kind never meet one.
+            // Reference to another sidx (top bit set) is not a media segment; not met by such players.
             require(word >= 0) { "nested sidx" }
             val size = word.toLong()
             val duration = (buf.getInt(pos + 4).toLong() and 0xFFFFFFFFL).toDouble() / timescale
@@ -52,11 +52,11 @@ internal object SidxParser {
     }
 }
 
-/** Writes a [StreamCatalog] as HLS playlists (fMP4 segments addressed by byte range, so the files are not copied or cut). */
+/** [StreamCatalog] → HLS playlists (fMP4 segments by byte range; files not copied or cut). */
 internal object HlsVod {
     private const val AUDIO_GROUP = "aud"
 
-    /** [playlistUrl] is the address of a representation's media playlist. */
+    /** [playlistUrl]: address of a representation's media playlist. */
     fun master(
         catalog: StreamCatalog,
         playlistUrl: (String) -> String,
@@ -83,7 +83,7 @@ internal object HlsVod {
         return out.toString()
     }
 
-    /** The playlist of one file: its `init` and the [spans] of its segments, all as byte ranges of [streamUrl]. */
+    /** One file's playlist: `init` + [spans] as byte ranges of [streamUrl]. */
     fun media(
         streamUrl: String,
         init: StreamCatalog.ByteRange,

@@ -84,7 +84,7 @@ object VideoCodecUtils {
         }
     }
 
-    /** The `codecs=` value with its case preserved: AV1's tier letter (M/H) is case-sensitive in MSE. */
+    /** `codecs=` value, case preserved: AV1 tier letter (M/H) is case-sensitive in MSE. */
     fun codecStringFromMimeType(mimeType: String): String =
         CODECS_PARAMETER_REGEX
             .find(mimeType)

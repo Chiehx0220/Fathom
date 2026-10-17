@@ -15,9 +15,7 @@ import io.github.aedev.flow.data.model.Video as FlowVideo
 
 private fun HistoryDbHelper.playlistRepository() = PlaylistRepository(appContext)
 
-/** Playlist bookmarks ("save this YouTube playlist") and Watch Later both live in Flow's native
- * PlaylistRepository (Room) - Watch Later is a hardcoded internal playlist there, the same table a
- * playlist saved from Flow's own UI lands in. */
+/** Playlist bookmarks ("save this YouTube playlist") and Watch Later: native PlaylistRepository (Room); Watch Later = hardcoded internal playlist, same table as playlists saved from Flow UI. */
 fun HistoryDbHelper.nativeIsPlaylistBookmarked(playlistUrl: String?): Boolean {
     val playlistId = playlistUrlToId(playlistUrl) ?: return false
     return runBlocking { playlistRepository().isExternalPlaylistSaved(playlistId) }
@@ -37,8 +35,7 @@ fun HistoryDbHelper.nativeUnbookmarkPlaylist(playlistUrl: String) {
     runBlocking { playlistRepository().unsaveExternalPlaylist(playlistId) }
 }
 
-/** Bookmarked playlists as [InfoItem]s. No uploader field (`PlaylistEntity` has none) -
- * the SPA's card subtitle just drops that part for these. */
+/** Bookmarked playlists as [InfoItem]s. No uploader field (`PlaylistEntity` has none): SPA card subtitle omits it. */
 fun HistoryDbHelper.nativeBookmarkedPlaylists(): List<InfoItem> =
     runBlocking {
         playlistRepository().getSavedVideoPlaylistsFlow().first().map { info ->
@@ -56,8 +53,7 @@ fun HistoryDbHelper.nativeIsWatchLater(videoUrl: String): Boolean {
     return runBlocking { playlistRepository().isInWatchLater(videoId) }
 }
 
-/** HTTP action params carry no duration/viewCount/uploadDate - only the triggering button's own
- * markup. Uses the same `-1`/empty convention as [StreamInfoItem.toFlowVideo] for missing data. */
+/** HTTP action params carry no duration/viewCount/uploadDate (button markup only); `-1`/empty as [StreamInfoItem.toFlowVideo]. */
 private fun buildFlowVideoFromParams(
     videoId: String,
     title: String,
@@ -75,8 +71,7 @@ private fun buildFlowVideoFromParams(
     uploadDate = "",
 )
 
-/** Also reports a SAVED signal to FlowNeuroEngine, mirroring native's
- * `QuickActionsViewModel.toggleWatchLater` - best-effort, same as [reportFlowNeuroInteraction]. */
+/** Also reports SAVED to FlowNeuroEngine, as native `QuickActionsViewModel.toggleWatchLater`; best-effort ([reportFlowNeuroInteraction]). */
 fun HistoryDbHelper.nativeAddWatchLater(
     url: String,
     title: String,
@@ -104,7 +99,7 @@ fun HistoryDbHelper.nativeRemoveWatchLater(url: String) {
     runBlocking { playlistRepository().removeFromWatchLater(videoId) }
 }
 
-/** Watch Later items as [InfoItem]s. Video-only, matching `renderWatchLaterButton()`'s call sites. */
+/** Watch Later items as [InfoItem]s; video-only (`renderWatchLaterButton()` call sites). */
 fun HistoryDbHelper.nativeWatchLaterItems(): List<InfoItem> =
     runBlocking {
         playlistRepository().getVideoOnlyWatchLaterFlow().first().map { it.toStreamInfoItem(0) }
@@ -112,9 +107,7 @@ fun HistoryDbHelper.nativeWatchLaterItems(): List<InfoItem> =
 
 private fun HistoryDbHelper.likedVideosRepository() = LikedVideosRepository.getInstance(appContext)
 
-/** Like/dislike state via `LikedVideosRepository` (DataStore), same store as native's
- * `VideoPlayerViewModel.likeVideo/dislikeVideo`. Same `-1`/empty convention as
- * [nativeAddWatchLater] for fields HTTP params don't carry. */
+/** Like/dislike via `LikedVideosRepository` (DataStore), as native `VideoPlayerViewModel.likeVideo/dislikeVideo`. `-1`/empty as [nativeAddWatchLater]. */
 fun HistoryDbHelper.nativeLikeState(videoUrl: String): String? {
     val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return null

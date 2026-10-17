@@ -36,12 +36,12 @@ import kotlinx.coroutines.launch
 private val Context.remoteHints by safePreferencesDataStore(name = "remote_hints")
 private val VolumeKeysSeen = booleanPreferencesKey("volume_keys_seen")
 
-/** One-time card: the hardware volume keys control the page volume. */
+/** One-time card: hardware volume keys control page volume. */
 @Composable
 internal fun VolumeKeysHint(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    // Defaults to seen to avoid a flash before the DataStore value loads.
+    // Default seen: no flash before DataStore loads.
     val seen by remember(context) { context.remoteHints.data.map { it[VolumeKeysSeen] ?: false } }.collectAsState(initial = true)
     if (seen) return
     Surface(

@@ -13,21 +13,19 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 
 /**
- * A YouTube channel's Videos tab through the same InnerTube calls as the app's channel screen, so the page
- * lists what the app lists and follows the app's fixes instead of the extractor's.
+ * YouTube channel Videos tab via the app channel screen's InnerTube calls: page lists what the app lists, follows its fixes.
  *
- * The continuation of a page is a [Page] whose url holds "yt:u:<token>", with the owner (id, name, avatar)
- * in its id and ids, because a continuation response has no header. A page from the extractor has no such
- * prefix, so it keeps going there. Other tabs and sort orders stay with the extractor.
+ * Continuation = [Page] url "yt:u:<token>", owner (id, name, avatar) in id and ids (continuation response has no header).
+ * Extractor pages lack the prefix: stay with the extractor. Other tabs and sorts: extractor.
  */
 internal object LocalServerYouTubeChannel {
     private const val MORE = "yt:u:"
     private const val YOUTUBE = 0
 
-    /** True for a continuation this object made, so [LocalServerSource] does not hand it to the extractor. */
+    /** Continuation made by this object; [LocalServerSource] does not hand it to the extractor. */
     fun owns(page: Page?): Boolean = page?.url?.startsWith(MORE) == true
 
-    /** The Videos tab page, or null when the extractor should answer (another tab or sort, or InnerTube had nothing). */
+    /** Videos tab page; null → extractor answers (other tab/sort, or InnerTube empty). */
     fun videos(
         channelUrl: String,
         tab: String,
@@ -43,12 +41,12 @@ internal object LocalServerYouTubeChannel {
             throw e
         } catch (e: Exception) {
             serverLog("InnerTube channel failed: ${e.message}")
-            // A continuation that fails ends the list; a first page that fails goes to the extractor.
+            // Failed continuation ends the list; failed first page → extractor.
             nextPage?.takeIf { owns(it) }?.let { ChannelPage(header(ownerOf(it), channelUrl), emptyList(), null) }
         }
     }
 
-    /** The uploads of [channelUrl], newest first, or null when InnerTube gave none. The About request is left out: only the videos matter. */
+    /** Uploads of [channelUrl], newest first; null if InnerTube gave none. About request omitted. */
     fun uploads(channelUrl: String): List<InfoItem>? =
         videos(channelUrl, "videos", null, null, withAbout = false)?.items?.takeIf { it.isNotEmpty() }
 
@@ -127,7 +125,7 @@ internal object LocalServerYouTubeChannel {
             avatarUrl = page.ids?.getOrNull(1).orEmpty(),
         )
 
-    /** A continuation carries no header, so the owner and the count it was handed stand in for it. */
+    /** Continuation has no header: handed owner + count stand in. */
     private fun header(
         owner: FeedItemOwner,
         channelUrl: String,

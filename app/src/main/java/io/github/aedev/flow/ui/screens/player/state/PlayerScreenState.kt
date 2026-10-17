@@ -52,8 +52,7 @@ class PlayerScreenState {
     // Subtitle States
     var subtitleStyle by mutableStateOf(SubtitleStyle())
 
-    // Danmaku (Bilibili bullet comments) toggle - a general viewing preference like showControls,
-    // not video-specific, so unlike subtitlesEnabled it's not reset in resetForNewVideo().
+    // Danmaku (Bilibili bullet comments) toggle: general viewing preference (like showControls), not per video: not reset in resetForNewVideo() (unlike subtitlesEnabled).
     var danmakuEnabled by mutableStateOf(true)
 
     // The caption track the transcript is read from. Separate from the subtitle choice: reading

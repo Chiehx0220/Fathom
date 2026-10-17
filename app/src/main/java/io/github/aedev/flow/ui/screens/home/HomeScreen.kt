@@ -217,7 +217,7 @@ fun HomeScreen(
                         viewModel.selectChip(key)
                     },
                     leading = {
-                        // The source filter shapes the mixed feed only, so picking one returns to All.
+                        // Source filter shapes the mixed feed only: picking one returns to All.
                         HomeContentSourceFilterChip(
                             selected = contentSourceFilter,
                             onSelect = viewModel::setContentSourceFilter,

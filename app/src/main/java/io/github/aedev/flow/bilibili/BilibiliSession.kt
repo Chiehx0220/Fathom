@@ -33,12 +33,11 @@ import javax.crypto.spec.SecretKeySpec
 import kotlin.random.Random
 
 /**
- * What makes a request look like a real logged-out browser to Bilibili: forged device headers, the
- * anonymous cookie set (buvid3/4, b_nut, b_lsid, _uuid, bili_ticket, buvid_fp) and the daily WBI
- * mixin key. One instance per app; the cookie set and the key are cached and refreshed on expiry.
+ * Logged-out browser fingerprint for Bilibili: forged device headers, anonymous cookie set
+ * (buvid3/4, b_nut, b_lsid, _uuid, bili_ticket, buvid_fp), daily WBI mixin key.
+ * Singleton; cookies and key cached, refreshed on expiry.
  *
- * When Bilibili changes what its risk control checks, this is the file that changes - and the file
- * to diff against PipePipeExtractor's BilibiliService/utils.
+ * Risk-control changes land here; diff against PipePipeExtractor BilibiliService/utils.
  */
 class BilibiliSession(
     private val http: OkHttpClient,
@@ -51,7 +50,7 @@ class BilibiliSession(
     private var mixinKey: String? = null
     private var mixinKeyDate: LocalDate? = null
 
-    /** UA + Referer + Accept-Language, no cookies. [originalUrl]'s host picks the Referer. */
+    /** UA + Referer + Accept-Language, no cookies. [originalUrl] host picks Referer. */
     fun userAgentHeaders(originalUrl: String?): LinkedHashMap<String, String> {
         val headers = LinkedHashMap<String, String>()
         headers["User-Agent"] = DeviceForger.requireRandomDevice().userAgent
@@ -64,7 +63,7 @@ class BilibiliSession(
         return headers
     }
 
-    /** [userAgentHeaders] plus the anonymous default cookie set. */
+    /** [userAgentHeaders] + anonymous default cookies. */
     suspend fun headers(originalUrl: String?): LinkedHashMap<String, String> {
         val headers = userAgentHeaders(originalUrl)
         headers["Cookie"] = cookieHeader(defaultCookies())
@@ -81,7 +80,7 @@ class BilibiliSession(
             fetchDefaultCookies().also { cookies = it }
         }
 
-    /** Forces the next call to fetch a fresh cookie set and a fresh device, e.g. after a risk-control block. */
+    /** Next call fetches fresh cookies + device (e.g. after risk-control block). */
     suspend fun reset() {
         cookieLock.withLock { cookies = null }
         keyLock.withLock {
@@ -91,7 +90,7 @@ class BilibiliSession(
         DeviceForger.regenerateRandomDevice()
     }
 
-    /** Signs [params] for a WBI endpoint and returns the full URL. */
+    /** WBI-signs [params]; returns full URL. */
     suspend fun signedUrl(
         baseUrl: String,
         params: LinkedHashMap<String, String>,
@@ -220,7 +219,7 @@ class BilibiliSession(
         headers: Map<String, String>,
     ): String = execute(request(url, headers)).body
 
-    /** For endpoints that answer with something other than text. */
+    /** Non-text responses. */
     internal suspend fun getBytes(
         url: String,
         headers: Map<String, String>,
@@ -233,7 +232,7 @@ class BilibiliSession(
             }
         }
 
-    /** Returns the body whatever the HTTP status: Bilibili's risk control answers with a 412 and a page. */
+    /** Body regardless of HTTP status (risk control: 412 + page). */
     internal suspend fun getLenient(
         url: String,
         headers: Map<String, String>,

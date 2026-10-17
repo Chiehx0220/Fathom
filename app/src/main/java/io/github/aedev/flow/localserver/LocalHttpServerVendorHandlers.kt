@@ -3,11 +3,11 @@ package io.github.aedev.flow.localserver
 import java.io.FileNotFoundException
 import java.io.OutputStream
 
-// The third-party files the web page loads from this device (assets/web/vendor), such as the Video.js player.
+// Third-party files loaded from this device (assets/web/vendor), e.g. Video.js.
 
 private val VENDOR_PATH = Regex("""/vendor/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*""")
 
-/** The asset path of a /vendor/ request, or null for anything that could leave the vendor folder or is not a plain file name. */
+/** Asset path of a /vendor/ request; null if it could escape the vendor folder or is not a plain file name. */
 internal fun vendorAssetPath(path: String): String? {
     if (!VENDOR_PATH.matches(path) || path.split('/').any { it == ".." || it == "." }) return null
     return "web" + path
@@ -23,8 +23,7 @@ internal fun vendorContentType(path: String): String? =
     }
 
 /**
- * One text file of the vendor folder. The names of the chunks Video.js loads carry a hash of their content, and its entry
- * files are asked for with the page's version in the address, so every answer can be kept forever.
+ * One vendor text file. Video.js chunk names carry a content hash; entry files requested with page version: cacheable forever.
  */
 @Throws(Exception::class)
 internal fun ClientHandler.handleVendorAsset(

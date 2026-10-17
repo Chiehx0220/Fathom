@@ -7,12 +7,11 @@ import java.net.URLEncoder
 import java.util.Locale
 
 /*
- * The seek bar's preview thumbnails. YouTube publishes a video's frames as storyboards: sprite
- * sheets with a grid of small frames each. The web player reads them from a WebVTT file whose cues point
- * at a region of a sheet (`url#xywh=x,y,w,h`), so this builds that file from the storyboard.
+ * Seek-bar preview thumbnails. YouTube storyboards: sprite sheets, grid of frames. Web player reads WebVTT with cues at sheet regions
+ * (`url#xywh=x,y,w,h`); built here from the storyboard.
  */
 
-/** The storyboard to draw previews from: the largest one no wider than a seek-bar tooltip. */
+/** Storyboard for previews: largest no wider than a seek-bar tooltip. */
 internal fun List<Frameset>.bestForSeekBar(): Frameset? {
     val usable = filter { it.urls.isNotEmpty() && it.frameWidth > 0 && it.frameHeight > 0 && it.durationPerFrame > 0 }
     return usable.filter { it.frameWidth <= MAX_PREVIEW_WIDTH }.maxByOrNull { it.frameWidth }
@@ -56,13 +55,12 @@ private fun vttTime(millis: Long): String =
 private const val MAX_PREVIEW_WIDTH = 320
 
 /*
- * Images from a host the browser cannot fetch directly - YouTube's refuses the player's CORS mode
- * (black previews); Bilibili's hotlink-checks the Referer and 403s without it. Both are fixed the
- * same way: fetched here, with whatever header that host needs, and served back same-origin.
+ * Images from hosts the browser cannot fetch directly: YouTube refuses the player's CORS mode (black previews);
+ * Bilibili hotlink-checks Referer (403). Fetched here with the host's header, served same-origin.
  */
 private const val IMAGE_ROUTE = "/image-proxy?u="
 
-/** The extra request headers [url]'s host needs to answer, or null when it needs no proxying. */
+/** Extra request headers [url]'s host needs; null if no proxying needed. */
 private fun proxiedImageHeaders(url: String): Map<String, String>? {
     val uri = runCatching { URI(url) }.getOrNull() ?: return null
     val host = uri.host?.lowercase() ?: return null
@@ -127,6 +125,6 @@ internal fun ClientHandler.handleImageProxy(
     }
 }
 
-/** A same-origin URL for an image the browser cannot fetch directly; the original URL for any other host. */
+/** Same-origin URL for an image the browser cannot fetch; original URL for other hosts. */
 internal fun sameOriginImageUrl(url: String): String =
     if (proxiedImageHeaders(url) != null) IMAGE_ROUTE + URLEncoder.encode(url, "UTF-8") else url

@@ -18,13 +18,10 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 
-// The home feed's Bilibili lane, kept out of HomeViewModel.kt so upstream changes to that file's
-// YouTube side merge without touching it.
+// Home feed Bilibili lane, outside HomeViewModel.kt: upstream YouTube-side changes merge cleanly.
 
 /**
- * Every wave-1 candidate fetch wants the same shape - skip the call outright when there's nothing
- * to fetch for, bound it so one slow service can't stall the whole wave, and treat any failure as
- * "no candidates" rather than propagating - so it's written once here instead of at each call site.
+ * Wave-1 candidate fetch, written once: skip when nothing to fetch, time-bounded (slow service can't stall the wave), failure → no candidates.
  */
 internal suspend fun <T> fetchSafely(
     enabled: Boolean = true,
@@ -43,13 +40,13 @@ private const val BILIBILI_LIVES_LIMIT = 6
 
 internal data class BilibiliWave1Feeds(
     val subs: List<Video>,
-    /** Trending and live videos, which no search found. */
+    /** Trending + live videos not found by search. */
     val viral: List<Video>,
 )
 
 internal fun Video.isBilibili(): Boolean = serviceIdOfVideo(id, serviceId) == BILIBILI_SERVICE_ID
 
-/** [pageOrigins], without a search label on Bilibili trending and live cards: no search found them. */
+/** [pageOrigins] without search label on Bilibili trending/live cards. */
 internal fun pageOriginsWithBilibili(
     videos: List<Video>,
     sourceOf: (String) -> FeedSource?,
@@ -66,17 +63,16 @@ internal fun pageOriginsWithBilibili(
     return origins - unsearched
 }
 
-/** Cards that arrive after the feed loaded face the same Home source filter as the feed they join. */
+/** Late-arriving cards: same Home source filter as the feed. */
 internal suspend fun List<Video>.allowedBy(preferences: PlayerPreferences): List<Video> {
     val filter = preferences.homeContentSourceFilter.first()
     return filter { filter.allows(it) }
 }
 
-/** A page of cards for Home: only the services [filter] allows, spread evenly through the page. */
+/** Home page of cards: [filter]-allowed services only, spread evenly. */
 internal fun List<Video>.forSourceFilter(filter: HomeContentSourceFilter): List<Video> = filter { filter.allows(it) }.spreadByService()
 
-// Bilibili's two wave-1 fetches (subs, then trending and live), factored out of loadFlowFeed()'s
-// supervisorScope to reduce merge-conflict surface with upstream's YouTube-side fetch logic there.
+// Bilibili wave-1 fetches (subs, trending + live), factored out of loadFlowFeed() supervisorScope: less merge surface with upstream YouTube fetch logic.
 internal fun CoroutineScope.launchBilibiliWave1Feeds(
     subscriptionRepository: SubscriptionRepository,
     context: Context,
@@ -85,8 +81,7 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
     async {
         if (!filter.allows(BILIBILI_SERVICE_ID)) return@async BilibiliWave1Feeds(emptyList(), emptyList())
         val bilibili = bilibiliApi(context)
-        // getAllSubscriptionIds() has no per-service info - filter to Bilibili channels here so
-        // the fetch below routes through the right extractor.
+        // getAllSubscriptionIds() has no per-service info: filter to Bilibili channels (right extractor).
         val bilibiliSubs =
             runCatching {
                 subscriptionRepository
@@ -95,8 +90,7 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
                     .filter { serviceIdOfChannel(it.channelId, it.serviceId) == BILIBILI_SERVICE_ID }
             }.getOrElse { emptyList() }
 
-        // getSubscriptionFeed()'s rotation cursor is YouTube-tuned - Bilibili gets its own small,
-        // uncursored fetch instead.
+        // getSubscriptionFeed() rotation cursor is YouTube-tuned: Bilibili gets own small uncursored fetch.
         val deferredSubs =
             async {
                 fetchSafely(enabled = bilibiliSubs.isNotEmpty()) {
@@ -115,7 +109,7 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
                 }
             }
 
-        // Popular videos, plus a few of the rooms that are live right now.
+        // Popular videos + a few live rooms.
         val deferredViral =
             async {
                 val popular = async { fetchSafely { bilibili.popular().map(BilibiliVideoMapper::videoFromRelated) } }
@@ -135,8 +129,7 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
     }
 
 /**
- * Spreads each service's videos evenly through the list, keeping their relative order. A ranker that
- * scores one service higher would otherwise put all of it first and the other service last.
+ * Spreads each service's videos evenly, relative order kept (a ranker favouring one service would put it first, the other last).
  */
 internal fun List<Video>.spreadByService(): List<Video> {
     val byService = groupBy { it.serviceId }

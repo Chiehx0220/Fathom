@@ -2,7 +2,7 @@ package io.github.aedev.flow.localserver
 
 import org.json.JSONArray
 
-/** Parses a JSON array of [id, label] pairs; malformed input yields an empty list. */
+/** JSON array of [id, label] pairs; malformed → empty. */
 internal fun parseQualities(raw: String?): List<RemoteQuality> {
     if (raw.isNullOrEmpty()) return emptyList()
     return try {

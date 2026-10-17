@@ -3,18 +3,16 @@ package io.github.aedev.flow.localserver
 import java.util.Locale
 
 /*
- * What the local server checks before it runs a request. The server has no sign-in, so these only keep out
- * what a browser can be tricked into sending: a web page on another site asking this device to change
- * something, and a domain an attacker re-points at this device's address. A program on the same network can
- * still set any header it likes; keeping it out would take a pairing step this does not add.
+ * Local server request checks. No sign-in: only keeps out what a browser can be tricked into sending (cross-site change request,
+ * attacker domain re-pointed at this device address). A same-network program can set any header; excluding it needs pairing (not added).
  */
 
-/** A request missing something it needs; answered with 400 and the message instead of a server error. */
+/** Request missing a required part; 400 + message, not server error. */
 internal class BadRequestException(
     message: String,
 ) : IllegalArgumentException(message)
 
-/** Routes that change something on the device, or take the queue of commands for the remote page. */
+/** Routes changing device state or taking the remote command queue. */
 internal val MUTATING_PATHS: Set<String> =
     setOf(
         "/send-link",
@@ -42,7 +40,7 @@ internal val MUTATING_PATHS: Set<String> =
 /** Saved downloads: same-origin pages only. */
 internal val OWN_PAGE_ONLY_PATHS: Set<String> = setOf("/downloadfile")
 
-/** Read-only media routes that other devices and players fetch, so they answer cross-origin requests. */
+/** Read-only media routes fetched by other devices/players: cross-origin allowed. */
 internal val CROSS_ORIGIN_PATHS: Set<String> =
     setOf("/stream", "/hlsvod", "/hls", "/subtitles", "/thumbnails", "/image-proxy", "/danmaku", "/live_chat")
 
@@ -50,10 +48,8 @@ private val IPV4 = Regex("""\d{1,3}(\.\d{1,3}){3}""")
 private val LOCAL_SUFFIXES = listOf(".local", ".lan", ".home.arpa", ".internal")
 
 /**
- * Whether [hostHeader] names this device by address or by a local name. A page on a public domain that
- * has been pointed at this device's address sends that domain here, and the browser then treats the
- * device as that page's own origin; refusing such a name closes that way in. No header at all comes from
- * a program, not a browser.
+ * [hostHeader] names this device by address or local name. Public domain re-pointed at this address sends that domain; browser then treats the device as that page's origin (DNS rebinding):
+ * refused. No header = program, not browser.
  */
 internal fun isLocalHostHeader(hostHeader: String?): Boolean {
     val value = hostHeader?.trim().orEmpty()
@@ -71,9 +67,8 @@ internal fun isLocalHostHeader(hostHeader: String?): Boolean {
 }
 
 /**
- * Whether a request that changes something came from one of this server's own pages, or from no browser.
- * A browser says where a request came from in `Sec-Fetch-Site`, or failing that `Origin`; a page cannot
- * change either. `none` is the viewer typing the address themselves.
+ * State-changing request from one of this server's pages, or no browser. Browser sends `Sec-Fetch-Site`, else `Origin` (page cannot change either).
+ * `none` = viewer typed the address.
  */
 internal fun isSameOriginRequest(headers: Map<String, String>): Boolean {
     val site = headers["sec-fetch-site"]
@@ -83,7 +78,7 @@ internal fun isSameOriginRequest(headers: Map<String, String>): Boolean {
     return origin.removePrefix("http://") == host && origin.startsWith("http://")
 }
 
-/** Why [path] must not be served to this request, or null when it may be. */
+/** Why [path] must not be served to this request; null if allowed. */
 internal fun refusalFor(
     method: String,
     path: String,
@@ -104,7 +99,7 @@ internal fun refusalFor(
         else -> null
     }
 
-/** The reason phrase of [code] in a status line. */
+/** Reason phrase of [code]. */
 internal fun statusText(code: Int): String =
     when (code) {
         200 -> "OK"

@@ -1,6 +1,6 @@
 /*
- * The JSON that Bilibili's endpoints return, as PipePipeExtractor (GPL-3.0, commit
- * aef9726d5b1172213066f60bc338eb4278651d61) reads it. Only the fields Flow uses are declared.
+ * Bilibili endpoint JSON, as PipePipeExtractor (GPL-3.0, commit aef9726d5b1172213066f60bc338eb4278651d61) reads it.
+ * Only fields Flow uses.
  */
 package io.github.aedev.flow.bilibili
 
@@ -22,7 +22,7 @@ internal data class ViewResponse(
         val desc: String = "",
         val pubdate: Long = 0,
         val duration: Int = 0,
-        /** The partition the uploader filed it under: "游戏", "生活", ... */
+        /** Uploader's partition: "游戏", "生活", ... */
         val tname: String = "",
         val owner: Owner = Owner(),
         val stat: Stat = Stat(),
@@ -154,7 +154,7 @@ internal data class SearchResponse(
         val result: List<Item>? = null,
     )
 
-    /** One row; the fields a video row and a user row each use are all optional here. */
+    /** One row; video-row and user-row fields all optional. */
     @Serializable
     data class Item(
         val type: String = "",
@@ -172,11 +172,11 @@ internal data class SearchResponse(
         val usign: String = "",
         val fans: Long = 0,
         val videos: Int = 0,
-        /** Comma-separated tags the uploader gave the video. */
+        /** Comma-separated uploader tags. */
         val tag: String = "",
-        /** The partition, as on a view response. */
+        /** Partition, as in view response. */
         val typename: String = "",
-        /** A live-room row's room number, cover ("//i0.hdslb.com/..."), viewer count, avatar and start time. */
+        /** Live-room row: room number, cover ("//i0.hdslb.com/..."), viewer count, avatar, start time. */
         val roomid: Long = 0,
         @SerialName("user_cover") val userCover: String = "",
         val uface: String = "",
@@ -217,7 +217,7 @@ internal data class CardResponse(
     )
 }
 
-/** The web (`x/space/wbi/arc/search`) and search (`recArchivesByKeywords`) list shapes together. */
+/** Web (`x/space/wbi/arc/search`) and search (`recArchivesByKeywords`) list shapes. */
 @Serializable
 internal data class UserVideosResponse(
     val code: Int = 0,
@@ -376,7 +376,7 @@ internal data class RoomBaseInfoResponse(
 ) {
     @Serializable
     data class Data(
-        /** Keyed by the long room id, even when the short one was asked for. */
+        /** Keyed by long room id even when asked by short id. */
         @SerialName("by_room_ids") val byRoomIds: Map<String, Room> = emptyMap(),
     )
 
@@ -390,9 +390,9 @@ internal data class RoomBaseInfoResponse(
         @SerialName("cover_from_user") val coverFromUser: String? = null,
         val face: String? = null,
         val online: Long = 0,
-        /** 0 not live, 1 live, 2 rebroadcast of uploaded videos. */
+        /** 0 offline, 1 live, 2 rebroadcast. */
         @SerialName("live_status") val liveStatus: Int = 0,
-        /** "yyyy-MM-dd HH:mm:ss" in China time; "0000-00-00 00:00:00" when not live. */
+        /** "yyyy-MM-dd HH:mm:ss" China time; "0000-00-00 00:00:00" offline. */
         @SerialName("live_time") val liveTime: String? = null,
         @SerialName("tag_name") val tagName: String = "",
         val tags: String = "",
@@ -429,7 +429,7 @@ internal data class RoomPlayInfoResponse(
     @Serializable
     data class Format(
         @SerialName("format_name") val formatName: String = "",
-        /** An HLS master playlist listing every quality the viewer may watch; on the fmp4 entry only. */
+        /** HLS master playlist, all viewer-allowed qualities; fmp4 entry only. */
         @SerialName("master_url") val masterUrl: String? = null,
         val codec: List<Codec> = emptyList(),
     )
@@ -491,7 +491,7 @@ internal data class RecommendedLivesResponse(
 @Serializable
 internal data class LiveStatusByUidsResponse(
     val code: Int = 0,
-    /** Keyed by uid; an uploader with no room gets an empty array instead, which does not decode. */
+    /** Keyed by uid; no room → empty array (does not decode). */
     val data: Map<String, Room>? = null,
 ) {
     @Serializable

@@ -1120,7 +1120,7 @@ internal fun selectCommentAuthorThumbnail(
         .resolveChannelAvatar(embeddedAvatar)
         .ifBlank { ThumbnailUrlResolver.resolveChannelAvatar(resolvedChannelAvatar) }
 
-/** YouTube-only: another service's ids are not "UC" ids and 404 on lookup. */
+/** YouTube-only: other services' ids are not "UC" ids (lookup 404). */
 internal fun Video.needsChannelMetadata(): Boolean =
     serviceId.isYouTubeServiceId &&
         (

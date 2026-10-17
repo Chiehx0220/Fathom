@@ -14,12 +14,10 @@ import io.github.aedev.flow.player.error.PlayerDiagnostics
 import io.github.aedev.flow.player.error.StreamDenialClassifier
 
 /**
- * One transfer from Bilibili's CDN, opened by [BilibiliRoutingDataSource] in place of
- * [YouTubeHttpDataSource], which stays as upstream has it.
+ * One Bilibili CDN transfer, opened by [BilibiliRoutingDataSource] instead of [YouTubeHttpDataSource] (upstream, untouched).
  *
- * Bilibili lists two mirrors per file; when this request has one to fall back to, both may be tried
- * (see [HedgedOpen]) so a stalled mirror costs one short delay rather than seconds. The speed each
- * mirror showed is reported to [BilibiliMirrors] when the transfer ends, to pick the order next time.
+ * Two mirrors per file; with a fallback available both may be tried ([HedgedOpen]): stalled mirror costs a short delay.
+ * Per-mirror speed reported to [BilibiliMirrors] at transfer end (next ordering).
  */
 @UnstableApi
 internal class BilibiliHttpDataSource(
@@ -34,7 +32,7 @@ internal class BilibiliHttpDataSource(
         val length: Long,
     )
 
-    // The transfer in progress: which URL, and what its reads have moved so far (see BilibiliMirrors.recordSpeed).
+    // In-progress transfer: URL + bytes moved (BilibiliMirrors.recordSpeed).
     private var speedUrl: String? = null
     private var readBytes = 0L
     private var readNanos = 0L
@@ -91,8 +89,7 @@ internal class BilibiliHttpDataSource(
             }
             currentUri = openedUri
             speedUrl = openedUri.toString()
-            // Only the requests worth a look: one that needed its other mirror, or that took long
-            // to answer. The rest is the normal case and would bury these.
+            // Only worth-a-look requests: needed other mirror, or slow to answer; rest is normal.
             val answeredMs = SystemClock.elapsedRealtime() - startedMs
             if (hedged || answeredMs >= BilibiliHttpSupport.SLOW_OPEN_LOG_MS) {
                 Log.w(
@@ -106,7 +103,7 @@ internal class BilibiliHttpDataSource(
             if (e.responseCode == 403) logForbidden(dataSpec)
             throw e
         } catch (e: java.io.IOException) {
-            // A cancelled request (the player seeked away) is not a failure; anything else is.
+            // Cancelled request (seek away) is not a failure.
             if (e !is java.io.InterruptedIOException && e.cause !is java.io.InterruptedIOException) {
                 Log.w(
                     "BiliCdn",

@@ -98,8 +98,7 @@ object GlobalPlayerState {
      * Set the current video being played.
      */
     fun setCurrentVideo(video: Video?) {
-        // Temporary: tracing down a caller that clobbers a just-enriched video with a blank-title
-        // one for the same id shortly after (#quick-panel-metadata). Remove once found.
+        // TEMP: tracing caller clobbering a just-enriched video with a blank-title one for the same id (#quick-panel-metadata). Remove once found.
         val callers =
             Thread
                 .currentThread()

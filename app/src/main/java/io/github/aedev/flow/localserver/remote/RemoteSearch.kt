@@ -54,13 +54,12 @@ import io.github.aedev.flow.localserver.nativeSearchHistory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-// How many past searches are looked through while typing, and how many of those are shown.
+// Past searches scanned while typing / shown.
 private const val HISTORY_LOOKBACK = 50
 private const val MAX_SUGGESTIONS = 8
 
 /**
- * Typing on a screen with no keyboard is the worst part of a remote, so there are three ways round it: type here,
- * tap something searched before, or speak. The page runs the search either way.
+ * Remote typing workarounds: type here, tap a past search, speak. Page runs the search.
  */
 @Composable
 internal fun SearchField(send: (String) -> Unit) {
@@ -72,7 +71,7 @@ internal fun SearchField(send: (String) -> Unit) {
     val voiceUnavailable = stringResource(R.string.remote_voice_unavailable)
     val voicePrompt = stringResource(R.string.remote_search_voice_prompt)
 
-    // Read again whenever the field is entered, so what was just searched is in the list.
+    // Reloaded on field entry (fresh searches listed).
     LaunchedEffect(focused) {
         if (focused) {
             history =
@@ -146,7 +145,7 @@ internal fun SearchField(send: (String) -> Unit) {
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { search(text) }),
             )
-            // As tall as the field and separate from it, so the pill keeps its own shape.
+            // Field height, separate: pill keeps own shape.
             FilledIconButton(onClick = { search(text) }, enabled = text.isNotBlank(), modifier = Modifier.size(56.dp)) {
                 Icon(Icons.Default.Search, contentDescription = stringResource(R.string.remote_search_submit))
             }

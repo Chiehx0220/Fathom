@@ -27,19 +27,18 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.ConcurrentHashMap
 
-/** The local server's Bilibili live rooms: a room's page as a [StreamInfo], and its chat for the web player to poll. */
+/** Local server Bilibili live: room page as [StreamInfo], chat for web-player polling. */
 internal object LocalServerBilibiliLive {
     private const val RECOMMENDED_LIMIT = 6
     private const val CHAT_KEPT = 200
     private const val CHAT_IDLE_MS = 30_000L
     private const val CHAT_SWEEP_MS = 10_000L
 
-    /** The room number in a live room link, or null when [mediaUrl] is not one. */
+    /** Room number of a live room link; null if [mediaUrl] is not one. */
     fun roomIdOf(mediaUrl: String): Long? = BilibiliLiveId.fromUrl(mediaUrl)?.let(BilibiliLiveId::roomIdOf)
 
     /**
-     * A room's metadata and HLS playlist, in the shape the watch page reads. A room that only publishes FLV
-     * has nothing a browser can play, so it fails with a message rather than an empty player.
+     * Room metadata + HLS playlist, watch-page shape. FLV-only room: not browser-playable → fails with message, not empty player.
      */
     fun streamInfo(
         context: Context,
@@ -68,14 +67,14 @@ internal object LocalServerBilibiliLive {
         return info
     }
 
-    /** Rooms live right now, for the front of a list. */
+    /** Rooms live now, list front. */
     fun recommended(context: Context): List<StreamInfoItem> =
         runCatching { runBlocking { bilibiliApi(context).recommendedLives() } }
             .getOrDefault(emptyList())
             .take(RECOMMENDED_LIMIT)
             .map(::bilibiliLiveItem)
 
-    /** The room [mid] is live in right now, as a row; null when they are not live. */
+    /** Room [mid] is live in now, as row; null if offline. */
     fun roomOf(
         context: Context,
         mid: Long,
@@ -97,7 +96,7 @@ internal object LocalServerBilibiliLive {
                 if (items.size > CHAT_KEPT) items.removeFirst()
             }
 
-        /** Everything after [since]; a null [since] is a first look, which only learns the position. */
+        /** Everything after [since]; null [since] = first look, learns position only. */
         fun after(since: Long?): Pair<Long, JSONArray> =
             synchronized(lock) {
                 val out = JSONArray()
@@ -110,8 +109,7 @@ internal object LocalServerBilibiliLive {
     private val chatScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /**
-     * The chat of [roomId] since the position [since] the last poll returned. The room's socket opens on the
-     * first poll and closes once nobody has polled for a while, so a closed tab does not hold a connection.
+     * Chat of [roomId] since [since] (last poll's position). Socket opens on first poll, closes after idle (closed tab holds no connection).
      */
     fun chatSince(
         context: Context,

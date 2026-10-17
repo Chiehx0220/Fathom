@@ -11,10 +11,9 @@ import kotlinx.coroutines.ensureActive
 import javax.inject.Inject
 
 /**
- * The non-YouTube leg of [PlaybackLoadResolver]: InnerTube is YouTube's own API, so every other
- * service resolves through its native client and produces its own step type.
+ * Non-YouTube leg of [PlaybackLoadResolver]: InnerTube is YouTube-only; other services via native client, own step type.
  *
- * The caller has already checked for an offline copy, so there is no offline fallback here.
+ * Offline copy checked by caller: no offline fallback here.
  */
 class NonYouTubeResolver
     @Inject
@@ -43,7 +42,7 @@ class NonYouTubeResolver
                     Log.e(TAG, "Native extraction failed for $videoId", e)
                     currentCoroutineContext().ensureActive()
                     if (!isCurrent()) return
-                    // No premiere lookup: that is a YouTube call and means nothing for these ids.
+                    // No premiere lookup (YouTube call).
                     onStep(ResolvedPlayback.Failed(PlaybackFailure.EXTRACTION, e, relatedVideos = null))
                     return
                 }

@@ -18,12 +18,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * Opens a Bilibili uploader's channel page for [ChannelViewModel], so that upstream file only carries a
- * call. Bilibili's header and tabs come from the native client, not InnerTube, but arrive as the same
- * [ChannelTabState], so the screen never needs to know which service a tab's data came from.
+ * Bilibili uploader channel page for [ChannelViewModel] (upstream file only calls it). Header/tabs from native client (not InnerTube),
+ * delivered as [ChannelTabState]: screen is service-agnostic.
  *
- * It writes the page into the view model's own [uiState]; what only the view model can do once the
- * channel is in place (its subscription, note and first tab) goes through [onLoaded].
+ * Writes into the view model's [uiState]; view-model-only work once loaded (subscription, note, first tab) via [onLoaded].
  */
 internal class BilibiliChannelLoader(
     private val scope: CoroutineScope,
@@ -34,18 +32,17 @@ internal class BilibiliChannelLoader(
 ) {
     private val native = BilibiliNativeChannelController(scope) { bilibiliApi(appContext) }
 
-    /** The Bilibili tab source while the open channel is a Bilibili one, [youTube] otherwise. */
+    /** Bilibili tab source while the open channel is Bilibili; else [youTube]. */
     fun tabSource(youTube: ChannelTabSource): ChannelTabSource = if (uiState.value.serviceId == BILIBILI_SERVICE_ID) native else youTube
 
-    /** [youTube]'s tab states, or Bilibili's while the open channel is a Bilibili one. */
+    /** [youTube] tab states, or Bilibili's while the open channel is Bilibili. */
     fun tabStates(youTube: Flow<Map<ChannelTabKind, ChannelTabState>>): Flow<Map<ChannelTabKind, ChannelTabState>> =
         combine(uiState, youTube, native.states) { state, youTubeStates, bilibiliStates ->
             if (state.serviceId == BILIBILI_SERVICE_ID) bilibiliStates else youTubeStates
         }
 
     /**
-     * Loads the channel when [channelUrl] is a Bilibili uploader, and returns true. Checked before any
-     * service lookup so a Bilibili uploader can never fall through to YouTube.
+     * Loads the channel if [channelUrl] is a Bilibili uploader; returns true. Checked before service lookup: Bilibili never falls through to YouTube.
      */
     fun load(channelUrl: String): Boolean {
         val mid = BilibiliChannelId.midOf(channelUrl) ?: return false

@@ -25,7 +25,7 @@ sealed interface NewPipeChannelRef {
         val url: String,
     ) : NewPipeChannelRef
 
-    /** A Bilibili uploader, identified by its `mid` (PipePipe's own `service_id: 5`). */
+    /** Bilibili uploader by `mid` (PipePipe `service_id: 5`). */
     data class Bilibili(
         val mid: Long,
     ) : NewPipeChannelRef

@@ -4,26 +4,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Which page, if any, has paired with the server to be remote-controlled. */
+/** Page paired for remote control, if any. */
 data class RemoteLock(
     val locked: Boolean,
     val clientIp: String?,
     val title: String?,
 )
 
-/** One picture quality the page can switch to: the player's id for it and the label to show. */
+/** Switchable picture quality: player id + label. */
 data class RemoteQuality(
     val id: String,
     val label: String,
 )
 
-/** Local like state of the video; feeds the recommendation ranking only. */
+/** Local like state; recommendation ranking only. */
 enum class RemoteRating { NONE, LIKED, DISLIKED }
 
-/** What the paired page last reported: whether a video is open and how it is playing. */
+/** Paired page's last report: video open, playback state. */
 data class RemoteState(
     val watching: Boolean = false,
-    /** A video is open but shrunk to the mini player while the page shows something else. */
+    /** Video open, shrunk to mini player. */
     val minimized: Boolean = false,
     val title: String? = null,
     val positionSec: Double = 0.0,
@@ -32,30 +32,30 @@ data class RemoteState(
     val volume: Float = 1f,
     val muted: Boolean = false,
     val fullscreen: Boolean = false,
-    /** Chapter titles in order; chapterIndex is the one playing now, -1 if none/chapterless. */
+    /** Chapter titles in order; chapterIndex = playing, -1 none. */
     val chapters: List<String> = emptyList(),
     val chapterIndex: Int = -1,
-    /** Active SponsorBlock category (e.g. "sponsor"), null between segments. */
+    /** Active SponsorBlock category (e.g. "sponsor"); null between segments. */
     val skipLabel: String? = null,
-    /** The sources the page can switch between (id to name) and which one it is on. */
+    /** Switchable sources (id → name) + current. */
     val services: List<Pair<Int, String>> = emptyList(),
     val activeService: Int? = null,
-    /** The picture qualities of the video, tallest first; empty when there is nothing to choose between. */
+    /** Picture qualities, tallest first; empty if no choice. */
     val qualities: List<RemoteQuality> = emptyList(),
-    /** The label of the quality playing now, and the id the viewer chose ("auto" when the player picks by itself). */
+    /** Playing quality label + chosen id ("auto" = player decides). */
     val quality: String? = null,
     val chosenQuality: String = "auto",
     val rate: Float = 1f,
-    /** Danmaku overlay on/off; null when the source has none. */
+    /** Danmaku overlay on/off; null if source has none. */
     val danmaku: Boolean? = null,
-    /** Null when the page does not report it. */
+    /** Null: not reported. */
     val rating: RemoteRating? = null,
 ) {
-    /** Whether there is a video to control, on its own page or in the mini player. */
+    /** Video to control: own page or mini player. */
     val hasVideo: Boolean get() = watching || minimized
 }
 
-/** The page paired with the server for remote control, what it last reported, and the commands waiting for it. */
+/** Paired page, last report, pending commands. */
 object RemoteSession {
     private val remoteLockState = MutableStateFlow(RemoteLock(false, null, null))
     val remoteLock: StateFlow<RemoteLock> = remoteLockState.asStateFlow()
@@ -78,7 +78,7 @@ object RemoteSession {
     @Volatile
     private var activeVideoTitle: String? = null
 
-    /** Delivers a command to connected remote pages; set by the running server. */
+    /** Delivers commands to connected remote pages; set by running server. */
     @Volatile
     var commandBroadcaster: ((String) -> Unit)? = null
 

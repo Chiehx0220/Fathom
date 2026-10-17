@@ -9,16 +9,12 @@ package io.github.aedev.flow.bilibili
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
-/**
- * A video's comments: hot-ordered pages with the pinned ones first, and the replies under one comment.
- *
- * A closed comment section answers with an error code and is returned as empty, not as a failure.
- */
+/** Comments: hot-ordered, pinned first; replies per comment. Closed section → empty, not failure. */
 internal class BilibiliComments(
     private val session: BilibiliSession,
     private val json: Json,
 ) {
-    /** [offset] is the previous page's [BilibiliCommentsPage.nextOffset]; empty for the first page. */
+    /** [offset]: previous [BilibiliCommentsPage.nextOffset]; empty = first page. */
     suspend fun page(
         bvid: String,
         offset: String,
@@ -42,14 +38,14 @@ internal class BilibiliComments(
         return BilibiliCommentsPage(comments, next.takeIf { !data.cursor.isEnd && it.isNotBlank() && comments.isNotEmpty() })
     }
 
-    /** [page] is 1-based; a page shorter than [REPLIES_PAGE_SIZE] is the last one. */
+    /** 1-based [page]; shorter than [REPLIES_PAGE_SIZE] = last. */
     suspend fun replies(
         bvid: String,
         rpid: String,
         page: Int,
     ): BilibiliRepliesPage {
         val aid = BilibiliSigning.bv2av(bvid)
-        // pn has to come last or nothing is returned.
+        // pn must be last.
         val url = "$REPLIES_URL$aid&root=$rpid&pn=$page"
         val body = session.guardedGet(json, videoUrl(bvid), COMMENTS_CLOSED_CODES) { url }
         val replies =
@@ -99,7 +95,7 @@ internal class BilibiliComments(
         const val REPLIES_URL = "https://api.bilibili.com/x/v2/reply/reply?type=1&ps=10&web_location=333.788&oid="
         const val REPLIES_PAGE_SIZE = 10
 
-        /** 12002: comments closed. 12061: only the uploader's followers may see them. */
+        /** 12002 closed; 12061 followers only. */
         val COMMENTS_CLOSED_CODES = setOf(0, 12002, 12061)
     }
 }

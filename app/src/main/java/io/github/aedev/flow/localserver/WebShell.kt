@@ -1,8 +1,8 @@
 package io.github.aedev.flow.localserver
 
-/** Fills the single-page app's HTML template (assets/web/app/index.html) with this phone's colours and sources. */
+/** Fills the SPA HTML template (assets/web/app/index.html) with phone colours + sources. */
 object WebShell {
-    /** A complete HTML document: the template with this phone's colours and sources filled in. */
+    /** Complete HTML document: template with phone colours + sources. */
     fun appPage(): String {
         val services =
             LocalServerMedia.SUPPORTED_SERVICE_IDS.joinToString(",") { id ->

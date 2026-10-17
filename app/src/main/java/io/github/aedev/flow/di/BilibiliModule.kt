@@ -12,11 +12,7 @@ import io.github.aedev.flow.bilibili.BilibiliSession
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
-/**
- * One [BilibiliSession] for the whole app, so the anonymous cookie set, the forged device and the
- * daily WBI key are minted once and shared by every Bilibili request, the way a single browser
- * would present them.
- */
+/** Singleton [BilibiliSession]: anonymous cookies, forged device, daily WBI key minted once, shared by all requests. */
 @Module
 @InstallIn(SingletonComponent::class)
 object BilibiliModule {
@@ -29,11 +25,7 @@ object BilibiliModule {
     fun provideBilibiliApi(session: BilibiliSession): BilibiliApi = BilibiliApi(session)
 }
 
-/**
- * For code that is not itself injected but is built by something that is (a use case constructed
- * with fixed arguments in tests, say): reaches the same singleton [BilibiliApi] without widening
- * that constructor.
- */
+/** Non-injected access to the singleton [BilibiliApi] (e.g. use case built with fixed arguments in tests). */
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface BilibiliEntryPoint {

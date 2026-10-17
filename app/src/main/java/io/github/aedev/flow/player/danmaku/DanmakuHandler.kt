@@ -27,12 +27,10 @@ data class DanmakuComment(
 )
 
 /**
- * Loads Bilibili danmaku for the current video through the native client. Shaped after
- * [io.github.aedev.flow.player.sponsorblock.SponsorBlockHandler]: a StateFlow the UI collects, an
- * explicit reset() + load call per video rather than anything automatic.
+ * Bilibili danmaku for the current video via native client. Shaped after [io.github.aedev.flow.player.sponsorblock.SponsorBlockHandler]:
+ * UI-collected StateFlow, explicit reset() + load per video, nothing automatic.
  *
- * A live room's danmaku is not loaded here: [liveRoomId] only names the room, and the layer that shows
- * it opens the chat socket while it is on screen and closes it otherwise.
+ * Live room danmaku not loaded here: [liveRoomId] names the room; the layer opens the chat socket while on screen.
  */
 class DanmakuHandler(
     private val scope: CoroutineScope,
@@ -61,8 +59,7 @@ class DanmakuHandler(
     }
 
     /**
-     * Loads the danmaku of one Bilibili part through the native client, with no StreamInfo fetch
-     * ahead of it: the part's cid is already in [info].
+     * Danmaku of one Bilibili part via native client, no StreamInfo fetch (part cid already in [info]).
      */
     fun loadBilibili(
         api: BilibiliApi,
@@ -98,7 +95,7 @@ private fun BilibiliDanmaku.toDanmakuComment() =
         relativeFontSize = relativeFontSize,
     )
 
-/** Live chat has no playback time: the layer stamps it on arrival. */
+/** Live chat has no playback time: layer stamps arrival. */
 fun BilibiliLiveMessage.toDanmakuComment(): DanmakuComment =
     when (this) {
         is BilibiliLiveMessage.Chat -> {

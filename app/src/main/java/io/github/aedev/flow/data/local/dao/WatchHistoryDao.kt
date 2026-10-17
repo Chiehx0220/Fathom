@@ -32,9 +32,7 @@ interface WatchHistoryDao {
     suspend fun deleteEntry(videoId: String)
 
     /**
-     * Update only the progress columns for an existing entry, leaving title/thumbnail/channel
-     * untouched. Used for periodic playback-progress pings that don't carry that metadata -
-     * unlike [upsert] (full REPLACE), this can't clobber it.
+     * Progress columns of an existing entry only; title/thumbnail/channel untouched (periodic progress pings). Unlike [upsert] (full REPLACE): no clobbering.
      */
     @Query("UPDATE watch_history SET position = :position, duration = :duration, timestamp = :timestamp WHERE videoId = :videoId")
     suspend fun updateProgress(
@@ -155,7 +153,7 @@ interface WatchHistoryDao {
     @Query("SELECT videoId FROM watch_history WHERE isMusic = 0 AND isLocal = 0")
     suspend fun getAllWatchedVideoIds(): List<String>
 
-    /** Same rows as [getAllWatchedVideoIds], with the serviceId needed to rebuild a real per-service URL. */
+    /** [getAllWatchedVideoIds] rows + serviceId (rebuilds per-service URL). */
     @Query("SELECT videoId, serviceId FROM watch_history WHERE isMusic = 0 AND isLocal = 0")
     suspend fun getAllWatchedVideoIdentities(): List<WatchedVideoIdentity>
 

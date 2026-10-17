@@ -373,8 +373,7 @@ class VideoPlaybackResolver(
         stream: VideoStream,
         durationSeconds: Long,
     ): MediaSource {
-        // Bilibili streams carry their own init/index ranges instead of an ItagItem, so they need
-        // their own manifest maker rather than YouTube's throttling-avoidance path below.
+        // Bilibili streams carry init/index ranges, no ItagItem: own manifest maker (not YouTube throttling-avoidance path below).
         if (BilibiliStreamBridge.isBilibili(stream)) {
             val source =
                 BilibiliDashManifest.buildVideoSource(

@@ -17,8 +17,7 @@ import org.schabi.newpipe.extractor.stream.VideoStream
 import java.util.Locale
 
 /**
- * The Bilibili counterpart of [InnerTubeStreamBridge]: turns the native client's formats into the
- * [VideoStream] and [AudioStream] the player uses. Init and index ranges are kept for [BilibiliDashManifest].
+ * Bilibili counterpart of [InnerTubeStreamBridge]: native formats → player [VideoStream]/[AudioStream]. Init/index ranges kept for [BilibiliDashManifest].
  */
 object BilibiliStreamBridge {
     private const val TAG = "BilibiliStreamBridge"
@@ -54,9 +53,8 @@ object BilibiliStreamBridge {
         }
 
     /**
-     * FLAC is dropped because it fails to decode on Bilibili's streams (InsufficientCapacityException,
-     * per PipePipeClient); Dolby (ec-3) is dropped because Flow has no switch to opt into it.
-     * What is left keeps the API's order, and the selector picks the highest bitrate.
+     * FLAC dropped: fails to decode on Bilibili streams (InsufficientCapacityException, per PipePipeClient); Dolby (ec-3) dropped: no opt-in switch.
+     * Remainder keeps API order; selector picks highest bitrate.
      */
     fun convertAudioFormats(
         bvid: String,
@@ -85,10 +83,10 @@ object BilibiliStreamBridge {
                 }
             }
 
-    /** Bilibili's quality ids repeat across codecs, so they cannot serve as an itag; -1 is "none". */
+    /** Bilibili quality ids repeat across codecs: unusable as itag; -1 = none. */
     private const val NO_ITAG = -1
 
-    /** A live room's FLV address as the one muxed stream to play when the room publishes no HLS. */
+    /** Live room FLV address as the one muxed stream (no HLS published). */
     fun liveFlvStream(url: String): VideoStream =
         VideoStream
             .Builder()
@@ -99,7 +97,7 @@ object BilibiliStreamBridge {
             .setDeliveryMethod(DeliveryMethod.PROGRESSIVE_HTTP)
             .build()
 
-    /** True for a stream this bridge built. */
+    /** Stream built by this bridge. */
     fun isBilibili(stream: Stream): Boolean = stream.id?.startsWith("bilibili-") == true
 
     private fun ItagItem.applyRanges(format: BilibiliStreamFormat) {
@@ -119,9 +117,8 @@ object BilibiliStreamBridge {
     }
 
     /**
-     * "1080p", or "1080p60" for the high-frame-rate ladder. The label is what
-     * [VideoCodecUtils.qualityHeightFromStream] reads first, and it must be the tier Bilibili names
-     * the stream by (a 720x1280 portrait clip is "720p", not "1280p"), not the raw pixel height.
+     * "1080p" or "1080p60" (high-frame-rate ladder). Label read first by [VideoCodecUtils.qualityHeightFromStream]; must be Bilibili's tier name
+     * (720x1280 portrait = "720p"), not raw pixel height.
      */
     private fun resolutionLabel(format: BilibiliStreamFormat): String {
         val tier = tierHeight(format)
@@ -145,8 +142,7 @@ object BilibiliStreamBridge {
 
             6 -> 240
 
-            // An id this table does not know yet: fall back to the shorter side, which is the tier
-            // for both landscape and portrait video.
+            // Unknown id: shorter side (tier for landscape and portrait).
             else -> minOf(format.width, format.height).takeIf { it > 0 } ?: format.height
         }
 

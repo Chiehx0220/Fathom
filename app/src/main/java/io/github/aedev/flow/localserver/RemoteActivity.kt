@@ -16,15 +16,13 @@ import io.github.aedev.flow.ui.theme.ThemeMode
 import io.github.aedev.flow.ui.theme.ThemeVariant
 
 /**
- * The phone as a remote for the page that paired with the local server (its cast button). Three ways to drive it:
- * a direction pad for browsing, playback keys for a playing video, and a touchpad for anything small. Commands go
- * straight to the server, which hands them to the paired page; the page reports back how it is playing.
- * The screens are in the `remote` package.
+ * Phone as remote for the page paired with the local server (cast button). Modes: direction pad (browsing), playback keys (playing video),
+ * touchpad. Commands → server → paired page; page reports playback state. Screens: `remote` package.
  */
 class RemoteActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // A remote that dims while you hold it is a remote that stops working.
+        // Dimming remote stops working.
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val dataManager = LocalDataManager(applicationContext)
         setContent {
@@ -36,7 +34,7 @@ class RemoteActivity : ComponentActivity() {
         }
     }
 
-    // The phone's own volume keys turn the page's volume while the remote is paired.
+    // Phone volume keys → page volume while paired.
     override fun onKeyDown(
         keyCode: Int,
         event: KeyEvent,

@@ -3,11 +3,11 @@ package io.github.aedev.flow.localserver
 import android.content.Context
 
 /**
- * Stylesheet and script of the single-page app, joined from `assets/web/app` in a fixed order and served as `/app.css`
- * and `/app.js`. `assets/web/app/strings/<language>.json` are embedded in the page as one object keyed by language.
+ * Single-page app stylesheet + script: `assets/web/app` joined in fixed order, served `/app.css`, `/app.js`.
+ * `assets/web/app/strings/<language>.json` embedded in page as one object keyed by language.
  */
 object WebAssets {
-    // The single-page app served at /app: its own stylesheet and script, and the HTML shell they are opened from.
+    // Single-page app at /app: own stylesheet, script, HTML shell.
     private val APP_CSS_FILES =
         listOf(
             "app/css/fonts.css",
@@ -49,7 +49,7 @@ object WebAssets {
     @Volatile
     private var bundle: Bundle? = null
 
-    /** Reads the files once; called when the server is created. */
+    /** Reads files once; at server creation. */
     fun init(context: Context) {
         if (bundle != null) return
         synchronized(this) {
@@ -59,7 +59,7 @@ object WebAssets {
             val appJs = join(app, APP_JS_FILES)
             val appShell = join(app, listOf("app/index.html"))
             val appStrings = stringsObject(app)
-            // The vendored player is part of the version too: its entry files are asked for with it, so a new player is fetched anew.
+            // Vendored player is part of the version (entry files requested with it): new player refetched.
             val vendorVersion = join(app, listOf("vendor/videojs/VERSION"))
             bundle =
                 Bundle(
@@ -67,7 +67,7 @@ object WebAssets {
                     appJs,
                     appShell,
                     appStrings,
-                    // Content hash: any change to the files, strings or vendored player busts the ?v= cache key.
+                    // Content hash: any change to files, strings, vendored player busts `?v=`.
                     Integer.toHexString(
                         ((appCss.hashCode() * 31 + appJs.hashCode()) * 31 + vendorVersion.hashCode()) * 31 + appStrings.hashCode(),
                     ),
@@ -79,10 +79,10 @@ object WebAssets {
     val appJs: String get() = requireBundle().appJs
     val appShell: String get() = requireBundle().appShell
 
-    /** All language files as one JSON object, safe inside a script element. */
+    /** All language files as one JSON object, safe in a script element. */
     val appStrings: String get() = requireBundle().appStrings
 
-    /** Cache-busting tag for /app.css and /app.js. */
+    /** Cache-busting tag for /app.css, /app.js. */
     val appVersion: String get() = requireBundle().appVersion
 
     private fun stringsObject(context: Context): String =

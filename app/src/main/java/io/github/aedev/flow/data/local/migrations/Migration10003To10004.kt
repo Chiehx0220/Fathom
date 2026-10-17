@@ -4,9 +4,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
- * Carries upstream's AutoMigrations 29 to 32, which a fork device never runs since Room only walks
- * forward from its own version: what each note keeps about its target (30, 32) and the feed
- * cache's collaboration columns (31). Idempotent like [Migration28To10001].
+ * Carries upstream AutoMigrations 29-32 (Room walks forward only): note target columns (30, 32),
+ * feed-cache collaboration columns (31). Idempotent, as [Migration28To10001].
  */
 class Migration10003To10004 : Migration(10003, 10004) {
     override fun migrate(db: SupportSQLiteDatabase) {

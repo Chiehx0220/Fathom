@@ -10,9 +10,8 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 
 /**
- * Reads/writes Flow's native storage directly - no bridge interface, no separate copy. Adapts
- * bare-ID-keyed models to the URL-keyed [InfoItem] shape Local Server's rendering expects.
- * `runBlocking` throughout: handlers run on a background thread pool, never a coroutine.
+ * Direct native storage read/write, no bridge, no copy. Adapts bare-ID models to URL-keyed [InfoItem].
+ * `runBlocking` throughout: handlers on a background thread pool, not coroutines.
  */
 
 internal fun HistoryDbHelper.subscriptionRepository() = SubscriptionRepository.getInstance(appContext)
@@ -34,7 +33,7 @@ fun HistoryDbHelper.nativeIsSubscribed(channelUrl: String?): Boolean {
     return runBlocking { subscriptionRepository().isSubscribed(channelId).first() }
 }
 
-/** Subscribes, or refreshes name/avatar if already subscribed - never resets tracked state. */
+/** Subscribe, or refresh name/avatar; tracked state kept. */
 fun HistoryDbHelper.nativeAddSubscription(
     channelUrl: String,
     channelName: String?,
@@ -57,8 +56,7 @@ fun HistoryDbHelper.nativeRemoveSubscription(channelUrl: String) {
     runBlocking { subscriptionRepository().unsubscribe(channelId) }
 }
 
-/** Reads/writes FlowNeuroEngine's block list directly - ranking already excludes blocked
- * channels, so this applies to native recommendations too, not just Local Server. */
+/** FlowNeuroEngine block list, direct; ranking already excludes blocked channels (native recommendations too). */
 fun HistoryDbHelper.nativeIsChannelBlocked(channelUrl: String?): Boolean {
     val channelId = channelUrlToId(channelUrl) ?: return false
     return runBlocking {

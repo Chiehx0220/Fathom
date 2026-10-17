@@ -12,11 +12,10 @@ import kotlinx.serialization.json.Json
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * An uploader's space: profile, videos, and the series and seasons they publish.
+ * Uploader space: profile, videos, series/seasons.
  *
- * Bilibili blocks these endpoints more readily than the rest, so the video list has three
- * interchangeable APIs (web, keyword search, app). A blocked one hands over to the next, and the
- * choice is kept for later calls, as PipePipe does.
+ * Endpoints blocked more readily: three interchangeable video-list APIs (web, keyword search, app);
+ * blocked one hands over to the next, choice kept for later calls (as PipePipe).
  */
 internal class BilibiliUserSpace(
     private val session: BilibiliSession,
@@ -168,7 +167,7 @@ internal class BilibiliUserSpace(
         return session.signedUrl(SEARCH_VIDEOS_URL, params)
     }
 
-    /** The app API pages by the last video's aid instead of a page number. */
+    /** App API pages by last video's aid. */
     private fun appUrl(
         mid: Long,
         lastAid: Long,

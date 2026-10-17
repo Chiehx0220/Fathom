@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-/** Bilibili's live rooms: the room page, its stream addresses, the recommended list and the chat socket's access. */
+/** Live rooms: room page, stream addresses, recommended list, chat socket access. */
 internal class BilibiliLive(
     private val session: BilibiliSession,
     private val json: Json,
@@ -20,8 +20,7 @@ internal class BilibiliLive(
         val headers = session.headers(liveReferer(roomId))
         val url = "$ROOM_BASE_INFO_URL$roomId&req_biz=web_room_componet"
         val response = json.decodeFromString<RoomBaseInfoResponse>(session.get(url, headers))
-        // Asked for one room, so the one answered is it, whichever number it is filed under: a short room
-        // number comes back under the long one.
+        // Single-room answer: short room number returns under the long one.
         val rooms = response.data?.byRoomIds.orEmpty()
         val room = rooms[roomId.toString()] ?: rooms.values.singleOrNull()
         if (response.code != 0 || room == null || room.roomId <= 0) {
@@ -31,7 +30,7 @@ internal class BilibiliLive(
             roomId = room.roomId,
             title = room.title,
             coverUrl = (room.coverFromUser ?: room.cover).toHttps(),
-            // The room info carries no avatar; BilibiliApi asks the uploader's channel for it.
+            // No avatar in room info; see BilibiliApi.
             uploader = BilibiliUploader(room.uid, room.uname, room.face.orEmpty().toHttps()),
             viewerCount = room.online,
             startedAtSec = parseStartTime(room.liveTime),
@@ -51,9 +50,8 @@ internal class BilibiliLive(
     }
 
     /**
-     * One request answers both shapes: the fmp4 HLS entry's master playlist (every quality the viewer
-     * may watch, so the player can adapt) and the FLV entry, which a few rooms (about 1 in 50) publish
-     * instead. [roomId] must be the long room number from [room].
+     * One request, both shapes: fmp4 HLS master playlist (all qualities, adaptive) and FLV (~1 in 50 rooms).
+     * [roomId]: long room number from [room].
      */
     suspend fun streams(roomId: Long): BilibiliLiveStreams {
         val headers = session.headers(liveReferer(roomId))
@@ -98,7 +96,7 @@ internal class BilibiliLive(
         }
     }
 
-    /** The room [mid] is streaming from right now, if any (a rebroadcast does not count). */
+    /** Room [mid] streams from now; rebroadcast excluded. */
     suspend fun roomOf(mid: Long): BilibiliLiveItem? {
         val headers = session.headers(LIVE_HOME)
         val response = json.decodeFromString<LiveStatusByUidsResponse>(session.get("$STATUS_BY_UIDS_URL$mid", headers))
@@ -131,7 +129,7 @@ internal class BilibiliLive(
         )
     }
 
-    /** Rebuilds a stream address from one codec entry, preferring the avc ladder over hevc. */
+    /** Stream address from one codec entry; avc preferred over hevc. */
     private fun flvUrl(format: RoomPlayInfoResponse.Format): String? {
         val urls =
             format.codec.mapNotNull { codec ->
@@ -142,7 +140,7 @@ internal class BilibiliLive(
         return (urls.firstOrNull { it.first == "avc" } ?: urls.firstOrNull())?.second
     }
 
-    /** "0000-00-00 00:00:00" (not live) and anything else unreadable is 0. */
+    /** "0000-00-00 00:00:00" (offline) and unreadable → 0. */
     private fun parseStartTime(text: String?): Long {
         if (text.isNullOrEmpty()) return 0L
         return runCatching { LocalDateTime.parse(text, START_TIME).toEpochSecond(ZoneOffset.ofHours(8)) }

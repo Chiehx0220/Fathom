@@ -11,18 +11,16 @@ import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
-// Home-feed candidates/ranking come from native `YouTubeRepository`/`FlowNeuroEngine` directly,
-// not a ported copy. `toFlowVideo()`/`toStreamInfoItem()` convert at the boundary between
-// NewPipeExtractor's [InfoItem] hierarchy (Local Server's native type across every page) and
-// Flow's video-only [FlowVideo] display model.
+// Home-feed candidates/ranking: native `YouTubeRepository`/`FlowNeuroEngine`, not a ported copy. `toFlowVideo()`/`toStreamInfoItem()` convert
+// between NewPipeExtractor [InfoItem] (Local Server native type) and Flow's video-only [FlowVideo].
 
-// Singleton shared with native (same instance as the Hilt provider).
+// Singleton shared with native (Hilt provider instance).
 internal fun HistoryDbHelper.youTubeRepository(): YouTubeRepository = YouTubeRepository.getInstance(PlayerPreferences(appContext))
 
-// Singleton reached through LocalServerEntryPoint, since this runs outside Hilt.
+// Singleton via LocalServerEntryPoint (runs outside Hilt).
 internal fun HistoryDbHelper.homeFeedSources(): HomeFeedSources = localServerEntryPoint(appContext).homeFeedSources()
 
-// The subscription store is local, so this never touches the network.
+// Local subscription store: no network.
 internal suspend fun HistoryDbHelper.storedSubscriptionFeed(): List<FlowVideo> =
     runCatching { localServerEntryPoint(appContext).subscriptionFeedRepository().observeFeed().first() }.getOrDefault(emptyList())
 
@@ -35,12 +33,9 @@ internal suspend fun HistoryDbHelper.ensureFlowNeuroInitialized() {
     flowNeuroInitialized = true
 }
 
-// serviceId is unused: this.serviceId is authoritative; the parameter keeps the converters symmetric.
+// serviceId unused: this.serviceId authoritative; parameter keeps converters symmetric.
 
-/**
- * Listing candidates (StreamInfoItem) carry no tags/description - only the watch-page StreamInfo
- * overload below has those.
- */
+/** Listing candidates (StreamInfoItem): no tags/description (only the watch-page StreamInfo overload). */
 fun StreamInfoItem.toFlowVideo(
     @Suppress("UNUSED_PARAMETER") serviceId: Int,
 ): FlowVideo {
@@ -64,7 +59,7 @@ fun StreamInfoItem.toFlowVideo(
     )
 }
 
-/** Full watch-page detail (StreamInfo) - includes description/tags, unlike StreamInfoItem. */
+/** Watch-page detail (StreamInfo): description/tags, unlike StreamInfoItem. */
 fun StreamInfo.toFlowVideo(
     @Suppress("UNUSED_PARAMETER") serviceId: Int,
 ): FlowVideo {
@@ -88,7 +83,7 @@ fun StreamInfo.toFlowVideo(
     )
 }
 
-/** Converts [FlowVideo] to the [InfoItem] shape `HtmlRenderer*` expects. */
+/** [FlowVideo] → [InfoItem] for `HtmlRenderer*`. */
 fun FlowVideo.toStreamInfoItem(serviceId: Int): StreamInfoItem {
     val item = StreamInfoItem(serviceId, videoIdToUrl(this.id, serviceId), this.title, StreamType.VIDEO_STREAM)
     item.setUploaderName(this.channelName)

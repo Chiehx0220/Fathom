@@ -54,7 +54,7 @@ internal class PlaybackStreamPreparer {
         val hlsUrl: String?,
         val dashManifestUrl: String?,
         val subtitles: List<ResolvedCaption>,
-        /** A single muxed stream to play when there is no manifest; Bilibili's FLV-only rooms. */
+        /** Single muxed stream, no manifest; Bilibili FLV-only rooms. */
         val progressiveStream: VideoStream? = null,
     )
 

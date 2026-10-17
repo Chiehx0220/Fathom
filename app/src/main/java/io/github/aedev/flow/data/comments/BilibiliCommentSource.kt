@@ -10,10 +10,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-/**
- * Bilibili's comments in the shape [CommentsPager] pages through: the continuation of the main list
- * is Bilibili's own offset string, and the one of a reply list is the next page number.
- */
+/** Bilibili comments for [CommentsPager]: main-list continuation is Bilibili's offset string; reply-list continuation is next page number. */
 internal class BilibiliCommentSource(
     apiProvider: () -> BilibiliApi,
 ) : CommentsSource {
@@ -28,7 +25,7 @@ internal class BilibiliCommentSource(
         videoId: String,
         continuation: String,
     ): CommentsPageResult {
-        // A live room has no comment section; its chat is the danmaku layer.
+        // Live room: no comment section (danmaku layer is chat).
         if (BilibiliLiveId.isLive(videoId)) return CommentsPageResult(comments = emptyList(), continuation = null)
         val page = api.comments(bvidOf(videoId), continuation)
         return CommentsPageResult(comments = page.comments.map { it.toComment() }, continuation = page.nextOffset)
@@ -57,7 +54,7 @@ internal class BilibiliCommentSource(
             likeCount = likeCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
             publishedTime = formatTime(postedSec),
             replyCount = replyCount,
-            // Page 1 of the replies; the pager swaps it for the next page as they load.
+            // Replies page 1; pager swaps in next pages.
             continuationToken = if (hasReplies && replyCount > 0) "1" else null,
             isPinned = isPinned,
             authorChannelId = authorMid.takeIf { it > 0 }?.toString().orEmpty(),

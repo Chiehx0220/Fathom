@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import org.schabi.newpipe.extractor.ServiceList
 
-/** Two pills to pick which streaming service search/paste-link resolution runs against. */
+/** Two pills: service for search/paste-link resolution. */
 @Composable
 fun SearchServiceSwitcher(
     selectedServiceId: Int,

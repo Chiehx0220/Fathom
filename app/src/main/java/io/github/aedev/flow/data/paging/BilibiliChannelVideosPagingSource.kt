@@ -12,7 +12,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** A Bilibili uploader's Videos tab through the native client; the key is the 1-based page. */
+/** Bilibili uploader Videos tab, native client; key = 1-based page. */
 class BilibiliChannelVideosPagingSource(
     private val api: BilibiliApi,
     private val mid: Long,
@@ -27,7 +27,7 @@ class BilibiliChannelVideosPagingSource(
         val key = params.key ?: BilibiliChannelPageKey(page = 1, lastAid = 0L)
         return try {
             val result = withContext(Dispatchers.IO) { api.channelVideos(mid, key) }
-            // The room the uploader is streaming from leads the first page.
+            // Live room leads first page.
             val liveRoom =
                 if (params.key == null) {
                     withContext(Dispatchers.IO) { api.channelLiveRoom(mid) }

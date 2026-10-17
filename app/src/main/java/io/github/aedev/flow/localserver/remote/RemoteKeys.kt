@@ -39,22 +39,21 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /*
- * The keys every screen of the remote is built from. Each one is an item of a ButtonGroup, so the keys in a row
- * share its width and a pressed key widens while its neighbours give way. Every key of one row has the same
- * height on purpose: a group lines its items up at the top, so keys of different heights would not share a line.
+ * Keys of every remote screen. Each = ButtonGroup item: row keys share width, pressed key widens, neighbours yield.
+ * Same height per row (group aligns items at top).
  */
 
-/** How far one volume key press moves the page's volume (0..1). */
+/** Page volume step per volume-key press (0..1). */
 internal const val VOLUME_STEP = 0.1f
 
-/** A light tick under the finger for every key: a remote is used without looking. */
+/** Light tick per key (eyes-free use). */
 @Composable
 internal fun rememberKeyTick(): () -> Unit {
     val haptic = LocalHapticFeedback.current
     return remember(haptic) { { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) } }
 }
 
-/** A key's icon. When the key's meaning changes (play becomes pause) the old icon shrinks away as the new one grows in. */
+/** Key icon; meaning change (play → pause): old icon shrinks, new grows. */
 @Composable
 internal fun KeyIcon(
     icon: ImageVector,
@@ -78,7 +77,7 @@ internal val KeyHeight = 52.dp
 internal val ShortcutHeight = 60.dp
 internal val TransportHeight = 80.dp
 
-/** A wide key with the icon beside its label. */
+/** Wide key, icon beside label. */
 internal fun ButtonGroupScope.wideKey(
     icon: ImageVector,
     label: Int,
@@ -101,7 +100,7 @@ internal fun ButtonGroupScope.wideKey(
     }
 }) {}
 
-/** A key with the icon over a short label, so four of them fit in a row. */
+/** Key, icon over short label (four per row). */
 internal fun ButtonGroupScope.shortcutKey(
     icon: ImageVector,
     label: Int,
@@ -126,7 +125,7 @@ internal fun ButtonGroupScope.shortcutKey(
     }
 }) {}
 
-/** An icon-only tool: a plain key, or a switch that lights up while [toggled] is true. */
+/** Icon-only tool: plain key or switch lit while [toggled]. */
 internal fun ButtonGroupScope.toolKey(
     icon: ImageVector,
     description: Int,
@@ -166,7 +165,7 @@ internal fun ButtonGroupScope.toolKey(
     }
 }) {}
 
-/** A playback key: [weight] is its share of the row, [strong] the filled colour instead of the tonal one. */
+/** Playback key: [weight] = row share, [strong] = filled instead of tonal. */
 internal fun ButtonGroupScope.transportKey(
     icon: ImageVector,
     description: Int,

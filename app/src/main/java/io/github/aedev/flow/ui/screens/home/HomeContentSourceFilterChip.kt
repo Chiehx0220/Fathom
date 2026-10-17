@@ -34,8 +34,7 @@ private fun HomeContentSourceFilter.label(mixLabel: String): String =
     }
 
 /**
- * Dropdown chip picking which service a feed shows. Home applies it to its fresh-subs and
- * recommendation lanes; Subscriptions and Search are unaffected - see HomeContentSourceFilter.
+ * Dropdown chip: service a feed shows. Home applies it to fresh-subs + recommendation lanes; Subscriptions, Search unaffected (HomeContentSourceFilter).
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

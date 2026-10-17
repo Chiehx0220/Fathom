@@ -146,7 +146,7 @@ class SearchViewModel
             }
         }
 
-        /** Switch which streaming service (YouTube / Bilibili) search runs against. */
+        /** Search service switch (YouTube / Bilibili). */
         fun setService(serviceId: Int) {
             if (serviceId == _uiState.value.serviceId) return
             _uiState.value = _uiState.value.copy(serviceId = serviceId)

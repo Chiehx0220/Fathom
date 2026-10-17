@@ -7,8 +7,7 @@ import kotlinx.coroutines.runBlocking
 
 private fun HistoryDbHelper.searchHistoryRepository() = SearchHistoryRepository(appContext)
 
-/** `SearchHistoryRepository` (DataStore), same store as native's search bar. HTTP contract is a
- * plain query-string list, so [nativeDeleteSearchQuery] resolves id by query text. */
+/** `SearchHistoryRepository` (DataStore), as native search bar. HTTP contract: plain query-string list; [nativeDeleteSearchQuery] resolves id by query text. */
 fun HistoryDbHelper.nativeAddSearchQuery(query: String?) {
     if (query.isNullOrBlank()) return
     runBlocking { searchHistoryRepository().saveSearchQuery(query.trim()) }
@@ -30,9 +29,7 @@ fun HistoryDbHelper.nativeDeleteSearchQuery(query: String?) {
 
 internal fun HistoryDbHelper.playerPreferences() = PlayerPreferences(appContext)
 
-/** `PlayerPreferences` (DataStore). `hideWatched` maps to native's home-feed toggle (Local Server
- * has one combined feed, not separate home/subscriptions screens). `videoQuality` maps to the
- * Wi-Fi quality slot (LAN-only, cellular slot never applies). */
+/** `PlayerPreferences` (DataStore). `hideWatched` → native home-feed toggle (one combined feed). `videoQuality` → Wi-Fi slot (LAN-only). */
 fun HistoryDbHelper.nativeHideWatched(): Boolean = runBlocking { playerPreferences().hideWatchedVideosFromHome.first() }
 
 fun HistoryDbHelper.nativeSetHideWatched(enabled: Boolean) {

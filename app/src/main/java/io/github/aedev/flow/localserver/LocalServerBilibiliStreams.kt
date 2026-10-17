@@ -15,7 +15,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.concurrent.ConcurrentHashMap
 
-/** The local server's Bilibili video pages: one video's metadata and streams, as a [StreamInfo]. Live rooms: [LocalServerBilibiliLive]. */
+/** Local server Bilibili video pages: metadata + streams as [StreamInfo]. Live rooms: [LocalServerBilibiliLive]. */
 internal object LocalServerBilibiliStreams {
     private const val INFO_TTL_MS = 30 * 60 * 1000L
 
@@ -27,9 +27,8 @@ internal object LocalServerBilibiliStreams {
     private val infoCache = ConcurrentHashMap<String, CachedInfo>()
 
     /**
-     * One video's metadata, DASH streams and related list, in the shape the watch page reads. The
-     * streams are video-only and audio-only, as Bilibili serves them. Cached for a while, because a
-     * watch page, its manifest and every stream request each ask for the same video.
+     * Video metadata, DASH streams, related list, watch-page shape. Video-only + audio-only streams, as Bilibili serves. Short-lived cache:
+     * watch page, manifest, each stream request ask for the same video.
      */
     fun streamInfo(
         context: Context,

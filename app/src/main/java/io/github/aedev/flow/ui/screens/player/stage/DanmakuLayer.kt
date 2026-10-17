@@ -18,24 +18,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import kotlin.math.abs
 
-// A tick that arrives more than this late for its scheduled time is treated as backlog (e.g. the
-// app was backgrounded) rather than spawned in a sudden burst.
+// Tick later than this = backlog (e.g. backgrounded), not a burst.
 private const val STALE_THRESHOLD_MS = 1_200L
 private const val SEEK_JUMP_THRESHOLD_MS = 1_500L
 
 /**
- * Bilibili danmaku overlay - the native-player counterpart of Local Server's own JS-driven version
- * (app/js/player.js's danmaku layer). Every comment's on-screen progress is a function of playback
- * position, not wall-clock time, so pausing the video freezes comments for free.
+ * Bilibili danmaku overlay: native-player counterpart of Local Server JS version (app/js/player.js danmaku layer).
+ * On-screen progress = f(playback position), not wall clock: pause freezes comments.
  *
- * [currentPositionMs] itself only updates on a ~250ms cadence (see PlayerPositionEffects.kt), which
- * produced visibly stepped/choppy motion - this smooths it by linearly extrapolating from the last
- * known real position at the player's own wall-clock rate between updates (while actually playing),
- * correcting back to the real value every time a fresh one arrives. The extrapolation only runs
- * while [EnhancedPlayerState.isPlaying] is true, so it costs nothing while paused.
+ * [currentPositionMs] updates ~250ms (PlayerPositionEffects.kt): choppy. Smoothed by linear extrapolation from last real position at player wall-clock rate
+ * (playing only), corrected on each fresh value. Zero cost while paused.
  *
- * On-screen duration is Bilibili's own typical default (see [DanmakuField]), because the danmaku
- * data carries no lasting time. A live room's chat is [LiveDanmakuLayer].
+ * On-screen duration = Bilibili default ([DanmakuField]); data has no duration. Live chat: [LiveDanmakuLayer].
  */
 @Composable
 internal fun BoxScope.DanmakuLayer(
@@ -48,11 +42,8 @@ internal fun BoxScope.DanmakuLayer(
 
     val playbackState by EnhancedPlayerManager.getInstance().playerState.collectAsStateWithLifecycle()
 
-    // anchorPositionMs/anchorAtElapsedMs pin down "what the real position was, and when" - the
-    // smoothed value is then that anchor plus wall-clock time elapsed since, scaled by playback
-    // speed. Re-anchored both whenever a fresh real position arrives (keeps drift from
-    // accumulating) and whenever play/pause or speed changes (so resuming after a pause doesn't
-    // jump forward by however long the pause lasted).
+    // anchorPositionMs/anchorAtElapsedMs = (real position, when); smoothed = anchor + elapsed wall time × speed.
+    // Re-anchored on fresh real position (no drift) and on play/pause/speed change (no jump after pause).
     var anchorPositionMs by remember { mutableLongStateOf(currentPositionMs) }
     var anchorAtElapsedMs by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     var smoothedPositionMs by remember { mutableLongStateOf(currentPositionMs) }

@@ -34,8 +34,7 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.localserver.RemoteState
 
 /**
- * Browsing, top to bottom in order of how rarely it is reached for: the source switch, the search, the two places
- * that are seldom needed, the direction wheel, and under the thumb the keys used all the time.
+ * Browsing, top to bottom by rising use frequency: source switch, search, two rare places, direction wheel, keys under the thumb.
  */
 @Composable
 internal fun DirectionsMode(
@@ -55,20 +54,20 @@ internal fun DirectionsMode(
             wideKey(Icons.Default.Subscriptions, R.string.remote_subscriptions) { send("goto:subscriptions") }
             wideKey(Icons.Default.VideoLibrary, R.string.library) { send("goto:library") }
         }
-        // The wheel takes what room is left, up to a comfortable size, so a small phone does not push the keys below off screen.
+        // Wheel takes remaining room up to a comfortable size (small phone: keys stay on screen).
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             DirectionWheel(send, minOf(300.dp, maxHeight, maxWidth))
         }
         ButtonGroup(overflowIndicator = {}, modifier = Modifier.fillMaxWidth()) {
             shortcutKey(Icons.AutoMirrored.Filled.ArrowBack, R.string.remote_back) { send("back") }
             shortcutKey(Icons.Default.Home, R.string.remote_home) { send("goto:home") }
-            // Menu, not MoreVert: matches the web key-hints overlay's glyph for "key:menu".
+            // Menu, not MoreVert: web key-hints overlay glyph for "key:menu".
             shortcutKey(Icons.Default.Menu, R.string.remote_options) { send("key:menu") }
         }
     }
 }
 
-// The page's own source switcher (YouTube / Bilibili / ...), mirrored: the one it is on is lit, a tap moves the page there.
+// Mirror of page source switcher (YouTube / Bilibili / ...): current lit, tap moves page.
 @Composable
 private fun ServiceSwitch(
     services: List<Pair<Int, String>>,

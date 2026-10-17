@@ -13,9 +13,9 @@ import io.github.aedev.flow.data.model.isYouTubeServiceId
 data class SubscriptionRefreshPlan(
     val channelIds: List<String>,
     val isFullRefresh: Boolean,
-    /** Which service each planned channel belongs to — a Bilibili channel has no YouTube RSS feed. */
+    /** Service per planned channel (Bilibili: no YouTube RSS). */
     val serviceIdByChannel: Map<String, Int> = emptyMap(),
-    /** Name and avatar of the planned non-YouTube channels, whose videos come back without them. */
+    /** Name + avatar of planned non-YouTube channels (videos come back without them). */
     val labelByChannel: Map<String, ChannelLabel> = emptyMap(),
 ) {
     val isEmpty: Boolean get() = channelIds.isEmpty()

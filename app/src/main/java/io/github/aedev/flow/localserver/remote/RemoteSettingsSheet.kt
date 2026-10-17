@@ -47,12 +47,12 @@ import kotlin.math.abs
 
 private enum class SettingsPage { MAIN, QUALITY, SPEED }
 
-/** Quality needs renditions, speed needs a finite duration, danmaku needs a source that provides it. */
+/** Quality needs renditions, speed needs finite duration, danmaku needs a providing source. */
 internal fun hasSettings(state: RemoteState): Boolean = state.qualities.isNotEmpty() || state.durationSec > 0.0 || state.danmaku != null
 
 private val Speeds = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
 
-/** Player settings in a bottom sheet; a selection returns to the main page. */
+/** Player settings bottom sheet; selection returns to main page. */
 @Composable
 internal fun RemoteSettingsSheet(
     state: RemoteState,
@@ -68,7 +68,7 @@ internal fun RemoteSettingsSheet(
         sheetState = sheetState,
         properties = ModalBottomSheetProperties(shouldDismissOnBackPress = false),
     ) {
-        // Sheet back handling is disabled: a stacked BackHandler otherwise swallows the first press.
+        // Sheet back handling disabled: stacked BackHandler swallows first press.
         BackHandler {
             if (page != SettingsPage.MAIN) toMain() else scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
         }
