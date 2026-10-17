@@ -3,7 +3,6 @@ package io.github.aedev.flow.player.stream
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.model.SponsorBlockSegment
 import io.github.aedev.flow.data.model.Video
-import org.schabi.newpipe.extractor.ServiceList
 
 /** Everything [PlaybackLoadResolver] needs that the player screen owns. */
 data class PlaybackResolutionRequest(
@@ -13,7 +12,7 @@ data class PlaybackResolutionRequest(
     val resumePositionOverrideMs: Long?,
     val allowShorts: Boolean,
     /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
-    val serviceId: Int = ServiceList.YouTube.serviceId,
+    val serviceId: Int = 0,
     /** Creators the viewer has blocked; their videos never enter the related list. */
     val blockedChannelIds: Set<String> = emptySet(),
 )

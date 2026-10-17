@@ -37,7 +37,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
 
 @HiltViewModel
@@ -225,7 +224,7 @@ class ChannelViewModel
             _uiState.update { it.copy(isLoading = true, error = null) }
             viewModelScope.launch(PerformanceDispatcher.networkIO) {
                 _uiState.update {
-                    it.copy(isLoading = true, error = null, serviceId = ServiceList.YouTube.serviceId)
+                    it.copy(isLoading = true, error = null, serviceId = 0)
                 }
 
                 val browseId =

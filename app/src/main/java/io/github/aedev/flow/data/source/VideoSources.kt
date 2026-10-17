@@ -2,10 +2,12 @@ package io.github.aedev.flow.data.source
 
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.HomeContentSourceFilter
+import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
 import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,20 +16,21 @@ import javax.inject.Singleton
 @Singleton
 class VideoSources(
     private val sources: List<VideoSource>,
+    private val homeFilter: suspend () -> HomeContentSourceFilter = { HomeContentSourceFilter.MIX },
 ) {
     @Inject
-    constructor(youtube: YouTubeVideoSource, bilibili: BilibiliVideoSource) : this(listOf(youtube, bilibili))
+    constructor(youtube: YouTubeVideoSource, bilibili: BilibiliVideoSource, preferences: PlayerPreferences) :
+        this(listOf(youtube, bilibili), { preferences.homeContentSourceFilter.first() })
 
     fun forFilter(filter: HomeContentSourceFilter): List<VideoSource> = sources.filter { filter.allows(it.serviceId) }
 
-    /** One discovery query asked of every service the filter allows; YouTube answers through [youtube]. */
+    /** One discovery query asked of every service the Home filter allows; YouTube answers through [youtube]. */
     suspend fun search(
         query: String,
-        filter: HomeContentSourceFilter,
         youtube: suspend (String) -> List<Video>,
     ): List<Video> =
         coroutineScope {
-            forFilter(filter)
+            forFilter(homeFilter())
                 .map { source ->
                     async { if (source.serviceId == ServiceList.YouTube.serviceId) youtube(query) else source.search(query) }
                 }.awaitAll()

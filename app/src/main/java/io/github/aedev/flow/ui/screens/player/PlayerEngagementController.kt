@@ -8,7 +8,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.ServiceList
 
 /**
  * Subscription, notification and like state for the video the player screen is on: the writes the
@@ -34,7 +33,7 @@ internal class PlayerEngagementController(
         channelId: String,
         channelName: String,
         channelThumbnail: String,
-        serviceId: Int = ServiceList.YouTube.serviceId,
+        serviceId: Int = 0,
     ) {
         scope.launch {
             engagement.toggleSubscription(channelId, channelName, channelThumbnail, serviceId) { isSubscribed ->

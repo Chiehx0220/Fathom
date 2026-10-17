@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.data.engagement.FeedInvalidationBus
 import io.github.aedev.flow.data.feed.FeedPrefetchQueue
 import io.github.aedev.flow.data.feed.FeedPrefetchRequest
@@ -32,7 +31,6 @@ import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.repository.needsChannelMetadata
 import io.github.aedev.flow.data.shorts.ShortsFeedRepository
 import io.github.aedev.flow.data.subscriptions.HomeSubscriptionUploads
-import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.pages.renderer.FeedItemOwner
 import io.github.aedev.flow.ui.screens.home.chips.ChipFeedContext
 import io.github.aedev.flow.ui.screens.home.chips.HomeChipFeeds
@@ -63,14 +61,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
-import org.schabi.newpipe.extractor.ServiceList
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 private data class Wave1FeedResults(
     val discovery: List<Pair<String, List<Video>>>,
     val related: RelatedGraphFetchResult,
-    val bilibili: BilibiliWave1Feeds,
 )
 
 @HiltViewModel
@@ -550,34 +546,26 @@ class HomeViewModel
 
                         val userSubs = subscriptionScope().boosted
                         val sourceFilter = playerPreferences.homeContentSourceFilter.first()
+                        val bilibiliFeeds = launchBilibiliWave1Feeds(subscriptionRepository, appContext, sourceFilter)
                         val region = playerPreferences.trendingRegion.first()
                         val fetchStart = System.currentTimeMillis()
 
                         // ── Wave 1: first 3 queries + related lanes; subscriptions come from the store ──
                         val wave1QueryCount = discoveryQueries.size.coerceAtMost(3)
                         val wave1Queries = discoveryQueries.take(wave1QueryCount)
-                        val youtubeQueries = if (sourceFilter.allows(ServiceList.YouTube.serviceId)) wave1Queries else emptyList()
                         currentQueryIndex = wave1QueryCount
 
                         val results =
                             traced(TRACE_WAVE1) {
                                 supervisorScope {
-                                    val deferredBilibili =
-                                        launchBilibiliWave1Feeds(
-                                            subscriptionRepository,
-                                            bilibiliApi(appContext),
-                                            discoveryQueries.toList(),
-                                            enabled = sourceFilter.allows(BILIBILI_SERVICE_ID),
-                                        )
-
                                     val deferredDiscovery =
                                         async {
-                                            youtubeQueries
+                                            wave1Queries
                                                 .map { query ->
                                                     async {
                                                         query to
                                                             runCatching {
-                                                                searchPages.firstPage(query)
+                                                                feedSources.searchDiscovery(query, searchPages::firstPage)
                                                             }.getOrElse { emptyList() }
                                                     }
                                                 }.awaitAll()
@@ -595,14 +583,14 @@ class HomeViewModel
                                     Wave1FeedResults(
                                         discovery = deferredDiscovery.await(),
                                         related = deferredRelated.await(),
-                                        bilibili = deferredBilibili.await(),
                                     )
                                 }
                             }
 
                         val discoveryPairs = results.discovery
+                        val bilibili = bilibiliFeeds.await()
                         // Bilibili's trending joins discovery: the feed no longer has a separate viral lane.
-                        val rawDiscovery = discoveryPairs.flatMap { it.second } + results.bilibili.discovery + results.bilibili.viral
+                        val rawDiscovery = discoveryPairs.flatMap { it.second } + bilibili.viral
                         val relatedFetch = results.related
                         val rawRelated = relatedFetch.candidates
 
@@ -670,7 +658,7 @@ class HomeViewModel
                         if (trace == null) snapshotFeedJob?.cancel()
                         val lanes =
                             buildHomeFeedLanes(
-                                rawSubs = storedFeed.storedSubscriptionVideos(now) + results.bilibili.subs,
+                                rawSubs = storedFeed.storedSubscriptionVideos(now) + bilibili.subs,
                                 rawDiscovery = rawDiscovery,
                                 rawMemory = rawMemory,
                                 rawRelated = rawRelated,
@@ -764,7 +752,7 @@ class HomeViewModel
                             )
                         val renderedIds = spacedMix.mapTo(HashSet()) { it.id }
                         val origins =
-                            pageOrigins(
+                            pageOriginsWithBilibili(
                                 spacedMix,
                                 sourceById::get,
                                 relatedSeedTitles(lanes.relatedCandidates, relatedFetch.seedInputs, relatedPickIds),
@@ -885,7 +873,6 @@ class HomeViewModel
                 wave2Job =
                     viewModelScope.launch(PerformanceDispatcher.networkIO) wave2@{
                         try {
-                            val wave2Filter = playerPreferences.homeContentSourceFilter.first()
                             val wave2Raw =
                                 wave2Queries
                                     .map { q ->
@@ -893,7 +880,7 @@ class HomeViewModel
                                             q to (
                                                 withTimeoutOrNull(6_000L) {
                                                     try {
-                                                        feedSources.searchDiscovery(q, wave2Filter, searchPages::firstPage)
+                                                        feedSources.searchDiscovery(q, searchPages::firstPage)
                                                     } catch (cancellation: CancellationException) {
                                                         throw cancellation
                                                     } catch (error: Exception) {
@@ -1140,7 +1127,7 @@ class HomeViewModel
                 val reserveSearchIds = HashSet<String>()
 
                 fun origins() =
-                    pageOrigins(
+                    pageOriginsWithBilibili(
                         page,
                         {
                             when (it) {
@@ -1184,7 +1171,6 @@ class HomeViewModel
 
                 val searchQueries = listOfNotNull(queryA, queryB)
 
-                val loadMoreFilter = playerPreferences.homeContentSourceFilter.first()
                 val searches =
                     listOfNotNull(continued) +
                         coroutineScope {
@@ -1194,7 +1180,7 @@ class HomeViewModel
                                         query to (
                                             withTimeoutOrNull(6_000L) {
                                                 try {
-                                                    feedSources.searchDiscovery(query, loadMoreFilter, searchPages::firstPage)
+                                                    feedSources.searchDiscovery(query, searchPages::firstPage)
                                                 } catch (cancellation: CancellationException) {
                                                     throw cancellation
                                                 } catch (error: Exception) {
@@ -1370,9 +1356,8 @@ class HomeViewModel
                 appendedPage =
                     page
                         .filterWatched(watchedVideoIds.value)
-                        .filter { sourceFilter.allows(it) }
                         .filterNot { it.id in existingVideoIds || exclusions.hidesFromRecommendations(it) }
-                        .spreadByService()
+                        .forSourceFilter(sourceFilter)
                 if (appendedPage.isEmpty()) return@update state
                 val tailChannels = state.videos.takeLast(CHANNEL_GAP).map { it.channelId }
                 val updated =
@@ -1521,7 +1506,7 @@ class HomeViewModel
             userSubs: Set<String>,
         ) {
             val exclusions = feedExclusions()
-            val videos = uploads.filterNot(exclusions::hidesFromRecommendations)
+            val videos = uploads.allowedBy(playerPreferences).filterNot(exclusions::hidesFromRecommendations)
             val onScreen = _uiState.value.videos.mapTo(HashSet()) { it.id }
             val candidates =
                 videos
@@ -1584,6 +1569,7 @@ class HomeViewModel
                     val ranked =
                         FlowNeuroEngine.rank(
                             fresh
+                                .allowedBy(playerPreferences)
                                 .filterValid()
                                 .filterWatched(watchedVideoIds.value)
                                 .filterNot {

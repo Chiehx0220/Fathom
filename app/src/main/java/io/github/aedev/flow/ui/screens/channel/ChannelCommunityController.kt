@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.ServiceList
 
 internal data class ChannelCommunityUiState(
     val posts: List<CommunityPost> = emptyList(),
@@ -47,7 +46,7 @@ internal class ChannelCommunityController(
         channelId: String,
         channelName: String,
         avatarUrl: String,
-        serviceId: Int = ServiceList.YouTube.serviceId,
+        serviceId: Int = 0,
     ) {
         channel = ChannelContext(channelId, channelName, avatarUrl, serviceId)
         _state.value = ChannelCommunityUiState()

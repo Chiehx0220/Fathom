@@ -34,11 +34,54 @@ class VideoSourcesTest {
     private val sources = VideoSources(listOf(youtube, bilibili))
 
     @Test
+    fun `YouTube's service id is the literal 0 that default parameters across the app rely on`() {
+        assertThat(ServiceList.YouTube.serviceId).isEqualTo(0)
+    }
+
+    @Test
     fun `a filter asks only the services it allows`() {
         assertThat(sources.forFilter(HomeContentSourceFilter.MIX)).containsExactly(youtube, bilibili)
         assertThat(sources.forFilter(HomeContentSourceFilter.YOUTUBE)).containsExactly(youtube)
         assertThat(sources.forFilter(HomeContentSourceFilter.BILIBILI)).containsExactly(bilibili)
     }
+
+    private class SearchingSource(
+        override val serviceId: Int,
+        private val found: List<Video>,
+    ) : VideoSource {
+        override suspend fun search(
+            query: String,
+            filter: SearchFilter,
+        ): List<Video> = found
+
+        override suspend fun related(videoId: String): List<Video> = emptyList()
+    }
+
+    private fun video(id: String) = Video(id, "t", "c", "ch", "", 60, 1, uploadDate = "1 day ago")
+
+    @Test
+    fun `a discovery search asks only the services the Home filter allows`() =
+        runTest {
+            val bilibiliHit = video("BV1xx411c7mD")
+            val searching =
+                listOf(
+                    SearchingSource(ServiceList.YouTube.serviceId, emptyList()),
+                    SearchingSource(BILIBILI_SERVICE_ID, listOf(bilibiliHit)),
+                )
+            var youtubeAsked = 0
+            val askYoutube: suspend (String) -> List<Video> = {
+                youtubeAsked++
+                listOf(video("dQw4w9WgXcQ"))
+            }
+
+            assertThat(VideoSources(searching) { HomeContentSourceFilter.BILIBILI }.search("q", askYoutube)).containsExactly(bilibiliHit)
+            assertThat(youtubeAsked).isEqualTo(0)
+
+            assertThat(VideoSources(searching) { HomeContentSourceFilter.YOUTUBE }.search("q", askYoutube).map { it.id })
+                .containsExactly("dQw4w9WgXcQ")
+            assertThat(VideoSources(searching) { HomeContentSourceFilter.MIX }.search("q", askYoutube).map { it.id })
+                .containsExactly("dQw4w9WgXcQ", "BV1xx411c7mD")
+        }
 
     @Test
     fun `a video goes to the service its id belongs to`() {

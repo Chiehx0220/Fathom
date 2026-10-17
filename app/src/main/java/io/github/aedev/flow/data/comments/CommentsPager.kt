@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import org.schabi.newpipe.extractor.ServiceList
 
 private const val TAG = "CommentsPager"
 
@@ -95,7 +94,7 @@ internal class CommentsPager(
     private var prefetchJob: Job? = null
     private var loadingVideoId: String? = null
     private var activeSortToken: String? = null
-    private var serviceId: Int = ServiceList.YouTube.serviceId
+    private var serviceId: Int = 0
     private val repliesInFlight = mutableSetOf<String>()
 
     private fun source(): CommentsSource = if (serviceId == BILIBILI_SERVICE_ID) bilibili ?: youtube else youtube
@@ -120,7 +119,7 @@ internal class CommentsPager(
 
     fun load(
         videoId: String,
-        serviceId: Int = ServiceList.YouTube.serviceId,
+        serviceId: Int = 0,
     ) {
         if (loadingVideoId == videoId && activeSortToken == null && loadJob?.isActive == true) return
         startLoad(videoId, sortToken = null, serviceId = serviceId)

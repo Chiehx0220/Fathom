@@ -4,12 +4,11 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.innertube.pages.channel.ChannelHeader
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabDescriptor
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
-import org.schabi.newpipe.extractor.ServiceList
 
 data class ChannelUiState(
     val channelId: String? = null,
     /** Which extractor service this channel came from. Everything else in this state is generic. */
-    val serviceId: Int = ServiceList.YouTube.serviceId,
+    val serviceId: Int = 0,
     val header: ChannelHeader? = null,
     /** Exactly the tabs the channel published, minus the ones the app hides. Empty until loaded. */
     val tabs: List<ChannelTabDescriptor> = emptyList(),

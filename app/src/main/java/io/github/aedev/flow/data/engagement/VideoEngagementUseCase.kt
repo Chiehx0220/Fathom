@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
 
 private const val TAG = "VideoEngagement"
@@ -80,7 +79,7 @@ class VideoEngagementUseCase
             channelId: String,
             channelName: String,
             channelThumbnail: String,
-            serviceId: Int = ServiceList.YouTube.serviceId,
+            serviceId: Int = 0,
             onApplied: (Boolean) -> Unit = {},
         ) {
             val isSubscribed = subscriptionRepository.isSubscribed(channelId).first()
@@ -103,7 +102,7 @@ class VideoEngagementUseCase
             channelName: String,
             channelThumbnail: String,
             subscribed: Boolean,
-            serviceId: Int = ServiceList.YouTube.serviceId,
+            serviceId: Int = 0,
             onApplied: (Boolean) -> Unit = {},
         ) {
             if (subscribed) {

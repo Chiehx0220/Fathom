@@ -2,7 +2,6 @@ package io.github.aedev.flow.ui.screens.home
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
-import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
 import io.github.aedev.flow.data.local.LikedVideosRepository
@@ -23,7 +22,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeoutOrNull
-import org.schabi.newpipe.extractor.ServiceList
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -152,15 +150,14 @@ class HomeFeedSources
 
         internal suspend fun searchDiscovery(
             query: String,
-            filter: HomeContentSourceFilter,
             youtube: suspend (String) -> List<Video>,
-        ): List<Video> = sources.search(query, filter, youtube)
+        ): List<Video> = sources.search(query, youtube)
 
         /** One seed's related list, through the same memory and Room caches the feed uses. */
         internal suspend fun relatedVideos(
             seedId: String,
             filters: suspend () -> HomeFeedCacheFilters,
-            serviceId: Int = ServiceList.YouTube.serviceId,
+            serviceId: Int = 0,
         ): List<Video> = fetchRelatedVideos(seedId, serviceId, filters)
 
         /**
@@ -250,7 +247,7 @@ class HomeFeedSources
                                 val videos =
                                     fetchRelatedVideos(
                                         seedId,
-                                        seed?.serviceId ?: ServiceList.YouTube.serviceId,
+                                        seed?.serviceId ?: 0,
                                         filters,
                                     )
                                 if (seed != null && videos.isNotEmpty()) neuroEngine.noteRelatedOfWatched(seed, videos)

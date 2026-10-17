@@ -3,7 +3,6 @@ package io.github.aedev.flow.data.music.model
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.serialization.Serializable
-import org.schabi.newpipe.extractor.ServiceList
 
 enum class MusicItemType { SONG, ALBUM, PLAYLIST, ARTIST }
 
@@ -58,7 +57,7 @@ data class MusicTrack(
     val artists: List<MusicArtist> = emptyList(),
     val itemType: MusicItemType = MusicItemType.SONG,
     /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
-    val serviceId: Int = ServiceList.YouTube.serviceId,
+    val serviceId: Int = 0,
 ) {
     val highResThumbnailUrl: String
         get() = ThumbnailUrlResolver.resolveMusicThumbnail(videoId, thumbnailUrl, 1080)

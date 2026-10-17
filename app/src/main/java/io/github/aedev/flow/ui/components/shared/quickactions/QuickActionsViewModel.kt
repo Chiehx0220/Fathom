@@ -37,7 +37,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -114,7 +113,7 @@ class QuickActionsViewModel
             channelId: String,
             channelName: String,
             channelThumbnail: String,
-            serviceId: Int = ServiceList.YouTube.serviceId,
+            serviceId: Int = 0,
         ) {
             viewModelScope.launch {
                 val subscribe = !engagement.subscriptionState(channelId).first()
@@ -128,7 +127,7 @@ class QuickActionsViewModel
             channelThumbnail: String,
             subscribe: Boolean,
             announce: Boolean,
-            serviceId: Int = ServiceList.YouTube.serviceId,
+            serviceId: Int = 0,
         ) {
             runAction {
                 val avatar =

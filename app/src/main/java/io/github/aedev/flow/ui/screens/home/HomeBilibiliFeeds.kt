@@ -1,13 +1,15 @@
 package io.github.aedev.flow.ui.screens.home
 
+import android.content.Context
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliApi
-import io.github.aedev.flow.bilibili.BilibiliSearchItem
-import io.github.aedev.flow.bilibili.BilibiliSearchType
 import io.github.aedev.flow.bilibili.serviceIdOfChannel
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
+import io.github.aedev.flow.data.local.HomeContentSourceFilter
+import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.subscriptions.latestVideos
+import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -18,9 +20,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 // The home feed's Bilibili lane, kept out of HomeViewModel.kt so upstream changes to that file's
 // YouTube side merge without touching it.
-
-// Bilibili's search is a per-query network round trip, so wave 1 only spends this many queries on it.
-private const val BILIBILI_DISCOVERY_QUERY_LIMIT = 2
 
 /**
  * Every wave-1 candidate fetch wants the same shape - skip the call outright when there's nothing
@@ -44,20 +43,48 @@ private const val BILIBILI_LIVES_LIMIT = 6
 
 internal data class BilibiliWave1Feeds(
     val subs: List<Video>,
-    val discovery: List<Video>,
+    /** Trending and live videos, which no search found. */
     val viral: List<Video>,
 )
 
-// Bilibili's three wave-1 fetches (subs, discovery, trending), factored out of loadFlowFeed()'s
+internal fun Video.isBilibili(): Boolean = serviceIdOfVideo(id, serviceId) == BILIBILI_SERVICE_ID
+
+/** [pageOrigins], without a search label on Bilibili trending and live cards: no search found them. */
+internal fun pageOriginsWithBilibili(
+    videos: List<Video>,
+    sourceOf: (String) -> FeedSource?,
+    seedTitles: Map<String, String>,
+    queries: Map<String, String>,
+    followed: Set<String>,
+    neighbourPointers: Map<String, String> = emptyMap(),
+): Map<String, HomeCardOrigin> {
+    val origins = pageOrigins(videos, sourceOf, seedTitles, queries, followed, neighbourPointers)
+    val unsearched =
+        videos
+            .filter { it.isBilibili() && it.id !in queries && origins[it.id]?.kind == HomeCardOrigin.Kind.SEARCH }
+            .mapTo(HashSet()) { it.id }
+    return origins - unsearched
+}
+
+/** Cards that arrive after the feed loaded face the same Home source filter as the feed they join. */
+internal suspend fun List<Video>.allowedBy(preferences: PlayerPreferences): List<Video> {
+    val filter = preferences.homeContentSourceFilter.first()
+    return filter { filter.allows(it) }
+}
+
+/** A page of cards for Home: only the services [filter] allows, spread evenly through the page. */
+internal fun List<Video>.forSourceFilter(filter: HomeContentSourceFilter): List<Video> = filter { filter.allows(it) }.spreadByService()
+
+// Bilibili's two wave-1 fetches (subs, then trending and live), factored out of loadFlowFeed()'s
 // supervisorScope to reduce merge-conflict surface with upstream's YouTube-side fetch logic there.
 internal fun CoroutineScope.launchBilibiliWave1Feeds(
     subscriptionRepository: SubscriptionRepository,
-    bilibili: BilibiliApi,
-    discoveryQueries: List<String>,
-    enabled: Boolean,
+    context: Context,
+    filter: HomeContentSourceFilter,
 ): Deferred<BilibiliWave1Feeds> =
     async {
-        if (!enabled) return@async BilibiliWave1Feeds(emptyList(), emptyList(), emptyList())
+        if (!filter.allows(BILIBILI_SERVICE_ID)) return@async BilibiliWave1Feeds(emptyList(), emptyList())
+        val bilibili = bilibiliApi(context)
         // getAllSubscriptionIds() has no per-service info - filter to Bilibili channels here so
         // the fetch below routes through the right extractor.
         val bilibiliSubs =
@@ -88,26 +115,6 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
                 }
             }
 
-        // Gives HomeContentSourceFilter real non-subscription Bilibili content, not just the
-        // fresh-subs RSS lane.
-        val deferredDiscovery =
-            async {
-                discoveryQueries
-                    .take(BILIBILI_DISCOVERY_QUERY_LIMIT)
-                    .map { query ->
-                        async {
-                            fetchSafely {
-                                bilibili
-                                    .search(query, BilibiliSearchType.VIDEO, page = 1)
-                                    .items
-                                    .filterIsInstance<BilibiliSearchItem.Video>()
-                                    .map(BilibiliVideoMapper::videoFromSearch)
-                            }
-                        }
-                    }.awaitAll()
-                    .flatten()
-            }
-
         // Popular videos, plus a few of the rooms that are live right now.
         val deferredViral =
             async {
@@ -123,7 +130,6 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
 
         BilibiliWave1Feeds(
             subs = deferredSubs.await(),
-            discovery = deferredDiscovery.await(),
             viral = deferredViral.await(),
         )
     }

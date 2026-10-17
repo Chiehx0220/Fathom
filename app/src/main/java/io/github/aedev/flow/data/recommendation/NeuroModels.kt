@@ -16,7 +16,6 @@ package io.github.aedev.flow.data.recommendation
 
 import androidx.annotation.StringRes
 import io.github.aedev.flow.R
-import org.schabi.newpipe.extractor.ServiceList
 import java.util.Calendar
 
 /*
@@ -315,7 +314,7 @@ data class GraphSeedInput(
     val durationSec: Int,
     val percentWatched: Double,
     val isShort: Boolean = false,
-    val serviceId: Int = ServiceList.YouTube.serviceId,
+    val serviceId: Int = 0,
 )
 
 /** Where a reel seed comes from; the weights live in [ShortsSeedSelector]. */

@@ -35,14 +35,13 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
 
 data class SearchUiState(
     val query: String = "",
     val filters: SearchFilter = SearchFilter.DEFAULT,
     val header: SearchHeader = SearchHeader(),
-    val serviceId: Int = ServiceList.YouTube.serviceId,
+    val serviceId: Int = 0,
 )
 
 @HiltViewModel

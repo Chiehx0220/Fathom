@@ -1,7 +1,6 @@
 package io.github.aedev.flow.data.local
 
 import io.github.aedev.flow.bilibili.serviceIdOfChannel
-import org.schabi.newpipe.extractor.ServiceList
 
 /**
  * The stored form of a subscription:
@@ -47,7 +46,7 @@ internal object SubscriptionRecordCodec {
             add(channel.isNotificationEnabled.toString())
             add(channel.isMusic.toString())
             add(channel.lastFeedFetchAt.toString())
-            if (channel.serviceId != ServiceList.YouTube.serviceId) add(channel.serviceId.toString())
+            if (channel.serviceId != 0) add(channel.serviceId.toString())
         }.joinToString(SEPARATOR.toString())
 
     fun decode(data: String): ChannelSubscription? {

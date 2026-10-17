@@ -47,7 +47,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import org.schabi.newpipe.extractor.ServiceList
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
@@ -337,10 +336,10 @@ class HomeChipFeeds
             val serviceOf = inputs.associate { it.id to it.serviceId }
             return coroutineScope {
                 seedIds
-                    .filter { source.allows(serviceOf[it] ?: ServiceList.YouTube.serviceId) }
+                    .filter { source.allows(serviceOf[it] ?: 0) }
                     .map { id ->
                         async {
-                            runCatching { feedSources.relatedVideos(id, context.filters, serviceOf[id] ?: ServiceList.YouTube.serviceId) }
+                            runCatching { feedSources.relatedVideos(id, context.filters, serviceOf[id] ?: 0) }
                                 .getOrDefault(emptyList())
                         }
                     }.awaitAll()

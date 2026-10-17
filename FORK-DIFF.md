@@ -26,32 +26,32 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **125** (1597 changed lines). New files: **242**.
+- Modified upstream files: **125** (1566 changed lines). New files: **242**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| ui/screens/home/chips/HomeChipFeeds.kt | 59 | 38 |
+| ui/screens/home/chips/HomeChipFeeds.kt | 58 | 38 |
 | data/local/BackupRepository.kt | 59 | 20 |
-| ui/screens/home/HomeViewModel.kt | 60 | 9 |
+| ui/screens/home/HomeViewModel.kt | 48 | 11 |
 | player/EnhancedPlayerManager.kt | 52 | 2 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
-| ui/screens/home/HomeFeedSources.kt | 42 | 5 |
 | ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
 | data/local/PlayerPreferences.kt | 39 | 0 |
-| data/local/SubscriptionRecordCodec.kt | 24 | 15 |
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
+| ui/screens/home/HomeFeedSources.kt | 33 | 6 |
+| data/local/SubscriptionRecordCodec.kt | 23 | 15 |
 | data/innertube/RssSubscriptionService.kt | 28 | 3 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/local/ViewHistory.kt | 28 | 0 |
 | data/video/VideoDownloadManager.kt | 25 | 3 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
-| ui/screens/channel/ChannelViewModel.kt | 23 | 3 |
-| data/comments/CommentsPager.kt | 19 | 6 |
+| ui/screens/channel/ChannelViewModel.kt | 22 | 3 |
 | ui/screens/player/PlaybackSessionApplier.kt | 25 | 0 |
-| ui/screens/search/SearchViewModel.kt | 21 | 4 |
-| data/paging/SearchPagingSource.kt | 18 | 6 |
+| data/comments/CommentsPager.kt | 18 | 6 |
 | data/repository/YouTubeRepository.kt | 18 | 6 |
+| ui/screens/search/SearchViewModel.kt | 20 | 4 |
+| data/paging/SearchPagingSource.kt | 17 | 6 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | data/local/dao/WatchHistoryDao.kt | 22 | 0 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 22 | 0 |
@@ -60,7 +60,7 @@ in it). **New files** never conflict; they are ours alone.
 | player/error/VideoErrorMapper.kt | 20 | 0 |
 | ui/screens/home/HomeScreen.kt | 16 | 4 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 16 | 3 |
-| ui/components/shared/quickactions/QuickActionsViewModel.kt | 14 | 3 |
+| ui/components/shared/quickactions/QuickActionsViewModel.kt | 13 | 3 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 14 | 2 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
@@ -82,11 +82,11 @@ in it). **New files** never conflict; they are ours alone.
 | player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
 | ui/FlowNavigation.kt | 5 | 5 |
-| ui/screens/channel/ChannelCommunityController.kt | 9 | 1 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
 | data/local/entity/VideoEntity.kt | 6 | 3 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
 | ui/AppHooks.kt | 4 | 5 |
+| ui/screens/channel/ChannelCommunityController.kt | 8 | 1 |
 | ui/screens/player/PlaybackLoadController.kt | 8 | 1 |
 | sync/merge/CollectionMergers.kt | 4 | 4 |
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
@@ -94,16 +94,16 @@ in it). **New files** never conflict; they are ours alone.
 
 ## FlowNeuro (Chinese text handling)
 
-- Modified upstream files: **2** (6 changed lines). New files: **2**.
+- Modified upstream files: **2** (5 changed lines). New files: **2**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | data/recommendation/NeuroText.kt | 2 | 2 |
-| data/recommendation/NeuroModels.kt | 2 | 0 |
+| data/recommendation/NeuroModels.kt | 1 | 0 |
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **71**.
+- Modified upstream files: **0** (0 changed lines). New files: **72**.
 
 ## Local server (fork-only feature)
 
@@ -124,7 +124,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **19** (135 changed lines). New files: **11**.
+- Modified upstream files: **19** (135 changed lines). New files: **12**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|

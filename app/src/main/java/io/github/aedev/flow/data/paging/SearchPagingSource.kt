@@ -15,7 +15,6 @@ import io.github.aedev.flow.innertube.pages.renderer.videoOrNull
 import io.github.aedev.flow.innertube.pages.search.SearchHeader
 import io.github.aedev.flow.innertube.pages.search.SearchResultsPage
 import io.github.aedev.flow.innertube.pages.search.SearchSection
-import org.schabi.newpipe.extractor.ServiceList
 
 /**
  * One InnerTube request per page, and nothing after it.
@@ -28,7 +27,7 @@ class SearchPagingSource(
     private val query: String,
     private val filter: SearchFilter = SearchFilter.DEFAULT,
     private val shortsEnabled: Boolean = true,
-    private val serviceId: Int = ServiceList.YouTube.serviceId,
+    private val serviceId: Int = 0,
     private val onHeader: (SearchHeader) -> Unit = {},
     private val loadPage: SearchPageLoader = DefaultSearchPageLoader,
     private val exclusions: suspend () -> FeedExclusions = { FeedExclusions.NONE },
