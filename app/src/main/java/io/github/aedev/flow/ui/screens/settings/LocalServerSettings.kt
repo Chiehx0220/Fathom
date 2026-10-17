@@ -34,8 +34,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.localserver.Pairing
 import io.github.aedev.flow.localserver.RemoteActivity
 import io.github.aedev.flow.localserver.ServerService
+import io.github.aedev.flow.localserver.remote.PairingCodeSection
 import io.github.aedev.flow.ui.components.shared.flowArtistShape
 import kotlinx.coroutines.launch
 
@@ -54,6 +56,8 @@ internal fun LocalServerSettingsSection() {
     val scope = rememberCoroutineScope()
     val preferences = remember { PlayerPreferences(context) }
     val running by ServerService.runningState.collectAsState()
+    val pairing = remember { Pairing.of(context) }
+    val pairingCode by pairing.code.collectAsState()
     val address =
         remember(running) {
             if (running) ServerService.getLocalIpAddress()?.let { "$it:${ServerService.PORT}" } else null
@@ -117,6 +121,7 @@ internal fun LocalServerSettingsSection() {
                 )
             }
             if (running) {
+                PairingCodeSection(code = pairingCode, onReset = pairing::reset)
                 FilledTonalButton(onClick = openRemote, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.settings_local_server_open_remote))
                     Spacer(Modifier.width(4.dp))

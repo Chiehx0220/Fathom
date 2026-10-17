@@ -14,8 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material3.Icon
@@ -34,8 +37,13 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.aedev.flow.R
+import io.github.aedev.flow.localserver.Pairing
 import io.github.aedev.flow.localserver.ServerService
 
 /** Nothing paired: instruction + address to open. */
@@ -48,6 +56,7 @@ internal fun NotConnected() {
         }
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
+    val pairingCode by remember { Pairing.of(context) }.code.collectAsState()
     val copiedMessage = stringResource(R.string.remote_address_copied)
 
     Column(
@@ -94,15 +103,24 @@ internal fun NotConnected() {
                     color = MaterialTheme.colorScheme.error,
                 )
             }
-            ConnectStep(2, stringResource(R.string.remote_connect_step_cast))
+            if (address != null) {
+                ConnectStep(2, stringResource(R.string.remote_connect_step_pair))
+                PairingCodeCells(code = pairingCode)
+            }
+            ConnectStep(if (address != null) 3 else 2, stringResource(R.string.remote_connect_step_cast, CAST_MARK), castIcon = true)
         }
     }
 }
+
+/** Placeholder replaced by the cast icon inside the step text. */
+private const val CAST_MARK = "\u0001"
+private const val CAST_ID = "cast"
 
 @Composable
 private fun ConnectStep(
     number: Int,
     text: String,
+    castIcon: Boolean = false,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Box(
@@ -111,6 +129,23 @@ private fun ConnectStep(
         ) {
             Text(number.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
         }
-        Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        if (castIcon && CAST_MARK in text) {
+            val annotated =
+                buildAnnotatedString {
+                    append(text.substringBefore(CAST_MARK))
+                    appendInlineContent(CAST_ID, "cast")
+                    append(text.substringAfter(CAST_MARK))
+                }
+            val inline =
+                mapOf(
+                    CAST_ID to
+                        InlineTextContent(Placeholder(24.sp, 24.sp, PlaceholderVerticalAlign.TextCenter)) {
+                            Icon(Icons.Default.Cast, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        },
+                )
+            Text(annotated, style = MaterialTheme.typography.bodyLarge, inlineContent = inline, modifier = Modifier.weight(1f))
+        } else {
+            Text(text.replace(CAST_MARK, ""), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        }
     }
 }

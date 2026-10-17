@@ -73,6 +73,7 @@ class BackupRulesTest {
             "flow_file_tombstones",
             "music_home_cache_prefs",
             "remote_hints",
+            "fathom_pairing",
         )
 
     private fun includes(

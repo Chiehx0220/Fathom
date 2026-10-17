@@ -106,7 +106,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **79**.
+- Modified upstream files: **0** (0 changed lines). New files: **87**.
 
 ## Build
 
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **17** (126 changed lines). New files: **14**.
+- Modified upstream files: **17** (127 changed lines). New files: **14**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -140,8 +140,8 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/ui/screens/crash/CrashSummaryTest.kt | 3 | 1 |
 | app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 2 | 1 |
 | app/src/test/java/io/github/aedev/flow/player/stream/PlaybackLoadResolverTest.kt | 3 | 0 |
+| app/src/test/java/io/github/aedev/flow/data/backup/BackupRulesTest.kt | 2 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/home/HomeFeedSourcesSeedTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelHarness.kt | 2 | 0 |
-| app/src/test/java/io/github/aedev/flow/data/backup/BackupRulesTest.kt | 1 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/home/chips/HomeChipFeedsTest.kt | 1 | 0 |
 
