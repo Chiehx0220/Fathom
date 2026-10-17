@@ -1,24 +1,17 @@
 package io.github.aedev.flow.data.video.downloader.resolve
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.aedev.flow.bilibili.BilibiliLiveId
-import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.local.MusicAudioQuality
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.VideoCodec
 import io.github.aedev.flow.data.video.DefaultDownloadSelection
 import io.github.aedev.flow.data.video.DownloadStreamPolicy
 import io.github.aedev.flow.data.video.downloader.request.DownloadRequest
-import io.github.aedev.flow.data.video.toDownloadFormats
-import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.models.response.PlayerResponse.StreamingData.Format
 import io.github.aedev.flow.player.stream.CaptionFormat
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor.VideoExtractionResult
 import io.github.aedev.flow.player.stream.ResolvedCaption
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -45,23 +38,21 @@ sealed interface ResolveOutcome {
 }
 
 /**
- * Turns a [DownloadRequest] into streams with fresh URLs: Bilibili ids through its own API, everything else
- * through the same InnerTube client ladder playback uses (coalesced with it, so a download of the video on
- * screen costs no second request).
+ * Turns a [DownloadRequest] into streams with fresh URLs, through the same InnerTube client ladder
+ * playback uses (coalesced with it, so a download of the video on screen costs no second request).
  */
 @Singleton
 class DownloadStreamResolver
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
+        private val bilibili: BilibiliDownloadResolver,
         private val preferences: PlayerPreferences,
     ) {
         suspend fun resolve(
             request: DownloadRequest,
             avoidItags: Set<Int> = emptySet(),
         ): ResolveOutcome {
-            if (BilibiliLiveId.isLive(request.videoId)) return ResolveOutcome.Unavailable
-            if (BilibiliVideoId.isBilibili(request.videoId)) return resolveBilibili(request, avoidItags)
+            bilibili.resolve(request, avoidItags, ::defaults)?.let { return it }
             val result = InnerTubeVideoStreamExtractor.extract(request.videoId) ?: return ResolveOutcome.Unavailable
             if (result.isLive) return ResolveOutcome.Unavailable
             val outcome = select(request, result, avoidItags, defaults())
@@ -77,24 +68,6 @@ class DownloadStreamResolver
                 request.subtitle?.takeIf { it.translated }?.languageTag
                     ?: preferences.preferredSubtitleLanguage.first()
             return CaptionTrackResolver.resolve(result.playerResponse, format = CaptionFormat.VTT, translateTo = translateTo)
-        }
-
-        /** Bilibili's tracks come as plain MP4 URLs, offered to the same selection as YouTube's. */
-        private suspend fun resolveBilibili(
-            request: DownloadRequest,
-            avoidItags: Set<Int>,
-        ): ResolveOutcome {
-            val (bvid, page) = BilibiliVideoId.parse(request.videoId)
-            val playback =
-                try {
-                    bilibiliApi(context).playback(bvid, page)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    return ResolveOutcome.Unavailable
-                }
-            val (video, audio) = playback.toDownloadFormats()
-            return choose(request, video, audio, playback.info.durationSec * 1_000L, avoidItags, defaults())
         }
 
         private suspend fun defaults(): SelectionDefaults =
@@ -125,7 +98,7 @@ class DownloadStreamResolver
                 defaults: SelectionDefaults,
             ): ResolveOutcome = choose(request, result.videoFormats, result.audioFormats, result.durationMs(), avoidItags, defaults)
 
-            private fun choose(
+            internal fun choose(
                 request: DownloadRequest,
                 allVideo: List<Format>,
                 allAudio: List<Format>,

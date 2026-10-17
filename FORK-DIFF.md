@@ -26,15 +26,14 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (1464 changed lines). New files: **242**.
+- Modified upstream files: **113** (1398 changed lines). New files: **242**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | ui/screens/home/chips/HomeChipFeeds.kt | 50 | 34 |
-| data/local/BackupRepository.kt | 59 | 20 |
 | ui/screens/home/HomeViewModel.kt | 48 | 11 |
 | player/EnhancedPlayerManager.kt | 52 | 2 |
-| data/video/downloader/resolve/DownloadStreamResolver.kt | 43 | 6 |
+| data/local/BackupRepository.kt | 23 | 21 |
 | ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
 | data/local/PlayerPreferences.kt | 39 | 0 |
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
@@ -59,6 +58,7 @@ in it). **New files** never conflict; they are ours alone.
 | player/error/VideoErrorMapper.kt | 20 | 0 |
 | ui/screens/home/HomeScreen.kt | 16 | 4 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 16 | 3 |
+| data/video/downloader/resolve/DownloadStreamResolver.kt | 14 | 4 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 14 | 2 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
@@ -102,7 +102,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **73**.
+- Modified upstream files: **0** (0 changed lines). New files: **74**.
 
 ## Local server (fork-only feature)
 
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **17** (126 changed lines). New files: **12**.
+- Modified upstream files: **17** (126 changed lines). New files: **13**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|

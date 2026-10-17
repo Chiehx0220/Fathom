@@ -24,15 +24,12 @@ import io.github.aedev.flow.data.local.entity.PlaylistVideoCrossRef
 import io.github.aedev.flow.data.local.entity.SubscriptionGroupEntity
 import io.github.aedev.flow.data.local.entity.VideoEntity
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.innertube.YouTube
-import io.github.aedev.flow.localserver.videoIdToUrl
 import io.github.aedev.flow.platform.AppIconEntryPoint
 import io.github.aedev.flow.player.audio.AudioEffectsEntryPoint
 import io.github.aedev.flow.util.AppIcons
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
-import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -264,7 +261,6 @@ class BackupRepository(
                         viewCount = 0L,
                         uploadDate = "",
                         timestamp = entry.timestamp,
-                        serviceId = entry.serviceId,
                     )
                 }.take(500)
                 .toList()
@@ -404,19 +400,10 @@ class BackupRepository(
                     history.mapNotNull { entry ->
                         val videoId = entry.videoId.trim()
                         if (videoId.isEmpty()) return@mapNotNull null
-                        val channelUrl =
-                            if (entry.serviceId.isYouTubeServiceId) {
-                                ucIdRegex
-                                    .find(entry.channelId.trim())
-                                    ?.value
-                                    ?.let { "https://www.youtube.com/channel/$it" }
-                                    ?: "https://www.youtube.com/"
-                            } else {
-                                nonYouTubeChannelUrlOrHome(entry.channelId, entry.serviceId)
-                            }
+                        val channelUrl = takeoutChannelUrl(entry.channelId, entry.serviceId, ucIdRegex)
                         YouTubeTakeoutHistoryEntryOut(
                             title = "Watched ${entry.title}",
-                            titleUrl = videoIdToUrl(videoId, entry.serviceId),
+                            titleUrl = takeoutVideoUrl(videoId, entry.serviceId),
                             subtitles =
                                 listOf(
                                     YouTubeTakeoutSubtitleOut(
@@ -744,26 +731,13 @@ class BackupRepository(
                         while (cursor.moveToNext()) {
                             val videoUrl = cursor.getString(0).orEmpty()
                             val serviceId = cursor.getInt(8)
-                            val videoId =
-                                if (serviceId.isYouTubeServiceId) {
-                                    extractYouTubeVideoId(videoUrl)
-                                } else {
-                                    nonYouTubeVideoId(videoUrl, serviceId)
-                                } ?: continue
+                            val videoId = importedVideoId(videoUrl, serviceId, ::extractYouTubeVideoId) ?: continue
 
                             val title = cursor.getString(1).orEmpty()
                             if (title.isBlank()) continue
                             val durationMs = if (cursor.isNull(2)) 0L else cursor.getLong(2).coerceAtLeast(0L) * 1000L
                             val channelName = cursor.getString(3).orEmpty()
-                            val uploaderUrl = cursor.getString(4)
-                            val channelId =
-                                if (serviceId.isYouTubeServiceId) {
-                                    extractImportedChannelId(uploaderUrl)
-                                } else if (uploaderUrl.isNullOrBlank()) {
-                                    ""
-                                } else {
-                                    resolveNonYouTubeChannelId(uploaderUrl, serviceId) { "" }
-                                }
+                            val channelId = importedChannelId(cursor.getString(4), serviceId, ::extractImportedChannelId)
                             val storedThumbnail = cursor.getString(5).orEmpty()
                             val timestamp = readSqliteTimestamp(cursor, 6) ?: (System.currentTimeMillis() - entries.size)
                             val rawPositionMs = if (cursor.isNull(7)) 0L else cursor.getLong(7).coerceAtLeast(0L)
@@ -1409,17 +1383,13 @@ class BackupRepository(
                         android.database.sqlite.SQLiteDatabase.OPEN_READONLY,
                     )
 
-                data class NpStream(
-                    val url: String,
-                    val serviceId: Int,
-                )
-                val streamMap = mutableMapOf<Long, NpStream>()
+                val streamMap = mutableMapOf<Long, Pair<String, Int>>()
                 db.rawQuery("SELECT uid, service_id, url FROM streams", null).use { cursor ->
                     while (cursor.moveToNext()) {
                         val uid = cursor.getLong(0)
                         val serviceId = cursor.getInt(1)
                         val url = cursor.getString(2)
-                        streamMap[uid] = NpStream(url, serviceId)
+                        importedVideoId(url, serviceId, ::extractYouTubeVideoId)?.let { streamMap[uid] = it to serviceId }
                     }
                 }
 
@@ -1456,14 +1426,7 @@ class BackupRepository(
 
                     val videoIds =
                         (playlistStreams[playlist.uid] ?: emptyList()).mapNotNull { streamId ->
-                            val stream = streamMap[streamId] ?: return@mapNotNull null
-                            val videoId =
-                                if (stream.serviceId.isYouTubeServiceId) {
-                                    extractYouTubeVideoId(stream.url)
-                                } else {
-                                    nonYouTubeVideoId(stream.url, stream.serviceId)
-                                }
-                            videoId?.let { it to stream.serviceId }
+                            streamMap[streamId]
                         }
 
                     if (videoIds.isEmpty()) return@forEachIndexed
