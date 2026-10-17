@@ -38,6 +38,11 @@ class LocalHttpServer(
             while (isRunning) {
                 try {
                     val socket = serverSocket.accept()
+                    if (!isLocalNetworkAddress(socket.inetAddress)) {
+                        serverLog("Refused a peer outside the local network")
+                        socket.refuseOutsideNetwork()
+                        continue
+                    }
                     threadPool.execute(ClientHandler(socket, dbHelper, context, threadPool))
                 } catch (e: IOException) {
                     if (!isRunning) break

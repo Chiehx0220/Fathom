@@ -65,6 +65,10 @@ Once it is on, the phone serves a web app on port 8080.
 - **On the phone itself:** `http://localhost:8080`
 - **On any device on the same Wi-Fi:** `http://<phone-ip>:8080`, with nothing to install there
 
+> **Private networks only.** The server answers devices on the same local network (your home Wi-Fi, or your phone's hotspot) and nothing else: not the internet, and not a web page of another site. Public Wi-Fi such as a cafe usually blocks devices from reaching each other, so there, connect the computer to your phone's hotspot. To reach it from outside the house, use a VPN such as Tailscale rather than opening a port.
+>
+> **There is no sign-in.** Anyone on the same network can see your history, subscriptions and watch-later, and control playback. Turn it on only on a network you trust, and turn it off when you are done.
+
 In the web app:
 
 - Search, channels, playlists, subscriptions

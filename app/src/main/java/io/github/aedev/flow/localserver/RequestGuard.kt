@@ -3,8 +3,8 @@ package io.github.aedev.flow.localserver
 import java.util.Locale
 
 /*
- * Local server request checks. No sign-in: only keeps out what a browser can be tricked into sending (cross-site change request,
- * attacker domain re-pointed at this device address). A same-network program can set any header; excluding it needs pairing (not added).
+ * Header-level request checks: cross-site state change, DNS rebinding (re-pointed domain), foreign WebSocket origin.
+ * Any program on the network can set these headers.
  */
 
 /** Request missing a required part; 400 + message, not server error. */
@@ -66,10 +66,7 @@ internal fun isLocalHostHeader(hostHeader: String?): Boolean {
         LOCAL_SUFFIXES.any { host.endsWith(it) }
 }
 
-/**
- * State-changing request from one of this server's pages, or no browser. Browser sends `Sec-Fetch-Site`, else `Origin` (page cannot change either).
- * `none` = viewer typed the address.
- */
+/** Same-origin by `Sec-Fetch-Site`, else `Origin`; `none` is a typed address. No such header means a program. */
 internal fun isSameOriginRequest(headers: Map<String, String>): Boolean {
     val site = headers["sec-fetch-site"]
     if (site != null) return site == "same-origin" || site == "none"
@@ -98,6 +95,19 @@ internal fun refusalFor(
 
         else -> null
     }
+
+private fun hostOf(authority: String): String =
+    (if (authority.startsWith("[")) authority.substringBefore(']') + "]" else authority.substringBefore(':')).lowercase(Locale.US)
+
+/** Browser WebSockets must come from a page of this server's own address; no `Origin` means a program. */
+internal fun isAllowedWebSocketOrigin(
+    origin: String?,
+    hostHeader: String?,
+): Boolean {
+    if (origin == null) return true
+    if (hostHeader == null || !isLocalHostHeader(hostHeader) || !origin.startsWith("http://")) return false
+    return hostOf(origin.removePrefix("http://")) == hostOf(hostHeader)
+}
 
 /** Reason phrase of [code]. */
 internal fun statusText(code: Int): String =

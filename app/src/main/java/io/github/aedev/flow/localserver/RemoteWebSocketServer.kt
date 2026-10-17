@@ -1,6 +1,7 @@
 package io.github.aedev.flow.localserver
 
 import org.java_websocket.WebSocket
+import org.java_websocket.framing.CloseFrame
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 import java.net.InetSocketAddress
@@ -21,9 +22,24 @@ class RemoteWebSocketServer(
         conn: WebSocket,
         handshake: ClientHandshake,
     ) {
+        if (!admits(conn, handshake)) {
+            serverLog("WebSocket refused")
+            conn.close(CloseFrame.POLICY_VALIDATION, OUTSIDE_NETWORK_REFUSAL)
+            return
+        }
         connections.add(conn)
         serverLog("WebSocket client connected: " + conn.remoteSocketAddress)
     }
+
+    private fun admits(
+        conn: WebSocket,
+        handshake: ClientHandshake,
+    ): Boolean {
+        val peer = conn.remoteSocketAddress?.address ?: return false
+        return isLocalNetworkAddress(peer) && isAllowedWebSocketOrigin(handshake.header("Origin"), handshake.header("Host"))
+    }
+
+    private fun ClientHandshake.header(name: String): String? = getFieldValue(name).ifEmpty { null }
 
     override fun onClose(
         conn: WebSocket,
