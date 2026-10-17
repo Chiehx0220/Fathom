@@ -41,7 +41,7 @@ import io.github.aedev.flow.ui.screens.playlists.PlaylistsScreen
 import io.github.aedev.flow.ui.screens.recap.RecapRoutes
 import io.github.aedev.flow.ui.screens.recap.RecapScreen
 import io.github.aedev.flow.ui.screens.recap.story.RecapStoryScreen
-import io.github.aedev.flow.ui.screens.search.SearchScreen
+import io.github.aedev.flow.ui.screens.search.SingleServiceSearchScreen
 import io.github.aedev.flow.ui.screens.settings.SettingsHost
 import io.github.aedev.flow.ui.screens.shorts.ShortsScreen
 import io.github.aedev.flow.ui.screens.subscriptions.SubscriptionsScreen
@@ -249,7 +249,7 @@ fun NavGraphBuilder.flowAppGraph(
     composable("search") {
         currentRoute.value = "search"
         // Search owns the whole screen, the way YouTube's does.
-        SearchScreen(
+        SingleServiceSearchScreen(
             onVideoClick = { video ->
                 navController.openVideoOrShorts(video, disableShortsPlayer) { playerViewModel.playVideo(it) }
             },
