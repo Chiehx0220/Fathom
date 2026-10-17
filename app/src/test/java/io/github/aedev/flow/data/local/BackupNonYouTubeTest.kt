@@ -29,12 +29,6 @@ class BackupNonYouTubeTest {
     }
 
     @Test
-    fun `a YouTube video's thumbnail follows from its id and Bilibili's is left blank`() {
-        assertThat(fallbackThumbnail("abc123", YOUTUBE)).isEqualTo("https://i.ytimg.com/vi/abc123/hq720.jpg")
-        assertThat(fallbackThumbnail("BV1xx411c7mD?p=1", BILIBILI_SERVICE_ID)).isEmpty()
-    }
-
-    @Test
     fun `an imported video id goes to upstream's parser for YouTube and to the link handler for Bilibili`() {
         val youtube: (String) -> String? = { "yt:$it" }
         assertThat(importedVideoId("https://youtu.be/x", YOUTUBE, youtube)).isEqualTo("yt:https://youtu.be/x")

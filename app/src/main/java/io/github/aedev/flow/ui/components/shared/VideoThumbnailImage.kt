@@ -61,7 +61,7 @@ fun VideoThumbnailImage(
     // Off draws nothing rather than the fallback fill, so the card's own container and badges show.
     if (models.isEmpty() && quality == ThumbnailQuality.OFF) return
     SafeAsyncImage(
-        models = models,
+        models = models.orBilibiliCover(videoId, quality, portrait),
         contentDescription = contentDescription,
         modifier = modifier,
         contentScale = contentScale,

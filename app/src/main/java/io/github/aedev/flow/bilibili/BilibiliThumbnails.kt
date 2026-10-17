@@ -1,12 +1,16 @@
 package io.github.aedev.flow.bilibili
 
 import io.github.aedev.flow.data.local.ThumbnailQuality
+import io.github.aedev.flow.data.localmedia.LocalMediaIds
 
 /*
  * Bilibili's image host (hdslb.com) resizes on request: "<cover url>@320w.webp" is the same cover at
  * 320 px wide, in the original aspect ratio. A cover is often a PNG of a megabyte or more, so the
  * thumbnail quality setting has to reach it the way it reaches YouTube's tiers.
  */
+
+/** Whether [id] has no `i.ytimg.com` thumbnail to build a link to: a device file, or a Bilibili video, whose cover only Bilibili knows. */
+fun hasNoYoutubeThumbnail(id: String): Boolean = LocalMediaIds.isLocal(id) || BilibiliVideoId.isBilibili(id)
 
 private val RESIZABLE_COVER = Regex("""^https?://[^/@]+\.hdslb\.com/bfs/[^@]+$""", RegexOption.IGNORE_CASE)
 

@@ -5,7 +5,6 @@ import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.localserver.videoIdToUrl
-import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
 import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
@@ -69,15 +68,6 @@ internal fun nonYouTubeChannelUrlOrHome(
     channelId: String,
     serviceId: Int,
 ): String = resolveNonYouTubeChannelUrl(channelId, serviceId) { "" }.ifEmpty { "https://www.youtube.com/" }
-
-/**
- * The thumbnail for an imported video that arrived without one. YouTube's follows from the id; another
- * service's cannot be guessed, and is left blank for the app to fill in when the video is first shown.
- */
-internal fun fallbackThumbnail(
-    videoId: String,
-    serviceId: Int,
-): String = if (serviceId.isYouTubeServiceId) ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(videoId) else ""
 
 /** A Bilibili uploader imported from a NewPipe export, named from the export and given its avatar by Bilibili when it answers. */
 internal suspend fun bilibiliSubscriptionFromNewPipe(

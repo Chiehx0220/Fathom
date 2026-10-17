@@ -42,9 +42,13 @@ class BackupNewPipeImportTest {
                 "INSERT INTO streams VALUES (2, 5, 'https://www.bilibili.com/video/BV1xx411c7mD', 'Bili', 100, " +
                     "'Up', 'https://space.bilibili.com/12345', 'https://i0.hdslb.com/cover.jpg')",
             )
-            db.execSQL("INSERT INTO stream_history VALUES (1, 1000), (2, 2000)")
+            db.execSQL(
+                "INSERT INTO streams VALUES (3, 5, 'https://www.bilibili.com/video/BV1yy411c7mE', 'No cover', 100, " +
+                    "'Up', 'https://space.bilibili.com/12345', '')",
+            )
+            db.execSQL("INSERT INTO stream_history VALUES (1, 1000), (2, 2000), (3, 3000)")
             db.execSQL("INSERT INTO playlists VALUES (1, 'Mixed')")
-            db.execSQL("INSERT INTO playlist_stream_join VALUES (1, 1, 0), (1, 2, 1)")
+            db.execSQL("INSERT INTO playlist_stream_join VALUES (1, 1, 0), (1, 2, 1), (1, 3, 2)")
         }
         return Uri.fromFile(file)
     }
@@ -56,7 +60,7 @@ class BackupNewPipeImportTest {
 
             val result = repository.importNewPipeWatchHistory(newPipeDatabase())
 
-            assertThat(result.getOrNull()).isEqualTo(2)
+            assertThat(result.getOrNull()).isEqualTo(3)
             val byId =
                 ViewHistory
                     .getInstance(context)
@@ -68,6 +72,8 @@ class BackupNewPipeImportTest {
             assertThat(byId.getValue("BV1xx411c7mD").serviceId).isEqualTo(BILIBILI_SERVICE_ID)
             assertThat(byId.getValue("BV1xx411c7mD").channelId).isEqualTo("12345")
             assertThat(byId.getValue("BV1xx411c7mD").thumbnailUrl).isEqualTo("https://i0.hdslb.com/cover.jpg")
+            // No cover in the export: none is made up, rather than a YouTube link that does not exist.
+            assertThat(byId.getValue("BV1yy411c7mE").thumbnailUrl).isEmpty()
         }
 
     @Test
@@ -77,7 +83,7 @@ class BackupNewPipeImportTest {
 
             val result = repository.importNewPipePlaylists(newPipeDatabase())
 
-            assertThat(result.getOrNull()).isEqualTo(2)
+            assertThat(result.getOrNull()).isEqualTo(3)
             val videos =
                 AppDatabase
                     .getDatabase(context)
@@ -88,5 +94,6 @@ class BackupNewPipeImportTest {
             assertThat(videos.getValue("dQw4w9WgXcQ").thumbnailUrl).contains("dQw4w9WgXcQ")
             assertThat(videos.getValue("BV1xx411c7mD").serviceId).isEqualTo(BILIBILI_SERVICE_ID)
             assertThat(videos.getValue("BV1xx411c7mD").thumbnailUrl).isEmpty()
+            assertThat(videos.getValue("BV1yy411c7mE").thumbnailUrl).isEmpty()
         }
 }

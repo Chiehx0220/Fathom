@@ -33,11 +33,11 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/home/chips/HomeChipFeeds.kt | 50 | 34 |
 | ui/screens/home/HomeViewModel.kt | 48 | 11 |
 | player/EnhancedPlayerManager.kt | 52 | 2 |
-| data/local/BackupRepository.kt | 23 | 21 |
 | ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
 | data/local/PlayerPreferences.kt | 39 | 0 |
 | player/resolver/VideoPlaybackResolver.kt | 36 | 3 |
 | data/local/SubscriptionRecordCodec.kt | 23 | 15 |
+| data/local/BackupRepository.kt | 20 | 17 |
 | data/innertube/RssSubscriptionService.kt | 28 | 3 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
@@ -75,6 +75,7 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/LikedVideosRepository.kt | 10 | 1 |
 | ui/FlowApp.kt | 2 | 9 |
 | ui/screens/player/WatchSessionTracker.kt | 8 | 3 |
+| utils/ThumbnailUrlResolver.kt | 6 | 5 |
 | MainActivity.kt | 9 | 1 |
 | data/video/downloader/work/DownloadTransfer.kt | 9 | 1 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
@@ -89,7 +90,6 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
 | utils/YouTubeLink.kt | 8 | 0 |
 | data/local/AppDatabase.kt | 6 | 1 |
-| ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
 | ... 53 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
@@ -102,7 +102,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **74**.
+- Modified upstream files: **0** (0 changed lines). New files: **78**.
 
 ## Local server (fork-only feature)
 

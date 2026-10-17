@@ -10,6 +10,3 @@ val DescriptionLinkBlue = Color(0xFF3EA6FF)
 
 /** YouTube's brand red, for marks that stay red in every theme. */
 val YouTubeRed = Color(0xFFFF0000)
-
-// Bilibili Brand Colors
-val BilibiliPink = Color(0xFFFB7299)

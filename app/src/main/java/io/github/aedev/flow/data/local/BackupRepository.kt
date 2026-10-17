@@ -751,7 +751,9 @@ class BackupRepository(
                                     timestamp = timestamp,
                                     title = title,
                                     thumbnailUrl =
-                                        storedThumbnail.ifBlank { fallbackThumbnail(videoId, serviceId) },
+                                        storedThumbnail.ifBlank {
+                                            ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(videoId)
+                                        },
                                     channelName = channelName,
                                     channelId = channelId,
                                     isMusic = false,
@@ -1432,8 +1434,7 @@ class BackupRepository(
                     if (videoIds.isEmpty()) return@forEachIndexed
 
                     val playlistId = "newpipe_pl_${playlist.uid}_${System.currentTimeMillis()}"
-                    val (firstVideoId, firstServiceId) = videoIds.first()
-                    val firstThumb = fallbackThumbnail(firstVideoId, firstServiceId)
+                    val firstThumb = ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(videoIds.first().first)
 
                     database.withTransaction {
                         database.playlistDao().insertPlaylist(
@@ -1455,7 +1456,7 @@ class BackupRepository(
                                     title = "",
                                     channelName = "",
                                     channelId = "",
-                                    thumbnailUrl = fallbackThumbnail(videoId, serviceId),
+                                    thumbnailUrl = ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(videoId),
                                     duration = 0,
                                     viewCount = 0L,
                                     uploadDate = "",

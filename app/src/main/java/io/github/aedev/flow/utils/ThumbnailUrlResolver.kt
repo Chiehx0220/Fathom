@@ -1,8 +1,8 @@
 package io.github.aedev.flow.utils
 
 import io.github.aedev.flow.bilibili.bilibiliThumbnailCandidates
+import io.github.aedev.flow.bilibili.hasNoYoutubeThumbnail
 import io.github.aedev.flow.data.local.ThumbnailQuality
-import io.github.aedev.flow.data.localmedia.LocalMediaIds
 
 object ThumbnailUrlResolver {
     private val youtubeVideoThumbnailPattern =
@@ -13,12 +13,12 @@ object ThumbnailUrlResolver {
 
     fun buildHighQualityYoutubeThumbnail(videoId: String): String {
         val id = videoId.trim()
-        return if (id.isEmpty() || LocalMediaIds.isLocal(id)) "" else "https://i.ytimg.com/vi/$id/hq720.jpg"
+        return if (id.isEmpty() || hasNoYoutubeThumbnail(id)) "" else "https://i.ytimg.com/vi/$id/hq720.jpg"
     }
 
     fun buildFallbackYoutubeThumbnail(videoId: String): String {
         val id = videoId.trim()
-        return if (id.isEmpty() || LocalMediaIds.isLocal(id)) "" else "https://i.ytimg.com/vi/$id/hqdefault.jpg"
+        return if (id.isEmpty() || hasNoYoutubeThumbnail(id)) "" else "https://i.ytimg.com/vi/$id/hqdefault.jpg"
     }
 
     fun buildMaxResYoutubeThumbnail(videoId: String): String {
@@ -40,7 +40,7 @@ object ThumbnailUrlResolver {
         portrait: Boolean = false,
     ): List<String> {
         val id = videoId.trim()
-        if (id.isEmpty() || LocalMediaIds.isLocal(id)) return emptyList()
+        if (id.isEmpty() || hasNoYoutubeThumbnail(id)) return emptyList()
         return youtubeThumbnailTiers(quality, portrait).map { tier -> "https://i.ytimg.com/vi/$id/$tier.jpg" }
     }
 
