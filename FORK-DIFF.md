@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (1362 changed lines). New files: **243**.
+- Modified upstream files: **113** (1357 changed lines). New files: **243**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -75,7 +75,6 @@ in it). **New files** never conflict; they are ours alone.
 | ui/FlowApp.kt | 2 | 9 |
 | ui/screens/player/WatchSessionTracker.kt | 8 | 3 |
 | utils/ThumbnailUrlResolver.kt | 6 | 5 |
-| MainActivity.kt | 9 | 1 |
 | data/video/downloader/work/DownloadTransfer.kt | 9 | 1 |
 | player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
@@ -83,13 +82,14 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
 | data/local/entity/VideoEntity.kt | 6 | 3 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
-| ui/AppHooks.kt | 4 | 5 |
 | ui/screens/channel/ChannelCommunityController.kt | 8 | 1 |
 | sync/merge/CollectionMergers.kt | 4 | 4 |
+| ui/PlayerNavigation.kt | 5 | 3 |
 | ui/components/shared/quickactions/VideoQuickActionsSheet.kt | 6 | 2 |
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
 | utils/YouTubeLink.kt | 8 | 0 |
 | ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
+| data/model/Models.kt | 6 | 0 |
 | ... 53 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)

@@ -171,8 +171,9 @@
     <string name="settings_backup_source_newpipe">NewPipe / PipePipe</string>
     <string name="taste_summary">How Fathom sees you, and what shapes your feed</string>
     <string name="taste_card_hint">See how Fathom sees you</string>
-    <string name="taste_reset_video_body">This clears what Fathom learned from your videos and starts again from zero. Your recap and hidden channels, topics and videos stay.</string>
+    <string name="taste_reset_video_body">Fathom forgets what it learned from your videos and searches. History, likes, playlists and hidden items stay, and Home still uses them.</string>
     <string name="taste_reset_music_body">This clears what Fathom learned from your music and starts again from zero. Your recap stays.</string>
+    <string name="content_settings_shared_links_subtitle">What a video shared to Fathom does</string>
     <string name="taste_starter_searches_detail">%1$s. Used until Fathom learns what you watch.</string>
     <string name="recap_title">Fathom Recap</string>
     <string name="recap_total_time">Time in Fathom</string>

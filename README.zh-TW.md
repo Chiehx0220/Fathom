@@ -56,7 +56,7 @@
   <img src="Assets/how-it-works.zh-TW.svg" alt="Fathom 的運作方式" width="90%">
 </p>
 
-## 🌐 本地網頁伺服器
+## 🌐 本機網頁伺服器
 
 想在電腦上看片,開啟伺服器後用任何瀏覽器就能看,不需要安裝任何程式。如果你比較喜歡專用的桌面應用程式,也可以使用 Flow 官方的 [Flow-Desktop](https://github.com/Flow-Tube/Flow-Desktop)。訂閱、觀看紀錄和稍後觀看都直接取自 App。
 

@@ -27,7 +27,7 @@
     <string name="remote_connect_step_cast">按下頁面上方的投放按鈕。</string>
     <string name="remote_copy_address">複製位址</string>
     <string name="remote_address_copied">已複製位址</string>
-    <string name="remote_server_off">本地伺服器目前是關閉的，請先到設定中開啟。</string>
+    <string name="remote_server_off">本機伺服器目前是關閉的，請先到設定中開啟。</string>
     <string name="settings_local_server_off">關閉</string>
     <string name="settings_local_server_on">開啟</string>
     <string name="remote_tab_directions">方向</string>
@@ -74,9 +74,9 @@
     <string name="remote_volume_hint_title">用手機的音量鍵調整音量</string>
     <string name="remote_volume_hint_body">音量鍵調整的是螢幕的音量，不是這支手機的。</string>
     <string name="remote_hint_dismiss">知道了</string>
-    <string name="settings_item_local_server">本地網頁伺服器</string>
+    <string name="settings_item_local_server">本機網頁伺服器</string>
     <string name="settings_item_local_server_subtitle">在區域網路內，用任何瀏覽器瀏覽並觀看</string>
-    <string name="settings_item_open_local_server">開啟本地伺服器</string>
+    <string name="settings_item_open_local_server">開啟本機伺服器</string>
     <string name="settings_item_open_local_server_subtitle">在瀏覽器中開啟</string>
     <string name="settings_item_about_flow">關於 Fathom</string>
     <string name="settings_item_support_subtitle">協助支持 Fathom 的開發</string>
@@ -122,8 +122,8 @@
     <string name="about_fathom_maintainer_role">Fathom 的維護者</string>
     <string name="about_upstream_title">上游 Flow</string>
     <string name="about_credit_pipepipe">Bilibili 客戶端的來源</string>
-    <string name="about_credit_localtube">本地網頁伺服器的靈感來源</string>
-    <string name="about_credit_videojs">本地伺服器的網頁播放器</string>
+    <string name="about_credit_localtube">本機網頁伺服器的靈感來源</string>
+    <string name="about_credit_videojs">本機伺服器的網頁播放器</string>
     <string name="about_credit_hlsjs">網頁播放器的 HLS 串流引擎，用於直播間</string>
     <string name="welcome_to_flow">歡迎使用 Fathom</string>
     <string name="onboarding_import_source_flow">Flow / Fathom 備份</string>
