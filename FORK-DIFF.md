@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (1353 changed lines). New files: **244**.
+- Modified upstream files: **113** (1357 changed lines). New files: **245**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -65,6 +65,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/effects/PlayerLoadEffects.kt | 13 | 2 |
 | ui/screens/player/stage/VideoStage.kt | 15 | 0 |
 | data/update/GitHubRelease.kt | 7 | 7 |
+| ui/FlowNavigation.kt | 7 | 7 |
 | data/comments/CommentsPager.kt | 9 | 3 |
 | player/GlobalPlayerState.kt | 12 | 0 |
 | player/stream/PlaybackLoadResolver.kt | 11 | 1 |
@@ -78,7 +79,6 @@ in it). **New files** never conflict; they are ours alone.
 | data/video/downloader/work/DownloadTransfer.kt | 9 | 1 |
 | player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
-| ui/FlowNavigation.kt | 5 | 5 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
 | data/local/entity/VideoEntity.kt | 6 | 3 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
