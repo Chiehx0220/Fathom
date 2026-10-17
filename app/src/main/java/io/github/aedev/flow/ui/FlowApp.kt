@@ -76,6 +76,7 @@ fun FlowApp(
     systemDarkThemeMode: ThemeMode,
     deeplinkVideoId: String? = null,
     isShort: Boolean = false,
+    isSharedLink: Boolean = false,
     openMusicPlayerRequest: Int = 0,
     onDeeplinkConsumed: () -> Unit = {},
     pendingRoute: String? = null,
@@ -161,7 +162,7 @@ fun FlowApp(
         subscriptionRefreshOnStartup = subscriptionRefreshOnStartup,
     )
 
-    HandleDeepLinks(deeplinkVideoId, isShort, navController, onDeeplinkConsumed)
+    HandleIncomingVideo(deeplinkVideoId, isShort, isSharedLink, navController, preferences, onDeeplinkConsumed)
     OfflineMonitor(context, navController, snackbarHostState, currentRoute)
 
     val currentEntry by navController.currentBackStackEntryAsState()

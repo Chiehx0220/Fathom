@@ -1,10 +1,13 @@
 package io.github.aedev.flow.ui.screens.settings.playback
 
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.aedev.flow.data.local.DEFAULT_BACKGROUND_PLAY_ENABLED
+import io.github.aedev.flow.data.local.DEFAULT_SPEED_SWIPE_STEP
 import io.github.aedev.flow.data.local.DoubleTapSeekZone
 import io.github.aedev.flow.data.local.PlayerOverlayPreferences
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.PlayerRelatedCardStyle
+import io.github.aedev.flow.data.local.SpeedSwipeSide
 import io.github.aedev.flow.data.lyrics.LyricsProviderRegistry
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.ui.screens.settings.SettingsViewModel
@@ -28,7 +31,7 @@ class PlaybackSettingsViewModel
         private val overlay = PlayerOverlayPreferences()
         private val lyricsRegistry = LyricsProviderRegistry.default()
 
-        val backgroundPlay = preferences.backgroundPlayEnabled.asState(false)
+        val backgroundPlay = preferences.backgroundPlayEnabled.asState(DEFAULT_BACKGROUND_PLAY_ENABLED)
         val autoplay = preferences.autoplayEnabled.asState(true)
         val startPaused = preferences.startVideosPaused.asState(false)
         val queueAutoplay = preferences.queueAutoplayEnabled.asState(true)
@@ -54,6 +57,8 @@ class PlaybackSettingsViewModel
         val rememberBrightness = preferences.rememberBrightnessEnabled.asState(false)
         val volumeGesture = preferences.volumeSwipeGesturesEnabled.asState(true)
         val volumeBoost = preferences.allowVolumeBoost.asState(false)
+        val speedSwipeSide = preferences.speedSwipeSide.asState(SpeedSwipeSide.OFF)
+        val speedSwipeStep = preferences.speedSwipeStep.asState(DEFAULT_SPEED_SWIPE_STEP)
         val seekGesture = preferences.seekSwipeGesturesEnabled.asState(true)
         val haptics = preferences.playerHapticsEnabled.asState(true)
         val controlsWhileLoading = preferences.showControlsWhileLoading.asState(overlay.showControlsWhileLoading)
@@ -67,6 +72,7 @@ class PlaybackSettingsViewModel
         val speedIndicator = preferences.overlaySpeedIndicatorEnabled.asState(overlay.speedIndicatorEnabled)
         val commentsButton = preferences.overlayCommentsEnabled.asState(overlay.commentsEnabled)
         val sponsorBlockButton = preferences.overlaySponsorBlockEnabled.asState(overlay.sponsorBlockEnabled)
+        val nextPrevButtons = preferences.overlayNextPrevEnabled.asState(overlay.nextPrevButtonsEnabled)
 
         val autoPip = preferences.autoPipEnabled.asState(false)
         val continueWatchingMiniPlayer = preferences.miniPlayerContinueWatchingEnabled.asState(true)
@@ -143,6 +149,10 @@ class PlaybackSettingsViewModel
 
         fun setSeekZone(zone: DoubleTapSeekZone) = write { preferences.setDoubleTapSeekZone(zone) }
 
+        fun setSpeedSwipeSide(side: SpeedSwipeSide) = write { preferences.setSpeedSwipeSide(side) }
+
+        fun setSpeedSwipeStep(step: Float) = write { preferences.setSpeedSwipeStep(step) }
+
         fun setBrightnessGesture(value: Boolean) = write { preferences.setBrightnessSwipeGesturesEnabled(value) }
 
         fun setRememberBrightness(value: Boolean) = write { preferences.setRememberBrightnessEnabled(value) }
@@ -178,6 +188,8 @@ class PlaybackSettingsViewModel
         fun setCommentsButton(value: Boolean) = write { preferences.setOverlayCommentsEnabled(value) }
 
         fun setSponsorBlockButton(value: Boolean) = write { preferences.setOverlaySponsorBlockEnabled(value) }
+
+        fun setNextPrevButtons(value: Boolean) = write { preferences.setOverlayNextPrevEnabled(value) }
 
         fun setAutoPip(value: Boolean) = write { preferences.setAutoPipEnabled(value) }
 

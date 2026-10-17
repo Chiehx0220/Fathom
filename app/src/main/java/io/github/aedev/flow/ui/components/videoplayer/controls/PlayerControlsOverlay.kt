@@ -204,7 +204,7 @@ internal fun PlayerControlsOverlay(
         )
 
     val fadeSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
-    // A scrub, a speed boost or a pinch each clear the overlay down to the bar and what sits on it:
+    // A scrub, a seek swipe, a speed boost or a pinch each clear the overlay down to the bar and what sits on it:
     // whatever the gesture is showing has the picture to itself for as long as it lasts.
     val isCleared = isScrubbing || state.isGestureReadoutActive
     // Held as State and read in the draw lambda below so the backdrop fades without recomposing the
@@ -331,7 +331,7 @@ internal fun PlayerControlsOverlay(
                         showBufferingSpinner = state.isBuffering || isInitialLoading,
                         hasPrevious = state.hasPrevious,
                         hasNext = state.hasNext,
-                        showSkipButtons = !hideControlsForLoading,
+                        showSkipButtons = !hideControlsForLoading && overlayPreferences.nextPrevButtonsEnabled,
                         // Stepping a running player just fights playback, and a live edge has nothing
                         // to step through.
                         showFrameStep =
@@ -369,6 +369,12 @@ internal fun PlayerControlsOverlay(
                         isLayerVisible = isLayerOnScreen,
                         modifier = Modifier.align(Alignment.BottomCenter),
                     )
+                }
+
+                // The second tap of a double tap, a tap during a double-tap seek and a tap on a
+                // fading-out button all belong to the player, not to the button under the finger.
+                if (!isVisible || state.yieldsTapsToPlayer) {
+                    PlayerTapShield(modifier = Modifier.matchParentSize())
                 }
             }
         }

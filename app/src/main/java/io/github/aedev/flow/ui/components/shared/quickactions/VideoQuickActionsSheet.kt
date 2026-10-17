@@ -11,6 +11,7 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.PlaylistRemove
 import androidx.compose.material.icons.outlined.QueuePlayNext
 import androidx.compose.material.icons.outlined.Share
@@ -50,6 +51,7 @@ import io.github.aedev.flow.ui.components.shared.SaveVideoSheet
 import io.github.aedev.flow.ui.components.shared.card.LocalVideoCardPreferences
 import io.github.aedev.flow.ui.components.shared.card.channelAvatarUrls
 import io.github.aedev.flow.ui.components.shared.card.isWatchedProgress
+import io.github.aedev.flow.ui.components.shared.card.rememberCardTitle
 import io.github.aedev.flow.ui.components.shared.card.rememberCollaboratorChannelDisplayName
 import io.github.aedev.flow.ui.components.shared.card.rememberCollaboratorItems
 import io.github.aedev.flow.ui.components.shared.card.rememberWatchProgress
@@ -65,19 +67,21 @@ private enum class VideoMenuPage { Actions, Details, Collaborators, Save }
  * same in the menu. [showChannel] is false where the screen already is the channel. A playlist that
  * can drop the video passes [onRemoveFromCollection] with its [removeFromCollectionLabel] and icon;
  * it is the last row of the Options group. [whyShown] says why a feed shows
- * the video, on the Details page.
+ * the video, on the Details page. [onPlayNow] puts Play now first in the Playback group, for a video
+ * that is not open yet, such as one shared to Flow.
  */
 @Composable
 fun VideoQuickActionsBottomSheet(
     video: Video,
     onDismiss: () -> Unit,
-    title: String = video.title,
+    title: String = rememberCardTitle(video),
     thumbnailUrl: String = video.thumbnailUrl,
     showChannel: Boolean = true,
     whyShown: String? = null,
     onRemoveFromCollection: (() -> Unit)? = null,
     removeFromCollectionLabel: String? = null,
     removeFromCollectionIcon: ImageVector = Icons.Outlined.PlaylistRemove,
+    onPlayNow: (() -> Unit)? = null,
     viewModel: QuickActionsViewModel = sharedQuickActionsViewModel(),
 ) {
     var page by rememberSaveable(video.id) { mutableStateOf(VideoMenuPage.Actions) }
@@ -121,7 +125,10 @@ fun VideoQuickActionsBottomSheet(
                 }
                 VideoPrimaryActions(video, viewModel, onSave = { sheet.hideThen { page = VideoMenuPage.Save } }, onDismiss = close)
                 if (!video.isShort) {
-                    QuickActionsGroup(title = stringResource(R.string.playback_header), rows = playbackRows(video, viewModel, close))
+                    QuickActionsGroup(
+                        title = stringResource(R.string.playback_header),
+                        rows = playbackRows(video, viewModel, close, onPlayNow),
+                    )
                 }
                 if (showChannel && video.channelId.isNotBlank()) {
                     QuickActionsGroup(
@@ -189,8 +196,20 @@ private fun playbackRows(
     video: Video,
     viewModel: QuickActionsViewModel,
     onDismiss: () -> Unit,
+    onPlayNow: (() -> Unit)?,
 ): List<QuickActionRow> =
-    listOf(
+    listOfNotNull(
+        onPlayNow?.let { play ->
+            actionRow(
+                "play_now",
+                Icons.Outlined.PlayArrow,
+                stringResource(R.string.shared_link_play_now),
+                stringResource(R.string.shared_link_play_now_desc),
+            ) {
+                play()
+                onDismiss()
+            }
+        },
         actionRow(
             "play_next",
             Icons.Outlined.QueuePlayNext,

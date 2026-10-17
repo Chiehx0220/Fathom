@@ -109,9 +109,14 @@ class VideoPlayerService : MediaSessionService() {
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
-        EnhancedPlayerManager.getInstance().initialize(applicationContext)
+        val manager = EnhancedPlayerManager.getInstance()
+        manager.initialize(applicationContext)
         serviceLog("onGetSession controller=${controllerInfo.packageName}")
-        return EnhancedPlayerManager.getInstance().getVideoMediaSession()
+        if (controllerInfo.declinesMediaButtonStart(hasMediaItem = manager.getPlayer()?.currentMediaItem != null)) {
+            serviceLog("onGetSession declined: media button with nothing to play")
+            return null
+        }
+        return manager.getVideoMediaSession()
     }
 
     override fun onStartCommand(
@@ -145,11 +150,14 @@ class VideoPlayerService : MediaSessionService() {
             return
         }
 
-        if (isPlaybackOngoing()) return
+        val player = EnhancedPlayerManager.getInstance().getPlayer()
+        if (player?.keepsPlayingOnTaskRemoved(isPlaybackOngoing()) == true) return
 
         EnhancedPlayerManager.getInstance().stop()
         releaseLocks()
-        stopSelf()
+        // Unlike a bare stopSelf(), this clears Media3's user-engaged state, so the pause cannot put
+        // the stopped service back into the foreground (#1025).
+        pauseAllPlayersAndStopSelf()
     }
 
     override fun onDestroy() {

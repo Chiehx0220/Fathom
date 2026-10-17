@@ -12,7 +12,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
+import io.github.aedev.flow.data.local.DEFAULT_SPEED_SWIPE_STEP
 import io.github.aedev.flow.data.local.DoubleTapSeekZone
+import io.github.aedev.flow.data.local.SpeedSwipeSide
 import kotlinx.coroutines.CoroutineScope
 
 private val MinSideEdgeIgnore = 24.dp
@@ -46,13 +48,19 @@ fun Modifier.videoPlayerControls(
     volumeSwipeGesturesEnabled: Boolean = true,
     seekSwipeGesturesEnabled: Boolean = true,
     allowVolumeBoost: Boolean = false,
+    speedSwipeSide: SpeedSwipeSide = SpeedSwipeSide.OFF,
+    speedSwipeStep: Float = DEFAULT_SPEED_SWIPE_STEP,
+    onSpeedSwipe: (speed: Float) -> Unit = {},
+    onSpeedSwipeEnd: (speed: Float) -> Unit = {},
     doubleTapSeekMs: Long = 10_000L,
     seekZoneFraction: Float = DoubleTapSeekZone.NORMAL.sideFraction,
+    seekZoneReachesEdges: Boolean = false,
     longPressPlaybackSpeed: Float = 2.0f,
     onExitFullscreen: ((releaseOffsetPx: Float, releaseVelocityPx: Float) -> Unit)? = null,
     onExitFullscreenDrag: (offsetPx: Float) -> Unit = {},
     isSeekForwardActive: Boolean = false,
     isSeekBackActive: Boolean = false,
+    onTapWindowChange: (Boolean) -> Unit = {},
 ): Modifier {
     val isSpeedBoostActiveState = rememberUpdatedState(isSpeedBoostActive)
     val onSpeedBoostChangeState = rememberUpdatedState(onSpeedBoostChange)
@@ -79,14 +87,20 @@ fun Modifier.videoPlayerControls(
     val volumeSwipeGesturesEnabledState = rememberUpdatedState(volumeSwipeGesturesEnabled)
     val seekSwipeGesturesEnabledState = rememberUpdatedState(seekSwipeGesturesEnabled)
     val allowVolumeBoostState = rememberUpdatedState(allowVolumeBoost)
+    val speedSwipeSideState = rememberUpdatedState(speedSwipeSide)
+    val speedSwipeStepState = rememberUpdatedState(speedSwipeStep)
+    val onSpeedSwipeState = rememberUpdatedState(onSpeedSwipe)
+    val onSpeedSwipeEndState = rememberUpdatedState(onSpeedSwipeEnd)
     val doubleTapSeekMsState = rememberUpdatedState(doubleTapSeekMs)
     val seekZoneFractionState = rememberUpdatedState(seekZoneFraction)
+    val seekZoneReachesEdgesState = rememberUpdatedState(seekZoneReachesEdges)
     val longPressPlaybackSpeedState = rememberUpdatedState(longPressPlaybackSpeed)
     val onSeekAccumulateState = rememberUpdatedState(onSeekAccumulate)
     val onExitFullscreenState = rememberUpdatedState(onExitFullscreen)
     val onExitFullscreenDragState = rememberUpdatedState(onExitFullscreenDrag)
     val isSeekForwardActiveState = rememberUpdatedState(isSeekForwardActive)
     val isSeekBackActiveState = rememberUpdatedState(isSeekBackActive)
+    val onTapWindowChangeState = rememberUpdatedState(onTapWindowChange)
 
     // The width the system itself reserves for the back gesture, so the player's dead zones match
     // the ones the user is already swiping against rather than a number of our own.
@@ -124,10 +138,12 @@ fun Modifier.videoPlayerControls(
             isFullscreen = isFullscreenState,
             doubleTapSeekMs = doubleTapSeekMsState,
             seekZoneFraction = seekZoneFractionState,
+            seekZoneReachesEdges = seekZoneReachesEdgesState,
             longPressPlaybackSpeed = longPressPlaybackSpeedState,
             isSeekForwardActive = isSeekForwardActiveState,
             isSeekBackActive = isSeekBackActiveState,
             sideEdgeIgnorePx = sideEdgeIgnorePxState,
+            onTapWindowChange = onTapWindowChangeState,
             haptics = haptics,
         ).playerDragGestures(
             currentPosition = currentPositionState,
@@ -149,6 +165,10 @@ fun Modifier.videoPlayerControls(
             volumeSwipeGesturesEnabled = volumeSwipeGesturesEnabledState,
             seekSwipeGesturesEnabled = seekSwipeGesturesEnabledState,
             allowVolumeBoost = allowVolumeBoostState,
+            speedSwipeSide = speedSwipeSideState,
+            speedSwipeStep = speedSwipeStepState,
+            onSpeedSwipe = onSpeedSwipeState,
+            onSpeedSwipeEnd = onSpeedSwipeEndState,
             sideEdgeIgnorePx = sideEdgeIgnorePxState,
             onExitFullscreen = onExitFullscreenState,
             onExitFullscreenDrag = onExitFullscreenDragState,

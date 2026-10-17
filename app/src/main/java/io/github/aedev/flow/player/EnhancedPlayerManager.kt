@@ -42,6 +42,7 @@ import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.YouTubeClient
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
 import io.github.aedev.flow.player.analytics.PlaybackAnalyticsLogger
+import io.github.aedev.flow.player.analytics.RenderedFirstFrameListener
 import io.github.aedev.flow.player.audio.AudioEffectsEntryPoint
 import io.github.aedev.flow.player.audio.AudioFeaturesManager
 import io.github.aedev.flow.player.audio.eq.EqualizerAudioProcessor
@@ -726,6 +727,9 @@ class EnhancedPlayerManager private constructor() {
                 dataSourceFactory = cacheManager?.getDataSourceFactory(),
             )
         player?.addAnalyticsListener(PlaybackAnalyticsLogger(TAG) { currentVideoId })
+        player?.addAnalyticsListener(
+            RenderedFirstFrameListener(currentVideoId = { currentVideoId }) { videoId -> _firstFrameVideoId.value = videoId },
+        )
         player?.let { announceAudioSession(effects, it.audioSessionId) }
 
         audioFeaturesManager?.setPlayer(player!!)
@@ -936,7 +940,6 @@ class EnhancedPlayerManager private constructor() {
 
                 override fun onRenderedFirstFrame() {
                     Log.d(TAG, "First frame rendered - video renderer working")
-                    _firstFrameVideoId.value = currentVideoId
                     surfaceManager?.setSurfaceReady(true)
                     surfaceFirstFrameWatchdog?.cancel()
                     surfaceFirstFrameWatchdog = null
@@ -2962,6 +2965,7 @@ class EnhancedPlayerManager private constructor() {
                 )
             }
             val p = player
+            val reenablesVideo = audioOnlyMode.isActive
             val resyncPausedVideo =
                 p != null && !wasSurfaceValid && !audioOnlyMode.isActive &&
                     p.currentMediaItem != null &&
@@ -2985,7 +2989,15 @@ class EnhancedPlayerManager private constructor() {
             }
             if (resyncPausedVideo && p != null) {
                 resyncAfterSurfaceReattach(p)
-            } else if (p != null && !wasSurfaceValid && !audioOnlyMode.isActive && !currentIsLiveStream) {
+            } else if (
+                p != null &&
+                VideoSurfacePolicy.shouldWatchFirstFrame(
+                    wasSurfaceValid = wasSurfaceValid,
+                    reenabledVideo = reenablesVideo,
+                    isAudioOnly = audioOnlyMode.isActive,
+                    isLive = currentIsLiveStream,
+                )
+            ) {
                 armSurfaceFirstFrameWatchdog(p)
             }
         }
@@ -3125,13 +3137,28 @@ class EnhancedPlayerManager private constructor() {
     fun switchToAudioOnly() {
         val p = player ?: return
         autoNextLog("switchToAudioOnly")
+        enterAudioOnly(p)
+        resumePlaybackIfStalled(p)
+        preload.schedule()
+    }
+
+    /**
+     * Turns video off with a pause on leaving the app, so Play from the notification resumes audio
+     * only, as background playback does (#1298). It neither resumes nor preloads: a pause fetches
+     * nothing. Coming back to the app restores video as it does after background playback.
+     */
+    fun parkVideoForBackground() {
+        val p = player ?: return
+        autoNextLog("parkVideoForBackground")
+        enterAudioOnly(p)
+    }
+
+    private fun enterAudioOnly(p: ExoPlayer) {
         audioOnlyMode.enter()
         setVideoTracksDisabled(true)
         p.setWakeMode(
             if (currentLocalFilePath != null) androidx.media3.common.C.WAKE_MODE_LOCAL else androidx.media3.common.C.WAKE_MODE_NETWORK,
         )
-        resumePlaybackIfStalled(p)
-        preload.schedule()
     }
 
     fun restoreVideoOutput() {

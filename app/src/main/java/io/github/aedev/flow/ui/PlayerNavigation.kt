@@ -1,7 +1,7 @@
 package io.github.aedev.flow.ui
 
 import android.net.Uri
-import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import io.github.aedev.flow.player.stream.PlaybackPrefetcher
 
 /**
@@ -11,7 +11,7 @@ import io.github.aedev.flow.player.stream.PlaybackPrefetcher
  * only effect is that navigation, composition and player setup overlap with the network work
  * instead of queuing behind it. Use this for every user-initiated open of the player screen.
  */
-internal fun NavHostController.navigateToPlayer(videoId: String) {
+internal fun NavController.navigateToPlayer(videoId: String) {
     PlaybackPrefetcher.prefetch(videoId)
     // Encoded: Bilibili id may hold "?" or ":" ("BVxxxx?p=1", "live:123"): breaks the route.
     navigate("player/${Uri.encode(videoId)}")

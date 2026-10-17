@@ -14,6 +14,7 @@ import io.github.aedev.flow.network.AppProxyType
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.ui.components.videoplayer.subtitle.SubtitleEdgeType
 import io.github.aedev.flow.ui.components.videoplayer.subtitle.SubtitleStyle
+import io.github.aedev.flow.utils.AppLanguageManager
 import io.github.aedev.flow.utils.DateContextMode
 import io.github.aedev.flow.utils.DateDisplayMode
 import io.github.aedev.flow.utils.DateFormatStyle
@@ -44,6 +45,10 @@ const val DEFAULT_FULLSCREEN_SEEKBAR_PADDING_DP = 48
 const val MAX_FULLSCREEN_SEEKBAR_PADDING_DP = 120
 const val DEFAULT_CONCURRENT_DOWNLOADS = 3
 const val MAX_CONCURRENT_DOWNLOADS = 5
+
+/** On until turned off, matching NewPipe's default and the Background button (#1298). */
+const val DEFAULT_BACKGROUND_PLAY_ENABLED = true
+
 val DEFAULT_NAV_TAB_ORDER = listOf(0, 1, 2, 3, 4, 5, 6)
 
 private const val MAX_UNPLAYABLE_VIDEO_IDS = 300
@@ -93,6 +98,7 @@ class PlayerPreferences(
         val LOCAL_SERVER_ENABLED = booleanPreferencesKey("local_server_enabled")
         val APP_LANGUAGE = stringPreferencesKey("app_language")
         val CONTENT_LANGUAGE = stringPreferencesKey("content_language")
+        val ORIGINAL_TITLES = booleanPreferencesKey("original_titles")
         val MUSIC_LOUDNESS_NORMALIZATION_ENABLED = booleanPreferencesKey("music_loudness_normalization_enabled")
         val SKIP_SILENCE_ENABLED = booleanPreferencesKey("skip_silence_enabled")
         val SPONSOR_BLOCK_ENABLED = booleanPreferencesKey("sponsor_block_enabled")
@@ -270,6 +276,7 @@ class PlayerPreferences(
         val OVERLAY_SPEED_INDICATOR_ENABLED = booleanPreferencesKey("overlay_speed_indicator_enabled")
         val OVERLAY_COMMENTS_ENABLED = booleanPreferencesKey("overlay_comments_enabled")
         val OVERLAY_SPONSORBLOCK_ENABLED = booleanPreferencesKey("overlay_sponsorblock_enabled")
+        val OVERLAY_NEXT_PREV_ENABLED = booleanPreferencesKey("overlay_next_prev_enabled")
 
         // Fullscreen Player
         val ADAPTIVE_PLAYER_SIZE_ENABLED = booleanPreferencesKey("adaptive_player_size_enabled")
@@ -334,6 +341,8 @@ class PlayerPreferences(
         val CUSTOM_SPEED_PRESETS = stringPreferencesKey("custom_speed_presets")
         val SPEED_SLIDER_ENABLED = booleanPreferencesKey("speed_slider_enabled")
         val LONG_PRESS_PLAYBACK_SPEED = floatPreferencesKey("long_press_playback_speed")
+        val SPEED_SWIPE_SIDE = stringPreferencesKey("speed_swipe_side")
+        val SPEED_SWIPE_STEP = floatPreferencesKey("speed_swipe_step")
 
         // Content filtering
         val HIDE_WATCHED_VIDEOS = booleanPreferencesKey("hide_watched_videos")
@@ -341,6 +350,7 @@ class PlayerPreferences(
         val HIDE_WATCHED_SUBSCRIPTIONS = booleanPreferencesKey("hide_watched_subscriptions")
         val HIDE_WATCHED_SHORTS = booleanPreferencesKey("hide_watched_shorts")
         val WATCHED_THRESHOLD = stringPreferencesKey("watched_threshold")
+        val SHARED_LINK_ACTION = stringPreferencesKey("shared_link_action")
         val DISABLE_SHORTS_PLAYER = booleanPreferencesKey("disable_shorts_player")
         val SHOW_SHORTS_PLAYER_PROMPT = booleanPreferencesKey("show_shorts_player_prompt")
         val SHARE_WITHOUT_TEXT = booleanPreferencesKey("share_without_text")
@@ -685,6 +695,7 @@ class PlayerPreferences(
                 this[Keys.OVERLAY_SPEED_INDICATOR_ENABLED] ?: overlayDefaults.speedIndicatorEnabled,
             commentsEnabled = this[Keys.OVERLAY_COMMENTS_ENABLED] ?: overlayDefaults.commentsEnabled,
             sponsorBlockEnabled = this[Keys.OVERLAY_SPONSORBLOCK_ENABLED] ?: overlayDefaults.sponsorBlockEnabled,
+            nextPrevButtonsEnabled = this[Keys.OVERLAY_NEXT_PREV_ENABLED] ?: overlayDefaults.nextPrevButtonsEnabled,
             showControlsWhileLoading =
                 this[Keys.SHOW_CONTROLS_WHILE_LOADING] ?: overlayDefaults.showControlsWhileLoading,
             fullscreenSeekbarHorizontalPaddingDp =
@@ -1405,6 +1416,18 @@ class PlayerPreferences(
         }
     }
 
+    /** Titles and descriptions in the video's own language instead of YouTube's translation (#1230). */
+    val originalTitles: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.ORIGINAL_TITLES] ?: false }
+            .distinctUntilChanged()
+
+    suspend fun setOriginalTitles(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.ORIGINAL_TITLES] = enabled
+        }
+    }
+
     val musicLoudnessNormalizationEnabled: Flow<Boolean> =
         context.playerPreferencesDataStore.data
             .map { preferences ->
@@ -1550,7 +1573,7 @@ class PlayerPreferences(
     val backgroundPlayEnabled: Flow<Boolean> =
         context.playerPreferencesDataStore.data
             .map { preferences ->
-                preferences[Keys.BACKGROUND_PLAY_ENABLED] ?: false
+                preferences[Keys.BACKGROUND_PLAY_ENABLED] ?: DEFAULT_BACKGROUND_PLAY_ENABLED
             }
 
     suspend fun setBackgroundPlayEnabled(enabled: Boolean) {
@@ -1819,6 +1842,15 @@ class PlayerPreferences(
     suspend fun setOverlaySponsorBlockEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.OVERLAY_SPONSORBLOCK_ENABLED] = enabled
+        }
+    }
+
+    val overlayNextPrevEnabled: Flow<Boolean> =
+        overlayPreferences.map { it.nextPrevButtonsEnabled }.distinctUntilChanged()
+
+    suspend fun setOverlayNextPrevEnabled(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.OVERLAY_NEXT_PREV_ENABLED] = enabled
         }
     }
 
@@ -2289,6 +2321,32 @@ class PlayerPreferences(
         }
     }
 
+    val speedSwipeSide: Flow<SpeedSwipeSide> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.SPEED_SWIPE_SIDE]
+                    ?.let { stored -> runCatching { SpeedSwipeSide.valueOf(stored) }.getOrNull() }
+                    ?: SpeedSwipeSide.OFF
+            }
+
+    suspend fun setSpeedSwipeSide(side: SpeedSwipeSide) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SPEED_SWIPE_SIDE] = side.name
+        }
+    }
+
+    val speedSwipeStep: Flow<Float> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.SPEED_SWIPE_STEP]?.takeIf { it in SPEED_SWIPE_STEPS } ?: DEFAULT_SPEED_SWIPE_STEP
+            }
+
+    suspend fun setSpeedSwipeStep(step: Float) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SPEED_SWIPE_STEP] = step.takeIf { it in SPEED_SWIPE_STEPS } ?: DEFAULT_SPEED_SWIPE_STEP
+        }
+    }
+
     // Subscriptions feed view mode
     val subsFullWidthView: Flow<Boolean> =
         context.playerPreferencesDataStore.data
@@ -2574,6 +2632,20 @@ class PlayerPreferences(
     suspend fun setWatchedThreshold(threshold: WatchedThreshold) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.WATCHED_THRESHOLD] = threshold.name
+        }
+    }
+
+    /** What a video link shared to Flow from another app does; links tapped elsewhere always play. */
+    val sharedLinkAction: Flow<SharedLinkAction> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                runCatching { SharedLinkAction.valueOf(preferences[Keys.SHARED_LINK_ACTION] ?: SharedLinkAction.ASK_WHILE_PLAYING.name) }
+                    .getOrDefault(SharedLinkAction.ASK_WHILE_PLAYING)
+            }
+
+    suspend fun setSharedLinkAction(action: SharedLinkAction) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SHARED_LINK_ACTION] = action.name
         }
     }
 
@@ -3680,6 +3752,11 @@ class PlayerPreferences(
             backup.floats.forEach { (k, v) -> prefs[floatPreferencesKey(k)] = v }
             backup.longs.forEach { (k, v) -> prefs[longPreferencesKey(k)] = v }
         }
+        // The UI language belongs to the language manager; written here alone it would never show,
+        // while YouTube's language follows what is shown (#1277).
+        backup.strings[Keys.APP_LANGUAGE.name]
+            ?.takeIf { AppLanguageManager.normalizeLanguageTag(it) != AppLanguageManager.appliedLanguage.value }
+            ?.let { tag -> withContext(Dispatchers.Main.immediate) { AppLanguageManager.applyLanguageTag(context, tag) } }
     }
 }
 
@@ -3820,12 +3897,28 @@ enum class MusicPlayerBackgroundStyle {
     DEFAULT,
 }
 
-/** How much of the player's width each double-tap seek side takes. */
+/** Which side of the fullscreen player a vertical swipe changes the playback speed on, in place of brightness or volume. */
+enum class SpeedSwipeSide {
+    OFF,
+    LEFT,
+    RIGHT,
+}
+
+/** How much one step of a speed swipe changes the speed by. */
+val SPEED_SWIPE_STEPS = listOf(0.05f, 0.1f, 0.25f)
+const val DEFAULT_SPEED_SWIPE_STEP = 0.1f
+
+/**
+ * How much of the player's width each double-tap seek side takes. [reachesEdges] lets taps count right
+ * up to the screen edges instead of leaving them to the back gesture.
+ */
 enum class DoubleTapSeekZone(
     val sideFraction: Float,
+    val reachesEdges: Boolean = false,
 ) {
     NORMAL(1f / 3f),
     NARROW(1f / 4f),
+    EDGE_TO_EDGE(1f / 3f, reachesEdges = true),
 }
 
 /** A mini bar swipe. The music bar only acts on [CLOSE], [NEXT] and [PREVIOUS]; it closes on the rest. */
@@ -3927,6 +4020,17 @@ enum class HomeFeedColumns(
 enum class PlayerRelatedCardStyle {
     COMPACT,
     FULL_WIDTH,
+}
+
+enum class SharedLinkAction {
+    /** Play the video straight away, replacing what plays. */
+    PLAY,
+
+    /** Offer the video's menu while something plays, so the queue is not lost; otherwise play it. */
+    ASK_WHILE_PLAYING,
+
+    /** Always offer the video's menu. */
+    ALWAYS_ASK,
 }
 
 const val LYRICS_ALIGN_LEFT = "left"

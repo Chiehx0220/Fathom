@@ -8,26 +8,26 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import dagger.hilt.android.HiltAndroidApp
-import io.github.aedev.flow.data.local.CONTENT_LANGUAGE_FOLLOW_APP
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.repository.NewPipeDownloader
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.discord.DiscordPresenceRuntime
 import io.github.aedev.flow.innertube.YouTube
-import io.github.aedev.flow.innertube.models.YouTubeLocale
-import io.github.aedev.flow.innertube.models.normalizeYouTubeHostLanguage
 import io.github.aedev.flow.network.AppProxyManager
 import io.github.aedev.flow.network.VpnStateMonitor
+import io.github.aedev.flow.notification.BackgroundCheckScheduler
 import io.github.aedev.flow.notification.NotificationHelper
-import io.github.aedev.flow.notification.SubscriptionCheckWorker
+import io.github.aedev.flow.player.PlaybackShutdown
+import io.github.aedev.flow.player.SleepTimerManager
+import io.github.aedev.flow.ui.screens.home.HomeFeedLanguageReset
 import io.github.aedev.flow.utils.AppLanguageManager
 import io.github.aedev.flow.utils.FlowCrashHandler
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import io.github.aedev.flow.utils.cipher.PipePipeNsigDecoder
+import io.github.aedev.flow.utils.contentYouTubeLocale
 import io.github.aedev.flow.utils.newPipeContentCountry
 import io.github.aedev.flow.utils.newPipeLocalization
-import io.github.aedev.flow.utils.normalizeYouTubeCountry
 import io.github.aedev.flow.utils.potoken.NewPipePoTokenProvider
 import io.github.aedev.flow.utils.potoken.VisitorIdentityStore
 import io.github.aedev.flow.utils.potoken.WebPoTokenSession
@@ -69,6 +69,9 @@ class FlowApplication :
 
     @Inject
     lateinit var visitorIdentityStore: VisitorIdentityStore
+
+    @Inject
+    internal lateinit var homeFeedLanguageReset: HomeFeedLanguageReset
 
     override fun newImageLoader(context: PlatformContext): ImageLoader = imageLoader
 
@@ -140,28 +143,14 @@ class FlowApplication :
         }
          */
 
-        // Schedule periodic subscription checks for new videos
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-            val savedIntervalMinutes = playerPreferences.subscriptionCheckIntervalMinutes.first()
-            SubscriptionCheckWorker.schedulePeriodicCheck(
-                this@FlowApplication,
-                intervalMinutes = savedIntervalMinutes.toLong(),
-            )
-
-            // Schedule periodic update checks (every 12 hours) — github flavor only
-            if (BuildConfig.UPDATER_ENABLED) {
-                io.github.aedev.flow.notification.UpdateCheckWorker
-                    .schedulePeriodicCheck(this@FlowApplication)
-            }
+            BackgroundCheckScheduler.follow(this@FlowApplication, playerPreferences)
         }
+        SleepTimerManager.attachExitCallback { PlaybackShutdown.closeApp(this) }
 
-        Log.d(TAG, "Workers scheduled successfully")
-
-        // Fetch and cache visitor data for the lifetime of the install.
-        // The X-Goog-Visitor-Id header prevents YouTube from returning empty
-        // search results on tablets and fresh Android 16 installs (Issue #223).
+        val warmups = StartupWarmups(this)
+        warmups.startWithFirstActivity()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-            var nsigWarmed = false
             playerPreferences.proxyConfig
                 .distinctUntilChanged()
                 .flatMapLatest { config ->
@@ -172,14 +161,7 @@ class FlowApplication :
                     }
                 }.collectLatest { (proxyConfig, vpnActive) ->
                     applyProxyConfig(proxyConfig, vpnActive)
-                    // Ordered after the first proxy application so the warm-up honours it. Resolving
-                    // the remote n-decoder player id is a round trip that the first video of a session
-                    // would otherwise pay on its path to first frame; it is persisted for 24h, so on
-                    // most launches this is only a disk read.
-                    if (!nsigWarmed) {
-                        nsigWarmed = true
-                        PipePipeNsigDecoder.warmUp()
-                    }
+                    warmups.onProxyApplied()
                 }
         }
 
@@ -187,55 +169,37 @@ class FlowApplication :
         WebPoTokenSession.bindIdentityStore(visitorIdentityStore)
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                val restored = visitorIdentityStore.restore()
-                if (restored != null) {
+                visitorIdentityStore.restore()?.let { restored ->
                     YouTube.visitorData = restored
                     Log.d(TAG, "visitorData restored")
-                } else {
-                    YouTube
-                        .visitorData()
-                        .onSuccess { data ->
-                            if (!data.isNullOrEmpty()) {
-                                YouTube.visitorData = data
-                                Log.d(TAG, "visitorData fetched")
-                            }
-                        }.onFailure { e ->
-                            Log.w(TAG, "visitorData fetch failed: ${e.message}")
-                        }
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "visitorData init error: ${e.message}")
+                Log.w(TAG, "visitorData restore error: ${e.message}")
             }
-            try {
-                WebPoTokenSession.prewarm()
-            } catch (e: Exception) {
-                Log.w(TAG, "WebPoTokenSession prewarm failed: ${e.message}")
-            }
-            // A cold player script is a 3 MB download the first web-client extraction would
-            // otherwise wait on.
-            io.github.aedev.flow.utils.cipher.CipherDeobfuscator
-                .ensureSignatureTimestamp()
+            warmups.onIdentityRestored()
         }
 
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-            AppLanguageManager.languageAdoptedFromSystem.filterNotNull().collect(playerPreferences::setAppLanguage)
+            AppLanguageManager.appliedLanguage.filterNotNull().collect { tag ->
+                if (playerPreferences.appLanguage.first() != tag) playerPreferences.setAppLanguage(tag)
+            }
         }
 
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             combine(
-                playerPreferences.appLanguage,
+                AppLanguageManager.appliedLanguage.filterNotNull(),
                 playerPreferences.contentLanguage,
                 playerPreferences.trendingRegion,
             ) { appLanguage, contentLanguage, region ->
-                val language = if (contentLanguage == CONTENT_LANGUAGE_FOLLOW_APP) appLanguage else contentLanguage
-                YouTubeLocale(gl = normalizeYouTubeCountry(region), hl = normalizeYouTubeHostLanguage(language))
-            }.collectLatest { newLocale ->
+                contentYouTubeLocale(appLanguage, contentLanguage, region, AppLanguageManager.deviceLocale(this@FlowApplication))
+            }.distinctUntilChanged().collectLatest { newLocale ->
                 YouTube.locale = newLocale
                 NewPipe.setupLocalization(
                     newPipeLocalization(newLocale.hl),
                     ContentCountry(newLocale.gl),
                 )
                 Log.d(TAG, "Dynamic YouTube Locale updated: gl=${newLocale.gl}, hl=${newLocale.hl}")
+                homeFeedLanguageReset.onContentLanguage(newLocale.hl)
             }
         }
 

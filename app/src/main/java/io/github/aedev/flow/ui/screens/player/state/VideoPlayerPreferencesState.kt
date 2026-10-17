@@ -6,11 +6,14 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import io.github.aedev.flow.data.local.DEFAULT_SPEED_SWIPE_STEP
 import io.github.aedev.flow.data.local.DoubleTapSeekZone
 import io.github.aedev.flow.data.local.DownloadDialogStyle
 import io.github.aedev.flow.data.local.GestureOverlayStyle
+import io.github.aedev.flow.data.local.HomeFeedColumns
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.PlayerRelatedCardStyle
+import io.github.aedev.flow.data.local.SpeedSwipeSide
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.ui.components.videoplayer.subtitle.SubtitleStyle
 
@@ -35,6 +38,8 @@ internal class VideoPlayerPreferencesState(
     val doubleTapSeekSeconds: Int,
     val doubleTapSeekZone: DoubleTapSeekZone,
     val longPressPlaybackSpeed: Float,
+    val speedSwipeSide: SpeedSwipeSide,
+    val speedSwipeStep: Float,
     val disableShortsPlayer: Boolean,
     val showShortsPlayerPrompt: Boolean,
     val savedSubtitleStyle: SubtitleStyle,
@@ -48,6 +53,7 @@ internal class VideoPlayerPreferencesState(
     val commentsPreviewEnabled: Boolean,
     val showRelatedVideos: Boolean,
     val relatedCardStyle: PlayerRelatedCardStyle,
+    val feedColumns: HomeFeedColumns,
     val deArrowEnabled: Boolean,
     val downloadDialogStyle: DownloadDialogStyle?,
 )
@@ -69,6 +75,8 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
     val doubleTapSeekSeconds by playerPreferences.doubleTapSeekSeconds.collectAsState(initial = 10)
     val doubleTapSeekZone by playerPreferences.doubleTapSeekZone.collectAsState(initial = DoubleTapSeekZone.NORMAL)
     val longPressPlaybackSpeed by playerPreferences.longPressPlaybackSpeed.collectAsState(initial = 2.0f)
+    val speedSwipeSide by playerPreferences.speedSwipeSide.collectAsState(initial = SpeedSwipeSide.OFF)
+    val speedSwipeStep by playerPreferences.speedSwipeStep.collectAsState(initial = DEFAULT_SPEED_SWIPE_STEP)
     val disableShortsPlayer by playerPreferences.effectiveDisableShortsPlayer.collectAsState(initial = false)
     val showShortsPlayerPrompt by playerPreferences.showShortsPlayerPrompt.collectAsState(initial = true)
     val savedSubtitleStyle by playerPreferences.subtitleStyle.collectAsState(initial = SubtitleStyle())
@@ -83,6 +91,7 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
     val commentsPreviewEnabled by playerPreferences.commentsPreviewEnabled.collectAsState(initial = true)
     val showRelatedVideos by playerPreferences.showRelatedVideos.collectAsState(initial = true)
     val relatedCardStyle by playerPreferences.playerRelatedCardStyle.collectAsState(initial = PlayerRelatedCardStyle.FULL_WIDTH)
+    val feedColumns by playerPreferences.homeFeedColumns.collectAsState(initial = HomeFeedColumns.AUTO)
     val deArrowEnabled by playerPreferences.deArrowEnabled.collectAsState(initial = false)
     val downloadDialogStyle by playerPreferences.downloadDialogStyle.collectAsState(initial = null)
 
@@ -101,6 +110,8 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
         doubleTapSeekSeconds = doubleTapSeekSeconds,
         doubleTapSeekZone = doubleTapSeekZone,
         longPressPlaybackSpeed = longPressPlaybackSpeed,
+        speedSwipeSide = speedSwipeSide,
+        speedSwipeStep = speedSwipeStep,
         disableShortsPlayer = disableShortsPlayer,
         showShortsPlayerPrompt = showShortsPlayerPrompt,
         savedSubtitleStyle = savedSubtitleStyle,
@@ -114,6 +125,7 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
         commentsPreviewEnabled = commentsPreviewEnabled,
         showRelatedVideos = showRelatedVideos,
         relatedCardStyle = relatedCardStyle,
+        feedColumns = feedColumns,
         deArrowEnabled = deArrowEnabled,
         downloadDialogStyle = downloadDialogStyle,
     )

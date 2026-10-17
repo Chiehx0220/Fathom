@@ -43,9 +43,11 @@
     <string name="widget_now_playing_description">Controlla la musica in riproduzione su Fathom</string>
     <string name="widget_quick_actions_description">Cerca su Fathom e passa a download, cronologia o riconoscimento</string>
     <string name="ui_flow_logo">Logo Fathom</string>
+    <string name="ui_crashed_last_session">Fathom si è interrotto in modo anomalo durante l\'ultima sessione</string>
     <string name="discord_presence_playing_fallback">In riproduzione su Fathom</string>
     <string name="export_watch_history_desc">Esporta come JSON della cronologia di YouTube (importabile in LibreTube e Fathom)</string>
     <string name="whats_new_in_flow">Novità in Fathom</string>
+    <string name="downloads_recover_body">Fathom salva i download nella cartella Download/Fathom e Music/Fathom. Per vedere i file che una precedente installazione ha salvato consenti l\'accesso a video e audio.</string>
     <string name="location_downloads_label">Downloads / Fathom</string>
     <string name="location_movies_label">Movies / Fathom</string>
 </resources>
