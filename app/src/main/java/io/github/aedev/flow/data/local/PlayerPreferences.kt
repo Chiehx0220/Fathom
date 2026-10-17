@@ -166,6 +166,8 @@ class PlayerPreferences(
         val HIDE_MUSIC_PLAYER_ARTWORK = booleanPreferencesKey("hide_music_player_artwork")
         val MUSIC_ARTWORK_CONTROL_COLORS = booleanPreferencesKey("music_artwork_control_colors")
         val MUSIC_PLAIN_CONTROL_COLORS = stringPreferencesKey("music_plain_control_colors")
+        val MUSIC_SLEEP_TIMER_BUTTON = booleanPreferencesKey("music_sleep_timer_button")
+        val MUSIC_PLAYER_FOLLOW_LIGHT_THEME = booleanPreferencesKey("music_player_follow_light_theme")
         val SHORTS_PLAYER_UI_MODE = stringPreferencesKey("shorts_player_ui_mode")
         val GESTURE_OVERLAY_STYLE = stringPreferencesKey("gesture_overlay_style")
         val PLAYER_HAPTICS_ENABLED = booleanPreferencesKey("player_haptics_enabled")
@@ -203,6 +205,7 @@ class PlayerPreferences(
         val LYRICS_SHOW_TRANSLATION = booleanPreferencesKey("lyrics_show_translation")
         val LYRICS_SHOW_ROMANIZATION = booleanPreferencesKey("lyrics_show_romanization")
         val LYRICS_AUTO_ROMANIZE = booleanPreferencesKey("lyrics_auto_romanize")
+        val LYRICS_KEEP_SCREEN_ON = booleanPreferencesKey("lyrics_keep_screen_on")
         val LYRICS_PROVIDER_ENABLED_BETTERLYRICS = booleanPreferencesKey("lyrics_provider_enabled_betterlyrics")
         val LYRICS_PROVIDER_ENABLED_SIMPMUSIC = booleanPreferencesKey("lyrics_provider_enabled_simpmusic")
         val LYRICS_PROVIDER_ENABLED_LYRICSPLUS = booleanPreferencesKey("lyrics_provider_enabled_lyricsplus")
@@ -330,6 +333,7 @@ class PlayerPreferences(
         val AUTO_DOWNLOAD_LIKED_MUSIC = booleanPreferencesKey("auto_download_liked_music")
         val RECAP_SOURCE = stringPreferencesKey("recap_source")
         val HIDDEN_MUSIC_HOME_SHELVES = stringSetPreferencesKey("hidden_music_home_shelves")
+        val HIDDEN_LIBRARY_SECTIONS = stringSetPreferencesKey("hidden_library_sections")
         val SPEED_PER_CHANNEL = booleanPreferencesKey("speed_per_channel")
         val CHANNEL_PLAYBACK_SPEEDS = stringSetPreferencesKey("channel_playback_speeds")
 
@@ -416,6 +420,7 @@ class PlayerPreferences(
         val DEEP_FLOW_EXPIRE_HOURS = intPreferencesKey("deep_flow_expire_hours")
         val DEEP_FLOW_SAVE_HISTORY = booleanPreferencesKey("deep_flow_save_history")
         val DEEP_FLOW_SCROBBLE = booleanPreferencesKey("deep_flow_scrobble")
+        val DEEP_FLOW_ON_SEARCH = booleanPreferencesKey("deep_flow_on_search")
 
         // Home subscription feed rotation cursor
         val HOME_SUBS_ROTATION_CURSOR = intPreferencesKey("home_subs_rotation_cursor")
@@ -814,6 +819,28 @@ class PlayerPreferences(
     suspend fun setMusicArtworkControlColors(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.MUSIC_ARTWORK_CONTROL_COLORS] = enabled
+        }
+    }
+
+    /** Whether the artwork backgrounds turn light while the app theme is light. */
+    val musicPlayerFollowLightTheme: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.MUSIC_PLAYER_FOLLOW_LIGHT_THEME] ?: false }
+
+    suspend fun setMusicPlayerFollowLightTheme(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_PLAYER_FOLLOW_LIGHT_THEME] = enabled
+        }
+    }
+
+    /** Whether the music player's action row shows a sleep timer button. */
+    val musicSleepTimerButton: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.MUSIC_SLEEP_TIMER_BUTTON] ?: false }
+
+    suspend fun setMusicSleepTimerButton(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_SLEEP_TIMER_BUTTON] = enabled
         }
     }
 
@@ -2132,6 +2159,21 @@ class PlayerPreferences(
         context.playerPreferencesDataStore.edit { preferences ->
             val current = preferences[Keys.HIDDEN_MUSIC_HOME_SHELVES].orEmpty()
             preferences[Keys.HIDDEN_MUSIC_HOME_SHELVES] = if (hidden) current + shelf else current - shelf
+        }
+    }
+
+    val hiddenLibrarySections: Flow<Set<String>> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.HIDDEN_LIBRARY_SECTIONS].orEmpty() }
+            .distinctUntilChanged()
+
+    suspend fun setLibrarySectionHidden(
+        section: String,
+        hidden: Boolean,
+    ) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            val current = preferences[Keys.HIDDEN_LIBRARY_SECTIONS].orEmpty()
+            preferences[Keys.HIDDEN_LIBRARY_SECTIONS] = if (hidden) current + section else current - section
         }
     }
 
@@ -3490,6 +3532,13 @@ class PlayerPreferences(
         context.playerPreferencesDataStore.edit { it[Keys.LYRICS_AUTO_ROMANIZE] = enabled }
     }
 
+    val lyricsKeepScreenOn: Flow<Boolean> =
+        context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_KEEP_SCREEN_ON] ?: false }
+
+    suspend fun setLyricsKeepScreenOn(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { it[Keys.LYRICS_KEEP_SCREEN_ON] = enabled }
+    }
+
     // ========== MINI PLAYER PREFERENCES ==========
 
     val miniPlayerScale: Flow<Float> =
@@ -3633,6 +3682,17 @@ class PlayerPreferences(
     suspend fun setDeepFlowScrobble(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.DEEP_FLOW_SCROBBLE] = enabled
+        }
+    }
+
+    /** Off by default: the search screen shows its Deep Flow switch only once this is turned on. */
+    val deepFlowOnSearch: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.DEEP_FLOW_ON_SEARCH] ?: false }
+
+    suspend fun setDeepFlowOnSearch(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.DEEP_FLOW_ON_SEARCH] = enabled
         }
     }
 

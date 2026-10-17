@@ -44,9 +44,11 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -56,17 +58,30 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 private data class Wave1FeedResults(
     val discovery: List<Pair<String, List<Video>>>,
     val related: RelatedGraphFetchResult,
+)
+
+/** Cards a load-more attempt found but did not show yet, with why each is there. */
+private class HeldPage(
+    val videos: List<Video>,
+    val origins: Map<String, HomeCardOrigin>,
+)
+
+private class PrefetchAttempt(
+    val outcome: LoadMoreOutcome,
+    val held: HeldPage? = null,
 )
 
 @HiltViewModel
@@ -122,6 +137,7 @@ class HomeViewModel
 
             // Next pages of earlier searches a short load-more page may fetch.
             private const val DEEPER_SEARCH_PAGES = 2
+            private const val SEARCH_TIMEOUT_MS = 6_000L
         }
 
         private val relatedPickIds = ConcurrentHashMap.newKeySet<String>()
@@ -169,13 +185,23 @@ class HomeViewModel
         private var subsBacklog: List<Video> = emptyList()
 
         private var currentQueryIndex = 0
-        private val searchPages = HomeSearchPages({ query, continuation -> repository.searchVideos(query, continuation) })
+        private val searchPages = HomeSearchPages({ query, continuation -> repository.searchVideoPage(query, continuation) })
         private val discoveryQueries = mutableListOf<String>()
         private var wave2Job: Job? = null
         private var feedJob: Job? = null
         private var subsTopUpJob: Job? = null
         private var channelMemoryJob: Job? = null
         private var neighbourJob: Job? = null
+        private var visibleMetadataJob: Job? = null
+
+        // Changes with every feed load, so work cancelled by leaving Home can tell it from a reload.
+        @Volatile
+        private var feedGeneration = 0
+
+        private val refreshFailureEvents = Channel<Unit>(Channel.CONFLATED)
+
+        /** A refresh that failed while the old feed stayed on screen. */
+        internal val refreshFailures: Flow<Unit> = refreshFailureEvents.receiveAsFlow()
 
         // Neighbour cards already counted as shown; an ignored neighbour is dropped after a few.
         private val shownNeighbourCards = ConcurrentHashMap.newKeySet<String>()
@@ -386,7 +412,8 @@ class HomeViewModel
 
         private suspend fun drainHomePrefetchQueue(generation: Int) {
             var pagesLoaded = 0
-            var emptyPageAttempts = 0
+            var attempt = 0
+            var held: HeldPage? = null
             var allowRestart = true
             try {
                 wave2Job?.takeIf { it.isActive }?.join()
@@ -395,24 +422,33 @@ class HomeViewModel
                     val request = homePrefetchQueue.currentRequest(state.videos.size) ?: break
                     if (request.generation != generation || !state.hasMorePages) break
 
-                    _uiState.update { it.copy(isLoadingMore = true) }
-                    if (loadNextPrefetchPage(generation)) {
-                        pagesLoaded++
-                        continue
-                    }
+                    _uiState.update { it.copy(isLoadingMore = true, loadMoreFailed = false) }
+                    attempt++
+                    val result = loadNextPrefetchPage(generation, held, lastAttempt = attempt >= HOME_PREFETCH_EMPTY_PAGE_RETRIES)
+                    held = result.held
+                    if (!homePrefetchQueue.isCurrent(generation)) break
 
                     // A page that appended nothing leaves the feed at the same length, so the
                     // viewport index cannot change and nothing would re-arm this queue. Retry a
                     // few times — each attempt rotates queries and seeds — before giving up.
-                    emptyPageAttempts++
-                    if (emptyPageAttempts >= HOME_PREFETCH_EMPTY_PAGE_RETRIES) {
-                        // Out of videos on the viewer's subjects: Home ends with a refresh rather than
-                        // filling itself with unrelated ones (#907).
-                        _uiState.update { it.copy(hasMorePages = false) }
-                        allowRestart = false
-                        break
+                    when (val step = nextLoadMoreStep(result.outcome, attempt)) {
+                        LoadMoreStep.DONE -> {
+                            pagesLoaded++
+                        }
+
+                        LoadMoreStep.RETRY -> {
+                            if (result.outcome == LoadMoreOutcome.EXHAUSTED) delay(HOME_PREFETCH_EMPTY_PAGE_BACKOFF_MS * attempt)
+                        }
+
+                        LoadMoreStep.END_FEED, LoadMoreStep.STOP_FAILED -> {
+                            _uiState.update {
+                                if (step == LoadMoreStep.END_FEED) it.copy(hasMorePages = false) else it.copy(loadMoreFailed = true)
+                            }
+                            Log.w(TAG, "Load-more stopped: $step after $attempt attempts at ${state.videos.size} cards")
+                            allowRestart = false
+                            break
+                        }
                     }
-                    delay(HOME_PREFETCH_EMPTY_PAGE_BACKOFF_MS * emptyPageAttempts)
                 }
                 if (pagesLoaded >= HOME_PREFETCH_MAX_PAGES_PER_RUN) {
                     allowRestart = false
@@ -440,12 +476,18 @@ class HomeViewModel
             }
         }
 
+        /** The viewer's retry after a load-more that failed; the next scroll retries too. */
+        fun retryLoadMore() {
+            _uiState.update { it.copy(loadMoreFailed = false) }
+            startHomePrefetch(homePrefetchQueue.currentRequest(_uiState.value.videos.size))
+        }
+
         private fun resetHomePrefetch() {
             homePrefetchQueue.reset()
             synchronized(homePrefetchWorkerLock) {
                 homePrefetchJob?.cancel()
             }
-            _uiState.update { it.copy(isLoadingMore = false) }
+            _uiState.update { it.copy(isLoadingMore = false, loadMoreFailed = false) }
         }
 
         fun removeContinueWatchingEntry(videoId: String) {
@@ -532,6 +574,8 @@ class HomeViewModel
             feedJob?.cancel()
             subsTopUpJob?.cancel()
             channelMemoryJob?.cancel()
+            visibleMetadataJob?.cancel()
+            feedGeneration++
             _uiState.update { it.copy(isLoading = true, error = null) }
 
             feedJob =
@@ -565,8 +609,10 @@ class HomeViewModel
                                                     async {
                                                         query to
                                                             runCatching {
-                                                                feedSources.searchDiscovery(query, searchPages::firstPage)
-                                                            }.getOrElse { emptyList() }
+                                                                withTimeoutOrNull(SEARCH_TIMEOUT_MS) {
+                                                                    feedSources.searchDiscovery(query, searchPages::firstPage)
+                                                                }
+                                                            }.getOrNull().orEmpty()
                                                     }
                                                 }.awaitAll()
                                         }
@@ -707,7 +753,7 @@ class HomeViewModel
                             .mapTo(relatedPickIds) { it.video.id }
 
                         if (finalMix.isEmpty()) {
-                            settleWithoutFeed()
+                            settleWithoutFeed(error = null)
                             return@launch
                         }
                         val relatedMetrics =
@@ -773,6 +819,7 @@ class HomeViewModel
                                 isLoading = false,
                                 isRefreshing = false,
                                 hasMorePages = true,
+                                loadMoreFailed = false,
                                 isFlowFeed = true,
                                 lastRefreshTime = now,
                             )
@@ -795,9 +842,13 @@ class HomeViewModel
                             )
                             recordShownFeed(trace)
                         }
-                        enrichVisibleChannelMetadata(spacedMix)?.let {
-                            persistentHomeFeedCache.saveLastFeed(it)
-                        }
+                        // Its own job: feedJob ends once the feed is on screen, so a pull never waits on these lookups.
+                        visibleMetadataJob =
+                            viewModelScope.launch(PerformanceDispatcher.networkIO) {
+                                enrichVisibleChannelMetadata(spacedMix)?.let {
+                                    persistentHomeFeedCache.saveLastFeed(it)
+                                }
+                            }
 
                         // Enrich (post-paint) with related neighbours of saved/watched videos.
                         enrichFeedWithSavedInterest(userSubs, taste)
@@ -811,14 +862,8 @@ class HomeViewModel
                     } catch (cancellation: CancellationException) {
                         throw cancellation
                     } catch (e: Exception) {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                isRefreshing = false,
-                                error = appContext.getString(R.string.error_failed_to_load_feed),
-                            )
-                        }
-                        settleWithoutFeed()
+                        Log.w(TAG, "Home feed load failed: ${e::class.simpleName}: ${e.message}")
+                        settleWithoutFeed(error = appContext.getString(R.string.error_failed_to_load_feed))
                     }
                 }
         }
@@ -869,6 +914,7 @@ class HomeViewModel
             currentQueryIndex = discoveryQueries.size
             if (wave2Queries.isNotEmpty()) {
                 val wave2FinalMixIds = finalMix.map { it.id }.toHashSet()
+                val generation = feedGeneration
                 wave2Job =
                     viewModelScope.launch(PerformanceDispatcher.networkIO) wave2@{
                         try {
@@ -936,6 +982,9 @@ class HomeViewModel
                                 Log.d(TAG, "Wave 2 merged ${wave2Ranked.size} extra candidates")
                             }
                         } catch (cancellation: CancellationException) {
+                            // Leaving Home cancelled it, not a reload: load-more asks them instead.
+                            // Any that finished come back from the page cache without a request.
+                            if (generation == feedGeneration) discoveryQueries.addAll(wave2Queries)
                             throw cancellation
                         } catch (error: Exception) {
                             Log.d(TAG, "Wave 2 failed: ${error.message}")
@@ -1102,7 +1151,15 @@ class HomeViewModel
             return seedIds.size
         }
 
-        private suspend fun loadNextPrefetchPage(generation: Int): Boolean {
+        /**
+         * One load-more attempt. Cards [held] from the run's earlier attempts start the page, and a
+         * page too small to show is handed back held unless this is the [lastAttempt].
+         */
+        private suspend fun loadNextPrefetchPage(
+            generation: Int,
+            held: HeldPage?,
+            lastAttempt: Boolean,
+        ): PrefetchAttempt {
             try {
                 val now = System.currentTimeMillis()
                 val userSubs = subscriptionScope().boosted
@@ -1112,16 +1169,17 @@ class HomeViewModel
                     _uiState.value.videos
                         .map { it.id }
                         .toHashSet()
-                val page = mutableListOf<Video>()
+                val page = held?.videos.orEmpty().toMutableList()
                 // Channels the viewer just scrolled past count as used, so a new page never repeats them.
                 val channelCounts =
-                    _uiState.value.videos
-                        .takeLast(RECENT_CHANNEL_WINDOW)
+                    (_uiState.value.videos.takeLast(RECENT_CHANNEL_WINDOW) + page)
                         .filter { it.channelId.isNotBlank() }
                         .associateTo(HashMap()) { it.channelId to 1 }
                 val pageIds = HashSet<String>(currentIds)
+                page.mapTo(pageIds) { it.id }
                 val relatedTo = HashMap<String, String>()
                 val queries = HashMap<String, String>()
+                val requestFailed = AtomicBoolean(false)
 
                 val reserveSearchIds = HashSet<String>()
 
@@ -1138,33 +1196,46 @@ class HomeViewModel
                         relatedTo,
                         queries,
                         userSubs,
-                    )
+                    ) + held?.origins.orEmpty()
+
+                suspend fun finish(): PrefetchAttempt =
+                    when (val outcome = loadMoreOutcome(page.size, lastAttempt, requestFailed.get())) {
+                        LoadMoreOutcome.APPENDED -> {
+                            val appended = appendLoadMorePage(page, generation, origins())
+                            appended?.let { persistentHomeFeedCache.saveLastFeed(it) }
+                            PrefetchAttempt(if (appended != null) LoadMoreOutcome.APPENDED else LoadMoreOutcome.EXHAUSTED)
+                        }
+
+                        LoadMoreOutcome.HELD -> {
+                            PrefetchAttempt(outcome, HeldPage(page.toList(), origins()))
+                        }
+
+                        else -> {
+                            PrefetchAttempt(outcome)
+                        }
+                    }
 
                 fillPageFromChannelMemory(page, channelCounts, pageIds, userSubs, now)
 
                 val reserveAdded = fillPageFromReserve(page, channelCounts, pageIds, userSubs, now, reserveSearchIds)
                 reserveSearchIds.forEach { id -> searchPages.queryOf(id)?.let { queries[id] = it } }
                 if (page.size >= MIN_PAGE_SIZE) {
-                    val appended = appendLoadMorePage(page, generation, origins())
-                    appended?.let { persistentHomeFeedCache.saveLastFeed(it) }
                     Log.d(TAG, "Load-more filled from reserve: +$reserveAdded")
-                    return appended != null
+                    return finish()
                 }
 
                 val graphSeedCount = fillPageFromRelatedGraph(page, channelCounts, pageIds, now, userSubs, taste, brain, relatedTo)
                 if (page.size >= MIN_PAGE_SIZE) {
-                    val appended = appendLoadMorePage(page, generation, origins())
-                    appended?.let { persistentHomeFeedCache.saveLastFeed(it) }
                     Log.d(TAG, "Load-more filled from reserve/graph: reserve=$reserveAdded graphSeeds=$graphSeedCount")
-                    return appended != null
+                    return finish()
                 }
 
                 if (currentQueryIndex >= discoveryQueries.size) {
-                    discoveryQueries.addAll(FlowNeuroEngine.generateDiscoveryQueries())
+                    discoveryQueries.addAll(unaskedQueries(FlowNeuroEngine.generateDiscoveryQueries(), discoveryQueries))
                 }
 
                 // The next page of a search already filling Home takes one of the two searches.
-                val continued = nextSearchPage { searchPages.nextPageOfProductive(_uiState.value.origins) }
+                val continued = nextSearchPage(requestFailed) { searchPages.nextPageOfProductive(_uiState.value.origins) }
                 val queryA = discoveryQueries.getOrNull(currentQueryIndex++)
                 val queryB = if (continued == null) discoveryQueries.getOrNull(currentQueryIndex++) else null
 
@@ -1177,23 +1248,24 @@ class HomeViewModel
                                 .map { query ->
                                     async {
                                         query to (
-                                            withTimeoutOrNull(6_000L) {
+                                            withTimeoutOrNull(SEARCH_TIMEOUT_MS) {
                                                 try {
                                                     feedSources.searchDiscovery(query, searchPages::firstPage)
                                                 } catch (cancellation: CancellationException) {
                                                     throw cancellation
                                                 } catch (error: Exception) {
                                                     Log.d(TAG, "Prefetch query failed for $query: ${error.message}")
+                                                    requestFailed.set(true)
                                                     emptyList()
                                                 }
-                                            } ?: emptyList()
+                                            } ?: emptyList<Video>().also { requestFailed.set(true) }
                                         )
                                     }
                                 }.awaitAll()
                         }
                 queries += queriesById(searches)
                 val rawVideos = searches.flatMap { it.second }
-                if (!homePrefetchQueue.isCurrent(generation)) return false
+                if (!homePrefetchQueue.isCurrent(generation)) return PrefetchAttempt(LoadMoreOutcome.EXHAUSTED)
 
                 // Extract shorts for shelf — rank through FlowNeuro
                 val moreShorts =
@@ -1243,7 +1315,7 @@ class HomeViewModel
                 // Still short: the next pages of searches already made, before any wider related pass (#907).
                 repeat(DEEPER_SEARCH_PAGES) {
                     if (page.size >= MIN_PAGE_SIZE || !homePrefetchQueue.isCurrent(generation)) return@repeat
-                    val (query, deeper) = nextSearchPage { searchPages.nextPageOfAny() } ?: return@repeat
+                    val (query, deeper) = nextSearchPage(requestFailed) { searchPages.nextPageOfAny() } ?: return@repeat
                     queries += queriesById(listOf(query to deeper))
                     addDiscovery(deeper)
                 }
@@ -1312,31 +1384,34 @@ class HomeViewModel
                     }
                 }
 
-                if (page.isNotEmpty()) {
-                    val appended = appendLoadMorePage(page, generation, origins())
-                    appended?.let { persistentHomeFeedCache.saveLastFeed(it) }
-                    return appended != null
-                }
-                return false
+                return finish()
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (error: Exception) {
                 Log.d(TAG, "Home prefetch page failed: ${error.message}")
-                return false
+                return PrefetchAttempt(LoadMoreOutcome.FAILED)
             }
         }
 
-        private suspend fun nextSearchPage(fetch: suspend () -> Pair<String, List<Video>>?): Pair<String, List<Video>>? =
-            withTimeoutOrNull(6_000L) {
-                try {
-                    fetch()
-                } catch (cancellation: CancellationException) {
-                    throw cancellation
-                } catch (error: Exception) {
-                    Log.d(TAG, "Next search page failed: ${error.message}")
-                    null
+        /** The next page [fetch] picks, or null when there is none or its request failed, which [failed] records. */
+        private suspend fun nextSearchPage(
+            failed: AtomicBoolean,
+            fetch: suspend () -> Pair<String, List<Video>>?,
+        ): Pair<String, List<Video>>? {
+            val attempt =
+                withTimeoutOrNull(SEARCH_TIMEOUT_MS) {
+                    try {
+                        Result.success(fetch())
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (error: Exception) {
+                        Log.d(TAG, "Next search page failed: ${error.message}")
+                        Result.failure(error)
+                    }
                 }
-            }
+            if (attempt == null || attempt.isFailure) failed.set(true)
+            return attempt?.getOrNull()
+        }
 
         private suspend fun appendLoadMorePage(
             page: List<Video>,
@@ -1376,6 +1451,7 @@ class HomeViewModel
                 )
             }
             if (appendedPage.isEmpty()) return null
+            Log.d(TAG, "Load-more appended ${appendedPage.size} cards")
             return enrichVisibleChannelMetadata(appendedPage) ?: updatedSnapshot
         }
 
@@ -1440,22 +1516,37 @@ class HomeViewModel
         /**
          * Nothing to fall back to: the trending kiosk this used to load is retired, and the charts
          * that replaced it belong on Explore, not mixed into the feed. The screen settles empty and
-         * offers a refresh instead of filling itself with unrelated content.
+         * offers a refresh instead of filling itself with unrelated content. A feed already on
+         * screen stays, still loading more, and the viewer is told the refresh failed (#1317).
          */
-        private fun settleWithoutFeed() {
+        private fun settleWithoutFeed(error: String?) {
+            var keptFeed = false
             _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isRefreshing = false,
-                    hasMorePages = false,
-                    isFlowFeed = false,
-                )
+                keptFeed = it.isFlowFeed && it.videos.isNotEmpty()
+                if (keptFeed) {
+                    it.copy(isLoading = false, isRefreshing = false)
+                } else {
+                    it.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        hasMorePages = false,
+                        isFlowFeed = false,
+                        error = error,
+                    )
+                }
             }
+            if (keptFeed) refreshFailureEvents.trySend(Unit)
         }
 
-        /** The viewer's refresh. Ignored while a load is running, so repeated taps cannot stack pipelines (#1171). */
+        /**
+         * The viewer's refresh. A load already running is the refresh: the indicator stays until it
+         * lands, and repeated pulls cannot stack pipelines (#1171).
+         */
         fun refreshFeed() {
-            if (feedJob?.isActive == true) return
+            if (feedJob?.isActive == true) {
+                _uiState.update { it.copy(isRefreshing = true) }
+                return
+            }
             reloadFeed()
         }
 

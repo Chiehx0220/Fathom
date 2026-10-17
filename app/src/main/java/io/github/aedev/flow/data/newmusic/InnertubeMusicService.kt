@@ -4,6 +4,7 @@ import io.github.aedev.flow.data.music.model.ArtistDetails
 import io.github.aedev.flow.data.music.model.MusicArtist
 import io.github.aedev.flow.data.music.model.MusicCharts
 import io.github.aedev.flow.data.music.model.MusicPlaylist
+import io.github.aedev.flow.data.music.model.MusicTextLink
 import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.data.music.model.PlaylistDetails
 import io.github.aedev.flow.data.music.model.RelatedMusic
@@ -328,6 +329,7 @@ object InnertubeMusicService {
                 subscriberCount = parseCount(page.subscriberCountText),
                 monthlyListenersText = page.monthlyListenersText,
                 description = page.description ?: "",
+                descriptionLinks = page.descriptionLinks.map { MusicTextLink(it.start, it.end, it.url) },
                 topTracks = tracks(ArtistSectionKind.TOP_SONGS),
                 albums = releases(ArtistSectionKind.ALBUMS),
                 singles = releases(ArtistSectionKind.SINGLES),
@@ -350,7 +352,29 @@ object InnertubeMusicService {
                 singlesParams = singles?.moreEndpoint?.params,
                 topTracksBrowseId = topSongs?.moreEndpoint?.browseId,
                 topTracksParams = topSongs?.moreEndpoint?.params,
+                shufflePlaylistId = artistItem.shuffleEndpoint?.playlistId,
+                shuffleParams = artistItem.shuffleEndpoint?.params,
+                radioPlaylistId = artistItem.radioEndpoint?.playlistId,
+                radioParams = artistItem.radioEndpoint?.params,
             )
+        }
+
+    /**
+     * The songs of a watch playlist such as an artist's shuffle or mix. Sent without a video id:
+     * with one, `next` answers these playlists with an empty queue.
+     */
+    suspend fun fetchWatchPlaylist(
+        playlistId: String,
+        params: String?,
+    ): List<MusicTrack> =
+        withContext(Dispatchers.IO) {
+            YouTube
+                .next(WatchEndpoint(playlistId = playlistId, params = params))
+                .getOrNull()
+                ?.items
+                .orEmpty()
+                .mapNotNull { convertToMusicTrack(it) }
+                .distinctBy { it.videoId }
         }
 
     /**

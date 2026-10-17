@@ -132,6 +132,64 @@ class SubscriptionRefreshPlannerTest {
     }
 
     @Test
+    fun `a group plan covers only its channels and is never full`() {
+        val plan =
+            SubscriptionRefreshPlanner.planForGroup(
+                listOf(subscription("a"), subscription("b"), subscription("c")),
+                groupChannelIds = setOf("a", "b"),
+                now = now,
+                force = true,
+            )
+
+        assertEquals(listOf("a", "b"), plan.channelIds)
+        assertFalse(plan.isFullRefresh)
+        assertEquals(setOf("a", "b"), plan.scope)
+    }
+
+    @Test
+    fun `a group whose channels are all stale is still not full`() {
+        val plan =
+            SubscriptionRefreshPlanner.planForGroup(
+                listOf(subscription("a", lastFeedFetchAt = 0L), subscription("b")),
+                groupChannelIds = setOf("a"),
+                now = now,
+            )
+
+        assertEquals(listOf("a"), plan.channelIds)
+        assertFalse(plan.isFullRefresh)
+    }
+
+    @Test
+    fun `a fresh group fetches nothing`() {
+        val plan =
+            SubscriptionRefreshPlanner.planForGroup(listOf(subscription("a")), groupChannelIds = setOf("a"), now = now)
+
+        assertTrue(plan.isEmpty)
+    }
+
+    @Test
+    fun `a small group reads every channel's tabs and a large one does not`() {
+        val small = (1..SubscriptionRefreshPlanner.DEEP_READ_MAX_CHANNELS).map { subscription("s$it") }
+        val large = (1..SubscriptionRefreshPlanner.DEEP_READ_MAX_CHANNELS + 1).map { subscription("l$it") }
+
+        val smallPlan =
+            SubscriptionRefreshPlanner.planForGroup(small, small.mapTo(HashSet()) { it.channelId }, now, force = true)
+        val largePlan =
+            SubscriptionRefreshPlanner.planForGroup(large, large.mapTo(HashSet()) { it.channelId }, now, force = true)
+
+        assertTrue(smallPlan.readAllTabs)
+        assertFalse(largePlan.readAllTabs)
+    }
+
+    @Test
+    fun `a plan for every subscription reads tabs only where RSS falls short`() {
+        val plan = SubscriptionRefreshPlanner.plan(listOf(subscription("a")), now, force = true)
+
+        assertFalse(plan.readAllTabs)
+        assertEquals(null, plan.scope)
+    }
+
+    @Test
     fun `a Bilibili channel carries its subscribed name and avatar`() {
         val bilibili = subscription("455557356", lastFeedFetchAt = 0L).copy(channelThumbnail = "https://i0.hdslb.com/a.jpg", serviceId = 5)
         val youtube = subscription("UCabc", lastFeedFetchAt = 0L)

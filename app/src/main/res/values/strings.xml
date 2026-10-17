@@ -14,9 +14,16 @@
     <string name="no_subscriptions_yet">No Subscriptions Yet</string>
     <string name="empty_subscriptions_body">Subscribe to channels to see their latest videos here</string>
     <string name="home_refresh_feed">Refresh Feed</string>
+    <string name="home_load_more_failed">Couldn\'t load more videos</string>
+    <string name="home_load_more_failed_body">Check your connection</string>
+    <string name="home_refresh_failed">Couldn\'t refresh your feed</string>
     <plurals name="subscriptions_refresh_progress_template">
         <item quantity="one">Refreshing %1$d of %2$d channel</item>
         <item quantity="other">Refreshing %1$d of %2$d channels</item>
+    </plurals>
+    <plurals name="subscriptions_refresh_checks_template">
+        <item quantity="one">Checking %1$d of %2$d channel for Shorts and live</item>
+        <item quantity="other">Checking %1$d of %2$d channels for Shorts and live</item>
     </plurals>
     <plurals name="subscriptions_last_refreshed_template">
         <item quantity="one">Last refreshed %1$s - %2$d video checked</item>
@@ -131,8 +138,14 @@
     <string name="lyrics_show_romanization_summary">Show lyrics in other scripts in Latin letters too</string>
     <string name="lyrics_auto_romanize">Romanize on this device</string>
     <string name="lyrics_auto_romanize_summary">When the lyrics source has no romanization</string>
+    <string name="lyrics_keep_screen_on">Keep screen on</string>
+    <string name="lyrics_keep_screen_on_summary">While lyrics are showing and music plays</string>
     <string name="player_appearance_artwork_control_colors_title">Artwork colors on controls</string>
     <string name="player_appearance_artwork_control_colors_subtitle">Tint the buttons and seek bar from the cover</string>
+    <string name="player_appearance_follow_light_theme_title">Light in light theme</string>
+    <string name="player_appearance_follow_light_theme_subtitle">Artwork backgrounds turn light</string>
+    <string name="player_appearance_sleep_timer_button_title">Sleep timer button</string>
+    <string name="player_appearance_sleep_timer_button_subtitle">Show it next to the queue button</string>
     <string name="player_appearance_plain_control_colors_title">Control colors</string>
     <string name="player_appearance_plain_control_colors_monochrome">Black and white</string>
     <string name="player_appearance_plain_control_colors_app">App theme</string>
@@ -500,6 +513,13 @@
     <string name="search_filter_group_upload_date">Upload date</string>
     <string name="search_filter_group_features">Features</string>
     <string name="search_filter_group_sort">Sort by</string>
+    <string name="search_filter_group_watched">Watched</string>
+    <string name="search_filter_recently_uploaded">Recently uploaded</string>
+    <string name="search_filter_watch_any">Watched or not</string>
+    <string name="search_filter_unwatched">Unwatched</string>
+    <string name="search_filter_watched">Watched</string>
+    <string name="search_watch_empty_watched">No watched videos here</string>
+    <string name="search_watch_empty_unwatched">No unwatched videos here</string>
     <string name="search_feature_hd">HD</string>
     <string name="search_feature_4k">4K</string>
     <string name="search_feature_hdr">HDR</string>
@@ -672,6 +692,8 @@
     <string name="deep_flow_scrobble_title">Scrobble during Deep Flow</string>
     <string name="taste_learning_paused">Deep Flow is on, learning is paused</string>
     <string name="deep_flow_scrobble_subtitle">Keep sending listens to Last.fm, Libre.fm and ListenBrainz</string>
+    <string name="deep_flow_on_search_title">Show on search</string>
+    <string name="deep_flow_on_search_subtitle">A Deep Flow switch above recent searches</string>
     <string name="deep_flow_dialog_title">Pause Duration</string>
     <string name="deep_flow_dialog_body">How long should learning stay paused?</string>
     <string name="deep_flow_enabled_message">Deep Flow enabled</string>
@@ -1783,7 +1805,8 @@
     <!-- Donations Screen -->
     <string name="support_donations_title">Support &amp; Donations</string>
     <string name="support_flow_dev_title">Support Flow Development</string>
-    <string name="support_flow_dev_desc">If Flow is useful to you, you can support it on Patreon or with crypto below. Thank you!</string>
+    <string name="support_flow_dev_desc">If Flow is useful to you, you can support it on Open Collective, Patreon or with crypto below. Thank you!</string>
+    <string name="support_flow_open_collective">Support Flow on Open Collective</string>
     <string name="support_flow_patreon">Support Flow on Patreon</string>
     <string name="thank_you_support_message">Thank you for your support! ❤️</string>
     <string name="address_copied_toast">Address copied to clipboard</string>
@@ -1791,8 +1814,9 @@
     <!-- One-time support prompt -->
     <string name="donation_prompt_title">Enjoying Flow?</string>
     <string name="donation_prompt_message">Flow is free, open source and ad-free. If it earned a spot on your phone, a little support keeps it going.</string>
+    <string name="donation_method_open_collective" translatable="false">Open Collective</string>
     <string name="donation_method_patreon" translatable="false">Patreon</string>
-    <string name="donation_prompt_methods">Patreon · Bitcoin · Ethereum · Solana · USDT · Monero</string>
+    <string name="donation_prompt_methods">Open Collective · Patreon · Bitcoin · Ethereum · Solana · USDT · Monero</string>
     <string name="donation_prompt_support">Support development</string>
     <string name="donation_prompt_later">Maybe later</string>
     <string name="donation_prompt_never">Don\'t show again</string>
@@ -2162,6 +2186,8 @@
     <string name="daily_discover_for_fans_of">For fans of %1$s</string>
     <string name="section_recommended">Recommended</string>
     <string name="section_recently_played">Recently played</string>
+    <string name="auto_tab_for_you">For you</string>
+    <string name="auto_tab_queue">Queue</string>
     <string name="section_music_videos">Music videos</string>
     <string name="section_music_videos_for_you">Music videos for you</string>
     <string name="section_live_performances">Live performances</string>
@@ -3946,6 +3972,7 @@
     <string name="taste_hidden_artists">Artists</string>
     <string name="taste_unblock">Unblock</string>
     <string name="taste_unblock_item">Unblock %1$s</string>
+    <string name="taste_unknown_channel">Unknown channel</string>
     <string name="taste_data_header">Your data</string>
     <string name="taste_export_video">Export video profile</string>
     <string name="taste_import_video">Import video profile</string>
@@ -4268,6 +4295,7 @@
     <string name="settings_music_home_title">Music home</string>
     <string name="settings_music_home_summary">Choose the sections the music home shows</string>
     <string name="settings_music_home_sections">Sections</string>
+    <string name="settings_library_summary">Choose the sections Library shows</string>
     <string name="onboarding_step_artists">Artists</string>
     <string name="onboarding_artists_title">Pick some artists</string>
     <string name="onboarding_artists_subtitle">Your music picks start from them. Skip it if you like.</string>
