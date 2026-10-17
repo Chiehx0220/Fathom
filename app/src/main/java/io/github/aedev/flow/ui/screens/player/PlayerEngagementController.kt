@@ -33,10 +33,9 @@ internal class PlayerEngagementController(
         channelId: String,
         channelName: String,
         channelThumbnail: String,
-        serviceId: Int = 0,
     ) {
         scope.launch {
-            engagement.toggleSubscription(channelId, channelName, channelThumbnail, serviceId) { isSubscribed ->
+            engagement.toggleSubscription(channelId, channelName, channelThumbnail) { isSubscribed ->
                 state.value = state.value.copy(isSubscribed = isSubscribed)
             }
         }

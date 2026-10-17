@@ -40,7 +40,7 @@ class NonYouTubeResolver
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Log.e(TAG, "Native extraction failed for $videoId (service ${request.serviceId})", e)
+                    Log.e(TAG, "Native extraction failed for $videoId", e)
                     currentCoroutineContext().ensureActive()
                     if (!isCurrent()) return
                     // No premiere lookup: that is a YouTube call and means nothing for these ids.

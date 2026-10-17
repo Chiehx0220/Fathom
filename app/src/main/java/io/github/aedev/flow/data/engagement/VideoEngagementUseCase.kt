@@ -1,6 +1,7 @@
 package io.github.aedev.flow.data.engagement
 
 import android.util.Log
+import io.github.aedev.flow.bilibili.serviceIdOfChannel
 import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.local.LikedVideoInfo
 import io.github.aedev.flow.data.local.LikedVideosRepository
@@ -79,7 +80,6 @@ class VideoEngagementUseCase
             channelId: String,
             channelName: String,
             channelThumbnail: String,
-            serviceId: Int = 0,
             onApplied: (Boolean) -> Unit = {},
         ) {
             val isSubscribed = subscriptionRepository.isSubscribed(channelId).first()
@@ -88,7 +88,6 @@ class VideoEngagementUseCase
                 channelName = channelName,
                 channelThumbnail = channelThumbnail,
                 subscribed = !isSubscribed,
-                serviceId = serviceId,
                 onApplied = onApplied,
             )
         }
@@ -102,7 +101,6 @@ class VideoEngagementUseCase
             channelName: String,
             channelThumbnail: String,
             subscribed: Boolean,
-            serviceId: Int = 0,
             onApplied: (Boolean) -> Unit = {},
         ) {
             if (subscribed) {
@@ -111,7 +109,7 @@ class VideoEngagementUseCase
                         channelId = channelId,
                         channelName = channelName,
                         channelThumbnail = channelThumbnail,
-                        serviceId = serviceId,
+                        serviceId = serviceIdOfChannel(channelId),
                     ),
                 )
             } else {

@@ -54,5 +54,4 @@ fun StreamInfo.toVideo(
         channelThumbnailUrl = channelAvatarUrl ?: base.channelThumbnailUrl,
         timestamp = timestamp,
         isMusic = isMusic,
-        serviceId = serviceId,
     )

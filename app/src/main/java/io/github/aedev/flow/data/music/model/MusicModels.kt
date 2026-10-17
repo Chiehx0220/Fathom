@@ -1,5 +1,6 @@
 package io.github.aedev.flow.data.music.model
 
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.serialization.Serializable
@@ -36,7 +37,6 @@ fun MusicTrack.toVideo(): Video =
         duration = duration,
         viewCount = views,
         uploadDate = "",
-        serviceId = serviceId,
     )
 
 @Serializable
@@ -56,8 +56,8 @@ data class MusicTrack(
     val albumId: String? = null,
     val artists: List<MusicArtist> = emptyList(),
     val itemType: MusicItemType = MusicItemType.SONG,
-    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
-    val serviceId: Int = 0,
+    /** The service the id belongs to (see serviceIdOfVideo). */
+    val serviceId: Int = serviceIdOfVideo(videoId),
 ) {
     val highResThumbnailUrl: String
         get() = ThumbnailUrlResolver.resolveMusicThumbnail(videoId, thumbnailUrl, 1080)

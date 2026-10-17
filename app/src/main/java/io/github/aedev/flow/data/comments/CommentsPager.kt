@@ -1,7 +1,7 @@
 package io.github.aedev.flow.data.comments
 
 import android.util.Log
-import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.distinctByNonBlankKey
 import io.github.aedev.flow.data.model.mergeDistinctByNonBlankKey
@@ -94,10 +94,9 @@ internal class CommentsPager(
     private var prefetchJob: Job? = null
     private var loadingVideoId: String? = null
     private var activeSortToken: String? = null
-    private var serviceId: Int = 0
     private val repliesInFlight = mutableSetOf<String>()
 
-    private fun source(): CommentsSource = if (serviceId == BILIBILI_SERVICE_ID) bilibili ?: youtube else youtube
+    private fun source(videoId: String): CommentsSource = if (BilibiliVideoId.isBilibili(videoId)) bilibili ?: youtube else youtube
 
     /** Empties the list, for a video with no comments to fetch and for a player being torn down. */
     fun clear() {
@@ -117,12 +116,9 @@ internal class CommentsPager(
         _totalCount.value = null
     }
 
-    fun load(
-        videoId: String,
-        serviceId: Int = 0,
-    ) {
+    fun load(videoId: String) {
         if (loadingVideoId == videoId && activeSortToken == null && loadJob?.isActive == true) return
-        startLoad(videoId, sortToken = null, serviceId = serviceId)
+        startLoad(videoId, sortToken = null)
     }
 
     /** Reloads the section in the order [sort] names, which is a different continuation entirely. */
@@ -131,15 +127,13 @@ internal class CommentsPager(
         sort: VideoCommentSort,
     ) {
         if (activeSortToken == sort.token && loadJob?.isActive == true) return
-        startLoad(videoId, sortToken = sort.token, serviceId = serviceId)
+        startLoad(videoId, sortToken = sort.token)
     }
 
     private fun startLoad(
         videoId: String,
         sortToken: String?,
-        serviceId: Int = this.serviceId,
     ) {
-        this.serviceId = serviceId
         loadJob?.cancel()
         prefetchJob?.cancel()
         // A re-sort keeps the header; a page without a count must not inherit the last video's (#1111).
@@ -168,7 +162,7 @@ internal class CommentsPager(
                         }
                     }
                     if (!isCurrentVideo(videoId)) return@launch
-                    val page = fetch { source().first(videoId, sortToken) } ?: return@launch
+                    val page = fetch { source(videoId).first(videoId, sortToken) } ?: return@launch
                     if (!isCurrentVideo(videoId)) return@launch
                     _comments.value = page.comments.distinctByNonBlankKey(Comment::id)
                     next = page
@@ -234,7 +228,7 @@ internal class CommentsPager(
         val page =
             when {
                 continuation != null -> {
-                    source().more(videoId, continuation)
+                    source(videoId).more(videoId, continuation)
                 }
 
                 legacyPage != null -> {
@@ -275,7 +269,7 @@ internal class CommentsPager(
             try {
                 val (replies, nextContinuation, nextLegacyPage) =
                     if (continuation != null) {
-                        val page = source().replies(videoId, comment.id, continuation)
+                        val page = source(videoId).replies(videoId, comment.id, continuation)
                         Triple(page.comments, page.continuation, null)
                     } else {
                         val url = "https://www.youtube.com/watch?v=$videoId"

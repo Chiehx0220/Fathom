@@ -262,12 +262,7 @@ private fun channelRow(
                 } else {
                     {
                         val toggle = {
-                            viewModel.toggleSubscription(
-                                video.channelId,
-                                video.channelName,
-                                video.channelThumbnailUrl,
-                                video.serviceId,
-                            )
+                            viewModel.toggleSubscription(video.channelId, video.channelName, video.channelThumbnailUrl)
                         }
                         FlowSubscribeButton(
                             isSubscribed = video.channelId in subscribedChannelIds,

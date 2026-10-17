@@ -113,11 +113,10 @@ class QuickActionsViewModel
             channelId: String,
             channelName: String,
             channelThumbnail: String,
-            serviceId: Int = 0,
         ) {
             viewModelScope.launch {
                 val subscribe = !engagement.subscriptionState(channelId).first()
-                setSubscription(channelId, channelName, channelThumbnail, subscribe, announce = true, serviceId = serviceId)
+                setSubscription(channelId, channelName, channelThumbnail, subscribe, announce = true)
             }
         }
 
@@ -127,7 +126,6 @@ class QuickActionsViewModel
             channelThumbnail: String,
             subscribe: Boolean,
             announce: Boolean,
-            serviceId: Int = 0,
         ) {
             runAction {
                 val avatar =
@@ -142,7 +140,6 @@ class QuickActionsViewModel
                     channelName = channelName,
                     channelThumbnail = avatar,
                     subscribed = subscribe,
-                    serviceId = serviceId,
                 ) { subscribed ->
                     _subscribedChannelIds.update { if (subscribed) it + channelId else it - channelId }
                 }
@@ -150,7 +147,7 @@ class QuickActionsViewModel
                     emit(
                         text = if (subscribe) R.string.toast_subscribed_to else R.string.toast_unsubscribed_from,
                         arg = channelName,
-                        undo = QuickActionUndo.Subscription(channelId, channelName, avatar, subscribed = !subscribe, serviceId = serviceId),
+                        undo = QuickActionUndo.Subscription(channelId, channelName, avatar, subscribed = !subscribe),
                     )
                 }
             }
@@ -274,14 +271,7 @@ class QuickActionsViewModel
                         }
 
                         is QuickActionUndo.Subscription -> {
-                            setSubscription(
-                                undo.channelId,
-                                undo.channelName,
-                                undo.channelThumbnail,
-                                undo.subscribed,
-                                announce = false,
-                                serviceId = undo.serviceId,
-                            )
+                            setSubscription(undo.channelId, undo.channelName, undo.channelThumbnail, undo.subscribed, announce = false)
                         }
 
                         is QuickActionUndo.PlaylistRemoval -> {

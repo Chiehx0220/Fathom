@@ -212,7 +212,7 @@ class QuickActionsMessagesTest {
             viewModel.toggleSubscription("UCorbital", "Orbital Notes", "https://yt3.ggpht.com/a")
             testDispatcher.scheduler.advanceUntilIdle()
 
-            coVerify { engagement.applySubscription("UCorbital", "Orbital Notes", any(), false, any(), any()) }
+            coVerify { engagement.applySubscription("UCorbital", "Orbital Notes", any(), false, any()) }
         }
 
     @Test

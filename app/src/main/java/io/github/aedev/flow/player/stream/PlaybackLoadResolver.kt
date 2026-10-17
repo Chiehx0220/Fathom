@@ -89,7 +89,7 @@ class PlaybackLoadResolver
 
                 val innerTubeDeferred =
                     scope.async(networkDispatcher) {
-                        if (!InnerTubeVideoStreamExtractor.supportsService(request.serviceId)) return@async null
+                        if (!InnerTubeVideoStreamExtractor.supportsVideo(videoId)) return@async null
                         extractInnerTube(videoId, forceSabr = request.escalateToSabr)
                     }
 
@@ -146,7 +146,7 @@ class PlaybackLoadResolver
 
             // InnerTube is YouTube's own API; every other service resolves through its own native
             // client, which produces its own step type rather than an InnerTube result.
-            if (!InnerTubeVideoStreamExtractor.supportsService(request.serviceId)) {
+            if (!InnerTubeVideoStreamExtractor.supportsVideo(videoId)) {
                 nonYouTube.resolve(request, preferences, isCurrent, onStep)
                 return
             }

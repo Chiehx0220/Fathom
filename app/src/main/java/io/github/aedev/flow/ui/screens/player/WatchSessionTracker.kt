@@ -173,7 +173,6 @@ internal class WatchSessionTracker(
                 channelName = video.channelName,
                 channelId = video.channelId,
                 isShort = video.isShort,
-                serviceId = video.serviceId,
             )
         }
     }
@@ -188,7 +187,6 @@ internal class WatchSessionTracker(
         channelId: String,
         isShort: Boolean,
         isLocal: Boolean,
-        serviceId: Int = 0,
     ) {
         scope.launch {
             viewHistory.savePlaybackPosition(
@@ -201,7 +199,6 @@ internal class WatchSessionTracker(
                 channelId = channelId,
                 isShort = isShort,
                 isLocal = isLocal,
-                serviceId = serviceId,
             )
         }
         if (!isLocal && durationMs > 0) {
@@ -236,7 +233,6 @@ internal class WatchSessionTracker(
             channelName = video?.channelName.orEmpty(),
             channelId = video?.channelId.orEmpty(),
             isShort = video?.isShort == true,
-            serviceId = video?.serviceId ?: 0,
         )
     }
 

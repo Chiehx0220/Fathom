@@ -114,7 +114,6 @@ class HomeFeedSources
                         timestamp = it.likedAt,
                         durationSec = 0,
                         percentWatched = 0.0,
-                        serviceId = it.serviceId,
                     )
                 }
             }.getOrElse { emptyList() }
@@ -131,7 +130,6 @@ class HomeFeedSources
                         timestamp = it.timestamp,
                         durationSec = it.duration,
                         percentWatched = 0.0,
-                        serviceId = it.serviceId,
                     )
                 }
             }.getOrElse { emptyList() }
@@ -157,8 +155,7 @@ class HomeFeedSources
         internal suspend fun relatedVideos(
             seedId: String,
             filters: suspend () -> HomeFeedCacheFilters,
-            serviceId: Int = 0,
-        ): List<Video> = fetchRelatedVideos(seedId, serviceId, filters)
+        ): List<Video> = fetchRelatedVideos(seedId, filters)
 
         /**
          * Lets the related lists of up to two recent uploads of followed channels, each used once, teach
@@ -181,14 +178,13 @@ class HomeFeedSources
                 .take(FOLLOWED_SOURCES_PER_LOAD)
                 .toList()
                 .forEach { upload ->
-                    val related = fetchRelatedVideos(upload.id, upload.serviceId, filters)
+                    val related = fetchRelatedVideos(upload.id, filters)
                     if (related.isNotEmpty()) neuroEngine.noteRelatedOfFollowed(upload, related)
                 }
         }
 
         private suspend fun fetchRelatedVideos(
             seedId: String,
-            serviceId: Int,
             filters: suspend () -> HomeFeedCacheFilters,
         ): List<Video> {
             val ts = System.currentTimeMillis()
@@ -206,7 +202,7 @@ class HomeFeedSources
             return (
                 relatedSemaphore.withPermit {
                     withTimeoutOrNull(RELATED_FETCH_TIMEOUT_MS) {
-                        if (serviceIdOfVideo(seedId, serviceId) == BILIBILI_SERVICE_ID) {
+                        if (serviceIdOfVideo(seedId) == BILIBILI_SERVICE_ID) {
                             sources.forService(BILIBILI_SERVICE_ID)?.related(seedId).orEmpty()
                         } else {
                             repository.getRelatedCandidates(seedId)
@@ -244,12 +240,7 @@ class HomeFeedSources
                         .map { seedId ->
                             async {
                                 val seed = seedMetadata[seedId]
-                                val videos =
-                                    fetchRelatedVideos(
-                                        seedId,
-                                        seed?.serviceId ?: 0,
-                                        filters,
-                                    )
+                                val videos = fetchRelatedVideos(seedId, filters)
                                 if (seed != null && videos.isNotEmpty()) neuroEngine.noteRelatedOfWatched(seed, videos)
                                 val seedScore = seed?.let { GraphSeedSelector.scoreSeed(it, now) } ?: 0.0
                                 val seedCluster = seed?.let { GraphSeedSelector.clusterKey(it) } ?: "misc"
@@ -307,6 +298,5 @@ internal fun feedSeedInputs(
                 timestamp = now,
                 durationSec = video.duration,
                 percentWatched = 0.0,
-                serviceId = video.serviceId,
             )
         }.toList()

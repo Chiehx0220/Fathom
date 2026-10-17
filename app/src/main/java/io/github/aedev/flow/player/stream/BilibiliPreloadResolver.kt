@@ -55,7 +55,6 @@ internal object BilibiliPreloadResolver {
                 escalateToSabr = false,
                 resumePositionOverrideMs = null,
                 allowShorts = false,
-                serviceId = BILIBILI_SERVICE_ID,
             )
         // The same source the player screen loads through, so a preloaded video is the one playback would have built.
         val step =

@@ -94,7 +94,6 @@ class ViewHistory private constructor(
         // A device file's row stays local whichever caller writes it, or it would join the online
         // history, the engine's signals and sync under an id that names no YouTube video.
         isLocal: Boolean = LocalMediaIds.isLocal(videoId),
-        serviceId: Int = 0,
     ) {
         if (PlayerPreferences(context).isWatchHistorySavingBlocked()) return
 
@@ -112,7 +111,7 @@ class ViewHistory private constructor(
                 isMusic = isMusic,
                 isShort = isShort,
                 isLocal = isLocal,
-                serviceId = serviceIdOfVideo(videoId, serviceId),
+                serviceId = serviceIdOfVideo(videoId),
             ),
         )
     }
@@ -170,7 +169,6 @@ class ViewHistory private constructor(
         channelId: String = "",
         duration: Long = 0L,
         isShort: Boolean = false,
-        serviceId: Int = 0,
     ) {
         if (PlayerPreferences(context).isWatchHistorySavingBlocked()) return
 
@@ -194,7 +192,7 @@ class ViewHistory private constructor(
                 channelId = channelId.ifBlank { existing?.channelId.orEmpty() },
                 isMusic = false,
                 isShort = isShort,
-                serviceId = serviceIdOfVideo(videoId, serviceId),
+                serviceId = serviceIdOfVideo(videoId),
                 isLocal = LocalMediaIds.isLocal(videoId),
             ),
         )

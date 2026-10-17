@@ -2155,14 +2155,14 @@ class EnhancedPlayerManager private constructor() {
         context: Context,
     ): ResolvedStreamData? =
         coroutineScope {
-            if (!InnerTubeVideoStreamExtractor.supportsService(video.serviceId)) {
+            if (!InnerTubeVideoStreamExtractor.supportsVideo(video.id)) {
                 return@coroutineScope BilibiliPreloadResolver.resolveOrNull(video, context)
             }
             val extractionDeferred =
                 async(Dispatchers.IO) {
                     try {
                         if (!io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
-                                .supportsService(video.serviceId)
+                                .supportsVideo(video.id)
                         ) {
                             return@async null
                         }

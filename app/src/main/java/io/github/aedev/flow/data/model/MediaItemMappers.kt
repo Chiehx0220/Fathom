@@ -14,7 +14,6 @@ fun VideoHistoryEntry.toMusicTrack(): MusicTrack =
         thumbnailUrl = thumbnailUrl,
         duration = (duration / MILLIS_PER_SECOND).toInt(),
         channelId = channelId,
-        serviceId = serviceId,
     )
 
 fun VideoHistoryEntry.toVideo(): Video =
@@ -29,7 +28,6 @@ fun VideoHistoryEntry.toVideo(): Video =
         uploadDate = "",
         timestamp = timestamp,
         isShort = isShort,
-        serviceId = serviceId,
     )
 
 fun LikedVideoInfo.toMusicTrack(): MusicTrack =
@@ -38,7 +36,6 @@ fun LikedVideoInfo.toMusicTrack(): MusicTrack =
         title = title,
         artist = channelName,
         thumbnailUrl = thumbnail,
-        serviceId = serviceId,
         duration = durationSeconds,
         channelId = channelId.orEmpty(),
     )
@@ -54,6 +51,5 @@ fun LikedVideoInfo.toVideo(): Video =
         viewCount = -1L,
         uploadDate = "",
         timestamp = likedAt,
-        serviceId = serviceId,
         isMusic = isMusic,
     )

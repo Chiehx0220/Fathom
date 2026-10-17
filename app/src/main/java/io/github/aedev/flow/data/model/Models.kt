@@ -1,5 +1,7 @@
 package io.github.aedev.flow.data.model
 
+import io.github.aedev.flow.bilibili.serviceIdOfChannel
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import kotlinx.serialization.Serializable
 import org.schabi.newpipe.extractor.Page
 
@@ -49,8 +51,8 @@ data class Video(
     // Transient: when this video was added to the playlist currently being viewed. Not persisted
     // on the video row — populated only by playlist-scoped queries.
     val addedAtInPlaylist: Long? = null,
-    // org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube (default, keeps old data/call sites valid).
-    val serviceId: Int = 0,
+    // The service the id belongs to (see serviceIdOfVideo): YouTube unless the id has Bilibili's shape.
+    val serviceId: Int = serviceIdOfVideo(id),
 )
 
 data class Channel(
@@ -66,7 +68,7 @@ data class Channel(
     val isVerified: Boolean = false,
     // Full channel URL for navigation
     val url: String = "",
-    val serviceId: Int = 0,
+    val serviceId: Int = serviceIdOfChannel(id),
 )
 
 data class Playlist(

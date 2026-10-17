@@ -3,6 +3,7 @@ package io.github.aedev.flow.player.stream
 import android.net.Uri
 import android.util.Log
 import androidx.media3.common.util.UnstableApi
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.AttestationPlatform
@@ -127,6 +128,8 @@ object InnerTubeVideoStreamExtractor {
      * re-deriving the same service check.
      */
     fun supportsService(serviceId: Int): Boolean = serviceId.isYouTubeServiceId
+
+    fun supportsVideo(videoId: String): Boolean = supportsService(serviceIdOfVideo(videoId))
 
     /**
      * @param audioOnly the caller plays only [VideoExtractionResult.audioFormats], so a capped

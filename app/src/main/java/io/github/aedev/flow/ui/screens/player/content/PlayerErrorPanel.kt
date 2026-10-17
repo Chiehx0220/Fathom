@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.aedev.flow.R
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.player.error.PlayerDiagnostics
 
@@ -25,11 +26,10 @@ import io.github.aedev.flow.player.error.PlayerDiagnostics
 internal fun PlayerErrorPanel(
     errorHint: String?,
     videoId: String,
-    serviceId: Int,
     context: Context,
     onRetryClick: () -> Unit,
 ) {
-    val isYouTube = serviceId.isYouTubeServiceId
+    val isYouTube = serviceIdOfVideo(videoId).isYouTubeServiceId
     Surface(
         modifier =
             Modifier

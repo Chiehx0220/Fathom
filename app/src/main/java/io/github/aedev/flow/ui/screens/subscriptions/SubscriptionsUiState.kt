@@ -26,7 +26,6 @@ internal fun List<ChannelSubscription>.toSubscribedChannels(): List<Channel> =
             subscriberCount = 0L,
             isSubscribed = true,
             isMusic = sub.isMusic,
-            serviceId = sub.serviceId,
         )
     }
 

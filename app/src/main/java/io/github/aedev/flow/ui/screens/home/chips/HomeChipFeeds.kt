@@ -2,6 +2,7 @@ package io.github.aedev.flow.ui.screens.home.chips
 
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
@@ -328,18 +329,14 @@ class HomeChipFeeds
                     .flatten()
             }
 
-        private suspend fun related(
-            seedIds: List<String>,
-            inputs: List<GraphSeedInput>,
-        ): List<Video> {
+        private suspend fun related(seedIds: List<String>): List<Video> {
             val source = context.source()
-            val serviceOf = inputs.associate { it.id to it.serviceId }
             return coroutineScope {
                 seedIds
-                    .filter { source.allows(serviceOf[it] ?: 0) }
+                    .filter { source.allows(serviceIdOfVideo(it)) }
                     .map { id ->
                         async {
-                            runCatching { feedSources.relatedVideos(id, context.filters, serviceOf[id] ?: 0) }
+                            runCatching { feedSources.relatedVideos(id, context.filters) }
                                 .getOrDefault(emptyList())
                         }
                     }.awaitAll()
@@ -374,16 +371,15 @@ class HomeChipFeeds
             val storedClusters = FlowNeuroEngine.clusterKeys(stored)
             val pool =
                 search(interestQueries(interest)) +
-                    related(seeds, history) +
+                    related(seeds) +
                     stored.filter { storedClusters[it.id] in clusters }
             val outside = interest.category?.let { FlowNeuroEngine.outsideCategory(pool, it) }.orEmpty()
             return ranked(pool.filterNot { it.id in outside }).take(HomeChipParams.MAX_VIDEOS)
         }
 
         private suspend fun newToYou(): List<Video> {
-            val history = feedSources.historySeedInputs()
-            val strongSeeds = GraphSeedSelector.select(history, HomeChipParams.RELATED_SEEDS)
-            val pool = search(FlowNeuroEngine.explorationQueries(HomeChipParams.QUERIES_PER_INTEREST)) + related(strongSeeds, history)
+            val strongSeeds = GraphSeedSelector.select(feedSources.historySeedInputs(), HomeChipParams.RELATED_SEEDS)
+            val pool = search(FlowNeuroEngine.explorationQueries(HomeChipParams.QUERIES_PER_INTEREST)) + related(strongSeeds)
             val brain = FlowNeuroEngine.getBrainSnapshot()
             val known =
                 buildSet {
@@ -490,7 +486,7 @@ class HomeChipFeeds
                     .map { seed ->
                         async {
                             val next =
-                                runCatching { feedSources.relatedVideos(seed.video.id, context.filters, seed.video.serviceId) }
+                                runCatching { feedSources.relatedVideos(seed.video.id, context.filters) }
                                     .getOrDefault(emptyList())
                                     .filterValid()
                                     .filter { !it.isShort && it.id != seed.video.id && it.id !in disliked }

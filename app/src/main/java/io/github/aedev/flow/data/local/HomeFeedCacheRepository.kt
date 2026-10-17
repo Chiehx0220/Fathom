@@ -296,7 +296,6 @@ class HomeFeedCacheRepository(
                     isShort = isShort,
                     isUpcoming = isUpcoming,
                     commentCountText = commentCountText,
-                    serviceId = serviceId,
                 ),
             source = source,
             relatedSeedId = relatedSeedId,

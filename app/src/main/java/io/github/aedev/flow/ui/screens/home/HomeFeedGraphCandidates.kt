@@ -30,7 +30,6 @@ internal fun graphSeedInputsFromHistory(
                 durationSec = (it.duration / 1000L).coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
                 percentWatched = it.progressPercentage.toDouble(),
                 isShort = it.isShort,
-                serviceId = it.serviceId,
             )
         }
 

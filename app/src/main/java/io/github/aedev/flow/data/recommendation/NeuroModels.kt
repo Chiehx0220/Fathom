@@ -314,7 +314,6 @@ data class GraphSeedInput(
     val durationSec: Int,
     val percentWatched: Double,
     val isShort: Boolean = false,
-    val serviceId: Int = 0,
 )
 
 /** Where a reel seed comes from; the weights live in [ShortsSeedSelector]. */

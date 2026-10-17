@@ -6,8 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.aedev.flow.bilibili.serviceIdOfChannel
-import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.engagement.FeedInvalidationBus
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
 import io.github.aedev.flow.data.local.*
@@ -477,7 +475,6 @@ class VideoPlayerViewModel
             channelName: String = "",
             channelId: String = "",
             isShort: Boolean = false,
-            serviceId: Int = serviceIdOfVideo(videoId),
         ) {
             if (!positionBelongsTo(videoId, playerManager.playerState.value.currentVideoId)) return
             watchSessions.savePlaybackPosition(
@@ -490,7 +487,6 @@ class VideoPlayerViewModel
                 channelId = channelId,
                 isShort = isShort,
                 isLocal = isLocalMediaId(videoId),
-                serviceId = serviceId,
             )
             viewModelScope.launch { watchLaterCleanup.onProgress(videoId, position, duration) }
         }
@@ -516,12 +512,7 @@ class VideoPlayerViewModel
             channelId: String,
             channelName: String,
             channelThumbnail: String,
-        ) = engagementState.toggleSubscription(
-            channelId,
-            channelName,
-            channelThumbnail,
-            serviceIdOfChannel(channelId),
-        )
+        ) = engagementState.toggleSubscription(channelId, channelName, channelThumbnail)
 
         fun setNotificationEnabled(
             channelId: String,
@@ -574,7 +565,7 @@ class VideoPlayerViewModel
                 comments.clear()
                 return
             }
-            comments.load(videoId, serviceIdOfVideo(videoId))
+            comments.load(videoId)
         }
 
         fun loadMoreComments(videoId: String) = comments.loadMore(videoId)

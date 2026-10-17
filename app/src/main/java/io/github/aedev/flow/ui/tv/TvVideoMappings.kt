@@ -18,7 +18,6 @@ internal fun VideoHistoryEntry.toTvVideo(): Video =
         timestamp = timestamp,
         isMusic = isMusic,
         isShort = isShort,
-        serviceId = serviceId,
     )
 
 /**
@@ -43,7 +42,6 @@ internal fun VideoHistoryEntry.toTvMusicTrack(): MusicTrack =
         thumbnailUrl = thumbnailUrl,
         duration = (duration / 1_000L).toInt(),
         channelId = channelId,
-        serviceId = serviceId,
     )
 
 internal fun LikedVideoInfo.toTvMusicTrack(): MusicTrack =
@@ -53,7 +51,6 @@ internal fun LikedVideoInfo.toTvMusicTrack(): MusicTrack =
         artist = channelName,
         thumbnailUrl = thumbnail,
         duration = 0,
-        serviceId = serviceId,
     )
 
 internal fun Video.toTvMusicTrack(): MusicTrack =
@@ -79,5 +76,4 @@ internal fun LikedVideoInfo.toTvVideo(): Video =
         uploadDate = "",
         timestamp = likedAt,
         isMusic = isMusic,
-        serviceId = serviceId,
     )

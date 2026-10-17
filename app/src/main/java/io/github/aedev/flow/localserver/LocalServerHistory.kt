@@ -25,7 +25,7 @@ fun HistoryDbHelper.nativeSaveToHistory(
     url: String,
     uploader: String,
     thumbnailUrl: String,
-    serviceId: Int,
+    @Suppress("UNUSED_PARAMETER") serviceId: Int,
     uploaderUrl: String?,
     @Suppress("UNUSED_PARAMETER") uploaderAvatar: String?,
 ) {
@@ -38,7 +38,6 @@ fun HistoryDbHelper.nativeSaveToHistory(
             thumbnailUrl = thumbnailUrl,
             channelName = uploader,
             channelId = channelUrlToId(uploaderUrl) ?: "",
-            serviceId = serviceId,
         )
     }
 }

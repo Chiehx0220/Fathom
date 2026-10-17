@@ -29,7 +29,6 @@ sealed interface QuickActionUndo {
         val channelName: String,
         val channelThumbnail: String,
         val subscribed: Boolean,
-        val serviceId: Int = org.schabi.newpipe.extractor.ServiceList.YouTube.serviceId,
     ) : QuickActionUndo
 
     data class ChannelBlock(

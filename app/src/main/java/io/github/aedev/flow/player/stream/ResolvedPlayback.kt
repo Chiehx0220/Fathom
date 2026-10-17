@@ -11,8 +11,6 @@ data class PlaybackResolutionRequest(
     val escalateToSabr: Boolean,
     val resumePositionOverrideMs: Long?,
     val allowShorts: Boolean,
-    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
-    val serviceId: Int = 0,
     /** Creators the viewer has blocked; their videos never enter the related list. */
     val blockedChannelIds: Set<String> = emptySet(),
 )

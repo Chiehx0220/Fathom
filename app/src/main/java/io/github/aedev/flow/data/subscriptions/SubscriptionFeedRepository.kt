@@ -407,7 +407,6 @@ private fun SubscriptionFeedEntity.toVideo() =
         // A cached "upcoming" outlives its start time only until the next look at the row.
         isUpcoming = isUpcoming && timestamp > System.currentTimeMillis(),
         isScheduledLive = isUpcoming && isLive && timestamp > System.currentTimeMillis(),
-        serviceId = serviceId,
     )
 
 private fun Video.toEntity(
