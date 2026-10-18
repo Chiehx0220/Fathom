@@ -96,8 +96,9 @@
     <string name="icon_name_expressive_play">Lighthouse</string>
     <string name="icon_name_expressive_sky">Sailboat</string>
     <string name="icon_name_expressive_cookie">Night Sea</string>
-    <string name="icon_name_expressive_oval">Submarine</string>
+    <string name="icon_name_expressive_oval">Surfboard</string>
     <string name="icon_name_expressive_pill">Depth Gauge</string>
+    <string name="icon_name_expressive_mint">Whale</string>
     <string name="home_content_filter_mix">Mix</string>
     <string name="home_content_filter_description">Filter which service Home shows videos from</string>
     <string name="content_settings_open_links_title">Open YouTube links in Fathom</string>

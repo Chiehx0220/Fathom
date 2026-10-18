@@ -95,8 +95,9 @@
     <string name="icon_name_expressive_play">燈塔</string>
     <string name="icon_name_expressive_sky">帆船</string>
     <string name="icon_name_expressive_cookie">夜海</string>
-    <string name="icon_name_expressive_oval">潛艇</string>
+    <string name="icon_name_expressive_oval">衝浪板</string>
     <string name="icon_name_expressive_pill">深度計</string>
+    <string name="icon_name_expressive_mint">鯨魚</string>
     <string name="home_content_filter_mix">混合</string>
     <string name="home_content_filter_description">篩選首頁顯示哪個服務的影片</string>
     <string name="content_settings_open_links_title">在 Fathom 中開啟 YouTube 連結</string>

@@ -73,9 +73,6 @@
         <activity-alias
             android:name=".IconExpressiveSegmented"
             tools:node="remove" />
-        <activity-alias
-            android:name=".IconExpressiveMint"
-            tools:node="remove" />
 
     </application>
 </manifest>

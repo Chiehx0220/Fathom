@@ -37,6 +37,7 @@ object AppIcons {
             LauncherIcon(".IconExpressiveScallop", R.string.icon_name_expressive_scallop, R.mipmap.ic_launcher_expressive_scallop),
             LauncherIcon(".IconExpressivePlay", R.string.icon_name_expressive_play, R.mipmap.ic_launcher_expressive_play),
             LauncherIcon(".IconExpressiveSky", R.string.icon_name_expressive_sky, R.mipmap.ic_launcher_expressive_sky),
+            LauncherIcon(".IconExpressiveMint", R.string.icon_name_expressive_mint, R.mipmap.ic_launcher_expressive_mint),
             LauncherIcon(".IconExpressiveCookie", R.string.icon_name_expressive_cookie, R.mipmap.ic_launcher_expressive_cookie),
             LauncherIcon(".IconExpressiveOval", R.string.icon_name_expressive_oval, R.mipmap.ic_launcher_expressive_oval),
             LauncherIcon(".IconExpressivePill", R.string.icon_name_expressive_pill, R.mipmap.ic_launcher_expressive_pill),
