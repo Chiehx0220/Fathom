@@ -26,12 +26,12 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (1357 changed lines). New files: **244**.
+- Modified upstream files: **113** (1353 changed lines). New files: **244**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | ui/screens/home/chips/HomeChipFeeds.kt | 33 | 37 |
-| ui/screens/home/HomeViewModel.kt | 47 | 11 |
+| ui/screens/home/HomeViewModel.kt | 49 | 11 |
 | player/EnhancedPlayerManager.kt | 52 | 2 |
 | ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
 | data/local/PlayerPreferences.kt | 39 | 0 |
@@ -39,12 +39,12 @@ in it). **New files** never conflict; they are ours alone.
 | player/resolver/VideoPlaybackResolver.kt | 35 | 3 |
 | data/local/BackupRepository.kt | 20 | 17 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
-| data/innertube/RssSubscriptionService.kt | 27 | 3 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
 | data/video/VideoDownloadManager.kt | 23 | 3 |
 | ui/screens/channel/ChannelViewModel.kt | 22 | 3 |
 | ui/screens/player/PlaybackSessionApplier.kt | 25 | 0 |
+| data/innertube/RssSubscriptionService.kt | 21 | 3 |
 | data/local/ViewHistory.kt | 24 | 0 |
 | data/repository/YouTubeRepository.kt | 18 | 6 |
 | ui/screens/search/SearchViewModel.kt | 20 | 4 |
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **17** (127 changed lines). New files: **14**.
+- Modified upstream files: **17** (128 changed lines). New files: **14**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -131,7 +131,7 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/platform/LauncherAliasManifestTest.kt | 13 | 2 |
 | app/src/test/java/io/github/aedev/flow/utils/ShareVideoTest.kt | 12 | 3 |
 | app/src/test/java/io/github/aedev/flow/data/subscriptions/SubscriptionRefreshPlannerTest.kt | 12 | 0 |
-| app/src/test/java/io/github/aedev/flow/data/paging/SearchPagingSourceTest.kt | 8 | 1 |
+| app/src/test/java/io/github/aedev/flow/data/paging/SearchPagingSourceTest.kt | 9 | 1 |
 | app/src/test/java/io/github/aedev/flow/data/repository/ChannelMetadataNeedTest.kt | 9 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/NavigationDestinationsTest.kt | 8 | 0 |
 | app/src/test/java/io/github/aedev/flow/player/stream/VideoCodecUtilsTest.kt | 6 | 0 |
