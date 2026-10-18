@@ -376,8 +376,13 @@ internal fun ClientHandler.handleApiSettings(
     if (hideWatched != null) dbHelper.nativeSetHideWatched(hideWatched == "true")
     val hideShorts = params["hideShorts"]
     if (hideShorts != null) dbHelper.nativeSetHideShorts(hideShorts == "true")
+    val deepFlow = params["deepFlow"]
+    if (deepFlow != null) dbHelper.nativeSetDeepFlow(deepFlow == "true")
     val json = org.json.JSONObject()
     json.put("hideWatched", dbHelper.nativeHideWatched())
     json.put("hideShorts", dbHelper.nativeHideShorts())
+    val deepFlowStatus = dbHelper.nativeDeepFlow()
+    json.put("deepFlow", deepFlowStatus.active)
+    json.put("deepFlowEndsAt", deepFlowStatus.endsAt)
     sendResponse(os, 200, json.toString(), "application/json")
 }

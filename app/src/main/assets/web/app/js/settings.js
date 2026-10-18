@@ -35,7 +35,7 @@ const modePills = () => {
 
 const toggle = (title, hint, on, save, key) => {
     const sw = h('button', { type: 'button', class: 'switch' + (on ? ' on' : ''), role: 'switch', 'aria-checked': String(on), data: { f: '', key }, onclick: () => {
-        on = !on;
+        on = !sw.classList.contains('on');
         sw.classList.toggle('on', on);
         sw.setAttribute('aria-checked', String(on));
         save(on).then(() => { FT.api.forget(); }).catch(() => { on = !on; sw.classList.toggle('on', on); FT.toast(FT.t('could_not_save')); });
@@ -43,8 +43,16 @@ const toggle = (title, hint, on, save, key) => {
     return h('div', { class: 'setting' }, h('div', {}, h('b', {}, title), h('span', { class: 'hint' }, hint)), sw);
 };
 
+// Keeps the Deep Flow switch in step with the phone while Settings is open.
+let stopDeepFlow = null;
+
 FT.register('settings', {
+    leave() {
+        if (stopDeepFlow) stopDeepFlow();
+        stopDeepFlow = null;
+    },
     async render(root, params, isCurrent) {
+        let status = null;
         const values = await FT.api.settings().catch(() => null);
         if (!isCurrent()) return;
 
@@ -53,6 +61,12 @@ FT.register('settings', {
                 h('div', { style: 'margin-top:12px' }, modePills()), h('div', { class: 'swatches' }, FT.palettes.map(swatch))),
         ];
         if (values) {
+            FT.deepFlow.adopt(values);
+            status = h('span', { class: 'hint' }, FT.deepFlow.status());
+            sections.push(h('section', { style: 'display:flex;flex-direction:column;gap:10px' }, h('h2', {}, 'Deep Flow'),
+                toggle(FT.t('settings_deep_flow'), FT.t('settings_deep_flow_hint'), !!values.deepFlow,
+                    (on) => FT.deepFlow.set(on).then(() => { status.textContent = FT.deepFlow.status(); }), 'deep-flow'),
+                status));
             sections.push(h('section', { style: 'display:flex;flex-direction:column;gap:10px' }, h('h2', {}, FT.t('settings_filters')),
                 toggle(FT.t('filter_hide_watched'), FT.t('filter_hide_watched_hint'), !!values.hideWatched, (on) => FT.api.settings({ hideWatched: on }), 'hide-watched'),
                 toggle(FT.t('filter_hide_shorts'), FT.t('filter_hide_shorts_hint'), !!values.hideShorts, (on) => FT.api.settings({ hideShorts: on }), 'hide-shorts')));
@@ -65,6 +79,16 @@ FT.register('settings', {
             h('p', { class: 'hint' }, FT.t('settings_fullscreen_hint'))));
 
         root.replaceChildren(h('div', { class: 'head' }, h('h1', {}, FT.t('tab_settings'))), h('div', { class: 'settings' }, sections));
+
+        const sw = FT.$('[data-key="deep-flow"]', root);
+        if (sw && status) {
+            if (stopDeepFlow) stopDeepFlow();
+            stopDeepFlow = FT.deepFlow.onChange(() => {
+                sw.classList.toggle('on', FT.deepFlow.active);
+                sw.setAttribute('aria-checked', String(FT.deepFlow.active));
+                status.textContent = FT.deepFlow.status();
+            });
+        }
     },
 });
 })();

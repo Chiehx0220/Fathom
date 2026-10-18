@@ -25,6 +25,7 @@ object WebAssets {
             "app/js/theme.js",
             "app/js/api.js",
             "app/js/ui.js",
+            "app/js/deepflow.js",
             "app/js/focus.js",
             "app/js/menu.js",
             "app/js/router.js",

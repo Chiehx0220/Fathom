@@ -4,4 +4,5 @@
 FT.$$('[data-t-label]').forEach((el) => el.setAttribute('aria-label', FT.t(el.dataset.tLabel)));
 FT.remote.resume();
 FT.start();
+FT.deepFlow.watch();
 })();

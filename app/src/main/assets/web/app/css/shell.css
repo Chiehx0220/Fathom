@@ -29,11 +29,13 @@ body[data-input="keys"] { cursor: none; }
 .rbtn { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--s1); color: var(--mute); }
 .rbtn:hover { background: var(--s2); color: var(--fg); }
 .rbtn.on { background: var(--acc); color: var(--on-acc); }
+.dfbadge { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px 0 12px; border-radius: 22px; background: color-mix(in srgb, var(--acc) 16%, transparent); color: var(--acc); font-size: 14px; font-weight: 500; white-space: nowrap; }
+.dfbadge:hover { background: color-mix(in srgb, var(--acc) 26%, transparent); }
 
 /* Selection. The engine puts .sel on the stop the keys or the remote are on. It only shows while keys or a remote are in use; the
  * mouse gets hover instead. */
 [data-f] { outline: none; scroll-margin: calc(var(--bar-h) + 24px) var(--pad-x) 120px var(--pad-x); }
-body[data-input="keys"] .tab.sel, body[data-input="keys"] .chip.sel, body[data-input="keys"] .rbtn.sel, body[data-input="keys"] .btn.sel,
+body[data-input="keys"] .tab.sel, body[data-input="keys"] .dfbadge.sel, body[data-input="keys"] .chip.sel, body[data-input="keys"] .rbtn.sel, body[data-input="keys"] .btn.sel,
 body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[data-input="keys"] .row-item.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc2); }
 
 /* Buttons */
@@ -78,4 +80,6 @@ body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[da
   .tab span:not(.i) { display: inline; }
   .tab.on { background: none; color: var(--acc); }
   .chip { padding: 0 8px 0 14px; }
+  .dfbadge { padding: 0 12px; }
+  .dfbadge span { display: none; }
 }

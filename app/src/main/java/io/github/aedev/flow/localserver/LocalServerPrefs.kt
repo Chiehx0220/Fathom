@@ -1,5 +1,6 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.data.local.DEEP_FLOW_NEVER_EXPIRES_HOURS
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SearchHistoryRepository
 import kotlinx.coroutines.flow.first
@@ -43,3 +44,28 @@ fun HistoryDbHelper.nativeSetHideShorts(hide: Boolean) {
 }
 
 fun HistoryDbHelper.nativeVideoQuality(): String = runBlocking { playerPreferences().defaultQualityWifi.first().label }
+
+/** [endsAt]: epoch ms of timer expiry; 0 = no timer or inactive. */
+data class DeepFlowStatus(
+    val active: Boolean,
+    val endsAt: Long,
+)
+
+fun HistoryDbHelper.nativeDeepFlow(): DeepFlowStatus =
+    runBlocking {
+        val preferences = playerPreferences()
+        if (!preferences.isDeepFlowCurrentlyActive()) return@runBlocking DeepFlowStatus(active = false, endsAt = 0L)
+        DeepFlowStatus(
+            active = true,
+            endsAt = deepFlowEndsAt(preferences.deepFlowActivatedAt.first(), preferences.deepFlowExpireHours.first()),
+        )
+    }
+
+fun HistoryDbHelper.nativeSetDeepFlow(enabled: Boolean) {
+    runBlocking { playerPreferences().setDeepFlowActive(enabled) }
+}
+
+internal fun deepFlowEndsAt(
+    activatedAt: Long,
+    expireHours: Int,
+): Long = if (expireHours == DEEP_FLOW_NEVER_EXPIRES_HOURS) 0L else activatedAt + expireHours * 3_600_000L
