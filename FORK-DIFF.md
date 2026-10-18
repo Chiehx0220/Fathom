@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (1376 changed lines). New files: **248**.
+- Modified upstream files: **114** (1383 changed lines). New files: **248**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -42,8 +42,8 @@ in it). **New files** never conflict; they are ours alone.
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
 | data/video/VideoDownloadManager.kt | 23 | 3 |
+| ui/screens/player/PlaybackSessionApplier.kt | 26 | 0 |
 | ui/screens/channel/ChannelViewModel.kt | 22 | 3 |
-| ui/screens/player/PlaybackSessionApplier.kt | 25 | 0 |
 | data/innertube/RssSubscriptionService.kt | 21 | 3 |
 | data/local/ViewHistory.kt | 24 | 0 |
 | data/repository/YouTubeRepository.kt | 18 | 6 |
@@ -90,7 +90,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
 | utils/YouTubeLink.kt | 8 | 0 |
 | ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
-| ... 53 more, each small | | |
+| ... 54 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -102,7 +102,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **78**.
+- Modified upstream files: **0** (0 changed lines). New files: **80**.
 
 ## Local server (fork-only feature)
 
