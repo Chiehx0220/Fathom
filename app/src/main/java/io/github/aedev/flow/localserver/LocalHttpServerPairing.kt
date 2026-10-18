@@ -3,19 +3,20 @@ package io.github.aedev.flow.localserver
 import java.io.OutputStream
 
 internal const val PAIR_PATH = "/pair"
+internal const val ICON_PATH = "/app-icon.png"
 private const val PAIRING_REQUIRED = "Unauthorized: pair this browser with the code shown on the phone"
 private const val JSON = "application/json; charset=UTF-8"
 
 internal enum class Gate { ADMIT, PAIR_PAGE, REFUSE }
 
-/** Loopback (this phone) and paired browsers pass; an unpaired browser gets the pairing page at `/`. */
+/** Loopback and paired browsers pass; unpaired get the pairing page at `/` and [ICON_PATH]. */
 internal fun gateFor(
     path: String,
     paired: Boolean,
     loopback: Boolean,
 ): Gate =
     when {
-        loopback || paired || path == PAIR_PATH -> Gate.ADMIT
+        loopback || paired || path == PAIR_PATH || path == ICON_PATH -> Gate.ADMIT
         path == "/" -> Gate.PAIR_PAGE
         else -> Gate.REFUSE
     }

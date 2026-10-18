@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>Fathom</title>
-<!-- Pairing page: standalone, no other server file is reachable before the code is entered. -->
+<!-- Pairing page: standalone; only the launcher icon is served before pairing. -->
+<link rel="icon" type="image/png" href="/app-icon.png">
 <style>
 :root { --bg: #F6F1E4; --card: #FFFCF4; --fg: #0F1D33; --mute: #56627A; --acc: #3F73D6; --err: #B3261E; --line: rgba(15, 29, 51, .16); color-scheme: light dark; }
 @media (prefers-color-scheme: dark) { :root { --bg: #0B1524; --card: #12223A; --fg: #E8EEF6; --mute: #92A4BC; --acc: #7FA8F0; --err: #FF8A80; --line: rgba(232, 238, 246, .2); } }
@@ -39,14 +40,7 @@ h1 { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: .01em; }
   <path fill="currentColor" fill-opacity=".2" d="M0,230C240,180 480,280 720,230C960,180 1200,280 1440,230L1440,320L0,320Z"/>
 </svg>
 <main>
-  <svg class="mark" viewBox="0 0 100 100" aria-hidden="true">
-    <defs><clipPath id="fw"><rect width="100" height="100" rx="18"/></clipPath></defs>
-    <rect width="100" height="100" rx="18" fill="#F2EDE0"/>
-    <path clip-path="url(#fw)" fill="#5B8DEF" fill-opacity=".35" d="M0,58 Q6.25,53 12.5,58 T25,58 T37.5,58 T50,58 T62.5,58 T75,58 T87.5,58 T100,58 L100,100 L0,100 Z"/>
-    <g stroke="#0F1D33" stroke-width="5" stroke-linecap="round"><line x1="37" y1="18" x2="37" y2="78"/><line x1="37" y1="22" x2="76" y2="22"/><line x1="37" y1="42" x2="50" y2="42"/><line x1="37" y1="62" x2="50" y2="62"/></g>
-    <polygon points="58,42 58,62 75,52" fill="#C99A34"/>
-    <rect x="1" y="1" width="98" height="98" rx="17" fill="none" stroke="#0F1D33" stroke-opacity=".14" stroke-width="2"/>
-  </svg>
+  <img class="mark" src="/app-icon.png" alt="" width="72" height="72">
   <h1>Fathom</h1>
   <p class="sub" id="prompt"></p>
   <form id="b" class="code" onsubmit="return false" autocomplete="off">

@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (1357 changed lines). New files: **246**.
+- Modified upstream files: **113** (1376 changed lines). New files: **248**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -48,6 +48,7 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/ViewHistory.kt | 24 | 0 |
 | data/repository/YouTubeRepository.kt | 18 | 6 |
 | ui/screens/search/SearchViewModel.kt | 20 | 4 |
+| ui/tv/components/TvNavRail.kt | 4 | 20 |
 | data/paging/SearchPagingSource.kt | 17 | 6 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | ui/screens/home/HomeFeedSources.kt | 20 | 3 |
@@ -89,7 +90,6 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
 | utils/YouTubeLink.kt | 8 | 0 |
 | ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
-| data/model/Models.kt | 6 | 0 |
 | ... 53 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
@@ -106,7 +106,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **94**.
+- Modified upstream files: **0** (0 changed lines). New files: **95**.
 
 ## Build
 
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **17** (128 changed lines). New files: **14**.
+- Modified upstream files: **17** (128 changed lines). New files: **15**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|

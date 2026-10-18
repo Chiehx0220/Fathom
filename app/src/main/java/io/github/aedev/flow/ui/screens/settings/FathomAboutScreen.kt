@@ -1,7 +1,6 @@
 package io.github.aedev.flow.ui.screens.settings
 
 import android.os.Build
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.pm.PackageInfoCompat
 import coil3.compose.AsyncImage
 import io.github.aedev.flow.R
+import io.github.aedev.flow.ui.components.LauncherIconImage
 import io.github.aedev.flow.ui.components.settings.SettingsGroupScope
 import io.github.aedev.flow.ui.components.settings.SettingsPage
 import io.github.aedev.flow.ui.components.shared.FlowNavRow
@@ -208,11 +208,7 @@ private fun FathomAboutHeader() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(HeaderSpacing),
     ) {
-        Image(
-            painter = painterResource(R.drawable.ic_fathom_logo),
-            contentDescription = stringResource(R.string.app_logo_desc),
-            modifier = Modifier.size(LogoSize),
-        )
+        LauncherIconImage(Modifier.size(LogoSize), stringResource(R.string.app_logo_desc))
         Text(
             text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineMedium,

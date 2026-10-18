@@ -56,6 +56,7 @@ internal val ROUTES: Map<String, Route> =
         "/api/v1/settings" to route { os, params, _ -> handleApiSettings(os, params) },
         "/app.css" to route { os, _, _ -> handleAppCss(os) },
         "/app.js" to route { os, _, _ -> handleAppJs(os) },
+        ICON_PATH to route { os, _, _ -> handleAppIcon(os) },
     )
 
 private fun route(handler: Route): Route = handler
