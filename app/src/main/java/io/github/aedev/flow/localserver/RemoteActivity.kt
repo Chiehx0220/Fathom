@@ -7,28 +7,33 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import dagger.hilt.android.AndroidEntryPoint
+import io.github.aedev.flow.data.local.AppFontPreferences
 import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.localserver.remote.RemoteScreen
 import io.github.aedev.flow.localserver.remote.VOLUME_STEP
 import io.github.aedev.flow.localserver.remote.volumeCommand
-import io.github.aedev.flow.ui.theme.FlowTheme
-import io.github.aedev.flow.ui.theme.ThemeMode
-import io.github.aedev.flow.ui.theme.ThemeVariant
+import io.github.aedev.flow.ui.startup.FlowTheme
+import io.github.aedev.flow.ui.startup.themeSettings
+import javax.inject.Inject
 
 /**
  * Phone as remote for the page paired with the local server (cast button). Modes: direction pad (browsing), playback keys (playing video),
  * touchpad. Commands → server → paired page; page reports playback state. Screens: `remote` package.
  */
+@AndroidEntryPoint
 class RemoteActivity : ComponentActivity() {
+    @Inject
+    lateinit var appFontPreferences: AppFontPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Dimming remote stops working.
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        val dataManager = LocalDataManager(applicationContext)
+        val theme = LocalDataManager(applicationContext).themeSettings(appFontPreferences)
         setContent {
-            val themeMode by dataManager.themeMode.collectAsState(initial = ThemeMode.NORDIC_HORIZON)
-            val themeVariant by dataManager.themeVariant.collectAsState(initial = ThemeVariant.DARK)
-            FlowTheme(themeMode = themeMode, themeVariant = themeVariant) {
+            val settings = theme.collectAsState(initial = null).value ?: return@setContent
+            FlowTheme(settings) {
                 RemoteScreen(onBack = { finish() })
             }
         }
