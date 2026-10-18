@@ -59,7 +59,10 @@ FT.api = {
     settings: (changes) => getJson('/api/v1/settings', changes),
     download: (action, service, id, choice = {}) => getJson('/api/v1/download', { action, serviceId: service, id, ...choice }),
 
-    progress: (id, service, percent, duration) => fetch('/api/v1/watch_progress?' + new URLSearchParams({ id, serviceId: service, percent, durationSeconds: duration }), { keepalive: true }).catch(() => {}),
+    // `notify`: playback settled (pause, close, switch); history subscribers refresh. Timer reports stay silent.
+    progress: (id, service, percent, duration, { notify = false } = {}) => fetch('/api/v1/watch_progress?' + new URLSearchParams({ id, serviceId: service, percent, durationSeconds: duration }), { keepalive: true })
+        .then(() => { if (notify) dispatchEvent(new Event('ft:history')); }).catch(() => {}),
+    onHistoryChange: (handler) => FT.on('ft:history', handler),
 
     subscribe: (channel, on) => act('/subscribe', { action: on ? 'subscribe' : 'unsubscribe', id: channel.id, name: channel.name || '', avatar: channel.thumbnailUrl || '' }),
     block: (channelUrl, on) => act('/block_channel', { action: on ? 'block' : 'unblock', id: channelUrl }),

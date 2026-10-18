@@ -4,6 +4,12 @@ const FT = (window.FT = window.FT || {});
 FT.$ = (selector, root = document) => root.querySelector(selector);
 FT.$$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
+// Window event subscription; returns the unsubscribe function.
+FT.on = (type, handler) => {
+    addEventListener(type, handler);
+    return () => removeEventListener(type, handler);
+};
+
 // Builds an element. Text is always added as text (never parsed), so titles from the network cannot inject markup.
 //   FT.h('a', { class: 'card', href: '#/x', onclick: fn, data: { key: 'k' } }, child, 'text', [more])
 FT.h = (tag, props, ...kids) => {

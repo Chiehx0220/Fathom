@@ -85,7 +85,13 @@ FT.listView = async (root, options, isCurrent) => {
     if (firstRow) showPane(firstRow);
 };
 
-const cleanup = () => { FT.screenSelect = null; };
+// A history list redraws on history changes (scroll and selection kept by FT.reload).
+let stopHistory = null;
+const cleanup = () => {
+    FT.screenSelect = null;
+    if (stopHistory) stopHistory();
+    stopHistory = null;
+};
 
 // ---- Search ----
 
@@ -152,6 +158,8 @@ FT.register('search', {
 // history list; `continuing`: unfinished only (Home shelf)
 const historyList = (root, { before, continuing }, isCurrent) => {
     const service = FT.store.service;
+    if (stopHistory) stopHistory();
+    stopHistory = FT.api.onHistoryChange(() => { if (isCurrent()) FT.reload(); });
     return FT.listView(root, {
         before,
         empty: continuing

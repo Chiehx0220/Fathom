@@ -374,15 +374,16 @@ const stopDanmaku = () => {
 
 // ---- Progress and what comes next ----
 
-const reportProgress = () => {
+// Timer reports are silent; pause, close and switch notify history subscribers.
+const reportProgress = (quiet) => {
     const p = playerEl();
     if (!current || !p.duration || !isFinite(p.duration)) return;
     const percent = Math.round((p.currentTime / p.duration) * 100);
     if (percent === lastReported) return;
     lastReported = percent;
-    FT.api.progress(current.url, current.service, percent, Math.round(p.duration));
+    FT.api.progress(current.url, current.service, percent, Math.round(p.duration), { notify: quiet !== true });
 };
-setInterval(reportProgress, 15000);
+setInterval(() => reportProgress(true), 15000);
 addEventListener('pagehide', reportProgress);
 
 // ---- Up next: the card shown when a video ends ----

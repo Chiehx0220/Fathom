@@ -3,6 +3,8 @@
 const h = FT.h;
 // Per-shelf IntersectionObservers (see shelfOf); disconnected together on leave().
 let activeObservers = [];
+// Unsubscribes the resume row from history changes.
+let stopHistory = null;
 
 // Cards rendered per chunk as a shelf scrolls into view.
 const SHELF_CHUNK = 14;
@@ -68,12 +70,15 @@ const render = async (root, params, isCurrent) => {
     ]);
     if (!isCurrent()) return;
 
-    const seen = (hist.videos || []).filter((v) => v.serviceId === service && v.progress > 2 && v.progress < 95);
+    const resumable = (history) => (history.videos || []).filter((v) => v.serviceId === service && v.progress > 2 && v.progress < 95);
+    const seen = resumable(hist);
     const picks = (recs.videos || []).filter((v) => !v.isShort);
     const lead = seen[0] || picks[0];
     if (!lead) { root.replaceChildren(FT.empty('video_library', FT.t('nothing_yet'), FT.t('nothing_yet_hint'))); return; }
 
     // Slots for the shelves that arrive later, so they land in the right place whenever they do.
+    const slotHero = h('div', { style: 'display:contents' });
+    const slotSeen = h('div', { style: 'display:contents' });
     const slotSubs = h('div', { hidden: true });
     const slotLater = h('div', { hidden: true });
 
@@ -86,14 +91,31 @@ const render = async (root, params, isCurrent) => {
         return { items: fresh, hasMore: body.hasMore !== false };
     });
 
+    const paintResume = (resuming) => {
+        const first = resuming[0] || picks[0];
+        slotHero.replaceChildren(...(first ? [hero(first, resuming[0] === first)] : []));
+        slotSeen.replaceChildren(...(resuming.length
+            ? [shelfOf(FT.t('continue_watching'), FT.t('from_history'), resuming, { expand: '#/history?filter=continuing' })] : []));
+    };
+    paintResume(seen);
+
     const page = [
-        hero(lead, seen[0] === lead),
-        seen.length ? shelfOf(FT.t('continue_watching'), FT.t('from_history'), seen, { expand: '#/history?filter=continuing' }) : null,
+        slotHero,
+        slotSeen,
         picks.length ? shelfOf(FT.t('recommended'), FT.t('for_you'), picks, { ...(loadMoreRecs ? { loadMore: loadMoreRecs } : {}), expand: '#/recommended' }) : null,
         slotSubs,
         slotLater,
     ];
     root.replaceChildren(...page.filter(Boolean));
+
+    if (stopHistory) stopHistory();
+    stopHistory = FT.api.onHistoryChange(() => FT.api.history().then((fresh) => {
+        if (!isCurrent()) return;
+        const selected = FT.focus.el;
+        const key = selected && (slotHero.contains(selected) || slotSeen.contains(selected)) ? selected.dataset.key : null;
+        paintResume(resumable(fresh));
+        if (key) FT.focus.select(FT.focus.stops().find((el) => el.dataset.key === key) || FT.focus.stops()[0]);
+    }).catch(() => {}));
 
     FT.api.feed(service).then((body) => {
         if (!isCurrent()) return;
@@ -114,6 +136,11 @@ const render = async (root, params, isCurrent) => {
 
 FT.register('home', {
     render,
-    leave() { activeObservers.forEach((o) => o.disconnect()); activeObservers = []; },
+    leave() {
+        activeObservers.forEach((o) => o.disconnect());
+        activeObservers = [];
+        if (stopHistory) stopHistory();
+        stopHistory = null;
+    },
 });
 })();
