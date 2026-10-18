@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
@@ -34,7 +35,7 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.localserver.RemoteState
 
 /**
- * Browsing, top to bottom by rising use frequency: source switch, search, two rare places, direction wheel, keys under the thumb.
+ * Directions page: search, subscriptions/library, direction wheel, shortcut keys.
  */
 @Composable
 internal fun DirectionsMode(
@@ -42,13 +43,10 @@ internal fun DirectionsMode(
     send: (String) -> Unit,
 ) {
     Column(
-        Modifier.fillMaxSize().padding(16.dp),
+        Modifier.fillMaxSize().padding(RemotePagePadding),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(RemoteGroupSpacing),
     ) {
-        if (state.services.size > 1) {
-            ServiceSwitch(state.services, state.activeService) { send("service:$it") }
-        }
         SearchField(send)
         ButtonGroup(overflowIndicator = {}, modifier = Modifier.fillMaxWidth()) {
             wideKey(Icons.Default.Subscriptions, R.string.remote_subscriptions) { send("goto:subscriptions") }
@@ -63,35 +61,6 @@ internal fun DirectionsMode(
             shortcutKey(Icons.Default.Home, R.string.remote_home) { send("goto:home") }
             // Menu, not MoreVert: web key-hints overlay glyph for "key:menu".
             shortcutKey(Icons.Default.Menu, R.string.remote_options) { send("key:menu") }
-        }
-    }
-}
-
-// Mirror of page source switcher (YouTube / Bilibili / ...): current lit, tap moves page.
-@Composable
-private fun ServiceSwitch(
-    services: List<Pair<Int, String>>,
-    active: Int?,
-    onSelect: (Int) -> Unit,
-) {
-    ButtonGroup(overflowIndicator = {}, modifier = Modifier.fillMaxWidth()) {
-        services.forEach { (id, name) ->
-            customItem({
-                val interaction = remember { MutableInteractionSource() }
-                val tick = rememberKeyTick()
-                ToggleButton(
-                    checked = id == active,
-                    onCheckedChange = {
-                        tick()
-                        onSelect(id)
-                    },
-                    shapes = ToggleButtonDefaults.shapesFor(ButtonDefaults.MinHeight),
-                    interactionSource = interaction,
-                    modifier = Modifier.weight(1f).animateWidth(interaction),
-                ) {
-                    Text(name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-            }) {}
         }
     }
 }

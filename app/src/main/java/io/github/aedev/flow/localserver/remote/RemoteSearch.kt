@@ -28,6 +28,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -137,8 +138,8 @@ internal fun SearchField(send: (String) -> Unit) {
                 shape = MaterialTheme.shapes.extraLarge,
                 colors =
                     TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
@@ -146,7 +147,16 @@ internal fun SearchField(send: (String) -> Unit) {
                 keyboardActions = KeyboardActions(onSearch = { search(text) }),
             )
             // Field height, separate: pill keeps own shape.
-            FilledIconButton(onClick = { search(text) }, enabled = text.isNotBlank(), modifier = Modifier.size(56.dp)) {
+            FilledIconButton(
+                onClick = { search(text) },
+                enabled = text.isNotBlank(),
+                modifier = Modifier.size(56.dp),
+                colors =
+                    IconButtonDefaults.filledIconButtonColors(
+                        disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        disabledContentColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.38f),
+                    ),
+            ) {
                 Icon(Icons.Default.Search, contentDescription = stringResource(R.string.remote_search_submit))
             }
         }

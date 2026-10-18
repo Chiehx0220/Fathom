@@ -46,7 +46,8 @@
     <string name="remote_search_voice">Search by voice</string>
     <string name="remote_search_voice_prompt">Say what to search for</string>
     <string name="remote_voice_unavailable">Voice search is not available on this phone</string>
-    <string name="remote_touchpad_hint">Drag to move the pointer, tap to click, use two fingers to scroll</string>
+    <string name="remote_deep_flow">Deep Flow</string>
+    <string name="remote_touchpad_hint">Drag to move, tap to click, two fingers to scroll</string>
     <string name="remote_ok">OK</string>
     <string name="remote_up">Up</string>
     <string name="remote_down">Down</string>

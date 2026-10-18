@@ -12,6 +12,7 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -29,6 +30,7 @@ import androidx.compose.material3.ShortNavigationBar
 import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -85,6 +87,7 @@ internal fun RemoteScreen(onBack: () -> Unit) {
                 },
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 title = {
                     Column {
                         Text(stringResource(R.string.remote_title))
@@ -117,42 +120,48 @@ internal fun RemoteScreen(onBack: () -> Unit) {
             )
         },
         bottomBar = {
-            ShortNavigationBar {
-                RemoteMode.entries.forEach { entry ->
-                    ShortNavigationBarItem(
-                        selected = mode == entry,
-                        onClick = { mode = entry },
-                        icon = { Icon(entry.icon, contentDescription = null) },
-                        label = { Text(stringResource(entry.label)) },
-                    )
+            // Modes require a paired page.
+            if (lock.locked) {
+                ShortNavigationBar(containerColor = MaterialTheme.colorScheme.background) {
+                    RemoteMode.entries.forEach { entry ->
+                        ShortNavigationBarItem(
+                            selected = mode == entry,
+                            onClick = { mode = entry },
+                            icon = { Icon(entry.icon, contentDescription = null) },
+                            label = { Text(stringResource(entry.label)) },
+                        )
+                    }
                 }
             }
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            VolumeHud(volumeHud, state, Modifier.align(BiasAlignment(0f, -0.72f)).zIndex(1f))
-            val motion = MaterialTheme.motionScheme
-            // Slide direction = tab order.
-            AnimatedContent(
-                targetState = if (lock.locked) mode else null,
-                transitionSpec = {
-                    val direction = if ((targetState?.ordinal ?: -1) > (initialState?.ordinal ?: -1)) 1 else -1
-                    (
-                        slideInHorizontally(motion.fastSpatialSpec<IntOffset>()) { it / 5 * direction } +
-                            fadeIn(motion.defaultEffectsSpec<Float>())
-                    ) togetherWith
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            RemoteStatusStrip(state, connected = lock.locked, send = ::sendRemoteCommand)
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                VolumeHud(volumeHud, state, Modifier.align(BiasAlignment(0f, -0.72f)).zIndex(1f))
+                val motion = MaterialTheme.motionScheme
+                // Slide direction = tab order.
+                AnimatedContent(
+                    targetState = if (lock.locked) mode else null,
+                    transitionSpec = {
+                        val direction = if ((targetState?.ordinal ?: -1) > (initialState?.ordinal ?: -1)) 1 else -1
                         (
-                            slideOutHorizontally(motion.fastSpatialSpec<IntOffset>()) { -it / 5 * direction } +
-                                fadeOut(motion.defaultEffectsSpec<Float>())
-                        )
-                },
-                label = "remotePage",
-            ) { page ->
-                when (page) {
-                    null -> NotConnected()
-                    RemoteMode.DIRECTIONS -> DirectionsMode(state, ::sendRemoteCommand)
-                    RemoteMode.PLAYBACK -> PlaybackMode(state, ::sendRemoteCommand)
-                    RemoteMode.TOUCHPAD -> TouchpadMode(state, ::sendRemoteCommand)
+                            slideInHorizontally(motion.fastSpatialSpec<IntOffset>()) { it / 5 * direction } +
+                                fadeIn(motion.defaultEffectsSpec<Float>())
+                        ) togetherWith
+                            (
+                                slideOutHorizontally(motion.fastSpatialSpec<IntOffset>()) { -it / 5 * direction } +
+                                    fadeOut(motion.defaultEffectsSpec<Float>())
+                            )
+                    },
+                    label = "remotePage",
+                ) { page ->
+                    when (page) {
+                        null -> NotConnected()
+                        RemoteMode.DIRECTIONS -> DirectionsMode(state, ::sendRemoteCommand)
+                        RemoteMode.PLAYBACK -> PlaybackMode(state, ::sendRemoteCommand)
+                        RemoteMode.TOUCHPAD -> TouchpadMode(state, ::sendRemoteCommand)
+                    }
                 }
             }
         }

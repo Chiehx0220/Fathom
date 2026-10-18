@@ -82,7 +82,7 @@ internal fun NotConnected() {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
             ConnectStep(1, stringResource(R.string.remote_connect_step_open))
             if (address != null) {
-                Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.secondaryContainer) {
                     Row(
                         Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -105,7 +105,11 @@ internal fun NotConnected() {
             }
             if (address != null) {
                 ConnectStep(2, stringResource(R.string.remote_connect_step_pair))
-                PairingCodeCells(code = pairingCode)
+                PairingCodeCells(
+                    code = pairingCode,
+                    container = MaterialTheme.colorScheme.secondaryContainer,
+                    content = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
             }
             ConnectStep(if (address != null) 3 else 2, stringResource(R.string.remote_connect_step_cast, CAST_MARK), castIcon = true)
         }
@@ -124,10 +128,10 @@ private fun ConnectStep(
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Box(
-            Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+            Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
             contentAlignment = Alignment.Center,
         ) {
-            Text(number.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Text(number.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
         if (castIcon && CAST_MARK in text) {
             val annotated =

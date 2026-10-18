@@ -85,10 +85,16 @@ internal fun PlaybackMode(
     send: (String) -> Unit,
 ) {
     var showSettings by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(
+        Modifier.fillMaxSize().padding(RemotePagePadding),
+        verticalArrangement = Arrangement.spacedBy(RemoteGroupSpacing),
+    ) {
         NowPlaying(state, send)
 
-        Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically)) {
+        Column(
+            Modifier.weight(1f).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(RemoteGroupSpacing, Alignment.CenterVertically),
+        ) {
             SeekBar(state, send)
             TransportKeys(state, send)
         }
@@ -232,7 +238,7 @@ private fun NowPlaying(
         Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.extraLarge)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .background(MaterialTheme.colorScheme.secondaryContainer)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -240,14 +246,14 @@ private fun NowPlaying(
             Text(
                 stringResource(R.string.remote_no_video),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
             )
             return
         }
         Text(
             stringResource(R.string.remote_now_playing),
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
         )
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
@@ -365,7 +371,7 @@ private fun RatingKeys(
 ) {
     val colors =
         IconButtonDefaults.iconToggleButtonColors(
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             checkedContainerColor = MaterialTheme.colorScheme.primary,
             checkedContentColor = MaterialTheme.colorScheme.onPrimary,
         )

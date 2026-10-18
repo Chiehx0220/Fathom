@@ -186,6 +186,7 @@ const connect = () => {
     };
     clearInterval(reportTimer);
     reportTimer = setInterval(report, 1000);
+    report();
 };
 
 Object.assign(FT.remote, {

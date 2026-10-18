@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +40,8 @@ private const val GROUP = 3
 internal fun PairingCodeCells(
     code: String,
     modifier: Modifier = Modifier,
+    container: Color = MaterialTheme.colorScheme.primaryContainer,
+    content: Color = MaterialTheme.colorScheme.onPrimaryContainer,
 ) {
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         code.forEachIndexed { index, digit ->
@@ -46,7 +49,7 @@ internal fun PairingCodeCells(
             Surface(
                 modifier = Modifier.weight(1f).aspectRatio(0.82f),
                 shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.primaryContainer,
+                color = container,
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
@@ -54,7 +57,7 @@ internal fun PairingCodeCells(
                         style = MaterialTheme.typography.headlineMedium,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = content,
                     )
                 }
             }

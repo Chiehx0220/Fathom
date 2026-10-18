@@ -72,7 +72,7 @@ internal fun DirectionWheel(
             Modifier
                 .size(wheelSize)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .background(MaterialTheme.colorScheme.secondaryContainer)
                 .pointerInput(okSize) {
                     val slop = viewConfiguration.touchSlop
                     val longPress = viewConfiguration.longPressTimeoutMillis
@@ -163,7 +163,7 @@ private fun Arrow(
     Icon(
         icon,
         contentDescription = stringResource(description),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = MaterialTheme.colorScheme.onSecondaryContainer,
         modifier = modifier.size(40.dp),
     )
 }

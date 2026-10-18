@@ -55,7 +55,10 @@ internal fun TouchpadMode(
     state: RemoteState,
     send: (String) -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        Modifier.fillMaxSize().padding(RemotePagePadding),
+        verticalArrangement = Arrangement.spacedBy(RemoteGroupSpacing),
+    ) {
         Touchpad(send, Modifier.weight(1f).fillMaxWidth())
         ButtonGroup(overflowIndicator = {}, modifier = Modifier.fillMaxWidth()) {
             wideKey(Icons.AutoMirrored.Filled.ArrowBack, R.string.remote_back) { send("back") }
@@ -79,7 +82,7 @@ private fun Touchpad(
         modifier =
             modifier
                 .clip(MaterialTheme.shapes.extraLarge)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .background(MaterialTheme.colorScheme.secondaryContainer)
                 .drawBehind { touches.forEach { drawCircle(glow, radius = 56.dp.toPx(), center = it) } }
                 .touchpadGestures(send, tick) { touches = it },
         verticalArrangement = Arrangement.Center,
@@ -88,14 +91,14 @@ private fun Touchpad(
         Icon(
             Icons.Default.TouchApp,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = MaterialTheme.colorScheme.onSecondaryContainer,
             modifier = Modifier.size(40.dp),
         )
         Spacer(Modifier.height(8.dp))
         Text(
             stringResource(R.string.remote_touchpad_hint),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 24.dp),
         )
