@@ -43,10 +43,11 @@
 
 <table>
   <tr>
-    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/home.png" alt="Home feed mixing YouTube and Bilibili"><br><sub>One feed for YouTube and Bilibili</sub></td>
-    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/watch.png" alt="Watch page"><br><sub>Watch page</sub></td>
-    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/live.png" alt="Bilibili live room"><br><sub>Bilibili live with danmaku</sub></td>
-    <td width="25%" align="center" valign="top"><img src="Assets/screenshots/remote.png" alt="Remote control screen"><br><sub>Phone as a remote control</sub></td>
+    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/home.png" alt="Home feed tuned to your taste"><br><sub>A home feed that learns your taste</sub></td>
+    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/search.png" alt="Search across YouTube and Bilibili"><br><sub>Search YouTube and Bilibili</sub></td>
+    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/live.png" alt="Bilibili live room with danmaku and a chat list"><br><sub>Bilibili live with danmaku and chat</sub></td>
+    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/remote.png" alt="Remote control screen"><br><sub>Phone as a remote control</sub></td>
+    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/icons.png" alt="Launcher icon picker"><br><sub>Pick your launcher icon</sub></td>
   </tr>
 </table>
 
@@ -99,6 +100,7 @@ No web view. A Kotlin client talks to Bilibili's web API directly.
 
 - Search, channels (uploads, series, seasons), playback, quality, multi-part videos
 - Comments and danmaku, the comments that scroll across the video
+- Live rooms, with danmaku over the video and a chat list that shows avatars and super chats
 - Subscriptions, history, likes and playlists, alongside YouTube's
 
 ## 🧠 FlowNeuro
