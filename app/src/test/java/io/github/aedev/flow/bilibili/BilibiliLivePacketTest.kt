@@ -12,9 +12,13 @@ class BilibiliLivePacketTest {
 
     private val chat =
         """{"cmd":"DANMU_MSG","info":[[0,1,25,16711680,1710000000000,0,0,"x",0,0,0,"",0,"{}","{}"],"hello",[1,"u",0]]}"""
+    private val profiledChat =
+        """{"cmd":"DANMU_MSG","info":[[0,1,25,255,0,0,0,"x",0,0,0,"",0,"{}","{}",""" +
+            """{"mode":0,"user":{"base":{"face":"https://i0.hdslb.com/f.jpg","name":"p"}}}],"hi",[2,"p",0]]}"""
     private val topChat = """{"cmd":"DANMU_MSG:4:0:2:2:2:0","info":[[0,5,25,255,0],"pinned"]}"""
     private val superChat =
-        """{"cmd":"SUPER_CHAT_MESSAGE","data":{"price":30,"message":"thanks","background_bottom_color":"#2A60B2"}}"""
+        """{"cmd":"SUPER_CHAT_MESSAGE","data":{"price":30,"message":"thanks","background_bottom_color":"#2A60B2",""" +
+            """"background_color_start":"#3171D2","user_info":{"uname":"fan","face":"https://i0.hdslb.com/face.jpg"}}}"""
 
     /** A packet the way the server wraps a batch: version 2, holding zlib-compressed packets. */
     private fun compressed(vararg bodies: String): ByteArray {
@@ -61,12 +65,46 @@ class BilibiliLivePacketTest {
     }
 
     @Test
+    fun `a chat message carries its sender`() {
+        assertThat((BilibiliLivePacket.parse(chat, json) as BilibiliLiveMessage.Chat).author).isEqualTo("u")
+        assertThat((BilibiliLivePacket.parse(topChat, json) as BilibiliLiveMessage.Chat).author).isEmpty()
+    }
+
+    @Test
+    fun `a chat message carries its sender avatar when the payload has a profile`() {
+        val withProfile = BilibiliLivePacket.parse(profiledChat, json) as BilibiliLiveMessage.Chat
+        assertThat(withProfile.avatarUrl).isEqualTo("https://i0.hdslb.com/f.jpg")
+
+        assertThat((BilibiliLivePacket.parse(chat, json) as BilibiliLiveMessage.Chat).avatarUrl).isNull()
+    }
+
+    @Test
     fun `a super chat carries its price and background colour`() {
         val message = BilibiliLivePacket.parse(superChat, json) as BilibiliLiveMessage.SuperChat
 
         assertThat(message.text).isEqualTo("(¥30) thanks")
+        assertThat(message.message).isEqualTo("thanks")
         assertThat(message.priceYuan).isEqualTo(30)
         assertThat(message.argbColor).isEqualTo(0xFF2A60B2.toInt())
+        assertThat(message.headerArgbColor).isEqualTo(0xFF3171D2.toInt())
+    }
+
+    @Test
+    fun `a super chat carries its sender and avatar`() {
+        val message = BilibiliLivePacket.parse(superChat, json) as BilibiliLiveMessage.SuperChat
+
+        assertThat(message.author).isEqualTo("fan")
+        assertThat(message.avatarUrl).isEqualTo("https://i0.hdslb.com/face.jpg")
+    }
+
+    @Test
+    fun `a super chat without sender or header colour falls back`() {
+        val bare = """{"cmd":"SUPER_CHAT_MESSAGE","data":{"price":5,"message":"hi","background_bottom_color":"#112233"}}"""
+        val message = BilibiliLivePacket.parse(bare, json) as BilibiliLiveMessage.SuperChat
+
+        assertThat(message.author).isEmpty()
+        assertThat(message.avatarUrl).isNull()
+        assertThat(message.headerArgbColor).isEqualTo(message.argbColor)
     }
 
     @Test

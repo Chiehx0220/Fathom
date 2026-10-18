@@ -181,13 +181,21 @@ sealed interface BilibiliLiveMessage {
         val text: String,
         val argbColor: Int,
         val position: BilibiliDanmakuPosition,
+        val author: String,
+        val avatarUrl: String?,
     ) : BilibiliLiveMessage
 
     data class SuperChat(
-        val text: String,
+        val message: String,
         val priceYuan: Int,
         val argbColor: Int,
-    ) : BilibiliLiveMessage
+        val headerArgbColor: Int,
+        val author: String,
+        val avatarUrl: String?,
+    ) : BilibiliLiveMessage {
+        /** Danmaku layer form. */
+        val text: String get() = "(¥$priceYuan) $message"
+    }
 }
 
 // endregion

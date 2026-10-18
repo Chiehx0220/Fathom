@@ -99,6 +99,7 @@ internal class PlaybackSessionApplier(
             scope,
             networkDispatcher,
             ::recordWatchClick,
+            liveChat,
         )
 
     suspend fun apply(

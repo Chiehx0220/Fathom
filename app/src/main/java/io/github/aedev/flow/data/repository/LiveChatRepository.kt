@@ -19,7 +19,9 @@ import javax.inject.Singleton
 @Singleton
 class LiveChatRepository
     @Inject
-    constructor() {
+    constructor(
+        private val bilibili: BilibiliLiveChatFeed,
+    ) {
         data class LiveChatPage(
             val messages: List<LiveChatMessage>,
             val nextContinuation: String?,
@@ -28,6 +30,7 @@ class LiveChatRepository
 
         suspend fun initialContinuation(videoId: String): String? =
             withContext(Dispatchers.IO) {
+                bilibili.seed(videoId)?.let { return@withContext it }
                 try {
                     YouTube.liveChatContinuation(videoId).getOrNull()
                 } catch (e: CancellationException) {
@@ -40,6 +43,7 @@ class LiveChatRepository
 
         suspend fun poll(continuation: String): LiveChatPage? =
             withContext(Dispatchers.IO) {
+                bilibili.poll(continuation)?.let { return@withContext it }
                 val response =
                     try {
                         YouTube.liveChat(continuation).getOrNull()

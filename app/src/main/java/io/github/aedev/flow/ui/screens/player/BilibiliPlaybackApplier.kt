@@ -2,6 +2,7 @@ package io.github.aedev.flow.ui.screens.player
 
 import android.content.Context
 import android.util.Log
+import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliVideoInfo
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.model.Video
@@ -37,6 +38,7 @@ internal class BilibiliPlaybackApplier(
     private val scope: CoroutineScope,
     private val networkDispatcher: CoroutineDispatcher,
     private val recordWatchClick: (Video) -> Unit,
+    private val liveChat: LiveChatController,
 ) {
     suspend fun applyVod(
         load: LoadContext,
@@ -73,7 +75,7 @@ internal class BilibiliPlaybackApplier(
     }
 
     /**
-     * Bilibili live room: HLS master via the YouTube live-stream player path. No related lane; chat opened by danmaku layer only while on screen.
+     * Bilibili live room: HLS master via the YouTube live-stream player path. No related lane; chat socket shared by the danmaku layer and [liveChat].
      */
     private suspend fun prepareLiveStreamFromBilibili(
         load: LoadContext,
@@ -108,7 +110,9 @@ internal class BilibiliPlaybackApplier(
             embeddedAvatarUrls = identity.embeddedAvatarUrls,
             loadToken = load.token,
         )
-        playerManager.startLiveDanmaku(step.playback.room.roomId)
+        val roomId = step.playback.room.roomId
+        playerManager.startLiveDanmaku(roomId)
+        liveChat.start(BilibiliLiveId.of(roomId))
     }
 
     /**

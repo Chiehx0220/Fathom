@@ -6,15 +6,20 @@ package io.github.aedev.flow.bilibili
 
 import android.util.Log
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -23,14 +28,21 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
+import java.util.concurrent.ConcurrentHashMap
 
 internal class BilibiliLiveChat(
     private val session: BilibiliSession,
     private val live: BilibiliLive,
     private val json: Json,
 ) {
-    /** Room chat across reconnects, until collector stops. */
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val rooms = ConcurrentHashMap<Long, Flow<BilibiliLiveMessage>>()
+
+    /** Reconnecting room chat, one shared socket per room; closes [SHARE_LINGER_MS] after the last collector. */
     fun messages(roomId: Long): Flow<BilibiliLiveMessage> =
+        rooms.getOrPut(roomId) { connectRoom(roomId).shareIn(scope, SharingStarted.WhileSubscribed(SHARE_LINGER_MS)) }
+
+    private fun connectRoom(roomId: Long): Flow<BilibiliLiveMessage> =
         flow {
             var failures = 0
             var attempt = 0
@@ -119,5 +131,6 @@ internal class BilibiliLiveChat(
         const val MAX_BACKOFF_STEPS = 4
         const val NORMAL_CLOSURE = 1000
         const val BUFFERED_MESSAGES = 256
+        const val SHARE_LINGER_MS = 3_000L
     }
 }
