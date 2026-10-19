@@ -57,8 +57,8 @@ android {
         applicationId = "io.github.chiehx0220.fathom"
         minSdk = 26
         targetSdk = 36
-        versionCode = 24
-        versionName = "0.1.6"
+        versionCode = 25
+        versionName = "0.2.0"
 
         buildConfigField("int", "NIGHTLY_RUN", "0")
         buildConfigField("String", "APP_LANGUAGE_TAGS", "\"${(listOf("en") + translatedLocaleTags()).joinToString(",")}\"")
