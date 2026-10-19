@@ -34,7 +34,7 @@ internal fun BoxScope.LiveDanmakuLayer(
     modifier: Modifier = Modifier,
 ) {
     val manager = EnhancedPlayerManager.getInstance()
-    val roomId by manager.liveDanmakuRoom.collectAsStateWithLifecycle()
+    val roomId by manager.danmaku.liveRoom.collectAsStateWithLifecycle()
     val id = roomId
     if (!enabled || id == null) return
 

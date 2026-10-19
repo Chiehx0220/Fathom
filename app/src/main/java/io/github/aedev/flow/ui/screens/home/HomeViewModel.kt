@@ -157,12 +157,7 @@ class HomeViewModel
                 )
 
         val contentSourceFilter: StateFlow<io.github.aedev.flow.data.local.HomeContentSourceFilter> =
-            playerPreferences.homeContentSourceFilter
-                .stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(UI_STATE_SUBSCRIPTION_TIMEOUT_MS),
-                    initialValue = io.github.aedev.flow.data.local.HomeContentSourceFilter.YOUTUBE,
-                )
+            playerPreferences.homeContentSourceFilterIn(viewModelScope, SharingStarted.WhileSubscribed(UI_STATE_SUBSCRIPTION_TIMEOUT_MS))
 
         /** Persists filter, reloads immediately. */
         fun setContentSourceFilter(filter: io.github.aedev.flow.data.local.HomeContentSourceFilter) {
@@ -185,7 +180,11 @@ class HomeViewModel
         private var subsBacklog: List<Video> = emptyList()
 
         private var currentQueryIndex = 0
-        private val searchPages = HomeSearchPages({ query, continuation -> repository.searchVideoPage(query, continuation) })
+        private val searchPages =
+            MultiSourceSearchPages(
+                HomeSearchPages({ query, continuation -> repository.searchVideoPage(query, continuation) }),
+                feedSources,
+            )
         private val discoveryQueries = mutableListOf<String>()
         private var wave2Job: Job? = null
         private var feedJob: Job? = null
@@ -609,9 +608,7 @@ class HomeViewModel
                                                     async {
                                                         query to
                                                             runCatching {
-                                                                withTimeoutOrNull(SEARCH_TIMEOUT_MS) {
-                                                                    feedSources.searchDiscovery(query, searchPages::firstPage)
-                                                                }
+                                                                withTimeoutOrNull(SEARCH_TIMEOUT_MS) { searchPages.firstPage(query) }
                                                             }.getOrNull().orEmpty()
                                                     }
                                                 }.awaitAll()
@@ -738,14 +735,8 @@ class HomeViewModel
                                 subCount = userSubs.size,
                                 totalInteractions = brain.totalInteractions,
                             )
-                        // Home-only source filter (YouTube/Bilibili/mix); Subscriptions, Search untouched. Applied after assembly, not per lane:
-                        // only the fresh-subs lane can hold a non-YouTube video (HomeContentSourceFilter).
-                        val sourceFilterServiceId = sourceFilter.serviceId
-                        val finalMix =
-                            sourceFilterServiceId?.let { id -> mix.videos.filter { it.serviceId == id } } ?: mix.videos.spreadByService()
-                        subsBacklog =
-                            sourceFilterServiceId?.let { id -> mix.subsBacklog.filter { it.serviceId == id } }
-                                ?: mix.subsBacklog
+                        val finalMix = mix.videos.shapedBy(sourceFilter)
+                        subsBacklog = mix.subsBacklog.onlyFrom(sourceFilter)
                         channelMemoryQuota = mix.quotas[FeedSource.CHANNEL_MEMORY] ?: 0
                         relatedPickIds.clear()
                         mix.sourceMix.items
@@ -925,7 +916,7 @@ class HomeViewModel
                                             q to (
                                                 withTimeoutOrNull(6_000L) {
                                                     try {
-                                                        feedSources.searchDiscovery(q, searchPages::firstPage)
+                                                        searchPages.firstPage(q)
                                                     } catch (cancellation: CancellationException) {
                                                         throw cancellation
                                                     } catch (error: Exception) {
@@ -1250,7 +1241,7 @@ class HomeViewModel
                                         query to (
                                             withTimeoutOrNull(SEARCH_TIMEOUT_MS) {
                                                 try {
-                                                    feedSources.searchDiscovery(query, searchPages::firstPage)
+                                                    searchPages.firstPage(query)
                                                 } catch (cancellation: CancellationException) {
                                                     throw cancellation
                                                 } catch (error: Exception) {
