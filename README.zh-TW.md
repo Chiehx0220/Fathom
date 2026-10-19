@@ -43,8 +43,8 @@
 
 <table>
   <tr>
-    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/home.png" alt="依你的口味調整的首頁"><br><sub>會學習你口味的首頁</sub></td>
-    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/search.png" alt="同時搜尋 YouTube 與 Bilibili"><br><sub>YouTube 與 Bilibili 一起搜尋</sub></td>
+    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/home.png" alt="依你的口味調整的首頁"><br><sub>懂你的首頁</sub></td>
+    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/search.png" alt="同時搜尋 YouTube 與 Bilibili"><br><sub>YouTube、Bilibili 一起搜</sub></td>
     <td width="20%" align="center" valign="top"><img src="Assets/screenshots/live.png" alt="有彈幕和聊天室的 Bilibili 直播間"><br><sub>Bilibili 直播、彈幕與聊天室</sub></td>
     <td width="20%" align="center" valign="top"><img src="Assets/screenshots/remote.png" alt="遙控器畫面"><br><sub>手機變遙控器</sub></td>
     <td width="20%" align="center" valign="top"><img src="Assets/screenshots/icons.png" alt="啟動圖示選擇"><br><sub>自選啟動圖示</sub></td>
