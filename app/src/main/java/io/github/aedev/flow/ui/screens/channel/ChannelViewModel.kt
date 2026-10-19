@@ -187,7 +187,7 @@ class ChannelViewModel
             kind: ChannelTabKind,
             groupIndex: Int,
             optionIndex: Int,
-        ) = tabController.selectFilter(kind, _uiState.value.tabParams(kind), groupIndex, optionIndex)
+        ) = bilibili.selectFilter(tabController, kind, _uiState.value.tabParams(kind), groupIndex, optionIndex)
 
         var listScrollIndex: Int = 0
             private set

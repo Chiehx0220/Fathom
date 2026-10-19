@@ -229,10 +229,19 @@ data class BilibiliChannelVideosPage(
     val lastAid: Long,
 )
 
+/** Uploader video-list order; [order] is the API's `order` value. */
+enum class BilibiliChannelSort(
+    val order: String,
+) {
+    LATEST("pubdate"),
+    POPULAR("click"),
+}
+
 /** Uploader video-list position: web API by number, app API by aid. */
 data class BilibiliChannelPageKey(
     val page: Int,
     val lastAid: Long,
+    val sort: BilibiliChannelSort = BilibiliChannelSort.LATEST,
 )
 
 enum class BilibiliPlaylistKind { SERIES, SEASON }

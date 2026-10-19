@@ -48,10 +48,10 @@ internal class BilibiliUserSpace(
         repeat(VIDEO_API_MODES) {
             val mode = videoApiMode.get()
             try {
-                return when (mode) {
-                    MODE_WEB -> videosFrom(mid, webUrl(mid, key.page)) { it.data?.list?.vlist }
-                    MODE_SEARCH -> videosFrom(mid, searchUrl(mid, key.page)) { it.data?.archives }
-                    else -> videosFrom(mid, appUrl(mid, key.lastAid)) { it.data?.item }
+                return when (apiFor(mode, key.sort)) {
+                    MODE_WEB -> videosFrom(mid, webUrl(mid, key.page, key.sort.order)) { it.data?.list?.vlist }
+                    MODE_SEARCH -> videosFrom(mid, searchUrl(mid, key.page, key.sort.order)) { it.data?.archives }
+                    else -> videosFrom(mid, appUrl(mid, key.lastAid, key.sort.order)) { it.data?.item }
                 }
             } catch (e: BilibiliException) {
                 failure = e
@@ -140,10 +140,11 @@ internal class BilibiliUserSpace(
     private suspend fun webUrl(
         mid: Long,
         page: Int,
+        order: String,
     ): String {
         val params = LinkedHashMap<String, String>()
         params["mid"] = mid.toString()
-        params["order"] = "pubdate"
+        params["order"] = order
         params["ps"] = "25"
         params["pn"] = page.toString()
         params["order_avoided"] = "true"
@@ -156,11 +157,12 @@ internal class BilibiliUserSpace(
     private suspend fun searchUrl(
         mid: Long,
         page: Int,
+        order: String,
     ): String {
         val params = LinkedHashMap<String, String>()
         params["mid"] = mid.toString()
         params["keywords"] = ""
-        params["order"] = "pubdate"
+        params["order"] = order
         params["pn"] = page.toString()
         params["ps"] = "20"
         params.putAll(BilibiliSigning.dmImgParams())
@@ -171,11 +173,12 @@ internal class BilibiliUserSpace(
     private fun appUrl(
         mid: Long,
         lastAid: Long,
+        order: String,
     ): String {
         val params = LinkedHashMap<String, String>()
         params["vmid"] = mid.toString()
         if (lastAid > 0) params["aid"] = lastAid.toString()
-        params["order"] = "pubdate"
+        params["order"] = order
         params["mobi_app"] = "android"
         params["ts"] = (System.currentTimeMillis() / 1000).toString()
         return "$APP_VIDEOS_URL?${BilibiliSigning.signApp(params)}"
@@ -193,11 +196,18 @@ internal class BilibiliUserSpace(
             throw BilibiliContentNotAvailableException("Unreadable Bilibili response: ${e.message}")
         }
 
-    private companion object {
-        const val TAG = "BilibiliUserSpace"
+    internal companion object {
+        private const val TAG = "BilibiliUserSpace"
         const val MODE_WEB = 0
         const val MODE_SEARCH = 1
-        const val VIDEO_API_MODES = 3
+        const val MODE_APP = 2
+        private const val VIDEO_API_MODES = 3
+
+        /** The search API ignores `order=click` and lists the latest: popular goes through the app API for that call only. */
+        fun apiFor(
+            mode: Int,
+            sort: BilibiliChannelSort,
+        ): Int = if (mode == MODE_SEARCH && sort == BilibiliChannelSort.POPULAR) MODE_APP else mode
 
         const val CARD_URL = "https://api.bilibili.com/x/web-interface/card?photo=true&mid="
         const val WEB_VIDEOS_URL = "https://api.bilibili.com/x/space/wbi/arc/search"

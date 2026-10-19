@@ -5,6 +5,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliChannelPageKey
+import io.github.aedev.flow.bilibili.BilibiliChannelSort
 import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
@@ -18,13 +19,14 @@ class BilibiliChannelVideosPagingSource(
     private val mid: Long,
     private val channelName: String,
     private val channelAvatarUrl: String,
+    private val sort: BilibiliChannelSort = BilibiliChannelSort.LATEST,
 ) : PagingSource<BilibiliChannelPageKey, Video>() {
     private val loadedKeys = DistinctKeyTracker()
 
     override fun getRefreshKey(state: PagingState<BilibiliChannelPageKey, Video>): BilibiliChannelPageKey? = null
 
     override suspend fun load(params: LoadParams<BilibiliChannelPageKey>): LoadResult<BilibiliChannelPageKey, Video> {
-        val key = params.key ?: BilibiliChannelPageKey(page = 1, lastAid = 0L)
+        val key = params.key ?: BilibiliChannelPageKey(page = 1, lastAid = 0L, sort = sort)
         return try {
             val result = withContext(Dispatchers.IO) { api.channelVideos(mid, key) }
             // Live room leads first page.
@@ -43,7 +45,7 @@ class BilibiliChannelVideosPagingSource(
                         Video::id,
                     ),
                 prevKey = null,
-                nextKey = if (result.hasMore) BilibiliChannelPageKey(key.page + 1, result.lastAid) else null,
+                nextKey = if (result.hasMore) BilibiliChannelPageKey(key.page + 1, result.lastAid, key.sort) else null,
             )
         } catch (e: CancellationException) {
             throw e

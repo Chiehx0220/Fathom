@@ -5,6 +5,7 @@ import android.util.Log
 import io.github.aedev.flow.R
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliChannelId
+import io.github.aedev.flow.bilibili.BilibiliChannelSort
 import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
 import io.github.aedev.flow.utils.PerformanceDispatcher
@@ -34,6 +35,19 @@ internal class BilibiliChannelLoader(
 
     /** Bilibili tab source while the open channel is Bilibili; else [youTube]. */
     fun tabSource(youTube: ChannelTabSource): ChannelTabSource = if (uiState.value.serviceId == BILIBILI_SERVICE_ID) native else youTube
+
+    /** Sort chip tapped: Bilibili's Videos tab sorts itself, any other channel goes to [youTube]. */
+    fun selectFilter(
+        youTube: ChannelTabController,
+        kind: ChannelTabKind,
+        tabParams: String?,
+        groupIndex: Int,
+        optionIndex: Int,
+    ) = if (uiState.value.serviceId == BILIBILI_SERVICE_ID) {
+        native.selectFilter(kind, tabParams, groupIndex, optionIndex)
+    } else {
+        youTube.selectFilter(kind, tabParams, groupIndex, optionIndex)
+    }
 
     /** [youTube] tab states, or Bilibili's while the open channel is Bilibili. */
     fun tabStates(youTube: Flow<Map<ChannelTabKind, ChannelTabState>>): Flow<Map<ChannelTabKind, ChannelTabState>> =
@@ -72,6 +86,10 @@ internal class BilibiliChannelLoader(
                 info,
                 appContext.getString(R.string.tab_videos),
                 appContext.getString(R.string.tab_playlists),
+                mapOf(
+                    BilibiliChannelSort.LATEST to appContext.getString(R.string.filter_newest),
+                    BilibiliChannelSort.POPULAR to appContext.getString(R.string.filter_popular),
+                ),
             )
         val channelId = info.mid.toString()
         uiState.update {
