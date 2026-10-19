@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **114** (1383 changed lines). New files: **248**.
+- Modified upstream files: **114** (1370 changed lines). New files: **248**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -36,13 +36,13 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
 | data/local/PlayerPreferences.kt | 39 | 0 |
 | data/local/SubscriptionRecordCodec.kt | 23 | 15 |
-| player/resolver/VideoPlaybackResolver.kt | 35 | 3 |
 | data/local/BackupRepository.kt | 20 | 17 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
 | data/video/VideoDownloadManager.kt | 23 | 3 |
 | ui/screens/player/PlaybackSessionApplier.kt | 26 | 0 |
+| player/resolver/VideoPlaybackResolver.kt | 22 | 3 |
 | ui/screens/channel/ChannelViewModel.kt | 22 | 3 |
 | data/innertube/RssSubscriptionService.kt | 21 | 3 |
 | data/local/ViewHistory.kt | 24 | 0 |
