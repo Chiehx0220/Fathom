@@ -5,6 +5,7 @@
 package io.github.aedev.flow.player.stream
 
 import android.net.Uri
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.datasource.DataSource
 import androidx.media3.exoplayer.source.MediaSource
@@ -18,6 +19,8 @@ import org.schabi.newpipe.extractor.stream.VideoStream
  * DASH: short ranges served fast.
  */
 object BilibiliDashManifest {
+    private const val TAG = "BilibiliDashManifest"
+
     /** [forVideo] + [MediaSource]; null as [forVideo]. */
     fun buildVideoSource(
         dataSourceFactory: DataSource.Factory,
@@ -25,7 +28,12 @@ object BilibiliDashManifest {
         durationSeconds: Long,
         mediaItem: MediaItem,
     ): MediaSource? {
-        val manifest = forVideo(stream, durationSeconds) ?: return null
+        val manifest = forVideo(stream, durationSeconds)
+        if (manifest == null) {
+            Log.w(TAG, "Bilibili DASH manifest generation failed, using raw progressive (may throttle)")
+            return null
+        }
+        Log.d(TAG, "Generating Bilibili DASH manifest for ${VideoCodecUtils.qualityHeightFromStream(stream)}p")
         return MediaSourceBuilder.buildDashSource(dataSourceFactory, manifest, Uri.parse(stream.content), mediaItem)
     }
 
@@ -36,7 +44,12 @@ object BilibiliDashManifest {
         durationSeconds: Long,
         mediaItem: MediaItem,
     ): MediaSource? {
-        val manifest = forAudio(stream, durationSeconds) ?: return null
+        val manifest = forAudio(stream, durationSeconds)
+        if (manifest == null) {
+            Log.w(TAG, "Bilibili audio DASH manifest generation failed, using raw progressive")
+            return null
+        }
+        Log.d(TAG, "Generating Bilibili DASH manifest for audio")
         return MediaSourceBuilder.buildDashSource(dataSourceFactory, manifest, Uri.parse(stream.content), mediaItem)
     }
 
