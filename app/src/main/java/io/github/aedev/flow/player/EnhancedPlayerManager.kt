@@ -27,8 +27,6 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
 import androidx.media3.session.MediaSession
 import dagger.hilt.android.EntryPointAccessors
-import io.github.aedev.flow.bilibili.BilibiliApi
-import io.github.aedev.flow.bilibili.BilibiliVideoInfo
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SponsorBlockAction
 import io.github.aedev.flow.data.local.VideoQuality
@@ -37,7 +35,6 @@ import io.github.aedev.flow.data.model.SponsorBlockCategories
 import io.github.aedev.flow.data.model.SponsorBlockSegment
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.repository.YouTubeRepository
-import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.YouTubeClient
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
@@ -50,8 +47,6 @@ import io.github.aedev.flow.player.cache.PlayerCacheManager
 import io.github.aedev.flow.player.config.PlayerConfig
 import io.github.aedev.flow.player.config.VideoSizeCap
 import io.github.aedev.flow.player.config.resetVideoSizeTo
-import io.github.aedev.flow.player.danmaku.DanmakuComment
-import io.github.aedev.flow.player.danmaku.DanmakuHandler
 import io.github.aedev.flow.player.error.PlayerDiagnostics
 import io.github.aedev.flow.player.error.PlayerErrorHandler
 import io.github.aedev.flow.player.factory.PlayerFactory
@@ -493,7 +488,7 @@ class EnhancedPlayerManager private constructor() {
     private var qualityManager: QualityManager? = null
     private var surfaceManager: SurfaceManager? = null
     private var sponsorBlockHandler: SponsorBlockHandler? = null
-    private var danmakuHandler: DanmakuHandler? = null
+    val danmaku = PlayerDanmaku()
     private var playbackTracker: PlaybackTracker? = null
     private var errorHandler: PlayerErrorHandler? = null
 
@@ -571,8 +566,7 @@ class EnhancedPlayerManager private constructor() {
         // Initialize sponsor block handler
         sponsorBlockHandler = SponsorBlockHandler(scope)
 
-        // Danmaku (Bilibili bullet comments) handler init
-        danmakuHandler = DanmakuHandler(scope)
+        danmaku.attach(scope)
 
         // Initialize audio features manager
         audioFeaturesManager = AudioFeaturesManager(scope, _playerState)
@@ -1014,7 +1008,7 @@ class EnhancedPlayerManager private constructor() {
         startPlaybackTracker()
 
         // Local file: no Bilibili danmaku; clear previous video's.
-        danmakuHandler?.reset()
+        danmaku.reset()
 
         // Stored segments win even when empty (looked up, none found); a device file has none to look up.
         sponsorBlockHandler?.reset()
@@ -2164,11 +2158,6 @@ class EnhancedPlayerManager private constructor() {
             val extractionDeferred =
                 async(Dispatchers.IO) {
                     try {
-                        if (!io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
-                                .supportsVideo(video.id)
-                        ) {
-                            return@async null
-                        }
                         withTimeoutOrNull(25000L) {
                             io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
                                 .extract(video.id)
@@ -2292,13 +2281,7 @@ class EnhancedPlayerManager private constructor() {
 
         sponsorBlockHandler?.reset()
         sponsorBlockHandler?.loadSegments(data.enrichedVideo.id)
-        val danmakuInfo = data.bilibiliInfo
-        val danmakuContext = appContext
-        if (danmakuInfo != null && danmakuContext != null) {
-            loadDanmaku(bilibiliApi(danmakuContext), danmakuInfo)
-        } else {
-            resetDanmaku()
-        }
+        danmaku.onPlaybackLoaded(data.bilibiliInfo, appContext)
 
         GlobalPlayerState.setCurrentVideo(data.enrichedVideo)
         startBackgroundService(
@@ -2927,25 +2910,6 @@ class EnhancedPlayerManager private constructor() {
 
     val sbCategoryActions: Map<String, SponsorBlockAction>
         get() = sponsorBlockHandler?.categoryActions ?: emptyMap()
-
-    fun loadDanmaku(
-        api: BilibiliApi,
-        info: BilibiliVideoInfo,
-    ) {
-        danmakuHandler?.reset()
-        danmakuHandler?.loadBilibili(api, info)
-    }
-
-    fun resetDanmaku() = danmakuHandler?.reset()
-
-    /** [roomId]: live room whose chat the danmaku layer shows. */
-    fun startLiveDanmaku(roomId: Long) = danmakuHandler?.startLive(roomId)
-
-    val liveDanmakuRoom: StateFlow<Long?>
-        get() = danmakuHandler?.liveRoomId ?: MutableStateFlow(null)
-
-    val danmakuComments: StateFlow<List<DanmakuComment>>
-        get() = danmakuHandler?.comments ?: MutableStateFlow(emptyList())
 
     // ===== Surface Management =====
 
