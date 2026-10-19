@@ -26,12 +26,12 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **114** (1347 changed lines). New files: **249**.
+- Modified upstream files: **114** (1334 changed lines). New files: **250**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | ui/screens/home/chips/HomeChipFeeds.kt | 33 | 37 |
-| ui/screens/home/HomeViewModel.kt | 49 | 11 |
+| ui/screens/home/HomeViewModel.kt | 38 | 9 |
 | ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
 | data/local/PlayerPreferences.kt | 39 | 0 |
 | data/local/SubscriptionRecordCodec.kt | 23 | 15 |
