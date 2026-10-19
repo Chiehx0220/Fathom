@@ -42,3 +42,4 @@ left, re-port only what changed, and update the commit above. PPE paths are unde
 - Requests go through Flow's OkHttp client, not PPE's downloader, so the default user agent of the one
   request sent with an empty Cookie header (`wbi/view`) is OkHttp's. Compare this first if that request fails.
 - A blocked video list moves to the next API in the same call. PPE moves on for the next call.
+- `AudioStream.averageBitrate` is bps (`bandwidth`), as `AudioStreamSelector` and the bitrate labels expect; PPE's `bandwidth / 1000` (kbps) is not ported.
