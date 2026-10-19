@@ -37,7 +37,10 @@ internal fun BoxScope.DanmakuLayer(
     enabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val comments by EnhancedPlayerManager.getInstance().danmakuComments.collectAsStateWithLifecycle()
+    val comments by EnhancedPlayerManager
+        .getInstance()
+        .danmaku.comments
+        .collectAsStateWithLifecycle()
     if (!enabled || comments.isEmpty()) return
 
     val playbackState by EnhancedPlayerManager.getInstance().playerState.collectAsStateWithLifecycle()

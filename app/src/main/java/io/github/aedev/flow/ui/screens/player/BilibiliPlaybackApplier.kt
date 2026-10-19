@@ -111,7 +111,7 @@ internal class BilibiliPlaybackApplier(
             loadToken = load.token,
         )
         val roomId = step.playback.room.roomId
-        playerManager.startLiveDanmaku(roomId)
+        playerManager.danmaku.startLive(roomId)
         liveChat.start(BilibiliLiveId.of(roomId))
     }
 
@@ -180,7 +180,7 @@ internal class BilibiliPlaybackApplier(
             isCurrent = { isLoadCurrent(load.token) },
         )
 
-        playerManager.loadDanmaku(bilibiliApi(context), playback.info)
+        playerManager.danmaku.load(bilibiliApi(context), playback.info)
     }
 
     /** Off playback path: slow/failing chapter request never delays first frame. */
