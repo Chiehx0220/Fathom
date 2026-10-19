@@ -197,7 +197,7 @@ internal class PlaybackPreparer(
             if (playerManager.isPreparedForPlayback(videoId)) return@withContext false
 
             // Previous video's danmaku; live room chat starts after this.
-            playerManager.resetDanmaku()
+            playerManager.danmaku.reset()
 
             playerManager.setStreams(
                 videoId = videoId,
