@@ -8,6 +8,7 @@
     <string name="app_name">Fathom</string>
     <string name="channel_error_log_clip_label">Отчет об ошибке Fathom</string>
     <string name="local_media_permission_body">Разрешите доступ к медиа, чтобы Fathom мог находить и воспроизводить локальные видео и музыку.</string>
+    <string name="link_not_supported">Fathom не может открыть ссылку такого типа</string>
     <string name="update_flow">Обновить Fathom</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Управляйте тем, какие уведомления может присылать Fathom</string>
