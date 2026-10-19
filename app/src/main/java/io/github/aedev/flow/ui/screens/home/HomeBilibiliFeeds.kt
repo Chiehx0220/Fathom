@@ -15,7 +15,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
 
 // Home feed Bilibili lane, outside HomeViewModel.kt: upstream YouTube-side changes merge cleanly.
@@ -68,6 +71,23 @@ internal suspend fun List<Video>.allowedBy(preferences: PlayerPreferences): List
     val filter = preferences.homeContentSourceFilter.first()
     return filter { filter.allows(it) }
 }
+
+/** [HomeContentSourceFilter] as the Home state upstream has no notion of: persisted, with YouTube as the initial value. */
+internal fun PlayerPreferences.homeContentSourceFilterIn(
+    scope: CoroutineScope,
+    started: SharingStarted,
+): StateFlow<HomeContentSourceFilter> = homeContentSourceFilter.stateIn(scope, started, HomeContentSourceFilter.YOUTUBE)
+
+/**
+ * The assembled Home mix under the Home-only source filter (YouTube/Bilibili/mix); Subscriptions and Search untouched.
+ * Applied after assembly, not per lane: only the fresh-subs lane can hold a non-YouTube video.
+ */
+internal fun List<Video>.shapedBy(filter: HomeContentSourceFilter): List<Video> =
+    filter.serviceId?.let { id -> filter { it.serviceId == id } } ?: spreadByService()
+
+/** [shapedBy] for a backlog that is only narrowed, never reordered. */
+internal fun List<Video>.onlyFrom(filter: HomeContentSourceFilter): List<Video> =
+    filter.serviceId?.let { id -> filter { it.serviceId == id } } ?: this
 
 /** Home page of cards: [filter]-allowed services only, spread evenly. */
 internal fun List<Video>.forSourceFilter(filter: HomeContentSourceFilter): List<Video> = filter { filter.allows(it) }.spreadByService()
