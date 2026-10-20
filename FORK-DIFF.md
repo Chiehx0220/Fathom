@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **114** (1323 changed lines). New files: **250**.
+- Modified upstream files: **113** (1306 changed lines). New files: **249**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -47,7 +47,6 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/ViewHistory.kt | 24 | 0 |
 | data/repository/YouTubeRepository.kt | 18 | 6 |
 | ui/screens/search/SearchViewModel.kt | 20 | 4 |
-| ui/tv/components/TvNavRail.kt | 4 | 20 |
 | data/paging/SearchPagingSource.kt | 17 | 6 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | ui/screens/home/HomeFeedSources.kt | 20 | 3 |
@@ -56,6 +55,7 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/dao/WatchHistoryDao.kt | 20 | 0 |
 | player/error/VideoErrorMapper.kt | 20 | 0 |
 | ui/screens/home/HomeScreen.kt | 16 | 4 |
+| ui/tv/components/TvNavRail.kt | 3 | 17 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 19 | 0 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 16 | 3 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 14 | 4 |
@@ -71,7 +71,6 @@ in it). **New files** never conflict; they are ours alone.
 | player/GlobalPlayerState.kt | 12 | 0 |
 | player/stream/PlaybackLoadResolver.kt | 11 | 1 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
-| ui/screens/search/SearchScreen.kt | 12 | 0 |
 | ui/startup/SplashThemes.kt | 0 | 12 |
 | data/local/LikedVideosRepository.kt | 10 | 1 |
 | ui/FlowApp.kt | 2 | 9 |
@@ -90,7 +89,8 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
 | utils/YouTubeLink.kt | 8 | 0 |
 | ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
-| ... 54 more, each small | | |
+| data/model/Models.kt | 6 | 0 |
+| ... 53 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
