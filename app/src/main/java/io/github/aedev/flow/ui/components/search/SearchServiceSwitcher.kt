@@ -2,6 +2,7 @@ package io.github.aedev.flow.ui.components.search
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +24,7 @@ fun SearchServiceSwitcher(
             BILIBILI_SERVICE_ID to "Bilibili",
         )
     Row(
-        modifier = modifier,
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         options.forEach { (serviceId, label) ->

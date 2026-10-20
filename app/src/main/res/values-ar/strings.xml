@@ -4466,7 +4466,9 @@
     <string name="mini_bar_nothing_next">لا يوجد شيء تالياً</string>
     <string name="mini_bar_nothing_previous">لا يوجد شيء سابقاً</string>
     <string name="categories_chart_source">قوائم تصنيفات YouTube Music</string>
-    <string name="categories_rate_limited">يفرض YouTube قيودًا على الطلبات حاليًا. حاول مجددًا بعد بضع دقائق.</string>
+    <plurals name="categories_rate_limited">
+        <item quantity="zero">يفرض YouTube قيودًا على الطلبات حاليًا. حاول مجددًا بعد بضع دقائق.</item>
+    </plurals>
     <string name="import_takeout_step_history">سجل المشاهدة</string>
     <string name="import_takeout_step_subscriptions">الاشتراكات</string>
     <string name="import_takeout_step_activity">الإعجابات وعمليات البحث</string>
@@ -4625,8 +4627,12 @@
     <string name="search_filter_watch_any">تمت مشاهدته أم لا</string>
     <string name="search_filter_unwatched">لم تتم مشاهدته</string>
     <string name="search_filter_watched">تمت مشاهدته</string>
-    <string name="search_watch_empty_watched">لا توجد مقاطع فيديو تمت مشاهدتها هنا</string>
-    <string name="search_watch_empty_unwatched">لا توجد مقاطع فيديو غير مشاهدة هنا</string>
+    <plurals name="search_watch_empty_watched">
+        <item quantity="zero">لا توجد فيديوهات تمت مشاهدتها</item>
+    </plurals>
+    <plurals name="search_watch_empty_unwatched">
+        <item quantity="zero">لا توجد فيديوهات غير مشاهدة</item>
+    </plurals>
     <string name="deep_flow_on_search_title">إظهار في البحث</string>
     <string name="deep_flow_on_search_subtitle">مفتاح تبديل Deep Flow فوق عمليات البحث الأخيرة</string>
     <string name="support_flow_open_collective">ادعم Flow على Open Collective</string>
@@ -4634,4 +4640,7 @@
     <string name="auto_tab_queue">قائمة التشغيل</string>
     <string name="taste_unknown_channel">قناة غير معروفة</string>
     <string name="settings_library_summary">اختر الأقسام التي تظهر في المكتبة</string>
+    <string name="tv_guide_search_field">في حقل البحث، افتح لوحة مفاتيح التلفاز للكتابة بأي لغة.</string>
+    <string name="tv_guide_search_down">الانتقال من شريط البحث إلى الاقتراحات والنتائج.</string>
+    <string name="tv_guide_search_open">فتح الاقتراح أو النتيجة المحددة.</string>
 </resources>
