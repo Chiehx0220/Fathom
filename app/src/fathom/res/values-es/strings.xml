@@ -23,8 +23,10 @@
     <string name="location_internal_app_desc">Privado de Fathom. Se eliminará si desinstalas la aplicación.</string>
     <string name="donation_prompt_title">Disfrutando Fathom?</string>
     <string name="donation_prompt_message">Fathom es gratis, libre y sin anuncios. Si se ha ganado su lugar en tu teléfono, un pequeño aporte ayuda a seguir manteniéndolo vivo.</string>
+    <string name="onboarding_welcome_title">Dale tu toque a Fathom</string>
     <string name="flow_control_center">Centro de control de Fathom</string>
     <string name="persona_audiophile_description">Usas Fathom principalmente para la música. El ambiente lo es todo.</string>
+    <string name="eq_system_desc">Se añade al ecualizador propio de Fathom</string>
     <string name="flow_is_up_to_date">¡Fathom está actualizado!</string>
     <string name="sync_error_qr_not_flow">Los datos de conexión de Fathom no parecen válidos.</string>
     <string name="sync_collection_recommendation_profile_body">Que ha aprendido Fathom de tus visualizaciones.</string>
@@ -42,9 +44,13 @@
     <string name="update_download_prompt">Hay una nueva versión de Fathom disponible (%1$s). ¿Descargar el APK más reciente?</string>
     <string name="import_migrate_description">Migra tus suscripciones e historial desde otras plataformas a Fathom sin complicaciones.</string>
     <string name="import_manage_backups">Gestiona tus copias de seguridad de Fathom</string>
+    <string name="taste_reset_video_body">Fathom olvida lo que ha aprendido de tus vídeos y búsquedas. El historial, los favoritos, las listas y los elementos ocultos se mantienen, y Inicio sigue usándolos.</string>
+    <string name="subtitle_add_file_failed">Fathom no puede leer ese archivo como subtítulos</string>
     <string name="discord_presence_playing_fallback">Reproduciendo en Fathom</string>
     <string name="export_watch_history_desc">Exportar como JSON del historial de YouTube (importaciones a LibreTube y Fathom)</string>
     <string name="whats_new_in_flow">Novedades en Fathom</string>
+    <string name="cache_size_applies_on_restart">Se aplica la próxima vez que se inicie Fathom.</string>
+    <string name="downloads_recover_body">Fathom guarda las descargas en Download/Fathom y Music/Fathom. Para ver los archivos que guardó una instalación anterior ahí, permite el acceso a vídeos y audio.</string>
     <string name="location_downloads_label">Descargas / Fathom</string>
     <string name="location_movies_label">Películas / Fathom</string>
 </resources>
