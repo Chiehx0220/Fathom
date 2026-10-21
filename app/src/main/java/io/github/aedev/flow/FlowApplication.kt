@@ -8,6 +8,7 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import dagger.hilt.android.HiltAndroidApp
+import io.github.aedev.flow.data.account.GoogleAccountSession
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.repository.NewPipeDownloader
@@ -72,6 +73,9 @@ class FlowApplication :
 
     @Inject
     internal lateinit var homeFeedLanguageReset: HomeFeedLanguageReset
+
+    @Inject
+    internal lateinit var googleAccountSession: GoogleAccountSession
 
     override fun newImageLoader(context: PlatformContext): ImageLoader = imageLoader
 
@@ -165,6 +169,7 @@ class FlowApplication :
                 }
         }
 
+        googleAccountSession.start(CoroutineScope(SupervisorJob() + Dispatchers.IO))
         YouTube.onVisitorDataChanged = visitorIdentityStore::save
         WebPoTokenSession.bindIdentityStore(visitorIdentityStore)
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {

@@ -5,6 +5,7 @@ import io.github.aedev.flow.ui.components.settings.SettingsDestination
 import io.github.aedev.flow.ui.components.settings.SettingsTarget
 import io.github.aedev.flow.ui.screens.equalizer.EqualizerScreen
 import io.github.aedev.flow.ui.screens.settings.about.AboutScreen
+import io.github.aedev.flow.ui.screens.settings.account.GoogleAccountScreen
 import io.github.aedev.flow.ui.screens.settings.appearance.AppearanceScreen
 import io.github.aedev.flow.ui.screens.settings.appearance.DateTimeScreen
 import io.github.aedev.flow.ui.screens.settings.appearance.FontScreen
@@ -151,6 +152,10 @@ internal fun SettingsDetail(
 
         SettingsDestination.SCROBBLING -> {
             ScrobblingScreen(onBack = onBack, highlight = target.highlight)
+        }
+
+        SettingsDestination.GOOGLE_ACCOUNT -> {
+            GoogleAccountScreen(onBack = onBack, highlight = target.highlight)
         }
 
         SettingsDestination.BACKUP -> {

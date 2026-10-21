@@ -293,6 +293,10 @@
             android:name=".widget.core.action.WidgetPlaybackReceiver"
             android:exported="false" />
         <activity
+            android:name=".ui.screens.settings.account.GoogleSignInActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Flow" />
+        <activity
             android:name=".widget.config.WidgetConfigActivity"
             android:exported="true"
             android:excludeFromRecents="true"

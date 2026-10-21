@@ -25,6 +25,7 @@ internal object SettingsIndex {
             TopicsIndex.all +
             IntegrationsIndex.all +
             ScrobblingIndex.all +
+            GoogleAccountIndex.entries +
             BackupIndex.all +
             DownloadsIndex.all +
             LocalMediaIndex.all +

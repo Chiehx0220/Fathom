@@ -4239,6 +4239,15 @@
         <item quantity="one">%d artist</item>
         <item quantity="other">%d artists</item>
     </plurals>
+    <string name="google_account_title">Google account</string>
+    <string name="google_account_summary">Sign in so YouTube answers as your own account</string>
+    <string name="settings_keywords_google_account">google youtube account login sign in cookie</string>
+    <string name="google_account_sign_in">Sign in</string>
+    <string name="google_account_sign_in_summary">Opens Google\'s sign-in page. YouTube can link what you watch to this account.</string>
+    <string name="google_account_sign_out">Sign out</string>
+    <string name="google_account_sign_out_summary">Forget the account on this device</string>
+    <string name="google_account_signed_in">Signed in</string>
+    <string name="google_account_signed_in_as">Signed in as %1$s</string>
     <string name="scrobbling_title">Scrobbling</string>
     <string name="scrobbling_summary">Send what you listen to Last.fm, Libre.fm or ListenBrainz</string>
     <string name="settings_keywords_scrobbling">scrobble scrobbling last.fm lastfm libre.fm librefm listenbrainz</string>

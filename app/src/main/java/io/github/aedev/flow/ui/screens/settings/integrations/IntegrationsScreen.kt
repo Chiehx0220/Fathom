@@ -1,6 +1,7 @@
 package io.github.aedev.flow.ui.screens.settings.integrations
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.AutoFixHigh
 import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material.icons.outlined.ThumbDownOffAlt
@@ -66,6 +67,13 @@ internal fun IntegrationsScreen(
             onEditUserId = { dialog = IntegrationsDialog.USER_ID },
             onPickColour = { colourCategory = it },
         )
+        group(key = "integrations.google_account.group", header = R.string.google_account_title) {
+            nav(
+                DestinationIndex.entry(SettingsDestination.GOOGLE_ACCOUNT),
+                icon = Icons.Outlined.AccountCircle,
+                onClick = { onNavigate(SettingsTarget(SettingsDestination.GOOGLE_ACCOUNT)) },
+            )
+        }
         group(key = "integrations.scrobbling.group", header = R.string.scrobbling_title) {
             nav(
                 DestinationIndex.entry(SettingsDestination.SCROBBLING),
