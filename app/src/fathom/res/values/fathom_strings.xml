@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Fathom</string>
-    <string name="app_launcher_name" translatable="false">Fathom</string>
+    <string name="app_launcher_name" translatable="false">Glow</string>
     <string name="channel_error_log_clip_label">Fathom channel error log</string>
     <string name="local_media_permission_body">Allow access to your media so Fathom can find and play local videos and music.</string>
     <string name="check_out_video_template">Check out this video: %1$s\n%2$s</string>

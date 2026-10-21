@@ -54,7 +54,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "io.github.chiehx0220.fathom"
+        applicationId = "io.github.chiehx0220.glow"
         minSdk = 26
         targetSdk = 36
         versionCode = 25
