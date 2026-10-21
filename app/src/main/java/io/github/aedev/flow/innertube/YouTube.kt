@@ -66,6 +66,7 @@ import io.github.aedev.flow.innertube.pages.SearchSummaryPage
 import io.github.aedev.flow.innertube.pages.VideoCommentsPage
 import io.github.aedev.flow.innertube.pages.VideoDescriptionPage
 import io.github.aedev.flow.innertube.pages.VideoPlaylistPage
+import io.github.aedev.flow.innertube.pages.WebHomePage
 import io.github.aedev.flow.innertube.pages.channel.ChannelAbout
 import io.github.aedev.flow.innertube.pages.channel.ChannelHeader
 import io.github.aedev.flow.innertube.pages.channel.ChannelPage
@@ -86,6 +87,7 @@ import io.github.aedev.flow.innertube.pages.explore.exploreShelves
 import io.github.aedev.flow.innertube.pages.explore.ranked
 import io.github.aedev.flow.innertube.pages.explore.toExploreDestinationShell
 import io.github.aedev.flow.innertube.pages.explore.trendingVideoChart
+import io.github.aedev.flow.innertube.pages.parseWebHomePage
 import io.github.aedev.flow.innertube.pages.parseYouTubeViewCount
 import io.github.aedev.flow.innertube.pages.reel.ReelLockup
 import io.github.aedev.flow.innertube.pages.reel.ReelOverlay
@@ -317,6 +319,12 @@ object YouTube {
             ?.takeIf(String::isNotBlank)
             ?.let { visitorData = it }
     }
+
+    internal suspend fun homeFeed(continuation: String? = null): Result<WebHomePage> =
+        runCatching {
+            val body = innerTube.homeBrowse(currentWebClient(), continuation).bodyAsText()
+            parseWebHomePage(Json.parseToJsonElement(body).jsonObject, locale.hl)
+        }
 
     private suspend fun currentWebClient(): YouTubeClient =
         withContext(Dispatchers.IO) {

@@ -102,6 +102,7 @@ class HomeViewModel
         private val chipFeeds: HomeChipFeeds,
         private val snapshotRecorder: HomeSnapshotRecorder,
         private val neighbourChannels: NeighbourChannelsRepository,
+        private val youTubeHome: io.github.aedev.flow.data.account.YouTubeHomeFeed,
         savedStateHandle: SavedStateHandle,
         @ApplicationContext private val appContext: Context,
     ) : ViewModel() {
@@ -138,6 +139,7 @@ class HomeViewModel
             // Next pages of earlier searches a short load-more page may fetch.
             private const val DEEPER_SEARCH_PAGES = 2
             private const val SEARCH_TIMEOUT_MS = 6_000L
+            private const val YOUTUBE_HOME_LOAD_AHEAD = 6
         }
 
         private val relatedPickIds = ConcurrentHashMap.newKeySet<String>()
@@ -145,6 +147,11 @@ class HomeViewModel
         private val channelMetadataEnrichmentInFlight =
             java.util.concurrent.ConcurrentHashMap
                 .newKeySet<String>()
+
+        @Volatile
+        private var youTubeHomeActive = false
+
+        private var youTubeMoreJob: Job? = null
 
         private val _uiState = MutableStateFlow(HomeUiState())
         val uiState: StateFlow<HomeUiState> =
@@ -229,6 +236,9 @@ class HomeViewModel
         fun enrichChipVideo(video: Video) = chipFeeds.enrichVisible(video)
 
         init {
+            viewModelScope.launch {
+                youTubeHome.active.drop(1).collect { reloadFeed() }
+            }
             chipFeeds.attach(
                 scope = viewModelScope,
                 savedState = savedStateHandle,
@@ -381,6 +391,10 @@ class HomeViewModel
 
         fun onHomeViewportChanged(lastVisibleVideoIndex: Int) {
             this.lastVisibleVideoIndex = lastVisibleVideoIndex
+            if (youTubeHomeActive) {
+                loadMoreYouTubeHome(lastVisibleVideoIndex)
+                return
+            }
             val state = _uiState.value
             if (!state.isReadyForPrefetch()) return
             startHomePrefetch(
@@ -395,6 +409,7 @@ class HomeViewModel
 
         private fun startHomePrefetch(request: FeedPrefetchRequest?) {
             request ?: return
+            if (youTubeHomeActive) return
             val worker =
                 synchronized(homePrefetchWorkerLock) {
                     if (homePrefetchJob?.isCompleted == false) return
@@ -478,6 +493,7 @@ class HomeViewModel
         /** The viewer's retry after a load-more that failed; the next scroll retries too. */
         fun retryLoadMore() {
             _uiState.update { it.copy(loadMoreFailed = false) }
+            if (youTubeHomeActive) loadMoreYouTubeHome(lastVisibleVideoIndex)
             startHomePrefetch(homePrefetchQueue.currentRequest(_uiState.value.videos.size))
         }
 
@@ -579,6 +595,11 @@ class HomeViewModel
 
             feedJob =
                 viewModelScope.launch(PerformanceDispatcher.networkIO) {
+                    youTubeHomeActive = youTubeHome.isActive()
+                    if (youTubeHomeActive) {
+                        loadYouTubeHome()
+                        return@launch
+                    }
                     try {
                         discoveryQueries.clear()
                         searchPages.reset()
@@ -1510,6 +1531,50 @@ class HomeViewModel
          * offers a refresh instead of filling itself with unrelated content. A feed already on
          * screen stays, still loading more, and the viewer is told the refresh failed (#1317).
          */
+        private suspend fun loadYouTubeHome() {
+            youTubeHome
+                .refresh()
+                .onSuccess { videos ->
+                    _uiState.update {
+                        it.copy(
+                            videos = videos,
+                            isLoading = false,
+                            isRefreshing = false,
+                            isLoadingMore = false,
+                            loadMoreFailed = false,
+                            hasMorePages = youTubeHome.hasMore,
+                            isFlowFeed = true,
+                            error = null,
+                            lastRefreshTime = System.currentTimeMillis(),
+                            origins = emptyMap(),
+                        )
+                    }
+                }.onFailure { settleWithoutFeed(it.message) }
+        }
+
+        private fun loadMoreYouTubeHome(lastVisibleIndex: Int) {
+            val state = _uiState.value
+            if (state.isLoading || state.isLoadingMore || state.loadMoreFailed || !state.hasMorePages) return
+            if (state.videos.size - lastVisibleIndex > YOUTUBE_HOME_LOAD_AHEAD) return
+            youTubeMoreJob?.cancel()
+            _uiState.update { it.copy(isLoadingMore = true) }
+            youTubeMoreJob =
+                viewModelScope.launch(PerformanceDispatcher.networkIO) {
+                    youTubeHome
+                        .loadMore()
+                        .onSuccess { more ->
+                            _uiState.update {
+                                val known = it.videos.mapTo(HashSet()) { video -> video.id }
+                                it.copy(
+                                    videos = it.videos + more.filter { video -> known.add(video.id) },
+                                    isLoadingMore = false,
+                                    hasMorePages = youTubeHome.hasMore,
+                                )
+                            }
+                        }.onFailure { _uiState.update { it.copy(isLoadingMore = false, loadMoreFailed = true) } }
+                }
+        }
+
         private fun settleWithoutFeed(error: String?) {
             var keptFeed = false
             _uiState.update {

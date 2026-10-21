@@ -38,6 +38,7 @@ import java.util.*
 import kotlin.io.encoding.Base64
 
 private const val TAG = "InnerTube"
+private const val HOME_BROWSE_ID = "FEwhat_to_watch"
 
 /**
  * Provide access to InnerTube endpoints.
@@ -239,6 +240,14 @@ class InnerTube {
         }
     }
 
+    private fun HeadersBuilder.appendSignedIn(origin: String) {
+        val cookie = cookie ?: return
+        append("cookie", cookie)
+        val sapisid = cookieMap["SAPISID"] ?: return
+        val currentTime = System.currentTimeMillis() / 1000
+        append("Authorization", "SAPISIDHASH ${currentTime}_${sha1("$currentTime $sapisid $origin")}")
+    }
+
     private fun HttpRequestBuilder.ytClient(
         client: YouTubeClient,
         setLogin: Boolean = false,
@@ -255,15 +264,7 @@ class InnerTube {
             append("X-Origin", origin)
             append("Referer", referer)
             visitorData?.let { append("X-Goog-Visitor-Id", it) }
-            if (setLogin && client.loginSupported) {
-                cookie?.let { cookie ->
-                    append("cookie", cookie)
-                    if ("SAPISID" !in cookieMap) return@let
-                    val currentTime = System.currentTimeMillis() / 1000
-                    val sapisidHash = sha1("$currentTime ${cookieMap["SAPISID"]} $origin")
-                    append("Authorization", "SAPISIDHASH ${currentTime}_$sapisidHash")
-                }
-            }
+            if (setLogin && client.loginSupported) appendSignedIn(origin)
         }
         userAgent(client.userAgent)
         parameter("prettyPrint", false)
@@ -356,11 +357,12 @@ class InnerTube {
     private suspend fun webBrowse(
         client: YouTubeClient,
         body: (String?) -> BrowseBody,
-    ) = mainSitePost(client, "browse", body)
+    ) = mainSitePost(client, "browse", body = body)
 
     private suspend inline fun <reified T> mainSitePost(
         client: YouTubeClient,
         path: String,
+        signedIn: Boolean = false,
         crossinline body: (String?) -> T,
     ) = withRetry {
         withVisitorDataFallback { requestVisitorData ->
@@ -371,6 +373,7 @@ class InnerTube {
                     append("X-Origin", YouTubeClient.ORIGIN_YOUTUBE)
                     append("Referer", YouTubeClient.REFERER_YOUTUBE)
                     requestVisitorData?.let { append("X-Goog-Visitor-Id", it) }
+                    if (signedIn) appendSignedIn(YouTubeClient.ORIGIN_YOUTUBE)
                 }
                 contentType(ContentType.Application.Json)
                 userAgent(client.userAgent)
@@ -420,6 +423,18 @@ class InnerTube {
             context = client.toContext(locale, requestVisitorData, null),
             browseId = if (continuation == null) channelId else null,
             params = if (continuation == null) params else null,
+            continuation = continuation,
+        )
+    }
+
+    suspend fun homeBrowse(
+        client: YouTubeClient,
+        continuation: String? = null,
+    ) = mainSitePost(client, "browse", signedIn = true) { requestVisitorData ->
+        BrowseBody(
+            context = client.copy(loginSupported = true).toContext(locale, requestVisitorData, dataSyncId),
+            browseId = if (continuation == null) HOME_BROWSE_ID else null,
+            params = null,
             continuation = continuation,
         )
     }
