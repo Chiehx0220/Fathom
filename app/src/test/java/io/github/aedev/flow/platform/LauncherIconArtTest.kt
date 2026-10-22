@@ -1,6 +1,7 @@
 package io.github.aedev.flow.platform
 
 import android.app.Application
+import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -11,6 +12,7 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.GraphicsMode
+import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [34], application = Application::class)
@@ -28,5 +30,16 @@ class LauncherIconArtTest {
             assertThat(Color.alpha(tile.getPixel(size / 2, size / 2))).isEqualTo(255)
             assertThat(Color.alpha(tile.getPixel(0, 0))).isEqualTo(0)
         }
+    }
+
+    @Test
+    fun `the tile persisted by the previous run is read back`() {
+        val context = ApplicationProvider.getApplicationContext<Application>()
+        val tile = LauncherIconArt.render(context, AppIcons.ALL.first(), size)
+        File(context.cacheDir, "launcher_icon_tile.png").outputStream().use { tile.compress(Bitmap.CompressFormat.PNG, 100, it) }
+
+        val cached = LauncherIconArt.cached(context)
+
+        assertThat(cached?.width).isEqualTo(size)
     }
 }

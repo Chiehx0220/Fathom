@@ -24,7 +24,7 @@ private fun rememberLauncherIcon(): ImageBitmap? {
     val context = LocalContext.current.applicationContext
     val stored by remember(context) { LauncherIconArt.entryPoint(context).playerPreferences().selectedAppIcon }
         .collectAsStateWithLifecycle(initialValue = null)
-    return produceState(LauncherIconArt.lastActive?.asImageBitmap(), stored) {
+    return produceState(remember(context) { LauncherIconArt.cached(context)?.asImageBitmap() }, stored) {
         value = LauncherIconArt.renderActive(context).asImageBitmap()
     }.value
 }

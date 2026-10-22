@@ -2,6 +2,7 @@ package io.github.aedev.flow.platform
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
@@ -19,6 +20,7 @@ import io.github.aedev.flow.util.AppIcons
 import io.github.aedev.flow.util.LauncherIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.math.roundToInt
 
 @EntryPoint
@@ -38,10 +40,29 @@ object LauncherIconArt {
     private const val CANVAS_DP = 108f
     private const val VISIBLE_DP = 72f
 
+    private const val CACHE_NAME = "launcher_icon_tile"
+
     /** Last bitmap from [renderActive]; seeds composables so they skip the empty first frame. */
     @Volatile
     var lastActive: Bitmap? = null
         private set
+
+    @Volatile
+    private var lastSuffix: String? = null
+
+    private fun cacheFile(
+        context: Context,
+        extension: String,
+    ) = File(context.applicationContext.cacheDir, "$CACHE_NAME.$extension")
+
+    /** [lastActive], else the persisted tile; null on first run. */
+    fun cached(context: Context): Bitmap? {
+        lastActive?.let { return it }
+        val bitmap = runCatching { BitmapFactory.decodeFile(cacheFile(context, "png").path) }.getOrNull() ?: return null
+        lastSuffix = runCatching { cacheFile(context, "suffix").readText() }.getOrNull()
+        lastActive = bitmap
+        return bitmap
+    }
 
     fun entryPoint(context: Context): LauncherIconEntryPoint =
         EntryPointAccessors.fromApplication(context.applicationContext, LauncherIconEntryPoint::class.java)
@@ -51,7 +72,24 @@ object LauncherIconArt {
         sizePx: Int = TILE_PX,
     ): Bitmap {
         val suffix = entryPoint(context).appIconController().activeSuffix()
-        return withContext(Dispatchers.Default) { render(context, AppIcons.icon(suffix), sizePx) }.also { lastActive = it }
+        lastActive?.takeIf { sizePx == TILE_PX && suffix == lastSuffix }?.let { return it }
+        return withContext(Dispatchers.Default) {
+            render(context, AppIcons.icon(suffix), sizePx).also { if (sizePx == TILE_PX) persist(context, it, suffix) }
+        }.also {
+            lastActive = it
+            lastSuffix = suffix
+        }
+    }
+
+    private fun persist(
+        context: Context,
+        bitmap: Bitmap,
+        suffix: String,
+    ) {
+        runCatching {
+            cacheFile(context, "png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            cacheFile(context, "suffix").writeText(suffix)
+        }
     }
 
     fun render(
