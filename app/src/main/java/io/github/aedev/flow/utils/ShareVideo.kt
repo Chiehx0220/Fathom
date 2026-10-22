@@ -8,7 +8,7 @@ import android.net.Uri
 import io.github.aedev.flow.MainActivity
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.repository.isYouTubeVideoId
-import io.github.aedev.flow.localserver.videoIdToUrl
+import io.github.aedev.flow.utils.videoIdToUrl
 
 /**
  * The canonical watch link for a video, optionally seeked to [positionSeconds]. The timestamp

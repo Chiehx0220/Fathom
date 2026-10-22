@@ -4,10 +4,10 @@ import android.content.Context
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.di.bilibiliApi
-import io.github.aedev.flow.localserver.videoIdToUrl
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelId
 import io.github.aedev.flow.utils.resolveNonYouTubeChannelUrl
 import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
+import io.github.aedev.flow.utils.videoIdToUrl
 import kotlinx.coroutines.CancellationException
 
 /*

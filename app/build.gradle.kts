@@ -288,9 +288,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
-    // Classic Material Components lib (not Compose) - used by localserver/DynamicColorHelper.kt
-    // as a scratch theme context for resolving Material color attributes.
-    implementation("com.google.android.material:material:1.11.0")
 
     // --- Navigation ---
     implementation(libs.androidx.navigation.compose)
@@ -324,8 +321,6 @@ dependencies {
 
     // Networking
     implementation(libs.okhttp)
-    // Local Server remote-control WebSocket server (localserver/RemoteWebSocketServer.kt)
-    implementation("org.java-websocket:Java-WebSocket:1.5.3")
 
     // Ktor (Managed in libs.versions.toml)
     implementation(libs.ktor.client.core)

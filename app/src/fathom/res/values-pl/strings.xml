@@ -36,7 +36,7 @@
     <string name="discord_presence_privacy_body">Po włączeniu aplikacja Fathom udostępnia na Discordzie tytuł, wykonawcę, okładkę oraz czas odtwarzania treści (Shorts, filmy, streamy, muzyka). Domyślnie wyłączone. Token sesji Discord jest szyfrowany w Android Keystore i nie jest zapisywany w logach.</string>
     <string name="discord_presence_risk_dialog_body">Połączenie loguje Cię przez Discorda i przekazuje aplikacji Fathom token Twojego konta. Fathom szyfruje go w Android Keystore i wysyła wyłącznie do Discorda, jednak ten nieoficjalny self-bot narusza Regulamin usługi. Discord może zawiesić lub usunąć Twoje konto, wymusić reset hasła, wyświetlić CAPTCHA lub zażądać weryfikacji numerem telefonu.</string>
     <string name="discord_error_open_flow">Otwórz Fathom przed połączeniem z Discordem.</string>
-    <string name="tv_remote_guide_subtitle">Szybki przewodnik po nawigacji w aplikacji Fathom</string>
+    <string name="tv_remote_guide_subtitle">Szybki przewodnik po nawigacji w aplikacji Glow</string>
     <string name="widget_now_playing_description">Steruj muzyką odtwarzaną we Fathom</string>
     <string name="widget_quick_actions_description">Wyszukuj w Fathom i przechodź do pobranych, historii lub rozpoznawania muzyki</string>
     <string name="ui_crashed_last_session">Awaria aplikacji Fathom</string>

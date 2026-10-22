@@ -41,8 +41,8 @@
     <string name="search_in_flow">ابحث في Fathom</string>
     <string name="discord_presence_privacy_body">يشارك Fathom العنوان واسم المنشئ والصورة ومدة التقدم لما تشغّله. يكون معطّلًا افتراضيًا. يتم تشفير رمز Discord الخاص بك ولا يتم تسجيله مطلقًا.</string>
     <string name="discord_presence_risk_dialog_body">عند الاتصال، تمنح Fathom رمز Discord الخاص بك. يبقى مشفّرًا على هذا الجهاز ولا يُرسل إلا إلى Discord. تخالف هذه الطريقة شروط خدمة Discord، لذا قد يتم تقييد حسابك أو حظره.</string>
-    <string name="discord_error_open_flow">افتح تطبيق Fathom قبل الاتصال بـ Discord.</string>
-    <string name="tv_remote_guide_subtitle">دليل سريع للتنقل في تطبيق Fathom من الأريكة</string>
+    <string name="discord_error_open_flow">افتح تطبيق Glow قبل الاتصال بـ Discord.</string>
+    <string name="tv_remote_guide_subtitle">دليل سريع للتنقل في تطبيق Glow من الأريكة</string>
     <string name="widget_now_playing_description">تحكم في الموسيقى التي يتم تشغيلها في Fathom</string>
     <string name="widget_quick_actions_description">إبحث في Fathom و انتقل إلى التنزيلات أو السجل أو التعرف علي الموسيقى</string>
     <string name="settings_widgets_summary">أضف Fathom إلى شاشتك الرئيسية</string>

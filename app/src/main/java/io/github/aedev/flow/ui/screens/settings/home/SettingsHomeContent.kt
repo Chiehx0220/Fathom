@@ -18,7 +18,6 @@ import io.github.aedev.flow.ui.components.shared.DeepFlowState
 import io.github.aedev.flow.ui.components.shared.FlowNavRow
 import io.github.aedev.flow.ui.components.shared.FlowSwitchRow
 import io.github.aedev.flow.ui.components.shared.deepFlowStatus
-import io.github.aedev.flow.ui.screens.settings.LocalServerSettingsSection
 import io.github.aedev.flow.ui.screens.settings.index.DestinationIndex
 import io.github.aedev.flow.ui.screens.settings.index.HomeIndex
 
@@ -49,16 +48,6 @@ internal fun SettingsListScope.homeContent(
     state: SettingsHomeState,
     actions: SettingsHomeActions,
 ) {
-    item("home.localserver") { LocalServerSettingsSection() }
-    item(HomeIndex.persona.key) {
-        PersonaEntryCard(
-            persona = state.persona,
-            selected = state.selected == SettingsDestination.TASTE,
-            onOpen = { actions.onOpen(SettingsTarget(SettingsDestination.TASTE)) },
-            modifier = state.selectedFocusModifier(SettingsDestination.TASTE),
-        )
-    }
-
     fun SettingsGroupScope.page(destination: SettingsDestination) =
         nav(
             entry = DestinationIndex.entry(destination),
