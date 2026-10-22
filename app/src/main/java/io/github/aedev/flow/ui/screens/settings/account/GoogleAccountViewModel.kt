@@ -21,6 +21,12 @@ internal class GoogleAccountViewModel
         val info: StateFlow<AccountInfo?> =
             store.account.mapLatest { if (it == null) null else YouTube.accountInfo().getOrNull() }.asState(null)
 
+        val syncEnabled: StateFlow<Boolean> = store.syncEnabled.asState(false)
+
+        fun setSyncEnabled(enabled: Boolean) {
+            write { store.setSyncEnabled(enabled) }
+        }
+
         fun signOut() {
             write { store.clear() }
         }

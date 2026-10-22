@@ -320,6 +320,19 @@ object YouTube {
             ?.let { visitorData = it }
     }
 
+    internal suspend fun playbackTracking(
+        videoId: String,
+        signatureTimestamp: Int,
+    ): Result<PlayerResponse.PlaybackTracking?> =
+        player(
+            videoId = videoId,
+            client = YouTubeClient.TVHTML5,
+            signatureTimestamp = signatureTimestamp,
+            apiUrl = YouTubeClient.API_URL_YOUTUBE,
+        ).map { it.playbackTracking }
+
+    internal suspend fun sendTracking(url: String): Result<Boolean> = runCatching { innerTube.sendTracking(url).status.value in 200..299 }
+
     internal suspend fun homeFeed(continuation: String? = null): Result<WebHomePage> =
         runCatching {
             val body = innerTube.homeBrowse(currentWebClient(), continuation).bodyAsText()

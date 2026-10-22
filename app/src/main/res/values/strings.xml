@@ -4244,6 +4244,8 @@
     <string name="settings_keywords_google_account">google youtube account login sign in cookie</string>
     <string name="google_account_sign_in">Sign in</string>
     <string name="google_account_sign_in_summary">Opens Google\'s sign-in page. YouTube can link what you watch to this account.</string>
+    <string name="google_account_sync">Sync to Google account</string>
+    <string name="google_account_sync_summary">Report what you watch to your YouTube history so recommendations follow it. Off by default; nothing is written to the account while it is off.</string>
     <string name="google_account_sign_out">Sign out</string>
     <string name="google_account_sign_out_summary">Forget the account on this device</string>
     <string name="google_account_signed_in">Signed in</string>

@@ -615,6 +615,17 @@ class InnerTube {
         }
     }
 
+    /** Tracking ping; [url] is complete, auth is in the headers. */
+    suspend fun sendTracking(url: String) =
+        httpClient.get(url) {
+            headers {
+                append("X-Origin", YouTubeClient.ORIGIN_YOUTUBE)
+                append("Referer", YouTubeClient.REFERER_YOUTUBE)
+                appendSignedIn(YouTubeClient.ORIGIN_YOUTUBE)
+            }
+            userAgent(YouTubeClient.TVHTML5.userAgent)
+        }
+
     suspend fun browse(
         client: YouTubeClient,
         browseId: String? = null,

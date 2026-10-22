@@ -2,6 +2,7 @@ package io.github.aedev.flow.data.account
 
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -31,11 +32,22 @@ class GoogleAccountStore
     ) {
         private val cookieKey = stringPreferencesKey("cookie")
         private val dataSyncIdKey = stringPreferencesKey("data_sync_id")
+        private val syncKey = booleanPreferencesKey("sync_to_account")
 
         val account: Flow<GoogleAccount?> =
             context.googleAccountDataStore.data
                 .map { it.account() }
                 .flowOn(Dispatchers.IO)
+
+        /** Opt-in; off writes nothing to the account. */
+        val syncEnabled: Flow<Boolean> =
+            context.googleAccountDataStore.data
+                .map { it[syncKey] ?: false }
+                .flowOn(Dispatchers.IO)
+
+        suspend fun setSyncEnabled(enabled: Boolean) {
+            context.googleAccountDataStore.edit { it[syncKey] = enabled }
+        }
 
         suspend fun save(account: GoogleAccount) {
             val sealed = withContext(Dispatchers.IO) { KeystoreSecretBox.seal(account.cookie) }

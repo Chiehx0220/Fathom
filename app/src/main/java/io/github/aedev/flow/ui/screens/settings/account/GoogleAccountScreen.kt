@@ -13,6 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.R
 import io.github.aedev.flow.ui.components.settings.SettingsPage
 import io.github.aedev.flow.ui.components.settings.nav
+import io.github.aedev.flow.ui.components.settings.switch
 import io.github.aedev.flow.ui.screens.settings.index.GoogleAccountIndex
 
 @Composable
@@ -24,6 +25,7 @@ internal fun GoogleAccountScreen(
     val context = LocalContext.current
     val signedIn by viewModel.signedIn.collectAsStateWithLifecycle()
     val info by viewModel.info.collectAsStateWithLifecycle()
+    val syncEnabled by viewModel.syncEnabled.collectAsStateWithLifecycle()
     val signedInLabel = stringResource(R.string.google_account_signed_in)
     val signedInAs = info?.let { stringResource(R.string.google_account_signed_in_as, it.email ?: it.name) }
 
@@ -41,6 +43,11 @@ internal fun GoogleAccountScreen(
                     onClick = { context.startActivity(Intent(context, GoogleSignInActivity::class.java)) },
                 )
             } else {
+                switch(
+                    GoogleAccountIndex.sync,
+                    checked = syncEnabled,
+                    onCheckedChange = viewModel::setSyncEnabled,
+                )
                 nav(
                     GoogleAccountIndex.signOut,
                     value = signedInAs ?: signedInLabel,

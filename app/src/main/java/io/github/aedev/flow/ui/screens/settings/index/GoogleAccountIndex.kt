@@ -21,5 +21,7 @@ internal object GoogleAccountIndex {
     val signIn = entry("sign_in", R.string.google_account_sign_in, R.string.google_account_sign_in_summary)
     val signOut = entry("sign_out", R.string.google_account_sign_out, R.string.google_account_sign_out_summary)
 
-    val entries = listOf(signIn, signOut)
+    val sync = entry("sync", R.string.google_account_sync, R.string.google_account_sync_summary)
+
+    val entries = listOf(signIn, sync, signOut)
 }
