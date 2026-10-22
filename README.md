@@ -41,15 +41,15 @@
 
 ## 📸 Screenshots
 
-<table>
-  <tr>
-    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/home.png" alt="Home feed tuned to your taste"><br><sub>A home feed that learns your taste</sub></td>
-    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/search.png" alt="Search across YouTube and Bilibili"><br><sub>Search YouTube and Bilibili</sub></td>
-    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/live.png" alt="Bilibili live room with danmaku and a chat list"><br><sub>Bilibili live with danmaku and chat</sub></td>
-    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/remote.png" alt="Remote control screen"><br><sub>Phone as a remote control</sub></td>
-    <td width="20%" align="center" valign="top"><img src="Assets/screenshots/icons.png" alt="Launcher icon picker"><br><sub>Pick your launcher icon</sub></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="Assets/screenshots/home.png" alt="Home feed tuned to your taste" width="19%">
+  <img src="Assets/screenshots/search.png" alt="Search across YouTube and Bilibili" width="19%">
+  <img src="Assets/screenshots/live.png" alt="Bilibili live room with danmaku and a chat list" width="19%">
+  <img src="Assets/screenshots/remote.png" alt="Remote control screen" width="19%">
+  <img src="Assets/screenshots/icons.png" alt="Launcher icon picker" width="19%">
+</p>
+
+<p align="center"><sub>Home feed · Search YouTube and Bilibili · Bilibili live with danmaku and chat · Phone as a remote · Launcher icons</sub></p>
 
 ## 🏗 How it fits together
 
