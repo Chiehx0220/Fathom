@@ -31,6 +31,12 @@ private val ExpressiveSplashes =
                 R.style.Theme_Flow_Starting_Dark_Expressive_Scallop,
                 R.style.Theme_Flow_Starting_Black_Expressive_Scallop,
             ),
+        ".IconExpressiveSegmented" to
+            ExpressiveSplash(
+                R.style.Theme_Flow_Starting_Light_Expressive_Segmented,
+                R.style.Theme_Flow_Starting_Dark_Expressive_Segmented,
+                R.style.Theme_Flow_Starting_Black_Expressive_Segmented,
+            ),
         ".IconExpressivePlay" to
             ExpressiveSplash(
                 R.style.Theme_Flow_Starting_Light_Expressive_Play,
@@ -42,6 +48,12 @@ private val ExpressiveSplashes =
                 R.style.Theme_Flow_Starting_Light_Expressive_Sky,
                 R.style.Theme_Flow_Starting_Dark_Expressive_Sky,
                 R.style.Theme_Flow_Starting_Black_Expressive_Sky,
+            ),
+        ".IconExpressiveMint" to
+            ExpressiveSplash(
+                R.style.Theme_Flow_Starting_Light_Expressive_Mint,
+                R.style.Theme_Flow_Starting_Dark_Expressive_Mint,
+                R.style.Theme_Flow_Starting_Black_Expressive_Mint,
             ),
         ".IconExpressiveCookie" to
             ExpressiveSplash(
@@ -60,6 +72,18 @@ private val ExpressiveSplashes =
                 R.style.Theme_Flow_Starting_Light_Expressive_Pill,
                 R.style.Theme_Flow_Starting_Dark_Expressive_Pill,
                 R.style.Theme_Flow_Starting_Black_Expressive_Pill,
+            ),
+        ".IconMaterialSky" to
+            ExpressiveSplash(
+                R.style.Theme_Flow_Starting_Light_Material_Sky,
+                R.style.Theme_Flow_Starting_Dark_Material_Sky,
+                R.style.Theme_Flow_Starting_Black_Material_Sky,
+            ),
+        ".IconMaterialMint" to
+            ExpressiveSplash(
+                R.style.Theme_Flow_Starting_Light_Material_Mint,
+                R.style.Theme_Flow_Starting_Dark_Material_Mint,
+                R.style.Theme_Flow_Starting_Black_Material_Mint,
             ),
     )
 

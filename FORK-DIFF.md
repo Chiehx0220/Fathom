@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (1305 changed lines). New files: **249**.
+- Modified upstream files: **114** (1312 changed lines). New files: **249**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -71,7 +71,7 @@ in it). **New files** never conflict; they are ours alone.
 | player/GlobalPlayerState.kt | 12 | 0 |
 | player/stream/PlaybackLoadResolver.kt | 11 | 1 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
-| ui/startup/SplashThemes.kt | 0 | 12 |
+| ui/startup/SplashThemes.kt | 12 | 0 |
 | data/local/LikedVideosRepository.kt | 10 | 1 |
 | ui/FlowApp.kt | 2 | 9 |
 | ui/screens/player/WatchSessionTracker.kt | 8 | 3 |
@@ -88,9 +88,9 @@ in it). **New files** never conflict; they are ours alone.
 | ui/components/shared/quickactions/VideoQuickActionsSheet.kt | 6 | 2 |
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
 | utils/YouTubeLink.kt | 8 | 0 |
+| MainActivity.kt | 5 | 2 |
 | ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
-| data/model/Models.kt | 6 | 0 |
-| ... 53 more, each small | | |
+| ... 54 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -119,15 +119,20 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Resources / strings
 
-- Modified upstream files: **0** (0 changed lines). New files: **3**.
+- Modified upstream files: **1** (30 changed lines). New files: **3**.
+
+| Modified upstream file | + | - |
+|---|---:|---:|
+| app/src/main/res/values/themes.xml | 30 | 0 |
 
 ## Tests
 
-- Modified upstream files: **17** (128 changed lines). New files: **15**.
+- Modified upstream files: **18** (148 changed lines). New files: **15**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | app/src/test/java/io/github/aedev/flow/data/update/GitHubReleaseTest.kt | 13 | 13 |
+| app/src/test/java/io/github/aedev/flow/ui/startup/SplashThemesTest.kt | 20 | 0 |
 | app/src/test/java/io/github/aedev/flow/platform/LauncherAliasManifestTest.kt | 13 | 2 |
 | app/src/test/java/io/github/aedev/flow/utils/ShareVideoTest.kt | 12 | 3 |
 | app/src/test/java/io/github/aedev/flow/data/subscriptions/SubscriptionRefreshPlannerTest.kt | 12 | 0 |
