@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (1306 changed lines). New files: **249**.
+- Modified upstream files: **113** (1305 changed lines). New files: **249**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -57,9 +57,9 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/home/HomeScreen.kt | 16 | 4 |
 | ui/tv/components/TvNavRail.kt | 3 | 17 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 19 | 0 |
-| ui/screens/player/content/PlayerErrorPanel.kt | 16 | 3 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 14 | 4 |
 | player/EnhancedPlayerManager.kt | 16 | 2 |
+| ui/screens/player/content/PlayerErrorPanel.kt | 15 | 3 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 14 | 1 |
