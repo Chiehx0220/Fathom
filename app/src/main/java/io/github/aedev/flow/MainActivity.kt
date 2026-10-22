@@ -231,9 +231,14 @@ class MainActivity : ComponentActivity() {
             SideEffect { cachedAppUiRoot = appUiRoot }
 
             // Check for a crash that happened last session.
-            // If found, show the CrashReportScreen instead of the normal UI.
+            // If found, show the CrashReportScreen instead of the normal UI. It is cleared as soon
+            // as it is read, so leaving the screen any way shows it once, not on every launch.
             var pendingCrashLog by remember {
-                mutableStateOf(FlowCrashHandler.getLastCrash(applicationContext))
+                mutableStateOf(
+                    FlowCrashHandler.getLastCrash(applicationContext)?.also {
+                        FlowCrashHandler.clearLastCrash(applicationContext)
+                    },
+                )
             }
 
             if (pendingCrashLog != null) {
@@ -241,10 +246,7 @@ class MainActivity : ComponentActivity() {
                 FlowTheme(theme.copy(fontFamily = FlowFontFamily)) {
                     CrashReportScreen(
                         report = pendingCrashLog!!,
-                        onContinue = {
-                            FlowCrashHandler.clearLastCrash(applicationContext)
-                            pendingCrashLog = null
-                        },
+                        onContinue = { pendingCrashLog = null },
                     )
                 }
                 return@setContent
@@ -441,14 +443,12 @@ class MainActivity : ComponentActivity() {
                     delay(350L)
                     val stillBackgrounded = !lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
                     if (stillBackgrounded && !isInPictureInPictureMode) {
-                        GlobalPlayerState.requestDismiss()
-                        io.github.aedev.flow.player.EnhancedPlayerManager
-                            .getInstance()
-                            .stop()
-                        io.github.aedev.flow.player.EnhancedPlayerManager
-                            .getInstance()
-                            .stopBackgroundService()
-                        // onStop ran while the window was still in PiP, so it skipped this (#1152).
+                        // onStop ran while the window was still in PiP, so it skipped its pause (#1152).
+                        // Closing the window pauses like leaving the app does, and keeps the video (#1349).
+                        if (cachedAppUiRoot == AppUiRoot.MOBILE) {
+                            releaseOrientationLock()
+                        }
+                        pauseVideoForBackground()
                         pauseShortsPlayers()
                     }
                 }
@@ -724,10 +724,17 @@ class MainActivity : ComponentActivity() {
             handOffVideoPlaybackToBackground()
         } else {
             videoLifecycleLog("handleBackgroundPlaybackOnStop pause")
-            playerManager.pause()
-            playerManager.parkVideoForBackground()
-            playerManager.stopBackgroundService()
+            pauseVideoForBackground()
         }
+    }
+
+    private fun pauseVideoForBackground() {
+        val playerManager =
+            io.github.aedev.flow.player.EnhancedPlayerManager
+                .getInstance()
+        playerManager.pause()
+        playerManager.parkVideoForBackground()
+        playerManager.stopBackgroundService()
     }
 
     companion object {

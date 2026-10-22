@@ -224,6 +224,10 @@ android {
     }
 }
 
+tasks.withType<Test>().configureEach {
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+}
+
 // One profile for every shipped variant: foss, nightly and github run the same startup code, and
 // a per-variant profile left foss and nightly with library profiles only (#1301).
 baselineProfile {
@@ -407,6 +411,8 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(libs.truth)
+    // Han word breaker for tests; the JDK breaker does not split Han runs.
+    testImplementation(libs.icu4j)
     testImplementation(libs.turbine)
     testImplementation(libs.androidx.glance.appwidget.testing)
     testImplementation(libs.hilt.android.testing)

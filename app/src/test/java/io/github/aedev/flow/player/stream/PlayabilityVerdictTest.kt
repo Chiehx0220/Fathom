@@ -1,6 +1,8 @@
 package io.github.aedev.flow.player.stream
 
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.innertube.models.response.PlayerResponse
+import kotlinx.serialization.json.Json
 import org.junit.Test
 
 class PlayabilityVerdictTest {
@@ -68,10 +70,12 @@ class PlayabilityVerdictTest {
     }
 
     @Test
-    fun `a bot wall on any client blocks the network`() {
+    fun `a wall on every client that answered blocks the visitor, and the network once a fresh one is walled`() {
         val reasons = listOf("VISIONOS: BOT_WALL, reason=Sign in", "MWEB: timeout or null response")
 
         assertThat(PlayabilityVerdict.block(reasons)).isEqualTo(PlaybackBlock.BOT_WALL)
+        assertThat(PlayabilityVerdict.block(reasons, freshVisitorWalled = true)).isEqualTo(PlaybackBlock.NETWORK_WALL)
+        assertThat(PlayabilityVerdict.block(reasons + "IOS: status=ERROR, reason=x")).isNull()
     }
 
     @Test
@@ -85,5 +89,82 @@ class PlayabilityVerdictTest {
     fun `other failures carry no block`() {
         assertThat(PlayabilityVerdict.block(listOf("IOS: status=ERROR, reason=x", "WEB: timeout or null response"))).isNull()
         assertThat(PlayabilityVerdict.block(emptyList())).isNull()
+    }
+
+    @Test
+    fun `a wall on every asked client is a full wall, one that answered otherwise is not (#1354)`() {
+        val walled =
+            listOf(
+                "ANDROID_VR: BOT_WALL, reason=Sign in to confirm you're not a bot",
+                "WEB_EMBEDDED: BOT_WALL, reason=Sign in to confirm you're not a bot",
+                "MWEB: PoToken unavailable (WebView missing/broken?)",
+                "all SABR clients demoted: WEB",
+            )
+        assertThat(PlayabilityVerdict.everyClientWalled(walled)).isTrue()
+        assertThat(PlayabilityVerdict.everyClientWalled(walled + "IOS: timeout or null response")).isTrue()
+        assertThat(PlayabilityVerdict.everyClientWalled(walled + "IOS: status=ERROR, reason=x")).isFalse()
+        assertThat(PlayabilityVerdict.everyClientWalled(listOf("MWEB: no visitorData"))).isFalse()
+        assertThat(PlayabilityVerdict.everyClientWalled(emptyList())).isFalse()
+    }
+
+    @Test
+    fun `a song blocked in this country is refused to the viewer, not gone (#1378)`() {
+        val reasons =
+            listOf(
+                "VISIONOS: status=UNPLAYABLE, reason=Video unavailable, " +
+                    "subreason=The uploader has not made this video available in your country, details=yes",
+                "ANDROID_VR: status=UNPLAYABLE, reason=Video unavailable, " +
+                    "subreason=The uploader has not made this video available in your country, details=yes",
+                "MWEB: PoToken unavailable (WebView missing/broken?)",
+            )
+
+        assertThat(PlayabilityVerdict.isGone(reasons)).isFalse()
+        assertThat(PlayabilityVerdict.block(reasons)).isEqualTo(PlaybackBlock.REGION)
+    }
+
+    @Test
+    fun `an unplayable answer that still carries the video's details is not gone`() {
+        val reasons = listOf("VISIONOS: status=UNPLAYABLE, reason=This video is not available, details=yes", "TV_TIZEN: not asked")
+
+        assertThat(PlayabilityVerdict.isGone(reasons)).isFalse()
+        assertThat(PlayabilityVerdict.block(reasons)).isNull()
+    }
+
+    @Test
+    fun `a removed video without details is still gone`() {
+        val reasons =
+            listOf(
+                "VISIONOS: status=ERROR, reason=This video is unavailable",
+                "ANDROID_VR: status=UNPLAYABLE, reason=This video is unavailable",
+            )
+
+        assertThat(PlayabilityVerdict.isGone(reasons)).isTrue()
+    }
+
+    @Test
+    fun `a rate limit and a members-only video are refusals of the viewer`() {
+        val limited = listOf("VISIONOS: status=ERROR, reason=This content isn't available, try again later.")
+        val members = listOf("VISIONOS: status=UNPLAYABLE, reason=Join this channel to get access to members-only content like this video.")
+
+        assertThat(PlayabilityVerdict.isGone(limited)).isFalse()
+        assertThat(PlayabilityVerdict.block(limited)).isEqualTo(PlaybackBlock.RATE_LIMITED)
+        assertThat(PlayabilityVerdict.isGone(members)).isFalse()
+        assertThat(PlayabilityVerdict.block(members)).isEqualTo(PlaybackBlock.MEMBERS_OR_PAID)
+    }
+
+    @Test
+    fun `a refusal is written with its subreason and whether details came back`() {
+        val status =
+            Json { ignoreUnknownKeys = true }.decodeFromString<PlayerResponse.PlayabilityStatus>(
+                """{"status":"UNPLAYABLE","reason":"Video unavailable","errorScreen":{"playerErrorMessageRenderer":""" +
+                    """{"subreason":{"runs":[{"text":"The uploader has not made this video available in your country"}]}}}}""",
+            )
+
+        assertThat(PlayabilityVerdict.refusal(status, hasVideoDetails = true)).isEqualTo(
+            "status=UNPLAYABLE, reason=Video unavailable, " +
+                "subreason=The uploader has not made this video available in your country, details=yes",
+        )
+        assertThat(PlayabilityVerdict.refusal(status.copy(reason = "Sign in to confirm you're not a bot"), hasVideoDetails = false))
+            .isEqualTo("BOT_WALL, reason=Sign in to confirm you're not a bot")
     }
 }

@@ -10,6 +10,7 @@ import io.github.aedev.flow.innertube.models.BrowseEndpoint
 import io.github.aedev.flow.innertube.models.GridRenderer
 import io.github.aedev.flow.innertube.models.MediaInfo
 import io.github.aedev.flow.innertube.models.MusicCarouselShelfRenderer
+import io.github.aedev.flow.innertube.models.MusicResponsiveHeaderRenderer
 import io.github.aedev.flow.innertube.models.MusicShelfRenderer
 import io.github.aedev.flow.innertube.models.PlaylistItem
 import io.github.aedev.flow.innertube.models.ReturnYouTubeDislikeResponse
@@ -150,6 +151,9 @@ object YouTube {
     private const val CHANNEL_POSTS_PARAMS = "EgVwb3N0c_IGBAoCSgA="
     private const val CHANNEL_SHORTS_PARAMS = "EgZzaG9ydHPyBgUKA5oBAA=="
 
+    /** The playlist header menu's "Show unavailable videos" view, which lists a Shorts grid in full. */
+    const val PLAYLIST_SHOW_UNAVAILABLE_PARAMS = "wgYCCAA="
+
     var locale: YouTubeLocale
         get() = innerTube.locale
         set(value) {
@@ -236,36 +240,25 @@ object YouTube {
     ): Result<SearchResult> =
         runCatching {
             val response = innerTube.search(WEB_REMIX, query, filter.value).body<SearchResponse>()
+            // The results shelf is not always the last section: a "did you mean" or message can follow it.
+            val shelf =
+                response.contents
+                    ?.tabbedSearchResultsRenderer
+                    ?.tabs
+                    ?.firstOrNull()
+                    ?.tabRenderer
+                    ?.content
+                    ?.sectionListRenderer
+                    ?.contents
+                    ?.firstNotNullOfOrNull { it.musicShelfRenderer }
             SearchResult(
                 items =
-                    response.contents
-                        ?.tabbedSearchResultsRenderer
-                        ?.tabs
-                        ?.firstOrNull()
-                        ?.tabRenderer
-                        ?.content
-                        ?.sectionListRenderer
-                        ?.contents
-                        ?.lastOrNull()
-                        ?.musicShelfRenderer
+                    shelf
                         ?.contents
                         ?.getItems()
-                        ?.mapNotNull {
-                            SearchPage.toYTItem(it)
-                        }.orEmpty(),
-                continuation =
-                    response.contents
-                        ?.tabbedSearchResultsRenderer
-                        ?.tabs
-                        ?.firstOrNull()
-                        ?.tabRenderer
-                        ?.content
-                        ?.sectionListRenderer
-                        ?.contents
-                        ?.lastOrNull()
-                        ?.musicShelfRenderer
-                        ?.continuations
-                        ?.getContinuation(),
+                        ?.mapNotNull(SearchPage::toYTItem)
+                        .orEmpty(),
+                continuation = shelf?.continuations?.getContinuation(),
             )
         }
 
@@ -337,7 +330,7 @@ object YouTube {
                         ?.contents
                         ?.mapNotNull {
                             SearchPage.toYTItem(it.musicResponsiveListItemRenderer)
-                        }!!,
+                        }.orEmpty(),
                 continuation =
                     response.continuationContents
                         ?.musicShelfContinuation
@@ -841,17 +834,21 @@ object YouTube {
             communityPostCommentsPage(continuation = continuation)
         }
 
-    /** A YouTube playlist's first page when [continuation] is null, otherwise the page it points to. */
+    /**
+     * A YouTube playlist's first page when [continuation] is null, otherwise the page it points to.
+     * [params] picks a view of the first page, such as [PLAYLIST_SHOW_UNAVAILABLE_PARAMS].
+     */
     suspend fun videoPlaylistPage(
         playlistId: String,
         continuation: String? = null,
+        params: String? = null,
     ): Result<VideoPlaylistPage> =
         runCatching {
             val response =
                 innerTube.channelBrowse(
-                    client = currentWebClient(),
+                    client = WEB,
                     channelId = "VL$playlistId".takeIf { continuation == null },
-                    params = null,
+                    params = params.takeIf { continuation == null },
                     continuation = continuation,
                 )
             Json.parseToJsonElement(response.bodyAsText()).toVideoPlaylistPage()
@@ -1674,6 +1671,24 @@ object YouTube {
             }
         }
 
+    // A podcast's playlist page lists its episodes but has no header; the show page has one.
+    private suspend fun podcastHeader(playlistId: String): MusicResponsiveHeaderRenderer? =
+        runCatching {
+            innerTube
+                .browse(client = WEB_REMIX, browseId = "MPSP$playlistId", setLogin = true)
+                .body<BrowseResponse>()
+                .contents
+                ?.twoColumnBrowseResultsRenderer
+                ?.tabs
+                ?.firstOrNull()
+                ?.tabRenderer
+                ?.content
+                ?.sectionListRenderer
+                ?.contents
+                ?.firstOrNull()
+                ?.musicResponsiveHeaderRenderer
+        }.getOrNull()
+
     suspend fun playlist(playlistId: String): Result<PlaylistPage> =
         runCatching {
             val response =
@@ -1696,6 +1711,7 @@ object YouTube {
             val header =
                 base?.musicResponsiveHeaderRenderer
                     ?: base?.musicEditablePlaylistDetailHeaderRenderer?.header?.musicResponsiveHeaderRenderer
+                    ?: podcastHeader(playlistId)
 
             val editable = base?.musicEditablePlaylistDetailHeaderRenderer != null
 
@@ -1737,7 +1753,7 @@ object YouTube {
                                 ?.firstOrNull()
                                 ?.menuNavigationItemRenderer
                                 ?.navigationEndpoint
-                                ?.watchPlaylistEndpoint!!,
+                                ?.watchPlaylistEndpoint,
                         radioEndpoint =
                             header.buttons
                                 .getOrNull(2)
@@ -2732,6 +2748,9 @@ object YouTube {
             val FILTER_ARTIST = SearchFilter("EgWKAQIgAWoKEAkQChAFEAMQBA%3D%3D")
             val FILTER_FEATURED_PLAYLIST = SearchFilter("EgeKAQQoADgBagwQDhAKEAMQBRAJEAQ%3D")
             val FILTER_COMMUNITY_PLAYLIST = SearchFilter("EgeKAQQoAEABagoQAxAEEAoQCRAF")
+            val FILTER_PODCAST = SearchFilter("EgWKAQJQAWoKEAkQChAFEAMQBA%3D%3D")
+            val FILTER_EPISODE = SearchFilter("EgWKAQJIAWoKEAkQChAFEAMQBA%3D%3D")
+            val FILTER_PROFILE = SearchFilter("EgWKAQJYAWoSEAUQCRADEAQQEBAVEAoQDhAR")
         }
     }
 
