@@ -8,7 +8,7 @@
 // app/src/main/res/values*/strings.xml stay identical to upstream, so merging upstream never conflicts
 // there. Fathom's own text lives in app/src/fathom/res, which the build lays over main:
 //   fathom_strings.xml   written by hand: Fathom-only strings and fork-specific wording
-//   strings.xml          generated here: upstream's translation with "Flow" turned into "Fathom"
+//   strings.xml          generated here: upstream's translation with "Flow" turned into "Glow"
 // A key written by hand is never generated. Run this after every merge of upstream.
 
 const fs = require('fs');
@@ -94,7 +94,7 @@ function hasBrand(text) {
 
 function rebrand(text) {
   return text.replace(BRAND, (word, _group, index) =>
-    isKept(text, index, word) ? word : word === 'FLOW' ? 'FATHOM' : 'Fathom');
+    isKept(text, index, word) ? word : word === 'FLOW' ? 'GLOW' : 'Glow');
 }
 
 function render(entries) {

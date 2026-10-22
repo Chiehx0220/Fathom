@@ -37,7 +37,7 @@ fun LauncherIconImage(
 ) {
     val icon = rememberLauncherIcon()
     if (icon == null) {
-        Box(modifier.background(colorResource(R.color.ic_fathom_background), RoundedCornerShape(LauncherIconArt.CORNER_PERCENT)))
+        Box(modifier.background(colorResource(R.color.ic_launcher_background), RoundedCornerShape(LauncherIconArt.CORNER_PERCENT)))
     } else {
         Image(bitmap = icon, contentDescription = contentDescription, modifier = modifier, filterQuality = FilterQuality.High)
     }

@@ -132,7 +132,7 @@ fun HomeScreen(
                 leading =
                     if (showAppLogoIcon) {
                         {
-                            FathomHeaderLogoIcon(
+                            FlowHeaderLogoIcon(
                                 isDeepFlowActive = deepFlowActive,
                                 modifier = Modifier.size(26.dp).deepFlowLongPress(deepFlowLabel, toggleDeepFlow),
                             )
