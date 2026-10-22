@@ -20,7 +20,6 @@ internal class HomeFeedLanguageReset
             val previous = lastLanguage
             lastLanguage = hl
             if (!isLanguageSwitch(previous, hl)) return
-            HomeFeedCache.clear()
             storedFeed.clearAll()
         }
     }

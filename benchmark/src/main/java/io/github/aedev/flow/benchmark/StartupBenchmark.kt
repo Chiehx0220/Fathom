@@ -5,7 +5,6 @@ import androidx.benchmark.macro.BaselineProfileMode
 import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
-import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -49,8 +48,7 @@ class StartupBenchmark {
 
         rule.measureRepeated(
             packageName = targetPackage,
-            // The engine loads beside the first frame since #1301; its own time shows here.
-            metrics = listOf(StartupTimingMetric(), TraceSectionMetric("neuro.init", TraceSectionMetric.Mode.First)),
+            metrics = listOf(StartupTimingMetric()),
             compilationMode = compilationMode,
             startupMode = startupMode,
             iterations = 10,

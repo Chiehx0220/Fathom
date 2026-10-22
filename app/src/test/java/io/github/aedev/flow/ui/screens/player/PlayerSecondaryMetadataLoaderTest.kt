@@ -1,9 +1,9 @@
 package io.github.aedev.flow.ui.screens.player
 
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.state.EnhancedPlayerState

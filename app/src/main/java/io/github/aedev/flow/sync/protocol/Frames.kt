@@ -44,7 +44,6 @@ object SyncCollection {
     const val PLAYLISTS = "playlists"
     const val LIKES = "likes"
     const val SETTINGS = "settings"
-    const val FLOW_NEURO_BRAIN = "flow_neuro_brain"
     const val MUSIC_BRAIN = "music_brain"
 
     /** The user's own notes on channels and videos. */
@@ -65,7 +64,6 @@ object SyncCollection {
             PLAYLISTS,
             LIKES,
             SETTINGS,
-            FLOW_NEURO_BRAIN,
             MUSIC_BRAIN,
             SUBSCRIBED_CHANNELS,
             SUBSCRIPTIONS,

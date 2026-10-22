@@ -2,13 +2,13 @@ package io.github.aedev.flow.data.paging
 
 import androidx.paging.PagingSource
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.local.ContentType
 import io.github.aedev.flow.data.local.Duration
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.local.SortType
 import io.github.aedev.flow.data.local.UploadDate
 import io.github.aedev.flow.data.local.WatchState
-import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.innertube.pages.SearchFixture
 import io.github.aedev.flow.innertube.pages.search.SearchHeader
 import io.github.aedev.flow.innertube.pages.search.toSearchResultsPage
@@ -255,7 +255,7 @@ class SearchPagingSourceTest {
 
         val visible =
             listOf(hidden, channel).withoutHidden(
-                FeedExclusions(suppressedVideoIds = setOf(hidden.video.id), suppressedChannelIds = setOf("UCkept")),
+                FeedExclusions(suppressedVideoIds = setOf(hidden.video.id)),
             )
 
         assertThat(visible).containsExactly(channel)

@@ -9,14 +9,6 @@ import io.github.aedev.flow.ui.components.settings.SettingsDestination
 internal object HomeIndex {
     private val home = SettingsDestination.HOME
 
-    val persona =
-        SettingEntry(
-            key = "home.persona",
-            title = R.string.taste_title,
-            summary = R.string.taste_summary,
-            section = R.string.settings_flow_engine_header,
-            destination = home,
-        )
     val deepFlow =
         SettingEntry(
             key = "home.deep_flow",

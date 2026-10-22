@@ -102,12 +102,11 @@ internal fun isWatchedProgress(watchProgress: Float?): Boolean = (watchProgress 
 /** The feedback a card sends without opening its sheet. */
 @Stable
 class VideoCardActions(
-    val onInterested: (Video) -> Unit,
     val onNotInterested: (Video) -> Unit,
     val onWatched: (Video) -> Unit,
 ) {
     internal companion object {
-        val None = VideoCardActions({}, {}, {})
+        val None = VideoCardActions({}, {})
     }
 }
 
@@ -129,7 +128,6 @@ fun ProvideVideoCardState(
     val actions =
         remember(quickActions) {
             VideoCardActions(
-                onInterested = quickActions::markAsInteresting,
                 onNotInterested = quickActions::markNotInterested,
                 onWatched = quickActions::markAsWatched,
             )

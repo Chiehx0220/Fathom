@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.account.YouTubeWatchReporter
 import io.github.aedev.flow.data.engagement.FeedInvalidationBus
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
 import io.github.aedev.flow.data.local.*
@@ -79,6 +80,7 @@ class VideoPlayerViewModel
         private val playbackResolver: PlaybackLoadResolver,
         notesRepository: io.github.aedev.flow.data.notes.NotesRepository,
         private val videoStats: io.github.aedev.flow.data.stats.VideoStatsRecorder,
+        private val watchReporter: YouTubeWatchReporter,
         private val localMediaDetails: LocalMediaDetails,
         private val lifecyclePlayback: LifecyclePlaybackPreferences,
         private val autoDownload: AutoDownloadTrigger,
@@ -115,6 +117,7 @@ class VideoPlayerViewModel
                 playerManager = playerManager,
                 upcomingPremiereProbe = upcomingPremiereProbe,
                 videoStats = videoStats,
+                watchReporter = watchReporter,
                 uiState = _uiState,
                 scope = viewModelScope,
                 networkDispatcher = networkDispatcher,

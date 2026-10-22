@@ -27,7 +27,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.aedev.flow.MainActivity
 import io.github.aedev.flow.data.local.PlayerPreferences
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.player.DeepFlowManager
 import io.github.aedev.flow.player.EnhancedMusicPlayerManager
 import io.github.aedev.flow.player.EnhancedPlayerManager
@@ -143,18 +142,7 @@ fun FlowApp(
     LaunchedEffect(Unit) {
         DeepFlowManager.initialize(context)
         val bypass = activity?.intent?.getBooleanExtra(MainActivity.EXTRA_BENCHMARK_BYPASS_ONBOARDING, false) == true
-        // A viewer who is past onboarding never waits for the engine here; everyone else asks it (#1301).
-        needsOnboarding =
-            when {
-                bypass || preferences.onboardingDone.first() -> {
-                    false
-                }
-
-                else -> {
-                    FlowNeuroEngine.initialize(context)
-                    FlowNeuroEngine.needsOnboarding().also { preferences.setOnboardingDone(!it) }
-                }
-            }
+        needsOnboarding = !(bypass || preferences.onboardingDone.first())
         onStartDestinationKnown()
     }
 

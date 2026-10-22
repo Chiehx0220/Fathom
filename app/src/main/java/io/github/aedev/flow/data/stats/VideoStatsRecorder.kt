@@ -6,7 +6,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.PrivacyGate
 import io.github.aedev.flow.data.local.dao.WatchHistoryDao
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -53,20 +52,12 @@ class VideoStatsRecorder
         /** Emits after each save of the ledger, for readers that show its totals outside the app. */
         val changes: Flow<Unit> = saved.asSharedFlow()
 
-        /** A finished view. [video] supplies the topics; without it the view still counts, topic-less. */
-        fun onView(
-            event: ViewEvent,
-            video: Video?,
-        ) = record(RecapEntry.VIEW) {
-            val topics =
-                if (event.counted && video != null) {
-                    runCatching { FlowNeuroEngine.topTopicsFor(video, VideoStatsParams.TOPICS_PER_VIEW) }.getOrDefault(emptyList())
-                } else {
-                    emptyList()
-                }
-            val now = System.currentTimeMillis()
-            locked { VideoStatsLedgerOps.recordView(it, now, event, topics) }
-        }
+        /** A finished view. */
+        fun onView(event: ViewEvent) =
+            record(RecapEntry.VIEW) {
+                val now = System.currentTimeMillis()
+                locked { VideoStatsLedgerOps.recordView(it, now, event, emptyList()) }
+            }
 
         fun onDislike(video: DislikedVideo) =
             record(RecapEntry.ACTIVITY) { locked { VideoStatsLedgerOps.recordDislike(it, video.at, video) } }

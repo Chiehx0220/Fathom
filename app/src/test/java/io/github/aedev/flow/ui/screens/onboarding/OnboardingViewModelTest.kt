@@ -10,7 +10,6 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.paging.ChannelSearch
-import io.github.aedev.flow.data.recommendation.OnboardingCompleter
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -38,7 +37,6 @@ class OnboardingViewModelTest {
     private val backup: BackupCoordinator = mockk(relaxed = true)
     private val operation = MutableStateFlow<BackupOperation>(BackupOperation.Idle)
     private val channelSearch: ChannelSearch = mockk()
-    private val completer: OnboardingCompleter = mockk()
     private val preferences: PlayerPreferences = mockk(relaxed = true)
     private val channel = Channel(id = "UCabc", name = "Circuit Bench", thumbnailUrl = "https://t", subscriberCount = 10)
 
@@ -49,7 +47,6 @@ class OnboardingViewModelTest {
         every { backup.importNewPipe(any()) } returns true
         every { backup.importNewPipeWatchHistory(any()) } returns true
         coEvery { channelSearch.search(any()) } returns listOf(channel)
-        coEvery { completer.complete(any()) } returns Unit
         every { preferences.notifNewVideosEnabled } returns flowOf(true)
     }
 
@@ -62,7 +59,6 @@ class OnboardingViewModelTest {
             subscriptions,
             backup,
             channelSearch,
-            completer,
             preferences,
             mockk(relaxed = true),
             mockk(relaxed = true),
@@ -73,7 +69,6 @@ class OnboardingViewModelTest {
         runTest(dispatcher) {
             val saved = SavedStateHandle()
             viewModel(saved).apply {
-                toggleTopic("Jazz")
                 toggleSubscription(channel)
                 next()
             }
@@ -81,7 +76,6 @@ class OnboardingViewModelTest {
             val restored = viewModel(saved).state.value
 
             assertThat(restored.step).isEqualTo(OnboardingStep.entries[1])
-            assertThat(restored.topics).containsExactly("Jazz")
             assertThat(restored.subscribed.map { it.id }).containsExactly("UCabc")
         }
 
@@ -122,12 +116,11 @@ class OnboardingViewModelTest {
         }
 
     @Test
-    fun `finishing seeds the engine once however often it is tapped`() =
+    fun `finishing marks setup done once however often it is tapped`() =
         runTest(dispatcher) {
             val gate = CompletableDeferred<Unit>()
-            coEvery { completer.complete(any()) } coAnswers { gate.await() }
+            coEvery { preferences.setOnboardingDone(any()) } coAnswers { gate.await() }
             val viewModel = viewModel()
-            viewModel.toggleTopic("Jazz")
 
             viewModel.complete()
             viewModel.complete()
@@ -135,7 +128,7 @@ class OnboardingViewModelTest {
             gate.complete(Unit)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { completer.complete(setOf("Jazz")) }
+            coVerify(exactly = 1) { preferences.setOnboardingDone(true) }
             assertThat(viewModel.state.value.completed).isTrue()
         }
 

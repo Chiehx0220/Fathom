@@ -120,7 +120,6 @@ internal fun BackupScreen(
             typeLabels =
                 mapOf(
                     AutoBackupType.APP_DATA to stringResource(R.string.auto_backup_type_app_data),
-                    AutoBackupType.BRAIN to stringResource(R.string.auto_backup_type_brain),
                     AutoBackupType.MASTER to stringResource(R.string.auto_backup_type_master),
                 ),
         )

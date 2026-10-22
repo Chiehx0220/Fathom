@@ -274,8 +274,6 @@
     <string name="mark_as_watched_toast">Marked as watched</string>
     <string name="mark_as_unwatched">Mark as unwatched</string>
     <string name="mark_as_unwatched_toast">Marked as unwatched</string>
-    <string name="i_like_this">I want more like this</string>
-    <string name="i_like_this_toast">Got it! You\'ll see more content like this.</string>
     <string name="go_to_channel">Go to channel</string>
     <!-- Media Info Dialog -->
     <string name="track_info">Track Information</string>
@@ -690,7 +688,6 @@
     <string name="deep_flow_save_history_title">Save to watch history</string>
     <string name="deep_flow_save_history_subtitle">Keep watch history without teaching recommendations</string>
     <string name="deep_flow_scrobble_title">Scrobble during Deep Flow</string>
-    <string name="taste_learning_paused">Deep Flow is on, learning is paused</string>
     <string name="deep_flow_scrobble_subtitle">Keep sending listens to Last.fm, Libre.fm and ListenBrainz</string>
     <string name="deep_flow_on_search_title">Show on search</string>
     <string name="deep_flow_on_search_subtitle">A Deep Flow switch above recent searches</string>
@@ -1527,26 +1524,18 @@
         <item quantity="other">%1$d topics</item>
     </plurals>
     <string name="your_interests_title">Your Interests</string>
-    <string name="your_interests_desc">Pick topics to shape your recommendations.</string>
     <string name="currently_following">Currently Following</string>
     <string name="tap_to_remove">Tap to remove</string>
     <string name="add_topics">Add Topics</string>
     <string name="browse_by_category">Browse by category</string>
     <string name="hidden_content_title">Hidden Content</string>
-    <string name="hidden_content_desc">Videos about these topics won\'t be recommended. You can also tap Not interested on any video.</string>
-    <string name="block_topic_title">Block a Topic</string>
     <string name="enter_keywords_to_hide">Enter keywords to hide</string>
-    <string name="block_topic_placeholder">e.g., makeup, fortnite, asmr</string>
     <string name="desc_add_topic">Add topic</string>
-    <string name="quick_add">Quick Add</string>
     <string name="common_topics_to_block">Common topics to block</string>
-    <string name="currently_blocked">Currently Blocked</string>
     <plurals name="topics_blocked_count_plural">
         <item quantity="one">%1$d topic</item>
         <item quantity="other">%1$d topics</item>
     </plurals>
-    <string name="desc_remove_topic">Remove %1$s</string>
-    <string name="desc_unblock_topic">Unblock %1$s</string>
     <plurals name="selected_count_template">
         <item quantity="one">%1$d selected</item>
         <item quantity="other">%1$d selected</item>
@@ -1833,8 +1822,6 @@
     <string name="newpipe_extractor_title">NewPipe Extractor</string>
     <string name="newpipe_extractor_subtitle">Core extraction library</string>
     <string name="about_license">License</string>
-    <string name="about_notices">Open source notices</string>
-    <string name="about_notices_summary">Word lists and code from other projects</string>
     <string name="about_license_name">GNU GPL v3</string>
     <string name="about_changelog">Changelog</string>
     <string name="whats_new_in_flow">What\'s new in Flow</string>
@@ -1897,9 +1884,6 @@
     <string name="welcome_to_flow">Welcome to Flow</string>
     <string name="onboarding_subtitle">Tell us what you\'re interested in</string>
     <string name="onboarding_instructions">Select at least 3 topics to personalize your experience</string>
-    <string name="onboarding_interests_title">What do you enjoy?</string>
-    <string name="onboarding_interests_hint">Pick at least %1$d topics to personalise your feed. %2$d more to go.</string>
-    <string name="onboarding_interests_ready">Great selection. You can always update this later in settings.</string>
     <string name="onboarding_channels_title">Find channels</string>
     <string name="onboarding_channels_subtitle">Search for channels you already follow and subscribe in one tap.</string>
     <string name="onboarding_channels_search_placeholder">Search channels…</string>
@@ -1919,7 +1903,6 @@
     <string name="onboarding_topic_selected">Selected</string>
     <string name="onboarding_topic_not_selected">Not selected</string>
     <string name="onboarding_import_failed_template">Import failed: %1$s</string>
-    <string name="onboarding_step_interests">Interests</string>
     <string name="onboarding_step_channels">Channels</string>
     <string name="onboarding_step_import">Import</string>
     <string name="onboarding_import_source_flow">Flow backup</string>
@@ -1942,10 +1925,6 @@
     <string name="onboarding_restore_backup">Restore a backup</string>
     <string name="onboarding_get_started">Get started</string>
     <string name="onboarding_start_watching">Start watching</string>
-    <plurals name="onboarding_pick_more">
-        <item quantity="one">Pick %d more</item>
-        <item quantity="other">Pick %d more</item>
-    </plurals>
     <string name="onboarding_welcome_title">Make Flow yours</string>
     <string name="onboarding_welcome_subtitle">Videos and music around what you love. Setup takes a minute.</string>
     <string name="onboarding_alerts_title">Never miss an upload</string>
@@ -1960,10 +1939,6 @@
     <string name="onboarding_alerts_footnote">You can change these any time in Settings.</string>
     <string name="onboarding_ready_title">You\'re all set</string>
     <string name="onboarding_ready_subtitle">Your feed is ready. It gets sharper as you watch.</string>
-    <plurals name="onboarding_ready_interests">
-        <item quantity="one">%d interest</item>
-        <item quantity="other">%d interests</item>
-    </plurals>
     <plurals name="onboarding_ready_channels">
         <item quantity="one">%d channel</item>
         <item quantity="other">%d channels</item>
@@ -1977,14 +1952,6 @@
     <!-- Categories -->
     <string name="category_gaming">Gaming</string>
     <string name="category_music">Music</string>
-    <string name="category_technology">Technology</string>
-    <string name="category_entertainment">Entertainment</string>
-    <string name="category_education">Education</string>
-    <string name="category_health_fitness">Health &amp; Fitness</string>
-    <string name="category_lifestyle">Lifestyle</string>
-    <string name="category_creative">Creative</string>
-    <string name="category_science_nature">Science &amp; Nature</string>
-    <string name="category_news_current_events">News &amp; Current Events</string>
     <!-- Flow Personality Screen -->
     <string name="flow_control_center">Flow Control Center</string>
     <string name="action_refresh">Refresh</string>
@@ -1998,26 +1965,6 @@
     <string name="temporal_patterns_subtitle">How your interests shift by time of day</string>
     <string name="channel_memory">Channel Memory</string>
     <string name="channel_memory_subtitle">Implicit feedback from your viewing history</string>
-    <string name="persona_initiate_title">The Initiate</string>
-    <string name="persona_initiate_description">Just getting started. Your profile is still forming.</string>
-    <string name="persona_audiophile_title">The Audiophile</string>
-    <string name="persona_audiophile_description">You use Flow mostly for Music. The vibe is everything.</string>
-    <string name="persona_livewire_title">The Livewire</string>
-    <string name="persona_livewire_description">You love the raw energy of Livestreams and premieres.</string>
-    <string name="persona_night_owl_title">The Night Owl</string>
-    <string name="persona_night_owl_description">You thrive in the dark. Most watching happens after midnight.</string>
-    <string name="persona_binger_title">The Binger</string>
-    <string name="persona_binger_description">Once you start, you can\'t stop. Massive content waves.</string>
-    <string name="persona_scholar_title">The Scholar</string>
-    <string name="persona_scholar_description">High-complexity content. Here to grow, not just be entertained.</string>
-    <string name="persona_deep_diver_title">The Deep Diver</string>
-    <string name="persona_deep_diver_description">Long-form video essays and documentaries are your world.</string>
-    <string name="persona_skimmer_title">The Skimmer</string>
-    <string name="persona_skimmer_description">Fast-paced, short content. Dopamine on demand.</string>
-    <string name="persona_specialist_title">The Specialist</string>
-    <string name="persona_specialist_description">Laser-focused on a few niches. You know what you like.</string>
-    <string name="persona_explorer_title">The Explorer</string>
-    <string name="persona_explorer_description">Chaotic and beautiful. A bit of everything.</string>
     <string name="channel_memory_empty">No channels in memory.</string>
     <string name="algorithm_insights">Algorithm Insights</string>
     <string name="algorithm_insights_subtitle">Under the hood</string>
@@ -2102,7 +2049,6 @@
     <string name="section_rotation_evening">Your evening rotation</string>
     <string name="section_rotation_night">Your late-night rotation</string>
     <string name="source_your_rotation">Your rotation</string>
-    <string name="music_genre_affinity_title">Genres and moods</string>
     <string name="music_genre_affinity_subtitle">Learned from the genre and mood surfaces you actually play</string>
     <string name="recommendations_header">Recommendations</string>
     <string name="not_interested_desc">Show less from this artist for a while</string>
@@ -2147,9 +2093,6 @@
     <string name="music_brain_import_failed">Music engine import failed</string>
     <string name="music_persona_overview_title">Music Taste</string>
     <string name="music_persona_overview_subtitle">What the music engine has learned from your listening</string>
-    <string name="music_persona_maturity_cold">Cold start</string>
-    <string name="music_persona_maturity_warming">Warming up</string>
-    <string name="music_persona_maturity_mature">Mature</string>
     <string name="music_metric_total_plays">Counted plays</string>
     <string name="music_metric_total_plays_detail">50%+ listens</string>
     <string name="music_metric_artists">Artists</string>
@@ -2158,8 +2101,6 @@
     <string name="music_metric_tracks_detail">repeat histories</string>
     <string name="music_metric_on_repeat">On Repeat</string>
     <string name="music_metric_on_repeat_detail">hot right now</string>
-    <string name="music_discovery_appetite">Discovery appetite</string>
-    <string name="music_discovery_appetite_detail">How much new music the engine mixes in</string>
     <string name="music_top_artists_title">Top Artists</string>
     <string name="music_top_artists_subtitle">Your strongest affinities right now</string>
     <string name="music_top_artist_plays">%1$d plays</string>
@@ -2521,14 +2462,6 @@
     <string name="flow_is_up_to_date">Flow is up to date!</string>
     <string name="update_check_failed">Couldn\'t check for updates. Check your connection.</string>
     <!-- Export / Import Flow Engine data (Settings + ImportDataScreen) -->
-    <string name="export_engine_data">Export Engine Profile</string>
-    <string name="export_engine_data_subtitle">Back up your AI personality &amp; learning data</string>
-    <string name="export_engine_success">Engine profile exported successfully</string>
-    <string name="export_engine_failed">Failed to export engine profile</string>
-    <string name="import_engine_data">Import Flow Engine Data</string>
-    <string name="import_engine_data_desc">Restore your AI personality profile from a backup file</string>
-    <string name="import_engine_success">Engine profile restored successfully</string>
-    <string name="import_engine_failed">Failed to import engine profile</string>
     <!-- Master Backup -->
     <string name="master_backup_title">Master Backup</string>
     <string name="master_backup_subtitle">App data, the video engine and the music engine in one file</string>
@@ -2551,7 +2484,6 @@
     <string name="sync_collection_subscription_groups">Subscription groups</string>
     <string name="sync_collection_subscription_groups_body">The folders you sort your channels into.</string>
     <string name="sync_collection_settings">Settings</string>
-    <string name="sync_collection_recommendation_profile">Recommendation profile</string>
     <string name="sync_collection_music_profile">Music taste profile</string>
     <string name="sync_preparing">Preparing…</string>
     <string name="sync_connecting">Connecting…</string>
@@ -2645,7 +2577,6 @@
     <string name="sync_collection_likes_body">Liked and disliked videos and music.</string>
     <string name="sync_collection_subscriptions_body">The channels you follow.</string>
     <string name="sync_collection_settings_body">Playback, appearance and download preferences.</string>
-    <string name="sync_collection_recommendation_profile_body">What Flow has learned about what you watch.</string>
     <string name="sync_collection_music_profile_body">What Flow has learned about what you listen to.</string>
     <string name="sync_waiting_for_peer">Waiting for the other device to connect…</string>
     <string name="sync_cancel_session">Cancel sync</string>
@@ -2666,7 +2597,6 @@
     <string name="auto_backup_frequency_weekly">Weekly</string>
     <string name="auto_backup_frequency_monthly">Monthly</string>
     <string name="auto_backup_type_app_data">App Data</string>
-    <string name="auto_backup_type_brain">Engine Profile</string>
     <string name="auto_backup_type_master">Master Backup</string>
     <string name="auto_backup_folder_label">Backup Folder</string>
     <string name="auto_backup_pick_folder">Pick Folder</string>
@@ -2820,36 +2750,24 @@
     <!-- Learning Stats Section -->
     <string name="learning_stats_title">Learning Signals</string>
     <string name="learning_stats_subtitle">What the engine currently remembers</string>
-    <string name="metric_interactions">Interactions</string>
     <string name="metric_interactions_detail">clicks, watches, skips</string>
-    <string name="metric_topics">Topics</string>
     <string name="metric_topics_detail">weighted interests</string>
     <string name="metric_evidence">Evidence</string>
     <string name="metric_evidence_detail">validated topics</string>
-    <string name="metric_channels">Channels</string>
     <string name="metric_channels_detail">affinity entries</string>
-    <string name="metric_history">History</string>
     <string name="metric_history_detail">watch references</string>
-    <string name="metric_feed_memory">Feed Memory</string>
     <string name="metric_feed_memory_detail">recently shown</string>
     <string name="metric_filters">Filters</string>
     <string name="metric_filters_detail">blocked items</string>
-    <string name="metric_suppressed">Suppressed</string>
     <string name="metric_suppressed_detail">cooldown items</string>
     <!-- Profile Maturity Section -->
-    <string name="profile_maturity_label">Profile maturity</string>
     <string name="profile_maturity_detail">Higher maturity means the profile has enough signals to be stable</string>
     <!-- Taste Shape Section -->
     <string name="taste_shape_title">Taste Shape</string>
     <string name="taste_shape_subtitle">Global profile compared with the active time context</string>
-    <string name="taste_pacing">Pacing</string>
     <string name="taste_pacing_context">Current context: %1$s</string>
-    <string name="taste_complexity">Complexity</string>
-    <string name="taste_duration">Duration preference</string>
     <string name="taste_duration_detail">Higher values lean toward longer videos</string>
-    <string name="taste_live_affinity">Live affinity</string>
     <string name="taste_live_affinity_detail">How much live content fits the profile</string>
-    <string name="taste_topic_breadth">Topic breadth</string>
     <plurals name="taste_topic_breadth_detail">
         <item quantity="one">%1$d topic in the global vector</item>
         <item quantity="other">%1$d topics in the global vector</item>
@@ -2883,20 +2801,15 @@
     <string name="time_window_evening">6 PM - 12 AM</string>
     <string name="time_window_night">12 AM - 6 AM</string>
     <!-- Channel Affinity Section -->
-    <string name="channel_affinity_strong">Strong</string>
-    <string name="channel_affinity_balanced">Balanced</string>
-    <string name="channel_affinity_cooling">Cooling</string>
     <string name="channel_affinity_score">affinity score</string>
     <!-- Discovery Status Section -->
     <string name="discovery_status_title">Discovery Status</string>
     <string name="discovery_status_subtitle">Queries and guardrails currently shaping exploration</string>
     <string name="discovery_queries">Queries</string>
     <string name="discovery_queries_detail">ready now</string>
-    <string name="discovery_query_memory">Query Memory</string>
     <string name="discovery_query_memory_detail">recent token sets</string>
     <string name="discovery_rejections">Rejections</string>
     <string name="discovery_rejections_detail">topic patterns</string>
-    <string name="discovery_shorts_seen">Shorts Seen</string>
     <string name="discovery_shorts_seen_detail">repeat guard</string>
     <!-- Blocked Content Section -->
     <string name="blocked_content_title">Filters</string>
@@ -2916,12 +2829,8 @@
     <string name="profile_action_reset">Reset profile</string>
     <string name="profile_action_reset_detail">Erase learned preferences and start fresh</string>
     <!-- Reset Profile Dialog -->
-    <string name="reset_profile_dialog_title">Reset profile?</string>
     <string name="reset_profile_dialog_message">This clears the local recommendation profile and starts learning again from zero.</string>
-    <string name="reset_profile_confirm">Reset</string>
     <!-- Taste Chart Labels -->
-    <string name="taste_chart_profile">Profile</string>
-    <string name="taste_chart_now">Now</string>
     <!-- Topic Evidence -->
     <string name="topic_score_prefix">Score</string>
     <!-- Date & Time Display (#481) -->
@@ -3188,10 +3097,7 @@
     <string name="ui_crashed_last_session">Flow crashed last session</string>
     <string name="ui_copy_log_description">Copy the log below and paste it into a GitHub issue so it can be fixed.</string>
     <string name="ui_search_settings">Search settings…</string>
-    <string name="ui_custom_interest_title">Add Custom Interest</string>
     <string name="ui_custom_interest_subtitle">Type any topic you want to follow</string>
-    <string name="ui_custom_interest_hint">Custom interest (e.g. Jazz, Astrophysics)</string>
-    <string name="ui_add_interest">Add interest</string>
     <string name="ui_version">Version %1$s</string>
     <string name="update_download_prompt">A new version of Flow is available (%1$s). Download the latest APK?</string>
     <string name="ui_instrumental">I N S T R U M E N T A L</string>
@@ -3328,7 +3234,6 @@
     <string name="error_invalid_channel_url">Invalid channel URL</string>
     <string name="error_channel_link_not_found">Couldn\'t find the channel this link points to</string>
     <string name="error_channel_loading_timed_out">Channel loading timed out</string>
-    <string name="error_failed_to_load_feed">Failed to load feed</string>
     <string name="error_failed_to_load_channel">Failed to load channel</string>
     <string name="error_failed_to_load_shorts">Failed to load shorts</string>
     <string name="error_failed_to_load_more_shorts">Failed to load more shorts</string>
@@ -3543,7 +3448,6 @@
     <string name="settings_language_region_title">Language &amp; region</string>
     <string name="settings_playback_title">Player &amp; playback</string>
     <string name="settings_content_title">Feeds &amp; content</string>
-    <string name="settings_topics_title">Interests &amp; blocked topics</string>
     <string name="settings_integrations_title">Integrations</string>
     <string name="settings_backup_title">Backup &amp; restore</string>
     <string name="settings_history_title">History &amp; privacy</string>
@@ -3553,13 +3457,13 @@
     <string name="settings_group_look">Look &amp; feel</string>
     <string name="settings_group_watching">Watching</string>
     <string name="settings_group_data">Your data</string>
+    <string name="settings_group_personal">Personal</string>
     <string name="settings_group_system">System</string>
     <string name="settings_appearance_summary">Theme, app icon, layout and navigation bar</string>
     <string name="settings_language_region_summary">App language, content language and country</string>
     <string name="settings_playback_summary">Autoplay, gestures, captions and player buttons</string>
     <string name="settings_quality_summary">Video, Shorts and music quality</string>
     <string name="settings_content_summary">Home, subscriptions, Shorts and notes</string>
-    <string name="settings_topics_summary">Topics you follow and topics you hide</string>
     <string name="settings_integrations_summary">SponsorBlock, DeArrow, dislikes and more</string>
     <string name="settings_backup_summary">Export, import and automatic backups</string>
     <string name="settings_history_summary">Search history and suggestions</string>
@@ -3704,10 +3608,6 @@
         <item>Challenge</item>
         <item>Family vlog</item>
     </string-array>
-    <string name="settings_topics_tab_interests">Interests</string>
-    <string name="settings_topics_tab_blocked">Blocked</string>
-    <string name="settings_topics_your_topics">Your topics</string>
-    <string name="settings_keywords_topics">interests, not interested, hide, block, mute, recommendations</string>
     <string name="settings_keywords_sponsorblock">skip sponsors, ads, segments, intro, outro</string>
     <string name="settings_keywords_dearrow">clickbait, titles, thumbnails</string>
     <string name="settings_keywords_discord">rich presence, now playing, status</string>
@@ -3765,14 +3665,6 @@
     <string name="settings_diagnostics_copy_summary">Device details, warnings and crash reports</string>
     <string name="settings_diagnostics_share_summary">Send the report to another app</string>
     <string name="settings_diagnostics_reset_summary">Try this if videos stop or won\'t play</string>
-    <string name="settings_section_home_snapshots">Home snapshots</string>
-    <string name="diagnostics_record_home_snapshots">Record Home snapshots</string>
-    <string name="settings_diagnostics_record_snapshots_summary">Keeps your last 3 Home loads on this device for a recommendation report</string>
-    <string name="diagnostics_export_home_snapshot">Export latest snapshot</string>
-    <string name="settings_diagnostics_export_snapshot_summary">Contains titles from your watch history</string>
-    <string name="diagnostics_no_home_snapshot">Open Home with recording on first</string>
-    <string name="diagnostics_snapshot_exported">Snapshot exported</string>
-    <string name="diagnostics_snapshot_export_failed">Couldn\'t export the snapshot</string>
     <string name="settings_keywords_diagnostics">logs, crash, bug report, debug, support, logcat</string>
     <string name="donation_currency_bitcoin" translatable="false">Bitcoin</string>
     <string name="donation_currency_ethereum" translatable="false">Ethereum</string>
@@ -3870,66 +3762,18 @@
     <string name="settings_custom_theme_in_use">In use</string>
     <string name="settings_custom_theme_export_failed">The theme could not be saved</string>
     <!-- Your taste -->
-    <string name="taste_title">Your taste</string>
-    <string name="taste_summary">How Flow sees you, and what shapes your feed</string>
-    <string name="taste_keywords">persona, profile, algorithm, recommendations, interests, brain, engine, control center</string>
-    <string name="taste_card_hint">See how Flow sees you</string>
-    <string name="taste_card_loading">Reading your profile</string>
-    <string name="taste_shape_header">Taste shape</string>
-    <string name="taste_shape_description">Your profile against what you watch at this time of day</string>
-    <string name="taste_interests_header">Interests</string>
-    <string name="taste_interests_footer">Boost a topic to see more of it, or block it to see none of it.</string>
-    <string name="taste_interests_empty">Watch a few videos and your interests show up here</string>
-    <string name="taste_topic_boosted">Boosted</string>
-    <string name="taste_picks_header">Your picks</string>
-    <string name="taste_evidence_often">Watched often</string>
-    <string name="taste_evidence_some">Watched a few times</string>
-    <string name="taste_evidence_once">Watched once or twice</string>
-    <string name="taste_evidence_none">Not watched yet</string>
-    <string name="taste_topic_boost">Show more like this</string>
-    <string name="taste_topic_unboost">Stop boosting</string>
-    <string name="taste_topic_block">Block topic</string>
-    <string name="taste_topic_block_named">Block %1$s</string>
-    <string name="taste_channels_header">Channels it favours</string>
-    <string name="taste_channel_block">Block channel</string>
-    <string name="taste_item_actions">More options for %1$s</string>
-    <string name="taste_music_header">Music taste</string>
-    <string name="taste_music_stage">Learning stage</string>
     <string name="taste_hidden_title">Hidden from you</string>
     <string name="taste_hidden_summary">Blocked topics, channels and artists</string>
-    <plurals name="taste_hidden_count">
-        <item quantity="one">%d item hidden</item>
-        <item quantity="other">%d items hidden</item>
-    </plurals>
-    <string name="taste_hidden_none">Nothing hidden</string>
     <string name="taste_hidden_empty_title">Nothing is hidden</string>
     <string name="taste_hidden_empty_body">Topics, channels and artists you block show up here.</string>
-    <string name="taste_hidden_topics">Topics</string>
     <string name="taste_hidden_channels">Channels</string>
     <string name="taste_hidden_artists">Artists</string>
     <string name="taste_unblock">Unblock</string>
     <string name="taste_unblock_item">Unblock %1$s</string>
     <string name="taste_unknown_channel">Unknown channel</string>
-    <string name="taste_data_header">Your data</string>
-    <string name="taste_export_video">Export video profile</string>
-    <string name="taste_import_video">Import video profile</string>
-    <string name="taste_reset_video">Reset video profile</string>
-    <string name="taste_export_music">Export music profile</string>
-    <string name="taste_import_music">Import music profile</string>
-    <string name="taste_reset_music">Reset music profile</string>
-    <string name="taste_reset_video_body">Flow forgets what it learned from your videos and searches. History, likes, playlists and hidden items stay, and Home still uses them.</string>
-    <string name="taste_reset_music_title">Reset music profile?</string>
-    <string name="taste_reset_music_body">This clears what Flow learned from your music and starts again from zero. Your recap stays.</string>
-    <string name="taste_trait_now">Now %1$s</string>
-    <string name="taste_reset_done">Profile reset</string>
-    <string name="diagnostics_engine_header">Engine details</string>
-    <string name="diagnostics_engine_queries_none">None yet</string>
-    <string name="taste_starter_searches">Starter searches</string>
-    <string name="taste_starter_searches_detail">%1$s. Used until Flow learns what you watch.</string>
     <!-- Flow Recap -->
     <string name="recap_title">Flow Recap</string>
     <string name="recap_summary">What you watched and listened to, month by month</string>
-    <string name="recap_keywords">wrapped, stats, statistics, recap, year in review, watch time, listening time, most watched, top artists</string>
     <string name="recap_period_month">Month</string>
     <string name="recap_period_year">Year</string>
     <string name="recap_period_all">All time</string>
@@ -4146,42 +3990,7 @@
     <string name="songs_download_nothing_new">Everything here is already downloaded or unavailable</string>
     <string name="save_as_playlist">Save as playlist</string>
     <string name="daily_mix_saved_as_playlist">Saved %1$s to your playlists</string>
-    <string name="home_reason_channel_memory">From a channel you watch</string>
     <string name="details_why_shown">Why you see this</string>
-    <string name="home_origin_subscription">From a channel you follow</string>
-    <string name="home_origin_related">Related to %1$s</string>
-    <string name="home_origin_related_watched">Related to a video you watched</string>
-    <string name="home_origin_search">From a search for %1$s</string>
-    <string name="home_origin_search_unnamed">From a search for your interests</string>
-    <string name="home_origin_channel_memory">From a channel you often watch</string>
-    <string name="home_origin_neighbour">A channel like %1$s</string>
-    <string name="home_origin_neighbour_unnamed">A channel like the ones you follow</string>
-    <string name="home_origin_neighbour_pair">%1$s and %2$s</string>
-    <string name="taste_remembered_header">Channels you keep watching</string>
-    <string name="taste_remembered_footer">New uploads from these channels show up on Home now and then. Subscribing to a channel or removing it takes it off this list.</string>
-    <string name="taste_remembered_empty">Watch a channel a few times without subscribing and it shows up here.</string>
-    <string name="taste_remembered_remove">Remove</string>
-    <string name="taste_remembered_remove_item">Remove %1$s</string>
-    <string name="taste_remembered_clear">Clear channel memory</string>
-    <string name="home_chip_all">All</string>
-    <string name="home_chip_new_to_you">New to you</string>
-    <string name="home_chip_recently_uploaded">Recently uploaded</string>
-    <string name="home_chip_mixes">Mixes</string>
-    <string name="home_chip_live">Live</string>
-    <string name="home_chip_watched">Watched</string>
-    <string name="home_theme_science">Science &amp; tech</string>
-    <string name="home_theme_comedy">Comedy</string>
-    <string name="home_theme_film">Film &amp; animation</string>
-    <string name="home_theme_autos">Cars &amp; vehicles</string>
-    <string name="home_theme_pets">Pets &amp; animals</string>
-    <string name="home_theme_travel">Travel</string>
-    <string name="home_theme_howto">How-to &amp; style</string>
-    <string name="home_theme_nonprofits">Nonprofits</string>
-    <string name="home_chip_description">Show %1$s on Home</string>
-    <string name="home_chip_empty_title">Nothing here right now</string>
-    <string name="home_chip_empty_body">Pull down to look again later.</string>
-    <string name="home_chip_failed">Couldn\'t load this right now.</string>
-    <string name="home_mix_title">Mix - %1$s</string>
     <string name="library_video_playlists">Video playlists</string>
     <string name="library_music_playlists">Music playlists</string>
     <string name="playlists_sort_newest">Newest</string>
@@ -4201,11 +4010,6 @@
     <string name="music_collection_suggestions">Suggestions</string>
     <string name="favourite_artists_title">Favourite artists</string>
     <string name="favourite_artists_summary">Pick artists to shape your music</string>
-    <string name="discover_channels_title">Discover channels</string>
-    <string name="discover_channels_summary">Search channels and subscribe, as at setup</string>
-    <string name="discover_channels_suggested_footer">Channels you have watched a few times without subscribing.</string>
-    <string name="discover_channels_like_yours">Channels like yours</string>
-    <string name="discover_channels_like_yours_footer">Channels YouTube lists next to several of the ones you follow or watch.</string>
     <string name="favourite_artists_search">Search artists</string>
     <string name="favourite_artists_picked">Your picks</string>
     <string name="favourite_artists_popular">Popular now</string>

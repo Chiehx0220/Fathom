@@ -6,14 +6,14 @@
 
 package io.github.aedev.flow.data.shorts
 
-import io.github.aedev.flow.data.recommendation.InteractionType
+import io.github.aedev.flow.data.stats.WatchKind
 
 /** Classified watch outcome for a Short. */
 data class ShortWatchSignal(
     val position: Long,
     val safeDuration: Long,
     val percent: Float,
-    val interaction: InteractionType,
+    val interaction: WatchKind,
 )
 
 /** Pure watch-signal classification for Shorts, extracted from the ViewModel for testability. */
@@ -45,9 +45,9 @@ object ShortWatchClassifier {
         val percent = (position.toFloat() / safeDuration.toFloat()).coerceIn(0f, 1f)
         val interaction =
             if (position < MIN_SHORT_WATCH_MS) {
-                InteractionType.SKIPPED
+                WatchKind.SKIPPED
             } else {
-                InteractionType.WATCHED
+                WatchKind.WATCHED
             }
         return ShortWatchSignal(position, safeDuration, percent, interaction)
     }
@@ -56,7 +56,7 @@ object ShortWatchClassifier {
      * Classifies a short the user swiped away from BEFORE the terminal watch fired.
      * Early abandonment is the clearest negative signal Shorts produce; a swipe
      * after substantial watching is still positive; the middle band is neutral
-     * (returns null — no engine signal).
+     * (returns null).
      */
     fun classifyAbandon(
         positionMs: Long,
@@ -66,11 +66,11 @@ object ShortWatchClassifier {
         val base = classify(positionMs, durationMs, videoDurationSec)
         return when {
             base.percent >= ABANDON_WATCH_FRACTION -> {
-                base.copy(interaction = InteractionType.WATCHED)
+                base.copy(interaction = WatchKind.WATCHED)
             }
 
             base.percent < ABANDON_SKIP_FRACTION && base.position < ABANDON_NEUTRAL_MS -> {
-                base.copy(interaction = InteractionType.SKIPPED)
+                base.copy(interaction = WatchKind.SKIPPED)
             }
 
             else -> {

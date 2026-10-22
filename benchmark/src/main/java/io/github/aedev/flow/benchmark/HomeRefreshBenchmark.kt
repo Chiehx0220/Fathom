@@ -3,8 +3,8 @@ package io.github.aedev.flow.benchmark
 import androidx.benchmark.macro.BaselineProfileMode
 import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.ExperimentalMetricApi
+import androidx.benchmark.macro.FrameTimingMetric
 import androidx.benchmark.macro.StartupMode
-import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -37,12 +37,7 @@ class HomeRefreshBenchmark {
         rule.measureRepeated(
             packageName = targetPackage,
             metrics =
-                listOf(
-                    TraceSectionMetric("neuro.init", TraceSectionMetric.Mode.First),
-                    TraceSectionMetric("home.wave1", TraceSectionMetric.Mode.First),
-                    TraceSectionMetric("neuro.rank", TraceSectionMetric.Mode.Sum),
-                    TraceSectionMetric("neuro.rank", TraceSectionMetric.Mode.Count),
-                ),
+                listOf(FrameTimingMetric()),
             compilationMode = CompilationMode.Partial(baselineProfileMode = BaselineProfileMode.Require),
             startupMode = StartupMode.COLD,
             iterations = 5,

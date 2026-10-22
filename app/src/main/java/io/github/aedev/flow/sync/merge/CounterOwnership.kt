@@ -1,7 +1,5 @@
 package io.github.aedev.flow.sync.merge
 
-import io.github.aedev.flow.sync.canonical.BrainCounters
-import io.github.aedev.flow.sync.canonical.CanonicalBrain
 import io.github.aedev.flow.sync.canonical.CanonicalMusicBrain
 import io.github.aedev.flow.sync.canonical.GCounter
 
@@ -34,31 +32,6 @@ object CounterOwnership {
             if (mine == null) out.remove(key) else out[key] = mine
         }
         return GCounter(out)
-    }
-
-    fun brain(
-        merged: CanonicalBrain,
-        local: CanonicalBrain,
-        remotes: List<CanonicalBrain>,
-        own: Set<String>,
-        sender: Set<String>,
-    ): CanonicalBrain {
-        fun settle(
-            pick: (CanonicalBrain) -> GCounter?,
-            mergedCounter: GCounter,
-        ) = reconcile(mergedCounter, pick(local) ?: GCounter(), remotes.mapNotNull(pick), own, sender)
-
-        return merged.copy(
-            counters =
-                BrainCounters(
-                    idfTotalDocuments = settle({ it.counters.idfTotalDocuments }, merged.counters.idfTotalDocuments),
-                    totalInteractions = settle({ it.counters.totalInteractions }, merged.counters.totalInteractions),
-                ),
-            idfWordFrequency =
-                merged.idfWordFrequency
-                    .mapValues { (word, counter) -> settle({ it.idfWordFrequency[word] }, counter) }
-                    .filterValues { it.perDevice.isNotEmpty() },
-        )
     }
 
     fun music(

@@ -4,16 +4,16 @@ import android.content.Context
 import android.os.SystemClock
 import android.util.Log
 import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.data.account.WatchReporting
 import io.github.aedev.flow.data.local.CachedHomeVideo
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
-import io.github.aedev.flow.data.recommendation.InteractionType
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.stats.VideoStatsRecorder
 import io.github.aedev.flow.data.stats.ViewEvent
 import io.github.aedev.flow.data.stats.ViewFormat
+import io.github.aedev.flow.data.stats.WatchKind
 import io.github.aedev.flow.player.PlayerRelatedVideosPolicy
 import io.github.aedev.flow.player.state.PlaybackCompletion
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
@@ -28,8 +28,6 @@ private const val MIN_SKIP_SIGNAL_POSITION_MS = 10_000L
 
 /** At or above this share of the video, the view counts as watched rather than skipped. */
 private const val WATCHED_FRACTION = 0.20
-
-private const val RELATED_PREWARM_TIMEOUT_MS = 4_000L
 
 /** Longest gap between two progress reports that still counts as continuous watching. */
 private const val MAX_WATCH_STEP_MS = 30_000L
@@ -60,10 +58,10 @@ internal fun viewEventFor(
     val countsAsView =
         when (format) {
             ViewFormat.LIVE -> watchedMs >= LIVE_VIEW_MS
-            else -> signal?.type == InteractionType.WATCHED
+            else -> signal?.type == WatchKind.WATCHED
         }
     val counted = countsAsView && !viewAlreadySent
-    val skipped = final && !viewAlreadySent && format != ViewFormat.LIVE && signal?.type == InteractionType.SKIPPED
+    val skipped = final && !viewAlreadySent && format != ViewFormat.LIVE && signal?.type == WatchKind.SKIPPED
     if (!counted && !skipped && unsentMs <= 0L) return null
     return ViewEvent(
         videoId = video.id,
@@ -79,9 +77,9 @@ internal fun viewEventFor(
     )
 }
 
-/** The terminal learning signal a view earned, with the share of the video it covered. */
+/** Terminal [WatchKind] with the watched fraction. */
 internal class WatchSignal(
-    val type: InteractionType,
+    val type: WatchKind,
     val fractionWatched: Float,
 )
 
@@ -100,7 +98,7 @@ internal fun watchSignalFor(
     if (durationMs <= 0L) return null
     val fraction = positionMs.toDouble() / durationMs
     if (fraction < WATCHED_FRACTION && positionMs < MIN_SKIP_SIGNAL_POSITION_MS) return null
-    val type = if (fraction >= WATCHED_FRACTION) InteractionType.WATCHED else InteractionType.SKIPPED
+    val type = if (fraction >= WATCHED_FRACTION) WatchKind.WATCHED else WatchKind.SKIPPED
     return WatchSignal(type, fraction.toFloat())
 }
 
@@ -115,24 +113,17 @@ internal fun positionBelongsTo(
 ): Boolean = playerVideoId == null || playerVideoId == videoId
 
 /**
- * Everything a view leaves behind: the history row, the resume position, the one terminal signal
- * the recommendation engine learns from, and the related-video prewarm that fills the home feed's
- * reserve while the user is still watching.
- *
- * A session spans one video: positions are folded into it as they arrive, and it is graded exactly
- * once — when the next video takes over, or when the screen goes away.
+ * Records a view: history row, resume position, recap view and account report.
+ * One session per video; recorded once, on the next video or on dispose.
  */
 internal class WatchSessionTracker(
     private val context: Context,
     private val viewHistory: ViewHistory,
-    private val repository: YouTubeRepository,
-    private val homeFeedCacheRepository: HomeFeedCacheRepository,
     private val videoStats: VideoStatsRecorder,
     private val scope: CoroutineScope,
     private val networkDispatcher: CoroutineDispatcher,
-    private val shortsEnabled: () -> Boolean,
-    private val relatedVideosFor: (String) -> List<Video>,
     private val richVideoFor: (String) -> Video?,
+    private val reporter: WatchReporting = WatchReporting.None,
     private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime,
 ) {
     private inner class Session(
@@ -157,8 +148,6 @@ internal class WatchSessionTracker(
     }
 
     private var session: Session? = null
-    private var lastReportedVideoId: String? = null
-    private val prewarmedVideoIds = ConcurrentHashMap.newKeySet<String>()
 
     fun saveHistoryEntry(video: Video) {
         if (video.id.startsWith("recovered_")) return
@@ -204,13 +193,6 @@ internal class WatchSessionTracker(
         if (!isLocal && durationMs > 0) {
             track(videoId, positionMs, durationMs, title, thumbnailUrl, channelName, channelId, isShort)
         }
-        maybePrewarmRelated(
-            videoId = videoId,
-            positionMs = positionMs,
-            durationMs = durationMs,
-            isShort = isShort,
-            isLocal = isLocal,
-        )
     }
 
     fun markCompleted(completion: PlaybackCompletion) {
@@ -283,10 +265,12 @@ internal class WatchSessionTracker(
             current.maxPositionMs = maxOf(current.maxPositionMs, positionMs)
             current.durationMs = maxOf(current.durationMs, durationMs)
             current.advance(positionMs)
+            reporter.progress(videoId, positionMs)
             richVideoOf(videoId)?.let { current.richVideo = it }
             return
         }
         current?.let(::finalize)
+        reporter.begin(videoId)
         session =
             Session(
                 video =
@@ -312,24 +296,8 @@ internal class WatchSessionTracker(
     private fun richVideoOf(videoId: String): Video? = richVideoFor(videoId)?.takeIf { it.id == videoId }
 
     private fun finalize(session: Session) {
-        // Prefer the rich (tags/description) video over the session stub: the screen's copy while it
-        // still holds this video, else the last one the session saw.
-        val video = richVideoOf(session.video.id) ?: session.richVideo ?: session.video
-        val signal = watchSignalFor(session.maxPositionMs, session.durationMs)
         recordView(session, final = true)
-
-        // Shorts played here teach the engine through the Shorts classifier's rules, not these.
-        if (session.format != ViewFormat.LONG || signal == null || video.id == lastReportedVideoId) return
-
-        lastReportedVideoId = video.id
-
-        // Engine-scope dispatch: survives ViewModel teardown.
-        FlowNeuroEngine.onVideoInteractionAsync(
-            context,
-            video,
-            signal.type,
-            percentWatched = signal.fractionWatched,
-        )
+        reporter.finish(session.video.id, session.maxPositionMs)
     }
 
     /** Sends the recap the time not yet sent, and the view itself once, the first time it counts. */
@@ -349,58 +317,8 @@ internal class WatchSessionTracker(
                 viewAlreadySent = session.viewSent,
                 final = final,
             ) ?: return
-        videoStats.onView(event, video)
+        videoStats.onView(event)
         session.sentMs = session.watchedMs
         if (event.counted) session.viewSent = true
-    }
-
-    private fun maybePrewarmRelated(
-        videoId: String,
-        positionMs: Long,
-        durationMs: Long,
-        isShort: Boolean,
-        isLocal: Boolean,
-    ) {
-        val alreadyPrewarmed = videoId in prewarmedVideoIds
-        if (!shouldPrewarmRelatedPlayback(videoId, positionMs, durationMs, isShort, isLocal, alreadyPrewarmed)) {
-            return
-        }
-        if (!prewarmedVideoIds.add(videoId)) return
-
-        val playerRelated = relatedVideosFor(videoId)
-        scope.launch(networkDispatcher) {
-            runCatching {
-                val related =
-                    PlayerRelatedVideosPolicy.sanitize(
-                        videoId = videoId,
-                        candidates =
-                            playerRelated.ifEmpty {
-                                if (BilibiliVideoId.isBilibili(videoId)) {
-                                    emptyList()
-                                } else {
-                                    withTimeoutOrNull(RELATED_PREWARM_TIMEOUT_MS) {
-                                        repository.getRelatedCandidates(videoId)
-                                    }.orEmpty()
-                                }
-                            },
-                        shortsEnabled = shortsEnabled(),
-                    )
-
-                if (related.isEmpty()) return@runCatching
-
-                homeFeedCacheRepository.saveRelated(videoId, related)
-                homeFeedCacheRepository.saveReserve(
-                    related.map { video ->
-                        CachedHomeVideo(
-                            video = video,
-                            source = HomeFeedCacheRepository.SOURCE_RELATED,
-                            relatedSeedId = videoId,
-                        )
-                    },
-                )
-            }.onFailure { error ->
-                Log.w("WatchSessionTracker", "Related prewarm failed for $videoId", error)
-            }
-        }
     }
 }

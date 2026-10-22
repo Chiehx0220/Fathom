@@ -523,22 +523,6 @@ class YouTubeRepository
             }
 
         /**
-         * Fetches a channel's creator-declared keyword tags (+ description) and
-         * feeds them to the recommendation engine — authored channel identity,
-         * used for topic profiles and interest clustering. Best-effort.
-         */
-        suspend fun learnChannelTags(
-            context: android.content.Context,
-            channelId: String,
-        ) {
-            val info = getChannelInfo(channelId) ?: return
-            val tags = info.tags.orEmpty()
-            if (tags.isEmpty() && info.description.isNullOrBlank()) return
-            io.github.aedev.flow.data.recommendation.FlowNeuroEngine
-                .onChannelTagsLearned(context, channelId, tags, info.description)
-        }
-
-        /**
          * The web watch response for [videoId], fetched once and shared.
          *
          * Returns null when the request fails; callers fall back to whatever they used before

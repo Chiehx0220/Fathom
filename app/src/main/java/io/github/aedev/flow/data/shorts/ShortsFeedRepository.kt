@@ -3,6 +3,8 @@ package io.github.aedev.flow.data.shorts
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.feed.BlockedContentStore
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.local.CachedHomeVideo
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
@@ -15,10 +17,6 @@ import io.github.aedev.flow.data.model.ShortVideo
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.toShortVideo
 import io.github.aedev.flow.data.model.toVideo
-import io.github.aedev.flow.data.recommendation.FeedExclusions
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
-import io.github.aedev.flow.data.recommendation.ShortsSeedInput
-import io.github.aedev.flow.data.recommendation.ShortsSeedSource
 import io.github.aedev.flow.data.shorts.feed.InnerTubeShortsFeedSources
 import io.github.aedev.flow.data.shorts.feed.ShortsFeedContext
 import io.github.aedev.flow.data.shorts.feed.ShortsFeedEngine
@@ -27,6 +25,9 @@ import io.github.aedev.flow.data.shorts.feed.ShortsFeedLane
 import io.github.aedev.flow.data.shorts.feed.ShortsFeedPager
 import io.github.aedev.flow.data.shorts.feed.ShortsFeedProfile
 import io.github.aedev.flow.data.shorts.feed.ShortsLaneItem
+import io.github.aedev.flow.data.shorts.feed.ShortsSeedInput
+import io.github.aedev.flow.data.shorts.feed.ShortsSeedSelector
+import io.github.aedev.flow.data.shorts.feed.ShortsSeedSource
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -55,6 +56,7 @@ class ShortsFeedRepository
         private val playlistRepository: PlaylistRepository,
         private val playerPreferences: PlayerPreferences,
         private val homeFeedCache: HomeFeedCacheRepository,
+        private val blockedContent: BlockedContentStore,
     ) {
         private val lock = Mutex()
         private var pager: ShortsFeedPager? = null
@@ -67,7 +69,6 @@ class ShortsFeedRepository
         /** The first page. A fresh pager is reused on a seedless open, so a return visit costs nothing. */
         suspend fun openFeed(seedVideoId: String?): List<ShortVideo> =
             withContext(PerformanceDispatcher.networkIO) {
-                FlowNeuroEngine.initialize(context)
                 lock.withLock {
                     val existing = pager
                     if (seedVideoId == null && existing != null && System.currentTimeMillis() - openedAtMillis < FEED_TTL_MS) {
@@ -98,14 +99,6 @@ class ShortsFeedRepository
             pager?.noteDwell(short)
         }
 
-        suspend fun recordShown(videoId: String) {
-            if (videoId.isBlank()) return
-            runCatching {
-                FlowNeuroEngine.initialize(context)
-                FlowNeuroEngine.recordSeenShorts(listOf(videoId))
-            }.onFailure { Log.w(TAG, "Failed to record shown Short $videoId", it) }
-        }
-
         fun clearCaches() {
             pager = null
             openedAtMillis = 0L
@@ -126,10 +119,7 @@ class ShortsFeedRepository
             channelId: String,
             title: String,
             channelName: String,
-        ): Boolean {
-            if (channelId.isNotBlank() && channelId in excludedChannelIds()) return true
-            return blockedTextMatcher()(title, channelName)
-        }
+        ): Boolean = channelId.isNotBlank() && channelId in excludedChannelIds()
 
         private fun saveReserve(pager: ShortsFeedPager) {
             val tail = pager.reserveTail(RESERVE_MAX)
@@ -151,14 +141,9 @@ class ShortsFeedRepository
                     }
             }.getOrElse { emptyList() }
 
-        private suspend fun excludedChannelIds(): Set<String> =
-            runCatching { FlowNeuroEngine.getExcludedChannelIds() }.getOrDefault(emptySet())
+        private suspend fun feedExclusions(): FeedExclusions = runCatching { blockedContent.exclusions() }.getOrDefault(FeedExclusions.NONE)
 
-        private suspend fun feedExclusions(): FeedExclusions =
-            runCatching { FlowNeuroEngine.feedExclusions() }.getOrDefault(FeedExclusions.NONE)
-
-        private suspend fun blockedTextMatcher(): (String, String) -> Boolean =
-            runCatching { FlowNeuroEngine.blockedContentMatcher() }.getOrElse { { _, _ -> false } }
+        private suspend fun excludedChannelIds(): Set<String> = feedExclusions().blockedChannelIds
 
         private suspend fun watchedReelIds(): Set<String> {
             if (!playerPreferences.hideWatchedShorts.first()) return emptySet()
@@ -170,45 +155,39 @@ class ShortsFeedRepository
                 override suspend fun rank(
                     videos: List<Video>,
                     subscribedChannelIds: Set<String>,
-                ): List<Video> = runCatching { FlowNeuroEngine.rank(videos, subscribedChannelIds) }.getOrDefault(videos)
+                ): List<Video> = videos
 
-                override suspend fun discoveryQueries(resetDepth: Boolean): List<String> =
-                    runCatching { FlowNeuroEngine.generateDiscoveryQueries(resetDepth) }.getOrDefault(emptyList())
+                override suspend fun discoveryQueries(resetDepth: Boolean): List<String> = emptyList()
 
                 override suspend fun selectSeeds(
                     candidates: List<ShortsSeedInput>,
                     maxSeeds: Int,
-                ): List<String> = runCatching { FlowNeuroEngine.selectShortsSeeds(candidates, maxSeeds) }.getOrDefault(emptyList())
+                ): List<String> = ShortsSeedSelector.select(candidates, maxSeeds, excludedChannelIds = excludedChannelIds())
 
                 override suspend fun reportQueryNovelty(
                     query: String,
                     novelRatio: Double,
-                ) {
-                    runCatching { FlowNeuroEngine.reportQueryResultNovelty(query, novelRatio) }
-                }
+                ) = Unit
 
-                override suspend fun recentlyShownIds(): Set<String> =
-                    runCatching { FlowNeuroEngine.getRecentlyShownVideoIds() }.getOrDefault(emptySet())
+                override suspend fun recentlyShownIds(): Set<String> = emptySet()
             }
 
         private val feedContext =
             object : ShortsFeedContext {
-                override suspend fun profile(): ShortsFeedProfile {
-                    val interactions = runCatching { FlowNeuroEngine.getBrainSnapshot().totalInteractions }.getOrDefault(0)
-                    return ShortsFeedProfile(
+                override suspend fun profile(): ShortsFeedProfile =
+                    ShortsFeedProfile(
                         subscribedChannelIds = subscriptionRepository.getAllSubscriptionIds(),
-                        isColdStart = interactions < COLD_START_INTERACTIONS,
+                        isColdStart = runCatching { viewHistory.getVideoHistoryFlow().first().size }.getOrDefault(0) < COLD_START_VIEWS,
                     )
-                }
 
                 override suspend fun filters(): ShortsFeedFilters {
-                    val brain = runCatching { FlowNeuroEngine.getBrainSnapshot() }.getOrNull()
+                    val exclusions = feedExclusions()
                     return ShortsFeedFilters(
                         watchedIds = watchedReelIds(),
-                        seenIds = runCatching { FlowNeuroEngine.getRecentlySeenShorts() }.getOrDefault(emptySet()),
-                        suppressedIds = brain?.suppressedVideoIds?.keys.orEmpty(),
-                        excludedChannelIds = excludedChannelIds(),
-                        isBlockedText = blockedTextMatcher(),
+                        seenIds = emptySet(),
+                        suppressedIds = exclusions.suppressedVideoIds,
+                        excludedChannelIds = exclusions.blockedChannelIds,
+                        isBlockedText = { _, _ -> false },
                     )
                 }
 
@@ -255,7 +234,7 @@ class ShortsFeedRepository
             const val TAG = "ShortsFeedRepository"
             const val FEED_TTL_MS = 30L * 60L * 1000L
             const val RESERVE_MAX = 120
-            const val COLD_START_INTERACTIONS = 30
+            const val COLD_START_VIEWS = 30
             const val SEED_HISTORY_MAX = 40
             const val SEED_SOURCE_MAX = 40
         }

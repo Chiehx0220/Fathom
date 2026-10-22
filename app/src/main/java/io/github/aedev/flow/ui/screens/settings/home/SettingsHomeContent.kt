@@ -7,7 +7,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import io.github.aedev.flow.BuildConfig
 import io.github.aedev.flow.R
-import io.github.aedev.flow.data.recommendation.FlowPersona
 import io.github.aedev.flow.ui.components.settings.SettingsDestination
 import io.github.aedev.flow.ui.components.settings.SettingsGroupScope
 import io.github.aedev.flow.ui.components.settings.SettingsListScope
@@ -24,7 +23,6 @@ import io.github.aedev.flow.ui.screens.settings.index.HomeIndex
 @Immutable
 internal data class SettingsHomeState(
     val selected: SettingsDestination?,
-    val persona: FlowPersona?,
     val deepFlow: DeepFlowState,
     /** Shown on the update row while a check the user started is running; null when idle. */
     val updateCheckingLabel: String?,
@@ -96,7 +94,10 @@ internal fun SettingsListScope.homeContent(
             onCheckedChange = actions.onShowOnSearchChange,
             icon = HomeRowIcons.DeepFlowOnSearch,
         )
-        page(SettingsDestination.TOPICS)
+    }
+    group(key = "home.library", header = R.string.settings_group_personal) {
+        page(SettingsDestination.HIDDEN_CONTENT)
+        page(SettingsDestination.FAVOURITE_ARTISTS)
     }
     group(key = "home.look", header = R.string.settings_group_look) {
         page(SettingsDestination.APPEARANCE)

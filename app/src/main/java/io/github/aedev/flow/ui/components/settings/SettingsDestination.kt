@@ -15,10 +15,8 @@ enum class SettingsDestination(
 ) {
     /** The settings list itself, for options that live directly on it such as Deep Flow. */
     HOME("home", R.string.settings_title),
-    TASTE("taste", R.string.taste_title),
-    HIDDEN_CONTENT("hidden_content", R.string.taste_hidden_title, TASTE),
-    FAVOURITE_ARTISTS("favourite_artists", R.string.favourite_artists_title, TASTE),
-    DISCOVER_CHANNELS("discover_channels", R.string.discover_channels_title, TASTE),
+    HIDDEN_CONTENT("hidden_content", R.string.taste_hidden_title),
+    FAVOURITE_ARTISTS("favourite_artists", R.string.favourite_artists_title),
     APPEARANCE("appearance", R.string.appearance_title),
     THEME("theme", R.string.settings_item_theme, APPEARANCE),
     FONT("font", R.string.settings_font_title, APPEARANCE),
@@ -36,7 +34,6 @@ enum class SettingsDestination(
     CONTENT("content", R.string.settings_content_title),
     MUSIC_HOME("music_home", R.string.settings_music_home_title, CONTENT),
     LIBRARY("library", R.string.library, CONTENT),
-    TOPICS("topics", R.string.settings_topics_title),
     INTEGRATIONS("integrations", R.string.settings_integrations_title),
     SCROBBLING("scrobbling", R.string.scrobbling_title, INTEGRATIONS),
     GOOGLE_ACCOUNT("google_account", R.string.google_account_title, INTEGRATIONS),

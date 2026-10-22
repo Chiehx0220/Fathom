@@ -1,9 +1,9 @@
 package io.github.aedev.flow.data.shorts.queue
 
+import io.github.aedev.flow.data.feed.BlockedContentStore
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.local.SubscriptionRepository
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.shorts.ShortsFeedRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionWatchedVideos
@@ -22,7 +22,7 @@ class ShortsQueueLoaderFactory
         private val subscriptionWatchedVideos: SubscriptionWatchedVideos,
         private val playerPreferences: PlayerPreferences,
         private val handoff: ShortsQueueHandoff,
-        private val neuroEngine: FlowNeuroEngine,
+        private val blockedContent: BlockedContentStore,
     ) {
         fun create(source: ShortsQueueSource): ShortsQueueController {
             val resolved = resolve(source)
@@ -62,7 +62,7 @@ class ShortsQueueLoaderFactory
                 subscriptionRepository = subscriptionRepository,
                 playerPreferences = playerPreferences,
                 watchedVideos = subscriptionWatchedVideos,
-                exclusions = { neuroEngine.feedExclusions() },
+                exclusions = { blockedContent.exclusions() },
             )
 
         private fun optionalFeedLoader(): ShortsQueueLoader =
@@ -91,7 +91,7 @@ class ShortsQueueLoaderFactory
                         playerPreferences = playerPreferences,
                         watchedVideos = subscriptionWatchedVideos,
                         anchorVideoId = source.startVideoId.takeIf { it.isNotBlank() },
-                        exclusions = { neuroEngine.feedExclusions() },
+                        exclusions = { blockedContent.exclusions() },
                     )
                 }
 

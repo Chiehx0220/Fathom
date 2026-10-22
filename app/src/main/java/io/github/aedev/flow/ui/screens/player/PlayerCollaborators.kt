@@ -1,16 +1,17 @@
 package io.github.aedev.flow.ui.screens.player
 
 import android.content.Context
+import io.github.aedev.flow.data.account.WatchReporting
 import io.github.aedev.flow.data.comments.BilibiliCommentSource
 import io.github.aedev.flow.data.comments.CommentsPager
 import io.github.aedev.flow.data.comments.CommentsPlaybackState
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.localmedia.LocalSubtitles
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.data.repository.LiveChatRepository
 import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import io.github.aedev.flow.data.repository.YouTubeRepository
@@ -52,6 +53,7 @@ internal class PlayerCollaborators(
     playerManager: EnhancedPlayerManager,
     upcomingPremiereProbe: UpcomingPremiereProbe,
     private val videoStats: VideoStatsRecorder,
+    private val watchReporter: WatchReporting,
     private val uiState: MutableStateFlow<VideoPlayerUiState>,
     scope: CoroutineScope,
     networkDispatcher: CoroutineDispatcher,
@@ -120,14 +122,11 @@ internal class PlayerCollaborators(
         WatchSessionTracker(
             context = context,
             viewHistory = viewHistory,
-            repository = repository,
-            homeFeedCacheRepository = homeFeedCacheRepository,
             videoStats = videoStats,
             scope = scope,
             networkDispatcher = networkDispatcher,
-            shortsEnabled = shortsEnabled,
-            relatedVideosFor = ::relatedVideosFor,
             richVideoFor = { videoId -> uiState.value.richVideoFor(videoId) },
+            reporter = watchReporter,
         )
 
     val liveChat =

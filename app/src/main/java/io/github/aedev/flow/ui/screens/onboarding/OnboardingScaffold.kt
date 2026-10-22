@@ -159,15 +159,6 @@ internal fun OnboardingBottomBar(
                 )
             }
 
-            !state.canAdvance -> {
-                FlowActionButton(
-                    text = pluralStringResource(R.plurals.onboarding_pick_more, state.topicsLeft, state.topicsLeft),
-                    onClick = onNext,
-                    modifier = Modifier.weight(1f),
-                    enabled = false,
-                )
-            }
-
             else -> {
                 FlowActionButton(
                     stringResource(R.string.onboarding_btn_continue),
@@ -218,17 +209,6 @@ internal fun stepCopy(
     step: OnboardingStep,
 ): StepCopy =
     when (step) {
-        OnboardingStep.INTERESTS -> {
-            StepCopy(
-                stringResource(R.string.onboarding_interests_title),
-                if (state.topicsLeft > 0) {
-                    stringResource(R.string.onboarding_interests_hint, MIN_TOPICS, state.topicsLeft)
-                } else {
-                    stringResource(R.string.onboarding_interests_ready)
-                },
-            )
-        }
-
         OnboardingStep.CHANNELS -> {
             StepCopy(stringResource(R.string.onboarding_channels_title), stringResource(R.string.onboarding_channels_subtitle))
         }

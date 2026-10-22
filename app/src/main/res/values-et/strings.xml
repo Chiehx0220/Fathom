@@ -174,8 +174,6 @@
     <string name="details_metadata">Üksikasjad ja metateave</string>
     <string name="mark_as_watched">Märgi vaadatuks</string>
     <string name="mark_as_watched_toast">Märkisid vaadatuks ja sinu soovitused ainult paranevad!</string>
-    <string name="i_like_this">Tahaks veel selliseid</string>
-    <string name="i_like_this_toast">Selge lugu! Näed veel sarnast sisu.</string>
     <string name="go_to_channel">Vaata kanalit</string>
     <string name="track_info">Loo teave</string>
     <string name="channel_id">Kanali tunnus</string>

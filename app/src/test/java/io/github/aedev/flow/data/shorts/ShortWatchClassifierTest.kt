@@ -7,16 +7,15 @@
 package io.github.aedev.flow.data.shorts
 
 import com.google.common.truth.Truth.assertThat
-import io.github.aedev.flow.data.recommendation.InteractionType
+import io.github.aedev.flow.data.stats.WatchKind
 import org.junit.Test
 
 /** I-5: a Short's watch signal reflects what actually happened, not a fabricated full watch. */
 class ShortWatchClassifierTest {
-
     @Test
     fun `sub-2s flick is a skip with its real fraction`() {
         val s = ShortWatchClassifier.classify(positionMs = 1_500L, durationMs = 30_000L, videoDurationSec = 30)
-        assertThat(s.interaction).isEqualTo(InteractionType.SKIPPED)
+        assertThat(s.interaction).isEqualTo(WatchKind.SKIPPED)
         assertThat(s.percent).isWithin(1e-4f).of(0.05f)
         assertThat(s.position).isEqualTo(1_500L)
     }
@@ -24,7 +23,7 @@ class ShortWatchClassifierTest {
     @Test
     fun `a partial watch reports its real fraction, not 90 percent`() {
         val s = ShortWatchClassifier.classify(positionMs = 9_000L, durationMs = 30_000L, videoDurationSec = 30)
-        assertThat(s.interaction).isEqualTo(InteractionType.WATCHED)
+        assertThat(s.interaction).isEqualTo(WatchKind.WATCHED)
         assertThat(s.percent).isWithin(1e-4f).of(0.30f)
     }
 
@@ -39,6 +38,6 @@ class ShortWatchClassifierTest {
     fun `falls back to video duration when player duration is missing`() {
         val s = ShortWatchClassifier.classify(positionMs = 5_000L, durationMs = 0L, videoDurationSec = 20)
         assertThat(s.safeDuration).isEqualTo(20_000L)
-        assertThat(s.interaction).isEqualTo(InteractionType.WATCHED)
+        assertThat(s.interaction).isEqualTo(WatchKind.WATCHED)
     }
 }

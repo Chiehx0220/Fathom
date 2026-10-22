@@ -20,6 +20,7 @@ import io.github.aedev.flow.ui.screens.settings.content.LibrarySettingsScreen
 import io.github.aedev.flow.ui.screens.settings.content.MusicHomeSettingsScreen
 import io.github.aedev.flow.ui.screens.settings.diagnostics.DiagnosticsScreen
 import io.github.aedev.flow.ui.screens.settings.downloads.DownloadSettingsScreen
+import io.github.aedev.flow.ui.screens.settings.hidden.HiddenContentScreen
 import io.github.aedev.flow.ui.screens.settings.history.HistorySettingsScreen
 import io.github.aedev.flow.ui.screens.settings.integrations.IntegrationsScreen
 import io.github.aedev.flow.ui.screens.settings.localmedia.LocalMediaSettingsScreen
@@ -30,11 +31,7 @@ import io.github.aedev.flow.ui.screens.settings.playback.PlaybackSettingsScreen
 import io.github.aedev.flow.ui.screens.settings.quality.QualitySettingsScreen
 import io.github.aedev.flow.ui.screens.settings.region.LanguageRegionScreen
 import io.github.aedev.flow.ui.screens.settings.scrobbling.ScrobblingScreen
-import io.github.aedev.flow.ui.screens.settings.taste.DiscoverChannelsScreen
 import io.github.aedev.flow.ui.screens.settings.taste.FavouriteArtistsScreen
-import io.github.aedev.flow.ui.screens.settings.taste.HiddenContentScreen
-import io.github.aedev.flow.ui.screens.settings.taste.TasteScreen
-import io.github.aedev.flow.ui.screens.settings.topics.TopicPreferencesScreen
 import io.github.aedev.flow.ui.screens.settings.wellbeing.WellbeingScreen
 import io.github.aedev.flow.ui.screens.settings.widgets.WidgetsSettingsScreen
 import io.github.aedev.flow.ui.screens.sync.SyncScreen
@@ -62,20 +59,12 @@ internal fun SettingsDetail(
             AppearanceScreen(onBack = onBack, highlight = target.highlight, onNavigate = onNavigate)
         }
 
-        SettingsDestination.TASTE -> {
-            TasteScreen(onBack = onBack, highlight = target.highlight, onNavigate = onNavigate, onOpenRecap = onOpenRecap)
-        }
-
         SettingsDestination.HIDDEN_CONTENT -> {
             HiddenContentScreen(onBack = onBack, highlight = target.highlight)
         }
 
         SettingsDestination.FAVOURITE_ARTISTS -> {
             FavouriteArtistsScreen(onBack = onBack, highlight = target.highlight)
-        }
-
-        SettingsDestination.DISCOVER_CHANNELS -> {
-            DiscoverChannelsScreen(onBack = onBack, highlight = target.highlight)
         }
 
         SettingsDestination.THEME -> {
@@ -140,10 +129,6 @@ internal fun SettingsDetail(
 
         SettingsDestination.QUALITY -> {
             QualitySettingsScreen(onBack = onBack, highlight = target.highlight, tab = target.tab)
-        }
-
-        SettingsDestination.TOPICS -> {
-            TopicPreferencesScreen(onBack = onBack, highlight = target.highlight, tab = target.tab)
         }
 
         SettingsDestination.INTEGRATIONS -> {

@@ -43,8 +43,7 @@ import io.github.aedev.flow.ui.screens.settings.index.SettingsSearch
 private val SearchFieldBottomPadding = 8.dp
 
 /**
- * The settings list: search, the persona card, Deep Flow, and one row per settings page grouped
- * the way people look for them. Beside a detail pane, [selected] marks the page open next to it.
+ * Settings list: search, Deep Flow and grouped page rows. [selected] marks the open page beside a detail pane.
  */
 @Composable
 internal fun SettingsHomeScreen(
@@ -58,7 +57,6 @@ internal fun SettingsHomeScreen(
 ) {
     val context = LocalContext.current
     val deepFlow by viewModel.deepFlow.collectAsStateWithLifecycle()
-    val persona by viewModel.persona.collectAsStateWithLifecycle()
     val updateCheck by viewModel.updateCheck.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -68,10 +66,6 @@ internal fun SettingsHomeScreen(
 
     val checkingLabel = stringResource(R.string.checking_for_updates)
     val searchable = rememberSearchableSettings()
-    LifecycleResumeEffect(selected) {
-        viewModel.refreshPersona()
-        onPauseOrDispose {}
-    }
     val results = remember(query, searchable) { SettingsSearch.search(query, searchable) }
 
     UpdateCheckFeedback(
@@ -118,7 +112,6 @@ internal fun SettingsHomeScreen(
                 state =
                     SettingsHomeState(
                         selected = selected,
-                        persona = persona,
                         deepFlow = deepFlow,
                         updateCheckingLabel = checkingLabel.takeIf { updateCheck == UpdateCheckState.Checking },
                         selectedRowFocus = selectedRowFocus,

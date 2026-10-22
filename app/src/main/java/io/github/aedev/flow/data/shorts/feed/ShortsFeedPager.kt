@@ -4,8 +4,6 @@ import android.util.Log
 import io.github.aedev.flow.data.model.ShortVideo
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.toVideo
-import io.github.aedev.flow.data.recommendation.ShortsSeedInput
-import io.github.aedev.flow.data.recommendation.ShortsSeedSource
 import io.github.aedev.flow.innertube.pages.reel.reelPosterUrl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

@@ -15,7 +15,6 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.ThumbDown
-import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
@@ -64,32 +63,21 @@ internal fun VideoCardFeedback(
 ) {
     if (!showRating && !showWatched) return
     val haptics = LocalHapticFeedback.current
-    val count = (if (showRating) 2 else 0) + (if (showWatched) 1 else 0)
-    val likeLabel = stringResource(R.string.i_like_this)
+    val count = (if (showRating) 1 else 0) + (if (showWatched) 1 else 0)
     val notInterestedLabel = stringResource(R.string.not_interested)
 
     BoxWithConstraints(modifier = modifier) {
-        val layout = rememberFeedbackLayout(listOf(likeLabel, notInterestedLabel), rowWidth = maxWidth, withWatched = showWatched)
+        val layout = rememberFeedbackLayout(listOf(notInterestedLabel), rowWidth = maxWidth, withWatched = showWatched)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
         ) {
             if (showRating) {
                 FeedbackButton(
-                    icon = Icons.Outlined.ThumbUp.takeIf { layout.showIcons },
-                    label = likeLabel,
-                    weight = layout.weights[0],
-                    shapes = connectedShapes(index = 0, count = count).asButtonShapes(),
-                    onClick = {
-                        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
-                        actions.onInterested(state.video)
-                    },
-                )
-                FeedbackButton(
                     icon = Icons.Outlined.ThumbDown.takeIf { layout.showIcons },
                     label = notInterestedLabel,
-                    weight = layout.weights[1],
-                    shapes = connectedShapes(index = 1, count = count).asButtonShapes(),
+                    weight = layout.weights[0],
+                    shapes = connectedShapes(index = 0, count = count).asButtonShapes(),
                     onClick = {
                         haptics.performHapticFeedback(HapticFeedbackType.Reject)
                         actions.onNotInterested(state.video)

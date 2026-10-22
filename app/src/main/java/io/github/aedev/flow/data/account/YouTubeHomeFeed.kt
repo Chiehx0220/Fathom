@@ -4,7 +4,6 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.innertube.YouTube
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -20,9 +19,8 @@ class YouTubeHomeFeed
         private val lock = Mutex()
         private var continuation: String? = null
 
-        val active: Flow<Boolean> = store.account.map { it != null }.distinctUntilChanged()
-
-        suspend fun isActive(): Boolean = store.account.first() != null
+        /** Sign-in state; a change reloads Home. */
+        val signedIn: Flow<Boolean> = store.account.map { it != null }.distinctUntilChanged()
 
         val hasMore: Boolean
             get() = continuation != null

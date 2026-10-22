@@ -8,7 +8,6 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.BackupRepository
 import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.data.local.NO_LIKES
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.music.FavouriteArtistsStore
 import io.github.aedev.flow.data.recommendation.music.MusicBrainEngine
 import io.github.aedev.flow.data.stats.RecapBackup
@@ -99,11 +98,6 @@ class BackupCoordinator
                 repository.exportWatchHistory(uri)
             }
 
-        fun exportEngine(uri: Uri) =
-            exportTo(uri, R.string.export_engine_success, R.string.export_engine_failed) {
-                writeStream(uri) { out -> FlowNeuroEngine.exportBrainToStream(out) }
-            }
-
         fun exportMusicBrain(uri: Uri) =
             exportTo(uri, R.string.music_brain_export_success, R.string.music_brain_export_failed) {
                 writeStream(uri) { out -> musicBrain.exportBrainToStream(out).let { true } }
@@ -128,10 +122,6 @@ class BackupCoordinator
                 when (type) {
                     LocalDataManager.AutoBackupType.APP_DATA -> {
                         repository.exportDataToFolder(folder)
-                    }
-
-                    LocalDataManager.AutoBackupType.BRAIN -> {
-                        repository.exportBrainToFolder(folder)
                     }
 
                     LocalDataManager.AutoBackupType.MASTER -> {
@@ -175,16 +165,6 @@ class BackupCoordinator
                     onSuccess = { BackupOperation.Succeeded(context.getString(R.string.import_master_backup_success)) },
                     onFailure = { failed(R.string.import_failed_template, it) },
                 )
-            }
-
-        fun importEngine(uri: Uri) =
-            run(context.getString(R.string.import_engine_data)) {
-                val ok = readStream(uri) { input -> FlowNeuroEngine.importBrainFromStream(context, input) } == true
-                if (ok) {
-                    BackupOperation.Succeeded(context.getString(R.string.import_engine_success))
-                } else {
-                    BackupOperation.Failed(context.getString(R.string.import_engine_failed))
-                }
             }
 
         fun importMusicBrain(uri: Uri) =

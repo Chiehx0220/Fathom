@@ -11,6 +11,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.feed.BlockedContentStore
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.local.SearchHistoryRepository
@@ -20,7 +21,6 @@ import io.github.aedev.flow.data.paging.SearchPagingSource
 import io.github.aedev.flow.data.paging.SearchResultItem
 import io.github.aedev.flow.data.paging.WatchedVideoLookup
 import io.github.aedev.flow.data.paging.watchedVideoIds
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.search.SearchSuggestionsRepository
 import io.github.aedev.flow.data.shorts.ShortsContentFilter
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueHandoff
@@ -60,7 +60,7 @@ class SearchViewModel
         private val shortsQueueHandoff: ShortsQueueHandoff,
         private val searchHistory: SearchHistoryRepository,
         private val videoStats: VideoStatsRecorder,
-        private val neuroEngine: FlowNeuroEngine,
+        private val blockedContent: BlockedContentStore,
         private val watchHistoryDao: WatchHistoryDao,
         private val preferences: PlayerPreferences,
     ) : ViewModel() {
@@ -99,7 +99,7 @@ class SearchViewModel
                                 serviceId = key.serviceId,
                                 onHeader = ::onHeader,
                                 watchedVideos = watchedVideos,
-                                exclusions = { neuroEngine.feedExclusions() },
+                                exclusions = { blockedContent.exclusions() },
                                 bilibiliApi = bilibiliApi(context),
                             )
                         },
@@ -130,14 +130,10 @@ class SearchViewModel
             _uiState.value = SearchUiState(query = query, filters = filters, serviceId = serviceId)
             _searchKey.value = SearchKey(query, filters, serviceId)
 
-            // A typed search is the most explicit interest statement the user makes.
             val normalized = query.trim().lowercase()
             if (normalized != lastSignaledQuery) {
                 lastSignaledQuery = normalized
-                viewModelScope.launch {
-                    runCatching { FlowNeuroEngine.onSearchQuery(context, query) }
-                    videoStats.onSearch(query.takeIf { searchHistory.isSearchHistoryEnabled() })
-                }
+                viewModelScope.launch { videoStats.onSearch(query.takeIf { searchHistory.isSearchHistoryEnabled() }) }
             }
         }
 

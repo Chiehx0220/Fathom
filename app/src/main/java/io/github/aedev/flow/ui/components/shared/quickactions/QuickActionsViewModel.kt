@@ -210,15 +210,6 @@ class QuickActionsViewModel
             }
         }
 
-        fun markAsInteresting(video: Video) {
-            viewModelScope.launch {
-                runAction {
-                    feedback.markInterested(video)
-                    emit(R.string.i_like_this_toast)
-                }
-            }
-        }
-
         fun playVideoNext(video: Video) {
             playerManager.get().addVideoToQueueNext(video)
             emit(R.string.play_next_toast)

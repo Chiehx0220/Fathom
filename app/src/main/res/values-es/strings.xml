@@ -134,8 +134,6 @@
     <string name="playlist_name">Nombre</string>
     <string name="save_to_playlist">Guardar en lista</string>
     <string name="mark_as_watched_toast">Marcado como visto</string>
-    <string name="i_like_this">Quiero más como esto</string>
-    <string name="i_like_this_toast">¡Lo tengo! Verás más contenido como este.</string>
     <string name="go_to_channel">Ir al canal</string>
     <string name="track_info">Información de la pista</string>
     <string name="track_info_subtitle">Métricas técnicas y sociales detalladas</string>
@@ -413,7 +411,6 @@
     <string name="buffer_label_rebuffer">Reanudar después del Rebuffer: %1$ds</string>
     <string name="share_short_template">Mira este corto: https://youtu.be/%1$s</string>
     <string name="action_like">Me gusta</string>
-    <string name="quick_add">Agregar rápido</string>
     <string name="bedtime_notification_note">Se enviará una notificación a la hora de inicio.</string>
     <string name="this_week">Esta semana</string>
     <string name="sleep_timer_duration">Duración</string>
@@ -431,7 +428,6 @@
     <string name="btn_copy">Copiar</string>
     <string name="remove_from_playlist_action">Eliminar de la lista de reproducción</string>
     <string name="category_gaming">Juego de azar</string>
-    <string name="category_creative">Creativo</string>
     <string name="channel_memory_subtitle">Comentarios implícitos de su historial de visualización</string>
     <string name="header_your_collection">Tu colección</string>
     <string name="share_link_cd">Compartir enlace</string>
@@ -468,8 +464,6 @@
     <string name="proxy_settings_password">Contraseña</string>
     <string name="import_playlists_section_title">Listas de reproducción</string>
     <string name="profile_export_success">Perfil exportado exitosamente</string>
-    <string name="metric_topics">Temas</string>
-    <string name="profile_maturity_label">Madurez del perfil</string>
     <string name="interest_weights_empty">Aún no hay ponderaciones de temas.</string>
     <string name="time_bucket_weekday_afternoon">tarde entre semana</string>
     <string name="time_window_morning">6 a.m. - 12 p.m.</string>
@@ -793,21 +787,14 @@
     <string name="content_preferences_subtitle">Personaliza lo que ves</string>
     <string name="blocked_tab">Bloqueado</string>
     <string name="your_interests_title">Tus intereses</string>
-    <string name="your_interests_desc">Elige temas para mejorar tus recomendaciones.</string>
     <string name="currently_following">Actualmente siguiendo</string>
     <string name="add_topics">Agregar temas</string>
     <string name="browse_by_category">Navegar por categoría</string>
     <string name="tap_to_remove">Toca para eliminar</string>
-    <string name="block_topic_title">Bloquear un tema</string>
     <string name="hidden_content_title">Contenido oculto</string>
-    <string name="hidden_content_desc">No se recomendarán videos sobre estos temas. También puedes pulsar en \'No me interesa\' en cualquier video.</string>
     <string name="enter_keywords_to_hide">Ingrese palabras clave para ocultar</string>
-    <string name="block_topic_placeholder">por ejemplo, maquillaje, fortnite, asmr</string>
     <string name="common_topics_to_block">Temas comunes para bloquear</string>
-    <string name="currently_blocked">Actualmente bloqueado</string>
     <string name="desc_add_topic">Agregar tema</string>
-    <string name="desc_remove_topic">Eliminar %1$s</string>
-    <string name="desc_unblock_topic">Desbloquear %1$s</string>
     <string name="time_management_subtitle">Realice un seguimiento y controle su tiempo frente a la pantalla</string>
     <string name="stats_disclaimer">Basado en tu historial de reproducciones en Flow. El uso real puede variar.</string>
     <string name="tools_to_manage_time">Herramientas para gestionar tu tiempo</string>
@@ -978,13 +965,6 @@
     <string name="onboarding_btn_continue">Continuar</string>
     <string name="cd_collapse_category">Colapsar</string>
     <string name="category_music">Música</string>
-    <string name="category_technology">Tecnología</string>
-    <string name="category_entertainment">Entretenimiento</string>
-    <string name="category_education">Educación</string>
-    <string name="category_health_fitness">Salud y fitness</string>
-    <string name="category_lifestyle">Estilo de vida</string>
-    <string name="category_science_nature">Ciencia y naturaleza</string>
-    <string name="category_news_current_events">Noticias y eventos actuales</string>
     <string name="cd_expand_category">Expandir</string>
     <string name="loading_neural_matrix">Cargando matriz neuronal...</string>
     <string name="action_refresh">Refrescar</string>
@@ -1155,15 +1135,7 @@
     <string name="check_for_updates_subtitle">Toque para buscar la última versión</string>
     <string name="checking_for_updates">Buscando actualizaciones…</string>
     <string name="flow_is_up_to_date">¡Flow está actualizado!</string>
-    <string name="export_engine_data">Perfil del motor de exportación</string>
-    <string name="export_engine_data_subtitle">Haga una copia de seguridad de sus datos de aprendizaje y personalidad de IA</string>
     <string name="update_check_failed">No se pudieron buscar actualizaciones. Comprueba tu conexión.</string>
-    <string name="export_engine_failed">No se pudo exportar el perfil del motor</string>
-    <string name="import_engine_data">Importar datos del motor de Flow</string>
-    <string name="export_engine_success">Perfil del motor exportado exitosamente</string>
-    <string name="import_engine_success">Perfil del motor restaurado exitosamente</string>
-    <string name="import_engine_failed">No se pudo importar el perfil del motor</string>
-    <string name="import_engine_data_desc">Restaure su perfil de personalidad de IA desde un archivo de respaldo</string>
     <string name="error_age_restricted_hint">Este video solo está disponible para usuarios registrados que hayan verificado su edad.</string>
     <string name="error_geo_restricted">No disponible en tu región</string>
     <string name="error_age_restricted">Contenido restringido por edad</string>
@@ -1274,7 +1246,6 @@
     <string name="auto_backup_type_section">Tipo de copia de seguridad</string>
     <string name="auto_backup_frequency_monthly">Mensual</string>
     <string name="auto_backup_type_app_data">Datos de la aplicación</string>
-    <string name="auto_backup_type_brain">Perfil del motor</string>
     <string name="auto_backup_frequency_weekly">Semanalmente</string>
     <string name="auto_backup_pick_folder">Seleccionar carpeta</string>
     <string name="auto_backup_no_folder">Ninguna carpeta seleccionada</string>
@@ -1377,30 +1348,20 @@
     <string name="import_yt_takeout_all">Importar desde Google Takeout</string>
     <string name="learning_stats_subtitle">Lo que recuerda el motor actualmente</string>
     <string name="metric_topics_detail">intereses ponderados</string>
-    <string name="metric_interactions">Interacciones</string>
     <string name="metric_interactions_detail">clics, relojes, saltos</string>
     <string name="metric_evidence">Evidencia</string>
-    <string name="metric_channels">Canales</string>
     <string name="metric_evidence_detail">temas verificados</string>
-    <string name="metric_history">Historia</string>
     <string name="metric_history_detail">ver referencias</string>
     <string name="metric_channels_detail">entradas de afinidad</string>
     <string name="metric_feed_memory_detail">mostrado recientemente</string>
     <string name="metric_filters">Filtros</string>
     <string name="metric_filters_detail">elementos bloqueados</string>
-    <string name="metric_feed_memory">Memoria de alimentación</string>
     <string name="profile_maturity_detail">Una mayor madurez significa que el perfil tiene suficientes señales para ser estable</string>
     <string name="taste_shape_title">Sabor Forma</string>
-    <string name="metric_suppressed">suprimido</string>
     <string name="metric_suppressed_detail">elementos de enfriamiento</string>
     <string name="taste_shape_subtitle">Perfil global comparado con el contexto de tiempo activo</string>
     <string name="taste_pacing_context">Contexto actual: %1$s</string>
-    <string name="taste_complexity">Complejidad</string>
-    <string name="taste_duration">Preferencia de duración</string>
-    <string name="taste_pacing">ritmo</string>
-    <string name="taste_live_affinity">Preferencia por los directos</string>
     <string name="taste_duration_detail">Los valores más altos se inclinan hacia videos más largos</string>
-    <string name="taste_topic_breadth">Amplitud del tema</string>
     <string name="interest_weights_title">Ponderaciones de intereses</string>
     <string name="interest_weights_subtitle">Temas con mayor ponderación después de la libertad condicional y los controles de pruebas</string>
     <string name="time_patterns_title">Patrones de tiempo</string>
@@ -1423,17 +1384,12 @@
     <string name="time_window_afternoon">12 p. m. - 6 p. m.</string>
     <string name="time_window_evening">6 p.m. - 12 a.m.</string>
     <string name="time_window_night">12 a. m. - 6 a. m.</string>
-    <string name="channel_affinity_balanced">Equilibrado</string>
-    <string name="channel_affinity_cooling">Enfriamiento</string>
-    <string name="channel_affinity_strong">Fuerte</string>
     <string name="discovery_status_subtitle">Consultas y barreras de seguridad que actualmente dan forma a la exploración</string>
     <string name="channel_affinity_score">puntuación de afinidad</string>
     <string name="discovery_status_title">Estado de descubrimiento</string>
     <string name="discovery_queries">Consultas</string>
     <string name="discovery_queries_detail">listo ahora</string>
-    <string name="discovery_query_memory">Memoria de consulta</string>
     <string name="discovery_rejections_detail">patrones de tema</string>
-    <string name="discovery_shorts_seen">Shorts vistos</string>
     <string name="discovery_rejections">Rechazos</string>
     <string name="discovery_shorts_seen_detail">repetir guardia</string>
     <string name="blocked_content_subtitle">Temas y canales excluidos de las recomendaciones</string>
@@ -1449,13 +1405,9 @@
     <string name="profile_action_import_detail">Restaurar una copia de seguridad del perfil</string>
     <string name="profile_action_reset">Restablecer perfil</string>
     <string name="profile_action_reset_detail">Borre las preferencias aprendidas y comience de nuevo</string>
-    <string name="reset_profile_dialog_title">¿Restablecer perfil?</string>
     <string name="reset_profile_dialog_message">Esto borra el perfil de recomendación local y comienza a aprender nuevamente desde cero.</string>
-    <string name="reset_profile_confirm">Reiniciar</string>
-    <string name="taste_chart_now">Ahora</string>
     <string name="profile_action_import">Importar perfil</string>
     <string name="title_copied">Título copiado al portapapeles</string>
-    <string name="taste_chart_profile">Perfil</string>
     <string name="import_subscriptions_section_title">Suscripciones</string>
     <string name="import_newpipe_history">Importar historial de NewPipe</string>
     <string name="import_newpipe_history_desc">Importe su historial de reproducciones desde un archivo ZIP de respaldo de NewPipe o un archivo newpipe.db.</string>
@@ -1686,7 +1638,6 @@
     <string name="appearance_role_on_secondary_container">Sobre contenedor secundario</string>
     <string name="appearance_role_tertiary_container">Contenedor terciario</string>
     <string name="appearance_role_on_tertiary_container">Sobre contenedor terciario</string>
-    <string name="onboarding_interests_hint">Elige al menos %1$d temas para personalizar tu feed. Faltan %2$d.</string>
     <string name="sync_expires_in">Expira en %1$ds</string>
     <string name="sync_progress_fraction">%1$d / %2$d</string>
     <string name="appearance_role_error_container">Contenedor de error</string>
@@ -1754,8 +1705,6 @@
     <string name="delete_selected">Eliminar seleccionados</string>
     <string name="default_download_codec_label">Códec de descarga predeterminado</string>
     <string name="default_download_codec_auto_subtitle">Usa tu última elección o el códec del video actual</string>
-    <string name="onboarding_interests_title">¿Qué te gusta?</string>
-    <string name="onboarding_interests_ready">Excelente selección. Siempre puedes actualizar esto más tarde en los ajustes.</string>
     <string name="onboarding_channels_title">Buscar canales</string>
     <string name="onboarding_channels_search_placeholder">Buscar canales…</string>
     <string name="onboarding_channels_empty_prompt">Escribe el nombre de un canal para buscar</string>
@@ -1768,31 +1717,10 @@
     <string name="onboarding_btn_skip">Omitir</string>
     <string name="onboarding_btn_finish">Finalizar</string>
     <string name="onboarding_btn_back">Atrás</string>
-    <string name="persona_initiate_title">Iniciado</string>
-    <string name="persona_initiate_description">Apenas estás comenzando. Tu perfil aún se está formando.</string>
-    <string name="persona_audiophile_title">Audiófilo</string>
-    <string name="persona_audiophile_description">Usas Flow principalmente para la música. El ambiente lo es todo.</string>
-    <string name="persona_livewire_title">Entusiasta de los directos</string>
-    <string name="persona_livewire_description">Te encanta la energía pura de los directos y los estrenos.</string>
-    <string name="persona_night_owl_title">Búho nocturno</string>
-    <string name="persona_night_owl_description">Te desenvuelves mejor en la oscuridad. La mayor parte de lo que ves es después de la medianoche.</string>
-    <string name="persona_binger_title">Devorador de contenido</string>
-    <string name="persona_binger_description">Una vez que empiezas, no puedes parar. Maratones de contenido masivas.</string>
-    <string name="persona_scholar_title">Erudito</string>
-    <string name="persona_scholar_description">Contenido de alta complejidad. Estás aquí para crecer, no solo para entretenerte.</string>
-    <string name="persona_deep_diver_title">Explorador profundo</string>
-    <string name="persona_deep_diver_description">Los videoensayos largos y los documentales son tu mundo.</string>
-    <string name="persona_skimmer_title">Devorador de clips</string>
-    <string name="persona_skimmer_description">Contenido rápido y dinámico. Dopamina a la carta.</string>
-    <string name="persona_specialist_title">Especialista</string>
-    <string name="persona_specialist_description">Enfocado al máximo en unos pocos nichos. Sabes bien lo que te gusta.</string>
-    <string name="persona_explorer_title">Explorador</string>
-    <string name="persona_explorer_description">Caótico y hermoso. Un poco de todo.</string>
     <string name="sync_devices_title">Sincronizar dispositivos</string>
     <string name="sync_devices_subtitle">Sincroniza tu biblioteca, historial y perfil a través de la red Wi-Fi local</string>
     <string name="sync_collection_likes">Me gusta</string>
     <string name="sync_collection_settings">Ajustes</string>
-    <string name="sync_collection_recommendation_profile">Perfil de recomendaciones</string>
     <string name="sync_preparing">Preparando…</string>
     <string name="sync_connecting">Conectando…</string>
     <string name="sync_intro">Sincroniza tu biblioteca, historial, favoritos y ajustes con otro dispositivo a través del Wi-Fi. Nada sale de tu red.</string>
@@ -1950,10 +1878,7 @@
     <string name="ui_clear_and_continue">Borrar y continuar</string>
     <string name="ui_crashed_last_session">Flow se cerró inesperadamente en la última sesión</string>
     <string name="ui_copy_log_description">Copia el registro de abajo y pégalo en un informe de GitHub para que pueda corregirse.</string>
-    <string name="ui_custom_interest_title">Agregar interés personalizado</string>
     <string name="ui_custom_interest_subtitle">Introduce cualquier tema de tu interés</string>
-    <string name="ui_custom_interest_hint">Tema personalizado (p. ej., Jazz, Astrofísica)</string>
-    <string name="ui_add_interest">Agregar tema de interés</string>
     <string name="ui_version">Versión %1$s</string>
     <string name="update_download_prompt">Hay una nueva versión de Flow disponible (%1$s). ¿Descargar el APK más reciente?</string>
     <string name="ui_instrumental">I N S T R U M E N T A L</string>
@@ -2024,7 +1949,6 @@
     <string name="error_failed_to_load_videos">No se pudieron cargar los videos.</string>
     <string name="error_invalid_channel_url">URL de canal no válida</string>
     <string name="error_channel_loading_timed_out">Tiempo de espera agotado al cargar el canal</string>
-    <string name="error_failed_to_load_feed">No se pudo cargar el feed</string>
     <string name="error_failed_to_load_channel">No se pudo cargar el canal</string>
     <string name="error_failed_to_load_shorts">No se pudieron cargar los shorts</string>
     <string name="error_failed_to_load_more_shorts">No se pudieron cargar más shorts</string>
@@ -2308,7 +2232,6 @@
     <string name="sync_collection_likes_body">Vídeos y música marcados con Me gusta y No me gusta.</string>
     <string name="sync_collection_subscriptions_body">Los canales que sigues.</string>
     <string name="sync_collection_settings_body">Preferencias de reproducción, apariencia y descargas.</string>
-    <string name="sync_collection_recommendation_profile_body">Que ha aprendido Flow de tus visualizaciones.</string>
     <string name="sync_waiting_for_peer">Esperando al otro dispositivo para conectar…</string>
     <string name="sync_cancel_session">Cancelar sincronización</string>
     <string name="sync_expires_label">Expiración del código QR</string>
@@ -2555,7 +2478,6 @@
         <item quantity="many">%1$d canales añadidos</item>
         <item quantity="other">%1$d canales añadidos</item>
     </plurals>
-    <string name="onboarding_step_interests">Intereses</string>
     <string name="onboarding_step_channels">Canales</string>
     <string name="onboarding_step_import">Importar</string>
     <string name="onboarding_imported_count">Importados %1$d %2$s</string>
@@ -2582,7 +2504,6 @@
     <string name="section_rotation_evening">Tu rotación nocturna</string>
     <string name="section_rotation_night">Tu rotación de madrugada</string>
     <string name="source_your_rotation">Tu rotación</string>
-    <string name="music_genre_affinity_title">Géneros y estados de ánimo</string>
     <string name="music_genre_affinity_subtitle">Aprendido de los géneros y estados de ánimo que realmente escuchas</string>
     <string name="recommendations_header">Recomendaciones</string>
     <string name="not_interested_desc">Mostrar menos de este artista durante un tiempo</string>
@@ -2606,9 +2527,6 @@
     <string name="music_brain_import_failed">Falló la importación del motor de música</string>
     <string name="music_persona_overview_title">Gustos musicales</string>
     <string name="music_persona_overview_subtitle">Lo que el motor de música ha aprendido de tu escucha</string>
-    <string name="music_persona_maturity_cold">Arranque en frío</string>
-    <string name="music_persona_maturity_warming">Calentando motores</string>
-    <string name="music_persona_maturity_mature">Maduro</string>
     <string name="music_metric_total_plays">Número de reproducciones</string>
     <string name="music_metric_total_plays_detail">+50% de reproducciones</string>
     <string name="music_metric_artists">Artistas</string>
@@ -2617,8 +2535,6 @@
     <string name="music_metric_tracks_detail">historiales de repetición</string>
     <string name="music_metric_on_repeat">En Repetición</string>
     <string name="music_metric_on_repeat_detail">en tendencia ahora mismo</string>
-    <string name="music_discovery_appetite">Apetito de descubrimiento</string>
-    <string name="music_discovery_appetite_detail">Cuánta música nueva mezcla el motor</string>
     <plurals name="notification_downloads_paused">
         <item quantity="one">%1$d descarga pausada</item>
         <item quantity="many">%1$d descargas pausadas</item>
@@ -2916,7 +2832,6 @@
     </plurals>
     <string name="notifications_clear_confirm">Borrar todo</string>
     <string name="deep_flow_scrobble_title">Scrobble durante Deep Flow</string>
-    <string name="taste_learning_paused">Deep Flow está activado, el aprendizaje está en pausa</string>
     <string name="deep_flow_scrobble_subtitle">Sigue enviando las escuchas a Last.fm, Libre.fm y ListenBrainz</string>
     <string name="deep_flow_on_search_title">Mostrar en la búsqueda</string>
     <string name="deep_flow_on_search_subtitle">Un interruptor de Deep Flow encima de las búsquedas recientes</string>
@@ -3073,8 +2988,6 @@
     <string name="widget_unlike">Eliminar de favoritos</string>
     <string name="import_no_likes">No se han encontrado favoritos. Exporta \"Mi actividad\" de YouTube como JSON, con tu cuenta de Google en Español.</string>
     <string name="settings_integrations_summary">SponsorBlock, DeArrow, \"No me gusta\" y más</string>
-    <string name="taste_topic_boost">Mostrar más como esto</string>
-    <string name="taste_reset_video_body">Flow olvida lo que ha aprendido de tus vídeos y búsquedas. El historial, los favoritos, las listas y los elementos ocultos se mantienen, y Inicio sigue usándolos.</string>
     <string name="recap_passed_subtitle">Descartados al principio, \"No me gusta\" u ocultos</string>
     <string name="recap_dislikes">No me gusta</string>
     <string name="recap_likes">Favoritos</string>
@@ -3100,9 +3013,6 @@
         <item quantity="other">%d canciones sin \"Me gusta\"</item>
     </plurals>
     <string name="music_sort_recently_liked">Favoritos recientes</string>
-    <string name="home_origin_neighbour">Un canal similar a %1$s</string>
-    <string name="home_origin_neighbour_unnamed">Un canal similar a los que sigues</string>
-    <string name="discover_channels_like_yours">Canales similares al tuyo</string>
     <string name="settings_auto_download_likes_title">Descargar canciones favoritas</string>
     <string name="settings_auto_download_likes_summary">Las canciones en tus favoritos se guardan para escucharlas sin conexión</string>
     <string name="onboarding_artists_subtitle">Tus recomendaciones musicales parten de ellas. Sáltalo si quieres.</string>
@@ -3132,8 +3042,6 @@
     <string name="concurrent_downloads_summary">Cuántos archivos se descargan a la vez</string>
     <string name="download_location_not_writable">No se puede guardar ahí. Se usará %1$s</string>
     <string name="support_flow_open_collective">Apoya a Flow en Open Collective</string>
-    <string name="about_notices">Avisos sobre código abierto</string>
-    <string name="about_notices_summary">Listas de palabras y código de otros proyectos</string>
     <string name="onboarding_channels_results_header">Canales</string>
     <string name="onboarding_import_source_flow">Copia de seguridad de Flow</string>
     <string name="onboarding_import_source_youtube">YouTube</string>
@@ -3149,11 +3057,6 @@
     <string name="onboarding_restore_backup">Restaurar una copia de seguridad</string>
     <string name="onboarding_get_started">Empezar</string>
     <string name="onboarding_start_watching">Empieza a ver</string>
-    <plurals name="onboarding_pick_more">
-        <item quantity="one">Elige %d más</item>
-        <item quantity="many">Elige %d más</item>
-        <item quantity="other">Elige %d más</item>
-    </plurals>
     <string name="onboarding_welcome_title">Dale tu toque a Flow</string>
     <string name="onboarding_welcome_subtitle">Vídeos y música en torno a lo que te gusta. La configuración lleva un minuto.</string>
     <string name="onboarding_alerts_title">No te pierdas ningún vídeo nuevo</string>
@@ -3168,11 +3071,6 @@
     <string name="onboarding_alerts_footnote">Puedes cambiar esto en cualquier momento en Ajustes.</string>
     <string name="onboarding_ready_title">Todo listo</string>
     <string name="onboarding_ready_subtitle">Tu feed está listo. Se afina a medida que ves contenido.</string>
-    <plurals name="onboarding_ready_interests">
-        <item quantity="one">%d interés</item>
-        <item quantity="many">%d intereses</item>
-        <item quantity="other">%d intereses</item>
-    </plurals>
     <plurals name="onboarding_ready_channels">
         <item quantity="one">%d canal</item>
         <item quantity="many">%d canales</item>

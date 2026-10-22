@@ -68,14 +68,6 @@ internal fun ChannelsStep(
                 trailingContent = { if (state.searching) SearchLoading() },
             )
         }
-        item(key = "quick") {
-            FlowQuickSearchChips(
-                searches = state.topics.take(MAX_QUICK_SEARCHES),
-                query = state.query,
-                onQueryChange = onQueryChange,
-                modifier = Modifier.padding(top = ChipSpacing),
-            )
-        }
         channelResults(state, onSubscribeToggle, onNotificationsChange)
         if (state.subscribed.isNotEmpty()) {
             item(key = "added") {

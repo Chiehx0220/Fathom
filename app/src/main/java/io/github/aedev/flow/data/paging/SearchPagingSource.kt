@@ -3,11 +3,11 @@ package io.github.aedev.flow.data.paging
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import io.github.aedev.flow.bilibili.BilibiliApi
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.local.WatchState
 import io.github.aedev.flow.data.model.DistinctKeyTracker
 import io.github.aedev.flow.data.model.isYouTubeServiceId
-import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.renderer.FeedItem
 import io.github.aedev.flow.innertube.pages.renderer.FeedShelf

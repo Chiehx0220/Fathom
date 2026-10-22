@@ -61,6 +61,7 @@ class BackupRulesTest {
             "sync_music_brain_crdt",
             "scrobbling",
             "google_account",
+            "blocked_content",
             "youtube_identity",
             "flow_prefs",
             "flow_crash_prefs",

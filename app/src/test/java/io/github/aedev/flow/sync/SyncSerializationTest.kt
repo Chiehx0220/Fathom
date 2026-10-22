@@ -1,7 +1,5 @@
 package io.github.aedev.flow.sync
 
-import io.github.aedev.flow.sync.canonical.BrainCounters
-import io.github.aedev.flow.sync.canonical.CanonicalBrain
 import io.github.aedev.flow.sync.canonical.GCounter
 import io.github.aedev.flow.sync.protocol.SyncSerialization
 import org.junit.Assert.assertEquals
@@ -39,27 +37,5 @@ class SyncSerializationTest {
         assertEquals("", p2.description) // null coerced to default
         assertEquals("PL123", p2.youtubeId)
         assertTrue(p2.items.isEmpty())
-    }
-
-    @Test
-    fun gcounter_is_the_bare_device_map_on_the_wire() {
-        val brain = CanonicalBrain(counters = BrainCounters(totalInteractions = GCounter(mapOf("dev" to 12L))))
-        val line = SyncSerialization.encodeBrain(listOf(brain)).lines.single()
-
-        assertTrue("""a G-Counter must serialize as {"dev":12}""", line.contains(""""totalInteractions":{"dev":12}"""))
-        assertFalse("the perDevice wrapper is what the desktop rejects", line.contains("perDevice"))
-    }
-
-    @Test
-    fun every_brain_snapshot_is_kept_not_just_the_first() {
-        // The desktop ships one snapshot per device it knows about; the learned vectors are a mean
-        // over those devices, so none may be folded away on decode.
-        val a = CanonicalBrain(deviceId = "a", counters = BrainCounters(totalInteractions = GCounter(mapOf("a" to 5L))))
-        val b = CanonicalBrain(deviceId = "b", counters = BrainCounters(totalInteractions = GCounter(mapOf("b" to 7L))))
-        val lines = SyncSerialization.encodeBrain(listOf(b, a)).lines
-
-        val decoded = SyncSerialization.decodeBrainSnapshots(lines)
-        assertEquals(listOf("a", "b"), decoded.map { it.deviceId })
-        assertEquals(listOf(5L, 7L), decoded.map { it.counters.totalInteractions.sum() })
     }
 }

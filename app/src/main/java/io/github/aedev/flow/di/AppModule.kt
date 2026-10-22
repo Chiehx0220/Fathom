@@ -15,7 +15,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.aedev.flow.BuildConfig
 import io.github.aedev.flow.data.localmedia.MediaStoreThumbnailFetcher
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.player.cache.PlayerCacheManager
 import okhttp3.OkHttpClient
@@ -33,13 +32,6 @@ object AppModule {
     @Provides
     @Singleton
     fun provideYouTube(): YouTube = YouTube
-
-    /** Delegates to the legacy singleton so injected consumers share the one engine the app already runs. */
-    @Provides
-    @Singleton
-    fun provideFlowNeuroEngine(
-        @ApplicationContext context: Context,
-    ): FlowNeuroEngine = FlowNeuroEngine.getInstance(context)
 
     @Provides
     @Singleton

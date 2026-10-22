@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aedev.flow.data.backup.BackupCoordinator
 import io.github.aedev.flow.data.engagement.FeedInvalidationBus
+import io.github.aedev.flow.data.feed.BlockedContentStore
 import io.github.aedev.flow.data.innertube.SubscriptionRefreshStage
 import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.local.PlayerPreferences
@@ -14,7 +15,6 @@ import io.github.aedev.flow.data.local.dao.SubscriptionGroupDao
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.toUiModel
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionRefreshPlan
 import io.github.aedev.flow.data.subscriptions.SubscriptionWatchedVideos
@@ -61,7 +61,7 @@ class SubscriptionsViewModel
         private val playerPreferences: PlayerPreferences,
         private val subscriptionGroupDao: SubscriptionGroupDao,
         private val subscriptionWatchedVideos: SubscriptionWatchedVideos,
-        private val neuroEngine: FlowNeuroEngine,
+        private val blockedContent: BlockedContentStore,
         private val backupCoordinator: BackupCoordinator,
     ) : ViewModel() {
         companion object {
@@ -349,7 +349,7 @@ class SubscriptionsViewModel
                                         ?.toHashSet()
                                 },
                             excludedShortsChannelIds = excludedShortsChannelIds,
-                            exclusions = neuroEngine.feedExclusions(),
+                            exclusions = blockedContent.exclusions(),
                         ),
                     now = System.currentTimeMillis(),
                 )

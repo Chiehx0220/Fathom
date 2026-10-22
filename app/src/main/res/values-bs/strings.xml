@@ -132,8 +132,6 @@
     <string name="details_metadata">Detalji i metapodaci</string>
     <string name="mark_as_watched">Označi kao gledano</string>
     <string name="mark_as_watched_toast">Označeno kao gledano — vaše preporuke će se poboljšati!</string>
-    <string name="i_like_this">Želim više ovakvog sadržaja</string>
-    <string name="i_like_this_toast">Razumio! Videćete više sličnog sadržaja.</string>
     <string name="go_to_channel">Idi na kanal</string>
     <string name="track_info">Informacije o pjesmi</string>
     <string name="track_info_subtitle">Detaljne tehničke i društvene statistike</string>

@@ -1,7 +1,5 @@
 package io.github.aedev.flow.sync.merge
 
-import io.github.aedev.flow.sync.canonical.BrainCounters
-import io.github.aedev.flow.sync.canonical.CanonicalBrain
 import io.github.aedev.flow.sync.canonical.CanonicalMusicAffinity
 import io.github.aedev.flow.sync.canonical.CanonicalMusicBrain
 import io.github.aedev.flow.sync.canonical.GCounter
@@ -44,27 +42,6 @@ class CounterOwnershipTest {
         val settled = CounterOwnership.reconcile(local, local, listOf(GCounter()), own, sender)
 
         assertEquals(5L, settled.perDevice["desk-uuid"])
-    }
-
-    @Test
-    fun brain_counters_and_word_frequencies_follow_the_same_rules() {
-        val local =
-            CanonicalBrain(
-                deviceId = "phone123",
-                counters = BrainCounters(idfTotalDocuments = GCounter(mapOf("phone123" to 20L, "desk-uuid" to 800L))),
-                idfWordFrequency = mapOf("kotlin" to GCounter(mapOf("desk-uuid" to 90L))),
-            )
-        val remote =
-            CanonicalBrain(
-                deviceId = "desk-uuid",
-                counters = BrainCounters(idfTotalDocuments = GCounter(mapOf("phone123" to 25L, "desk-uuid" to 200L))),
-                idfWordFrequency = mapOf("kotlin" to GCounter(mapOf("desk-uuid" to 30L))),
-            )
-
-        val settled = CounterOwnership.brain(BrainMerger.merge(local, remote), local, listOf(remote), own, sender)
-
-        assertEquals(220L, settled.counters.idfTotalDocuments.sum())
-        assertEquals(30L, settled.idfWordFrequency.getValue("kotlin").sum())
     }
 
     @Test

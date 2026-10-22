@@ -49,23 +49,6 @@ internal data class BilibiliWave1Feeds(
 
 internal fun Video.isBilibili(): Boolean = serviceIdOfVideo(id, serviceId) == BILIBILI_SERVICE_ID
 
-/** [pageOrigins] without search label on Bilibili trending/live cards. */
-internal fun pageOriginsWithBilibili(
-    videos: List<Video>,
-    sourceOf: (String) -> FeedSource?,
-    seedTitles: Map<String, String>,
-    queries: Map<String, String>,
-    followed: Set<String>,
-    neighbourPointers: Map<String, String> = emptyMap(),
-): Map<String, HomeCardOrigin> {
-    val origins = pageOrigins(videos, sourceOf, seedTitles, queries, followed, neighbourPointers)
-    val unsearched =
-        videos
-            .filter { it.isBilibili() && it.id !in queries && origins[it.id]?.kind == HomeCardOrigin.Kind.SEARCH }
-            .mapTo(HashSet()) { it.id }
-    return origins - unsearched
-}
-
 /** Late-arriving cards: same Home source filter as the feed. */
 internal suspend fun List<Video>.allowedBy(preferences: PlayerPreferences): List<Video> {
     val filter = preferences.homeContentSourceFilter.first()

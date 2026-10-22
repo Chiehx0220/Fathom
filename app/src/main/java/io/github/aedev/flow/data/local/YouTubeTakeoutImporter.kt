@@ -7,7 +7,6 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.entity.PlaylistEntity
 import io.github.aedev.flow.data.local.entity.PlaylistVideoCrossRef
 import io.github.aedev.flow.data.local.entity.VideoEntity
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -25,7 +24,6 @@ import java.util.zip.ZipInputStream
 private const val ENGLISH_TAKEOUT_WATCH_HISTORY = "history/watch-history.html"
 private const val TAKEOUT_PLAYLIST_ID_PREFIX = "yt_takeout_"
 private const val MUSIC_LIBRARY_PLAYLIST_ID = "yt_takeout_music_library"
-private const val NEURO_CANDIDATE_LIMIT = 800
 private const val AVATAR_FETCHES = 5
 private const val SUBSCRIPTION_BATCH = 25
 private const val WATCH_BATCH = 500
@@ -44,7 +42,6 @@ internal class YouTubeTakeoutImporter(
     private val subscriptions: SubscriptionRepository,
     private val saveLikes: suspend (List<TakeoutLike>) -> Int,
     private val channelAvatar: suspend (String) -> String,
-    private val learnFromHistory: suspend (Collection<VideoHistoryEntry>) -> Unit,
 ) {
     private class Found {
         val subscriptions = mutableListOf<YouTubeTakeoutSubscription>()
@@ -54,7 +51,6 @@ internal class YouTubeTakeoutImporter(
         var likes: List<TakeoutLike>? = null
         val searches = mutableListOf<TakeoutSearch>()
         var watches = 0
-        val learnable = LinkedHashMap<String, VideoHistoryEntry>()
     }
 
     suspend fun import(
@@ -80,7 +76,6 @@ internal class YouTubeTakeoutImporter(
                 val counts =
                     listOf(subscriptionsImported, found.watches, playlistsImported, librarySongsImported, likesImported, searchesImported)
                 if (counts.all { it == 0 }) return@withContext Result.failure(Exception("no_content"))
-                if (found.watches > 0) runCatching { learnFromHistory(found.learnable.values) }
 
                 Result.success(
                     buildList {
@@ -113,7 +108,6 @@ internal class YouTubeTakeoutImporter(
             input.bufferedReader(Charsets.UTF_8).use { reader ->
                 readTakeoutHtmlActivity(reader, System.currentTimeMillis(), requireActivityMarkup = false) { saveWatches(it, found) }
             }
-        if (found.watches > 0) runCatching { learnFromHistory(found.learnable.values) }
         return found.watches + saveSearches(read.searches)
     }
 
@@ -219,7 +213,6 @@ internal class YouTubeTakeoutImporter(
         val entries = watches.map { it.toHistoryEntry() }
         viewHistory.bulkSaveHistoryEntries(entries)
         entries.forEach { entry ->
-            if (found.learnable.size < NEURO_CANDIDATE_LIMIT && entry.title.isNotBlank()) found.learnable.putIfAbsent(entry.videoId, entry)
         }
         found.watches += entries.size
         yield()
@@ -256,8 +249,6 @@ internal class YouTubeTakeoutImporter(
             }
         }
         subscriptions.subscribeAll(imported)
-        val names = rows.map { it.channelName }.filter { it.isNotEmpty() }
-        if (names.isNotEmpty()) runCatching { FlowNeuroEngine.bootstrapFromSubscriptions(context, names) }
         return imported.size
     }
 

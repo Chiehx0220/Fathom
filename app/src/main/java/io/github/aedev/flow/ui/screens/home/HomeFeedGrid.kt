@@ -38,13 +38,11 @@ internal fun HomeFeedGrid(
     isListView: Boolean,
     gridState: LazyGridState,
     onVideoClick: (Video) -> Unit,
-    onEnrichChannelMetadata: (Video) -> Unit,
     onContinueWatchingClick: (VideoHistoryEntry) -> Unit,
     onContinueWatchingRemove: (String) -> Unit,
     onShortClick: (List<Video>, Video) -> Unit,
     onSeeAllHistory: () -> Unit,
     onOpenShortsFeed: () -> Unit,
-    onShortsShown: (ids: List<String>) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
     onRetryLoadMore: () -> Unit = {},
@@ -52,7 +50,6 @@ internal fun HomeFeedGrid(
     showShorts: Boolean = true,
 ) {
     val videos = uiState.videos
-    val channelMemoryReason = stringResource(R.string.home_reason_channel_memory)
     val rows =
         remember(videos, feedLayout.columns, uiState.continueWatchingVideos.isNotEmpty(), showShorts && uiState.shorts.isNotEmpty()) {
             homeFeedRows(
@@ -93,17 +90,12 @@ internal fun HomeFeedGrid(
         ) { index, row ->
             when (row) {
                 is HomeFeedRow.VideoCard -> {
-                    LaunchedEffect(row.video.id, row.video.channelId, row.video.channelThumbnailUrl) {
-                        onEnrichChannelMetadata(row.video)
-                    }
                     MediaVideoCard(
                         video = row.video,
                         layout = if (plan.isListCard(index)) VideoCardLayout.Row else VideoCardLayout.Stacked,
                         onClick = { onVideoClick(row.video) },
                         useInternalPadding = !feedLayout.cardsBleed,
                         thumbnailWidth = plan.listThumbnailWidth,
-                        reason = channelMemoryReason.takeIf { uiState.origins[row.video.id]?.kind == HomeCardOrigin.Kind.CHANNEL_MEMORY },
-                        whyShown = uiState.origins[row.video.id]?.label(),
                         modifier = Modifier.testTag("home_video_card"),
                     )
                 }
@@ -128,7 +120,6 @@ internal fun HomeFeedGrid(
                         shorts = uiState.shorts,
                         onShortClick = onShortClick,
                         onSeeAllClick = onOpenShortsFeed,
-                        onShortsShown = onShortsShown,
                         modifier = Modifier.testTag("home_shorts_shelf"),
                     )
                 }

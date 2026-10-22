@@ -1,8 +1,8 @@
 package io.github.aedev.flow.ui.screens.subscriptions
 
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.utils.formatYouTubeRelativeTime
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -75,17 +75,6 @@ class SubscriptionFeedFilterTest {
 
     // A single not-interested mark suppresses its channel in recommendations for a while; a
     // subscription is an explicit ask, so the channel's other uploads stay.
-    @Test
-    fun `an engine-suppressed channel still shows its uploads`() {
-        val result =
-            sections(
-                listOf(video("v1", "UCb")),
-                SubscriptionFeedFilters(exclusions = FeedExclusions(suppressedChannelIds = setOf("UCb"))),
-            )
-
-        assertThat(result.recentVideos.map { it.id }).containsExactly("v1")
-    }
-
     @Test
     fun `the shelf keeps one reel per channel, the newest`() {
         val result =

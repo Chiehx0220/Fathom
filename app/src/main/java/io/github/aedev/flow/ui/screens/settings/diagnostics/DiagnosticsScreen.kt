@@ -73,7 +73,6 @@ internal fun DiagnosticsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val session by viewModel.session.collectAsStateWithLifecycle()
     val crashes by viewModel.crashes.collectAsStateWithLifecycle()
-    val snapshotCount by viewModel.snapshotCount.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(DiagnosticsTab.SESSION) }
     var dialog by rememberSaveable { mutableStateOf<DiagnosticsDialog?>(null) }
 
@@ -83,17 +82,6 @@ internal fun DiagnosticsScreen(
     val copiedMessage = stringResource(R.string.diagnostics_copied)
     val subject = stringResource(R.string.diagnostics_report_subject)
     val shareTitle = stringResource(R.string.diagnostics_share)
-    val exportedMessage = stringResource(R.string.diagnostics_snapshot_exported)
-    val exportFailedMessage = stringResource(R.string.diagnostics_snapshot_export_failed)
-    val noSnapshotText = stringResource(R.string.diagnostics_no_home_snapshot)
-    val exportSnapshot =
-        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/gzip")) { uri ->
-            if (uri != null) {
-                scope.launch {
-                    snackbarHostState.showSnackbar(if (viewModel.exportSnapshot(uri)) exportedMessage else exportFailedMessage)
-                }
-            }
-        }
     val tabs =
         listOf(
             FlowToggleOption(DiagnosticsTab.SESSION, stringResource(R.string.diagnostics_tab_session), Icons.Outlined.BugReport),
@@ -133,22 +121,6 @@ internal fun DiagnosticsScreen(
                 icon = Icons.Outlined.Restore,
                 showChevron = false,
                 onClick = { dialog = DiagnosticsDialog.RESET_SESSION },
-            )
-        }
-        group(key = "diagnostics.snapshots", header = R.string.settings_section_home_snapshots) {
-            switch(
-                DiagnosticsIndex.recordSnapshots,
-                state = viewModel.recordingSnapshots,
-                onCheckedChange = viewModel::setRecordingSnapshots,
-                icon = Icons.Outlined.FiberManualRecord,
-            )
-            nav(
-                DiagnosticsIndex.exportSnapshot,
-                icon = Icons.Outlined.FileDownload,
-                showChevron = false,
-                enabled = snapshotCount > 0,
-                value = noSnapshotText.takeIf { snapshotCount == 0 },
-                onClick = { exportSnapshot.launch("flow_home_snapshot_${LocalDate.now()}.json.gz") },
             )
         }
         item("diagnostics.tabs") {

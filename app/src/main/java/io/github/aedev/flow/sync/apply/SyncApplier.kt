@@ -60,9 +60,6 @@ class SyncApplier
     ) {
         // --- sender ---
 
-        /** The language this device's topic keys are stemmed for, announced with the brain's capability. */
-        suspend fun neuroKeyLanguage(): String = brains.keyLanguage()
-
         suspend fun exportPayload(
             collections: List<String>,
             node: String,
@@ -98,10 +95,6 @@ class SyncApplier
 
                         SyncCollection.NOTES -> {
                             SyncSerialization.encodeNotes(tracker.notes())
-                        }
-
-                        SyncCollection.FLOW_NEURO_BRAIN -> {
-                            SyncSerialization.encodeBrain(brains.exportBrain(node, hlc))
                         }
 
                         SyncCollection.MUSIC_BRAIN -> {
@@ -222,17 +215,7 @@ class SyncApplier
                     stats[SyncCollection.SETTINGS] = ApplyStats(updated = remote.size)
                 }
 
-                // Brain: stateful CRDT merge + engine reload.
-                fresh[SyncCollection.FLOW_NEURO_BRAIN]?.let { rc ->
-                    failedCollection = SyncCollection.FLOW_NEURO_BRAIN
-                    val snapshots = SyncSerialization.decodeBrainSnapshots(rc.lines)
-                    if (snapshots.isNotEmpty()) {
-                        brains.mergeBrain(snapshots, peer.deviceId, node, myDeviceId, hlc)
-                        stats[SyncCollection.FLOW_NEURO_BRAIN] = ApplyStats(updated = 1)
-                    }
-                }
-
-                // Music brain: same stateful CRDT pattern, music twin.
+                // Music brain: stateful CRDT merge + engine reload.
                 fresh[SyncCollection.MUSIC_BRAIN]?.let { rc ->
                     failedCollection = SyncCollection.MUSIC_BRAIN
                     SyncSerialization.decodeMusicBrain(rc.lines)?.let { remote ->

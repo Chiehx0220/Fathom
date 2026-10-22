@@ -1,12 +1,12 @@
 package io.github.aedev.flow.data.shorts.queue
 
 import android.util.Log
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.model.ShortVideo
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.toShortVideo
-import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.data.shorts.ChannelShortsFeed
 import io.github.aedev.flow.data.shorts.ChannelShortsFeedPage
 import io.github.aedev.flow.data.shorts.ChannelShortsOwner

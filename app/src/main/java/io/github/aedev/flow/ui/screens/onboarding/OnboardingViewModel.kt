@@ -14,7 +14,6 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.paging.ChannelSearch
-import io.github.aedev.flow.data.recommendation.OnboardingCompleter
 import io.github.aedev.flow.data.recommendation.music.FavouriteArtistCatalog
 import io.github.aedev.flow.data.recommendation.music.FavouriteArtistPicker
 import io.github.aedev.flow.data.recommendation.music.FavouriteArtistsStore
@@ -32,7 +31,6 @@ import javax.inject.Inject
 
 private const val SEARCH_DEBOUNCE_MS = 400L
 private const val KEY_STEP = "step"
-private const val KEY_TOPICS = "topics"
 private const val KEY_QUERY = "query"
 private const val KEY_SUB_IDS = "subscribedIds"
 private const val KEY_SUB_NAMES = "subscribedNames"
@@ -52,7 +50,6 @@ class OnboardingViewModel
         private val subscriptions: SubscriptionRepository,
         private val backup: BackupCoordinator,
         private val channelSearch: ChannelSearch,
-        private val completer: OnboardingCompleter,
         private val preferences: PlayerPreferences,
         favouriteArtists: FavouriteArtistsStore,
         artistCatalog: FavouriteArtistCatalog,
@@ -100,11 +97,6 @@ class OnboardingViewModel
         }
 
         fun goTo(step: OnboardingStep) = edit { it.copy(step = step) }
-
-        fun toggleTopic(topic: String) =
-            edit { state ->
-                state.copy(topics = if (topic in state.topics) state.topics - topic else state.topics + topic)
-            }
 
         fun search(query: String) {
             edit { it.copy(query = query) }
@@ -172,12 +164,12 @@ class OnboardingViewModel
 
         fun dismissImport() = backup.dismiss()
 
-        /** Seeds the engine once; a second tap while it runs does nothing. */
+        /** Marks setup done; idempotent while running. */
         fun complete() {
             if (completion != null) return
             completion =
                 viewModelScope.launch {
-                    completer.complete(_state.value.topics)
+                    preferences.setOnboardingDone(true)
                     _state.update { it.copy(completed = true) }
                 }
         }
@@ -185,7 +177,6 @@ class OnboardingViewModel
         private fun edit(transform: (OnboardingUiState) -> OnboardingUiState) {
             val state = _state.updateAndGet(transform)
             savedState[KEY_STEP] = state.step.name
-            savedState[KEY_TOPICS] = ArrayList(state.topics)
             savedState[KEY_QUERY] = state.query
             savedState[KEY_SUB_IDS] = ArrayList(state.subscribed.map { it.id })
             savedState[KEY_SUB_NAMES] = ArrayList(state.subscribed.map { it.name })
@@ -204,7 +195,6 @@ class OnboardingViewModel
                         .get<String>(KEY_STEP)
                         ?.let { name -> OnboardingStep.entries.firstOrNull { it.name == name } }
                         ?: OnboardingStep.entries.first(),
-                topics = savedState.get<ArrayList<String>>(KEY_TOPICS).orEmpty().toSet(),
                 query = savedState.get<String>(KEY_QUERY).orEmpty(),
                 subscribed =
                     ids.mapIndexed { index, id ->

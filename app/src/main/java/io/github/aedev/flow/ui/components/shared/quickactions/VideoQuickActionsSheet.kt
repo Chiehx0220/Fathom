@@ -304,11 +304,6 @@ private fun feedRows(
     val haptics = LocalHapticFeedback.current
     val isWatched = isWatchedProgress(rememberWatchProgress(video.id))
     return listOf(
-        actionRow("interested", Icons.Outlined.ThumbUp, stringResource(R.string.i_like_this)) {
-            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
-            viewModel.markAsInteresting(video)
-            onDismiss()
-        },
         actionRow("not_interested", Icons.Outlined.ThumbDown, stringResource(R.string.not_interested)) {
             haptics.performHapticFeedback(HapticFeedbackType.Reject)
             viewModel.markNotInterested(video)

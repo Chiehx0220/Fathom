@@ -2,8 +2,8 @@ package io.github.aedev.flow.data.shorts.feed
 
 import io.github.aedev.flow.data.model.ShortVideo
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.ShortsSeedInput
-import io.github.aedev.flow.data.recommendation.ShortsSeedSource
+import io.github.aedev.flow.data.shorts.feed.ShortsSeedInput
+import io.github.aedev.flow.data.shorts.feed.ShortsSeedSource
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 

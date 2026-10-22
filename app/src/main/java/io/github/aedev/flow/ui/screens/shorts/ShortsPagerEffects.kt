@@ -17,9 +17,6 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "ShortsPagerEffects"
 
-/** A reel the user swiped past in under a second was never really shown. */
-private const val SHOWN_DWELL_MS = 1_000L
-
 /**
  * Prepares the settled reel and its neighbours whenever the pager rests, and re-resolves them when
  * the quality preference changes underneath a running reel.
@@ -49,10 +46,6 @@ internal fun ShortsPagerPlaybackEffects(
         playerPool.activatePlayer(settledPage, current.id)
         prepareReel(playerPool, viewModel, settledPage, current, height, preferredLang, shouldPlay = true)
         viewModel.loadShortDetails(current.id)
-        launch {
-            delay(SHOWN_DWELL_MS)
-            viewModel.onReelShown(current.id)
-        }
 
         playerPool.releaseUnusedPlayers(settledPage)
         preparedShortId.value = current.id

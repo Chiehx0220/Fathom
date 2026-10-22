@@ -85,7 +85,7 @@ class LocalDataManager
 
         enum class AutoBackupFrequency { NONE, DAILY, WEEKLY, MONTHLY }
 
-        enum class AutoBackupType { APP_DATA, BRAIN, MASTER }
+        enum class AutoBackupType { APP_DATA, MASTER }
 
         // Update Settings
         val lastUpdateCheck: Flow<Long> =

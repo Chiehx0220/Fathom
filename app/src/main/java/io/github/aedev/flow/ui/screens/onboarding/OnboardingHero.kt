@@ -49,7 +49,6 @@ private const val BACKDROP_TURN_FAR = -30f
 private fun heroShape(step: OnboardingStep): RoundedPolygon =
     when (step) {
         OnboardingStep.WELCOME -> MaterialShapes.SoftBurst
-        OnboardingStep.INTERESTS -> MaterialShapes.Clover4Leaf
         OnboardingStep.CHANNELS -> MaterialShapes.Cookie9Sided
         OnboardingStep.ARTISTS -> MaterialShapes.Cookie6Sided
         OnboardingStep.ALERTS -> MaterialShapes.Sunny
@@ -60,7 +59,6 @@ private fun heroShape(step: OnboardingStep): RoundedPolygon =
 private fun backdropShapes(step: OnboardingStep): Pair<RoundedPolygon, RoundedPolygon> =
     when (step) {
         OnboardingStep.WELCOME -> MaterialShapes.Flower to MaterialShapes.Cookie6Sided
-        OnboardingStep.INTERESTS -> MaterialShapes.Clover8Leaf to MaterialShapes.Cookie4Sided
         OnboardingStep.CHANNELS -> MaterialShapes.Cookie9Sided to MaterialShapes.Sunny
         OnboardingStep.ARTISTS -> MaterialShapes.Cookie6Sided to MaterialShapes.Burst
         OnboardingStep.ALERTS -> MaterialShapes.Burst to MaterialShapes.Cookie12Sided
@@ -68,33 +66,20 @@ private fun backdropShapes(step: OnboardingStep): Pair<RoundedPolygon, RoundedPo
         OnboardingStep.READY -> MaterialShapes.SoftBurst to MaterialShapes.Flower
     }.let { (near, far) -> near.normalized() to far.normalized() }
 
-private val PetalMorph: Morph by lazy { Morph(MaterialShapes.Clover4Leaf.normalized(), MaterialShapes.Clover8Leaf.normalized()) }
-
-/**
- * The step's shape with its icon inside. It morphs from [fromStep]'s shape when the step appears,
- * and on Interests grows from four leaves to eight as [petals] goes from 0 to 1. Every value is
- * read while drawing, and nothing runs once the shape has settled.
- */
+/** Step shape with icon; morphs from [fromStep]. Values are read at draw time, idle once settled. */
 @Composable
 internal fun OnboardingHero(
     step: OnboardingStep,
     fromStep: OnboardingStep,
     size: Dp,
     modifier: Modifier = Modifier,
-    petals: Float = 0f,
 ) {
     val entry = remember { Animatable(if (step == fromStep) 1f else 0f) }
-    val petal = remember { Animatable(0f) }
     val entrySpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
-    val petalSpec = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
     val shapes = remember { Morph(heroShape(fromStep), heroShape(step)) }
     val container = MaterialTheme.colorScheme.primaryContainer
 
     LaunchedEffect(Unit) { entry.animateTo(1f, entrySpec) }
-    LaunchedEffect(petals) {
-        snapshotFlow { entry.value >= 1f }.first { it }
-        petal.animateTo(petals, petalSpec)
-    }
 
     Box(
         modifier =
@@ -107,12 +92,9 @@ internal fun OnboardingHero(
                 }.drawWithCache {
                     val path = Path()
                     onDrawBehind {
-                        val settled = entry.value >= 1f
-                        val morph = if (step == OnboardingStep.INTERESTS && settled) PetalMorph else shapes
-                        val progress = if (morph === PetalMorph) petal.value else entry.value
                         drawMorph(
-                            morph = morph,
-                            progress = progress.coerceIn(0f, 1f),
+                            morph = shapes,
+                            progress = entry.value.coerceIn(0f, 1f),
                             path = path,
                             center = center,
                             extent = this.size.minDimension,
@@ -133,7 +115,6 @@ private fun HeroMark(step: OnboardingStep) {
     val icon =
         when (step) {
             OnboardingStep.WELCOME -> null
-            OnboardingStep.INTERESTS -> Icons.Outlined.Interests
             OnboardingStep.CHANNELS -> Icons.Outlined.Subscriptions
             OnboardingStep.ARTISTS -> Icons.Outlined.LibraryMusic
             OnboardingStep.ALERTS -> Icons.Outlined.NotificationsActive

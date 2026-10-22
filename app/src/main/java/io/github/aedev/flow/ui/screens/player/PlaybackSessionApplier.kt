@@ -9,8 +9,6 @@ import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.localmedia.LocalSubtitles
 import io.github.aedev.flow.data.model.SponsorBlockSegment
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
-import io.github.aedev.flow.data.recommendation.InteractionType
 import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.video.OfflineSubtitleStore
@@ -98,7 +96,6 @@ internal class PlaybackSessionApplier(
             playerManager,
             scope,
             networkDispatcher,
-            ::recordWatchClick,
             liveChat,
         )
 
@@ -219,23 +216,6 @@ internal class PlaybackSessionApplier(
         }
     }
 
-    /**
-     * The engine's click signal.
-     *
-     * It used to hang off the NewPipe metadata step, which meant it only ever fired on a load that
-     * leg won; a load InnerTube resolved by itself taught the engine nothing. Off the startup path
-     * because it takes the brain mutex and updates vectors, none of which first frame needs.
-     */
-    private fun recordWatchClick(video: Video) {
-        scope.launch(ioDispatcher) {
-            try {
-                FlowNeuroEngine.onVideoInteraction(context, video, InteractionType.CLICK)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to record interaction", e)
-            }
-        }
-    }
-
     private suspend fun applyVodFromInnerTube(
         load: LoadContext,
         step: ResolvedPlayback.VodFromInnerTube,
@@ -329,7 +309,6 @@ internal class PlaybackSessionApplier(
         val streams = streamPreparer.assembleLive(videoId, uiState.value.cachedVideo, result)
         val identity = streams.identity
         GlobalPlayerState.setCurrentVideo(identity.enrichedVideo)
-        recordWatchClick(identity.enrichedVideo)
 
         playbackPreparer.beginSession(videoId, identity.title, identity.channel, identity.thumbnail)
         playbackPreparer.applyAutoplayCandidates(videoId = videoId, videos = relatedVideos)
@@ -371,7 +350,6 @@ internal class PlaybackSessionApplier(
         val streams = streamPreparer.assembleVod(videoId, uiState.value.cachedVideo, step)
         val identity = streams.identity
         GlobalPlayerState.setCurrentVideo(identity.enrichedVideo)
-        recordWatchClick(identity.enrichedVideo)
 
         playbackPreparer.beginSession(videoId, identity.title, identity.channel, identity.thumbnail)
 
@@ -549,21 +527,6 @@ internal class PlaybackSessionApplier(
                 enabled = autoplay,
             )
             uiState.update { it.applyRelatedVideos(videoId, videos) }
-        }
-        noteRelatedForLearning(videoId, videos)
-    }
-
-    /** Hands the related list to the engine, which keeps it only if this video is then watched or liked. */
-    private fun noteRelatedForLearning(
-        videoId: String,
-        videos: List<Video>,
-    ) {
-        scope.launch(ioDispatcher) {
-            try {
-                FlowNeuroEngine.noteRelated(context, videoId, videos)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to note related videos", e)
-            }
         }
     }
 

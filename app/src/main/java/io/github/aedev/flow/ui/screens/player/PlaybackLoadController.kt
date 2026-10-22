@@ -2,13 +2,13 @@ package io.github.aedev.flow.ui.screens.player
 
 import android.content.Context
 import android.util.Log
+import io.github.aedev.flow.data.feed.BlockedContentStore
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.localmedia.LocalMediaDetails
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FeedExclusions
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.video.AutoDownloadResolution
 import io.github.aedev.flow.data.video.AutoDownloadTrigger
 import io.github.aedev.flow.player.EnhancedPlayerManager
@@ -288,7 +288,7 @@ internal class PlaybackLoadController(
 
     private fun refreshFeedExclusions() {
         scope.launch(ioDispatcher) {
-            runCatching { FlowNeuroEngine.getInstance(context).feedExclusions() }.onSuccess { exclusions = it }
+            runCatching { BlockedContentStore(context.applicationContext).exclusions() }.onSuccess { exclusions = it }
         }
     }
 }

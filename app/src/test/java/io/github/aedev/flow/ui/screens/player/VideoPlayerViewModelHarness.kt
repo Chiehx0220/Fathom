@@ -2,7 +2,6 @@ package io.github.aedev.flow.ui.screens.player
 
 import android.content.Context
 import io.github.aedev.flow.data.comments.CommentsPageResult
-import io.github.aedev.flow.data.engagement.VideoEngagementSignals
 import io.github.aedev.flow.data.engagement.VideoEngagementUseCase
 import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
@@ -17,7 +16,6 @@ import io.github.aedev.flow.data.localmedia.LocalSubtitles
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.music.model.MusicTrack
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.repository.LiveChatRepository
 import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import io.github.aedev.flow.data.repository.YouTubeRepository
@@ -90,7 +88,6 @@ internal class VideoPlayerViewModelHarness(
         VideoEngagementUseCase(
             subscriptionRepository = subscriptionRepository,
             likedVideosRepository = likedVideosRepository,
-            signals = VideoEngagementSignals(context, repository),
             videoStats = videoStats,
         )
     }
@@ -143,10 +140,6 @@ internal class VideoPlayerViewModelHarness(
 
         mockkObject(PlayerDiagnostics)
         every { PlayerDiagnostics.logWarning(any(), any()) } just Runs
-
-        mockkObject(FlowNeuroEngine.Companion)
-        coEvery { FlowNeuroEngine.onVideoInteraction(any<Context>(), any(), any(), any()) } just Runs
-        every { FlowNeuroEngine.onVideoInteractionAsync(any(), any(), any(), any()) } just Runs
 
         every { context.applicationContext } returns context
         every { context.getString(any()) } answers { "res:${firstArg<Int>()}" }
@@ -219,6 +212,7 @@ internal class VideoPlayerViewModelHarness(
                 ),
             notesRepository = mockk(relaxed = true),
             videoStats = videoStats,
+            watchReporter = mockk(relaxed = true),
             localMediaDetails = mockk { coEvery { enrich(any()) } returns null },
             lifecyclePlayback = mockk { every { settings } answers { LifecyclePlaybackSettings(startVideosPaused = startVideosPaused) } },
             autoDownload = autoDownload,

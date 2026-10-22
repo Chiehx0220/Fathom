@@ -70,7 +70,7 @@ internal class PlayerEngagementController(
                     viewCount = 0,
                     uploadDate = "",
                 )
-            engagement.like(video = liked, signalVideo = richVideoFor(videoId) ?: liked) {
+            engagement.like(video = liked) {
                 state.value = state.value.copy(likeState = "LIKED")
             }
         }

@@ -2,6 +2,8 @@ package io.github.aedev.flow.ui.screens.subscriptions
 
 import androidx.lifecycle.ViewModelStore
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.data.feed.BlockedContentStore
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.local.AppDatabase
 import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.local.PlayerPreferences
@@ -10,8 +12,6 @@ import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.local.dao.SubscriptionGroupDao
 import io.github.aedev.flow.data.local.entity.SubscriptionGroupEntity
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FeedExclusions
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRefreshProgress
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionRefreshPlan
@@ -51,7 +51,7 @@ class SubscriptionsViewModelTest {
     private val database: AppDatabase = mockk(relaxed = true)
     private val playerPreferences: PlayerPreferences = mockk(relaxed = true)
     private val subscriptionGroupDao: SubscriptionGroupDao = mockk(relaxed = true)
-    private val neuroEngine: FlowNeuroEngine = mockk(relaxed = true)
+    private val blockedContent: BlockedContentStore = mockk(relaxed = true)
 
     private lateinit var viewModel: SubscriptionsViewModel
     private val viewModelStore = ViewModelStore()
@@ -81,7 +81,7 @@ class SubscriptionsViewModelTest {
         coEvery { subscriptionRepository.getAllSubscriptions() } returns flowOf(emptyList())
         coEvery { subscriptionFeedRepository.observeFeed(any()) } returns flowOf(emptyList())
         coEvery { subscriptionFeedRepository.planRefresh(any(), any()) } returns SubscriptionRefreshPlan.NOTHING_TO_DO
-        coEvery { neuroEngine.feedExclusions(any()) } returns FeedExclusions.NONE
+        coEvery { blockedContent.exclusions() } returns FeedExclusions.NONE
 
         viewModel =
             SubscriptionsViewModel(
@@ -90,7 +90,7 @@ class SubscriptionsViewModelTest {
                 playerPreferences = playerPreferences,
                 subscriptionGroupDao = subscriptionGroupDao,
                 subscriptionWatchedVideos = SubscriptionWatchedVideos(viewHistory, playerPreferences, database),
-                neuroEngine = neuroEngine,
+                blockedContent = blockedContent,
                 backupCoordinator = mockk(relaxed = true),
             )
         viewModelStore.put("subscriptions", viewModel)

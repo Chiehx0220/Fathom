@@ -99,10 +99,6 @@ class AutoBackupWorker(
                         backupRepo.exportDataToFolder(folderUri)
                     }
 
-                    LocalDataManager.AutoBackupType.BRAIN -> {
-                        backupRepo.exportBrainToFolder(folderUri)
-                    }
-
                     LocalDataManager.AutoBackupType.MASTER -> {
                         backupRepo.exportMasterToFolder(folderUri, musicBrain = dependencies.musicBrainEngine().exportedBytes())
                     }

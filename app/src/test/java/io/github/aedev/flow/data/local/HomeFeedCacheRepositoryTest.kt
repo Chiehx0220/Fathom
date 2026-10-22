@@ -1,8 +1,8 @@
 package io.github.aedev.flow.data.local
 
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FeedExclusions
 import org.junit.Test
 
 class HomeFeedCacheRepositoryTest {
@@ -27,15 +27,13 @@ class HomeFeedCacheRepositoryTest {
     ) = CachedHomeVideo(video(id, channelId), source)
 
     @Test
-    fun `filterCachedHomeVideos drops watched suppressed blocked and blocked-topic rows`() {
+    fun `filterCachedHomeVideos drops watched suppressed and blocked rows`() {
         val rows =
             listOf(
                 cached("keep", HomeFeedCacheRepository.SOURCE_RELATED, channelId = "allowed"),
                 cached("watched", HomeFeedCacheRepository.SOURCE_RELATED, channelId = "allowed"),
                 cached("suppressed", HomeFeedCacheRepository.SOURCE_RELATED, channelId = "allowed"),
                 cached("blocked_channel", HomeFeedCacheRepository.SOURCE_RELATED, channelId = "blocked"),
-                cached("suppressed_channel", HomeFeedCacheRepository.SOURCE_RELATED, channelId = "suppressed_ch"),
-                cached("blocked_topic", HomeFeedCacheRepository.SOURCE_RELATED, channelId = "allowed"),
             )
 
         val filtered =
@@ -47,8 +45,6 @@ class HomeFeedCacheRepositoryTest {
                         FeedExclusions(
                             suppressedVideoIds = setOf("suppressed"),
                             blockedChannelIds = setOf("blocked"),
-                            suppressedChannelIds = setOf("suppressed_ch"),
-                            blockedText = { title, _ -> title == "title-blocked_topic" },
                         ),
                 ),
             )

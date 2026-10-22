@@ -9,10 +9,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -23,28 +21,17 @@ import io.github.aedev.flow.ui.TabScrollEventBus
 import io.github.aedev.flow.ui.components.FeedGridLayout
 import io.github.aedev.flow.ui.components.shared.FeedGridSkeleton
 import io.github.aedev.flow.ui.components.shared.FlowErrorState
-import io.github.aedev.flow.ui.screens.home.chips.HomeChipContent
-import io.github.aedev.flow.ui.screens.home.chips.HomeChipsState
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
-private const val IMPRESSION_DEBOUNCE_MS = 500L
 private const val SKELETON_CARD_COUNT = 12
 
-/** The main feed's scroll position and one per chip, each kept for the session. */
+/** Main feed scroll position, session-scoped. */
 @Stable
 internal class HomeGridStates(
     val feed: LazyGridState,
-) {
-    private val chipStates = HashMap<String, LazyGridState>()
-
-    fun forChips(chips: HomeChipsState): LazyGridState = if (chips.isAll) feed else chipStates.getOrPut(chips.selected) { LazyGridState() }
-
-    fun existingFor(chips: HomeChipsState): LazyGridState? = if (chips.isAll) feed else chipStates[chips.selected]
-}
+)
 
 @Composable
 internal fun rememberHomeGridStates(): HomeGridStates {
@@ -52,22 +39,16 @@ internal fun rememberHomeGridStates(): HomeGridStates {
     return remember(feed) { HomeGridStates(feed) }
 }
 
-/**
- * What keeps the feed fed while Home shows: visibility, the viewport-driven prefetch, dwelt-in-view
- * impressions, and the tab reselect that scrolls up and then refreshes. Shared by the phone and TV Home.
- */
-@OptIn(FlowPreview::class)
+/** Visibility refresh, viewport-driven load-more and tab reselect (scroll to top, then refresh); phone and TV. */
 @Composable
 internal fun HomeFeedEffects(
     viewModel: HomeViewModel,
     uiState: HomeUiState,
-    chips: HomeChipsState,
     gridStates: HomeGridStates,
     homeFeedEnabled: Boolean,
     refreshHomeOnReselect: Boolean,
 ) {
     val gridState = gridStates.feed
-    val currentChips by rememberUpdatedState(chips)
 
     LifecycleStartEffect(viewModel, homeFeedEnabled) {
         if (homeFeedEnabled) {
@@ -101,38 +82,26 @@ internal fun HomeFeedEffects(
             }
     }
 
-    // Viewport impressions: only items dwelt in view are recorded as "shown".
-    LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.mapNotNull { it.key as? String } }
-            .debounce(IMPRESSION_DEBOUNCE_MS)
-            .collect { viewModel.recordImpressions(it) }
-    }
-
     LaunchedEffect(refreshHomeOnReselect) {
         TabScrollEventBus.scrollToTopEvents
             .filter { it == "home" }
             .collectLatest {
                 // Down the feed a reselect only scrolls back up; at the top it refreshes (#1171).
-                val grid = gridStates.existingFor(currentChips) ?: return@collectLatest
-                val atTop = grid.firstVisibleItemIndex == 0 && grid.firstVisibleItemScrollOffset == 0
+                val atTop = gridState.firstVisibleItemIndex == 0 && gridState.firstVisibleItemScrollOffset == 0
                 if (!atTop) {
-                    grid.animateScrollToItem(0)
+                    gridState.animateScrollToItem(0)
                 } else if (refreshHomeOnReselect) {
-                    if (currentChips.isAll) viewModel.refreshFeed() else viewModel.refreshSelectedChip()
+                    viewModel.refreshFeed()
                 }
             }
     }
 }
 
-/**
- * Home's feed below its chips: the selected chip's feed, or the main feed through its loading,
- * error and loaded states. [showShorts] false leaves out the Shorts shelf, as TV does.
- */
+/** Loading, error and loaded states of the feed; [showShorts] false omits the Shorts shelf (TV). */
 @Composable
 internal fun HomeFeedBody(
     viewModel: HomeViewModel,
     uiState: HomeUiState,
-    chips: HomeChipsState,
     gridStates: HomeGridStates,
     feedLayout: FeedGridLayout,
     isListView: Boolean,
@@ -144,23 +113,9 @@ internal fun HomeFeedBody(
     onOpenShortsFeed: () -> Unit,
     showShorts: Boolean = true,
 ) {
-    val context = LocalContext.current
     when {
         !homeFeedEnabled -> {
             HomeFeedDisabledState(modifier = Modifier.fillMaxSize())
-        }
-
-        !chips.isAll -> {
-            HomeChipContent(
-                state = chips,
-                feedLayout = feedLayout,
-                isListView = isListView,
-                gridState = gridStates.forChips(chips),
-                onVideoClick = onVideoClick,
-                onPlayMix = { mix -> onPlayMix(mix.videos, context.getString(R.string.home_mix_title, mix.seed.title)) },
-                onRefresh = viewModel::refreshSelectedChip,
-                onEnrichVideo = viewModel::enrichChipVideo,
-            )
         }
 
         uiState.isLoading && uiState.videos.isEmpty() -> {
@@ -193,7 +148,6 @@ internal fun HomeFeedBody(
                 isListView = isListView,
                 gridState = gridStates.feed,
                 onVideoClick = onVideoClick,
-                onEnrichChannelMetadata = viewModel::enrichChannelMetadataIfMissing,
                 onContinueWatchingClick = { entry -> onVideoClick(entry.toResumeVideo()) },
                 onContinueWatchingRemove = viewModel::removeContinueWatchingEntry,
                 onShortClick = { shelf, tapped ->
@@ -201,7 +155,6 @@ internal fun HomeFeedBody(
                 },
                 onSeeAllHistory = onNavigateToHistory,
                 onOpenShortsFeed = onOpenShortsFeed,
-                onShortsShown = viewModel::recordShelfImpressions,
                 onRefresh = { viewModel.refreshFeed() },
                 onRetryLoadMore = viewModel::retryLoadMore,
                 // Since v5 the feed can end at a few dozen cards; a list that just stops reads as broken (#1317).

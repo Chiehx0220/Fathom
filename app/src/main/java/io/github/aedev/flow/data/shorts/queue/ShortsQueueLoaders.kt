@@ -1,10 +1,10 @@
 package io.github.aedev.flow.data.shorts.queue
 
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.model.ShortVideo
 import io.github.aedev.flow.data.model.toShortVideo
-import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.data.shorts.ShortsFeedRepository
 import io.github.aedev.flow.data.shorts.spreadChannels
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository

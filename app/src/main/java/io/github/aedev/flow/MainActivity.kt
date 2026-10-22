@@ -34,7 +34,6 @@ import io.github.aedev.flow.data.local.AppUiModePreferences
 import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.data.playlist.PlaylistImport
 import io.github.aedev.flow.data.playlist.PlaylistTransfer
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.repository.DeArrowRepository
 import io.github.aedev.flow.data.repository.OriginalTitleRepository
 import io.github.aedev.flow.discord.DiscordPresenceRuntime
@@ -190,11 +189,6 @@ class MainActivity : ComponentActivity() {
         // synchronously and must still see it after a recreation they run inside of (#817).
         lifecyclePlaybackPreferences.observeIn(lifecycleScope)
 
-        // Initialize Neuro Engine (Recommendation System)
-        lifecycleScope.launch(Dispatchers.IO) {
-            FlowNeuroEngine.initialize(applicationContext)
-        }
-
         val dataManager = LocalDataManager(applicationContext)
 
         lifecycleScope.launch {
@@ -248,12 +242,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 return@setContent
-            }
-
-            // Initialize Flow Neuro Engine
-            LaunchedEffect(Unit) {
-                io.github.aedev.flow.data.recommendation.FlowNeuroEngine
-                    .initialize(applicationContext)
             }
 
             FlowTheme(theme) {

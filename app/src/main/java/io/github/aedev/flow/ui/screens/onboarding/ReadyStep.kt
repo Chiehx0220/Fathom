@@ -77,10 +77,6 @@ internal fun ReadyStep(
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(ChipSpacing)) {
             SummaryChip(
-                text = pluralStringResource(R.plurals.onboarding_ready_interests, state.topics.size, state.topics.size),
-                icon = Icons.Outlined.Interests,
-            ) { onEdit(OnboardingStep.INTERESTS) }
-            SummaryChip(
                 text = pluralStringResource(R.plurals.onboarding_ready_channels, state.subscribed.size, state.subscribed.size),
                 icon = Icons.Outlined.Subscriptions,
             ) { onEdit(OnboardingStep.CHANNELS) }

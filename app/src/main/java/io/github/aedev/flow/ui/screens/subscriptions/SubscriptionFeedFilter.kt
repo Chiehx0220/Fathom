@@ -1,7 +1,7 @@
 package io.github.aedev.flow.ui.screens.subscriptions
 
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FeedExclusions
 import io.github.aedev.flow.data.subscriptions.withRelativeUploadDates
 import io.github.aedev.flow.data.subscriptions.withStableUploadSortKeys
 

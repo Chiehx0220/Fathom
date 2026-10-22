@@ -1,7 +1,7 @@
 package io.github.aedev.flow.player
 
+import io.github.aedev.flow.data.feed.FeedExclusions
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FeedExclusions
 
 object PlayerRelatedVideosPolicy {
     fun select(
@@ -31,7 +31,7 @@ object PlayerRelatedVideosPolicy {
         candidates
             .filter { it.id.isNotBlank() && it.id != videoId }
             .filter { shortsEnabled || !it.isShort }
-            .filterNot { exclusions.hidesFromRecommendations(it) }
+            .filterNot { exclusions.hides(it) }
             .distinctBy { it.id }
 
     /** [sanitize] against a live [source]; a null source hides nothing. */

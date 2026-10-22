@@ -37,7 +37,6 @@ internal class BilibiliPlaybackApplier(
     private val playerManager: EnhancedPlayerManager,
     private val scope: CoroutineScope,
     private val networkDispatcher: CoroutineDispatcher,
-    private val recordWatchClick: (Video) -> Unit,
     private val liveChat: LiveChatController,
 ) {
     suspend fun applyVod(
@@ -87,7 +86,6 @@ internal class BilibiliPlaybackApplier(
         val streams = streamPreparer.assembleLive(videoId, uiState.value.cachedVideo, step)
         val identity = streams.identity
         GlobalPlayerState.setCurrentVideo(identity.enrichedVideo)
-        recordWatchClick(identity.enrichedVideo)
         playbackPreparer.beginSession(videoId, identity.title, identity.channel, identity.thumbnail)
 
         uiState.update { it.applyLiveStreams(emptyList(), streams.hlsUrl).copy(cachedVideo = identity.enrichedVideo) }
@@ -130,7 +128,6 @@ internal class BilibiliPlaybackApplier(
         val identity = streams.identity
 
         GlobalPlayerState.setCurrentVideo(identity.enrichedVideo)
-        recordWatchClick(identity.enrichedVideo)
         playbackPreparer.beginSession(videoId, identity.title, identity.channel, identity.thumbnail)
         val autoplay = playbackPreparer.applyAutoplayCandidates(videoId = videoId, videos = step.relatedVideos)
 

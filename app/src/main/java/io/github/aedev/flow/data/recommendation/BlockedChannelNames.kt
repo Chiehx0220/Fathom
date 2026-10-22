@@ -67,9 +67,6 @@ class BlockedChannelNames
                 runCatching { subscriptions.getAllSubscriptions().first() }
                     .getOrDefault(emptyList())
                     .forEach { if (it.channelId in ids && it.channelName.isNotBlank()) names[it.channelId] = it.channelName }
-                runCatching { FlowNeuroEngine.getSavedBrainSnapshot().channelMemory.entries }
-                    .getOrDefault(emptyMap())
-                    .forEach { (id, entry) -> if (id in ids && entry.name.isNotBlank()) names[id] = entry.name }
                 store.names().forEach { (id, name) -> if (id in ids) names[id] = name }
                 names
             }

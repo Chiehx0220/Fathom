@@ -174,9 +174,6 @@
     <string name="playlist_sort_most_popular">人気順</string>
     <string name="playlist_sort_date_published_newest">公開日（新しい順）</string>
     <string name="playlist_sort_date_published_oldest">公開日（古い順）</string>
-    <string name="onboarding_interests_title">何がお好みですか？</string>
-    <string name="onboarding_interests_hint">%1$d 個以上のトピックを選択しておすすめを最適化しましょう。あと %2$d 個選択してください。</string>
-    <string name="onboarding_interests_ready">いい選択ですね。あとでいつでも設定で変更できます。</string>
     <string name="onboarding_channels_title">チャンネルを探す</string>
     <string name="onboarding_channels_search_placeholder">チャンネルを検索…</string>
     <string name="onboarding_import_title">データのインポート</string>

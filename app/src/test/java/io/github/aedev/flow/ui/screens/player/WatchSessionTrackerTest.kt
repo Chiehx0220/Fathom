@@ -2,13 +2,13 @@ package io.github.aedev.flow.ui.screens.player
 
 import android.content.Context
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.data.account.WatchReporting
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.model.Video
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
-import io.github.aedev.flow.data.recommendation.InteractionType
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.stats.ViewFormat
+import io.github.aedev.flow.data.stats.WatchKind
 import io.github.aedev.flow.player.state.PlaybackCompletion
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -42,21 +42,15 @@ class WatchSessionTrackerTest {
     private val testDispatcher = StandardTestDispatcher()
     private val context: Context = mockk(relaxed = true)
     private val viewHistory: ViewHistory = mockk(relaxed = true)
-    private val repository: YouTubeRepository = mockk(relaxed = true)
-    private val homeFeedCacheRepository: HomeFeedCacheRepository = mockk(relaxed = true)
     private val videoStats: io.github.aedev.flow.data.stats.VideoStatsRecorder = mockk(relaxed = true)
     private var clockMs = 0L
     private val trackerScope = CoroutineScope(testDispatcher)
 
-    private var relatedLane: List<Video> = emptyList()
     private var richVideo: Video? = null
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        mockkObject(FlowNeuroEngine.Companion)
-        every { FlowNeuroEngine.onVideoInteractionAsync(any(), any(), any(), any()) } just Runs
-        coEvery { repository.getRelatedCandidates(any()) } returns emptyList()
     }
 
     @After
@@ -66,18 +60,15 @@ class WatchSessionTrackerTest {
         unmockkAll()
     }
 
-    private fun tracker(): WatchSessionTracker =
+    private fun tracker(reporter: WatchReporting = WatchReporting.None): WatchSessionTracker =
         WatchSessionTracker(
             context = context,
             viewHistory = viewHistory,
-            repository = repository,
-            homeFeedCacheRepository = homeFeedCacheRepository,
             videoStats = videoStats,
             scope = trackerScope,
             networkDispatcher = testDispatcher,
-            shortsEnabled = { true },
-            relatedVideosFor = { relatedLane },
             richVideoFor = { id -> richVideo?.takeIf { it.id == id } },
+            reporter = reporter,
             elapsedRealtime = { clockMs },
         )
 
@@ -111,7 +102,7 @@ class WatchSessionTrackerTest {
     fun `a real attempt abandoned under a fifth of the video is a skip`() {
         val signal = watchSignalFor(positionMs = 11_000L, durationMs = 120_000L)
 
-        assertThat(signal?.type).isEqualTo(InteractionType.SKIPPED)
+        assertThat(signal?.type).isEqualTo(WatchKind.SKIPPED)
         assertThat(signal?.fractionWatched).isWithin(TOLERANCE).of(11_000f / 120_000f)
     }
 
@@ -119,7 +110,7 @@ class WatchSessionTrackerTest {
     fun `a fifth of the video or more is watched`() {
         val signal = watchSignalFor(positionMs = 24_000L, durationMs = 120_000L)
 
-        assertThat(signal?.type).isEqualTo(InteractionType.WATCHED)
+        assertThat(signal?.type).isEqualTo(WatchKind.WATCHED)
         assertThat(signal?.fractionWatched).isWithin(TOLERANCE).of(0.2f)
     }
 
@@ -167,8 +158,50 @@ class WatchSessionTrackerTest {
             advanceUntilIdle()
 
             verify(exactly = 1) {
-                videoStats.onView(match { it.videoId == "v1" && it.counted && it.format == ViewFormat.LONG }, any())
+                videoStats.onView(match { it.videoId == "v1" && it.counted && it.format == ViewFormat.LONG })
             }
+        }
+
+    @Test
+    fun `the account hears of a video once, as it plays, and once more when it ends`() =
+        runTest(testDispatcher) {
+            val calls = mutableListOf<String>()
+            val reporter =
+                object : WatchReporting {
+                    override fun begin(videoId: String) {
+                        calls += "begin $videoId"
+                    }
+
+                    override fun progress(
+                        videoId: String,
+                        positionMs: Long,
+                    ) {
+                        calls += "progress $videoId $positionMs"
+                    }
+
+                    override fun finish(
+                        videoId: String,
+                        positionMs: Long,
+                    ) {
+                        calls += "finish $videoId $positionMs"
+                    }
+                }
+            val tracker = tracker(reporter)
+
+            tracker.report("v1", positionMs = 10_000L)
+            tracker.report("v1", positionMs = 40_000L)
+            tracker.report("v2", positionMs = 5_000L)
+            tracker.finalizeActiveSession()
+            advanceUntilIdle()
+
+            assertThat(calls)
+                .containsExactly(
+                    "begin v1",
+                    "progress v1 40000",
+                    "finish v1 40000",
+                    "begin v2",
+                    "finish v2 5000",
+                ).inOrder()
         }
 
     @Test
@@ -176,7 +209,7 @@ class WatchSessionTrackerTest {
         runTest(testDispatcher) {
             val tracker = tracker()
             val events = mutableListOf<io.github.aedev.flow.data.stats.ViewEvent>()
-            every { videoStats.onView(capture(events), any()) } just Runs
+            every { videoStats.onView(capture(events)) } just Runs
 
             tracker.report("v1", positionMs = 0L)
             clockMs += 10_000L
@@ -193,7 +226,7 @@ class WatchSessionTrackerTest {
         }
 
     @Test
-    fun `a live session reaches the recap but never the engine`() =
+    fun `a live session reaches the recap`() =
         runTest(testDispatcher) {
             val tracker = tracker()
 
@@ -208,152 +241,9 @@ class WatchSessionTrackerTest {
             verify(exactly = 1) {
                 videoStats.onView(
                     match { it.videoId == "live" && it.format == ViewFormat.LIVE && it.counted && it.watchedMs == 70_000L },
-                    any(),
-                )
-            }
-            verify(exactly = 0) { FlowNeuroEngine.onVideoInteractionAsync(any(), any(), any(), any()) }
-        }
-
-    @Test
-    fun `the session is graded once when the next video takes it over`() =
-        runTest(testDispatcher) {
-            val tracker = tracker()
-
-            tracker.report("v1", positionMs = 30_000L)
-            tracker.report("v1", positionMs = 60_000L)
-            tracker.report("v2", positionMs = 1_000L)
-            advanceUntilIdle()
-
-            verify(exactly = 1) {
-                FlowNeuroEngine.onVideoInteractionAsync(any(), match { it.id == "v1" }, InteractionType.WATCHED, any())
-            }
-        }
-
-    @Test
-    fun `finalising twice still reports the open session only once`() =
-        runTest(testDispatcher) {
-            val tracker = tracker()
-
-            tracker.report("v1", positionMs = 30_000L)
-            tracker.finalizeActiveSession()
-            tracker.finalizeActiveSession()
-            advanceUntilIdle()
-
-            verify(exactly = 1) {
-                FlowNeuroEngine.onVideoInteractionAsync(any(), match { it.id == "v1" }, any(), any())
-            }
-        }
-
-    @Test
-    fun `the rich video the screen still holds is graded instead of the session stub`() =
-        runTest(testDispatcher) {
-            richVideo = video("v1").copy(description = "rich")
-            val tracker = tracker()
-
-            tracker.report("v1", positionMs = 30_000L)
-            tracker.finalizeActiveSession()
-            advanceUntilIdle()
-
-            verify(exactly = 1) {
-                FlowNeuroEngine.onVideoInteractionAsync(any(), match { it.description == "rich" }, any(), any())
-            }
-        }
-
-    @Test
-    fun `a video's tags and description are still learned after the next video takes over`() =
-        runTest(testDispatcher) {
-            val tracker = tracker()
-
-            richVideo = video("v1").copy(description = "rich", tags = listOf("guitar playalong"))
-            tracker.report("v1", positionMs = 30_000L)
-            tracker.report("v1", positionMs = 60_000L)
-            richVideo = video("v2")
-            tracker.report("v2", positionMs = 1_000L)
-            advanceUntilIdle()
-
-            verify(exactly = 1) {
-                FlowNeuroEngine.onVideoInteractionAsync(
-                    any(),
-                    match { it.id == "v1" && it.description == "rich" && it.tags == listOf("guitar playalong") },
-                    InteractionType.WATCHED,
-                    any(),
                 )
             }
         }
-
-    @Test
-    fun `an early position never spends a prewarm request`() =
-        runTest(testDispatcher) {
-            val tracker = tracker()
-
-            tracker.report("v1", positionMs = 5_000L)
-            advanceUntilIdle()
-
-            coVerify(exactly = 0) { repository.getRelatedCandidates(any()) }
-            coVerify(exactly = 0) { homeFeedCacheRepository.saveRelated(any(), any(), any()) }
-        }
-
-    @Test
-    fun `the prewarm runs once per video and reuses the lane the screen already has`() =
-        runTest(testDispatcher) {
-            relatedLane = listOf(video("v2"), video("v1"), video("v2"))
-            val tracker = tracker()
-
-            tracker.report("v1", positionMs = 21_000L)
-            tracker.report("v1", positionMs = 40_000L)
-            advanceUntilIdle()
-
-            coVerify(exactly = 0) { repository.getRelatedCandidates(any()) }
-            coVerify(exactly = 1) {
-                homeFeedCacheRepository.saveRelated(
-                    "v1",
-                    match<List<Video>> {
-                        it.map { video -> video.id } ==
-                            listOf("v2")
-                    },
-                    any(),
-                )
-            }
-        }
-
-    @Test
-    fun `an empty lane falls back to one related request`() =
-        runTest(testDispatcher) {
-            coEvery { repository.getRelatedCandidates("v1") } returns listOf(video("v2"))
-            val tracker = tracker()
-
-            tracker.report("v1", positionMs = 21_000L)
-            tracker.report("v1", positionMs = 40_000L)
-            advanceUntilIdle()
-
-            coVerify(exactly = 1) { repository.getRelatedCandidates("v1") }
-            coVerify(exactly = 1) {
-                homeFeedCacheRepository.saveRelated(
-                    "v1",
-                    match<List<Video>> {
-                        it.map { video -> video.id } ==
-                            listOf("v2")
-                    },
-                    any(),
-                )
-            }
-        }
-
-    private companion object {
-        const val TOLERANCE = 0.0001f
-
-        fun video(id: String): Video =
-            Video(
-                id = id,
-                title = "Title $id",
-                channelName = "Channel",
-                channelId = "channel",
-                thumbnailUrl = "https://example.invalid/$id.jpg",
-                duration = 120,
-                viewCount = 1L,
-                uploadDate = "2026-01-01",
-            )
-    }
 
     @Test
     fun `a video that played to its end is recorded at its full length`() =
@@ -377,5 +267,21 @@ class WatchSessionTrackerTest {
     @Test
     fun `a closed player no longer holds any video, so the last position still saves`() {
         assertThat(positionBelongsTo(videoId = "a", playerVideoId = null)).isTrue()
+    }
+
+    private companion object {
+        const val TOLERANCE = 0.0001f
+
+        fun video(id: String): Video =
+            Video(
+                id = id,
+                title = "Title $id",
+                channelName = "Channel",
+                channelId = "channel",
+                thumbnailUrl = "https://example.invalid/$id.jpg",
+                duration = 120,
+                viewCount = 1L,
+                uploadDate = "2026-01-01",
+            )
     }
 }

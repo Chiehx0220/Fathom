@@ -18,7 +18,7 @@ enum class ImportSource(
         R.string.settings_backup_restore_flow,
         R.string.onboarding_import_source_flow,
         R.drawable.ic_fathom_logo,
-        listOf(ImportKind.FLOW_BACKUP, ImportKind.MASTER, ImportKind.ENGINE, ImportKind.MUSIC_BRAIN),
+        listOf(ImportKind.FLOW_BACKUP, ImportKind.MASTER, ImportKind.MUSIC_BRAIN),
     ),
     YOUTUBE(
         R.string.settings_backup_source_youtube,

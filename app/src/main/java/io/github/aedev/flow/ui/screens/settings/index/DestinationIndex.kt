@@ -54,10 +54,8 @@ internal object DestinationIndex {
     private fun summaryOf(destination: SettingsDestination): Int? =
         when (destination) {
             SettingsDestination.HOME -> null
-            SettingsDestination.TASTE -> R.string.taste_summary
             SettingsDestination.HIDDEN_CONTENT -> R.string.taste_hidden_summary
             SettingsDestination.FAVOURITE_ARTISTS -> R.string.favourite_artists_summary
-            SettingsDestination.DISCOVER_CHANNELS -> R.string.discover_channels_summary
             SettingsDestination.APPEARANCE -> R.string.settings_appearance_summary
             SettingsDestination.THEME -> R.string.settings_theme_summary
             SettingsDestination.FONT -> R.string.settings_font_summary
@@ -74,7 +72,6 @@ internal object DestinationIndex {
             SettingsDestination.CONTENT -> R.string.settings_content_summary
             SettingsDestination.MUSIC_HOME -> R.string.settings_music_home_summary
             SettingsDestination.LIBRARY -> R.string.settings_library_summary
-            SettingsDestination.TOPICS -> R.string.settings_topics_summary
             SettingsDestination.INTEGRATIONS -> R.string.settings_integrations_summary
             SettingsDestination.SCROBBLING -> R.string.scrobbling_summary
             SettingsDestination.GOOGLE_ACCOUNT -> R.string.google_account_summary

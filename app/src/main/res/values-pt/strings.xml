@@ -114,8 +114,6 @@
     <string name="details_metadata">Pormenores &amp; Metadados</string>
     <string name="mark_as_watched">Marcar como assistido</string>
     <string name="mark_as_watched_toast">Marcado como assistido — as suas recomendações irão melhorar!</string>
-    <string name="i_like_this">Quero mais assim</string>
-    <string name="i_like_this_toast">Percebi! Verá mais conteúdos como este.</string>
     <string name="go_to_channel">Ir para o canal</string>
     <string name="track_info">Informações de rastreamento</string>
     <string name="track_info_subtitle">Métricas técnicas e sociais detalhadas</string>

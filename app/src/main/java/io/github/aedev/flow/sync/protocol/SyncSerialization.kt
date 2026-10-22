@@ -1,6 +1,5 @@
 package io.github.aedev.flow.sync.protocol
 
-import io.github.aedev.flow.sync.canonical.CanonicalBrain
 import io.github.aedev.flow.sync.canonical.CanonicalLike
 import io.github.aedev.flow.sync.canonical.CanonicalMusicBrain
 import io.github.aedev.flow.sync.canonical.CanonicalNote
@@ -135,11 +134,6 @@ object SyncSerialization {
     fun decodeNotes(lines: List<String>): List<CanonicalNote> =
         lines.filter { it.isNotBlank() }.map { json.decodeFromString(CanonicalNote.serializer(), it) }
 
-    // --- brain ---
-
-    /** One line per device snapshot, the sender's own carrying the shared CRDT state. */
-    fun encodeBrain(snapshots: List<CanonicalBrain>) = wire(snapshots.sortedBy { it.deviceId }, CanonicalBrain.serializer())
-
     // --- music brain ---
     fun encodeMusicBrain(brain: CanonicalMusicBrain): CollectionWire {
         val line = enc(CanonicalMusicBrain.serializer(), brain)
@@ -152,14 +146,4 @@ object SyncSerialization {
             .filter { it.isNotBlank() }
             .map { json.decodeFromString(CanonicalMusicBrain.serializer(), it) }
             .reduceOrNull(MusicBrainMerger::merge)
-
-    /**
-     * Every record, kept apart: the desktop ships one snapshot per device it knows about
-     * (`brainmap::merged_flow_to_snapshots`), and the learned vectors are a weighted mean over those
-     * devices, which a fold into one record would lose.
-     */
-    fun decodeBrainSnapshots(lines: List<String>): List<CanonicalBrain> =
-        lines
-            .filter { it.isNotBlank() }
-            .map { json.decodeFromString(CanonicalBrain.serializer(), it) }
 }

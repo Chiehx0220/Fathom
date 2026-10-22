@@ -7,8 +7,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.BuildConfig
 import io.github.aedev.flow.data.local.PlayerPreferences
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
-import io.github.aedev.flow.data.recommendation.FlowPersona
 import io.github.aedev.flow.data.update.AppRelease
 import io.github.aedev.flow.data.update.UpdateRepository
 import io.github.aedev.flow.player.DeepFlowManager
@@ -59,22 +57,8 @@ class SettingsHomeViewModel
                 state.copy(showOnSearch = onSearch)
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), DeepFlowState())
 
-        private val _persona = MutableStateFlow<FlowPersona?>(null)
-        val persona: StateFlow<FlowPersona?> = _persona.asStateFlow()
-
         private val _updateCheck = MutableStateFlow<UpdateCheckState>(UpdateCheckState.Idle)
         val updateCheck: StateFlow<UpdateCheckState> = _updateCheck.asStateFlow()
-
-        init {
-            refreshPersona()
-        }
-
-        /** Re-reads the persona; the engine exposes no stream, so the list refreshes it when shown. */
-        fun refreshPersona() {
-            viewModelScope.launch {
-                _persona.value = runCatching { FlowNeuroEngine.getPersona(FlowNeuroEngine.getBrainSnapshot()) }.getOrNull()
-            }
-        }
 
         fun setDeepFlowEnabled(enabled: Boolean) {
             viewModelScope.launch { DeepFlowManager.setEnabled(context, enabled) }

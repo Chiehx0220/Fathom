@@ -51,7 +51,6 @@ fun OnboardingScreen(
     val haptic = LocalHapticFeedback.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    var interestsRevealed by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(state.completed) { if (state.completed) onComplete() }
     BackHandler(enabled = state.step.index > 0) { viewModel.back() }
@@ -134,17 +133,10 @@ fun OnboardingScreen(
                     heroFrom = heroFrom,
                     importOperation = importOperation,
                     newVideoAlerts = newVideoAlerts,
-                    interestsRevealed = interestsRevealed,
                     actions =
                         StepActions(
                             viewModel = viewModel,
                             onPick = ::pick,
-                            onTopicToggle = { topic ->
-                                val selecting = topic !in state.topics
-                                haptic.performHapticFeedback(if (selecting) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
-                                viewModel.toggleTopic(topic)
-                            },
-                            onInterestsRevealed = { interestsRevealed = true },
                         ),
                 )
             }

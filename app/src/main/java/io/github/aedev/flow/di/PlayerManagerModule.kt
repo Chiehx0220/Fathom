@@ -5,9 +5,9 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.github.aedev.flow.data.feed.BlockedContentStore
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.localmedia.LocalSubtitles
-import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.video.OfflineSubtitleStore
 import io.github.aedev.flow.data.video.VideoDownloadManager
 import io.github.aedev.flow.player.EnhancedPlayerManager
@@ -38,7 +38,7 @@ object PlayerManagerModule {
     @Provides
     fun provideEnhancedPlayerManager(
         videoDownloadManager: VideoDownloadManager,
-        neuroEngine: Lazy<FlowNeuroEngine>,
+        blockedContent: Lazy<BlockedContentStore>,
         localSubtitles: Lazy<LocalSubtitles>,
         offlineSubtitleStore: Lazy<OfflineSubtitleStore>,
     ): EnhancedPlayerManager =
@@ -54,7 +54,7 @@ object PlayerManagerModule {
                         if (LocalMediaIds.isLocal(videoId)) subtitles.beside(path) else offlineSubtitleStore.get().load(videoId)
                     LocalCaptions(own + subtitles.picked(videoId), subtitles.offsetMs(videoId))
                 }
-            it.feedExclusionsSource = FeedExclusionsSource { neuroEngine.get().feedExclusions() }
+            it.feedExclusionsSource = FeedExclusionsSource { blockedContent.get().exclusions() }
         }
 
     @Provides

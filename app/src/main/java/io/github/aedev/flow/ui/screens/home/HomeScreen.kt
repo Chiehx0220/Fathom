@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -53,7 +54,6 @@ import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
 import io.github.aedev.flow.ui.components.rememberFeedGridLayout
 import io.github.aedev.flow.ui.components.shared.FlowPullToRefreshBox
 import io.github.aedev.flow.ui.components.shared.ProvidePlatformBadge
-import io.github.aedev.flow.ui.screens.home.chips.HomeChipRow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -84,9 +84,6 @@ fun HomeScreen(
 
     val gridStates = rememberHomeGridStates()
     val coroutineScope = rememberCoroutineScope()
-    val chips by viewModel.chips.collectAsStateWithLifecycle()
-    val chipRowState = rememberTopAppBarState()
-    val chipRowBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(chipRowState)
     val snackbarHostState = remember { SnackbarHostState() }
     val refreshFailed = stringResource(R.string.home_refresh_failed)
     val retryLabel = stringResource(R.string.retry)
@@ -101,7 +98,6 @@ fun HomeScreen(
     HomeFeedEffects(
         viewModel = viewModel,
         uiState = uiState,
-        chips = chips,
         gridStates = gridStates,
         homeFeedEnabled = homeFeedEnabled,
         refreshHomeOnReselect = refreshHomeOnReselect,
@@ -163,37 +159,21 @@ fun HomeScreen(
                     .background(MaterialTheme.colorScheme.background),
         ) {
             if (homeFeedEnabled) {
-                HomeChipRow(
-                    state = chips,
-                    scrollState = chipRowState,
-                    onSelect = { key ->
-                        chipRowState.heightOffset = 0f
-                        viewModel.selectChip(key)
-                    },
-                    leading = {
-                        // Source filter shapes the mixed feed only: picking one returns to All.
-                        HomeContentSourceFilterChip(
-                            selected = contentSourceFilter,
-                            onSelect = viewModel::setContentSourceFilter,
-                        )
-                    },
-                )
+                Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    HomeContentSourceFilterChip(selected = contentSourceFilter, onSelect = viewModel::setContentSourceFilter)
+                }
             }
             ResettableHomePullToRefreshBox(
                 resetKey = uiState.isLoading && uiState.videos.isEmpty(),
-                isRefreshing = if (chips.isAll) uiState.isRefreshing else chips.isRefreshing,
-                onRefresh = { if (chips.isAll) viewModel.refreshFeed() else viewModel.refreshSelectedChip() },
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = viewModel::refreshFeed,
                 showPlatformBadge = contentSourceFilter.isMix,
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .nestedScroll(chipRowBehavior.nestedScrollConnection),
+                modifier = Modifier.fillMaxSize(),
             ) {
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                     HomeFeedBody(
                         viewModel = viewModel,
                         uiState = uiState,
-                        chips = chips,
                         gridStates = gridStates,
                         feedLayout = rememberFeedGridLayout(maxWidth, homeFeedColumns),
                         isListView = homeViewMode == HomeViewMode.LIST,

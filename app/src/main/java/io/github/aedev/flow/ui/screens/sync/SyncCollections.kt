@@ -24,7 +24,6 @@ internal val COLLECTION_KEYS =
         SyncCollection.SUBSCRIBED_CHANNELS,
         SyncCollection.SUBSCRIPTIONS,
         SyncCollection.SETTINGS,
-        SyncCollection.FLOW_NEURO_BRAIN,
         SyncCollection.MUSIC_BRAIN,
         SyncCollection.NOTES,
     )
@@ -39,7 +38,6 @@ internal fun collectionLabel(key: String): String =
         SyncCollection.SUBSCRIPTIONS -> stringResource(R.string.sync_collection_subscription_groups)
         SyncCollection.NOTES -> stringResource(R.string.sync_collection_notes)
         SyncCollection.SETTINGS -> stringResource(R.string.sync_collection_settings)
-        SyncCollection.FLOW_NEURO_BRAIN -> stringResource(R.string.sync_collection_recommendation_profile)
         SyncCollection.MUSIC_BRAIN -> stringResource(R.string.sync_collection_music_profile)
         else -> key
     }
@@ -54,7 +52,6 @@ internal fun collectionDescription(key: String): String? =
         SyncCollection.SUBSCRIBED_CHANNELS -> stringResource(R.string.sync_collection_subscriptions_body)
         SyncCollection.SUBSCRIPTIONS -> stringResource(R.string.sync_collection_subscription_groups_body)
         SyncCollection.SETTINGS -> stringResource(R.string.sync_collection_settings_body)
-        SyncCollection.FLOW_NEURO_BRAIN -> stringResource(R.string.sync_collection_recommendation_profile_body)
         SyncCollection.MUSIC_BRAIN -> stringResource(R.string.sync_collection_music_profile_body)
         else -> null
     }

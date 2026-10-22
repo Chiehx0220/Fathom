@@ -8,6 +8,7 @@ import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material.icons.outlined.HighQuality
 import androidx.compose.material.icons.outlined.History
@@ -34,13 +35,13 @@ import io.github.aedev.flow.ui.components.settings.SettingsDestination
 internal fun destinationIcon(destination: SettingsDestination): ImageVector =
     when (destination.root) {
         SettingsDestination.HOME -> Icons.Outlined.Settings
-        SettingsDestination.TASTE -> Icons.Outlined.Psychology
+        SettingsDestination.HIDDEN_CONTENT -> Icons.Outlined.VisibilityOff
+        SettingsDestination.FAVOURITE_ARTISTS -> Icons.Outlined.Favorite
         SettingsDestination.APPEARANCE -> Icons.Outlined.Palette
         SettingsDestination.LANGUAGE_REGION -> Icons.Outlined.Language
         SettingsDestination.PLAYBACK -> Icons.Outlined.PlayCircle
         SettingsDestination.QUALITY -> Icons.Outlined.HighQuality
         SettingsDestination.CONTENT -> Icons.Outlined.ViewAgenda
-        SettingsDestination.TOPICS -> Icons.Outlined.FilterAlt
         SettingsDestination.INTEGRATIONS -> Icons.Outlined.Extension
         SettingsDestination.BACKUP -> Icons.Outlined.CloudSync
         SettingsDestination.SYNC -> Icons.Outlined.Devices

@@ -40,8 +40,6 @@ private val PanePadding = PaddingValues(horizontal = 40.dp, vertical = 8.dp)
 internal class StepActions(
     val viewModel: OnboardingViewModel,
     val onPick: (ImportKind) -> Unit,
-    val onTopicToggle: (String) -> Unit,
-    val onInterestsRevealed: () -> Unit,
 )
 
 /**
@@ -54,7 +52,6 @@ internal fun SharedTransitionScope.OnboardingSteps(
     heroFrom: OnboardingStep,
     importOperation: BackupOperation,
     newVideoAlerts: Boolean,
-    interestsRevealed: Boolean,
     actions: StepActions,
 ) {
     val slide = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
@@ -76,7 +73,6 @@ internal fun SharedTransitionScope.OnboardingSteps(
                 step = step,
                 fromStep = heroFrom,
                 size = size,
-                petals = (state.topics.size.toFloat() / MIN_TOPICS).coerceAtMost(1f),
                 modifier = heroModifier(this@AnimatedContent, BoundsTransform { _, _ -> bounds }),
             )
         }
@@ -104,7 +100,7 @@ internal fun SharedTransitionScope.OnboardingSteps(
                 Row(Modifier.fillMaxSize()) {
                     StepSidePane(hero, copy, Modifier.weight(SIDE_PANE_WEIGHT).fillMaxHeight())
                     Box(Modifier.weight(1f - SIDE_PANE_WEIGHT).fillMaxHeight()) {
-                        Readable { StepBody(step, state, importOperation, newVideoAlerts, interestsRevealed, actions, {}, PanePadding) }
+                        Readable { StepBody(step, state, importOperation, newVideoAlerts, actions, {}, PanePadding) }
                     }
                 }
             }
@@ -116,7 +112,6 @@ internal fun SharedTransitionScope.OnboardingSteps(
                     state,
                     importOperation,
                     newVideoAlerts,
-                    interestsRevealed,
                     actions,
                     { stepHeader(hero, copy.title, copy.subtitle) },
                     StepPadding,
@@ -132,24 +127,12 @@ private fun StepBody(
     state: OnboardingUiState,
     importOperation: BackupOperation,
     newVideoAlerts: Boolean,
-    interestsRevealed: Boolean,
     actions: StepActions,
     header: LazyListScope.() -> Unit,
     contentPadding: PaddingValues,
 ) {
     val viewModel = actions.viewModel
     when (step) {
-        OnboardingStep.INTERESTS -> {
-            InterestsStep(
-                selectedTopics = state.topics,
-                onTopicToggle = actions.onTopicToggle,
-                header = header,
-                revealed = interestsRevealed,
-                onRevealed = actions.onInterestsRevealed,
-                contentPadding = contentPadding,
-            )
-        }
-
         OnboardingStep.CHANNELS -> {
             ChannelsStep(
                 state = state,
