@@ -50,6 +50,8 @@
     <string name="export_watch_history_desc">Exportar como JSON del historial de YouTube (importaciones a LibreTube y Fathom)</string>
     <string name="whats_new_in_flow">Novedades en Fathom</string>
     <string name="cache_size_applies_on_restart">Se aplica la próxima vez que se inicie Fathom.</string>
+    <string name="sync_error_qr_not_local">Este código apunta fuera de tu red local, así que Fathom no se conectará a él. Usa solo los códigos que muestren tus propios dispositivos.</string>
+    <string name="sync_error_timeout">El otro dispositivo dejó de responder. Mantén Fathom abierto en ambos dispositivos y vuelve a intentarlo.</string>
     <string name="downloads_recover_body">Fathom guarda las descargas en Download/Fathom y Music/Fathom. Para ver los archivos que guardó una instalación anterior ahí, permite el acceso a vídeos y audio.</string>
     <string name="location_downloads_label">Descargas / Fathom</string>
     <string name="location_movies_label">Películas / Fathom</string>
