@@ -29,6 +29,8 @@ const EXTRA_KEYS = [
   'learning_stats_subtitle',
   'style_default',
   'onboarding_ready_subtitle',
+  'settings_section_home_snapshots',
+  'diagnostics_record_home_snapshots',
 ];
 
 // Keys whose "Flow" stays on purpose (the engine, the original author, the original theme).
