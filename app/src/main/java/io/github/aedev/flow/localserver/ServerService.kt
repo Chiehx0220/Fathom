@@ -20,9 +20,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.net.Inet4Address
-import java.net.InetAddress
-import java.net.NetworkInterface
 
 /**
  * Foreground promotion + notification for the embedded local web server. Assumes NewPipe.init() ran via FlowApplication:
@@ -185,23 +182,6 @@ class ServerService : Service() {
         }
 
         @JvmStatic
-        fun getLocalIpAddress(): String? {
-            try {
-                val interfaces = NetworkInterface.getNetworkInterfaces()
-                while (interfaces.hasMoreElements()) {
-                    val intf = interfaces.nextElement()
-                    val addresses = intf.inetAddresses
-                    while (addresses.hasMoreElements()) {
-                        val inetAddress: InetAddress = addresses.nextElement()
-                        if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
-                            return inetAddress.hostAddress
-                        }
-                    }
-                }
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
-            return null
-        }
+        fun getLocalIpAddress(): String? = lanAddress()
     }
 }
