@@ -12,9 +12,14 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -25,6 +30,8 @@ import java.net.NetworkInterface
  */
 class ServerService : Service() {
     private var server: LocalHttpServer? = null
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var handoffJob: Job? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
 
@@ -80,6 +87,8 @@ class ServerService : Service() {
             server = newServer
             newServer.startServer()
             mutableRunning.value = true
+            val delivery = HandoffDelivery(this)
+            handoffJob = serviceScope.launch { RemoteSession.handoffs.collect { runCatching { delivery.deliver(it) } } }
 
             try {
                 val pm = getSystemService(POWER_SERVICE) as PowerManager?
@@ -102,6 +111,8 @@ class ServerService : Service() {
     }
 
     private fun stopServer() {
+        handoffJob?.cancel()
+        handoffJob = null
         wakeLock?.let { if (it.isHeld) runCatching { it.release() } }
         wifiLock?.let { if (it.isHeld) runCatching { it.release() } }
         server?.stopServer()

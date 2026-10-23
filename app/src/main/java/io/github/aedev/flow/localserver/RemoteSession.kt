@@ -1,8 +1,20 @@
 package io.github.aedev.flow.localserver
 
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+/** Web page → app hand-off request. */
+data class Handoff(
+    val url: String,
+    val title: String,
+    val videoId: String,
+    val positionMs: Long?,
+)
 
 /** Page paired for remote control, if any. */
 data class RemoteLock(
@@ -61,6 +73,11 @@ object RemoteSession {
     val remoteLock: StateFlow<RemoteLock> = remoteLockState.asStateFlow()
 
     internal val choiceHold = RemoteChoiceHold()
+
+    private val handoffFlow = MutableSharedFlow<Handoff>(extraBufferCapacity = 4, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val handoffs: SharedFlow<Handoff> = handoffFlow.asSharedFlow()
+
+    fun handOff(handoff: Handoff) = handoffFlow.tryEmit(handoff)
 
     private val remoteStateFlow = MutableStateFlow(RemoteState())
     val remoteState: StateFlow<RemoteState> = remoteStateFlow.asStateFlow()

@@ -17,6 +17,7 @@ internal val MUTATING_PATHS: Set<String> =
     setOf(
         PAIR_PATH,
         "/send-link",
+        "/handoff",
         "/play",
         "/send-command",
         "/poll-commands",

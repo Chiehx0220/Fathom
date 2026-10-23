@@ -66,6 +66,7 @@ FT.api = {
 
     subscribe: (channel, on) => act('/subscribe', { action: on ? 'subscribe' : 'unsubscribe', id: channel.id, name: channel.name || '', avatar: channel.thumbnailUrl || '' }),
     block: (channelUrl, on) => act('/block_channel', { action: on ? 'block' : 'unblock', id: channelUrl }),
+    handoff: (url, t, d, title) => act('/handoff', { id: url, t, d, title }),
     watchLater: (video, on) => act('/watch_later_action', { action: on ? 'add' : 'remove', ...videoQuery(video), type: 'video', serviceId: video.serviceId ?? 0 }),
     rate: (video, action) => act('/rate_video', { action, ...videoQuery(video), serviceId: video.serviceId ?? 0 }),
     removeFromHistory: (video) => act('/history_action', { action: 'remove', url: video.url, serviceId: video.serviceId ?? 0 }),

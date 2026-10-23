@@ -1,5 +1,8 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.bilibili.BilibiliLink
+import io.github.aedev.flow.utils.YouTubeLink
+import io.github.aedev.flow.utils.parseYouTubeLink
 import java.io.OutputStream
 import java.util.UUID
 
@@ -294,4 +297,26 @@ internal fun ClientHandler.handlePollCommands(os: OutputStream) {
     }
     sb.append("]}")
     sendResponse(os, 200, sb.toString(), "application/json; charset=UTF-8")
+}
+
+private const val HANDOFF_TITLE_MAX = 200
+
+/** `/handoff`: saves the position to history, then emits a [Handoff] for the app. */
+internal fun ClientHandler.handleHandoff(
+    os: OutputStream,
+    params: Map<String, String>,
+) {
+    val url = params["id"].orEmpty().trim()
+    val link = parseYouTubeLink(url)
+    val playable = link is YouTubeLink.Video || link is YouTubeLink.Short || BilibiliLink.isBilibili(url)
+    if (!playable) {
+        sendResponse(os, 400, "{\"status\":\"unsupported\"}", "application/json")
+        return
+    }
+    val position = params["t"]?.toDoubleOrNull()?.takeIf { it.isFinite() && it >= 0 }
+    val duration = params["d"]?.toDoubleOrNull()?.takeIf { it.isFinite() && it > 0 }
+    val positionMs = position?.let { (it * 1000).toLong() }
+    if (positionMs != null && duration != null) dbHelper.nativeUpdateWatchPosition(url, positionMs, (duration * 1000).toLong())
+    RemoteSession.handOff(Handoff(url, params["title"].orEmpty().take(HANDOFF_TITLE_MAX), LocalServerMedia.getVideoId(url), positionMs))
+    sendActionResult(os)
 }

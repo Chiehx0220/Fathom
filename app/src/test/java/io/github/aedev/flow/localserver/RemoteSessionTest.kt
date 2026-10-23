@@ -1,6 +1,10 @@
 package io.github.aedev.flow.localserver
 
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -96,4 +100,17 @@ class RemoteSessionTest {
         assertThat(kept.first()).isEqualTo("cmd99")
         assertThat(kept.last()).isEqualTo("cmd599")
     }
+
+    @Test
+    fun `a handed off video reaches the collector that is listening`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val received = mutableListOf<Handoff>()
+            val job = launch { RemoteSession.handoffs.collect { received += it } }
+            val handoff = Handoff("https://www.youtube.com/watch?v=abc", "A video", "abc", 61_500L)
+
+            assertThat(RemoteSession.handOff(handoff)).isTrue()
+
+            assertThat(received).containsExactly(handoff)
+            job.cancel()
+        }
 }

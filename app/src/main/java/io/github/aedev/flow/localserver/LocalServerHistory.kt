@@ -46,10 +46,17 @@ fun HistoryDbHelper.nativeUpdateWatchProgress(
     percentWatched: Int,
     durationSeconds: Int,
 ) {
+    val durationMs = durationSeconds.toLong() * 1000
+    nativeUpdateWatchPosition(videoUrl, (durationMs * percentWatched.coerceIn(0, 100)) / 100, durationMs)
+}
+
+fun HistoryDbHelper.nativeUpdateWatchPosition(
+    videoUrl: String,
+    positionMs: Long,
+    durationMs: Long,
+) {
     val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return
-    val durationMs = durationSeconds.toLong() * 1000
-    val positionMs = (durationMs * percentWatched.coerceIn(0, 100)) / 100
     runBlocking { viewHistory().updatePlaybackProgress(videoId, positionMs, durationMs) }
 }
 

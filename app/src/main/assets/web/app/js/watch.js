@@ -149,8 +149,18 @@ const actionRow = (service, info) => {
         }
         FT.toast(await FT.copyText(link) ? FT.t('link_copied') : link);
     }, '', 'share');
+    // Hands the video to the serving phone; hidden when the page runs on the phone.
+    const handoff = FT.button(FT.t('continue_on_phone'), 'cast', async () => {
+        const now = FT.player.snapshot();
+        try {
+            await FT.api.handoff(info.url, now.t, now.d, info.title);
+            if (!now.paused) FT.player.toggle();
+            FT.toast(FT.t('handoff_sent'));
+        } catch (e) { FT.toast(FT.t('action_failed')); }
+    }, '', 'handoff');
     const audio = FT.button(FT.t('audio_only'), 'music_note', () => audio.classList.toggle('on', FT.player.toggleAudioOnly()), '', 'audio');
     const buttons = [subscribe, like, dislike, later, share, audio];
+    if (!['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) buttons.push(handoff);
     if (service === 0) buttons.push(downloadButton(service, info));
     buttons.forEach((b, i) => { if (i < 4) b.dataset.first = '1'; });
     paint();

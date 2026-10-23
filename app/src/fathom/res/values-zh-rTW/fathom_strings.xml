@@ -58,6 +58,8 @@
     <string name="remote_home">首頁</string>
     <string name="remote_subscriptions">訂閱</string>
     <string name="remote_back">返回</string>
+    <string name="handoff_channel_name">在這支手機繼續</string>
+    <string name="handoff_notification_text">點一下，從網頁停下的地方繼續</string>
     <string name="remote_now_playing">正在播放</string>
     <string name="remote_no_video">目前沒有開啟任何影片。請先在螢幕上挑選影片，再用這些按鍵控制。</string>
     <string name="remote_rewind">倒轉 10 秒</string>

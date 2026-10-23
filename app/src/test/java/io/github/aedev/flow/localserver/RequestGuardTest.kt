@@ -130,4 +130,12 @@ class RequestGuardTest {
     fun `a re-pointed public domain is refused even when page and host agree`() {
         assertThat(isAllowedWebSocketOrigin("http://rebind.attacker.com:8080", "rebind.attacker.com:8081")).isFalse()
     }
+
+    @Test
+    fun `a hand-off to the phone is refused from another origin`() {
+        val foreign = headers("sec-fetch-site" to "cross-site")
+
+        assertThat(refusalFor("GET", "/handoff", foreign)).isNotNull()
+        assertThat(refusalFor("GET", "/handoff", headers("sec-fetch-site" to "same-origin"))).isNull()
+    }
 }

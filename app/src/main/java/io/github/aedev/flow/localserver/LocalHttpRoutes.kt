@@ -13,6 +13,7 @@ internal val ROUTES: Map<String, Route> =
         "/danmaku" to route { os, params, _ -> handleDanmaku(os, params) },
         "/live_chat" to route { os, params, _ -> handleLiveChat(os, params) },
         "/hls" to route { os, params, _ -> handleHlsProxy(os, params) },
+        "/handoff" to route { os, params, _ -> handleHandoff(os, params) },
         "/send-link" to route { os, params, _ -> handleSendLink(os, params, remoteAddress) },
         "/play" to route { os, params, _ -> handleSendLink(os, params, remoteAddress) },
         "/send-command" to route { os, params, _ -> handleSendCommand(os, params) },

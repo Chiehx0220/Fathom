@@ -59,6 +59,8 @@
     <string name="remote_home">Home</string>
     <string name="remote_subscriptions">Subs</string>
     <string name="remote_back">Back</string>
+    <string name="handoff_channel_name">Continue on this phone</string>
+    <string name="handoff_notification_text">Tap to continue from where the web page stopped</string>
     <string name="remote_now_playing">Now playing</string>
     <string name="remote_no_video">No video is open. Pick one on the screen, then use these keys to control it.</string>
     <string name="remote_rewind">Back 10 seconds</string>
