@@ -104,7 +104,7 @@ class PlayerPreferences(
         val SPONSOR_BLOCK_ENABLED = booleanPreferencesKey("sponsor_block_enabled")
         val AUTO_PIP_ENABLED = booleanPreferencesKey("auto_pip_enabled")
         val MANUAL_PIP_BUTTON_ENABLED = booleanPreferencesKey("manual_pip_button_enabled")
-        val STABLE_VOLUME_ENABLED = booleanPreferencesKey("stable_volume_enabled")
+        val VIDEO_VOLUME_NORMALIZATION = booleanPreferencesKey("video_volume_normalization")
 
         // Buffer settings
         val MIN_BUFFER_MS = intPreferencesKey("min_buffer_ms")
@@ -334,6 +334,8 @@ class PlayerPreferences(
         val ANIMATED_ARTWORK = booleanPreferencesKey("animated_artwork")
         val MUSIC_REPEAT_MODE = intPreferencesKey("music_repeat_mode")
         val PAUSE_MUSIC_WHEN_MUTED = booleanPreferencesKey("pause_music_when_muted")
+        val MUSIC_RESUME_LONG_TRACKS = booleanPreferencesKey("music_resume_long_tracks")
+        val MUSIC_SIDE_SWIPES = booleanPreferencesKey("music_side_swipes")
         val ANIMATED_ARTWORK_WIFI_ONLY = booleanPreferencesKey("animated_artwork_wifi_only")
         val AUTO_DOWNLOAD_LIKED_MUSIC = booleanPreferencesKey("auto_download_liked_music")
         val RECAP_SOURCE = stringPreferencesKey("recap_source")
@@ -1727,16 +1729,15 @@ class PlayerPreferences(
         }
     }
 
-    // Stable Volume
-    val stableVolumeEnabled: Flow<Boolean> =
+    /** Videos and Shorts are turned down to YouTube's loudness level, as on youtube.com. */
+    val videoVolumeNormalizationEnabled: Flow<Boolean> =
         context.playerPreferencesDataStore.data
-            .map { preferences ->
-                preferences[Keys.STABLE_VOLUME_ENABLED] ?: false
-            }
+            .map { preferences -> preferences[Keys.VIDEO_VOLUME_NORMALIZATION] ?: true }
+            .distinctUntilChanged()
 
-    suspend fun setStableVolumeEnabled(enabled: Boolean) {
+    suspend fun setVideoVolumeNormalizationEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
-            preferences[Keys.STABLE_VOLUME_ENABLED] = enabled
+            preferences[Keys.VIDEO_VOLUME_NORMALIZATION] = enabled
         }
     }
 
@@ -2247,6 +2248,30 @@ class PlayerPreferences(
         }
     }
 
+    /** Podcasts and other long tracks pick up where they stopped when played again. */
+    val musicResumeLongTracks: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.MUSIC_RESUME_LONG_TRACKS] ?: false }
+            .distinctUntilChanged()
+
+    suspend fun setMusicResumeLongTracks(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_RESUME_LONG_TRACKS] = enabled
+        }
+    }
+
+    /** Vertical swipes on the music player's left and right thirds change speed and volume. */
+    val musicSideSwipes: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.MUSIC_SIDE_SWIPES] ?: false }
+            .distinctUntilChanged()
+
+    suspend fun setMusicSideSwipes(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_SIDE_SWIPES] = enabled
+        }
+    }
+
     /** The music player's repeat mode, as Media3's own Player.REPEAT_MODE_* value. */
     val musicRepeatMode: Flow<Int> =
         context.playerPreferencesDataStore.data
@@ -2616,7 +2641,7 @@ class PlayerPreferences(
     val autoPipEnabled: Flow<Boolean> =
         context.playerPreferencesDataStore.data
             .map { preferences ->
-                preferences[Keys.AUTO_PIP_ENABLED] ?: false
+                preferences[Keys.AUTO_PIP_ENABLED] ?: true
             }
 
     suspend fun setAutoPipEnabled(enabled: Boolean) {

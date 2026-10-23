@@ -136,6 +136,43 @@ class ViewHistory private constructor(
 
     suspend fun getSavedPosition(videoId: String): Long = dao.getPosition(videoId) ?: 0L
 
+    suspend fun getSavedDuration(videoId: String): Long = dao.getDuration(videoId) ?: 0L
+
+    /** Records that a song started without moving the place a long track was left at. */
+    suspend fun touchMusicEntry(
+        videoId: String,
+        duration: Long,
+        title: String,
+        thumbnailUrl: String,
+        channelName: String,
+        channelId: String,
+        isLocal: Boolean = LocalMediaIds.isLocal(videoId),
+    ) = savePlaybackPosition(
+        videoId = videoId,
+        position = dao.getPosition(videoId) ?: 0L,
+        duration = duration,
+        title = title,
+        thumbnailUrl = thumbnailUrl,
+        channelName = channelName,
+        channelId = channelId,
+        isMusic = true,
+        isLocal = isLocal,
+    )
+
+    /** Where a long track stopped. A row history already holds keeps its title, artist and time. */
+    suspend fun saveMusicPosition(
+        videoId: String,
+        position: Long,
+        duration: Long,
+        title: String,
+        thumbnailUrl: String,
+        channelName: String,
+    ) {
+        if (PlayerPreferences(context).isWatchHistorySavingBlocked()) return
+        if (dao.updateProgress(videoId, position, duration) > 0) return
+        savePlaybackPosition(videoId, position, duration, title, thumbnailUrl, channelName, isMusic = true)
+    }
+
     /**
      * Progress columns of an existing entry only (e.g. periodic watch-progress ping without title/thumbnail/channel). No-op without a history row: [touchHistoryEntry] first.
      */

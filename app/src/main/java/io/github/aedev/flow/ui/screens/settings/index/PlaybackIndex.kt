@@ -172,6 +172,14 @@ internal object PlaybackIndex {
             section = R.string.player_appearance_gestures_header,
             destination = page,
         )
+    val normalizeVolume =
+        SettingEntry(
+            key = "playback.normalize_volume",
+            title = R.string.player_settings_normalize_volume,
+            summary = R.string.player_settings_normalize_volume_summary,
+            section = R.string.eq_settings_section,
+            destination = page,
+        )
     val volumeBoost =
         SettingEntry(
             key = "playback.volume_boost",
@@ -469,6 +477,22 @@ internal object PlaybackIndex {
             section = R.string.settings_section_music,
             destination = page,
         )
+    val musicResume =
+        SettingEntry(
+            key = "playback.music_resume",
+            title = R.string.settings_music_resume_title,
+            summary = R.string.settings_music_resume_summary,
+            section = R.string.settings_section_music,
+            destination = page,
+        )
+    val musicSideSwipes =
+        SettingEntry(
+            key = "playback.music_side_swipes",
+            title = R.string.settings_music_side_swipes_title,
+            summary = R.string.settings_music_side_swipes_summary,
+            section = R.string.settings_section_music,
+            destination = page,
+        )
     val musicVideoSwitch =
         SettingEntry(
             key = "playback.music_video_switch",
@@ -496,6 +520,7 @@ internal object PlaybackIndex {
             loopAll,
             skipSilence,
             playDuringCalls,
+            normalizeVolume,
             rememberSpeed,
             musicNormalSpeed,
             speedPerChannel,
@@ -545,6 +570,8 @@ internal object PlaybackIndex {
             shortsContinueIntoFeed,
             endlessRadio,
             pauseMusicWhenMuted,
+            musicResume,
+            musicSideSwipes,
             musicVideoSwitch,
             lyricsProviders,
         )

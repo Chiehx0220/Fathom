@@ -17,7 +17,7 @@
     <string name="appearance_subtitle">Персонализация интерфейса Fathom</string>
     <string name="app_icon_picker_warning">Изменение значка может на мгновение удалит Fathom с главного экрана. При необходимости добавьте его обратно из панели приложений.</string>
     <string name="content_settings_open_links_title">Открывать ссылки YouTube в Fathom</string>
-    <string name="content_settings_show_app_logo_subtitle">Отображать логотип Fathom рядом с названием приложения в верхней панели главного экрана</string>
+    <string name="content_settings_show_app_logo_subtitle">Показывать логотип Fathom на верхней панели главной страницы.</string>
     <string name="content_settings_nav_order_subtitle">Перетащите, чтобы изменить порядок. Выберите вкладку Fathom</string>
     <string name="player_settings_subtitle_language_dialog_body">Субтитры открываются на этом языке, если они доступны. В противном случае Fathom переводит существующую дорожку.</string>
     <string name="player_settings_video_codec_dialog_body">Кодек Fathom выбирает первым. Вы по-прежнему можете выбрать любой кодек в меню качества. H.264 воспроизводится плавно на большинстве устройств. AV1 и VP9 используют меньше данных, но требуют больше энергии.</string>
@@ -65,6 +65,7 @@
     <string name="export_watch_history_desc">Экспорт истории просмотра YouTube в JSON-файл (импорт в LibreTube и Fathom)</string>
     <string name="whats_new_in_flow">Что нового в Fathom</string>
     <string name="cache_size_applies_on_restart">Применяется при следующем запуске Fathom</string>
+    <string name="settings_font_summary">Шрифт приложения Fathom</string>
     <string name="sync_error_qr_not_local">Этот код указывает за пределы вашей локальной сети, поэтому Fathom не сможет к нему подключиться. Используйте только те коды, которые отображаются на ваших собственных устройствах.</string>
     <string name="sync_error_timeout">Другое устройство перестало отвечать. Оставьте Fathom открытым на обоих устройствах и попробуйте снова.</string>
     <string name="sync_error_protocol">Двум устройствам не удалось согласовать этапы синхронизации. Обновите Fathom на обоих устройствах и повторите попытку.</string>
