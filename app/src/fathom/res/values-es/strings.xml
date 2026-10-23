@@ -30,8 +30,11 @@
     <string name="flow_is_up_to_date">¡Fathom está actualizado!</string>
     <string name="sync_error_qr_not_flow">Los datos de conexión de Fathom no parecen válidos.</string>
     <string name="sync_collection_recommendation_profile_body">Que ha aprendido Fathom de tus visualizaciones.</string>
+    <string name="sync_collection_music_profile_body">Lo que Fathom ha aprendido sobre lo que escuchas.</string>
     <string name="error_not_supported_hint">Este formato o tipo de contenido no se puede reproducir en Fathom.</string>
     <string name="error_extraction_failed_hint">Es posible que YouTube haya actualizado su formato. Fathom se actualizará pronto. Vuelve a intentarlo más tarde.</string>
+    <string name="diagnostics_report_subject">Informe de diagnóstico de Fathom</string>
+    <string name="diagnostics_reset_session_confirm_body">Fathom creará una nueva identidad de reproducción. Prueba esto si los vídeos se paran al minuto o no se reproducen.\n\nLa reproducción puede ir mal durante un minuto o dos. Tus datos guardados no se verán afectados.</string>
     <string name="search_in_flow">Buscar en Fathom</string>
     <string name="discord_presence_privacy_body">Fathom comparte el título, el creador, la portada y el progreso de lo que reproduces. Desactivado por defecto. Tu token de Discord está cifrado y nunca se registra.</string>
     <string name="discord_presence_risk_dialog_body">Al conectar, Fathom recibe tu token de Discord. Permanece cifrado en este dispositivo y solo se envía a Discord. Este método viola los Términos de Servicio de Discord, por lo que tu cuenta podría ser restringida o baneada.</string>
@@ -44,7 +47,7 @@
     <string name="update_download_prompt">Hay una nueva versión de Fathom disponible (%1$s). ¿Descargar el APK más reciente?</string>
     <string name="import_migrate_description">Migra tus suscripciones e historial desde otras plataformas a Fathom sin complicaciones.</string>
     <string name="import_manage_backups">Gestiona tus copias de seguridad de Fathom</string>
-    <string name="taste_reset_video_body">Fathom olvida lo que ha aprendido de tus vídeos y búsquedas. El historial, los favoritos, las listas y los elementos ocultos se mantienen, y Inicio sigue usándolos.</string>
+    <string name="taste_reset_video_body">Fathom olvida lo que ha aprendido de tus vídeos y búsquedas. El historial, «Me gusta», listas y los elementos ocultos se mantienen, y Inicio sigue usándolos.</string>
     <string name="subtitle_add_file_failed">Fathom no puede leer ese archivo como subtítulos</string>
     <string name="discord_presence_playing_fallback">Reproduciendo en Fathom</string>
     <string name="export_watch_history_desc">Exportar como JSON del historial de YouTube (importaciones a LibreTube y Fathom)</string>
@@ -52,6 +55,7 @@
     <string name="cache_size_applies_on_restart">Se aplica la próxima vez que se inicie Fathom.</string>
     <string name="sync_error_qr_not_local">Este código apunta fuera de tu red local, así que Fathom no se conectará a él. Usa solo los códigos que muestren tus propios dispositivos.</string>
     <string name="sync_error_timeout">El otro dispositivo dejó de responder. Mantén Fathom abierto en ambos dispositivos y vuelve a intentarlo.</string>
+    <string name="sync_error_protocol">Los dos dispositivos no lograron ponerse de acuerdo en los pasos de sincronización. Actualiza Fathom en ambos dispositivos y vuelve a intentarlo.</string>
     <string name="downloads_recover_body">Fathom guarda las descargas en Download/Fathom y Music/Fathom. Para ver los archivos que guardó una instalación anterior ahí, permite el acceso a vídeos y audio.</string>
     <string name="location_downloads_label">Descargas / Fathom</string>
     <string name="location_movies_label">Películas / Fathom</string>

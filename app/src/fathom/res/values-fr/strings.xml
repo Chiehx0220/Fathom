@@ -8,7 +8,7 @@
     <string name="app_name">Fathom</string>
     <string name="channel_error_log_clip_label">Journal des erreurs du canal de Fathom</string>
     <string name="local_media_permission_body">Autorisez l\'accès à vos fichiers multimédias afin que Fathom puisse trouver et lire vos vidéos et votre musique stockées localement.</string>
-    <string name="link_not_supported">Fathom ne peut pas ouvrir ce genre de lien</string>
+    <string name="link_not_supported">Fathom ne peut pas ouvrir ce type de lien</string>
     <string name="update_flow">Mettre à jour Fathom</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Gérer les notifications que Fathom peut envoyer</string>
@@ -46,7 +46,7 @@
     <string name="discord_presence_playing_fallback">Joué dans Fathom</string>
     <string name="export_watch_history_desc">Exporter l\'historique YouTube au format JSON (compatible avec LibreTube et Fathom)</string>
     <string name="whats_new_in_flow">Quoi de neuf dans Fathom</string>
-    <string name="downloads_recover_body">Fathom sauvegardes les téléchargements dans Download/Fathom and Music/Fathom. Pour lister les fichiers sauvegarder par une installation précédente, autorisez l\'accès aux vidéos et audios.</string>
+    <string name="downloads_recover_body">Fathom enregistre les téléchargements dans les dossiers « Téléchargements/Fathom » et « Musique/Fathom ». Pour afficher la liste des fichiers enregistrés à cet emplacement par une installation antérieure, autorisez l\'accès aux vidéos et aux fichiers audio.</string>
     <string name="location_downloads_label">Téléchargements / Fathom</string>
     <string name="location_movies_label">Vidéos / Fathom</string>
 </resources>
