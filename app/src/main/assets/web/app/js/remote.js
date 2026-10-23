@@ -77,7 +77,21 @@ const PAGES = { home: '#/home', subscriptions: '#/subscriptions', library: '#/li
 
 const handle = (cmd) => {
     wake();
-    if (cmd.startsWith('play_video:')) {
+    if (cmd.startsWith('play_video_at:')) {
+        // play_video_at:<seconds>:<url>
+        const rest = cmd.slice('play_video_at:'.length);
+        const split = rest.indexOf(':');
+        const url = rest.slice(split + 1);
+        const at = { url, sec: parseFloat(rest.slice(0, split)) || 0 };
+        if (FT.player.current && FT.player.current.url === url) {
+            FT.player.seekTo(at.sec);
+            if (FT.player.snapshot().paused) FT.player.toggle();
+        } else {
+            FT.startAt = at;
+            setTimeout(() => { if (FT.startAt === at) FT.startAt = null; }, 15000);
+            location.hash = FT.link.watch({ url, serviceId: FT.serviceOfUrl(url) });
+        }
+    } else if (cmd.startsWith('play_video:')) {
         const url = cmd.slice('play_video:'.length);
         location.hash = FT.link.watch({ url, serviceId: FT.serviceOfUrl(url) });
     } else if (cmd.startsWith('pointer_move:')) {

@@ -58,6 +58,10 @@
     <string name="remote_home">首頁</string>
     <string name="remote_subscriptions">訂閱</string>
     <string name="remote_back">返回</string>
+    <string name="cast_web_page">網頁（%1$s）</string>
+    <string name="cast_web_address">%1$s\n開啟後點擊右上角投放鈕</string>
+    <string name="cast_web_server_off">在其他裝置瀏覽器開啟\n至設定頁面啟用本機網頁伺服器</string>
+    <string name="cast_web_address_copied">已複製位址</string>
     <string name="handoff_channel_name">在這支手機繼續</string>
     <string name="handoff_notification_text">點一下，從網頁停下的地方繼續</string>
     <string name="remote_now_playing">正在播放</string>

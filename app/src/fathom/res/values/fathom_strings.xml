@@ -59,6 +59,10 @@
     <string name="remote_home">Home</string>
     <string name="remote_subscriptions">Subs</string>
     <string name="remote_back">Back</string>
+    <string name="cast_web_page">Web page (%1$s)</string>
+    <string name="cast_web_address">%1$s\nOpen it, then tap cast at top right</string>
+    <string name="cast_web_server_off">Open in a browser on another device\nEnable the local web server in Settings</string>
+    <string name="cast_web_address_copied">Address copied</string>
     <string name="handoff_channel_name">Continue on this phone</string>
     <string name="handoff_notification_text">Tap to continue from where the web page stopped</string>
     <string name="remote_now_playing">Now playing</string>

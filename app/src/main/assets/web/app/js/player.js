@@ -635,8 +635,20 @@ const build = async (info, way, owner) => {
 
 // A video that was left part-way starts where it was left (the history keeps a percentage; "Continue watching" on the home page offers the same).
 // Reports of the new position follow from the usual timer, so a visit that only opens the video does not overwrite the saved progress with 0.
+const sameVideo = (a, b) => a === b || (new URL(a, location.href).searchParams.get('v') || a) === (new URL(b, location.href).searchParams.get('v') || b);
+// One-shot start position from `play_video_at`, ahead of the history position.
+const startFromPhone = (owner, media, info) => {
+    const at = FT.startAt;
+    FT.startAt = null;
+    if (!at || !sameVideo(at.url, info.url)) return false;
+    const seek = () => { if (current === owner) media.currentTime = at.sec; };
+    if (media.readyState >= 1) seek(); else media.addEventListener('loadedmetadata', seek, { once: true });
+    return true;
+};
+
 const resumeFromHistory = (owner, media, info, service) => {
     if (info.isLive || info.playback.liveRoom) return;
+    if (startFromPhone(owner, media, info)) return;
     FT.api.history().then((hist) => {
         const saved = (hist.videos || []).find((v) => v.url === info.url && (v.serviceId ?? 0) === service);
         if (!saved || !(saved.progress > 2 && saved.progress < 95)) return;

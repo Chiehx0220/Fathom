@@ -7,12 +7,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.localserver.remote.CastPickerWithWebPage
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.dlna.DlnaCastManager
 import io.github.aedev.flow.player.state.EnhancedPlayerState
 import io.github.aedev.flow.ui.components.shared.MediaDownloadDialog
 import io.github.aedev.flow.ui.components.shared.MediaDownloadDialogCompact
-import io.github.aedev.flow.ui.components.videoplayer.DlnaDevicePickerDialog
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
 import io.github.aedev.flow.ui.screens.player.state.PlayerScreenState
 import io.github.aedev.flow.ui.screens.player.state.PlayerSheet
@@ -105,7 +105,7 @@ internal fun PlayerDialogsContainer(
     if (screenState.activeSheet == PlayerSheet.Dlna) {
         val dlnaDevices by DlnaCastManager.devices.collectAsStateWithLifecycle()
         val isDlnaDiscovering by DlnaCastManager.isDiscovering.collectAsStateWithLifecycle()
-        DlnaDevicePickerDialog(
+        CastPickerWithWebPage(
             devices = dlnaDevices,
             isDiscovering = isDlnaDiscovering,
             isCasting = DlnaCastManager.isCasting,
