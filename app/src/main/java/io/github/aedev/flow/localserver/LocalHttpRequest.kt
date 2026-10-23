@@ -1,6 +1,5 @@
 package io.github.aedev.flow.localserver
 
-import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.Locale
@@ -11,6 +10,10 @@ private const val LF_LF = 0x0A0A
 
 /** Millis for request line + headers. */
 internal const val REQUEST_READ_TIMEOUT_MS = 15_000
+
+/** Idle timeout between requests on a keep-alive connection, millis. */
+internal const val KEEP_ALIVE_IDLE_MS = 5_000
+internal const val MAX_REQUESTS_PER_CONNECTION = 100
 
 internal const val CORS_PREFLIGHT =
     "HTTP/1.1 204 No Content\r\n" +
@@ -23,10 +26,9 @@ internal const val CORS_PREFLIGHT =
 
 /**
  * Request line + header lines up to the blank line; null on close or > [MAX_HEAD_BYTES].
- * Read as bytes: nothing past the head consumed as text.
+ * [input] is buffered and shared across a connection's requests; nothing past the head is consumed.
  */
-internal fun readRequestHead(socketInput: InputStream): List<String>? {
-    val input = BufferedInputStream(socketInput)
+internal fun readRequestHead(input: InputStream): List<String>? {
     val bytes = ByteArrayOutputStream()
     var tail = 0
     while (bytes.size() < MAX_HEAD_BYTES) {
@@ -50,4 +52,22 @@ internal fun parseRequestHeaders(head: List<String>): MutableMap<String, String>
         if (colon > 0) headers[line.substring(0, colon).trim().lowercase(Locale.US)] = line.substring(colon + 1).trim()
     }
     return headers
+}
+
+/** Keep-alive eligibility: HTTP/1.1 or explicit keep-alive, no `close`/`Upgrade`, no request body (bodies are not consumed). */
+internal fun allowsReuse(
+    requestLine: List<String>,
+    headers: Map<String, String>,
+): Boolean {
+    val version = requestLine.getOrNull(2)?.trim()
+    val tokens =
+        headers["connection"]
+            ?.lowercase(Locale.US)
+            ?.split(',')
+            ?.map { it.trim() }
+            .orEmpty()
+    if ("close" in tokens || "upgrade" in tokens) return false
+    if (version != "HTTP/1.1" && "keep-alive" !in tokens) return false
+    val hasBody = (headers["content-length"]?.trim() ?: "0") != "0" || "transfer-encoding" in headers
+    return !hasBody
 }

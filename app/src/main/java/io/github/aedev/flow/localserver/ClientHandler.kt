@@ -7,6 +7,7 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.net.Socket
@@ -31,56 +32,34 @@ internal class ClientHandler(
     internal val remoteAddress: String? get() = socket.inetAddress.hostAddress
     internal val remoteIsLoopback: Boolean get() = socket.inetAddress.isLoopbackAddress
 
+    // Per-request keep-alive state.
+    private var reusable = false
+    private var keptAlive = false
+
+    private fun closeAfterResponse() {
+        reusable = false
+        keptAlive = false
+    }
+
+    /** `Connection` headers for a response with a known length. */
+    internal fun connectionHeaders(): String {
+        keptAlive = reusable
+        return if (reusable) "Connection: keep-alive\r\nKeep-Alive: timeout=${KEEP_ALIVE_IDLE_MS / 1000}\r\n" else "Connection: close\r\n"
+    }
+
     override fun run() {
         try {
             socket.tcpNoDelay = true
-            // Browsers open idle spare connections; unlimited → thread held forever.
-            socket.soTimeout = REQUEST_READ_TIMEOUT_MS
-            val head = readRequestHead(socket.getInputStream()) ?: return
-            socket.soTimeout = 0
-
-            val requestLine = head[0].split(" ")
-            if (requestLine.size < 2) return
-            val method = requestLine[0]
-            val rawUri = requestLine[1]
-            val path = rawUri.substringBefore('?')
-            val query = if (rawUri.contains('?')) rawUri.substringAfter('?') else null
-            val params = parseQueryParams(query)
-            serverLog("Request: $method $path" + (if (query != null) "?$query" else ""))
-
-            val requestHeaders = parseRequestHeaders(head)
-            this.requestHeaders = requestHeaders
-
-            socket.getOutputStream().use { os ->
-                val refusal = refusalFor(method, path, requestHeaders)
-                if (refusal != null) {
-                    serverLog("Refused $method $path: $refusal")
-                    sendResponse(os, 403, refusal, "text/plain; charset=UTF-8")
-                    return
-                }
-                if (!admits(os, path, requestHeaders)) return
-                if ("OPTIONS".equals(method, ignoreCase = true)) {
-                    os.write(CORS_PREFLIGHT.toByteArray(Charsets.UTF_8))
-                    os.flush()
-                    return
-                }
-                try {
-                    val route = ROUTES[path]
-                    if (route != null) {
-                        route(this, os, params, requestHeaders)
-                    } else if (path.startsWith("/vendor/")) {
-                        handleVendorAsset(os, path)
-                    } else {
-                        sendResponse(os, 404, "Page Not Found", "text/plain; charset=UTF-8")
-                    }
-                } catch (e: BadRequestException) {
-                    sendResponse(os, 400, "Bad Request: " + e.message, "text/plain; charset=UTF-8")
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    serverLog("Error during route handling: " + e.message)
-                    sendResponse(os, 500, "Internal Server Error", "text/plain; charset=UTF-8")
-                }
-            }
+            val input = BufferedInputStream(socket.getInputStream())
+            val os = socket.getOutputStream()
+            var served = 0
+            do {
+                // Browsers open idle spare connections; unlimited → thread held forever.
+                socket.soTimeout = if (served == 0) REQUEST_READ_TIMEOUT_MS else KEEP_ALIVE_IDLE_MS
+                val head = readRequestHead(input) ?: return
+                socket.soTimeout = 0
+                served++
+            } while (serve(head, os, last = served >= MAX_REQUESTS_PER_CONNECTION))
         } catch (e: IOException) {
             // Client gone or no request sent.
         } catch (e: Exception) {
@@ -91,6 +70,60 @@ internal class ClientHandler(
             } catch (ignored: IOException) {
             }
         }
+    }
+
+    /** Serves one request; true if the connection stays open. */
+    private fun serve(
+        head: List<String>,
+        os: OutputStream,
+        last: Boolean,
+    ): Boolean {
+        val requestLine = head[0].split(" ")
+        if (requestLine.size < 2) return false
+        val method = requestLine[0]
+        val rawUri = requestLine[1]
+        val path = rawUri.substringBefore('?')
+        val query = if (rawUri.contains('?')) rawUri.substringAfter('?') else null
+        val params = parseQueryParams(query)
+        serverLog("Request: $method $path" + (if (query != null) "?$query" else ""))
+
+        val requestHeaders = parseRequestHeaders(head)
+        this.requestHeaders = requestHeaders
+        reusable = !last && allowsReuse(requestLine, requestHeaders) && !method.equals("HEAD", ignoreCase = true)
+        keptAlive = false
+
+        val refusal = refusalFor(method, path, requestHeaders)
+        if (refusal != null) {
+            serverLog("Refused $method $path: $refusal")
+            closeAfterResponse()
+            sendResponse(os, 403, refusal, "text/plain; charset=UTF-8")
+            return false
+        }
+        if (!admits(os, path, requestHeaders)) return keptAlive
+        if ("OPTIONS".equals(method, ignoreCase = true)) {
+            os.write(CORS_PREFLIGHT.toByteArray(Charsets.UTF_8))
+            os.flush()
+            return false
+        }
+        try {
+            val route = ROUTES[path]
+            if (route != null) {
+                route(this, os, params, requestHeaders)
+            } else if (path.startsWith("/vendor/")) {
+                handleVendorAsset(os, path)
+            } else {
+                sendResponse(os, 404, "Page Not Found", "text/plain; charset=UTF-8")
+            }
+        } catch (e: BadRequestException) {
+            closeAfterResponse()
+            sendResponse(os, 400, "Bad Request: " + e.message, "text/plain; charset=UTF-8")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            serverLog("Error during route handling: " + e.message)
+            closeAfterResponse()
+            sendResponse(os, 500, "Internal Server Error", "text/plain; charset=UTF-8")
+        }
+        return keptAlive
     }
 
     // Subscribed channels' uploads → one newest-first feed (cap 60); channel resolved by own URL (subscriptions mix services).
@@ -235,7 +268,7 @@ internal class ClientHandler(
                 (if (cacheControl != null) "Cache-Control: $cacheControl\r\n" else "") +
                 (if (setCookie != null) "Set-Cookie: $setCookie\r\n" else "") +
                 "Content-Length: " + bytes.size + "\r\n" +
-                "Connection: close\r\n\r\n"
+                connectionHeaders() + "\r\n"
         os.write(response.toByteArray(Charsets.UTF_8))
         os.write(bytes)
         os.flush()
@@ -250,7 +283,7 @@ internal class ClientHandler(
             "HTTP/1.1 302 Found\r\n" +
                 "Location: $url\r\n" +
                 "Content-Length: 0\r\n" +
-                "Connection: close\r\n\r\n"
+                connectionHeaders() + "\r\n"
         os.write(response.toByteArray(Charsets.UTF_8))
         os.flush()
     }

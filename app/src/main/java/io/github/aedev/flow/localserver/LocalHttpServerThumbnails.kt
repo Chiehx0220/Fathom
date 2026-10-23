@@ -117,8 +117,7 @@ internal fun ClientHandler.handleImageProxy(
                 "Content-Type: $contentType",
                 "Content-Length: ${body.size}",
                 "Cache-Control: public, max-age=21600",
-                "Connection: close",
-            ).joinToString(separator = "\r\n", postfix = "\r\n\r\n")
+            ).joinToString(separator = "\r\n", postfix = "\r\n") + connectionHeaders() + "\r\n"
         os.write(head.toByteArray(Charsets.UTF_8))
         os.write(body)
         os.flush()

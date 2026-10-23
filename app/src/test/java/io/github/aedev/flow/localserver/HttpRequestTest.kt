@@ -32,6 +32,37 @@ class HttpRequestTest {
     }
 
     @Test
+    fun `requests on one connection are read in turn from a shared stream`() {
+        val input = ByteArrayInputStream("GET /a HTTP/1.1\r\nHost: x\r\n\r\nGET /b HTTP/1.1\r\nHost: x\r\n\r\n".toByteArray())
+
+        assertThat(readRequestHead(input)!![0]).isEqualTo("GET /a HTTP/1.1")
+        assertThat(readRequestHead(input)!![0]).isEqualTo("GET /b HTTP/1.1")
+        assertThat(readRequestHead(input)).isNull()
+    }
+
+    private fun reuse(
+        line: String,
+        vararg headers: Pair<String, String>,
+    ) = allowsReuse(line.split(" "), headers.toMap())
+
+    @Test
+    fun `http 1_1 connections are reused unless the client closes or sends a body`() {
+        assertThat(reuse("GET / HTTP/1.1")).isTrue()
+        assertThat(reuse("GET / HTTP/1.1", "connection" to "Keep-Alive")).isTrue()
+        assertThat(reuse("GET / HTTP/1.1", "content-length" to "0")).isTrue()
+        assertThat(reuse("GET / HTTP/1.1", "connection" to "close")).isFalse()
+        assertThat(reuse("GET / HTTP/1.1", "connection" to "keep-alive, Upgrade")).isFalse()
+        assertThat(reuse("POST / HTTP/1.1", "content-length" to "12")).isFalse()
+        assertThat(reuse("POST / HTTP/1.1", "transfer-encoding" to "chunked")).isFalse()
+    }
+
+    @Test
+    fun `http 1_0 connections are reused only on request`() {
+        assertThat(reuse("GET / HTTP/1.0")).isFalse()
+        assertThat(reuse("GET / HTTP/1.0", "connection" to "keep-alive")).isTrue()
+    }
+
+    @Test
     fun `every route is a distinct path that starts with a slash`() {
         assertThat(ROUTES.keys.all { it.startsWith("/") }).isTrue()
         assertThat(ROUTES).containsKey("/hls")
