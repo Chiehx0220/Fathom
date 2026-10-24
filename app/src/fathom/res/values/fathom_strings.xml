@@ -60,8 +60,8 @@
     <string name="remote_subscriptions">Subs</string>
     <string name="remote_back">Back</string>
     <string name="cast_web_page">Web page (%1$s)</string>
-    <string name="cast_web_address">%1$s\nOpen it, then tap cast at top right</string>
-    <string name="cast_web_server_off">Open in a browser on another device\nEnable the local web server in Settings</string>
+    <string name="cast_web_address">%1$s\nOpen it in a browser; it connects by itself</string>
+    <string name="cast_web_server_off">Open in a browser on another device</string>
     <string name="cast_web_address_copied">Address copied</string>
     <string name="handoff_channel_name">Continue on this phone</string>
     <string name="handoff_notification_text">Tap to continue from where the web page stopped</string>
@@ -210,4 +210,12 @@
     <string name="location_downloads_label">Downloads / Fathom</string>
     <string name="location_movies_label">Movies / Fathom</string>
     <string name="settings_music_folder_label">Music / Fathom</string>
+    <string name="share_web_label">Send to web page</string>
+    <string name="share_web_sent">Sent to the web page</string>
+    <string name="share_web_unsupported">Not a YouTube video link</string>
+    <string name="share_web_server_off_title">Local web server is off</string>
+    <string name="share_web_server_off_body">Enable it and send this video to a web page?</string>
+    <string name="share_web_enable_send">Enable and send</string>
+    <string name="share_web_queued_title">Waiting for the web page</string>
+    <string name="share_web_queued_body">%1$s\nOpen it and the video starts playing</string>
 </resources>

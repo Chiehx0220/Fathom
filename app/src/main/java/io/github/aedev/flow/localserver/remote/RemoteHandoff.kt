@@ -18,7 +18,7 @@ internal fun playVideoAtCommand(
 internal fun sendPhoneVideoToPage(): Boolean {
     val video = GlobalPlayerState.currentVideo.value ?: return false
     val player = EnhancedPlayerManager.getInstance()
-    RemoteSession.addPendingCommand(playVideoAtCommand(videoIdToUrl(video.id, video.serviceId), player.getCurrentPosition()))
+    RemoteSession.sendOrHold(playVideoAtCommand(videoIdToUrl(video.id, video.serviceId), player.getCurrentPosition()))
     player.pause()
     return true
 }

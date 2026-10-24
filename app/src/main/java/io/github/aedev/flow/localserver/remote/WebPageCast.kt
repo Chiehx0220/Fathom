@@ -2,8 +2,11 @@ package io.github.aedev.flow.localserver.remote
 
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -14,12 +17,10 @@ import io.github.aedev.flow.localserver.RemoteSession
 import io.github.aedev.flow.localserver.ServerService
 import io.github.aedev.flow.player.dlna.DlnaDevice
 import io.github.aedev.flow.ui.components.videoplayer.DlnaDevicePickerDialog
-import io.github.aedev.flow.widget.core.action.WidgetDeepLink
 
 private const val WEB_PAGE_USN = "fathom:web-page"
 private const val WEB_ADDRESS_USN = "fathom:web-address"
 private const val SERVER_OFF_USN = "fathom:server-off"
-private const val SETTINGS_ROUTE = "settings"
 
 /** [DlnaDevicePickerDialog] with web page entries beside the DLNA devices. */
 @Composable
@@ -32,12 +33,14 @@ internal fun CastPickerWithWebPage(
     onStopCasting: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    LaunchedEffect(Unit) { RemoteSession.isPageAlive() }
     val lock by RemoteSession.remoteLock.collectAsStateWithLifecycle()
     val serverRunning by ServerService.runningState.collectAsStateWithLifecycle()
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
+    var enabling by remember { mutableStateOf(false) }
     val connected = stringResource(R.string.cast_web_page, lock.clientIp.orEmpty())
-    val address = "http://${ServerService.getLocalIpAddress() ?: "127.0.0.1"}:${ServerService.PORT}"
+    val address = webAddress()
     val unconnected = stringResource(R.string.cast_web_address, address)
     val serverOff = stringResource(R.string.cast_web_server_off)
     val page =
@@ -62,8 +65,7 @@ internal fun CastPickerWithWebPage(
                 }
 
                 SERVER_OFF_USN -> {
-                    context.startActivity(WidgetDeepLink.openRoute(context, SETTINGS_ROUTE))
-                    onDismiss()
+                    enabling = true
                 }
 
                 WEB_ADDRESS_USN -> {
@@ -79,4 +81,12 @@ internal fun CastPickerWithWebPage(
         onStopCasting = onStopCasting,
         onDismiss = onDismiss,
     )
+
+    if (enabling) {
+        EnableServerAndSend(
+            send = ::sendPhoneVideoToPage,
+            onCancel = { enabling = false },
+            onDone = onDismiss,
+        )
+    }
 }

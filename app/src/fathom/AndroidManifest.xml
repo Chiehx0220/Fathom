@@ -62,6 +62,21 @@
             android:exported="false"
             android:theme="@style/Theme.Flow" />
 
+        <!-- Share-sheet target: plays a shared YouTube link on the paired web page. -->
+        <activity
+            android:name="io.github.aedev.flow.localserver.ShareToWebActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/share_web_label"
+            android:theme="@style/Theme.Fathom.Dialog">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <!-- Local Server foreground service: serves the local web UI on port 8080. -->
         <service
             android:name="io.github.aedev.flow.localserver.ServerService"

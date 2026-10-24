@@ -59,8 +59,8 @@
     <string name="remote_subscriptions">訂閱</string>
     <string name="remote_back">返回</string>
     <string name="cast_web_page">網頁（%1$s）</string>
-    <string name="cast_web_address">%1$s\n開啟後點擊右上角投放鈕</string>
-    <string name="cast_web_server_off">在其他裝置瀏覽器開啟\n至設定頁面啟用本機網頁伺服器</string>
+    <string name="cast_web_address">%1$s\n請以瀏覽器開啟，將自動連線</string>
+    <string name="cast_web_server_off">於其他裝置的瀏覽器中開啟</string>
     <string name="cast_web_address_copied">已複製位址</string>
     <string name="handoff_channel_name">在這支手機繼續</string>
     <string name="handoff_notification_text">點一下，從網頁停下的地方繼續</string>
@@ -207,4 +207,12 @@
     <string name="location_downloads_label">Downloads / Fathom</string>
     <string name="location_movies_label">Movies / Fathom</string>
     <string name="settings_music_folder_label">Music / Fathom</string>
+    <string name="share_web_label">傳送到網頁</string>
+    <string name="share_web_sent">已傳送到網頁</string>
+    <string name="share_web_unsupported">此連結不是 YouTube 影片</string>
+    <string name="share_web_server_off_title">本機網頁伺服器尚未啟用</string>
+    <string name="share_web_server_off_body">是否啟用伺服器，並將這部影片傳送到網頁？</string>
+    <string name="share_web_enable_send">啟用並傳送</string>
+    <string name="share_web_queued_title">等待網頁連線</string>
+    <string name="share_web_queued_body">%1$s\n開啟後將立即播放</string>
 </resources>
