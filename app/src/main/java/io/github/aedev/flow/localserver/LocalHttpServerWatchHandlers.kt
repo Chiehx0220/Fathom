@@ -4,7 +4,7 @@ import java.io.OutputStream
 
 // Bilibili danmaku, async from the watch page's player. Only Bilibili has a BulletCommentsExtractor (null elsewhere): empty result.
 @Throws(Exception::class)
-internal fun ClientHandler.handleDanmaku(
+internal fun RequestContext.handleDanmaku(
     reply: Reply,
     params: Map<String, String>,
 ) {

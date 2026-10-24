@@ -73,7 +73,7 @@ private fun proxiedImageHeaders(url: String): Map<String, String>? {
 }
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleThumbnailsProxy(
+internal fun RequestContext.handleThumbnailsProxy(
     reply: Reply,
     params: Map<String, String>,
 ) {
@@ -88,7 +88,7 @@ internal fun ClientHandler.handleThumbnailsProxy(
 }
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleImageProxy(
+internal fun RequestContext.handleImageProxy(
     reply: Reply,
     params: Map<String, String>,
 ) {

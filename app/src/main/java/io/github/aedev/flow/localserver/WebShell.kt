@@ -6,7 +6,7 @@ object WebShell {
     fun appPage(): String {
         val services =
             LocalServerMedia.SUPPORTED_SERVICE_IDS.joinToString(",") { id ->
-                "[$id,${HtmlRendererCommon.jsonString(HtmlRendererCommon.getServiceName(id))}]"
+                "[$id,${WebFormat.jsonString(WebFormat.getServiceName(id))}]"
             }
         return WebAssets.appShell
             .replace("{{version}}", WebAssets.appVersion)

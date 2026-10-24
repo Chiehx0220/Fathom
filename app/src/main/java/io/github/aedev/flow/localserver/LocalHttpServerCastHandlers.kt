@@ -15,13 +15,13 @@ internal fun castStateJson(
     discovering: Boolean,
     casting: DlnaDevice?,
 ): String {
-    val json = HtmlRendererCommon::jsonString
+    val json = WebFormat::jsonString
     val list = devices.joinToString(",") { "{\"name\":${json(it.friendlyName)},\"usn\":${json(it.usn)}}" }
     return "{\"discovering\":$discovering,\"casting\":${casting?.let { json(it.usn) } ?: "null"},\"devices\":[$list]}"
 }
 
 /** `scan=1` starts discovery if idle; reported as running before its coroutine starts. */
-internal fun ClientHandler.handleCastDevices(
+internal fun RequestContext.handleCastDevices(
     reply: Reply,
     params: Map<String, String>,
 ) {
@@ -31,7 +31,7 @@ internal fun ClientHandler.handleCastDevices(
     reply.sendJson(castStateJson(DlnaCastManager.devices.value, discovering, DlnaCastManager.currentDevice.value))
 }
 
-internal fun ClientHandler.handleCastStart(
+internal fun RequestContext.handleCastStart(
     reply: Reply,
     params: Map<String, String>,
 ) {
@@ -55,7 +55,7 @@ internal fun ClientHandler.handleCastStart(
     reply.sendJson("{\"status\":\"success\"}")
 }
 
-internal fun ClientHandler.handleCastStop(reply: Reply) {
+internal fun RequestContext.handleCastStop(reply: Reply) {
     DlnaCastManager.disconnect()
     reply.sendJson("{\"status\":\"success\"}")
 }

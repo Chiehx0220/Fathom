@@ -1,5 +1,6 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.bilibili.BilibiliLink
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.recommendation.FeedExclusions
@@ -8,6 +9,7 @@ import io.github.aedev.flow.data.recommendation.InteractionType
 import io.github.aedev.flow.data.recommendation.NeuroScoring
 import io.github.aedev.flow.data.recommendation.UserBrain
 import io.github.aedev.flow.data.repository.YouTubeRepository
+import io.github.aedev.flow.data.subscriptions.SubscriptionFeedTimestamps
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.player.PlayerRelatedVideosPolicy
 import io.github.aedev.flow.ui.screens.home.FeedTasteProfile
@@ -27,6 +29,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import java.util.concurrent.Callable
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
 // 5-min cache of assembled home feed, keyed by serviceId.
@@ -280,13 +285,13 @@ fun HistoryDbHelper.reportFlowNeuroInteraction(
  * Related via `PlayerRelatedVideosPolicy`, app watch-page order: InnerTube `/next` first, extractor list (no network) only if empty.
  * Never raw `StreamInfo.relatedItems`. Bilibili keeps the extractor list (YouTube feed unaware).
  */
-fun HistoryDbHelper.nativeRelatedVideos(
+fun HistoryDbHelper.relatedVideos(
     info: StreamInfo,
     serviceId: Int,
 ): List<StreamInfoItem> {
     val videoId = LocalServerMedia.getVideoId(info.url)
     val repo = youTubeRepository()
-    val shortsEnabled = !nativeHideShorts()
+    val shortsEnabled = !hideShorts()
     val fromStreamInfo = repo.getRelatedVideosFromStreamInfo(info)
     val fromInnerTube =
         if (serviceId.isYouTubeServiceId) {
@@ -308,3 +313,100 @@ fun HistoryDbHelper.nativeRelatedVideos(
 }
 
 private const val RELATED_TIMEOUT_MS = 10_000L
+
+// Subscribed channels' uploads → one newest-first feed (cap 60); channel resolved by own URL (subscriptions mix services).
+internal fun RequestContext.subscriptionFeed(channels: List<InfoItem>?): List<InfoItem> {
+    val feed = ArrayList<InfoItem>()
+    if (channels == null || channels.isEmpty()) {
+        return feed
+    }
+    val futures = ArrayList<Future<List<InfoItem>>>()
+    for (channel in channels) {
+        val url = channel.url
+        // Avatar from subscription; upload listings carry none.
+        val subscribedAvatarUrl = channel.thumbnailUrl?.takeIf { it.isNotBlank() }
+        futures.add(
+            executor.submit(
+                Callable {
+                    val uploads =
+                        if (BilibiliLink.isBilibili(url)) {
+                            LocalServerBilibili.uploads(
+                                dbHelper.appContext,
+                                url,
+                                channel.name.orEmpty(),
+                                subscribedAvatarUrl.orEmpty(),
+                            )
+                        } else {
+                            LocalServerMedia.fetchChannelUploads(url)
+                        }
+                    if (!subscribedAvatarUrl.isNullOrEmpty()) {
+                        for (upload in uploads) {
+                            if (upload is StreamInfoItem && upload.uploaderAvatarUrl.isNullOrBlank()) {
+                                upload.uploaderAvatarUrl = subscribedAvatarUrl
+                            }
+                        }
+                    }
+                    uploads
+                },
+            ),
+        )
+    }
+    for ((index, future) in futures.withIndex()) {
+        try {
+            // Bilibili first request of a session: cookies + signing key setup, slower.
+            val waitSeconds = if (BilibiliLink.isBilibili(channels[index].url)) 20L else 5L
+            val res = future.get(waitSeconds, TimeUnit.SECONDS)
+            if (res != null) {
+                feed.addAll(res)
+            }
+        } catch (e: Exception) {
+            serverLog("Future timeout/error fetching subscription feed: " + e.message)
+        }
+    }
+    val now = System.currentTimeMillis()
+    return feed
+        .map { it to uploadTimeOf(it, now) }
+        .sortedByDescending { it.second ?: Long.MIN_VALUE }
+        .take(60)
+        .map { it.first }
+}
+
+/** Upload time, epoch ms: exact date, else relative text against [now]. Null sorts last. */
+private fun uploadTimeOf(
+    item: InfoItem,
+    now: Long,
+): Long? {
+    val stream = item as? StreamInfoItem ?: return null
+    stream.uploadDate?.let { return it.offsetDateTime().toInstant().toEpochMilli() }
+    return stream.textualUploadDate?.let { SubscriptionFeedTimestamps.parseRelativeTime(it, now) }
+}
+
+/** [items] without watched / short / blocked-channel entries, per the user's settings. */
+internal fun HistoryDbHelper.withoutHidden(items: List<InfoItem>): List<InfoItem> {
+    val hideWatched = hideWatched()
+    val hideShorts = hideShorts()
+    val blockedChannelIds = blockedChannelIds()
+
+    val filtered = ArrayList<InfoItem>()
+    val watchedUrls: Set<String> = if (hideWatched) watchedUrls() else emptySet()
+
+    for (item in items) {
+        if (hideWatched && watchedUrls.contains(item.url)) {
+            continue
+        }
+
+        if (hideShorts && item is StreamInfoItem) {
+            if (item.duration > 0 && item.duration <= 120) {
+                continue
+            }
+        }
+
+        if (item is StreamInfoItem && blockedChannelIds.isNotEmpty()) {
+            val channelId = channelUrlToId(item.uploaderUrl)
+            if (channelId != null && blockedChannelIds.contains(channelId)) continue
+        }
+
+        filtered.add(item)
+    }
+    return filtered
+}

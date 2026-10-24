@@ -93,7 +93,7 @@ private fun HistoryDbHelper.startNativeDownload(
 
 // GET /api/v1/download?action=status|start|cancel|delete&id=<video url>&serviceId=<n>
 // Every action answers current {"state","progress"}.
-internal fun ClientHandler.handleApiDownload(
+internal fun RequestContext.handleApiDownload(
     reply: Reply,
     params: Map<String, String>,
 ) {

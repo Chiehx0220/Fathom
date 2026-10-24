@@ -16,12 +16,12 @@ import io.github.aedev.flow.data.model.Video as FlowVideo
 internal fun HistoryDbHelper.playlistRepository() = PlaylistRepository(appContext)
 
 /** Playlist bookmarks and Watch Later: native PlaylistRepository (Room); Watch Later = internal playlist, same table as Flow UI saves. */
-fun HistoryDbHelper.nativeIsPlaylistBookmarked(playlistUrl: String?): Boolean {
+fun HistoryDbHelper.isPlaylistBookmarked(playlistUrl: String?): Boolean {
     val playlistId = playlistUrlToId(playlistUrl) ?: return false
     return runBlocking { playlistRepository().isExternalPlaylistSaved(playlistId) }
 }
 
-fun HistoryDbHelper.nativeBookmarkPlaylist(
+fun HistoryDbHelper.bookmarkPlaylist(
     playlistUrl: String,
     name: String?,
     thumbnailUrl: String?,
@@ -30,13 +30,13 @@ fun HistoryDbHelper.nativeBookmarkPlaylist(
     runBlocking { playlistRepository().saveExternalVideoPlaylist(playlistId, name ?: "", "", thumbnailUrl ?: "") }
 }
 
-fun HistoryDbHelper.nativeUnbookmarkPlaylist(playlistUrl: String) {
+fun HistoryDbHelper.unbookmarkPlaylist(playlistUrl: String) {
     val playlistId = playlistUrlToId(playlistUrl) ?: return
     runBlocking { playlistRepository().unsaveExternalPlaylist(playlistId) }
 }
 
 /** Bookmarked playlists as [InfoItem]s. No uploader field (`PlaylistEntity` has none): SPA card subtitle omits it. */
-fun HistoryDbHelper.nativeBookmarkedPlaylists(): List<InfoItem> =
+fun HistoryDbHelper.bookmarkedPlaylists(): List<InfoItem> =
     runBlocking {
         playlistRepository().getSavedVideoPlaylistsFlow().first().map { info ->
             val item = PlaylistInfoItem(0, playlistIdToUrl(info.id), info.name)
@@ -47,7 +47,7 @@ fun HistoryDbHelper.nativeBookmarkedPlaylists(): List<InfoItem> =
         }
     }
 
-fun HistoryDbHelper.nativeIsWatchLater(videoUrl: String): Boolean {
+fun HistoryDbHelper.isWatchLater(videoUrl: String): Boolean {
     val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return false
     return runBlocking { playlistRepository().isInWatchLater(videoId) }
@@ -72,7 +72,7 @@ internal fun buildFlowVideoFromParams(
 )
 
 /** Also reports SAVED to FlowNeuroEngine (as native toggleWatchLater), best-effort. */
-fun HistoryDbHelper.nativeAddWatchLater(
+fun HistoryDbHelper.addWatchLater(
     url: String,
     title: String,
     uploader: String,
@@ -93,28 +93,28 @@ fun HistoryDbHelper.nativeAddWatchLater(
     }
 }
 
-fun HistoryDbHelper.nativeRemoveWatchLater(url: String) {
+fun HistoryDbHelper.removeWatchLater(url: String) {
     val videoId = LocalServerMedia.getVideoId(url)
     if (videoId.isEmpty()) return
     runBlocking { playlistRepository().removeFromWatchLater(videoId) }
 }
 
 /** Watch Later items as [InfoItem]s; video-only (`renderWatchLaterButton()` call sites). */
-fun HistoryDbHelper.nativeWatchLaterItems(): List<InfoItem> =
+fun HistoryDbHelper.watchLaterItems(): List<InfoItem> =
     runBlocking {
         playlistRepository().getVideoOnlyWatchLaterFlow().first().map { it.toStreamInfoItem(0) }
     }
 
 private fun HistoryDbHelper.likedVideosRepository() = LikedVideosRepository.getInstance(appContext)
 
-/** Like/dislike via `LikedVideosRepository` (DataStore), as native likeVideo/dislikeVideo. `-1`/empty as [nativeAddWatchLater]. */
-fun HistoryDbHelper.nativeLikeState(videoUrl: String): String? {
+/** Like/dislike via `LikedVideosRepository` (DataStore), as native likeVideo/dislikeVideo. `-1`/empty as [addWatchLater]. */
+fun HistoryDbHelper.likeState(videoUrl: String): String? {
     val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return null
     return runBlocking { likedVideosRepository().getLikeState(videoId).first() }
 }
 
-fun HistoryDbHelper.nativeLikeVideo(
+fun HistoryDbHelper.likeVideo(
     url: String,
     title: String,
     uploader: String,
@@ -132,7 +132,7 @@ fun HistoryDbHelper.nativeLikeVideo(
     }
 }
 
-fun HistoryDbHelper.nativeDislikeVideo(
+fun HistoryDbHelper.dislikeVideo(
     url: String,
     title: String,
     uploader: String,
@@ -147,7 +147,7 @@ fun HistoryDbHelper.nativeDislikeVideo(
     }
 }
 
-fun HistoryDbHelper.nativeRemoveLikeState(url: String) {
+fun HistoryDbHelper.removeLikeState(url: String) {
     val videoId = LocalServerMedia.getVideoId(url)
     if (videoId.isEmpty()) return
     runBlocking { likedVideosRepository().removeLikeState(videoId) }

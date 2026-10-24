@@ -1,7 +1,7 @@
 package io.github.aedev.flow.localserver
 
-/** Handler on [ClientHandler]: reply, query, request headers. */
-internal typealias Route = ClientHandler.(reply: Reply, params: Map<String, String>, requestHeaders: Map<String, String>) -> Unit
+/** Handler on [RequestContext]: reply, query, request headers. */
+internal typealias Route = RequestContext.(reply: Reply, params: Map<String, String>, requestHeaders: Map<String, String>) -> Unit
 
 /** All served paths, built once. */
 internal val ROUTES: Map<String, Route> =

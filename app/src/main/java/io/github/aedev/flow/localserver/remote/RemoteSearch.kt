@@ -51,7 +51,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.localserver.HistoryDbHelper
-import io.github.aedev.flow.localserver.nativeSearchHistory
+import io.github.aedev.flow.localserver.searchHistory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -76,7 +76,7 @@ internal fun SearchField(send: (String) -> Unit) {
     LaunchedEffect(focused) {
         if (focused) {
             history =
-                withContext(Dispatchers.IO) { HistoryDbHelper.getInstance(context).nativeSearchHistory().take(HISTORY_LOOKBACK) }
+                withContext(Dispatchers.IO) { HistoryDbHelper.getInstance(context).searchHistory().take(HISTORY_LOOKBACK) }
         }
     }
 

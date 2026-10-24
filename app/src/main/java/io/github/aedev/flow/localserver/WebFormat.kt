@@ -9,7 +9,7 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 
 // Shared page toolbox: formatting, escaping, thumbnails, page (de)serialization.
-object HtmlRendererCommon {
+object WebFormat {
     /** Service display name: Bilibili fixed, others from registered extractor service. */
     @JvmStatic
     fun getServiceName(serviceId: Int): String {

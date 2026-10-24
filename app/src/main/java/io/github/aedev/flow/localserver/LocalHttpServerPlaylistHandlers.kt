@@ -8,28 +8,28 @@ import io.github.aedev.flow.data.model.Video as FlowVideo
 private const val MAX_PLAYLIST_NAME = 100
 
 /** `id`: video being saved; marks the playlists that hold it. */
-internal fun ClientHandler.handleApiPlaylists(
+internal fun RequestContext.handleApiPlaylists(
     reply: Reply,
     params: Map<String, String>,
 ) {
-    val containing = params["id"]?.let { dbHelper.nativePlaylistIdsOf(it) }.orEmpty()
-    reply.sendJson(JSONObject().put("playlists", playlistChoicesJson(dbHelper.nativeUserPlaylists(), containing)))
+    val containing = params["id"]?.let { dbHelper.playlistIdsOf(it) }.orEmpty()
+    reply.sendJson(JSONObject().put("playlists", playlistChoicesJson(dbHelper.userPlaylists(), containing)))
 }
 
-internal fun ClientHandler.handleApiMyList(
+internal fun RequestContext.handleApiMyList(
     reply: Reply,
     params: Map<String, String>,
 ) {
-    val info = dbHelper.nativeUserPlaylist(params["id"].orEmpty()) ?: throw BadRequestException("Unknown playlist")
+    val info = dbHelper.userPlaylist(params["id"].orEmpty()) ?: throw BadRequestException("Unknown playlist")
     val header = JSONObject().put("id", info.id).put("name", info.name).put("videoCount", info.videoCount)
-    reply.sendJson(JSONObject().put("playlist", header).put("videos", mixedVideosJson(dbHelper.nativeUserPlaylistItems(info.id))))
+    reply.sendJson(JSONObject().put("playlist", header).put("videos", mixedVideosJson(dbHelper.userPlaylistItems(info.id))))
 }
 
-internal fun ClientHandler.handleApiLiked(reply: Reply) =
-    reply.sendJson(JSONObject().put("videos", mixedVideosJson(dbHelper.nativeLikedItems())))
+internal fun RequestContext.handleApiLiked(reply: Reply) =
+    reply.sendJson(JSONObject().put("videos", mixedVideosJson(dbHelper.likedItems())))
 
 /** `create` takes `name`; `add`, `remove`, `rename`, `delete` take `playlist`; `add`/`remove` take the video's `url`. */
-internal fun ClientHandler.handlePlaylistAction(
+internal fun RequestContext.handlePlaylistAction(
     reply: Reply,
     params: Map<String, String>,
 ) {
@@ -44,7 +44,7 @@ internal fun ClientHandler.handlePlaylistAction(
 
     fun existing() =
         params["playlist"].orEmpty().also {
-            if (dbHelper.nativeUserPlaylist(it) ==
+            if (dbHelper.userPlaylist(it) ==
                 null
             ) {
                 throw BadRequestException("Unknown playlist")
@@ -52,15 +52,15 @@ internal fun ClientHandler.handlePlaylistAction(
         }
 
     fun addVideo(playlistId: String) {
-        if (url.isNotEmpty()) dbHelper.nativeAddToPlaylist(playlistId, videoOf(url, params))
+        if (url.isNotEmpty()) dbHelper.addToPlaylist(playlistId, videoOf(url, params))
     }
     val playlistId =
         when (params["action"]) {
-            "create" -> dbHelper.nativeCreatePlaylist(name()).also(::addVideo)
+            "create" -> dbHelper.createPlaylist(name()).also(::addVideo)
             "add" -> existing().also(::addVideo)
-            "remove" -> existing().also { dbHelper.nativeRemoveFromPlaylist(it, url) }
-            "rename" -> existing().also { dbHelper.nativeRenamePlaylist(it, name()) }
-            "delete" -> existing().also { dbHelper.nativeDeletePlaylist(it) }
+            "remove" -> existing().also { dbHelper.removeFromPlaylist(it, url) }
+            "rename" -> existing().also { dbHelper.renamePlaylist(it, name()) }
+            "delete" -> existing().also { dbHelper.deletePlaylist(it) }
             else -> throw BadRequestException("Unknown action")
         }
     reply.sendJson(JSONObject().put("status", "success").put("playlist", playlistId))

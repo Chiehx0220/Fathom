@@ -8,18 +8,18 @@ import kotlinx.coroutines.runBlocking
 
 private fun HistoryDbHelper.searchHistoryRepository() = SearchHistoryRepository(appContext)
 
-/** `SearchHistoryRepository` (DataStore). Plain query-string list; [nativeDeleteSearchQuery] resolves id by text. */
-fun HistoryDbHelper.nativeAddSearchQuery(query: String?) {
+/** `SearchHistoryRepository` (DataStore). Plain query-string list; [deleteSearchQuery] resolves id by text. */
+fun HistoryDbHelper.addSearchQuery(query: String?) {
     if (query.isNullOrBlank()) return
     runBlocking { searchHistoryRepository().saveSearchQuery(query.trim()) }
 }
 
-fun HistoryDbHelper.nativeSearchHistory(): List<String> =
+fun HistoryDbHelper.searchHistory(): List<String> =
     runBlocking {
         searchHistoryRepository().getRecentSearches(10).map { it.query }
     }
 
-fun HistoryDbHelper.nativeDeleteSearchQuery(query: String?) {
+fun HistoryDbHelper.deleteSearchQuery(query: String?) {
     if (query.isNullOrBlank()) return
     runBlocking {
         val repo = searchHistoryRepository()
@@ -31,19 +31,19 @@ fun HistoryDbHelper.nativeDeleteSearchQuery(query: String?) {
 internal fun HistoryDbHelper.playerPreferences() = PlayerPreferences(appContext)
 
 /** `PlayerPreferences` (DataStore); `hideWatched` → home-feed toggle, `videoQuality` → Wi-Fi slot. */
-fun HistoryDbHelper.nativeHideWatched(): Boolean = runBlocking { playerPreferences().hideWatchedVideosFromHome.first() }
+fun HistoryDbHelper.hideWatched(): Boolean = runBlocking { playerPreferences().hideWatchedVideosFromHome.first() }
 
-fun HistoryDbHelper.nativeSetHideWatched(enabled: Boolean) {
+fun HistoryDbHelper.setHideWatched(enabled: Boolean) {
     runBlocking { playerPreferences().setHideWatchedVideosFromHome(enabled) }
 }
 
-fun HistoryDbHelper.nativeHideShorts(): Boolean = runBlocking { !playerPreferences().shortsContentEnabled.first() }
+fun HistoryDbHelper.hideShorts(): Boolean = runBlocking { !playerPreferences().shortsContentEnabled.first() }
 
-fun HistoryDbHelper.nativeSetHideShorts(hide: Boolean) {
+fun HistoryDbHelper.setHideShorts(hide: Boolean) {
     runBlocking { playerPreferences().setShortsContentEnabled(!hide) }
 }
 
-fun HistoryDbHelper.nativeVideoQuality(): String = runBlocking { playerPreferences().defaultQualityWifi.first().label }
+fun HistoryDbHelper.videoQuality(): String = runBlocking { playerPreferences().defaultQualityWifi.first().label }
 
 /** [endsAt]: epoch ms of timer expiry; 0 = no timer or inactive. */
 data class DeepFlowStatus(
@@ -51,7 +51,7 @@ data class DeepFlowStatus(
     val endsAt: Long,
 )
 
-fun HistoryDbHelper.nativeDeepFlow(): DeepFlowStatus =
+fun HistoryDbHelper.deepFlow(): DeepFlowStatus =
     runBlocking {
         val preferences = playerPreferences()
         if (!preferences.isDeepFlowCurrentlyActive()) return@runBlocking DeepFlowStatus(active = false, endsAt = 0L)
@@ -61,7 +61,7 @@ fun HistoryDbHelper.nativeDeepFlow(): DeepFlowStatus =
         )
     }
 
-fun HistoryDbHelper.nativeSetDeepFlow(enabled: Boolean) {
+fun HistoryDbHelper.setDeepFlow(enabled: Boolean) {
     runBlocking { playerPreferences().setDeepFlowActive(enabled) }
 }
 

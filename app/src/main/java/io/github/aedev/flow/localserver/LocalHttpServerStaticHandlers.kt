@@ -3,7 +3,7 @@ package io.github.aedev.flow.localserver
 import java.io.FileNotFoundException
 import java.io.OutputStream
 
-// Third-party files loaded from this device (assets/web/vendor), e.g. Video.js.
+// App shell, CSS, JS; third-party files from assets/web/vendor (e.g. Video.js).
 
 private val VENDOR_PATH = Regex("""/vendor/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*""")
 
@@ -26,7 +26,7 @@ internal fun vendorContentType(path: String): String? =
  * One vendor text file. Video.js chunk names carry a content hash; entry files requested with page version: cacheable forever.
  */
 @Throws(Exception::class)
-internal fun ClientHandler.handleVendorAsset(
+internal fun RequestContext.handleVendorAsset(
     reply: Reply,
     path: String,
 ) {
@@ -47,4 +47,20 @@ internal fun ClientHandler.handleVendorAsset(
             return
         }
     reply.send(200, text, type, "public, max-age=31536000, immutable")
+}
+
+// SPA shell, CSS, JS. ?v= ignored: content change changes WebAssets.appVersion, so max-age=31536000 immutable is safe.
+@Throws(Exception::class)
+internal fun RequestContext.handleAppShell(reply: Reply) {
+    reply.send(200, WebShell.appPage(), "text/html; charset=UTF-8")
+}
+
+@Throws(Exception::class)
+internal fun RequestContext.handleAppCss(reply: Reply) {
+    reply.send(200, WebAssets.appCss, "text/css; charset=UTF-8", "public, max-age=31536000, immutable")
+}
+
+@Throws(Exception::class)
+internal fun RequestContext.handleAppJs(reply: Reply) {
+    reply.send(200, WebAssets.appJs, "application/javascript; charset=UTF-8", "public, max-age=31536000, immutable")
 }

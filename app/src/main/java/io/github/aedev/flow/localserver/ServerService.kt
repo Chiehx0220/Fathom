@@ -48,8 +48,8 @@ class ServerService : Service() {
     }
 
     private fun startServer() {
-        HtmlRenderer.lightColors = DynamicColorHelper.getThemeColors(this, false)
-        HtmlRenderer.darkColors = DynamicColorHelper.getThemeColors(this, true)
+        WebTheme.lightColors = DynamicColorHelper.getThemeColors(this, false)
+        WebTheme.darkColors = DynamicColorHelper.getThemeColors(this, true)
 
         ensureChannel()
         // Settings lists the server switch first.

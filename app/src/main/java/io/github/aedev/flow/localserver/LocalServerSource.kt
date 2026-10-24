@@ -109,12 +109,12 @@ internal object LocalServerSource {
         LocalServerMedia.backfillUploaderUrl(page.items, channelUrl)
 
         val avatar =
-            HtmlRendererCommon.getThumbnailUrl(channelExtractor.avatars).takeIf {
-                HtmlRendererCommon.hasThumbnail(channelExtractor.avatars)
+            WebFormat.getThumbnailUrl(channelExtractor.avatars).takeIf {
+                WebFormat.hasThumbnail(channelExtractor.avatars)
             }
         val banner =
-            HtmlRendererCommon.getThumbnailUrl(channelExtractor.banners).takeIf {
-                HtmlRendererCommon.hasThumbnail(channelExtractor.banners)
+            WebFormat.getThumbnailUrl(channelExtractor.banners).takeIf {
+                WebFormat.hasThumbnail(channelExtractor.banners)
             }
         val header =
             ChannelHeader(
@@ -243,6 +243,6 @@ internal fun LocalServerSource.watchInfo(
     mediaUrl: String,
 ): StreamInfo {
     val info = streamInfo(dbHelper.appContext, serviceId, mediaUrl)
-    if (!LocalServerBilibili.isBilibili(serviceId)) info.relatedItems = dbHelper.nativeRelatedVideos(info, serviceId)
+    if (!LocalServerBilibili.isBilibili(serviceId)) info.relatedItems = dbHelper.relatedVideos(info, serviceId)
     return info
 }

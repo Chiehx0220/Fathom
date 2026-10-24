@@ -11,10 +11,10 @@ import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.IOException
 import java.io.OutputStream
 
-// Stream, manifest, subtitle proxies + static assets. Helpers: LocalServerMedia, LocalServerCaches, RemoteSession.
+// Stream, manifest, subtitle proxies. Helpers: LocalServerMedia, LocalServerCaches, RemoteSession.
 
 /** Stream URL a `/stream` request wants from [extractor]'s lists. */
-private fun ClientHandler.resolveDirectUrl(
+private fun RequestContext.resolveDirectUrl(
     extractor: StreamLists,
     requestedItag: Int,
     requestedTrackId: String?,
@@ -59,7 +59,7 @@ private fun ClientHandler.resolveDirectUrl(
         }
     }
 
-    val targetQuality = params["quality"] ?: dbHelper.nativeVideoQuality()
+    val targetQuality = params["quality"] ?: dbHelper.videoQuality()
     val targetHeight = LocalServerMedia.getResolutionHeight(targetQuality)
 
     val progressiveStreams = extractor.videoStreams
@@ -170,7 +170,7 @@ private fun dropAfterDenial(
 }
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleStreamProxy(
+internal fun RequestContext.handleStreamProxy(
     reply: Reply,
     params: Map<String, String>,
     requestHeaders: Map<String, String>,
@@ -341,7 +341,7 @@ internal fun repCacheKey(
 ) = "${serviceId}_${mediaUrl}_rep_$repId"
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleSubtitlesProxy(
+internal fun RequestContext.handleSubtitlesProxy(
     reply: Reply,
     params: Map<String, String>,
 ) {
@@ -400,19 +400,3 @@ internal fun ClientHandler.handleSubtitlesProxy(
  * YouTube WebVTT: placement on every cue timing line ("align:start position:0%") pins captions left in the player. Dropped → centred.
  */
 private fun String.withoutCueSettings(): String = replace(Regex("""^(\S+ --> \S+)[ \t]+\S.*$""", RegexOption.MULTILINE), "$1")
-
-// SPA shell, CSS, JS. ?v= ignored: content change changes WebAssets.appVersion, so max-age=31536000 immutable is safe.
-@Throws(Exception::class)
-internal fun ClientHandler.handleAppShell(reply: Reply) {
-    reply.send(200, WebShell.appPage(), "text/html; charset=UTF-8")
-}
-
-@Throws(Exception::class)
-internal fun ClientHandler.handleAppCss(reply: Reply) {
-    reply.send(200, WebAssets.appCss, "text/css; charset=UTF-8", "public, max-age=31536000, immutable")
-}
-
-@Throws(Exception::class)
-internal fun ClientHandler.handleAppJs(reply: Reply) {
-    reply.send(200, WebAssets.appJs, "application/javascript; charset=UTF-8", "public, max-age=31536000, immutable")
-}

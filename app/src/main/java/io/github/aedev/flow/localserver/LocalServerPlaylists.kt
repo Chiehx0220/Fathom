@@ -11,43 +11,43 @@ import org.schabi.newpipe.extractor.InfoItem
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
 /** User-created video playlists; Watch Later, saved and music playlists are excluded. */
-fun HistoryDbHelper.nativeUserPlaylists(): List<PlaylistInfo> =
+fun HistoryDbHelper.userPlaylists(): List<PlaylistInfo> =
     runBlocking {
         playlistRepository().getUserCreatedVideoPlaylistsFlow().first()
     }
 
-fun HistoryDbHelper.nativeUserPlaylist(playlistId: String): PlaylistInfo? = nativeUserPlaylists().firstOrNull { it.id == playlistId }
+fun HistoryDbHelper.userPlaylist(playlistId: String): PlaylistInfo? = userPlaylists().firstOrNull { it.id == playlistId }
 
-fun HistoryDbHelper.nativePlaylistIdsOf(videoUrl: String): Set<String> {
+fun HistoryDbHelper.playlistIdsOf(videoUrl: String): Set<String> {
     val videoId = LocalServerMedia.getVideoId(videoUrl).ifEmpty { return emptySet() }
     return runBlocking { playlistRepository().getPlaylistIdsForVideo(videoId).toSet() }
 }
 
-fun HistoryDbHelper.nativeUserPlaylistItems(playlistId: String): List<InfoItem> =
+fun HistoryDbHelper.userPlaylistItems(playlistId: String): List<InfoItem> =
     runBlocking {
         playlistRepository().getPlaylistVideosFlow(playlistId).first().map { it.toStreamInfoItem(serviceIdOfVideo(it.id, it.serviceId)) }
     }
 
 /** Id scheme of the app's save-video sheet. */
-fun HistoryDbHelper.nativeCreatePlaylist(name: String): String {
+fun HistoryDbHelper.createPlaylist(name: String): String {
     val id = System.currentTimeMillis().toString()
     runBlocking { playlistRepository().createPlaylist(id, name, "", isPrivate = true) }
     return id
 }
 
-fun HistoryDbHelper.nativeRenamePlaylist(
+fun HistoryDbHelper.renamePlaylist(
     playlistId: String,
     name: String,
 ) = runBlocking { playlistRepository().updatePlaylistName(playlistId, name) }
 
-fun HistoryDbHelper.nativeDeletePlaylist(playlistId: String) = runBlocking { playlistRepository().deletePlaylist(playlistId) }
+fun HistoryDbHelper.deletePlaylist(playlistId: String) = runBlocking { playlistRepository().deletePlaylist(playlistId) }
 
-fun HistoryDbHelper.nativeAddToPlaylist(
+fun HistoryDbHelper.addToPlaylist(
     playlistId: String,
     video: FlowVideo,
 ) = runBlocking { playlistRepository().addVideoToPlaylist(playlistId, video) }
 
-fun HistoryDbHelper.nativeRemoveFromPlaylist(
+fun HistoryDbHelper.removeFromPlaylist(
     playlistId: String,
     videoUrl: String,
 ) {
@@ -56,7 +56,7 @@ fun HistoryDbHelper.nativeRemoveFromPlaylist(
 }
 
 /** Non-music likes, newest first. */
-fun HistoryDbHelper.nativeLikedItems(): List<InfoItem> =
+fun HistoryDbHelper.likedItems(): List<InfoItem> =
     runBlocking {
         LikedVideosRepository.getInstance(appContext).getLikedVideosFlow().first().map { like ->
             FlowVideo(

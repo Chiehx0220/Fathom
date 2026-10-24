@@ -3,6 +3,7 @@ package io.github.aedev.flow.localserver
 import io.github.aedev.flow.bilibili.BilibiliLink
 import io.github.aedev.flow.utils.YouTubeLink
 import io.github.aedev.flow.utils.parseYouTubeLink
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.OutputStream
 import java.util.UUID
@@ -26,64 +27,64 @@ private fun parseSharedVideoParams(params: Map<String, String>): SharedVideoPara
 }
 
 // Toggle handlers answer alike (api.js act()).
-private fun ClientHandler.sendActionResult(reply: Reply) {
+private fun RequestContext.sendActionResult(reply: Reply) {
     reply.sendJson("{\"status\":\"success\"}")
 }
 
 private fun unknownAction(): Nothing = throw BadRequestException("Unknown action")
 
-internal fun ClientHandler.handleSubscribeAction(
+internal fun RequestContext.handleSubscribeAction(
     reply: Reply,
     params: Map<String, String>,
 ) {
     val channelUrl = params.required("id")
     when (params["action"]) {
-        "subscribe" -> dbHelper.nativeAddSubscription(channelUrl, params["name"], params["avatar"])
-        "unsubscribe" -> dbHelper.nativeRemoveSubscription(channelUrl)
+        "subscribe" -> dbHelper.addSubscription(channelUrl, params["name"], params["avatar"])
+        "unsubscribe" -> dbHelper.removeSubscription(channelUrl)
         else -> unknownAction()
     }
     sendActionResult(reply)
 }
 
-internal fun ClientHandler.handleBlockChannelAction(
+internal fun RequestContext.handleBlockChannelAction(
     reply: Reply,
     params: Map<String, String>,
 ) {
     val channelUrl = params.required("id")
     when (params["action"]) {
-        "block" -> dbHelper.nativeBlockChannel(channelUrl)
-        "unblock" -> dbHelper.nativeUnblockChannel(channelUrl)
+        "block" -> dbHelper.blockChannel(channelUrl)
+        "unblock" -> dbHelper.unblockChannel(channelUrl)
         else -> unknownAction()
     }
     sendActionResult(reply)
 }
 
-internal fun ClientHandler.handlePlaylistBookmarkAction(
+internal fun RequestContext.handlePlaylistBookmarkAction(
     reply: Reply,
     params: Map<String, String>,
 ) {
     val playlistUrl = params.required("id")
     when (params["action"]) {
-        "bookmark" -> dbHelper.nativeBookmarkPlaylist(playlistUrl, params["name"], null)
-        "unbookmark" -> dbHelper.nativeUnbookmarkPlaylist(playlistUrl)
+        "bookmark" -> dbHelper.bookmarkPlaylist(playlistUrl, params["name"], null)
+        "unbookmark" -> dbHelper.unbookmarkPlaylist(playlistUrl)
         else -> unknownAction()
     }
     sendActionResult(reply)
 }
 
-internal fun ClientHandler.handleHistoryAction(
+internal fun RequestContext.handleHistoryAction(
     reply: Reply,
     params: Map<String, String>,
 ) {
     when (params["action"]) {
-        "remove" -> dbHelper.nativeRemoveFromHistory(params.required("url"))
-        "clear" -> dbHelper.nativeClearHistory()
+        "remove" -> dbHelper.removeFromHistory(params.required("url"))
+        "clear" -> dbHelper.clearHistory()
         else -> unknownAction()
     }
     sendActionResult(reply)
 }
 
-internal fun ClientHandler.handleWatchLaterAction(
+internal fun RequestContext.handleWatchLaterAction(
     reply: Reply,
     params: Map<String, String>,
 ) {
@@ -91,11 +92,11 @@ internal fun ClientHandler.handleWatchLaterAction(
     when (params["action"]) {
         "add" -> {
             val meta = parseSharedVideoParams(params)
-            dbHelper.nativeAddWatchLater(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl)
+            dbHelper.addWatchLater(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl)
         }
 
         "remove" -> {
-            dbHelper.nativeRemoveWatchLater(url)
+            dbHelper.removeWatchLater(url)
         }
 
         else -> {
@@ -105,22 +106,22 @@ internal fun ClientHandler.handleWatchLaterAction(
     sendActionResult(reply)
 }
 
-internal fun ClientHandler.handleRateVideoAction(
+internal fun RequestContext.handleRateVideoAction(
     reply: Reply,
     params: Map<String, String>,
 ) {
     val url = params.required("url")
     val meta = parseSharedVideoParams(params)
     when (params["action"]) {
-        "like" -> dbHelper.nativeLikeVideo(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl, getServiceId(params))
-        "dislike" -> dbHelper.nativeDislikeVideo(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl)
-        "remove" -> dbHelper.nativeRemoveLikeState(url)
+        "like" -> dbHelper.likeVideo(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl, getServiceId(params))
+        "dislike" -> dbHelper.dislikeVideo(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl)
+        "remove" -> dbHelper.removeLikeState(url)
         else -> unknownAction()
     }
     sendActionResult(reply)
 }
 
-internal fun ClientHandler.handleSendLink(
+internal fun RequestContext.handleSendLink(
     reply: Reply,
     params: Map<String, String>,
     clientIp: String?,
@@ -169,7 +170,7 @@ internal fun ClientHandler.handleSendLink(
     }
 }
 
-internal fun ClientHandler.handleReleaseLock(
+internal fun RequestContext.handleReleaseLock(
     reply: Reply,
     params: Map<String, String>,
 ) {
@@ -197,7 +198,7 @@ private fun parseChapterTitles(raw: String?): List<String> {
 }
 
 // Paired page reports playback ~1/s: phone remote progress + mode.
-internal fun ClientHandler.handleRemoteState(
+internal fun RequestContext.handleRemoteState(
     reply: Reply,
     params: Map<String, String>,
 ) {
@@ -243,7 +244,7 @@ internal fun ClientHandler.handleRemoteState(
 private const val HANDOFF_TITLE_MAX = 200
 
 /** `/handoff`: saves the position to history, then emits a [Handoff] for the app. */
-internal fun ClientHandler.handleHandoff(
+internal fun RequestContext.handleHandoff(
     reply: Reply,
     params: Map<String, String>,
 ) {
@@ -254,7 +255,21 @@ internal fun ClientHandler.handleHandoff(
     val position = params["t"]?.toDoubleOrNull()?.takeIf { it.isFinite() && it >= 0 }
     val duration = params["d"]?.toDoubleOrNull()?.takeIf { it.isFinite() && it > 0 }
     val positionMs = position?.let { (it * 1000).toLong() }
-    if (positionMs != null && duration != null) dbHelper.nativeUpdateWatchPosition(url, positionMs, (duration * 1000).toLong())
+    if (positionMs != null && duration != null) dbHelper.updateWatchPosition(url, positionMs, (duration * 1000).toLong())
     RemoteSession.handOff(Handoff(url, params["title"].orEmpty().take(HANDOFF_TITLE_MAX), LocalServerMedia.getVideoId(url), positionMs))
     sendActionResult(reply)
+}
+
+@Throws(Exception::class)
+internal fun RequestContext.handleSearchHistory(
+    reply: Reply,
+    params: Map<String, String>,
+) {
+    val deleteQuery = params["delete"]
+    if (!deleteQuery.isNullOrEmpty()) {
+        dbHelper.deleteSearchQuery(deleteQuery)
+        reply.sendJson("{\"status\":\"success\"}")
+        return
+    }
+    reply.sendJson(JSONArray(dbHelper.searchHistory()).toString())
 }

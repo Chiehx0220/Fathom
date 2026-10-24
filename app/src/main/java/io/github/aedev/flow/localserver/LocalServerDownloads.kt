@@ -55,7 +55,7 @@ private fun HistoryDbHelper.finishedDownloads(): List<DownloadWithItems> {
         .sortedByDescending { it.download.createdAt }
 }
 
-internal fun ClientHandler.handleApiDownloads(reply: Reply) {
+internal fun RequestContext.handleApiDownloads(reply: Reply) {
     val array = JSONArray()
     for (entry in dbHelper.finishedDownloads()) {
         val download = entry.download
@@ -69,7 +69,7 @@ internal fun ClientHandler.handleApiDownloads(reply: Reply) {
         json.put("title", download.title)
         json.put("channelName", download.uploader)
         json.put("channelId", if (download.channelId.isNotEmpty()) channelIdToUrl(download.channelId, serviceId) else "")
-        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(download.thumbnailUrl))
+        json.put("thumbnailUrl", WebFormat.getThumbnailUrl(download.thumbnailUrl))
         json.put("channelThumbnailUrl", "")
         json.put("duration", download.duration.toInt())
         json.put("viewCount", -1)
@@ -150,7 +150,7 @@ internal fun parseByteRange(
     return if (last >= from) from..last else null
 }
 
-internal fun ClientHandler.handleDownloadFile(
+internal fun RequestContext.handleDownloadFile(
     reply: Reply,
     params: Map<String, String>,
     requestHeaders: Map<String, String>,

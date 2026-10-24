@@ -5,6 +5,11 @@ package io.github.aedev.flow.localserver
  * this overrides roles with the device scheme. Fixed accent presets (purple, green, ...): plain CSS in themes.css.
  */
 object WebTheme {
+    /** Scheme maps by role, set by ServerService. */
+    @Volatile var lightColors: Map<String, String> = emptyMap()
+
+    @Volatile var darkColors: Map<String, String> = emptyMap()
+
     // CSS variable → scheme-map key (from ServerService), per role.
     private val ROLES =
         listOf(
@@ -32,8 +37,8 @@ object WebTheme {
         darkSelector: String = "[data-theme=\"dark\"]",
     ): String {
         val sb = StringBuilder()
-        if (HtmlRenderer.lightColors.isNotEmpty()) sb.append(block(lightSelector, HtmlRenderer.lightColors))
-        if (HtmlRenderer.darkColors.isNotEmpty()) sb.append(block(darkSelector, HtmlRenderer.darkColors))
+        if (WebTheme.lightColors.isNotEmpty()) sb.append(block(lightSelector, WebTheme.lightColors))
+        if (WebTheme.darkColors.isNotEmpty()) sb.append(block(darkSelector, WebTheme.darkColors))
         return sb.toString()
     }
 

@@ -22,7 +22,7 @@ internal fun gateFor(
     }
 
 /** False when the request was answered here (pairing page or refusal). */
-internal fun ClientHandler.admits(
+internal fun RequestContext.admits(
     reply: Reply,
     path: String,
     headers: Map<String, String>,
@@ -44,7 +44,7 @@ internal fun ClientHandler.admits(
     }
 
 /** `/pair?code=`: a right code sets the session cookie. */
-internal fun ClientHandler.handlePair(
+internal fun RequestContext.handlePair(
     reply: Reply,
     params: Map<String, String>,
 ) {

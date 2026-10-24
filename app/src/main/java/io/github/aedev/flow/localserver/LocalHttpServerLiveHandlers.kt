@@ -47,7 +47,7 @@ internal fun isLiveGateway(url: String): Boolean {
 
 /** Relays one HLS playlist/segment of a Bilibili CDN or live gateway; other addresses refused (not an open proxy). */
 @Throws(Exception::class)
-internal fun ClientHandler.handleHlsProxy(
+internal fun RequestContext.handleHlsProxy(
     reply: Reply,
     params: Map<String, String>,
 ) {
@@ -97,7 +97,7 @@ internal fun ClientHandler.handleHlsProxy(
 
 /** Room chat since last poll's position; first poll (no position) only learns it. */
 @Throws(Exception::class)
-internal fun ClientHandler.handleLiveChat(
+internal fun RequestContext.handleLiveChat(
     reply: Reply,
     params: Map<String, String>,
 ) {

@@ -9,7 +9,7 @@ import java.net.URLEncoder
 private const val HLS_TYPE = "application/vnd.apple.mpegurl"
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleHlsVod(
+internal fun RequestContext.handleHlsVod(
     reply: Reply,
     params: Map<String, String>,
 ) {

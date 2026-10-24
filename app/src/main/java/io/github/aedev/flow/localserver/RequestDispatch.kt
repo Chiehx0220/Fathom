@@ -51,7 +51,7 @@ internal fun Application.installLocalServer(
     }
     val blocking = executor.asCoroutineDispatcher()
     intercept(ApplicationCallPipeline.Call) {
-        val handler = ClientHandler(InetAddress.getByName(call.request.local.remoteAddress), dbHelper, executor, pairing)
+        val handler = RequestContext(InetAddress.getByName(call.request.local.remoteAddress), dbHelper, executor, pairing)
         if (!withContext(blocking) { serve(call, handler) }) return@intercept
         finish()
     }
@@ -61,7 +61,7 @@ internal fun Application.installLocalServer(
 /** False = passed to routing (WebSocket upgrade). */
 private fun serve(
     call: ApplicationCall,
-    handler: ClientHandler,
+    handler: RequestContext,
 ): Boolean {
     val reply = KtorReply(call)
     val request = call.request

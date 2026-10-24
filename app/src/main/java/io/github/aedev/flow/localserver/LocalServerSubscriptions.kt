@@ -17,7 +17,7 @@ import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 internal fun HistoryDbHelper.subscriptionRepository() = SubscriptionRepository.getInstance(appContext)
 
 /** Subscriptions as [InfoItem]s. */
-fun HistoryDbHelper.nativeSubscriptions(): List<InfoItem> =
+fun HistoryDbHelper.subscriptions(): List<InfoItem> =
     runBlocking {
         subscriptionRepository().getAllSubscriptions().first().map { sub ->
             val item = ChannelInfoItem(sub.serviceId, channelIdToUrl(sub.channelId, sub.serviceId), sub.channelName)
@@ -28,13 +28,13 @@ fun HistoryDbHelper.nativeSubscriptions(): List<InfoItem> =
         }
     }
 
-fun HistoryDbHelper.nativeIsSubscribed(channelUrl: String?): Boolean {
+fun HistoryDbHelper.isSubscribed(channelUrl: String?): Boolean {
     val channelId = channelUrlToId(channelUrl) ?: return false
     return runBlocking { subscriptionRepository().isSubscribed(channelId).first() }
 }
 
 /** Subscribe, or refresh name/avatar; tracked state kept. */
-fun HistoryDbHelper.nativeAddSubscription(
+fun HistoryDbHelper.addSubscription(
     channelUrl: String,
     channelName: String?,
     channelAvatar: String?,
@@ -51,13 +51,13 @@ fun HistoryDbHelper.nativeAddSubscription(
     }
 }
 
-fun HistoryDbHelper.nativeRemoveSubscription(channelUrl: String) {
+fun HistoryDbHelper.removeSubscription(channelUrl: String) {
     val channelId = channelUrlToId(channelUrl) ?: return
     runBlocking { subscriptionRepository().unsubscribe(channelId) }
 }
 
 /** FlowNeuroEngine block list, direct; ranking already excludes blocked channels (native recommendations too). */
-fun HistoryDbHelper.nativeIsChannelBlocked(channelUrl: String?): Boolean {
+fun HistoryDbHelper.isChannelBlocked(channelUrl: String?): Boolean {
     val channelId = channelUrlToId(channelUrl) ?: return false
     return runBlocking {
         ensureFlowNeuroInitialized()
@@ -65,13 +65,13 @@ fun HistoryDbHelper.nativeIsChannelBlocked(channelUrl: String?): Boolean {
     }
 }
 
-fun HistoryDbHelper.nativeBlockedChannelIds(): Set<String> =
+fun HistoryDbHelper.blockedChannelIds(): Set<String> =
     runBlocking {
         ensureFlowNeuroInitialized()
         FlowNeuroEngine.getInstance(appContext).getBlockedChannels()
     }
 
-fun HistoryDbHelper.nativeBlockChannel(channelUrl: String) {
+fun HistoryDbHelper.blockChannel(channelUrl: String) {
     val channelId = channelUrlToId(channelUrl) ?: return
     runBlocking {
         ensureFlowNeuroInitialized()
@@ -79,7 +79,7 @@ fun HistoryDbHelper.nativeBlockChannel(channelUrl: String) {
     }
 }
 
-fun HistoryDbHelper.nativeUnblockChannel(channelUrl: String) {
+fun HistoryDbHelper.unblockChannel(channelUrl: String) {
     val channelId = channelUrlToId(channelUrl) ?: return
     runBlocking {
         ensureFlowNeuroInitialized()

@@ -10,7 +10,7 @@ import org.schabi.newpipe.extractor.stream.StreamType
 internal fun HistoryDbHelper.viewHistory() = ViewHistory.getInstance(appContext)
 
 /** Watched bare video IDs as full watch URLs (old `getWatchedUrls()` shape). */
-fun HistoryDbHelper.nativeWatchedUrls(): Set<String> =
+fun HistoryDbHelper.watchedUrls(): Set<String> =
     runBlocking {
         viewHistory().getAllWatchedVideoIdentities().map { videoIdToUrl(it.videoId, it.serviceId) }.toSet()
     }
@@ -18,7 +18,7 @@ fun HistoryDbHelper.nativeWatchedUrls(): Set<String> =
 /**
  * Create-or-touch history entry, saved position kept. `uploaderAvatar` dropped (no column).
  */
-fun HistoryDbHelper.nativeSaveToHistory(
+fun HistoryDbHelper.saveToHistory(
     title: String,
     url: String,
     uploader: String,
@@ -41,16 +41,16 @@ fun HistoryDbHelper.nativeSaveToHistory(
 }
 
 /** Progress columns only (position/duration); title/thumbnail/channel untouched. */
-fun HistoryDbHelper.nativeUpdateWatchProgress(
+fun HistoryDbHelper.updateWatchProgress(
     videoUrl: String,
     percentWatched: Int,
     durationSeconds: Int,
 ) {
     val durationMs = durationSeconds.toLong() * 1000
-    nativeUpdateWatchPosition(videoUrl, (durationMs * percentWatched.coerceIn(0, 100)) / 100, durationMs)
+    updateWatchPosition(videoUrl, (durationMs * percentWatched.coerceIn(0, 100)) / 100, durationMs)
 }
 
-fun HistoryDbHelper.nativeUpdateWatchPosition(
+fun HistoryDbHelper.updateWatchPosition(
     videoUrl: String,
     positionMs: Long,
     durationMs: Long,
@@ -60,18 +60,18 @@ fun HistoryDbHelper.nativeUpdateWatchPosition(
     runBlocking { viewHistory().updatePlaybackProgress(videoId, positionMs, durationMs) }
 }
 
-fun HistoryDbHelper.nativeRemoveFromHistory(videoUrl: String) {
+fun HistoryDbHelper.removeFromHistory(videoUrl: String) {
     val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return
     runBlocking { viewHistory().clearVideoHistory(videoId) }
 }
 
-fun HistoryDbHelper.nativeClearHistory() {
+fun HistoryDbHelper.clearHistory() {
     runBlocking { viewHistory().clearAllHistory() }
 }
 
 /** History rows for the JSON API: video fields + progress (0-100). */
-fun HistoryDbHelper.nativeHistoryJson(): org.json.JSONArray =
+fun HistoryDbHelper.historyJson(): org.json.JSONArray =
     runBlocking {
         val array = org.json.JSONArray()
         // Video may have two rows (one under a whole link, from web page before id normalisation): most recent wins.
@@ -86,7 +86,7 @@ fun HistoryDbHelper.nativeHistoryJson(): org.json.JSONArray =
             json.put("title", entry.title)
             json.put("channelName", entry.channelName)
             json.put("channelId", if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId, entry.serviceId) else "")
-            json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(entry.thumbnailUrl))
+            json.put("thumbnailUrl", WebFormat.getThumbnailUrl(entry.thumbnailUrl))
             json.put("channelThumbnailUrl", "")
             json.put("duration", (entry.duration / 1000).toInt())
             json.put("viewCount", -1)
