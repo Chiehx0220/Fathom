@@ -21,6 +21,12 @@ const swatch = (palette) => {
     return el;
 };
 
+// Text with an {icon} placeholder replaced by the glyph.
+const withIcon = (text, icon) => {
+    const [before, after] = text.split('{icon}');
+    return after === undefined ? [text] : [before, FT.icon(icon), after];
+};
+
 const modePills = () => {
     const row = h('div', { class: 'seg' }, FT.modes.map(([id, label]) => {
         const pill = FT.pill(label, null, FT.theme.mode() === id, () => {
@@ -72,9 +78,9 @@ FT.register('settings', {
                 toggle(FT.t('filter_hide_shorts'), FT.t('filter_hide_shorts_hint'), !!values.hideShorts, (on) => FT.api.settings({ hideShorts: on }), 'hide-shorts')));
         }
         sections.push(h('section', {}, h('h2', {}, FT.t('settings_remote')),
-            h('p', { class: 'hint' }, FT.t(FT.remote.active ? 'remote_hint_connected' : 'remote_hint_idle')),
+            h('p', { class: 'hint' }, ...withIcon(FT.t(FT.remote.active ? 'remote_hint_connected' : 'remote_hint_idle'), 'cast')),
             h('div', { class: 'btns', style: 'margin-top:12px' },
-                FT.button(FT.t(FT.remote.active ? 'disconnect' : 'connect_remote'), 'cast', () => { FT.remote.toggle(); setTimeout(() => FT.reload(), 600); }, 'primary', 'remote'))));
+                FT.button(FT.t(FT.remote.active ? 'disconnect' : 'connect_remote'), 'smartphone', () => { FT.remote.toggle(); setTimeout(() => FT.reload(), 600); }, 'primary', 'remote'))));
         sections.push(h('section', {}, h('h2', {}, FT.t('settings_fullscreen')),
             h('p', { class: 'hint' }, FT.t('settings_fullscreen_hint'))));
 

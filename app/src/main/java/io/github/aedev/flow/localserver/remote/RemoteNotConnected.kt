@@ -18,9 +18,9 @@ import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -111,20 +111,20 @@ internal fun NotConnected() {
                     content = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
             }
-            ConnectStep(if (address != null) 3 else 2, stringResource(R.string.remote_connect_step_cast, CAST_MARK), castIcon = true)
+            ConnectStep(if (address != null) 3 else 2, stringResource(R.string.remote_connect_step_phone, ICON_MARK), inlineIcon = true)
         }
     }
 }
 
-/** Placeholder replaced by the cast icon inside the step text. */
-private const val CAST_MARK = "\u0001"
-private const val CAST_ID = "cast"
+/** Placeholder replaced by the phone icon. */
+private const val ICON_MARK = "\u0001"
+private const val ICON_ID = "phone"
 
 @Composable
 private fun ConnectStep(
     number: Int,
     text: String,
-    castIcon: Boolean = false,
+    inlineIcon: Boolean = false,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Box(
@@ -133,23 +133,23 @@ private fun ConnectStep(
         ) {
             Text(number.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
-        if (castIcon && CAST_MARK in text) {
+        if (inlineIcon && ICON_MARK in text) {
             val annotated =
                 buildAnnotatedString {
-                    append(text.substringBefore(CAST_MARK))
-                    appendInlineContent(CAST_ID, "cast")
-                    append(text.substringAfter(CAST_MARK))
+                    append(text.substringBefore(ICON_MARK))
+                    appendInlineContent(ICON_ID, "phone")
+                    append(text.substringAfter(ICON_MARK))
                 }
             val inline =
                 mapOf(
-                    CAST_ID to
+                    ICON_ID to
                         InlineTextContent(Placeholder(24.sp, 24.sp, PlaceholderVerticalAlign.TextCenter)) {
-                            Icon(Icons.Default.Cast, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Default.Smartphone, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         },
                 )
             Text(annotated, style = MaterialTheme.typography.bodyLarge, inlineContent = inline, modifier = Modifier.weight(1f))
         } else {
-            Text(text.replace(CAST_MARK, ""), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+            Text(text.replace(ICON_MARK, ""), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         }
     }
 }

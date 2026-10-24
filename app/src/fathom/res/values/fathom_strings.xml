@@ -25,7 +25,7 @@
     <string name="remote_disconnect">Disconnect</string>
     <string name="remote_not_connected">Not connected</string>
     <string name="remote_connect_step_open">On the TV or computer, open this address in a browser on the same Wi-Fi.</string>
-    <string name="remote_connect_step_cast">Press the %1$s cast button at the top right of the web page.</string>
+    <string name="remote_connect_step_phone">The page connects by itself. If it does not, open its Settings and tap %1$s Connect to phone.</string>
     <string name="remote_connect_step_pair">Enter this pairing code when the page asks for it.</string>
     <string name="remote_copy_address">Copy address</string>
     <string name="remote_address_copied">Address copied</string>

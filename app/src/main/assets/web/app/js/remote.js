@@ -1,27 +1,29 @@
 // Phone-remote endpoint of the page: pairing, command handling (WebSocket) and state reporting (HTTP).
-// The pairing code shares its storage key with the classic pages so both UIs stay paired.
+// Pairing code is per tab (sessionStorage): a new tab is a new page and takes over.
 (() => {
 const KEY = 'server_play_release_code';
+// Explicit disconnect; suppresses auto-pair until a manual connect.
+const OPT_OUT = 'fathom_remote_opt_out';
 let socket = null;
+let pairing = false;
 let reportTimer = 0;
 let idleTimer = 0;
 let pointerIdleTimer = 0;
 let pointerX = innerWidth / 2;
 let pointerY = innerHeight / 2;
 
-const code = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
-const setCode = (value) => { try { if (value) localStorage.setItem(KEY, value); else localStorage.removeItem(KEY); } catch (e) {} };
+const code = () => { try { return sessionStorage.getItem(KEY); } catch (e) { return null; } };
+const setCode = (value) => { try { if (value) sessionStorage.setItem(KEY, value); else sessionStorage.removeItem(KEY); } catch (e) {} };
+const optedOut = () => { try { return localStorage.getItem(OPT_OUT) === '1'; } catch (e) { return false; } };
+const setOptOut = (value) => { try { if (value) localStorage.setItem(OPT_OUT, '1'); else localStorage.removeItem(OPT_OUT); } catch (e) {} };
 
-// ---- The banner, the pointer and the key hints ----
+// ---- Pointer and key hints ----
 
 const HINTS = [['open_with', FT.t('hint_move')], ['OK', FT.t('open')], ['menu', FT.t('options')], ['undo', FT.t('hint_back')]];
 
 const paintState = () => {
     const on = FT.remote.active;
     document.body.classList.toggle('remote-active', on);
-    const banner = FT.$('#remote-banner');
-    banner.hidden = !on;
-    if (on) banner.replaceChildren(FT.icon('cast', 'fill'), FT.t('remote_connected'), FT.h('button', { type: 'button', onclick: () => FT.remote.release() }, FT.t('disconnect')));
     const hints = FT.$('#keyhints');
     hints.hidden = !on;
     if (on) {
@@ -29,7 +31,6 @@ const paintState = () => {
             FT.h('span', { class: 'k' }, key.length > 2 ? FT.icon(key) : key), label)));
     }
     if (!on) { clearTimeout(pointerIdleTimer); FT.$('#vptr').hidden = true; }
-    if (FT.renderTop) FT.renderTop();
 };
 
 // Idle-fade for the key hints; any command resets the timer.
@@ -39,13 +40,6 @@ const wake = () => {
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => hints.classList.add('idle'), 4000);
 };
-
-// The banner hides in fullscreen; isFullscreen() includes the manual "remote-fs" fallback.
-const updateBannerFullscreen = () => {
-    FT.$('#remote-banner').classList.toggle('fs-hidden', FT.player.isFullscreen());
-};
-document.addEventListener('fullscreenchange', updateBannerFullscreen);
-new MutationObserver(updateBannerFullscreen).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
 // Idle-fade for the pointer dot; any pointer activity resets the timer.
 const showPointer = () => {
@@ -184,45 +178,70 @@ const report = () => {
         }
     }
     fetch('/remote-state?' + q).then((res) => res.json()).then((body) => {
-        // Lock released on the phone: disconnect here too.
+        // Lock gone on the phone: end here; next wake re-pairs.
         if (body.status === 'error') FT.remote.end();
     }).catch(() => {});
+};
+
+// Report cadence: 1 s playing, 5 s idle, 8 s hidden (< PAGE_ALIVE_MS).
+const reportDelay = () => {
+    const snap = FT.player.snapshot();
+    if (snap.open && !snap.paused) return 1000;
+    return document.hidden ? 8000 : 5000;
+};
+const tick = () => {
+    report();
+    reportTimer = setTimeout(tick, reportDelay());
+};
+const restartReports = () => {
+    clearTimeout(reportTimer);
+    tick();
 };
 
 const connect = () => {
     if (socket) return;
     socket = new WebSocket('ws://' + location.hostname + ':8081');
     socket.onmessage = (event) => handle(String(event.data));
-    socket.onclose = () => {
+    socket.onclose = (event) => {
         socket = null;
+        if (event.reason === 'taken_over') {
+            FT.remote.end();
+            FT.toast(FT.t('remote_taken_over'));
+            return;
+        }
         // Server may have restarted: retry while the lock is held.
         setTimeout(() => { if (code()) connect(); }, 1500);
     };
-    clearInterval(reportTimer);
-    reportTimer = setInterval(report, 1000);
-    report();
+    restartReports();
 };
 
 Object.assign(FT.remote, {
-    // Pairs with the phone (or, if already paired, does nothing new).
-    async pair() {
+    // takeover: replace the lock holder; otherwise busy.
+    async pair({ silent = false, takeover = !silent } = {}) {
+        if (!silent) setOptOut(false);
+        if (pairing) return;
+        pairing = true;
         try {
-            const res = await fetch('/send-link?' + new URLSearchParams({ id: '__connect_only__', release_code: code() || '', title: document.title }));
+            const res = await fetch('/send-link?' + new URLSearchParams({ id: '__connect_only__', release_code: code() || '', title: document.title, takeover: takeover ? 1 : 0 }));
             const body = await res.json();
             if (body.status === 'success') {
+                const fresh = !FT.remote.active;
                 setCode(body.release_code);
                 FT.remote.active = true;
-                paintState();
+                if (fresh) { paintState(); wake(); }
                 connect();
-                wake();
-                FT.toast(FT.t('remote_connected_toast'));
+                if (!silent) FT.toast(FT.t('remote_connected_toast'));
             } else if (body.status === 'busy') {
-                FT.toast(body.message || FT.t('remote_other_device'));
-            } else {
+                // Busy: drop the local session.
+                if (FT.remote.active) FT.remote.end();
+                if (!silent) FT.toast(body.message || FT.t('remote_other_device'));
+            } else if (!silent) {
                 FT.toast(body.message || FT.t('remote_could_not_connect'));
             }
         } catch (e) {
-            FT.toast(FT.t('remote_unreachable'));
+            if (!silent) FT.toast(FT.t('remote_unreachable'));
+        } finally {
+            pairing = false;
         }
     },
 
@@ -230,6 +249,7 @@ Object.assign(FT.remote, {
 
     // Ends the session here and tells the phone.
     async release() {
+        setOptOut(true);
         const lock = code();
         if (lock) { try { await fetch('/release-lock?release_code=' + FT.enc(lock)); } catch (e) {} }
         FT.remote.end();
@@ -239,20 +259,38 @@ Object.assign(FT.remote, {
     end() {
         setCode(null);
         FT.remote.active = false;
-        clearInterval(reportTimer);
+        clearTimeout(reportTimer);
         reportTimer = 0;
         clearTimeout(idleTimer);
         if (socket) { const s = socket; socket = null; s.onclose = null; s.close(); }
         paintState();
     },
 
-    // On page load: pick the session back up if this browser still holds a lock.
+    // Pairs unless opted out or on the phone.
+    auto({ takeover = false } = {}) {
+        if (optedOut() || FT.onPhone()) return;
+        FT.remote.pair({ silent: true, takeover });
+    },
+
+    // Load: pair with takeover (newest page wins).
     resume() {
-        if (!code()) return;
-        FT.remote.active = true;
-        paintState();
-        connect();
-        wake();
+        if (code()) {
+            FT.remote.active = true;
+            paintState();
+            wake();
+            // No auto-pair: reconnect the socket for the held lock.
+            if (optedOut() || FT.onPhone()) connect();
+        }
+        FT.remote.auto({ takeover: true });
     },
 });
+
+// Wake: reclaim a released lock; no-op while held.
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    FT.remote.auto();
+    if (FT.remote.active) restartReports();
+});
+addEventListener('online', () => FT.remote.auto());
+addEventListener('hashchange', () => { if (FT.remote.active) setTimeout(report, 300); });
 })();

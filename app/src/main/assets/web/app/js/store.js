@@ -22,4 +22,6 @@ FT.store = {
 
 // Whether the phone remote is connected here; the remote layer keeps it up to date.
 FT.remote = { active: false };
+// Served to the phone's own browser.
+FT.onPhone = () => ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
 })();

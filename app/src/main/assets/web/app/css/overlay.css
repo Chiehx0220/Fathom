@@ -27,13 +27,7 @@ kbd { min-width: 26px; padding: 3px 7px; border-radius: 7px; background: var(--s
 .vptr.press .vptr-disc { transform: scale(0.8); }
 .vptr.press .vptr-halo { opacity: 1; transform: scale(1); }
 
-/* Idle-fades alongside #keyhints (see remote.js's wake()). */
-.remote-banner { position: fixed; left: 24px; bottom: 18px; z-index: 3050; display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 8px 0 16px; border-radius: 20px; background: var(--acc); color: var(--on-acc); font-size: 13px; font-weight: 500; transition: opacity 0.4s; }
-.remote-banner.fs-hidden { opacity: 0; pointer-events: none; }
-.remote-banner .i { font-size: 16px; }
-.remote-banner button { height: 28px; padding: 0 14px; border: 0; border-radius: 14px; background: color-mix(in srgb, var(--on-acc) 16%, transparent); color: inherit; font-weight: 500; }
-.remote-banner button:hover { background: color-mix(in srgb, var(--on-acc) 26%, transparent); }
-
+/* Idle fade (remote.js wake()). */
 .keyhints { position: fixed; left: 50%; bottom: 18px; z-index: 3040; display: flex; align-items: center; gap: 18px; padding: 10px 22px; border-radius: 26px; background: var(--s2); color: var(--mute); font-size: 13px; white-space: nowrap; transform: translateX(-50%); transition: opacity 0.4s; }
 .keyhints.idle { opacity: 0; }
 /* Middle-aligned: icon-font and text badges have different baselines. */
@@ -42,6 +36,5 @@ kbd { min-width: 26px; padding: 3px 7px; border-radius: 7px; background: var(--s
 
 @media (max-width: 720px) {
   .keyhints { display: none; }
-  .remote-banner { bottom: 80px; left: 12px; }
   .toast { bottom: 90px; }
 }

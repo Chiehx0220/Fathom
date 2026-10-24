@@ -48,9 +48,7 @@ const renderTop = () => {
                 h('span', {}, FT.store.serviceName(FT.store.service)), FT.icon('expand_more')),
             FT.deepFlow.active ? h('a', { class: 'dfbadge', href: '#/settings', title: FT.deepFlow.status(), 'aria-label': FT.t('deep_flow_badge_label'), data: { f: '', key: 'deepflow' } },
                 FT.deepFlow.icon(), h('span', {}, FT.t('deep_flow_badge'))) : null,
-            h('a', { class: 'rbtn' + (searching ? ' on' : ''), href: '#/search', 'aria-label': FT.t('search'), data: { f: '', key: 'search' } }, FT.icon('search')),
-            h('button', { type: 'button', class: 'rbtn' + (FT.remote.active ? ' on' : ''), id: 'cast-btn', 'aria-label': FT.t('connect_remote'), data: { f: '', key: 'cast' }, onclick: () => FT.remote.toggle() },
-                FT.icon('cast', FT.remote.active ? 'fill' : ''))));
+            h('a', { class: 'rbtn' + (searching ? ' on' : ''), href: '#/search', 'aria-label': FT.t('search'), data: { f: '', key: 'search' } }, FT.icon('search'))));
 };
 FT.renderTop = renderTop;
 

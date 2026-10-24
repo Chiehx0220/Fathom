@@ -55,6 +55,7 @@ body[data-input="keys"] .suggest-item.sel { background: var(--s2); box-shadow: 0
 .settings { display: flex; flex-direction: column; gap: 28px; max-width: 980px; padding: 8px var(--pad-x) 24px; }
 .settings h2 { margin-bottom: 4px; font-size: 18px; font-weight: 500; }
 .settings .hint { color: var(--mute); font-size: 14px; }
+.settings .hint .i { font-size: 18px; vertical-align: -4px; }
 .setting { display: flex; align-items: center; gap: 16px; padding: 14px 18px; border-radius: 18px; background: var(--s1); }
 .setting > div:first-child { flex: 1; }
 .setting b { display: block; font-weight: 500; }

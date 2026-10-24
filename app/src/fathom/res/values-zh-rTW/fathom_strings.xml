@@ -24,7 +24,7 @@
     <string name="remote_disconnect">中斷連線</string>
     <string name="remote_not_connected">未連線</string>
     <string name="remote_connect_step_open">在電視或電腦上，用瀏覽器開啟這個位址（需連到同一個 Wi-Fi）。</string>
-    <string name="remote_connect_step_cast">按下網頁右上角的 %1$s 投放按鈕。</string>
+    <string name="remote_connect_step_phone">網頁會自動連線。若未連線，請前往網頁的「設定」，點選 %1$s「連線手機」。</string>
     <string name="remote_connect_step_pair">網頁要求時，輸入這組配對碼。</string>
     <string name="remote_copy_address">複製位址</string>
     <string name="remote_address_copied">已複製位址</string>
