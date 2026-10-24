@@ -12,6 +12,8 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import io.github.aedev.flow.localserver.remote.SETTINGS_ROUTE
+import io.github.aedev.flow.widget.core.action.WidgetDeepLink
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -50,16 +52,14 @@ class ServerService : Service() {
         HtmlRenderer.darkColors = DynamicColorHelper.getThemeColors(this, true)
 
         ensureChannel()
-        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+        // Settings lists the server switch first.
         val pendingIntent =
-            launchIntent?.let {
-                PendingIntent.getActivity(
-                    this,
-                    0,
-                    it,
-                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-                )
-            }
+            PendingIntent.getActivity(
+                this,
+                0,
+                WidgetDeepLink.openRoute(this, SETTINGS_ROUTE),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
 
         val notification =
             NotificationCompat
