@@ -1,6 +1,8 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.data.recommendation.InteractionType
+import org.json.JSONArray
+import org.json.JSONObject
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import java.io.OutputStream
@@ -13,20 +15,11 @@ internal fun ClientHandler.handleApiSearch(
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
-    val query = params["q"]
-    if (query.isNullOrEmpty()) {
-        sendResponse(os, 400, ApiRenderer.errorJson("Missing 'q' parameter"), "application/json")
-        return
-    }
+    val query = params.required("q")
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     if (nextPage == null) dbHelper.nativeAddSearchQuery(query)
-    try {
-        val page = LocalServerSource.search(dbHelper.appContext, serviceId, query, nextPage)
-        val filtered = filterItems(page.items)
-        sendResponse(os, 200, ApiRenderer.searchResultJson(filtered, serviceId, page.next).toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-    }
+    val page = LocalServerSource.search(dbHelper.appContext, serviceId, query, nextPage)
+    sendJson(os, ApiRenderer.searchResultJson(filterItems(page.items), serviceId, page.next))
 }
 
 internal fun ClientHandler.handleApiHome(
@@ -35,23 +28,18 @@ internal fun ClientHandler.handleApiHome(
 ) {
     val serviceId = getServiceId(params)
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
-    try {
-        var items: List<InfoItem>
-        var next: Page?
-        if (serviceId != LocalServerMedia.SERVICE_YOUTUBE) {
-            val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
-            items = page.items
-            next = page.next
-        } else {
-            // fetchTrendingItems(): no pagination.
-            items = dbHelper.fetchTrendingItems(serviceId)
-            next = null
-        }
-        val filtered = filterItems(items)
-        sendResponse(os, 200, ApiRenderer.searchResultJson(filtered, serviceId, next).toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
+    val items: List<InfoItem>
+    val next: Page?
+    if (serviceId != LocalServerMedia.SERVICE_YOUTUBE) {
+        val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
+        items = page.items
+        next = page.next
+    } else {
+        // fetchTrendingItems(): no pagination.
+        items = dbHelper.fetchTrendingItems(serviceId)
+        next = null
     }
+    sendJson(os, ApiRenderer.searchResultJson(filterItems(items), serviceId, next))
 }
 
 // Additive route mirroring handleApiHome(), via buildAndRankHomeFeed() on YouTube: FlowNeuroEngine-ranked; handleApiHome() stays raw.
@@ -66,35 +54,29 @@ internal fun ClientHandler.handleApiRecommendations(
     val serviceId = getServiceId(params)
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     val loadMore = params["more"] == "1"
-    try {
-        var items: List<InfoItem>
-        var alreadyRanked = false
-        var hasMore = false
-        if (serviceId != LocalServerMedia.SERVICE_YOUTUBE) {
-            // alreadyRanked false: applyFlowNeuroRanking() below reorders. Service's own nextPage covers "more".
-            val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
-            items = page.items
-            hasMore = page.next != null
-        } else if (loadMore) {
-            val (feedItems, more) = dbHelper.continueDiscoveryFeed(serviceId)
-            items = feedItems
-            alreadyRanked = true
-            hasMore = more
-        } else {
-            // buildAndRankHomeFeed(): trending + discovery + subs, ranked. "more" = non-empty; later rounds governed by continueDiscoveryFeed.
-            val (feedItems, more) = dbHelper.buildAndRankHomeFeed(serviceId)
-            items = feedItems
-            alreadyRanked = true
-            hasMore = more
-        }
-        val filtered = filterItems(items)
-        val ranked = if (alreadyRanked) filtered else applyFlowNeuroRanking(filtered, serviceId)
-        val json = ApiRenderer.searchResultJson(ranked, serviceId, null)
-        json.put("hasMore", hasMore)
-        sendResponse(os, 200, json.toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
+    var items: List<InfoItem>
+    var alreadyRanked = false
+    var hasMore = false
+    if (serviceId != LocalServerMedia.SERVICE_YOUTUBE) {
+        // alreadyRanked false: applyFlowNeuroRanking() below reorders. Service's own nextPage covers "more".
+        val page = LocalServerSource.home(dbHelper.appContext, serviceId, nextPage)
+        items = page.items
+        hasMore = page.next != null
+    } else if (loadMore) {
+        val (feedItems, more) = dbHelper.continueDiscoveryFeed(serviceId)
+        items = feedItems
+        alreadyRanked = true
+        hasMore = more
+    } else {
+        // buildAndRankHomeFeed(): trending + discovery + subs, ranked. "more" = non-empty; later rounds governed by continueDiscoveryFeed.
+        val (feedItems, more) = dbHelper.buildAndRankHomeFeed(serviceId)
+        items = feedItems
+        alreadyRanked = true
+        hasMore = more
     }
+    val filtered = filterItems(items)
+    val ranked = if (alreadyRanked) filtered else applyFlowNeuroRanking(filtered, serviceId)
+    sendJson(os, ApiRenderer.searchResultJson(ranked, serviceId, null).put("hasMore", hasMore))
 }
 
 internal fun ClientHandler.handleApiChannel(
@@ -102,28 +84,18 @@ internal fun ClientHandler.handleApiChannel(
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
-    val channelUrl = params["id"]
-    if (channelUrl.isNullOrEmpty()) {
-        sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
-        return
-    }
+    val channelUrl = params.required("id")
     val tab = params.getOrDefault("tab", "videos")
     // Matches YoutubeChannelTabLinkHandlerFactory SORT_LATEST/POPULAR/OLDEST literals. YouTube "videos" tab only; no-op elsewhere.
     val sort = params["sort"]?.takeIf { it.isNotBlank() }
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
-    try {
-        val channel = LocalServerSource.channel(dbHelper.appContext, serviceId, channelUrl, tab, sort, nextPage)
-        val isSubscribed = dbHelper.nativeIsSubscribed(channel.header.url)
-        val filtered = filterItems(channel.items)
-
-        val json = org.json.JSONObject()
-        json.put("channel", ApiRenderer.channelJson(channel.header, isSubscribed))
-        json.put("videos", ApiRenderer.infoItemsToJson(filtered, serviceId))
-        json.put("nextPage", ApiRenderer.serializePageOrNull(channel.next))
-        sendResponse(os, 200, json.toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-    }
+    val channel = LocalServerSource.channel(dbHelper.appContext, serviceId, channelUrl, tab, sort, nextPage)
+    val isSubscribed = dbHelper.nativeIsSubscribed(channel.header.url)
+    val json = JSONObject()
+    json.put("channel", ApiRenderer.channelJson(channel.header, isSubscribed))
+    json.put("videos", ApiRenderer.infoItemsToJson(filterItems(channel.items), serviceId))
+    json.put("nextPage", ApiRenderer.serializePageOrNull(channel.next))
+    sendJson(os, json)
 }
 
 internal fun ClientHandler.handleApiVideo(
@@ -131,27 +103,16 @@ internal fun ClientHandler.handleApiVideo(
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
-    val mediaUrl = params["id"]
-    if (mediaUrl.isNullOrEmpty()) {
-        sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
-        return
-    }
-    try {
-        val info = LocalServerSource.watchInfo(dbHelper, serviceId, mediaUrl)
-        var thumbUrl = ""
-        if (info.thumbnails != null && !info.thumbnails.isEmpty()) {
-            thumbUrl = info.thumbnails[info.thumbnails.size - 1].url
-        }
-        var uploaderAvatarUrl: String? = null
-        if (info.uploaderAvatars != null && !info.uploaderAvatars.isEmpty()) {
-            uploaderAvatarUrl = HtmlRenderer.getThumbnailUrl(info.uploaderAvatars)
-        }
-        dbHelper.nativeSaveToHistory(info.name, info.url, info.uploaderName, thumbUrl, serviceId, info.uploaderUrl, uploaderAvatarUrl)
-        reportFlowNeuroClick(info, serviceId)
-        sendResponse(os, 200, ApiRenderer.videoDetailJson(info, serviceId).toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-    }
+    val info = LocalServerSource.watchInfo(dbHelper, serviceId, params.required("id"))
+    val thumbUrl =
+        info.thumbnails
+            ?.lastOrNull()
+            ?.url
+            .orEmpty()
+    val uploaderAvatarUrl = info.uploaderAvatars?.takeIf { it.isNotEmpty() }?.let { HtmlRenderer.getThumbnailUrl(it) }
+    dbHelper.nativeSaveToHistory(info.name, info.url, info.uploaderName, thumbUrl, serviceId, info.uploaderUrl, uploaderAvatarUrl)
+    reportFlowNeuroClick(info, serviceId)
+    sendJson(os, ApiRenderer.videoDetailJson(info, serviceId))
 }
 
 internal fun ClientHandler.handleApiComments(
@@ -159,52 +120,31 @@ internal fun ClientHandler.handleApiComments(
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
-    val videoUrl = params["id"]
-    if (videoUrl.isNullOrEmpty()) {
-        sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
+    val videoUrl = params.required("id")
+    val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
+    val page = LocalServerSource.comments(dbHelper.appContext, serviceId, videoUrl, nextPage)
+    if (page.disabled) {
+        sendJson(os, "{\"comments\":[],\"nextPage\":null,\"commentsDisabled\":true}")
         return
     }
-    val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
-    try {
-        val page = LocalServerSource.comments(dbHelper.appContext, serviceId, videoUrl, nextPage)
-        if (page.disabled) {
-            sendResponse(os, 200, "{\"comments\":[],\"nextPage\":null,\"commentsDisabled\":true}", "application/json")
-            return
-        }
-        val comments = org.json.JSONArray()
-        for (item in page.items) {
-            comments.put(ApiRenderer.commentJson(item))
-        }
-        val json = org.json.JSONObject()
-        json.put("comments", comments)
-        json.put("nextPage", ApiRenderer.serializePageOrNull(page.next))
-        json.put("commentsDisabled", false)
-        sendResponse(os, 200, json.toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
+    val comments = JSONArray()
+    for (item in page.items) {
+        comments.put(ApiRenderer.commentJson(item))
     }
-}
-
-// Reachability check for server-address settings; no extraction cost.
-internal fun ClientHandler.handleApiPing(os: OutputStream) {
-    sendResponse(os, 200, "{\"status\":\"ok\",\"service\":\"fathom\"}", "application/json")
+    val json = JSONObject()
+    json.put("comments", comments)
+    json.put("nextPage", ApiRenderer.serializePageOrNull(page.next))
+    json.put("commentsDisabled", false)
+    sendJson(os, json)
 }
 
 internal fun ClientHandler.handleApiWatchProgress(
     os: OutputStream,
     params: Map<String, String>,
 ) {
-    val videoUrl = params["id"]
-    if (videoUrl.isNullOrEmpty()) {
-        sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
-        return
-    }
-    val percent = params["percent"]?.toIntOrNull()
+    val videoUrl = params.required("id")
+    val percent = params["percent"]?.toIntOrNull() ?: throw BadRequestException("Missing or invalid 'percent' parameter")
     val durationSeconds = params["durationSeconds"]?.toIntOrNull() ?: 0
-    if (percent == null) {
-        sendResponse(os, 400, ApiRenderer.errorJson("Missing or invalid 'percent' parameter"), "application/json")
-        return
-    }
     dbHelper.nativeUpdateWatchProgress(videoUrl, percent, durationSeconds)
 
     // FlowNeuro WATCHED signal, best-effort (LocalHttpServer.kt FlowNeuro section). serviceId: newer param (player.js initWatchProgressReporting()); stale cached page without it: no-op.
@@ -218,39 +158,13 @@ internal fun ClientHandler.handleApiWatchProgress(
         }
     }
 
-    sendResponse(os, 200, "{\"status\":\"ok\"}", "application/json")
-}
-
-// Native audio-player control dropped with ServerService ExoPlayer (duplicated host player); no-op kept for older clients.
-internal fun ClientHandler.handleApiPlayerPlay(
-    os: OutputStream,
-    params: Map<String, String>,
-) {
-    sendResponse(os, 200, "{\"status\":\"unsupported\"}", "application/json")
-}
-
-internal fun ClientHandler.handleApiPlayerPause(os: OutputStream) {
-    sendResponse(os, 200, "{\"status\":\"unsupported\"}", "application/json")
-}
-
-internal fun ClientHandler.handleApiPlayerResume(os: OutputStream) {
-    sendResponse(os, 200, "{\"status\":\"unsupported\"}", "application/json")
-}
-
-internal fun ClientHandler.handleApiPlayerStop(os: OutputStream) {
-    sendResponse(os, 200, "{\"status\":\"unsupported\"}", "application/json")
+    sendJson(os, "{\"status\":\"ok\"}")
 }
 
 // Single-page web app (/app) endpoints: JSON of what HTML pages embedded.
 
 internal fun ClientHandler.handleApiHistory(os: OutputStream) {
-    try {
-        val json = org.json.JSONObject()
-        json.put("videos", dbHelper.nativeHistoryJson())
-        sendResponse(os, 200, json.toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-    }
+    sendJson(os, JSONObject().put("videos", dbHelper.nativeHistoryJson()))
 }
 
 // Subscriptions + bookmarked playlists + watch-later (Library screen).
@@ -259,16 +173,12 @@ internal fun ClientHandler.handleApiLibrary(
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
-    try {
-        val json = org.json.JSONObject()
-        json.put("channels", ApiRenderer.infoItemsToJson(dbHelper.nativeSubscriptions(), serviceId))
-        json.put("playlists", ApiRenderer.infoItemsToJson(dbHelper.nativeBookmarkedPlaylists(), serviceId))
-        json.put("watchLater", ApiRenderer.infoItemsToJson(dbHelper.nativeWatchLaterItems(), serviceId))
-        json.put("mine", myPlaylistsJson(dbHelper.nativeUserPlaylists()))
-        sendResponse(os, 200, json.toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-    }
+    val json = JSONObject()
+    json.put("channels", ApiRenderer.infoItemsToJson(dbHelper.nativeSubscriptions(), serviceId))
+    json.put("playlists", ApiRenderer.infoItemsToJson(dbHelper.nativeBookmarkedPlaylists(), serviceId))
+    json.put("watchLater", ApiRenderer.infoItemsToJson(dbHelper.nativeWatchLaterItems(), serviceId))
+    json.put("mine", myPlaylistsJson(dbHelper.nativeUserPlaylists()))
+    sendJson(os, json)
 }
 
 // Newest uploads of subscribed channels; one request per channel: separate call.
@@ -277,12 +187,8 @@ internal fun ClientHandler.handleApiFeed(
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
-    try {
-        val items = filterItems(fetchSubscriptionFeed(dbHelper.nativeSubscriptions()))
-        sendResponse(os, 200, ApiRenderer.searchResultJson(items, serviceId, null).toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-    }
+    val items = filterItems(fetchSubscriptionFeed(dbHelper.nativeSubscriptions()))
+    sendJson(os, ApiRenderer.searchResultJson(items, serviceId, null))
 }
 
 internal fun ClientHandler.handleApiPlaylist(
@@ -290,29 +196,21 @@ internal fun ClientHandler.handleApiPlaylist(
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
-    val playlistUrl = params["id"]
-    if (playlistUrl.isNullOrEmpty()) {
-        sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
-        return
-    }
+    val playlistUrl = params.required("id")
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
-    try {
-        val playlist = LocalServerSource.playlist(dbHelper.appContext, serviceId, playlistUrl, nextPage)
-        val json = org.json.JSONObject()
-        val header = org.json.JSONObject()
-        header.put("id", playlist.header.url)
-        header.put("name", playlist.header.name)
-        header.put("uploaderName", playlist.header.uploaderName)
-        // -1 when source omits it; page omits the count
-        header.put("videoCount", playlist.header.streamCount.coerceAtLeast(-1))
-        header.put("isBookmarked", dbHelper.nativeIsPlaylistBookmarked(playlistUrl))
-        json.put("playlist", header)
-        json.put("videos", ApiRenderer.infoItemsToJson(filterItems(playlist.items), serviceId))
-        json.put("nextPage", ApiRenderer.serializePageOrNull(playlist.next))
-        sendResponse(os, 200, json.toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-    }
+    val playlist = LocalServerSource.playlist(dbHelper.appContext, serviceId, playlistUrl, nextPage)
+    val header = JSONObject()
+    header.put("id", playlist.header.url)
+    header.put("name", playlist.header.name)
+    header.put("uploaderName", playlist.header.uploaderName)
+    // -1 when source omits it; page omits the count
+    header.put("videoCount", playlist.header.streamCount.coerceAtLeast(-1))
+    header.put("isBookmarked", dbHelper.nativeIsPlaylistBookmarked(playlistUrl))
+    val json = JSONObject()
+    json.put("playlist", header)
+    json.put("videos", ApiRenderer.infoItemsToJson(filterItems(playlist.items), serviceId))
+    json.put("nextPage", ApiRenderer.serializePageOrNull(playlist.next))
+    sendJson(os, json)
 }
 
 // Watch-screen button state: channel subscribed/blocked, video saved/liked/disliked.
@@ -322,13 +220,13 @@ internal fun ClientHandler.handleApiState(
 ) {
     val videoUrl = params["id"].orEmpty()
     val channelUrl = params["channel"].orEmpty()
-    val json = org.json.JSONObject()
+    val json = JSONObject()
     json.put("subscribed", channelUrl.isNotEmpty() && dbHelper.nativeIsSubscribed(channelUrl))
     json.put("blocked", channelUrl.isNotEmpty() && dbHelper.nativeIsChannelBlocked(channelUrl))
     json.put("watchLater", videoUrl.isNotEmpty() && dbHelper.nativeIsWatchLater(videoUrl))
     val like = if (videoUrl.isEmpty()) null else dbHelper.nativeLikeState(videoUrl)
-    json.put("like", like ?: org.json.JSONObject.NULL)
-    sendResponse(os, 200, json.toString(), "application/json")
+    json.put("like", like ?: JSONObject.NULL)
+    sendJson(os, json)
 }
 
 // SponsorBlock segments (seconds): skip button + seek-bar marks; YouTube only.
@@ -338,7 +236,7 @@ internal fun ClientHandler.handleApiSponsor(
 ) {
     val serviceId = getServiceId(params)
     val videoUrl = params["id"].orEmpty()
-    val array = org.json.JSONArray()
+    val array = JSONArray()
     if (serviceId == LocalServerMedia.SERVICE_YOUTUBE && videoUrl.isNotEmpty()) {
         try {
             for (segment in SponsorBlockClient.fetchSegments(LocalServerMedia.getVideoId(videoUrl))) {
@@ -352,7 +250,7 @@ internal fun ClientHandler.handleApiSponsor(
                         "music_offtopic" -> "non-music part"
                         else -> null
                     } ?: continue
-                val item = org.json.JSONObject()
+                val item = JSONObject()
                 item.put("s", segment.startMs / 1000.0)
                 item.put("e", segment.endMs / 1000.0)
                 item.put("c", segment.category)
@@ -363,9 +261,9 @@ internal fun ClientHandler.handleApiSponsor(
             serverLog("SponsorBlock error: " + e.message)
         }
     }
-    val json = org.json.JSONObject()
+    val json = JSONObject()
     json.put("segments", array)
-    sendResponse(os, 200, json.toString(), "application/json")
+    sendJson(os, json)
 }
 
 // Reads filter settings; hideWatched, hideShorts in query saved first.
@@ -379,11 +277,11 @@ internal fun ClientHandler.handleApiSettings(
     if (hideShorts != null) dbHelper.nativeSetHideShorts(hideShorts == "true")
     val deepFlow = params["deepFlow"]
     if (deepFlow != null) dbHelper.nativeSetDeepFlow(deepFlow == "true")
-    val json = org.json.JSONObject()
+    val json = JSONObject()
     json.put("hideWatched", dbHelper.nativeHideWatched())
     json.put("hideShorts", dbHelper.nativeHideShorts())
     val deepFlowStatus = dbHelper.nativeDeepFlow()
     json.put("deepFlow", deepFlowStatus.active)
     json.put("deepFlowEndsAt", deepFlowStatus.endsAt)
-    sendResponse(os, 200, json.toString(), "application/json")
+    sendJson(os, json)
 }

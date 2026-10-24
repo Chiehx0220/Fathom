@@ -68,9 +68,8 @@ data class RemoteState(
     val hasVideo: Boolean get() = watching || minimized
 }
 
-/** Paired page, last report, pending commands. */
+/** Paired page, last report, commands to the page. */
 object RemoteSession {
-    const val PENDING_TTL_MS = 120_000L
     const val HELD_TTL_MS = 300_000L
 
     /** Max silence of a page without an open socket. */
@@ -146,17 +145,9 @@ object RemoteSession {
         }
     }
 
-    private val pendingCommands = ExpiringQueue(capacity = 500, ttlMs = PENDING_TTL_MS)
     private val heldCommands = ExpiringQueue(capacity = 20, ttlMs = HELD_TTL_MS)
 
-    fun getAndClearPendingCommands(now: Long = System.currentTimeMillis()): List<String> = pendingCommands.drain(now)
-
-    fun addPendingCommand(
-        cmd: String?,
-        now: Long = System.currentTimeMillis(),
-    ) {
-        pendingCommands.add(cmd!!, now)
-
+    fun broadcast(cmd: String) {
         commandBroadcaster?.invoke(cmd)
     }
 
@@ -166,7 +157,7 @@ object RemoteSession {
         now: Long = System.currentTimeMillis(),
     ): Boolean {
         if (listenerCount() > 0) {
-            addPendingCommand(cmd, now)
+            broadcast(cmd)
             return true
         }
         heldCommands.add(cmd, now)

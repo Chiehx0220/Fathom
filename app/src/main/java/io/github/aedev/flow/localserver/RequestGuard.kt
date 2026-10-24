@@ -12,7 +12,11 @@ internal class BadRequestException(
     message: String,
 ) : IllegalArgumentException(message)
 
-/** Routes changing device state or taking the remote command queue. */
+/** Non-empty query parameter [name]; absent or empty is a 400. */
+internal fun Map<String, String>.required(name: String): String =
+    this[name]?.takeIf { it.isNotEmpty() } ?: throw BadRequestException("Missing '$name' parameter")
+
+/** Routes changing device state. */
 internal val MUTATING_PATHS: Set<String> =
     setOf(
         PAIR_PATH,
@@ -21,8 +25,6 @@ internal val MUTATING_PATHS: Set<String> =
         "/api/v1/cast/start",
         "/api/v1/cast/stop",
         "/play",
-        "/send-command",
-        "/poll-commands",
         "/remote-state",
         "/release-lock",
         "/history_action",
@@ -33,10 +35,6 @@ internal val MUTATING_PATHS: Set<String> =
         "/watch_later_action",
         "/playlist_action",
         "/rate_video",
-        "/api/player/play",
-        "/api/player/pause",
-        "/api/player/resume",
-        "/api/player/stop",
         "/api/v1/download",
         "/api/v1/watch_progress",
         "/api/v1/settings",

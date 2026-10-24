@@ -308,6 +308,7 @@ object ApiRenderer {
     @JvmStatic
     fun errorJson(message: String?): String {
         val json = JSONObject()
+        json.put("status", "error")
         json.put("error", message ?: "Unknown error")
         return json.toString()
     }

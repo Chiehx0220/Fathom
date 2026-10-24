@@ -7,11 +7,6 @@ import io.github.aedev.flow.data.model.Video as FlowVideo
 
 private const val MAX_PLAYLIST_NAME = 100
 
-private fun ClientHandler.sendJson(
-    os: OutputStream,
-    json: JSONObject,
-) = sendResponse(os, 200, json.toString(), "application/json")
-
 /** `id`: video being saved; marks the playlists that hold it. */
 internal fun ClientHandler.handleApiPlaylists(
     os: OutputStream,

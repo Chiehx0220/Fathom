@@ -16,8 +16,6 @@ internal val ROUTES: Map<String, Route> =
         "/handoff" to route { os, params, _ -> handleHandoff(os, params) },
         "/send-link" to route { os, params, _ -> handleSendLink(os, params, remoteAddress) },
         "/play" to route { os, params, _ -> handleSendLink(os, params, remoteAddress) },
-        "/send-command" to route { os, params, _ -> handleSendCommand(os, params) },
-        "/poll-commands" to route { os, _, _ -> handlePollCommands(os) },
         "/remote-state" to route { os, params, _ -> handleRemoteState(os, params) },
         "/release-lock" to route { os, params, _ -> handleReleaseLock(os, params) },
         "/history_action" to route { os, params, _ -> handleHistoryAction(os, params) },
@@ -27,10 +25,6 @@ internal val ROUTES: Map<String, Route> =
         "/subtitles" to route { os, params, _ -> handleSubtitlesProxy(os, params) },
         "/thumbnails" to route { os, params, _ -> handleThumbnailsProxy(os, params) },
         "/image-proxy" to route { os, params, _ -> handleImageProxy(os, params) },
-        "/api/player/play" to route { os, params, _ -> handleApiPlayerPlay(os, params) },
-        "/api/player/pause" to route { os, _, _ -> handleApiPlayerPause(os) },
-        "/api/player/resume" to route { os, _, _ -> handleApiPlayerResume(os) },
-        "/api/player/stop" to route { os, _, _ -> handleApiPlayerStop(os) },
         "/search-history" to route { os, params, _ -> handleSearchHistory(os, params) },
         "/subscribe" to route { os, params, _ -> handleSubscribeAction(os, params) },
         "/block_channel" to route { os, params, _ -> handleBlockChannelAction(os, params) },
@@ -45,12 +39,10 @@ internal val ROUTES: Map<String, Route> =
         "/api/v1/comments" to route { os, params, _ -> handleApiComments(os, params) },
         "/api/v1/watch_progress" to route { os, params, _ -> handleApiWatchProgress(os, params) },
         "/api/v1/download" to route { os, params, _ -> handleApiDownload(os, params) },
-        "/api/v1/bilibili_probe" to route { os, params, _ -> handleApiBilibiliProbe(os, params) },
         "/api/v1/recommendations" to route { os, params, _ -> handleApiRecommendations(os, params) },
         "/api/v1/cast/devices" to route { os, params, _ -> handleCastDevices(os, params) },
         "/api/v1/cast/start" to route { os, params, _ -> handleCastStart(os, params) },
         "/api/v1/cast/stop" to route { os, _, _ -> handleCastStop(os) },
-        "/api/v1/ping" to route { os, _, _ -> handleApiPing(os) },
         "/api/v1/history" to route { os, _, _ -> handleApiHistory(os) },
         "/api/v1/library" to route { os, params, _ -> handleApiLibrary(os, params) },
         "/api/v1/downloads" to route { os, _, _ -> handleApiDownloads(os) },
@@ -66,5 +58,37 @@ internal val ROUTES: Map<String, Route> =
         "/app.js" to route { os, _, _ -> handleAppJs(os) },
         ICON_PATH to route { os, _, _ -> handleAppIcon(os) },
     )
+
+/** Routes outside `/api/` that answer JSON; their failures are JSON too. */
+internal val JSON_ROUTES: Set<String> =
+    setOf(
+        "/danmaku",
+        "/live_chat",
+        "/handoff",
+        "/send-link",
+        "/play",
+        "/remote-state",
+        "/release-lock",
+        "/history_action",
+        "/search-history",
+        "/subscribe",
+        "/block_channel",
+        "/bookmark_playlist",
+        "/watch_later_action",
+        "/playlist_action",
+        "/rate_video",
+    )
+
+/** Body and content type for a failed request: JSON on JSON routes, plain text elsewhere (no internals on 500). */
+internal fun failureBody(
+    path: String,
+    code: Int,
+    message: String?,
+): Pair<String, String> =
+    when {
+        path.startsWith("/api/") || path in JSON_ROUTES -> ApiRenderer.errorJson(message) to "application/json"
+        code == 400 -> "Bad Request: $message" to "text/plain; charset=UTF-8"
+        else -> "Internal Server Error" to "text/plain; charset=UTF-8"
+    }
 
 private fun route(handler: Route): Route = handler

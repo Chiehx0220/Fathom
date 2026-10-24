@@ -10,7 +10,6 @@ internal object AboutLinks {
     const val FLOW_GITHUB = "https://github.com/A-EDev/Flow"
     const val FLOW_WEBSITE = "https://flow.aedev.me"
     const val FLOW_REDDIT = "https://www.reddit.com/r/Flow_Official/"
-    const val FLOW_DONATION = "https://patreon.com/A_EDev"
     const val LICENSE = "https://www.gnu.org/licenses/gpl-3.0.html"
     const val NEWPIPE_EXTRACTOR = "https://github.com/TeamNewPipe/NewPipeExtractor"
 }

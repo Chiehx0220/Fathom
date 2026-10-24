@@ -60,20 +60,6 @@ fun HistoryDbHelper.nativeUpdateWatchPosition(
     runBlocking { viewHistory().updatePlaybackProgress(videoId, positionMs, durationMs) }
 }
 
-/** History rows as [InfoItem]s. */
-fun HistoryDbHelper.nativeHistory(): List<InfoItem> =
-    runBlocking {
-        viewHistory().getAllHistory().first().map { entry ->
-            val item = StreamInfoItem(entry.serviceId, videoIdToUrl(entry.videoId, entry.serviceId), entry.title, StreamType.VIDEO_STREAM)
-            item.setUploaderName(entry.channelName)
-            item.setUploaderUrl(if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId, entry.serviceId) else "")
-            if (entry.thumbnailUrl.isNotEmpty()) {
-                item.thumbnailUrl = entry.thumbnailUrl
-            }
-            item
-        }
-    }
-
 fun HistoryDbHelper.nativeRemoveFromHistory(videoUrl: String) {
     val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return

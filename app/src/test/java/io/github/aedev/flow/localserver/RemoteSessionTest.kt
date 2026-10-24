@@ -18,7 +18,6 @@ class RemoteSessionTest {
 
     private fun reset() {
         RemoteSession.releaseLock()
-        RemoteSession.getAndClearPendingCommands()
         RemoteSession.commandBroadcaster = null
         RemoteSession.listenerCount = { 0 }
         RemoteSession.listenerCloser = null
@@ -93,23 +92,6 @@ class RemoteSessionTest {
     }
 
     @Test
-    fun `commands wait in order until they are taken, once`() {
-        RemoteSession.addPendingCommand("play_pause")
-        RemoteSession.addPendingCommand("volume:1")
-
-        assertThat(RemoteSession.getAndClearPendingCommands()).containsExactly("play_pause", "volume:1").inOrder()
-        assertThat(RemoteSession.getAndClearPendingCommands()).isEmpty()
-    }
-
-    @Test
-    fun `a command nobody took in time is dropped`() {
-        RemoteSession.addPendingCommand("old", now = 0)
-        RemoteSession.addPendingCommand("fresh", now = RemoteSession.PENDING_TTL_MS)
-
-        assertThat(RemoteSession.getAndClearPendingCommands(now = RemoteSession.PENDING_TTL_MS + 1)).containsExactly("fresh")
-    }
-
-    @Test
     fun `a page that stopped reporting without releasing is no longer alive`() {
         RemoteSession.tryLock("code-a", "10.0.0.5", null)
         RemoteSession.markSeen(now = 1_000)
@@ -156,24 +138,13 @@ class RemoteSessionTest {
     }
 
     @Test
-    fun `a command is also pushed to the connected pages`() {
+    fun `a command is pushed to the connected pages`() {
         val pushed = mutableListOf<String>()
         RemoteSession.commandBroadcaster = { pushed += it }
 
-        RemoteSession.addPendingCommand("mute")
+        RemoteSession.broadcast("mute")
 
         assertThat(pushed).containsExactly("mute")
-    }
-
-    @Test
-    fun `a page that never collects its commands cannot grow the queue without bound`() {
-        repeat(600) { RemoteSession.addPendingCommand("cmd$it") }
-
-        val kept = RemoteSession.getAndClearPendingCommands()
-
-        assertThat(kept).hasSize(501)
-        assertThat(kept.first()).isEqualTo("cmd99")
-        assertThat(kept.last()).isEqualTo("cmd599")
     }
 
     @Test

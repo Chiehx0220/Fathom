@@ -102,11 +102,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **81**.
+- Modified upstream files: **0** (0 changed lines). New files: **80**.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **110**.
+- Modified upstream files: **0** (0 changed lines). New files: **111**.
 
 ## Build
 

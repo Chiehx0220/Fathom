@@ -91,7 +91,7 @@ class RequestGuardTest {
         assertThat(refusalFor("OPTIONS", "/stream", headers())).isNull()
         assertThat(refusalFor("OPTIONS", "/hls", headers())).isNull()
         assertThat(refusalFor("OPTIONS", "/history_action", headers())).isNotNull()
-        assertThat(refusalFor("OPTIONS", "/api/v1/ping", headers())).isNotNull()
+        assertThat(refusalFor("OPTIONS", "/api/v1/home", headers())).isNotNull()
     }
 
     @Test

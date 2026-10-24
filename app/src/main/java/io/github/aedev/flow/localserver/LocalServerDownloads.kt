@@ -56,37 +56,33 @@ private fun HistoryDbHelper.finishedDownloads(): List<DownloadWithItems> {
 }
 
 internal fun ClientHandler.handleApiDownloads(os: OutputStream) {
-    try {
-        val array = JSONArray()
-        for (entry in dbHelper.finishedDownloads()) {
-            val download = entry.download
-            val id = LocalServerMedia.getVideoId(download.videoId)
-            // recovered rows lack serviceId: derived from id
-            val serviceId = serviceIdOfVideo(id, download.serviceId)
-            val json = JSONObject()
-            json.put("id", id)
-            json.put("url", videoIdToUrl(download.videoId, serviceId))
-            json.put("serviceId", serviceId)
-            json.put("title", download.title)
-            json.put("channelName", download.uploader)
-            json.put("channelId", if (download.channelId.isNotEmpty()) channelIdToUrl(download.channelId, serviceId) else "")
-            json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(download.thumbnailUrl))
-            json.put("channelThumbnailUrl", "")
-            json.put("duration", download.duration.toInt())
-            json.put("viewCount", -1)
-            json.put("uploadDate", "")
-            json.put("isLive", false)
-            json.put("isShort", false)
-            json.put("progress", 0)
-            // opened from saved file (watch?...&local=1)
-            json.put("local", true)
-            json.put("sizeBytes", entry.totalSize)
-            array.put(json)
-        }
-        sendResponse(os, 200, JSONObject().put("videos", array).toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
+    val array = JSONArray()
+    for (entry in dbHelper.finishedDownloads()) {
+        val download = entry.download
+        val id = LocalServerMedia.getVideoId(download.videoId)
+        // recovered rows lack serviceId: derived from id
+        val serviceId = serviceIdOfVideo(id, download.serviceId)
+        val json = JSONObject()
+        json.put("id", id)
+        json.put("url", videoIdToUrl(download.videoId, serviceId))
+        json.put("serviceId", serviceId)
+        json.put("title", download.title)
+        json.put("channelName", download.uploader)
+        json.put("channelId", if (download.channelId.isNotEmpty()) channelIdToUrl(download.channelId, serviceId) else "")
+        json.put("thumbnailUrl", HtmlRendererCommon.getThumbnailUrl(download.thumbnailUrl))
+        json.put("channelThumbnailUrl", "")
+        json.put("duration", download.duration.toInt())
+        json.put("viewCount", -1)
+        json.put("uploadDate", "")
+        json.put("isLive", false)
+        json.put("isShort", false)
+        json.put("progress", 0)
+        // opened from saved file (watch?...&local=1)
+        json.put("local", true)
+        json.put("sizeBytes", entry.totalSize)
+        array.put(json)
     }
+    sendJson(os, JSONObject().put("videos", array))
 }
 
 /** Length + stream at offset (file or SAF document). */
@@ -160,10 +156,7 @@ internal fun ClientHandler.handleDownloadFile(
     requestHeaders: Map<String, String>,
 ) {
     val videoId = params["id"]?.let(LocalServerMedia::getVideoId).orEmpty()
-    if (videoId.isEmpty()) {
-        sendResponse(os, 400, "Missing 'id' parameter.", "text/plain; charset=UTF-8")
-        return
-    }
+    if (videoId.isEmpty()) throw BadRequestException("Missing 'id' parameter")
     val download = runBlocking { localServerEntryPoint(dbHelper.appContext).videoDownloadManager().getDownloadWithItems(videoId) }
     val item = download?.takeIf { it.overallStatus == DownloadItemStatus.COMPLETED }?.playableItem()
     val source = item?.let { dbHelper.sourceOf(it.filePath) }

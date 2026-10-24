@@ -59,18 +59,7 @@ class RemoteWebSocketServer internal constructor(
         conn: WebSocket,
         message: String?,
     ) {
-        if (message != null && message.startsWith("register_client:")) {
-            val clientName = message.substring("register_client:".length)
-            conn.setAttachment(clientName)
-            serverLog("Registered client: $clientName for IP " + conn.remoteSocketAddress)
-            return
-        }
-
-        // Forward to LocalHttpServer pending-commands queue
-        RemoteSession.addPendingCommand(message)
-
-        // Broadcast to other connected clients (e.g. TV browser)
-        broadcastCommand(message, conn)
+        // Receive-only: pages get commands, they send none.
     }
 
     override fun getConnections(): Set<WebSocket> = connections
@@ -94,13 +83,9 @@ class RemoteWebSocketServer internal constructor(
         for (conn in connections) conn.close(CloseFrame.NORMAL, TAKEN_OVER_REASON)
     }
 
-    @JvmOverloads
-    fun broadcastCommand(
-        command: String?,
-        excludeConn: WebSocket? = null,
-    ) {
+    fun broadcastCommand(command: String?) {
         for (conn in connections) {
-            if (conn !== excludeConn && conn.isOpen) {
+            if (conn.isOpen) {
                 try {
                     conn.send(command)
                 } catch (e: Exception) {

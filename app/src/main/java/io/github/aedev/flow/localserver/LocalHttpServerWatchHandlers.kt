@@ -9,17 +9,6 @@ internal fun ClientHandler.handleDanmaku(
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
-    val mediaUrl = params["id"]
-    if (mediaUrl.isNullOrEmpty()) {
-        sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
-        return
-    }
-    try {
-        val danmaku = LocalServerSource.danmaku(dbHelper.appContext, serviceId, mediaUrl)
-        val json = org.json.JSONObject()
-        json.put("danmaku", danmaku)
-        sendResponse(os, 200, json.toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-    }
+    val danmaku = LocalServerSource.danmaku(dbHelper.appContext, serviceId, params.required("id"))
+    sendJson(os, org.json.JSONObject().put("danmaku", danmaku))
 }

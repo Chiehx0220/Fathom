@@ -51,7 +51,7 @@ class RemoteActivity : ComponentActivity() {
                 else -> return super.onKeyDown(keyCode, event)
             }
         if (!RemoteSession.remoteLock.value.locked) return super.onKeyDown(keyCode, event)
-        RemoteSession.addPendingCommand(volumeCommand(step))
+        RemoteSession.broadcast(volumeCommand(step))
         return true
     }
 }

@@ -3,11 +3,12 @@ package io.github.aedev.flow.localserver
 import io.github.aedev.flow.bilibili.BilibiliLink
 import io.github.aedev.flow.utils.YouTubeLink
 import io.github.aedev.flow.utils.parseYouTubeLink
+import org.json.JSONObject
 import java.io.OutputStream
 import java.util.UUID
 
 // Toggle DB action endpoints (subscribe/block/bookmark/history/watch-later/like-dislike) + TV remote-control endpoints
-// (send-link/release-lock/send-command/poll-commands). ClientHandler/dbHelper/sendResponse/getServiceId internal.
+// (send-link/release-lock/remote-state). ClientHandler/dbHelper/sendResponse/getServiceId internal.
 
 // Shared "share this video" field set/defaults for handleWatchLaterAction, handleRateVideoAction: video unseen by server, client-page metadata only.
 private data class SharedVideoParams(
@@ -27,24 +28,21 @@ private fun parseSharedVideoParams(params: Map<String, String>): SharedVideoPara
 
 // Callers: web app fetch-based FT.api (app/js/api.js act()), success-only: all toggle handlers answer alike.
 private fun ClientHandler.sendActionResult(os: OutputStream) {
-    sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
+    sendJson(os, "{\"status\":\"success\"}")
 }
+
+private fun unknownAction(): Nothing = throw BadRequestException("Unknown action")
 
 internal fun ClientHandler.handleSubscribeAction(
     os: OutputStream,
     params: Map<String, String>,
 ) {
-    val action = params["action"]
-    val channelUrl = params["id"]
-
-    if ("subscribe" == action && !channelUrl.isNullOrEmpty()) {
-        val name = params["name"]
-        val avatar = params["avatar"]
-        dbHelper.nativeAddSubscription(channelUrl, name, avatar)
-    } else if ("unsubscribe" == action && !channelUrl.isNullOrEmpty()) {
-        dbHelper.nativeRemoveSubscription(channelUrl)
+    val channelUrl = params.required("id")
+    when (params["action"]) {
+        "subscribe" -> dbHelper.nativeAddSubscription(channelUrl, params["name"], params["avatar"])
+        "unsubscribe" -> dbHelper.nativeRemoveSubscription(channelUrl)
+        else -> unknownAction()
     }
-
     sendActionResult(os)
 }
 
@@ -52,15 +50,12 @@ internal fun ClientHandler.handleBlockChannelAction(
     os: OutputStream,
     params: Map<String, String>,
 ) {
-    val action = params["action"]
-    val channelUrl = params["id"]
-
-    if ("block" == action && !channelUrl.isNullOrEmpty()) {
-        dbHelper.nativeBlockChannel(channelUrl)
-    } else if ("unblock" == action && !channelUrl.isNullOrEmpty()) {
-        dbHelper.nativeUnblockChannel(channelUrl)
+    val channelUrl = params.required("id")
+    when (params["action"]) {
+        "block" -> dbHelper.nativeBlockChannel(channelUrl)
+        "unblock" -> dbHelper.nativeUnblockChannel(channelUrl)
+        else -> unknownAction()
     }
-
     sendActionResult(os)
 }
 
@@ -68,16 +63,12 @@ internal fun ClientHandler.handlePlaylistBookmarkAction(
     os: OutputStream,
     params: Map<String, String>,
 ) {
-    val action = params["action"]
-    val playlistUrl = params["id"]
-
-    if ("bookmark" == action && !playlistUrl.isNullOrEmpty()) {
-        val name = params["name"]
-        dbHelper.nativeBookmarkPlaylist(playlistUrl, name, null)
-    } else if ("unbookmark" == action && !playlistUrl.isNullOrEmpty()) {
-        dbHelper.nativeUnbookmarkPlaylist(playlistUrl)
+    val playlistUrl = params.required("id")
+    when (params["action"]) {
+        "bookmark" -> dbHelper.nativeBookmarkPlaylist(playlistUrl, params["name"], null)
+        "unbookmark" -> dbHelper.nativeUnbookmarkPlaylist(playlistUrl)
+        else -> unknownAction()
     }
-
     sendActionResult(os)
 }
 
@@ -85,15 +76,11 @@ internal fun ClientHandler.handleHistoryAction(
     os: OutputStream,
     params: Map<String, String>,
 ) {
-    val action = params["action"]
-    val url = params["url"]
-
-    if ("remove" == action && !url.isNullOrEmpty()) {
-        dbHelper.nativeRemoveFromHistory(url)
-    } else if ("clear" == action) {
-        dbHelper.nativeClearHistory()
+    when (params["action"]) {
+        "remove" -> dbHelper.nativeRemoveFromHistory(params.required("url"))
+        "clear" -> dbHelper.nativeClearHistory()
+        else -> unknownAction()
     }
-
     sendActionResult(os)
 }
 
@@ -101,16 +88,21 @@ internal fun ClientHandler.handleWatchLaterAction(
     os: OutputStream,
     params: Map<String, String>,
 ) {
-    val action = params["action"]
-    val url = params["url"]
+    val url = params.required("url")
+    when (params["action"]) {
+        "add" -> {
+            val meta = parseSharedVideoParams(params)
+            dbHelper.nativeAddWatchLater(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl)
+        }
 
-    if ("add" == action && !url.isNullOrEmpty()) {
-        val meta = parseSharedVideoParams(params)
-        dbHelper.nativeAddWatchLater(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl)
-    } else if ("remove" == action && !url.isNullOrEmpty()) {
-        dbHelper.nativeRemoveWatchLater(url)
+        "remove" -> {
+            dbHelper.nativeRemoveWatchLater(url)
+        }
+
+        else -> {
+            unknownAction()
+        }
     }
-
     sendActionResult(os)
 }
 
@@ -118,19 +110,14 @@ internal fun ClientHandler.handleRateVideoAction(
     os: OutputStream,
     params: Map<String, String>,
 ) {
-    val action = params["action"]
-    val url = params["url"]
-
-    if (!url.isNullOrEmpty()) {
-        val meta = parseSharedVideoParams(params)
-        val serviceId = getServiceId(params)
-        when (action) {
-            "like" -> dbHelper.nativeLikeVideo(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl, serviceId)
-            "dislike" -> dbHelper.nativeDislikeVideo(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl)
-            "remove" -> dbHelper.nativeRemoveLikeState(url)
-        }
+    val url = params.required("url")
+    val meta = parseSharedVideoParams(params)
+    when (params["action"]) {
+        "like" -> dbHelper.nativeLikeVideo(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl, getServiceId(params))
+        "dislike" -> dbHelper.nativeDislikeVideo(url, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl)
+        "remove" -> dbHelper.nativeRemoveLikeState(url)
+        else -> unknownAction()
     }
-
     sendActionResult(os)
 }
 
@@ -139,18 +126,10 @@ internal fun ClientHandler.handleSendLink(
     params: Map<String, String>,
     clientIp: String?,
 ) {
-    val videoUrl = params["id"]
+    val videoUrl = params.required("id")
     val clientReleaseCode = params["release_code"]
     val takeover = params["takeover"] == "1"
-    var videoTitle = params["title"]
-    if (videoTitle.isNullOrEmpty()) {
-        videoTitle = "Video"
-    }
-
-    if (videoUrl.isNullOrEmpty()) {
-        sendResponse(os, 400, "{\"status\":\"error\",\"message\":\"Missing 'id' parameter\"}", "application/json; charset=UTF-8")
-        return
-    }
+    val videoTitle = params["title"].takeUnless { it.isNullOrEmpty() } ?: "Video"
 
     synchronized(RemoteSession) {
         var hasLock = false
@@ -176,20 +155,17 @@ internal fun ClientHandler.handleSendLink(
             // "__connect_only__": cast on non-video page (Home, Subscriptions): pairs remote control, no play_video command (would 404 as /watch).
             if ("__connect_only__" != videoUrl) {
                 serverLog("Casting link: $videoUrl from client IP $clientIp")
-                RemoteSession.addPendingCommand("play_video:$videoUrl")
+                RemoteSession.broadcast("play_video:$videoUrl")
             } else {
                 serverLog("Remote connected (pairing only) from client IP $clientIp")
             }
-
-            val json = "{\"status\":\"success\",\"release_code\":\"" + currentLockCode + "\"}"
-            sendResponse(os, 200, json, "application/json; charset=UTF-8")
+            sendJson(os, JSONObject().put("status", "success").put("release_code", currentLockCode))
         } else {
-            var busyMsg = "Server is currently controlled by device at IP " + RemoteSession.getActiveClientIp()
-            if (RemoteSession.getActiveVideoTitle() != null) {
-                busyMsg += " playing: " + RemoteSession.getActiveVideoTitle()
-            }
-            val json = "{\"status\":\"busy\",\"message\":\"" + busyMsg.replace("\"", "\\\"") + "\"}"
-            sendResponse(os, 200, json, "application/json; charset=UTF-8")
+            val title = RemoteSession.getActiveVideoTitle()
+            val busyMsg =
+                "Server is currently controlled by device at IP ${RemoteSession.getActiveClientIp()}" +
+                    (title?.let { " playing: $it" } ?: "")
+            sendJson(os, JSONObject().put("status", "busy").put("message", busyMsg))
         }
     }
 }
@@ -198,42 +174,14 @@ internal fun ClientHandler.handleReleaseLock(
     os: OutputStream,
     params: Map<String, String>,
 ) {
-    val clientReleaseCode = params["release_code"]
-    if (clientReleaseCode.isNullOrEmpty()) {
-        sendResponse(os, 400, "{\"status\":\"error\",\"message\":\"Missing 'release_code' parameter\"}", "application/json; charset=UTF-8")
-        return
-    }
-
+    val clientReleaseCode = params.required("release_code")
     synchronized(RemoteSession) {
-        val currentLockCode = RemoteSession.getActiveLockCode()
-        if (currentLockCode != null && currentLockCode == clientReleaseCode) {
+        if (RemoteSession.getActiveLockCode() == clientReleaseCode) {
             RemoteSession.releaseLock()
             serverLog("Lock released by client.")
-            sendResponse(os, 200, "{\"status\":\"success\"}", "application/json; charset=UTF-8")
+            sendJson(os, "{\"status\":\"success\"}")
         } else {
-            sendResponse(os, 200, "{\"status\":\"error\",\"message\":\"Invalid or expired lock code\"}", "application/json; charset=UTF-8")
-        }
-    }
-}
-
-internal fun ClientHandler.handleSendCommand(
-    os: OutputStream,
-    params: Map<String, String>,
-) {
-    val cmd = params["command"]
-    val clientReleaseCode = params["release_code"]
-    if (cmd.isNullOrEmpty()) {
-        sendResponse(os, 400, "{\"status\":\"error\",\"message\":\"Missing 'command' parameter\"}", "application/json; charset=UTF-8")
-        return
-    }
-
-    synchronized(RemoteSession) {
-        val currentLockCode = RemoteSession.getActiveLockCode()
-        if (currentLockCode != null && currentLockCode == clientReleaseCode) {
-            RemoteSession.addPendingCommand(cmd)
-            sendResponse(os, 200, "{\"status\":\"success\"}", "application/json; charset=UTF-8")
-        } else {
-            sendResponse(os, 200, "{\"status\":\"error\",\"message\":\"Not authorized / lock expired\"}", "application/json; charset=UTF-8")
+            sendJson(os, "{\"status\":\"error\",\"message\":\"Invalid or expired lock code\"}")
         }
     }
 }
@@ -256,7 +204,7 @@ internal fun ClientHandler.handleRemoteState(
 ) {
     val code = RemoteSession.getActiveLockCode()
     if (code == null || code != params["release_code"]) {
-        sendResponse(os, 200, "{\"status\":\"error\"}", "application/json; charset=UTF-8")
+        sendJson(os, "{\"status\":\"error\"}")
         return
     }
     RemoteSession.markSeen()
@@ -290,21 +238,7 @@ internal fun ClientHandler.handleRemoteState(
             rating = RemoteSession.choiceHold.rating(params["like"], previous.rating),
         ),
     )
-    sendResponse(os, 200, "{\"status\":\"success\"}", "application/json; charset=UTF-8")
-}
-
-internal fun ClientHandler.handlePollCommands(os: OutputStream) {
-    val cmds = RemoteSession.getAndClearPendingCommands()
-    val sb = StringBuilder()
-    sb.append("{\"commands\":[")
-    for (i in cmds.indices) {
-        sb.append("\"").append(cmds[i].replace("\"", "\\\"")).append("\"")
-        if (i < cmds.size - 1) {
-            sb.append(",")
-        }
-    }
-    sb.append("]}")
-    sendResponse(os, 200, sb.toString(), "application/json; charset=UTF-8")
+    sendJson(os, "{\"status\":\"success\"}")
 }
 
 private const val HANDOFF_TITLE_MAX = 200
@@ -317,10 +251,7 @@ internal fun ClientHandler.handleHandoff(
     val url = params["id"].orEmpty().trim()
     val link = parseYouTubeLink(url)
     val playable = link is YouTubeLink.Video || link is YouTubeLink.Short || BilibiliLink.isBilibili(url)
-    if (!playable) {
-        sendResponse(os, 400, "{\"status\":\"unsupported\"}", "application/json")
-        return
-    }
+    if (!playable) throw BadRequestException("Unsupported link")
     val position = params["t"]?.toDoubleOrNull()?.takeIf { it.isFinite() && it >= 0 }
     val duration = params["d"]?.toDoubleOrNull()?.takeIf { it.isFinite() && it > 0 }
     val positionMs = position?.let { (it * 1000).toLong() }

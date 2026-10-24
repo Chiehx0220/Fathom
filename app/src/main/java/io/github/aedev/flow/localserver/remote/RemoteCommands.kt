@@ -66,5 +66,5 @@ internal fun sendRemoteCommand(command: String) {
             }
         }
     shown?.let(RemoteSession::updateRemoteState)
-    RemoteSession.addPendingCommand(command)
+    RemoteSession.broadcast(command)
 }

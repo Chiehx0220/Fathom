@@ -3,6 +3,8 @@ package io.github.aedev.flow.localserver
 import io.github.aedev.flow.bilibili.BilibiliLink
 import io.github.aedev.flow.data.recommendation.InteractionType
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedTimestamps
+import org.json.JSONArray
+import org.json.JSONObject
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.stream.StreamInfo
@@ -116,12 +118,14 @@ internal class ClientHandler(
             }
         } catch (e: BadRequestException) {
             closeAfterResponse()
-            sendResponse(os, 400, "Bad Request: " + e.message, "text/plain; charset=UTF-8")
+            val (body, type) = failureBody(path, 400, e.message)
+            sendResponse(os, 400, body, type)
         } catch (e: Exception) {
             e.printStackTrace()
             serverLog("Error during route handling: " + e.message)
             closeAfterResponse()
-            sendResponse(os, 500, "Internal Server Error", "text/plain; charset=UTF-8")
+            val (body, type) = failureBody(path, 500, e.message)
+            sendResponse(os, 500, body, type)
         }
         return keptAlive
     }
@@ -274,19 +278,15 @@ internal class ClientHandler(
         os.flush()
     }
 
-    @Throws(IOException::class)
-    internal fun sendRedirect(
+    internal fun sendJson(
         os: OutputStream,
-        url: String,
-    ) {
-        val response =
-            "HTTP/1.1 302 Found\r\n" +
-                "Location: $url\r\n" +
-                "Content-Length: 0\r\n" +
-                connectionHeaders() + "\r\n"
-        os.write(response.toByteArray(Charsets.UTF_8))
-        os.flush()
-    }
+        body: String,
+    ) = sendResponse(os, 200, body, "application/json")
+
+    internal fun sendJson(
+        os: OutputStream,
+        body: JSONObject,
+    ) = sendJson(os, body.toString())
 
     @Throws(Exception::class)
     internal fun handleSearchHistory(
@@ -296,20 +296,10 @@ internal class ClientHandler(
         val deleteQuery = params["delete"]
         if (!deleteQuery.isNullOrEmpty()) {
             dbHelper.nativeDeleteSearchQuery(deleteQuery)
-            sendResponse(os, 200, "{\"status\":\"success\"}", "application/json")
+            sendJson(os, "{\"status\":\"success\"}")
             return
         }
-        val history = dbHelper.nativeSearchHistory()
-        val json = StringBuilder()
-        json.append("[")
-        for (i in history.indices) {
-            json.append("\"").append(history[i].replace("\"", "\\\"")).append("\"")
-            if (i < history.size - 1) {
-                json.append(",")
-            }
-        }
-        json.append("]")
-        sendResponse(os, 200, json.toString(), "application/json")
+        sendJson(os, JSONArray(dbHelper.nativeSearchHistory()).toString())
     }
 
     internal fun filterItems(items: List<InfoItem>): List<InfoItem> {

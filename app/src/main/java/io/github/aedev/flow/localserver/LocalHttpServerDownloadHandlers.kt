@@ -97,24 +97,13 @@ internal fun ClientHandler.handleApiDownload(
     os: OutputStream,
     params: Map<String, String>,
 ) {
-    val mediaUrl = params["id"]
-    if (mediaUrl.isNullOrEmpty()) {
-        sendResponse(os, 400, ApiRenderer.errorJson("Missing 'id' parameter"), "application/json")
-        return
-    }
+    val mediaUrl = params.required("id")
     val serviceId = getServiceId(params)
-    val videoId = LocalServerMedia.getVideoId(mediaUrl)
-    if (videoId.isEmpty()) {
-        sendResponse(os, 400, ApiRenderer.errorJson("Could not determine video id"), "application/json")
-        return
-    }
+    val videoId = LocalServerMedia.getVideoId(mediaUrl).ifEmpty { throw BadRequestException("Could not determine video id") }
 
     when (params["action"]) {
         "start" -> {
-            if (serviceId != 0) {
-                sendResponse(os, 400, ApiRenderer.errorJson("Downloads are only supported for YouTube videos"), "application/json")
-                return
-            }
+            if (serviceId != 0) throw BadRequestException("Downloads are only supported for YouTube videos")
             val error =
                 try {
                     dbHelper.startNativeDownload(serviceId, mediaUrl, videoId, downloadChoice(params))
@@ -127,22 +116,22 @@ internal fun ClientHandler.handleApiDownload(
                 return
             }
             // Service creates DB rows async: report "pending", not "none" (button flips before first poll).
-            sendResponse(os, 200, downloadStateJson("pending", 0), "application/json")
+            sendJson(os, downloadStateJson("pending", 0))
         }
 
         "cancel" -> {
             localServerEntryPoint(dbHelper.appContext).downloadController().cancel(videoId)
-            sendResponse(os, 200, downloadStateJson("none", 0), "application/json")
+            sendJson(os, downloadStateJson("none", 0))
         }
 
         "delete" -> {
             val manager = localServerEntryPoint(dbHelper.appContext).videoDownloadManager()
             runBlocking { manager.deleteDownload(videoId) }
-            sendResponse(os, 200, downloadStateJson("none", 0), "application/json")
+            sendJson(os, downloadStateJson("none", 0))
         }
 
         else -> {
-            sendResponse(os, 200, dbHelper.downloadStateFor(videoId), "application/json")
+            sendJson(os, dbHelper.downloadStateFor(videoId))
         }
     }
 }

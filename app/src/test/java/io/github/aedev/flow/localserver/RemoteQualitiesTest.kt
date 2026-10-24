@@ -152,7 +152,6 @@ class RemoteQualitiesTest {
         sendRemoteCommand(DISLIKE)
         assertThat(RemoteSession.remoteState.value.rating).isEqualTo(RemoteRating.NONE)
 
-        RemoteSession.getAndClearPendingCommands()
         RemoteSession.updateRemoteState(RemoteState())
     }
 }

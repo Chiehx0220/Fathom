@@ -105,15 +105,7 @@ internal fun ClientHandler.handleLiveChat(
     os: OutputStream,
     params: Map<String, String>,
 ) {
-    val roomId = params["room"]?.toLongOrNull()
-    if (roomId == null) {
-        sendResponse(os, 400, ApiRenderer.errorJson("Missing 'room' parameter"), "application/json")
-        return
-    }
-    try {
-        val (seq, items) = LocalServerBilibiliLive.chatSince(dbHelper.appContext, roomId, params["since"]?.toLongOrNull())
-        sendResponse(os, 200, JSONObject().put("seq", seq).put("items", items).toString(), "application/json")
-    } catch (e: Exception) {
-        sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")
-    }
+    val roomId = params["room"]?.toLongOrNull() ?: throw BadRequestException("Missing 'room' parameter")
+    val (seq, items) = LocalServerBilibiliLive.chatSince(dbHelper.appContext, roomId, params["since"]?.toLongOrNull())
+    sendJson(os, JSONObject().put("seq", seq).put("items", items))
 }
