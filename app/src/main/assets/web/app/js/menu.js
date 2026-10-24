@@ -68,6 +68,10 @@ FT.menu = {
     },
 
     itemsFor(el) {
+        const removal = (icon, label, done, request) => ({
+            icon, label, danger: true,
+            run: () => request().then(() => { FT.toast(done); el.onRemoved(); }).catch(() => FT.toast(FT.t('could_not_remove'))),
+        });
         const it = el.item;
         const items = [{ icon: 'open_in_new', label: FT.t('open'), run: () => el.click() }];
         if (el.kind === 'video') {
@@ -80,6 +84,9 @@ FT.menu = {
                     if (later && el.onRemoved) el.onRemoved();
                 }).catch(() => FT.toast(FT.t('could_not_save'))),
             });
+            items.push({ icon: 'playlist_play', label: FT.t('save_to_playlist'), run: () => FT.playlistPicker(it) });
+            if (el.fromLiked) items.push(removal('thumb_down_off', FT.t('remove_like'), FT.t('removed_like'), () => FT.api.rate(it, 'remove')));
+            if (el.fromPlaylist) items.push(removal('delete', FT.t('remove_from_playlist'), FT.t('removed_from_playlist'), () => FT.api.playlistSet(el.fromPlaylist, it, false)));
             if (it.channelId) items.push({ icon: 'account_circle', label: FT.t('go_to_channel'), run: () => { location.hash = FT.link.channel(it.channelId, it.serviceId); } });
             if (el.onRemoved && el.fromHistory) {
                 items.push({
@@ -92,7 +99,7 @@ FT.menu = {
                 icon: 'person_remove', label: FT.t('unsubscribe'), danger: true,
                 run: () => FT.api.subscribe(it, false).then(() => { FT.toast(FT.t('unsubscribed')); if (el.onRemoved) el.onRemoved(); }).catch(() => FT.toast(FT.t('could_not_unsubscribe'))),
             });
-        } else if (el.kind === 'playlist') {
+        } else if (el.kind === 'playlist' && !it.isLocal) {
             items.push({
                 icon: 'star_border', label: FT.t('remove_bookmark'), danger: true,
                 run: () => FT.api.bookmarkPlaylist(it, false).then(() => { FT.toast(FT.t('bookmark_removed')); if (el.onRemoved) el.onRemoved(); }).catch(() => FT.toast(FT.t('could_not_remove'))),

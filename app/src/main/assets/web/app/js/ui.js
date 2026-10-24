@@ -8,7 +8,7 @@ FT.link = {
     // `local`: finished download, played from the phone's file
     watch: (video) => `#/watch?s=${video.serviceId ?? FT.serviceOfUrl(video.url)}&u=${FT.enc(video.url)}${video.local ? '&local=1' : ''}`,
     channel: (url, service) => `#/channel?s=${service ?? FT.serviceOfUrl(url)}&u=${FT.enc(url)}`,
-    playlist: (item) => `#/playlist?s=${item.serviceId ?? FT.store.service}&u=${FT.enc(item.id)}`,
+    playlist: (item) => item.isLocal ? `#/mylist?u=${FT.enc(item.id)}` : `#/playlist?s=${item.serviceId ?? FT.store.service}&u=${FT.enc(item.id)}`,
 };
 
 const meta = (v) => [v.channelName, FT.views(v.viewCount), v.uploadDate].filter(Boolean).join(' · ');

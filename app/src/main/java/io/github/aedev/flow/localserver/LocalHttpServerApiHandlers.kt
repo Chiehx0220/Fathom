@@ -264,6 +264,7 @@ internal fun ClientHandler.handleApiLibrary(
         json.put("channels", ApiRenderer.infoItemsToJson(dbHelper.nativeSubscriptions(), serviceId))
         json.put("playlists", ApiRenderer.infoItemsToJson(dbHelper.nativeBookmarkedPlaylists(), serviceId))
         json.put("watchLater", ApiRenderer.infoItemsToJson(dbHelper.nativeWatchLaterItems(), serviceId))
+        json.put("mine", myPlaylistsJson(dbHelper.nativeUserPlaylists()))
         sendResponse(os, 200, json.toString(), "application/json")
     } catch (e: Exception) {
         sendResponse(os, 500, ApiRenderer.errorJson(e.message), "application/json")

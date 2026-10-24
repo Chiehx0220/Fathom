@@ -152,6 +152,7 @@ const actionRow = (service, info) => {
     const cast = FT.button(FT.t('cast'), 'cast', () => FT.cast.open(info), '', 'cast');
     const audio = FT.button(FT.t('audio_only'), 'music_note', () => audio.classList.toggle('on', FT.player.toggleAudioOnly()), '', 'audio');
     const buttons = [subscribe, like, dislike, later, share, audio, cast];
+    buttons.splice(4, 0, FT.button(FT.t('playlist'), 'playlist_play', () => FT.playlistPicker(video), '', 'playlist'));
     if (service === 0) buttons.push(downloadButton(service, info));
     buttons.forEach((b, i) => { if (i < 4) b.dataset.first = '1'; });
     paint();

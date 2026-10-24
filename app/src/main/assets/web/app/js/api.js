@@ -34,6 +34,8 @@ const act = async (path, params) => {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 };
 
+const playlistAction = (params) => getJson('/playlist_action', params);
+
 FT.api = {
     forget: () => memo.clear(),
 
@@ -51,6 +53,9 @@ FT.api = {
     searchHistory: () => getJson('/search-history'),
     forgetSearch: (q) => getJson('/search-history', { delete: q }),
     channel: (service, id, nextPage) => getJson('/api/v1/channel', { serviceId: service, id, nextPage }),
+    liked: () => getJson('/api/v1/liked'),
+    playlists: (videoUrl) => getJson('/api/v1/playlists', videoUrl ? { id: videoUrl } : {}),
+    myList: (id) => getJson('/api/v1/mylist', { id }),
     playlist: (service, id, nextPage) => getJson('/api/v1/playlist', { serviceId: service, id, nextPage }),
     video: (service, id) => getJson('/api/v1/video', { serviceId: service, id }),
     comments: (service, id, nextPage) => getJson('/api/v1/comments', { serviceId: service, id, nextPage }),
@@ -73,6 +78,10 @@ FT.api = {
     watchLater: (video, on) => act('/watch_later_action', { action: on ? 'add' : 'remove', ...videoQuery(video), type: 'video', serviceId: video.serviceId ?? 0 }),
     rate: (video, action) => act('/rate_video', { action, ...videoQuery(video), serviceId: video.serviceId ?? 0 }),
     removeFromHistory: (video) => act('/history_action', { action: 'remove', url: video.url, serviceId: video.serviceId ?? 0 }),
+    playlistSet: (playlist, video, on) => playlistAction({ action: on ? 'add' : 'remove', playlist, ...videoQuery(video) }),
+    playlistCreate: (name, video) => playlistAction({ action: 'create', name, ...(video ? videoQuery(video) : {}) }),
+    playlistRename: (playlist, name) => playlistAction({ action: 'rename', playlist, name }),
+    playlistDelete: (playlist) => playlistAction({ action: 'delete', playlist }),
     bookmarkPlaylist: (playlist, on) => act('/bookmark_playlist', { action: on ? 'bookmark' : 'unbookmark', id: playlist.id, name: playlist.name || '' }),
 };
 })();

@@ -19,7 +19,7 @@ const parse = () => {
 const TABS = [
     { name: 'home', label: FT.t('tab_home'), icon: 'home', match: ['home'] },
     { name: 'subscriptions', label: FT.t('tab_subscriptions'), icon: 'subscriptions', match: ['subscriptions', 'channel'] },
-    { name: 'library', label: FT.t('tab_library'), icon: 'video_library', match: ['library', 'playlist', 'history'] },
+    { name: 'library', label: FT.t('tab_library'), icon: 'video_library', match: ['library', 'playlist', 'mylist', 'history'] },
     { name: 'settings', label: FT.t('tab_settings'), icon: 'settings', match: ['settings'] },
 ];
 

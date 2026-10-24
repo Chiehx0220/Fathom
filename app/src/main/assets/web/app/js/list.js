@@ -292,7 +292,25 @@ FT.register('subscriptions', {
 
 // ---- Library: history, watch later, playlists, downloads ----
 
-const LIBRARY_TABS = [['history', FT.t('tab_history'), 'history'], ['later', FT.t('watch_later'), 'schedule'], ['playlists', FT.t('playlists'), 'playlist_play'], ['downloads', FT.t('tab_downloads'), 'download']];
+const LIBRARY_TABS = [['history', FT.t('tab_history'), 'history'], ['later', FT.t('watch_later'), 'schedule'], ['liked', FT.t('liked_videos'), 'thumb_up'], ['playlists', FT.t('playlists'), 'playlist_play'], ['downloads', FT.t('tab_downloads'), 'download']];
+
+// Tabs that are one plain list of videos.
+const LIBRARY_LISTS = {
+    later: {
+        empty: { icon: 'schedule', title: FT.t('nothing_saved'), text: FT.t('nothing_saved_hint') },
+        load: async (service) => (await FT.api.library(service)).watchLater,
+        decorate: (row) => { row.inWatchLater = true; },
+    },
+    liked: {
+        empty: { icon: 'thumb_up', title: FT.t('no_liked'), text: FT.t('no_liked_hint') },
+        load: async () => (await FT.api.liked()).videos,
+        decorate: (row) => { row.fromLiked = true; },
+    },
+    downloads: {
+        empty: { icon: 'download', title: FT.t('no_downloads'), text: FT.t('no_downloads_hint') },
+        load: async () => (await FT.api.downloads()).videos,
+    },
+};
 
 FT.register('library', {
     leave: cleanup,
@@ -311,24 +329,20 @@ FT.register('library', {
             return;
         }
 
-        if (tab === 'later' || tab === 'downloads') {
+        const source = LIBRARY_LISTS[tab];
+        if (source) {
             await FT.listView(root, {
                 before,
-                empty: tab === 'later'
-                    ? { icon: 'schedule', title: FT.t('nothing_saved'), text: FT.t('nothing_saved_hint') }
-                    : { icon: 'download', title: FT.t('no_downloads'), text: FT.t('no_downloads_hint') },
-                decorate: (row) => { if (tab === 'later') row.inWatchLater = true; },
-                fetch: async () => {
-                    const items = tab === 'later' ? (await FT.api.library(service)).watchLater : (await FT.api.downloads()).videos;
-                    return { items: (items || []).filter(sameService), next: null };
-                },
+                empty: source.empty,
+                decorate: source.decorate,
+                fetch: async () => ({ items: (await source.load(service)).filter(sameService), next: null }),
             }, isCurrent);
             return;
         }
 
         const lib = await FT.api.library(service);
         if (!isCurrent()) return;
-        const cards = (lib.playlists || []).filter(sameService).map((item) => {
+        const cards = [...(lib.mine || []), ...(lib.playlists || []).filter(sameService)].map((item) => {
             const card = FT.playlistCard(item);
             card.onRemoved = () => { card.remove(); FT.focus.first(); };
             return card;
@@ -336,6 +350,42 @@ FT.register('library', {
         root.replaceChildren(...before, cards.length
             ? h('div', { class: 'grid' }, cards)
             : FT.empty('playlist_play', FT.t('no_bookmarks'), FT.t('no_bookmarks_hint')));
+    },
+});
+
+// ---- Own playlist ----
+
+const ownPlaylistHead = (id, meta) => {
+    const title = h('h1', {}, meta.name);
+    const rename = FT.button(FT.t('rename'), 'title', () => {
+        const name = (prompt(FT.t('playlist_name'), meta.name) || '').trim();
+        if (!name || name === meta.name) return;
+        FT.api.playlistRename(id, name)
+            .then(() => { meta.name = name; title.textContent = name; FT.toast(FT.t('playlist_renamed')); })
+            .catch(() => FT.toast(FT.t('could_not_change')));
+    }, '', 'rename');
+    const remove = FT.button(FT.t('delete_playlist'), 'delete', () => {
+        if (!confirm(FT.t('confirm_delete_playlist', { name: meta.name }))) return;
+        FT.api.playlistDelete(id)
+            .then(() => { FT.toast(FT.t('playlist_deleted')); location.hash = '#/library?tab=playlists'; })
+            .catch(() => FT.toast(FT.t('could_not_remove')));
+    }, '', 'delete-playlist');
+    return h('div', { class: 'head' }, title, h('span', { class: 'card-meta' }, FT.tn('count_videos', meta.videoCount)), h('span', { class: 'grow' }), rename, remove);
+};
+
+FT.register('mylist', {
+    leave: cleanup,
+    async render(root, params, isCurrent) {
+        const id = params.u;
+        await FT.listView(root, {
+            before: [],
+            empty: { icon: 'playlist_remove', title: FT.t('playlist_empty'), text: FT.t('playlist_empty_hint') },
+            decorate: (row) => { row.fromPlaylist = id; },
+            fetch: async () => {
+                const body = await FT.api.myList(id);
+                return { items: body.videos, next: null, extra: [ownPlaylistHead(id, body.playlist)] };
+            },
+        }, isCurrent);
     },
 });
 

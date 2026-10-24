@@ -16,6 +16,10 @@ kbd { min-width: 26px; padding: 3px 7px; border-radius: 7px; background: var(--s
 .menu-item:hover { background: var(--s2); }
 .menu-item.danger { color: var(--danger); }
 .menu-item.on { color: var(--acc); }
+.menu-item .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-item .count { color: var(--mute); font-size: 13px; }
+.picker { max-height: 50vh; overflow: auto; }
+.picker-new { margin: 6px 4px 4px; }
 .menu-item.sel { background: var(--acc); color: var(--on-acc); }
 
 /* Remote pointer: tonal disc with a dark core. Press shrinks it and lights a halo; .idle fades it

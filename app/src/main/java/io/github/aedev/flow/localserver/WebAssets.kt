@@ -30,6 +30,7 @@ object WebAssets {
             "app/js/focus.js",
             "app/js/menu.js",
             "app/js/cast.js",
+            "app/js/playlists.js",
             "app/js/router.js",
             "app/js/player.js",
             "app/js/remote.js",

@@ -13,7 +13,7 @@ import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
-private fun HistoryDbHelper.playlistRepository() = PlaylistRepository(appContext)
+internal fun HistoryDbHelper.playlistRepository() = PlaylistRepository(appContext)
 
 /** Playlist bookmarks ("save this YouTube playlist") and Watch Later: native PlaylistRepository (Room); Watch Later = hardcoded internal playlist, same table as playlists saved from Flow UI. */
 fun HistoryDbHelper.nativeIsPlaylistBookmarked(playlistUrl: String?): Boolean {
@@ -54,7 +54,7 @@ fun HistoryDbHelper.nativeIsWatchLater(videoUrl: String): Boolean {
 }
 
 /** HTTP action params carry no duration/viewCount/uploadDate (button markup only); `-1`/empty as [StreamInfoItem.toFlowVideo]. */
-private fun buildFlowVideoFromParams(
+internal fun buildFlowVideoFromParams(
     videoId: String,
     title: String,
     uploader: String,

@@ -31,6 +31,7 @@ internal val MUTATING_PATHS: Set<String> =
         "/block_channel",
         "/bookmark_playlist",
         "/watch_later_action",
+        "/playlist_action",
         "/rate_video",
         "/api/player/play",
         "/api/player/pause",
