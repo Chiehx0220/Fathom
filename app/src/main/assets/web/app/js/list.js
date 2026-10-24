@@ -1,9 +1,8 @@
-// Screens that are lists of videos: search, subscriptions, library, playlists. One list view serves them all:
-// rows on the left, the selected one drawn large on the right, and "load more" that also runs by itself near the end.
+// Video-list screens (search, subscriptions, library, playlists): rows left, selected drawn large right, load more (auto near end).
 (() => {
 const h = FT.h;
 
-// The detail pane for the selected row.
+// Detail pane of selected row.
 const paneFor = (el) => {
     const v = el.item;
     return [
@@ -94,7 +93,7 @@ FT.listView = async (root, options, isCurrent) => {
     if (firstRow && !wide) showPane(firstRow);
 };
 
-// A history list redraws on history changes (scroll and selection kept by FT.reload).
+// History list redraws on history change (FT.reload keeps scroll/selection).
 let stopHistory = null;
 // Grid layout end observers; disconnected on leave.
 const activeEnds = [];
@@ -137,7 +136,7 @@ FT.register('search', {
             root.replaceChildren(...[field, suggestions(history, () => {}), history.length ? null : FT.empty('search', FT.t('search_service', { name: FT.store.serviceName(service) }), FT.t('search_empty_hint'))].filter(Boolean));
             return;
         }
-        // The first page decides which kinds of result exist; videos come first, channels and playlists are one press away.
+        // First page decides result kinds; videos first, channels/playlists one press away.
         const first = await FT.api.search(service, q, null);
         if (!isCurrent()) return;
         const kinds = [['videos', FT.t('videos'), 'play_circle', first.videos], ['channels', FT.t('channels'), 'group', first.channels], ['playlists', FT.t('playlists'), 'playlist_play', first.playlists]]
@@ -226,8 +225,7 @@ const ofService = (service) => (item) => item.serviceId === undefined || item.se
 const SUBSCRIPTIONS_TABS = [['feed', FT.t('tab_feed'), 'dynamic_feed'], ['channels', FT.t('channels'), 'group']];
 const SOURCE_KEY = 'fathom-subs-source';
 
-// Source filter of the subscriptions screen: 'all' or a service id, independent of the app-wide source.
-// `used`: the services that have a subscription.
+// Source filter: 'all' | service id (independent of app source); `used`: services with subscriptions.
 const subsSource = (params, used) => {
     let saved = null;
     try { saved = localStorage.getItem(SOURCE_KEY); } catch (e) {}

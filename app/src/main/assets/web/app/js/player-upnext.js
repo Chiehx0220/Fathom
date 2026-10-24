@@ -1,9 +1,9 @@
-// Up next: the card shown when a video ends.
+// Up-next card on ended.
 (() => {
 const P = FT.playerCore;
 const h = FT.h;
 const UP_NEXT_SECONDS = 8;
-const RING = 88; // circumference of the countdown ring (r = 14)
+const RING = 88; // ring circumference (r = 14)
 let upNext = null; // { el, timer, endAt, ring, count }
 
 const svgEl = (tag, attrs) => {
@@ -12,7 +12,7 @@ const svgEl = (tag, attrs) => {
     return el;
 };
 
-// Closes the card, stops its countdown, gives the keys back. Safe when there is none.
+// Idempotent: close card, stop countdown, release focus trap.
 const cancel = () => {
     if (!upNext) return;
     clearInterval(upNext.timer);
@@ -37,7 +37,7 @@ const tick = (next) => {
 
 const schedule = () => {
     const next = P.current && P.current.info.relatedVideos && P.current.info.relatedVideos[0];
-    // A video ending in the mini player, viewer elsewhere on the site: the page is not pulled away.
+    // Skip unless full dock (ended in mini: no navigation).
     if (!next || upNext || !P.tree || P.dockMode !== 'full') return;
     const counting = P.prefs.autoplay();
     const ring = svgEl('circle', { cx: 17, cy: 17, r: 14, fill: 'none', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-dasharray': RING, class: 'upnext-bar' });
@@ -80,7 +80,7 @@ const schedule = () => {
     P.tree.skin.append(el);
     upNext = { el, ring, count, endAt: performance.now() + UP_NEXT_SECONDS * 1000, timer: 0 };
     if (counting) upNext.timer = setInterval(() => tick(next), 200);
-    // Remote keys stay on the card until it is gone: OK plays now, left/right pick a button, Back cancels.
+    // Focus trapped: OK play, left/right buttons, Back cancel.
     FT.focus.trap(el);
     FT.focus.select(play, { scroll: false });
 };
@@ -89,7 +89,7 @@ FT.playerCore.upNext = {
     schedule,
     cancel,
     active: () => !!upNext,
-    // Back/Escape closes the card without leaving the page; any other key is the focus engine's. True when used.
+    // Back/Escape cancels card in place; true if consumed.
     back(name) {
         if (!upNext || name !== 'back') return false;
         cancel();

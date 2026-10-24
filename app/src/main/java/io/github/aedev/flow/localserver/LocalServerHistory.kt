@@ -16,7 +16,7 @@ fun HistoryDbHelper.nativeWatchedUrls(): Set<String> =
     }
 
 /**
- * Create-or-touch history entry metadata, saved position kept. `uploaderAvatar` dropped (no column in native history table; native history screen shows none).
+ * Create-or-touch history entry, saved position kept. `uploaderAvatar` dropped (no column).
  */
 fun HistoryDbHelper.nativeSaveToHistory(
     title: String,

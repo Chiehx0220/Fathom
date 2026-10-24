@@ -1,5 +1,4 @@
-// The theme: a palette (which colours) and a mode (how light). Both are attributes on <html>, set by FT_setTheme in
-// index.html; what each palette and scheme looks like is in tokens.css. The choice is kept in this browser.
+// Theme = palette + mode, attributes on <html> (FT_setTheme, index.html); styles in tokens.css; per-browser.
 (() => {
 
 const save = (key, value) => { try { localStorage.setItem(key, value); } catch (e) {} };
@@ -34,7 +33,7 @@ FT.theme = {
     },
 };
 
-// Auto follows the browser's own light or dark setting as it changes.
+// Auto follows browser scheme changes.
 const preference = window.matchMedia && matchMedia('(prefers-color-scheme: dark)');
 if (preference && preference.addEventListener) {
     preference.addEventListener('change', () => { if (FT.theme.mode() === 'auto') window.FT_setTheme(FT.theme.palette(), 'auto'); });

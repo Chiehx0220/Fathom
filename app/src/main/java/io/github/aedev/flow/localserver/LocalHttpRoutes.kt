@@ -59,7 +59,7 @@ internal val ROUTES: Map<String, Route> =
         ICON_PATH to route { os, _, _ -> handleAppIcon(os) },
     )
 
-/** Routes outside `/api/` that answer JSON; their failures are JSON too. */
+/** Non-`/api/` JSON routes; failures are JSON. */
 internal val JSON_ROUTES: Set<String> =
     setOf(
         "/danmaku",
@@ -79,7 +79,7 @@ internal val JSON_ROUTES: Set<String> =
         "/rate_video",
     )
 
-/** Body and content type for a failed request: JSON on JSON routes, plain text elsewhere (no internals on 500). */
+/** Failure body + content type: JSON on JSON routes, else text; 500 hides the message. */
 internal fun failureBody(
     path: String,
     code: Int,

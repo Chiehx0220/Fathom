@@ -120,7 +120,7 @@ class ServerService : Service() {
     }
 
     // Android 15+ caps dataSync FGS (~6h); system calls this, expects stopSelf() within seconds or ForegroundServiceDidNotStopInTimeException.
-    // stopSelf() → onDestroy() → stopServer() releases locks + notification. No restart (background FGS start restriction): server stays down until re-enabled in Settings.
+    // stopSelf() → onDestroy() → stopServer(). No restart (background FGS start restriction): down until re-enabled in Settings.
     override fun onTimeout(
         startId: Int,
         fgsType: Int,

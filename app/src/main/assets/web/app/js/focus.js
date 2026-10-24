@@ -1,6 +1,4 @@
-// The focus engine: which control the keys (or the phone remote) are on, and where an arrow goes next.
-// Screens only mark their controls with `data-f`; they never handle arrow keys themselves. Where a control sits on
-// screen decides where each arrow leads, so shelves, lists, grids and the top bar all behave the same way.
+// Focus engine: selection by keys/phone remote; arrow target by control position. Screens only mark controls with data-f.
 (() => {
 const state = { el: null, trap: null, memory: new Map(), routeKey: '' };
 
@@ -10,8 +8,7 @@ const visible = (el) => {
     return r.width > 0 && r.height > 0;
 };
 
-// The controls that can be selected right now: an open menu or dialog holds them all, otherwise the top bar and the
-// screen. With the phone paired the top bar is left out: its places are keys on the phone, and the arrows stay on the page.
+// Selectable controls: open menu/dialog holds all, else top bar + screen. Paired phone: top bar excluded (its keys are on the phone).
 const stops = () => {
     const scope = state.trap ? [state.trap] : FT.remote.active ? [FT.$('#screen')] : [FT.$('#top'), FT.$('#screen')];
     return scope.flatMap((root) => FT.$$('[data-f]', root)).filter(visible);
@@ -22,7 +19,7 @@ const box = (el) => {
     return { l: r.left, r: r.right, t: r.top, b: r.bottom, cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height };
 };
 
-// Best control in a direction: nearest along it, with a strong preference for staying lined up (same row or column).
+// Best control per direction: nearest along it, strongly prefer alignment (same row/column).
 const neighbour = (from, all, dir) => {
     const c = box(from);
     const horizontal = dir === 'left' || dir === 'right';
@@ -35,10 +32,9 @@ const neighbour = (from, all, dir) => {
         const along = (horizontal ? r.cx - c.cx : r.cy - c.cy) * sign;
         if (along <= 4) continue;
         const across = Math.abs(horizontal ? r.cy - c.cy : r.cx - c.cx);
-        // Sideways moves stay on the row they are on; a control in another row is not "to the left".
+        // Sideways: same row only.
         if (horizontal && across > Math.max(c.h, r.h) * 0.6) continue;
-        // Up and down prefer what is directly above or below (the two overlap side to side); only when there is
-        // nothing there does the nearest control off to the side count.
+        // Up/down: prefer overlap above/below; else nearest to the side.
         const lined = Math.min(r.r, c.r) - Math.max(r.l, c.l) > 8;
         const score = horizontal ? along + across * 3 : lined ? along : along + across * 2 + 100000;
         if (score < bestScore) { bestScore = score; best = el; }
@@ -66,12 +62,12 @@ FT.focus = {
         state.el = null;
     },
 
-    // Confine the controls to one element (an open menu); pass null to release.
+    // Confine to element (open menu); null releases.
     trap(el) { state.trap = el || null; },
 
     first() {
         const all = stops();
-        // A screen opens on its first control; when that is a search box and there are results, on the first result instead.
+        // Opens on first control; search box with results → first result.
         const content = all.filter((el) => !inTop(el));
         const lead = content[0];
         // pill row: focus the active tab
@@ -81,12 +77,12 @@ FT.focus = {
         return pick || null;
     },
 
-    // Remember where the selection was on this screen, so coming back to it lands on the same control.
+    // Remember selection per screen.
     remember() {
         if (state.routeKey && state.el && state.el.dataset.key && !inTop(state.el)) state.memory.set(state.routeKey, state.el.dataset.key);
     },
 
-    // Called when a screen has drawn itself: reselect what was selected last time here, else the first control.
+    // After screen draw: restore last selection, else first control.
     restore(routeKey) {
         state.routeKey = routeKey;
         FT.focus.clear();
@@ -98,7 +94,7 @@ FT.focus = {
         else FT.focus.first();
     },
 
-    // Where a downward move from the top bar should land.
+    // Landing for downward move from top bar.
     below() {
         const wanted = state.memory.get(state.routeKey);
         const all = stops().filter((el) => !inTop(el));
@@ -134,7 +130,7 @@ FT.input = setInput;
 
 const DIRECTIONS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
 
-// One entry point for the keyboard and the phone remote: a command name in, the same behaviour out.
+// Single entry for keyboard + phone remote: command name in.
 FT.command = (name) => {
     setInput('keys');
     if (FT.command.hook && FT.command.hook(name)) return;
@@ -145,12 +141,12 @@ FT.command = (name) => {
 };
 
 document.addEventListener('keydown', (e) => {
-    // A key the player's own shortcuts already used (it has focus) is theirs; handling it here too would do it twice.
+    // Player shortcut already handled it (focused): skip.
     if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
     const inField = e.target && e.target.matches && e.target.matches('input, textarea, select');
     const dir = DIRECTIONS[e.key];
     if (inField) {
-        // A text field keeps its own keys, except that up and down leave it and Escape gives it up.
+        // Text field keeps its keys; up/down leave, Escape releases.
         if (e.key === 'Escape') { e.target.blur(); FT.focus.select(e.target.closest('[data-f]')); e.preventDefault(); }
         else if (dir === 'up' || dir === 'down') { e.target.blur(); FT.command(dir); e.preventDefault(); }
         return;
@@ -162,7 +158,7 @@ document.addEventListener('keydown', (e) => {
     else if (e.key === 'Tab') { FT.command(e.shiftKey ? 'left' : 'right'); e.preventDefault(); }
 });
 
-// The mouse takes over again the moment it really moves; a hovered control becomes the selected one, so the keys continue from it.
+// Real mouse move reclaims selection (hovered control); keys continue from it.
 let lastX = -1;
 let lastY = -1;
 document.addEventListener('mousemove', (e) => {
@@ -172,7 +168,7 @@ document.addEventListener('mousemove', (e) => {
     setInput('pointer');
 });
 document.addEventListener('mouseover', (e) => {
-    // Content sliding under a still mouse (keys scrolling the page) also raises mouseover; only a moving mouse counts.
+    // Scroll under still mouse raises mouseover: only moving mouse counts.
     if (document.body.dataset.input !== 'pointer') return;
     const stop = e.target.closest && e.target.closest('[data-f]');
     if (stop && stop !== state.el && (!state.trap || state.trap.contains(stop))) FT.focus.select(stop, { scroll: false });

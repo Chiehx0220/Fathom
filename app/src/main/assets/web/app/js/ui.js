@@ -1,9 +1,8 @@
-// The pieces screens are built from: cards, list rows, shelves, buttons. Each returns an element; the item it shows
-// is kept on the element (`el.item`) so the options menu and the detail pane can find it again.
+// Screen building blocks: cards, rows, shelves, buttons; item kept on `el.item` (options menu, detail pane).
 (() => {
 const h = FT.h;
 
-// Where opening a video, channel or playlist goes. Links are real anchors, so the mouse gets them natively.
+// Open target for video/channel/playlist; real anchors (native mouse behaviour).
 FT.link = {
     // `local`: finished download, played from the phone's file
     watch: (video) => `#/watch?s=${video.serviceId ?? FT.serviceOfUrl(video.url)}&u=${FT.enc(video.url)}${video.local ? '&local=1' : ''}`,
@@ -32,7 +31,7 @@ FT.videoCard = (v, key) => {
     return el;
 };
 
-// A video as a list row; `onSelect` is called with the item when the row becomes the selected one.
+// Video list row; `onSelect(item)` when selected.
 FT.videoRow = (v, key) => {
     const el = h('a', { class: 'row-item', href: FT.link.watch(v), tabindex: '-1', data: { f: '', key: key || v.url } },
         thumb(v, false), h('div', { class: 'row-text' }, h('div', { class: 'card-title' }, v.title), h('div', { class: 'card-meta' }, meta(v))));
@@ -58,16 +57,14 @@ FT.playlistCard = (p) => {
     return el;
 };
 
-// One card for whatever an API list held.
+// Card for any API list item.
 FT.itemCard = (item) => (item.subscriberCount !== undefined && item.name ? FT.channelCard(item) : item.videoCount !== undefined && item.name ? FT.playlistCard(item) : FT.videoCard(item));
 
-// A sideways row with a hint that it scrolls: its edges fade where there is more, and a pointer user gets an arrow button on each side
-// (CSS shows them only to a mouse; a finger swipes and a remote moves the selection, which scrolls the row by itself). The buttons are
-// not data-f, so the remote never stops on them.
+// Sideways row: edge fade; pointer users get arrow buttons (CSS shows mouse only; swipe/remote scroll natively); buttons not data-f.
 FT.scroller = (row) => {
     const wrap = h('div', { class: 'row-wrap' });
     const arrow = (dir) => h('button', { type: 'button', class: 'row-arrow ' + dir, tabindex: '-1', 'aria-label': FT.t(dir === 'left' ? 'scroll_left' : 'scroll_right'),
-        onclick: () => row.scrollBy({ left: (dir === 'left' ? -1 : 1) * row.clientWidth * 0.85 }) }, FT.icon('chevron_right'));  // the icon font holds only the icons the app uses, so the left arrow is this one mirrored in CSS
+        onclick: () => row.scrollBy({ left: (dir === 'left' ? -1 : 1) * row.clientWidth * 0.85 }) }, FT.icon('chevron_right'));  // icon font has only used icons: left arrow = mirrored right (CSS)
     const update = () => {
         wrap.classList.toggle('can-left', row.scrollLeft > 4);
         wrap.classList.toggle('can-right', row.scrollLeft + row.clientWidth < row.scrollWidth - 4);
@@ -83,7 +80,7 @@ FT.shelf = (title, sub, cards, extra = '') => h('section', { class: 'shelf' },
     h('div', { class: 'shelf-head' }, h('h2', {}, title), sub ? h('span', {}, sub) : null),
     FT.scroller(h('div', { class: ('row ' + extra).trim() }, cards)));
 
-// A button. `onclick` is the action; `variant` is 'primary', 'round' or ''. Stops are found by the focus engine through data-f.
+// Button; `variant`: 'primary' | 'round' | ''. Focus engine finds it via data-f.
 FT.button = (label, icon, onclick, variant = '', key) => {
     const el = h('button', { type: 'button', class: ('btn ' + variant).trim(), data: { f: '', key: key || label }, onclick, 'aria-label': label },
         icon ? FT.icon(icon) : null, variant.includes('round') ? null : label);

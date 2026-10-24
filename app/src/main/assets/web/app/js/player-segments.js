@@ -1,4 +1,4 @@
-// Chapters, SponsorBlock segments and the skip button.
+// Chapters, SponsorBlock segments, skip button.
 (() => {
 const P = FT.playerCore;
 const h = FT.h;
@@ -10,7 +10,7 @@ const vttTime = (sec) => {
     return `${pad(Math.floor(ms / 3600000), 2)}:${pad(Math.floor(ms / 60000) % 60, 2)}:${pad(Math.floor(ms / 1000) % 60, 2)}.${pad(ms % 1000, 3)}`;
 };
 
-// The skin draws chapter gaps and names on the seek bar from a chapters text track.
+// Chapters WebVTT track: seek-bar gaps + names.
 const addTrack = () => {
     const p = P.media();
     const current = P.current;
@@ -27,8 +27,7 @@ const addTrack = () => {
     p.append(P.track('chapters', FT.t('chapters'), 'en', P.tree.chapterUrl, true));
 };
 
-// Marks go into the skin's time slider, in the skin's open shadow root (rules in player-build.js SKIN_STYLE).
-// Packaged skin internals: re-check that the slider is still found after a Video.js upgrade.
+// Marks in skin <media-time-slider> shadow root (SKIN_STYLE). Skin internals: re-check on Video.js upgrade.
 const placeMarks = () => {
     const p = P.media();
     if (!P.tree || !P.current || !P.current.segments.length || !p.duration) return;
@@ -40,7 +39,7 @@ const placeMarks = () => {
     }
 };
 
-// Server labels are English; translated via segment_* keys when present.
+// segment_* i18n keys; fallback server label.
 const segmentName = (label) => FT.t('segment_' + String(label).replace(/[ -]/g, '_'), null, label);
 
 const watch = () => {
@@ -96,7 +95,7 @@ FT.playerCore.segments = {
         else if (i > 0 && p.currentTime - list[i].s <= 3) p.currentTime = list[i - 1].s;
         else p.currentTime = list[i].s;
     },
-    // By chapter index, for the remote's picker (step moves ±1).
+    // By index (remote picker); step is ±1.
     jump(i) {
         const target = P.current ? P.current.chapters[i] : null;
         if (target) P.media().currentTime = target.s;

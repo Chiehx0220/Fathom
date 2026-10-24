@@ -1,8 +1,8 @@
-// Shared state of the one player (FT.playerCore), plus helpers every player-*.js module needs.
-// Only state read by several modules lives here; the rest is private to the module that owns it.
-// Load order (WebAssets): state, prefs, progress, segments, stream, menu, danmaku, upnext, dock, controls, build, player.
+// FT.playerCore: cross-module state + helpers.
+// Only multi-module state here; rest private to owner.
+// Order: WebAssets APP_JS_FILES.
 (() => {
-// Stands in for the media element while nothing is open.
+// Placeholder media while idle.
 const IDLE = {
     paused: true, currentTime: 0, duration: 0, volume: 1, muted: false,
     play: () => Promise.resolve(), pause() {}, addEventListener() {}, removeEventListener() {},
@@ -11,7 +11,7 @@ const IDLE = {
 let hudTimer = 0;
 
 const P = FT.playerCore = {
-    // { host, skin, media, live, chapterUrl }: the Video.js player of the open video. host.store carries fullscreen, renditions, tracks.
+    // { host, skin, media, live, chapterUrl }; host.store: fullscreen, renditions, tracks
     tree: null,
     // { service, url, info, chapters, segments, chapterTrack }
     current: null,

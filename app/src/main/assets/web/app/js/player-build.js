@@ -1,9 +1,8 @@
-// Builds the Video.js player of one video: modules, skin, media component, and the page-side bindings.
+// Per-video player build: modules, skin, media component, bindings.
 (() => {
 const P = FT.playerCore;
 
-// Player modules come with the first video that opens, not with the page: player, live player and media components are 1.8 MB together.
-// The page's version goes on the entry files, as for /app.js.
+// Lazy-load player modules on first open (1.8 MB); version tag = /app.js ?v=.
 const APP_VERSION = new URL(document.currentScript.src).searchParams.get('v') || '';
 const vendor = (path) => `/vendor/videojs/${path}?v=${APP_VERSION}`;
 const loadPlayer = (way) => Promise.all([
@@ -11,8 +10,7 @@ const loadPlayer = (way) => Promise.all([
     way.tag === 'video' ? null : import(vendor(`media/${way.tag}.js`)),
 ]);
 
-// Rules for the skin's shadow root, out of reach of the page's CSS: no skin controls in the mini player (its buttons are the page's .mini-ctrl),
-// the skin's cast button (disabled without the Cast SDK; FT.cast takes it over), SponsorBlock marks on the seek bar.
+// Skin shadow-root CSS (unreachable from page CSS): hide controls in mini, force-enable cast button (FT.cast), SponsorBlock marks.
 const SKIN_STYLE = `
 :host([data-mini]) media-controls, :host([data-mini]) media-title { display: none !important; }
 media-cast-button[hidden] { display: inline-flex !important; }
@@ -23,7 +21,7 @@ media-cast-button, media-cast-button[data-disabled], media-cast-button[aria-disa
 .sb-mark.selfpromo { background: #FFFF00; }
 .sb-mark.music_offtopic { background: #FF9900; }`;
 
-// Video.js does not set the media session shown on lock screens and by media keys.
+// Media Session (lock screen, media keys); not set by Video.js.
 const publishMediaSession = (info) => {
     if (!('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
     try {
@@ -53,7 +51,7 @@ const teardown = () => {
     if (holder) holder.append(FT.$('#skip-btn'), FT.$('#hud'));
     P.menu.stop();
     if (P.tree) {
-        // A removed media element keeps playing unless stopped first.
+        // Stop before remove, else audio continues.
         try { P.tree.media.pause(); P.tree.media.removeAttribute('src'); } catch (e) {}
         if (P.tree.chapterUrl) URL.revokeObjectURL(P.tree.chapterUrl);
         P.tree.host.remove();
@@ -62,15 +60,14 @@ const teardown = () => {
     FT.$('#player').replaceChildren();
 };
 
-// The skin builds its shadow root when connected; its rules go in once that exists.
+// Shadow root exists after connect; inject rules then.
 const skinReady = (skin) => new Promise((resolve) => {
     const started = performance.now();
     const check = () => ((skin.shadowRoot && skin.shadowRoot.firstElementChild) || performance.now() - started > 3000 ? resolve() : requestAnimationFrame(check));
     check();
 });
 
-// Replaces the last player. The media component follows from the stream, so it is part of what is built.
-// Returns null when another video was opened while this one waited for its components.
+// Replaces previous player; null if superseded while loading.
 const build = async (info, way, owner) => {
     teardown();
     const [playerTag, skinTag] = way.live ? ['live-video-player', 'live-video-skin'] : ['video-player', 'video-skin'];

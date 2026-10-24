@@ -82,7 +82,7 @@ private suspend fun HistoryDbHelper.buildHomeFeedContext(): HomeFeedContext {
     return HomeFeedContext(watched, exclusions, brain, taste, subAvatarMap)
 }
 
-/** Dedup by video id, rank via FlowNeuroEngine (unranked on failure), convert to [StreamInfoItem]. Used by [continueDiscoveryFeed]. */
+/** Dedup by id, rank via FlowNeuroEngine (unranked on failure), convert. For [continueDiscoveryFeed]. */
 private suspend fun HistoryDbHelper.rankAndConvert(
     videos: List<FlowVideo>,
     serviceId: Int,
@@ -189,8 +189,7 @@ fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int): Pair<List<InfoItem>, B
         result to true
     }
 
-/** Load more: deeper discovery-query round, ranked as [buildAndRankHomeFeed]. Uncached, no subscription-feed re-pull (subs lane first-load only, as native).
- * Shares FlowNeuroEngine discovery-depth counter with native. */
+/** Load more: deeper discovery round, ranked as [buildAndRankHomeFeed]. Uncached; shares discovery-depth counter with native. */
 fun HistoryDbHelper.continueDiscoveryFeed(serviceId: Int): Pair<List<InfoItem>, Boolean> =
     runBlocking {
         ensureFlowNeuroInitialized()

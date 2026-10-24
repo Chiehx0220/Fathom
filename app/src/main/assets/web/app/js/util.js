@@ -1,4 +1,4 @@
-// Small helpers used everywhere. Everything the app shares hangs off one object, FT.
+// Shared helpers; everything hangs off FT.
 const FT = (window.FT = window.FT || {});
 
 FT.$ = (selector, root = document) => root.querySelector(selector);
@@ -10,7 +10,7 @@ FT.on = (type, handler) => {
     return () => removeEventListener(type, handler);
 };
 
-// Builds an element. Text is always added as text (never parsed), so titles from the network cannot inject markup.
+// Element builder; text always as text (no markup injection from network titles).
 //   FT.h('a', { class: 'card', href: '#/x', onclick: fn, data: { key: 'k' } }, child, 'text', [more])
 FT.h = (tag, props, ...kids) => {
     const el = document.createElement(tag);
@@ -28,10 +28,10 @@ FT.h = (tag, props, ...kids) => {
     return el;
 };
 
-// A Material icon by name; the glyph comes from the bundled font.
+// Material icon by name (bundled font).
 FT.icon = (name, extra = '') => FT.h('span', { class: ('i ' + extra).trim(), 'aria-hidden': 'true' }, name);
 
-// The Fathom mark: the page's own icon (the <link rel="icon"> in index.html), so the header and the browser tab always match.
+// Fathom mark from <link rel=icon>: header = tab.
 FT.brandMark = () => FT.h('img', { class: 'brand-mark', src: document.querySelector('link[rel="icon"]').href, alt: '', width: 32, height: 32 });
 
 FT.enc = encodeURIComponent;
@@ -71,9 +71,9 @@ const BCP47 = FT.lang.replace('_', '-');
 const fill = (text, values) => (values ? text.replace(/\{(\w+)\}/g, (all, name) => (name in values ? values[name] : all)) : text);
 
 FT.hasT = (key) => key in WORDS || key in BASE;
-// Text for `key` with {name} placeholders filled; a missing key yields `fallback`, else the key itself.
+// Text for key with {name} filled; missing → fallback, else key.
 FT.t = (key, values, fallback) => fill(WORDS[key] ?? BASE[key] ?? fallback ?? key, values);
-// Plural form by CLDR category: key_one, key_other, ...; {count} is filled in.
+// Plural by CLDR category: key_one, key_other, ...; {count} filled.
 const plurals = new Intl.PluralRules(BCP47);
 FT.tn = (key, n, values) => {
     const form = `${key}_${plurals.select(n)}`;
@@ -86,7 +86,7 @@ FT.count = (n) => (n === undefined || n === null || n < 0 ? '' : compact.format(
 // 0 means the source gave no count.
 FT.views = (n) => (n > 0 ? FT.t('count_views', { count: FT.count(n) }) : '');
 
-// The service a video or channel address belongs to (the list of services comes from the server).
+// Service of a video/channel address (list from server).
 FT.serviceOfUrl = (url) => (/bilibili\.com|^BV/i.test(url || '') ? 5 : 0);
 
 let toastTimer = 0;
@@ -109,9 +109,7 @@ FT.frame = (fn) => {
     };
 };
 
-// Copies text to the clipboard, true on success. navigator.clipboard requires a secure context
-// (this app is plain HTTP) and a trusted user gesture; execCommand needs only the latter, so it
-// stays as a real fallback rather than dead code.
+// Clipboard copy, true on success. navigator.clipboard needs secure context (plain HTTP here); execCommand is the real fallback.
 FT.copyText = async (text) => {
     try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -134,8 +132,7 @@ FT.copyText = async (text) => {
     return false;
 };
 
-// Description/comment text: HTML (YouTube) vs plain text (Bilibili) per ApiRenderer.kt's type
-// field, so a plain-text '<' is never rendered as markup. Links open in a new tab.
+// Description/comment text: HTML (YouTube) vs plain (Bilibili) per ApiRenderer type field; plain '<' never markup. Links in new tab.
 FT.description = (text, type) => {
     const box = FT.h('div');
     if (type === 'html' && text) {
@@ -147,10 +144,10 @@ FT.description = (text, type) => {
     return box;
 };
 
-// An avatar: the picture over a coloured initial, so a missing or broken picture still looks intentional.
+// Avatar: picture over coloured initial (missing picture still looks intentional).
 FT.avatar = (name, src, extra = '') => {
     const img = src ? FT.h('img', { src, alt: '', loading: 'lazy' }) : null;
-    // A comment author's name is often a "@handle" - the initial is the first letter of the handle, not "@".
+    // '@handle' authors: initial = first letter after @.
     const initial = (name || '?').trim().replace(/^@/, '').charAt(0).toUpperCase() || '?';
     const box = FT.h('span', { class: ('avatar ' + extra).trim() }, initial, img);
     if (img) img.addEventListener('error', () => box.classList.add('failed'));

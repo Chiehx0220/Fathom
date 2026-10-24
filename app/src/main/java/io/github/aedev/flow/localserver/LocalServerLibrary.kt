@@ -15,7 +15,7 @@ import io.github.aedev.flow.data.model.Video as FlowVideo
 
 internal fun HistoryDbHelper.playlistRepository() = PlaylistRepository(appContext)
 
-/** Playlist bookmarks ("save this YouTube playlist") and Watch Later: native PlaylistRepository (Room); Watch Later = hardcoded internal playlist, same table as playlists saved from Flow UI. */
+/** Playlist bookmarks and Watch Later: native PlaylistRepository (Room); Watch Later = internal playlist, same table as Flow UI saves. */
 fun HistoryDbHelper.nativeIsPlaylistBookmarked(playlistUrl: String?): Boolean {
     val playlistId = playlistUrlToId(playlistUrl) ?: return false
     return runBlocking { playlistRepository().isExternalPlaylistSaved(playlistId) }
@@ -71,7 +71,7 @@ internal fun buildFlowVideoFromParams(
     uploadDate = "",
 )
 
-/** Also reports SAVED to FlowNeuroEngine, as native `QuickActionsViewModel.toggleWatchLater`; best-effort ([reportFlowNeuroInteraction]). */
+/** Also reports SAVED to FlowNeuroEngine (as native toggleWatchLater), best-effort. */
 fun HistoryDbHelper.nativeAddWatchLater(
     url: String,
     title: String,
@@ -107,7 +107,7 @@ fun HistoryDbHelper.nativeWatchLaterItems(): List<InfoItem> =
 
 private fun HistoryDbHelper.likedVideosRepository() = LikedVideosRepository.getInstance(appContext)
 
-/** Like/dislike via `LikedVideosRepository` (DataStore), as native `VideoPlayerViewModel.likeVideo/dislikeVideo`. `-1`/empty as [nativeAddWatchLater]. */
+/** Like/dislike via `LikedVideosRepository` (DataStore), as native likeVideo/dislikeVideo. `-1`/empty as [nativeAddWatchLater]. */
 fun HistoryDbHelper.nativeLikeState(videoUrl: String): String? {
     val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return null

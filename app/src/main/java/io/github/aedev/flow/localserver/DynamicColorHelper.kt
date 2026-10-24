@@ -9,7 +9,7 @@ import io.github.aedev.flow.R
 import com.google.android.material.R as MaterialR
 
 object DynamicColorHelper {
-    // Single source of MD3 baseline palette: per-attr resolve fallback; full override when resolved dynamic palette is inconsistent (isColorDark).
+    // MD3 baseline palette source: per-attr fallback; full override when dynamic palette is inconsistent (isColorDark).
     private fun baselinePalette(dark: Boolean): Map<String, String> {
         val p = HashMap<String, String>()
         p["primary"] = if (dark) "#d0bcff" else "#6750A4"
@@ -52,7 +52,6 @@ object DynamicColorHelper {
             val themedContext = context.createConfigurationContext(config)
             themedContext.setTheme(R.style.Theme_LocalMediaServer)
 
-            // Wrap context with dynamic colors if supported
             val wrappedContext = DynamicColors.wrapContextIfAvailable(themedContext)
 
             fun resolve(

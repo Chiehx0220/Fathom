@@ -1,8 +1,8 @@
-// Settings: the theme, list filters, and the phone remote. Theme changes apply at once; the rest is saved on the phone.
+// Settings: theme (immediate), list filters, phone remote (saved on phone).
 (() => {
 const h = FT.h;
 
-// A palette's swatch is drawn by the stylesheet itself: it carries the same attributes as <html>, so it shows the palette in the current mode.
+// Palette swatch drawn by stylesheet (same attributes as <html>).
 const syncArt = (art) => {
     const root = document.documentElement;
     art.dataset.scheme = root.dataset.scheme;
@@ -21,7 +21,7 @@ const swatch = (palette) => {
     return el;
 };
 
-// Text with an {icon} placeholder replaced by the glyph.
+// Text with {icon} placeholder → glyph.
 const withIcon = (text, icon) => {
     const [before, after] = text.split('{icon}');
     return after === undefined ? [text] : [before, FT.icon(icon), after];
@@ -60,7 +60,7 @@ const toggle = (title, hint, on, save, key) => {
     return h('div', { class: 'setting' }, h('div', {}, h('b', {}, title), h('span', { class: 'hint' }, hint)), sw);
 };
 
-// Keeps the Deep Flow switch in step with the phone while Settings is open.
+// Keeps Deep Flow switch in sync with phone.
 let stopDeepFlow = null;
 
 FT.register('settings', {

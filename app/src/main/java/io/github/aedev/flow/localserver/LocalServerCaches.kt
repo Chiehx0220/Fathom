@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 internal object LocalServerCaches {
     internal val streamUrlCache = StreamUrlCache()
 
-    // InnerTube client that minted each cached URL (same key): googlevideo CDN 403s on User-Agent/client mismatch; replaces guessing from URL query.
+    // InnerTube client that minted each cached URL: googlevideo 403s on UA/client mismatch.
     internal val streamUaCache = StreamUrlCache()
 
     // One extraction per video, shared by watch + manifest handlers. Smaller than streamUrlCache (parsed extractor state).

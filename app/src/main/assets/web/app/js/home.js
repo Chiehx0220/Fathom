@@ -1,20 +1,18 @@
-// Home: a featured video, then shelves. The quick shelves show at once; the slow ones (subscriptions) fill in when they arrive.
+// Home: featured video + shelves; fast shelves at once, slow (subscriptions) fill in later.
 (() => {
 const h = FT.h;
-// Per-shelf IntersectionObservers (see shelfOf); disconnected together on leave().
+// Per-shelf IntersectionObservers (shelfOf); disconnected on leave().
 let activeObservers = [];
-// Unsubscribes the resume row from history changes.
+// Resume-row history unsubscribe.
 let stopHistory = null;
 
-// Cards rendered per chunk as a shelf scrolls into view.
+// Cards per chunk on scroll-in.
 const SHELF_CHUNK = 14;
 
-// options.loadMore: () => Promise<{items, hasMore}>, fetches a deeper server round once the local
-// list is exhausted, appended to the same row.
-// options.expand: hash link to the shelf's full contents as a list.js view, for keyboard/mouse
-// navigation (a row's overflow is otherwise only reachable by dragging it).
+// options.loadMore: () => Promise<{items, hasMore}>; deeper server round when local list exhausted, appended to same row.
+// options.expand: hash link to full list.js view (keyboard/mouse; row overflow otherwise drag-only).
 // options.rows: grid layout preview rows for a shelf without loadMore.
-// Grid layout: the shelf is a grid and its sentinel watches the viewport.
+// Grid layout: shelf is grid; sentinel watches viewport.
 const shelfOf = (title, sub, items, options = {}) => {
     const wide = FT.layout.current() === 'grid';
     const preview = wide && !options.loadMore;
@@ -37,7 +35,7 @@ const shelfOf = (title, sub, items, options = {}) => {
         if (!io) { io = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) reach(sentinel); }, { root: wide ? null : row, rootMargin: '600px' }); activeObservers.push(io); }
         io.observe(sentinel);
     };
-    // Sentinel intersected: show the next local chunk, else (if loadMore was given) fetch one.
+    // Sentinel hit: next local chunk, else loadMore.
     const reach = (sentinel) => {
         sentinel.remove();
         if (shown < items.length) { step(); return; }
@@ -94,13 +92,13 @@ const render = async (root, params, isCurrent) => {
     const lead = seen[0] || picks[0];
     if (!lead) { root.replaceChildren(FT.empty('video_library', FT.t('nothing_yet'), FT.t('nothing_yet_hint'))); return; }
 
-    // Slots for the shelves that arrive later, so they land in the right place whenever they do.
+    // Slots for late shelves (keep order).
     const slotHero = h('div', { style: 'display:contents' });
     const slotSeen = h('div', { style: 'display:contents' });
     const slotSubs = h('div', { hidden: true });
     const slotLater = h('div', { hidden: true });
 
-    // Deeper discovery rounds (handleApiRecommendations's more=1) feed the Recommended shelf directly.
+    // Deeper rounds (more=1) feed Recommended shelf.
     const known = new Set(picks.map((v) => v.url));
     const loadMoreRecs = recs.hasMore === false ? null : () => FT.api.recommendations(service, true).then((body) => {
         if (!isCurrent()) throw new Error('left the home screen');

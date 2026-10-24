@@ -10,7 +10,7 @@ import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.stream.Description
 
 /**
- * YouTube comments via the app InnerTube client (as player screen). Extractor omits avatars of the newer comment format; InnerTube has them.
+ * YouTube comments via app InnerTube client; extractor lacks newer-format avatars.
  *
  * Continuation = [Page] url "yt:c:<token>"; replies "yt:r:<token>". Extractor pages have neither prefix: stay there.
  */

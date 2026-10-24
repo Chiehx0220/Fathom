@@ -1,4 +1,4 @@
-// Rows added to the skin's settings menu (open shadow root), cloned from a native row for styling.
+// Settings-menu rows (skin shadow root), cloned from a native row.
 (() => {
 const P = FT.playerCore;
 const h = FT.h;
@@ -9,7 +9,7 @@ const CHAT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18
 const KEYBOARD_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"/></svg>';
 let observer = null;
 
-// `valued`: a switch row keeping the native value slot (On/Off); otherwise a plain action row.
+// valued: switch row keeping value slot; else action row.
 const buildRow = (content, { id, svg, label, valued, onSelect }) => {
     const model = content.querySelector(':scope > media-menu-item');
     if (!model) return null;
@@ -26,7 +26,7 @@ const buildRow = (content, { id, svg, label, valued, onSelect }) => {
         const hint = row.querySelector('.media-menu-hint');
         if (hint) hint.remove();
     }
-    // <media-icon> resolves icons by name and has none of these: a same-class element carries the SVG.
+    // <media-icon> resolves by name only: swap in inline SVG.
     const icon = row.querySelector('media-icon');
     if (icon) {
         const glyph = h('span', { class: icon.className });
@@ -52,7 +52,7 @@ const paint = () => {
     let row = root.getElementById(DANMAKU_ROW);
     if (!danmaku) { if (row) row.remove(); return; }
     if (!row) {
-        // Cancelling `select` keeps the menu open, so the switch flips in place.
+        // preventDefault on select keeps menu open.
         row = buildRow(content, {
             id: DANMAKU_ROW, svg: CHAT_ICON, label: FT.t('danmaku'), valued: true,
             onSelect: (e) => { e.preventDefault(); P.danmaku.toggle(); },
@@ -68,7 +68,7 @@ const paint = () => {
 
 FT.playerCore.menu = {
     paint,
-    // The skin renders the menu lazily and may re-render it: rows are re-asserted on every mutation.
+    // Skin re-renders menu lazily: re-assert rows per mutation.
     watch() {
         if (observer) observer.disconnect();
         observer = null;
@@ -82,7 +82,7 @@ FT.playerCore.menu = {
         if (observer) observer.disconnect();
         observer = null;
     },
-    // One-time callout (localStorage) pointing at the menu.
+    // One-time hint (localStorage).
     hintDanmaku() {
         let seen = true;
         try { seen = !!localStorage.getItem(DANMAKU_HINT_KEY); } catch (e) {}

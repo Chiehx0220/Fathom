@@ -1,4 +1,4 @@
-// Deep Flow state mirror. The phone owns state and timer; polled while the page is visible.
+// Deep Flow mirror; phone owns state/timer; polled while visible.
 (() => {
 const SYNC_MS = 3000;
 const SVG = 'http://www.w3.org/2000/svg';
@@ -36,7 +36,7 @@ FT.deepFlow = {
         return FT.t('deep_flow_until', { time });
     },
 
-    // Applies a /api/v1/settings response. Top bar redraws on active change; 'ft:deepflow' fires on active or end-time change.
+    // Applies /api/v1/settings; top bar redraws on active change; 'ft:deepflow' on active/end-time change.
     adopt(body) {
         const next = { active: !!body.deepFlow, endsAt: body.deepFlowEndsAt || 0 };
         const shown = state.active !== next.active;

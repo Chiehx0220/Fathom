@@ -1,9 +1,9 @@
-// Watch-progress reports and where a video resumes.
+// Progress reporting, resume position.
 (() => {
 const P = FT.playerCore;
 let lastReported = -1;
 
-// Timer reports are silent; pause, close and switch notify history subscribers.
+// Timer silent; pause/close/switch notify history.
 const report = (quiet) => {
     const p = P.media();
     if (!P.current || !p.duration || !isFinite(p.duration)) return;
@@ -17,7 +17,7 @@ addEventListener('pagehide', report);
 
 const sameVideo = (a, b) => a === b || (new URL(a, location.href).searchParams.get('v') || a) === (new URL(b, location.href).searchParams.get('v') || b);
 
-// One-shot start position from `play_video_at`, ahead of the history position.
+// play_video_at start position; precedes history.
 const startFromPhone = (owner, media, info) => {
     const at = FT.startAt;
     FT.startAt = null;
@@ -27,14 +27,14 @@ const startFromPhone = (owner, media, info) => {
     return true;
 };
 
-// Starts where the history left off. No timer report before playback, so merely opening a video never overwrites saved progress with 0.
+// Resume from history; no report before playback (no 0% overwrite).
 const resume = (owner, media, info, service) => {
     if (info.isLive || info.playback.liveRoom) return;
     if (startFromPhone(owner, media, info)) return;
     FT.api.history().then((hist) => {
         const saved = (hist.videos || []).find((v) => v.url === info.url && (v.serviceId ?? 0) === service);
         if (!saved || !(saved.progress > 2 && saved.progress < 95)) return;
-        // Some files start their timeline past 0: "not played yet" is judged from where the buffer begins.
+        // Timeline may start >0: 'unplayed' = relative to buffer start.
         const seek = (fresh) => {
             if (P.current !== owner || !isFinite(media.duration)) return;
             const start = media.buffered.length ? media.buffered.start(0) : 0;

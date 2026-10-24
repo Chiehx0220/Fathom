@@ -1,4 +1,4 @@
-// Everything the app asks the phone for, and everything it tells it. Nothing else in the app calls fetch().
+// Sole fetch() caller: all phone requests.
 (() => {
 
 const getJson = async (path, params) => {
@@ -13,7 +13,7 @@ const getJson = async (path, params) => {
     return body;
 };
 
-// A short memory for lists that are slow to build, so going back to a screen does not fetch it all again.
+// TTL memo for slow lists.
 const memo = new Map();
 const remembered = (key, ttlMs, load) => {
     const hit = memo.get(key);
@@ -23,11 +23,11 @@ const remembered = (key, ttlMs, load) => {
     return value;
 };
 
-// A video the server needs to know about to save, like or list it.
+// Video fields the server needs to save/like/list.
 const videoQuery = (v) => ({
     url: v.url, title: v.title, uploader: v.channelName || '', thumbnail: v.thumbnailUrl || '', uploaderUrl: v.channelId || '',
 });
-// These actions answer with a redirect or a page; only whether they went through matters.
+// Redirect/page answers: only ok matters.
 const act = async (path, params) => {
     const query = new URLSearchParams({ ...params, back: 'ajax' });
     const res = await fetch(`${path}?${query}`);
@@ -39,8 +39,7 @@ const playlistAction = (params) => getJson('/playlist_action', params);
 FT.api = {
     forget: () => memo.clear(),
 
-    // more: true asks for another discovery round for infinite-scroll on Home - never memoized,
-    // each call is a fresh server round (see handleApiRecommendations's `more=1`).
+    // more: fresh discovery round (infinite scroll), never memoized (handleApiRecommendations more=1).
     recommendations: (service, more) => more
         ? getJson('/api/v1/recommendations', { serviceId: service, more: 1 })
         : remembered(`rec:${service}`, 120000, () => getJson('/api/v1/recommendations', { serviceId: service })),
@@ -64,7 +63,7 @@ FT.api = {
     settings: (changes) => getJson('/api/v1/settings', changes),
     download: (action, service, id, choice = {}) => getJson('/api/v1/download', { action, serviceId: service, id, ...choice }),
 
-    // `notify`: playback settled (pause, close, switch); history subscribers refresh. Timer reports stay silent.
+    // notify: playback settled (pause/close/switch) → history subscribers refresh; timer reports silent.
     progress: (id, service, percent, duration, { notify = false } = {}) => fetch('/api/v1/watch_progress?' + new URLSearchParams({ id, serviceId: service, percent, durationSeconds: duration }), { keepalive: true })
         .then(() => { if (notify) dispatchEvent(new Event('ft:history')); }).catch(() => {}),
     onHistoryChange: (handler) => FT.on('ft:history', handler),

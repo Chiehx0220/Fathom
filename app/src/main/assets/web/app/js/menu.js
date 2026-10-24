@@ -1,5 +1,4 @@
-// The options menu: a small list of what can be done with the selected card. Opened by the Menu key, `m`, a long press on the
-// phone's wheel, or the card's own button. While it is open it holds the focus.
+// Options menu for selected card. Opened by Menu key, `m`, phone wheel long press, card button; holds focus while open.
 (() => {
 const h = FT.h;
 let opener = null;
@@ -18,7 +17,7 @@ const place = (panel, anchor) => {
     panel.style.top = top + 'px';
 };
 
-// Shows `panel` over a scrim and traps focus in it; `position` runs once the panel is in the document.
+// Panel over scrim, focus trapped; `position` runs after insert.
 const present = (panel, focus, position) => {
     opener = FT.focus.el;
     const menu = root();
@@ -43,7 +42,7 @@ FT.menu = {
         present(panel, FT.$('[data-f]', panel), () => place(panel, options.anchor));
     },
 
-    // A dialog with the caller's content, closed like a menu (scrim, Back, the button).
+    // Dialog with caller content; closes like menu (scrim, Back, button).
     panel(title, body) {
         const close = h('button', { type: 'button', class: 'menu-item', data: { f: '', key: 'panel-close' }, onclick: () => FT.menu.close() }, FT.icon('close'), FT.t('close'));
         present(h('div', { class: 'menu-panel wide', role: 'dialog', 'aria-label': title }, h('div', { class: 'menu-title' }, title), body, close), close);
@@ -58,7 +57,7 @@ FT.menu = {
         opener = null;
     },
 
-    // The menu of whatever is selected, if it has one.
+    // Menu of selection, if any.
     forSelected() {
         if (FT.menu.isOpen()) { FT.menu.close(); return; }
         const el = FT.focus.el;

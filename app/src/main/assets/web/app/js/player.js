@@ -1,5 +1,4 @@
-// The one player. Created once, lives for the whole visit: a video keeps playing (and stays fullscreen) while screens change.
-// Screens only ask it to open a video, dock it (full, mini, off) or do something to it. Parts: player-*.js, shared state in FT.playerCore.
+// Single player instance per visit; screens only open/dock/control. Parts: player-*.js; state: FT.playerCore.
 (() => {
 const P = FT.playerCore;
 let audioOnly = false;
@@ -17,7 +16,7 @@ FT.player = {
     dock: P.dock.set,
     dismissMini: P.dock.dismiss,
 
-    // Loads a video from /api/v1/video's answer. Opening the one already loaded changes nothing.
+    // Open from /api/v1/video; no-op if already loaded.
     async open(service, info) {
         if (P.current && P.current.url === info.url) return;
         P.upNext.cancel();
@@ -29,7 +28,7 @@ FT.player = {
         resetStage();
         P.stream.reset();
         P.segments.reset();
-        // null when another video was opened meanwhile
+        // null if superseded
         const start = async (way) => {
             if (P.current !== owner || !(await P.build.build(info, way, owner))) return null;
             const p = P.media();
@@ -73,7 +72,7 @@ FT.player = {
         P.dock.set('off');
     },
 
-    // Visual-only: hides the video surface behind an artwork card while the same stream keeps playing.
+    // Hides video behind artwork; stream continues.
     toggleAudioOnly() {
         if (!P.current) return false;
         audioOnly = !audioOnly;
@@ -95,7 +94,7 @@ FT.player = {
     hasSkip: P.segments.hasSkip,
 };
 
-// Fullscreen: the phone's browsers turn to landscape for it, as the player this replaced did.
+// Fullscreen ↔ landscape lock.
 document.addEventListener('fullscreenchange', () => {
     if (!P.current || !screen.orientation) return;
     if (document.fullscreenElement) { if (screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }

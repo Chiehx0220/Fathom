@@ -11,7 +11,7 @@ import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.IOException
 import java.io.OutputStream
 
-// Stream, manifest, subtitle proxying + static assets, split from LocalHttpServer.kt. Helpers: LocalServerMedia, LocalServerCaches, RemoteSession.
+// Stream, manifest, subtitle proxies + static assets. Helpers: LocalServerMedia, LocalServerCaches, RemoteSession.
 
 /** Stream URL a `/stream` request wants from [extractor]'s lists. */
 private fun ClientHandler.resolveDirectUrl(
@@ -452,7 +452,7 @@ internal fun ClientHandler.handleSubtitlesProxy(
  */
 private fun String.withoutCueSettings(): String = replace(Regex("""^(\S+ --> \S+)[ \t]+\S.*$""", RegexOption.MULTILINE), "$1")
 
-// Single-page app: HTML shell, stylesheet, script. ?v= ignored: content change changes WebAssets.appVersion (URL), so max-age=31536000 immutable is safe.
+// SPA shell, CSS, JS. ?v= ignored: content change changes WebAssets.appVersion, so max-age=31536000 immutable is safe.
 @Throws(Exception::class)
 internal fun ClientHandler.handleAppShell(os: OutputStream) {
     sendResponse(os, 200, WebShell.appPage(), "text/html; charset=UTF-8")

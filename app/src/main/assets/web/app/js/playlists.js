@@ -1,4 +1,4 @@
-// Picker that saves a video to the viewer's own playlists; a field creates a new one.
+// Playlist picker: save video; field creates new.
 (() => {
 const h = FT.h;
 
@@ -11,7 +11,7 @@ const choiceRow = (choice, video) => {
         count.textContent = String(choice.videoCount);
         button.classList.toggle('on', choice.contains);
     };
-    // Optimistic: applied at once, reverted when the request fails.
+    // Optimistic; reverted on failure.
     const set = (on) => {
         if (on !== choice.contains) choice.videoCount += on ? 1 : -1;
         choice.contains = on;

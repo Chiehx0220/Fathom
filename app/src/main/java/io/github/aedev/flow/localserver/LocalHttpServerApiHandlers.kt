@@ -7,8 +7,7 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import java.io.OutputStream
 
-// `/api/v1/...` JSON handlers, split from LocalHttpServer.kt, no behavior change. Independent of HTML handlers (ApiRenderer.kt).
-// Companion calls (fetchInitialOrPage, fetchKioskPage, ...) in LocalServerMedia.
+// `/api/v1/...` JSON handlers; extractor calls (fetchInitialOrPage, fetchKioskPage, ...) in LocalServerMedia.
 
 internal fun ClientHandler.handleApiSearch(
     os: OutputStream,
@@ -42,11 +41,9 @@ internal fun ClientHandler.handleApiHome(
     sendJson(os, ApiRenderer.searchResultJson(filterItems(items), serviceId, next))
 }
 
-// Additive route mirroring handleApiHome(), via buildAndRankHomeFeed() on YouTube: FlowNeuroEngine-ranked; handleApiHome() stays raw.
-//
-// `more=1`: another discovery round (continueDiscoveryFeed(), as native Home load-more), not rebuild of ranked mix.
-// No NewPipeExtractor Page behind it (FlowNeuroEngine goes one query-depth deeper): reported as boolean "hasMore",
-// not via searchResultJson nextPage.
+// Ranked home feed: buildAndRankHomeFeed() on YouTube (FlowNeuroEngine); handleApiHome() stays raw.
+// `more=1`: another discovery round (continueDiscoveryFeed()), not a rebuild of the ranked mix.
+// No NewPipeExtractor Page behind it: reported as boolean "hasMore", not nextPage.
 internal fun ClientHandler.handleApiRecommendations(
     os: OutputStream,
     params: Map<String, String>,
@@ -147,7 +144,7 @@ internal fun ClientHandler.handleApiWatchProgress(
     val durationSeconds = params["durationSeconds"]?.toIntOrNull() ?: 0
     dbHelper.nativeUpdateWatchProgress(videoUrl, percent, durationSeconds)
 
-    // FlowNeuro WATCHED signal, best-effort (LocalHttpServer.kt FlowNeuro section). serviceId: newer param (player.js initWatchProgressReporting()); stale cached page without it: no-op.
+    // FlowNeuro WATCHED signal, best-effort; no serviceId → no-op.
     val serviceId = params["serviceId"]?.toIntOrNull()
     if (serviceId != null) {
         try {
@@ -161,7 +158,7 @@ internal fun ClientHandler.handleApiWatchProgress(
     sendJson(os, "{\"status\":\"ok\"}")
 }
 
-// Single-page web app (/app) endpoints: JSON of what HTML pages embedded.
+// Web app endpoints (JSON).
 
 internal fun ClientHandler.handleApiHistory(os: OutputStream) {
     sendJson(os, JSONObject().put("videos", dbHelper.nativeHistoryJson()))
@@ -181,7 +178,7 @@ internal fun ClientHandler.handleApiLibrary(
     sendJson(os, json)
 }
 
-// Newest uploads of subscribed channels; one request per channel: separate call.
+// Subscription feed: newest uploads, one request per channel.
 internal fun ClientHandler.handleApiFeed(
     os: OutputStream,
     params: Map<String, String>,
@@ -266,7 +263,7 @@ internal fun ClientHandler.handleApiSponsor(
     sendJson(os, json)
 }
 
-// Reads filter settings; hideWatched, hideShorts in query saved first.
+// Filter settings; query params saved first.
 internal fun ClientHandler.handleApiSettings(
     os: OutputStream,
     params: Map<String, String>,

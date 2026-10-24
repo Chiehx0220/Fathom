@@ -1,4 +1,4 @@
-// Bilibili danmaku overlay: one CSS animation per comment, so pausing the media pauses them.
+// Danmaku overlay: CSS animation per item (pause follows media).
 (() => {
 const P = FT.playerCore;
 const h = FT.h;
@@ -67,7 +67,7 @@ const start = (url, live = false) => {
     p.addEventListener('pause', state.pause);
     p.addEventListener('play', state.play);
     if (live) {
-        // A live room has no timeline: chat is polled and each message shown as it arrives.
+        // Live: no timeline, poll chat.
         let since = null;
         let timer = 0;
         const poll = async () => {

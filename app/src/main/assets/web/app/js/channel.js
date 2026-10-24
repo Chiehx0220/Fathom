@@ -1,4 +1,4 @@
-// A channel: who it is, a Subscribe button, and its videos as the usual list.
+// Channel: header, Subscribe, video list.
 (() => {
 const h = FT.h;
 

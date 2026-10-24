@@ -1,4 +1,4 @@
-// Volume, mute, speed and autoplay survive visits here; Video.js keeps nothing.
+// Persisted volume, mute, rate, autoplay.
 (() => {
 const KEY = 'fathom-player';
 

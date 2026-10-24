@@ -21,7 +21,7 @@ fun channelIdToUrl(
     }
 
 /**
- * Channel URL → bare id. YouTube: `/channel/UC...`, `/@handle`, `/c/name`, `/user/name`; Bilibili: space page or bare number. Else null.
+ * Channel URL → bare id (YouTube, Bilibili); else null.
  */
 fun channelUrlToId(url: String?): String? {
     if (url == null) return null

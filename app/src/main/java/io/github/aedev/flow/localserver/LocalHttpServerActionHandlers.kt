@@ -7,10 +7,9 @@ import org.json.JSONObject
 import java.io.OutputStream
 import java.util.UUID
 
-// Toggle DB action endpoints (subscribe/block/bookmark/history/watch-later/like-dislike) + TV remote-control endpoints
-// (send-link/release-lock/remote-state). ClientHandler/dbHelper/sendResponse/getServiceId internal.
+// Toggle actions (subscribe/block/bookmark/history/watch-later/rate) + remote control (send-link/release-lock/remote-state).
 
-// Shared "share this video" field set/defaults for handleWatchLaterAction, handleRateVideoAction: video unseen by server, client-page metadata only.
+// Client-supplied video metadata (server has not seen the video).
 private data class SharedVideoParams(
     val title: String,
     val uploader: String,
@@ -26,7 +25,7 @@ private fun parseSharedVideoParams(params: Map<String, String>): SharedVideoPara
     return SharedVideoParams(title, uploader, thumbnail, uploaderUrl)
 }
 
-// Callers: web app fetch-based FT.api (app/js/api.js act()), success-only: all toggle handlers answer alike.
+// Toggle handlers answer alike (api.js act()).
 private fun ClientHandler.sendActionResult(os: OutputStream) {
     sendJson(os, "{\"status\":\"success\"}")
 }
@@ -152,7 +151,7 @@ internal fun ClientHandler.handleSendLink(
         }
 
         if (hasLock) {
-            // "__connect_only__": cast on non-video page (Home, Subscriptions): pairs remote control, no play_video command (would 404 as /watch).
+            // __connect_only__: pair without play_video (non-video page; /watch would 404).
             if ("__connect_only__" != videoUrl) {
                 serverLog("Casting link: $videoUrl from client IP $clientIp")
                 RemoteSession.broadcast("play_video:$videoUrl")

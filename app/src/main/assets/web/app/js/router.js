@@ -1,5 +1,4 @@
-// Moving between screens without reloading the page. A screen is `{ render(root, params, isCurrent) }`; the router draws the top bar,
-// asks the screen to fill the page, docks the player to suit, and hands the selection back to where it was.
+// Screen router (no reload): screen = { render(root, params, isCurrent) }.
 (() => {
 const h = FT.h;
 const screens = {};
@@ -31,7 +30,7 @@ const chooseService = (anchor) => {
     })), { title: FT.t('source'), anchor });
 };
 
-// the tab the watch page was opened from stays active
+// watch page keeps origin tab active
 let origin = 'home';
 
 const renderTop = () => {
@@ -88,7 +87,7 @@ const show = async () => {
 };
 FT.reload = show;
 
-// Every selection passes through here: the watch screen leaves player mode when a control is picked, and a screen may listen too.
+// All selections pass here: watch screen leaves player mode; screens may listen.
 FT.onSelect = (el) => {
     if (FT.route.name === 'watch' && FT.watchMode && FT.watchMode.onPlayer && el) {
         FT.watchMode.onPlayer = false;
@@ -102,13 +101,13 @@ FT.setService = (id) => {
     FT.store.setService(id);
     FT.toast(FT.t('source_changed', { name: FT.store.serviceName(id) }));
     const name = FT.route.name;
-    // A channel or playlist belongs to one source, so switching leaves it; screens that follow the source start over; the rest only need the top bar.
+    // Channel/playlist is per source: switching leaves it; source-following screens restart; rest redraw top bar.
     if (name === 'channel' || name === 'playlist') location.hash = '#/home';
     else if (['home', 'subscriptions', 'library', 'search'].includes(name)) show();
     else renderTop();
 };
 
-// Back: close a menu, leave fullscreen, else go to the previous screen.
+// Back: close menu, leave fullscreen, else previous screen.
 FT.back = () => {
     if (FT.menu.isOpen()) { FT.menu.close(); return; }
     if (FT.player && FT.player.isFullscreen()) { FT.player.fullscreen(false); return; }

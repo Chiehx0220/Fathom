@@ -3,7 +3,7 @@ package io.github.aedev.flow.localserver
 import org.schabi.newpipe.extractor.Image
 import org.schabi.newpipe.extractor.Page
 
-// Facade over HtmlRendererCommon; keeps "HtmlRenderer.xxx(...)" call sites. lightColors/darkColors stay: ServerService sets, WebTheme reads for SPA shell.
+// Facade over HtmlRendererCommon; lightColors/darkColors set by ServerService, read by WebTheme.
 object HtmlRenderer {
     @JvmField
     var lightColors: MutableMap<String, String> = HashMap()

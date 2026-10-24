@@ -1,6 +1,4 @@
-// The watch screen. The picture is the persistent player, docked over the space this screen leaves at the top; below it are the
-// video's details, chapters, related videos and comments. With a remote, the keys start on the player (left and right seek,
-// OK pauses) and Down moves into the details; Up from the first row returns to the player.
+// Watch screen: docked player over details, chapters, related, comments. Remote: focus starts on player; Down → details, Up → player.
 (() => {
 const h = FT.h;
 let observer = null;
@@ -56,7 +54,7 @@ const loadComments = async (holder, service, url, isCurrent) => {
     }
 };
 
-// Download button: the phone is the source of truth; the button polls while a download runs.
+// Download button: phone is source of truth; polls while downloading.
 const downloadButton = (service, info) => {
     let state = 'none';
     const label = h('span', {}, FT.t('download'));
@@ -79,7 +77,7 @@ const downloadButton = (service, info) => {
     const call = (action, choice) => FT.api.download(action, service, info.url, choice);
     const refresh = () => call('status').then(paint).catch(() => {});
     const run = (action, choice) => call(action, choice).then(paint).catch((e) => FT.toast(e.message || FT.t('download_failed')));
-    // [{ height, codecs }] from the video's own streams, tallest first; empty (combined stream only) starts at the default quality
+    // [{ height, codecs }] tallest first; empty (combined stream only) → default quality
     const qualities = (info.playback && info.playback.qualities) || [];
     const CODEC_LABEL = { h264: FT.t('codec_h264'), vp9: FT.t('codec_vp9'), av1: FT.t('codec_av1'), hevc: 'HEVC', vp8: 'VP8' };
     const pickCodec = (height, codecs) => FT.menu.open(
@@ -140,8 +138,7 @@ const actionRow = (service, info) => {
         toggle: rate,
     };
 
-    // navigator.share() rejects without a trusted user gesture (a phone-remote press is a WebSocket
-    // message, not a click); falls through to FT.copyText so that press still does something.
+    // navigator.share() needs trusted gesture (remote press = WebSocket message); falls back to FT.copyText.
     const share = FT.button(FT.t('share'), 'share', async () => {
         const link = info.url;
         if (navigator.share) {
@@ -187,8 +184,7 @@ const render = async (root, params, isCurrent) => {
     if (!isCurrent()) return;
     FT.player.dock('full');
 
-    // A long description starts folded to a few lines, so the comments are not pushed screens down. Like a comment with replies, the whole block
-    // is the control (it takes the remote's focus, and OK or a click opens it); the hint line under the text shows only when there is more.
+    // Long description folded; whole block is the control (remote focus, OK/click opens); hint line only when more.
     const aboutText = h('div', { class: 'about-text' }, FT.description(info.description, info.descriptionType));
     const aboutHint = h('div', { class: 'about-hint', hidden: true }, FT.icon('expand_more'), h('span', {}, FT.t('show_more')));
     const about = h('div', { class: 'about', tabindex: '-1', data: { f: '', key: 'about' } },
@@ -212,10 +208,10 @@ const render = async (root, params, isCurrent) => {
         commentsHolder);
     root.replaceChildren(slot, page);
     loadComments(commentsHolder, service, info.url, isCurrent);
-    // Measured once the text has a size (the page may not be laid out yet) and again whenever it changes, e.g. when the window is resized.
+    // Measured once sized (layout may lag) and on change (e.g. resize).
     new ResizeObserver(() => { const more = about.classList.contains('open') || aboutText.scrollHeight > aboutText.clientHeight + 1; aboutHint.hidden = !more; about.classList.toggle('foldable', more); }).observe(aboutText);
 
-    // The picture shrinks into the corner once it has scrolled out of sight, and comes back when it is in view again.
+    // Out of view → corner (mini); in view → back.
     if (observer) observer.disconnect();
     observer = new IntersectionObserver(([entry]) => {
         if (FT.route.name !== 'watch' || FT.player.isFullscreen()) return;
@@ -226,7 +222,7 @@ const render = async (root, params, isCurrent) => {
 
 FT.register('watch', {
     render,
-    // The keys start on the player, not on a control.
+    // Keys start on player.
     ready() { mode.onPlayer = true; FT.focus.clear(); document.body.classList.add('player-mode'); },
     leave() {
         if (observer) { observer.disconnect(); observer = null; }
@@ -235,9 +231,9 @@ FT.register('watch', {
     },
 });
 
-// While the player has the keys: left and right seek, OK pauses (or skips a sponsor segment), Menu toggles fullscreen.
+// Player has keys: left/right seek, OK pause (or skip segment), Menu fullscreen.
 FT.command.hook = (name) => {
-    // While the Up next card is open it holds the keys (see player.js); only Back is handled here.
+    // Up next open: it holds keys (player-upnext.js); only Back here.
     if (FT.player.upNextActive) return FT.player.upNextBack(name);
     if (FT.menu.isOpen() || FT.route.name !== 'watch') return false;
     const el = FT.focus.el;
@@ -260,7 +256,7 @@ FT.command.hook = (name) => {
         } else return false;
         return true;
     }
-    // From the first row of details, Up hands the keys back to the player.
+    // Up from first details row → player.
     if (name === 'up' && el && el.dataset.first) {
         mode.onPlayer = true;
         document.body.classList.add('player-mode');
@@ -268,11 +264,11 @@ FT.command.hook = (name) => {
         scrollTo({ top: 0 });
         return true;
     }
-    // Leaving the top bar downward, or picking a control by any means, ends player mode.
+    // Leaving top bar downward or any pick ends player mode.
     return false;
 };
 
-// The skin's hotkeys plus the keys handled below; listed by `?` and the player's settings menu.
+// Skin hotkeys + keys below; listed by `?` and player settings menu.
 const SHORTCUTS = [
     [['Space', 'K'], FT.t('shortcut_play_pause')],
     [['F'], FT.t('shortcut_fullscreen')],
@@ -297,9 +293,9 @@ FT.shortcuts = {
     },
 };
 
-// Keyboard shortcuts for the video, on this screen only and never while typing.
+// Video shortcuts on this screen, never while typing.
 document.addEventListener('keydown', (e) => {
-    // A key the player's own shortcuts already used (it has focus) is theirs; handling it here too would do it twice.
+    // Player shortcut already handled it (focused): skip.
     if (e.defaultPrevented || FT.route.name !== 'watch' || e.ctrlKey || e.metaKey || e.altKey || FT.menu.isOpen()) return;
     if (e.target && e.target.matches && e.target.matches('input, textarea, select')) return;
     const key = e.key.toLowerCase();

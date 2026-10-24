@@ -1,11 +1,11 @@
-// Where the player sits: off, full (top of the watch page) or mini (draggable corner). P.dock.set is the only writer of P.dockMode.
+// Dock state: off | full | mini. P.dock.set is sole writer of P.dockMode.
 (() => {
 const P = FT.playerCore;
-// Every mini control shares this class: drag suppression and click dispatch use one selector.
+// Shared selector: drag suppression, click dispatch.
 const MINI_CTRL = '.mini-ctrl';
-let miniPos = null; // {x, y} override of the CSS corner default; session-lived
+let miniPos = null; // {x, y} over CSS default; not persisted
 let drag = null; // {pointerId, startX, startY, originX, originY, moved}
-let miniDismissed = false; // closed from the corner on the watch page: paused, back in place when scrolled to the top
+let miniDismissed = false; // dismissed from mini on watch page: paused, restored at scroll top
 
 const clampMiniPos = (x, y) => {
     const stage = P.stage();
@@ -31,7 +31,7 @@ const paintPlay = () => {
     btn.setAttribute('aria-label', FT.t(paused ? 'play' : 'pause'));
 };
 
-// On this video's own watch page the hash does not change: the way back is the top of the page.
+// Same-video watch route: hash unchanged, scroll to top.
 const expand = () => {
     if (!P.current) return;
     if (FT.route.name === 'watch' && FT.route.params.u === P.current.url) scrollTo({ top: 0, behavior: 'smooth' });
@@ -59,9 +59,9 @@ const onPointerUp = (e) => {
     const stage = P.stage();
     try { stage.releasePointerCapture(e.pointerId); } catch (err) {}
     stage.classList.remove('dragging');
-    if (!drag.moved) drag = null; // else kept for onClick to swallow the trailing click
+    if (!drag.moved) drag = null; // kept: onClick swallows trailing click
 };
-// Taps on the mini player: a completed drag is swallowed, #mini-play toggles playback, #mini-close closes, anything else opens the full page.
+// Mini tap dispatch: drag swallowed; #mini-play toggle; #mini-close dismiss; else expand.
 const onClick = (e) => {
     if (drag && drag.moved) { drag = null; return; }
     if (!P.stage().classList.contains('mini')) return;
@@ -70,7 +70,7 @@ const onClick = (e) => {
     else expand();
 };
 
-// The picture is as wide as the window, never taller than most of it.
+// Stage height: min(64% viewport, 16:9 of width).
 const sizeStage = () => {
     const height = Math.min(innerHeight * 0.64, (innerWidth * 9) / 16);
     document.documentElement.style.setProperty('--stage-h', Math.round(height) + 'px');
@@ -101,7 +101,7 @@ FT.playerCore.dock = {
         if (P.dockMode === 'mini') paintPlay();
         place();
     },
-    // On the watch page the video keeps its place at the top: the corner is only emptied and the video paused.
+    // Watch route: stage stays in place; mini corner emptied, media paused.
     dismiss() {
         if (FT.route.name !== 'watch') return FT.player.close();
         P.media().pause();

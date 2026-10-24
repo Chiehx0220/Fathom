@@ -12,7 +12,7 @@ internal class BadRequestException(
     message: String,
 ) : IllegalArgumentException(message)
 
-/** Non-empty query parameter [name]; absent or empty is a 400. */
+/** Non-empty param [name], else 400. */
 internal fun Map<String, String>.required(name: String): String =
     this[name]?.takeIf { it.isNotEmpty() } ?: throw BadRequestException("Missing '$name' parameter")
 

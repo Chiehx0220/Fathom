@@ -1,4 +1,4 @@
-// Transport controls for keys and the phone remote, and the state snapshot the remote reads.
+// Key/remote transport controls, remote state snapshot.
 (() => {
 const P = FT.playerCore;
 
@@ -46,7 +46,7 @@ FT.playerCore.controls = {
             try { const left = store && store.isFullscreen && store.exitFullscreen(); if (left && left.catch) left.catch(() => {}); } catch (e) {}
             return;
         }
-        // A browser grants real fullscreen only right after a click on the page itself, which a remote never makes: if refused, fill the window.
+        // Real fullscreen needs a page click (remote has none): fallback fills window.
         try { const asked = store && store.requestFullscreen(); if (asked && asked.catch) asked.catch(() => {}); } catch (e) {}
         setTimeout(() => { if (!P.isFullscreen()) document.body.classList.add('remote-fs'); }, 300);
     },

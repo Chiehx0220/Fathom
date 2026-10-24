@@ -13,7 +13,6 @@ import org.schabi.newpipe.extractor.stream.StreamType
 
 /**
  * `/api/v1/...` JSON. Field names mirror `Models.kt` (`Video`/`Channel`/`Playlist`/`Comment`/`SearchResult`).
- * Independent of `HtmlRenderer*.kt`: no shared functions, own extraction calls.
  */
 object ApiRenderer {
     // channelId = full channel URL.
@@ -59,7 +58,7 @@ object ApiRenderer {
         return json
     }
 
-    // Watch-page detail: videoJson() + StreamInfo fields (description, like count, related, playback URLs); points at /stream, /hlsvod, /subtitles proxies.
+    // Watch-page detail: videoJson() + description, likes, related, playback URLs (/stream, /hlsvod, /subtitles proxies).
     @JvmStatic
     fun videoDetailJson(
         info: StreamInfo,
@@ -258,7 +257,7 @@ object ApiRenderer {
         return json
     }
 
-    // HtmlRendererCommon Base64 serializePage()/deserializePage() round-trip, as HTML "Load More".
+    // Page ↔ Base64 via HtmlRendererCommon.serializePage()/deserializePage().
     @JvmStatic
     fun serializePageOrNull(page: Page?): String? = HtmlRendererCommon.serializePage(page)
 

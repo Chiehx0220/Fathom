@@ -1,4 +1,4 @@
-// What the app remembers between screens and visits: which source is chosen.
+// Persisted: chosen source.
 (() => {
 
 const save = (key, value) => { try { localStorage.setItem(key, value); } catch (e) {} };
@@ -20,7 +20,7 @@ FT.store = {
     serviceName: (id) => (FT.services.find((s) => s.id === id) || {}).name || '',
 };
 
-// Whether the phone remote is connected here; the remote layer keeps it up to date.
+// Phone remote connected here (kept by remote layer).
 FT.remote = { active: false };
 // Served to the phone's own browser.
 FT.onPhone = () => ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);

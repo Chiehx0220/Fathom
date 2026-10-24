@@ -83,7 +83,7 @@ fun StreamInfo.toFlowVideo(
     )
 }
 
-/** [FlowVideo] → [InfoItem] for `HtmlRenderer*`. */
+/** [FlowVideo] → [InfoItem]. */
 fun FlowVideo.toStreamInfoItem(serviceId: Int): StreamInfoItem {
     val item = StreamInfoItem(serviceId, videoIdToUrl(this.id, serviceId), this.title, StreamType.VIDEO_STREAM)
     item.setUploaderName(this.channelName)
