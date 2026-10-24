@@ -23,7 +23,7 @@ private const val STALE_THRESHOLD_MS = 1_200L
 private const val SEEK_JUMP_THRESHOLD_MS = 1_500L
 
 /**
- * Bilibili danmaku overlay: native-player counterpart of Local Server JS version (app/js/player.js danmaku layer).
+ * Bilibili danmaku overlay: native-player counterpart of Local Server JS version (app/js/player-danmaku.js).
  * On-screen progress = f(playback position), not wall clock: pause freezes comments.
  *
  * [currentPositionMs] updates ~250ms (PlayerPositionEffects.kt): choppy. Smoothed by linear extrapolation from last real position at player wall-clock rate
