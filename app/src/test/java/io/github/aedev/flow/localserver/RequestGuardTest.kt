@@ -137,5 +137,7 @@ class RequestGuardTest {
 
         assertThat(refusalFor("GET", "/handoff", foreign)).isNotNull()
         assertThat(refusalFor("GET", "/handoff", headers("sec-fetch-site" to "same-origin"))).isNull()
+        assertThat(refusalFor("GET", "/api/v1/cast/start", foreign)).isNotNull()
+        assertThat(refusalFor("GET", "/api/v1/cast/stop", foreign)).isNotNull()
     }
 }
