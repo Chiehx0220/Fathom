@@ -10,7 +10,7 @@ private const val HLS_TYPE = "application/vnd.apple.mpegurl"
 
 @Throws(Exception::class)
 internal fun ClientHandler.handleHlsVod(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -23,7 +23,7 @@ internal fun ClientHandler.handleHlsVod(
         catalog.videos.forEach { warmRep(catalog, serviceId, mediaUrl, it.id) }
         catalog.audioTracks.forEach { t -> t.audios.forEach { warmRep(catalog, serviceId, mediaUrl, it.id) } }
         val base = "/hlsvod?serviceId=$serviceId&id=${enc(mediaUrl)}"
-        sendResponse(os, 200, HlsVod.master(catalog) { "$base&rep=${enc(it)}" }, HLS_TYPE)
+        reply.send(200, HlsVod.master(catalog) { "$base&rep=${enc(it)}" }, HLS_TYPE)
         return
     }
 
@@ -39,7 +39,7 @@ internal fun ClientHandler.handleHlsVod(
                 ?.let { it.init to it.index }
     val fileUrl = StreamCatalog.urlOf(extractor, repId)
     if (ranges == null || fileUrl == null) {
-        sendResponse(os, 404, "Unknown representation.", "text/plain; charset=UTF-8")
+        reply.send(404, "Unknown representation.", "text/plain; charset=UTF-8")
         return
     }
     val (init, index) = ranges
@@ -47,17 +47,17 @@ internal fun ClientHandler.handleHlsVod(
     val fetched = fetchIndex(fileUrl, key, "bytes=${index.start}-${index.end}")
     val sidx = fetched.bytes
     if (sidx == null) {
-        sendResponse(os, 502, "The segment index could not be fetched (${fetched.code}).", "text/plain; charset=UTF-8")
+        reply.send(502, "The segment index could not be fetched (${fetched.code}).", "text/plain; charset=UTF-8")
         return
     }
     val spans =
         try {
             SidxParser.parse(sidx, index.end)
         } catch (e: IllegalArgumentException) {
-            sendResponse(os, 502, "The segment index is not usable: ${e.message}", "text/plain; charset=UTF-8")
+            reply.send(502, "The segment index is not usable: ${e.message}", "text/plain; charset=UTF-8")
             return
         }
-    sendResponse(os, 200, HlsVod.media(StreamPath.of(serviceId, mediaUrl, repId), init, spans), HLS_TYPE)
+    reply.send(200, HlsVod.media(StreamPath.of(serviceId, mediaUrl, repId), init, spans), HLS_TYPE)
 }
 
 private class IndexFetch(

@@ -123,5 +123,7 @@ internal fun statusText(code: Int): String =
         401 -> "Unauthorized"
         403 -> "Forbidden"
         404 -> "Not Found"
+        416 -> "Range Not Satisfiable"
+        502 -> "Bad Gateway"
         else -> "Internal Server Error"
     }

@@ -1,12 +1,17 @@
 package io.github.aedev.flow.localserver
 
+import io.ktor.server.cio.CIO
+import io.ktor.server.engine.EmbeddedServer
+import io.ktor.server.engine.embeddedServer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import java.io.IOException
-import java.net.ServerSocket
-import java.net.Socket
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-/** Local web UI + API + remote-control WebSocket. */
+/** Local web UI + API + remote-control WebSocket, one port. */
 class LocalHttpServer(
     private val context: android.content.Context,
     private val port: Int,
@@ -15,69 +20,35 @@ class LocalHttpServer(
         WebAssets.init(context)
     }
 
-    private var serverSocket: ServerSocket? = null
-    private var isRunning = false
+    private var engine: EmbeddedServer<*, *>? = null
     private val threadPool: ExecutorService = Executors.newCachedThreadPool()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val dbHelper: HistoryDbHelper = HistoryDbHelper.getInstance(context)
     private val pairing = Pairing.of(context)
 
     @Throws(IOException::class)
     fun startServer() {
-        val serverSocket = ServerSocket(port)
-        this.serverSocket = serverSocket
-        isRunning = true
-        serverLog("Local server started on port $port")
-
-        if (wsServer == null) {
-            val server = RemoteWebSocketServer(8081, pairing)
-            wsServer = server
-            server.start()
-            RemoteSession.commandBroadcaster = server::broadcastCommand
-            RemoteSession.listenerCount = { server.connections.size }
-            RemoteSession.listenerCloser = server::closeAll
-        }
-
-        threadPool.execute {
-            while (isRunning) {
-                try {
-                    val socket = serverSocket.accept()
-                    if (!isLocalNetworkAddress(socket.inetAddress)) {
-                        serverLog("Refused a peer outside the local network")
-                        socket.refuseOutsideNetwork()
-                        continue
-                    }
-                    threadPool.execute(ClientHandler(socket, dbHelper, context, threadPool, pairing))
-                } catch (e: IOException) {
-                    if (!isRunning) break
-                    serverLog("Socket accept error: " + e.message)
-                }
+        val sockets = RemoteSockets(scope)
+        val server =
+            embeddedServer(CIO, host = "0.0.0.0", port = port) {
+                installLocalServer(dbHelper, threadPool, pairing, sockets)
             }
-        }
+        server.start(wait = false)
+        engine = server
+        RemoteSession.commandBroadcaster = sockets::broadcast
+        RemoteSession.listenerCount = sockets::count
+        RemoteSession.listenerCloser = sockets::closeAll
+        serverLog("Local server started on port $port")
     }
 
     fun stopServer() {
-        isRunning = false
-        try {
-            serverSocket?.close()
-        } catch (e: IOException) {
-        }
-        val server = wsServer
-        if (server != null) {
-            try {
-                server.stop()
-            } catch (e: InterruptedException) {
-            }
-            wsServer = null
-            RemoteSession.commandBroadcaster = null
-            RemoteSession.listenerCount = { 0 }
-            RemoteSession.listenerCloser = null
-        }
+        engine?.stop(gracePeriodMillis = 0, timeoutMillis = 1000)
+        engine = null
+        RemoteSession.commandBroadcaster = null
+        RemoteSession.listenerCount = { 0 }
+        RemoteSession.listenerCloser = null
+        scope.cancel()
         threadPool.shutdownNow()
         serverLog("Local server stopped.")
-    }
-
-    private companion object {
-        @Volatile
-        private var wsServer: RemoteWebSocketServer? = null
     }
 }

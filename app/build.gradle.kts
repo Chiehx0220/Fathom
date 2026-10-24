@@ -328,8 +328,7 @@ dependencies {
 
     // Networking
     implementation(libs.okhttp)
-    // Local Server remote-control WebSocket server (localserver/RemoteWebSocketServer.kt)
-    implementation("org.java-websocket:Java-WebSocket:1.5.3")
+    implementation("io.ktor:ktor-server-compression:${libs.versions.ktor.get()}")
 
     // Ktor (Managed in libs.versions.toml)
     implementation(libs.ktor.client.core)

@@ -10,7 +10,7 @@ import java.io.OutputStream
 // `/api/v1/...` JSON handlers; extractor calls (fetchInitialOrPage, fetchKioskPage, ...) in LocalServerMedia.
 
 internal fun ClientHandler.handleApiSearch(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -18,11 +18,11 @@ internal fun ClientHandler.handleApiSearch(
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     if (nextPage == null) dbHelper.nativeAddSearchQuery(query)
     val page = LocalServerSource.search(dbHelper.appContext, serviceId, query, nextPage)
-    sendJson(os, ApiRenderer.searchResultJson(filterItems(page.items), serviceId, page.next))
+    reply.sendJson(ApiRenderer.searchResultJson(filterItems(page.items), serviceId, page.next))
 }
 
 internal fun ClientHandler.handleApiHome(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -38,14 +38,14 @@ internal fun ClientHandler.handleApiHome(
         items = dbHelper.fetchTrendingItems(serviceId)
         next = null
     }
-    sendJson(os, ApiRenderer.searchResultJson(filterItems(items), serviceId, next))
+    reply.sendJson(ApiRenderer.searchResultJson(filterItems(items), serviceId, next))
 }
 
 // Ranked home feed: buildAndRankHomeFeed() on YouTube (FlowNeuroEngine); handleApiHome() stays raw.
 // `more=1`: another discovery round (continueDiscoveryFeed()), not a rebuild of the ranked mix.
 // No NewPipeExtractor Page behind it: reported as boolean "hasMore", not nextPage.
 internal fun ClientHandler.handleApiRecommendations(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -73,11 +73,11 @@ internal fun ClientHandler.handleApiRecommendations(
     }
     val filtered = filterItems(items)
     val ranked = if (alreadyRanked) filtered else applyFlowNeuroRanking(filtered, serviceId)
-    sendJson(os, ApiRenderer.searchResultJson(ranked, serviceId, null).put("hasMore", hasMore))
+    reply.sendJson(ApiRenderer.searchResultJson(ranked, serviceId, null).put("hasMore", hasMore))
 }
 
 internal fun ClientHandler.handleApiChannel(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -92,11 +92,11 @@ internal fun ClientHandler.handleApiChannel(
     json.put("channel", ApiRenderer.channelJson(channel.header, isSubscribed))
     json.put("videos", ApiRenderer.infoItemsToJson(filterItems(channel.items), serviceId))
     json.put("nextPage", ApiRenderer.serializePageOrNull(channel.next))
-    sendJson(os, json)
+    reply.sendJson(json)
 }
 
 internal fun ClientHandler.handleApiVideo(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -109,11 +109,11 @@ internal fun ClientHandler.handleApiVideo(
     val uploaderAvatarUrl = info.uploaderAvatars?.takeIf { it.isNotEmpty() }?.let { HtmlRenderer.getThumbnailUrl(it) }
     dbHelper.nativeSaveToHistory(info.name, info.url, info.uploaderName, thumbUrl, serviceId, info.uploaderUrl, uploaderAvatarUrl)
     reportFlowNeuroClick(info, serviceId)
-    sendJson(os, ApiRenderer.videoDetailJson(info, serviceId))
+    reply.sendJson(ApiRenderer.videoDetailJson(info, serviceId))
 }
 
 internal fun ClientHandler.handleApiComments(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -121,7 +121,7 @@ internal fun ClientHandler.handleApiComments(
     val nextPage = HtmlRenderer.deserializePage(params["nextPage"])
     val page = LocalServerSource.comments(dbHelper.appContext, serviceId, videoUrl, nextPage)
     if (page.disabled) {
-        sendJson(os, "{\"comments\":[],\"nextPage\":null,\"commentsDisabled\":true}")
+        reply.sendJson("{\"comments\":[],\"nextPage\":null,\"commentsDisabled\":true}")
         return
     }
     val comments = JSONArray()
@@ -132,11 +132,11 @@ internal fun ClientHandler.handleApiComments(
     json.put("comments", comments)
     json.put("nextPage", ApiRenderer.serializePageOrNull(page.next))
     json.put("commentsDisabled", false)
-    sendJson(os, json)
+    reply.sendJson(json)
 }
 
 internal fun ClientHandler.handleApiWatchProgress(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val videoUrl = params.required("id")
@@ -155,18 +155,18 @@ internal fun ClientHandler.handleApiWatchProgress(
         }
     }
 
-    sendJson(os, "{\"status\":\"ok\"}")
+    reply.sendJson("{\"status\":\"ok\"}")
 }
 
 // Web app endpoints (JSON).
 
-internal fun ClientHandler.handleApiHistory(os: OutputStream) {
-    sendJson(os, JSONObject().put("videos", dbHelper.nativeHistoryJson()))
+internal fun ClientHandler.handleApiHistory(reply: Reply) {
+    reply.sendJson(JSONObject().put("videos", dbHelper.nativeHistoryJson()))
 }
 
 // Subscriptions + bookmarked playlists + watch-later (Library screen).
 internal fun ClientHandler.handleApiLibrary(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -175,21 +175,21 @@ internal fun ClientHandler.handleApiLibrary(
     json.put("playlists", ApiRenderer.infoItemsToJson(dbHelper.nativeBookmarkedPlaylists(), serviceId))
     json.put("watchLater", ApiRenderer.infoItemsToJson(dbHelper.nativeWatchLaterItems(), serviceId))
     json.put("mine", myPlaylistsJson(dbHelper.nativeUserPlaylists()))
-    sendJson(os, json)
+    reply.sendJson(json)
 }
 
 // Subscription feed: newest uploads, one request per channel.
 internal fun ClientHandler.handleApiFeed(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
     val items = filterItems(fetchSubscriptionFeed(dbHelper.nativeSubscriptions()))
-    sendJson(os, ApiRenderer.searchResultJson(items, serviceId, null))
+    reply.sendJson(ApiRenderer.searchResultJson(items, serviceId, null))
 }
 
 internal fun ClientHandler.handleApiPlaylist(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -207,12 +207,12 @@ internal fun ClientHandler.handleApiPlaylist(
     json.put("playlist", header)
     json.put("videos", ApiRenderer.infoItemsToJson(filterItems(playlist.items), serviceId))
     json.put("nextPage", ApiRenderer.serializePageOrNull(playlist.next))
-    sendJson(os, json)
+    reply.sendJson(json)
 }
 
 // Watch-screen button state: channel subscribed/blocked, video saved/liked/disliked.
 internal fun ClientHandler.handleApiState(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val videoUrl = params["id"].orEmpty()
@@ -223,12 +223,12 @@ internal fun ClientHandler.handleApiState(
     json.put("watchLater", videoUrl.isNotEmpty() && dbHelper.nativeIsWatchLater(videoUrl))
     val like = if (videoUrl.isEmpty()) null else dbHelper.nativeLikeState(videoUrl)
     json.put("like", like ?: JSONObject.NULL)
-    sendJson(os, json)
+    reply.sendJson(json)
 }
 
 // SponsorBlock segments (seconds): skip button + seek-bar marks; YouTube only.
 internal fun ClientHandler.handleApiSponsor(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -260,12 +260,12 @@ internal fun ClientHandler.handleApiSponsor(
     }
     val json = JSONObject()
     json.put("segments", array)
-    sendJson(os, json)
+    reply.sendJson(json)
 }
 
 // Filter settings; query params saved first.
 internal fun ClientHandler.handleApiSettings(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val hideWatched = params["hideWatched"]
@@ -280,5 +280,5 @@ internal fun ClientHandler.handleApiSettings(
     val deepFlowStatus = dbHelper.nativeDeepFlow()
     json.put("deepFlow", deepFlowStatus.active)
     json.put("deepFlowEndsAt", deepFlowStatus.endsAt)
-    sendJson(os, json)
+    reply.sendJson(json)
 }

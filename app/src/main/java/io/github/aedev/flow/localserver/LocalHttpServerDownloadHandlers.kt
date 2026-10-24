@@ -94,7 +94,7 @@ private fun HistoryDbHelper.startNativeDownload(
 // GET /api/v1/download?action=status|start|cancel|delete&id=<video url>&serviceId=<n>
 // Every action answers current {"state","progress"}.
 internal fun ClientHandler.handleApiDownload(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val mediaUrl = params.required("id")
@@ -112,26 +112,26 @@ internal fun ClientHandler.handleApiDownload(
                     "Could not start download: " + (e.message ?: "unknown error")
                 }
             if (error != null) {
-                sendResponse(os, 500, ApiRenderer.errorJson(error), "application/json")
+                reply.send(500, ApiRenderer.errorJson(error), "application/json")
                 return
             }
             // Service creates DB rows async: report "pending", not "none" (button flips before first poll).
-            sendJson(os, downloadStateJson("pending", 0))
+            reply.sendJson(downloadStateJson("pending", 0))
         }
 
         "cancel" -> {
             localServerEntryPoint(dbHelper.appContext).downloadController().cancel(videoId)
-            sendJson(os, downloadStateJson("none", 0))
+            reply.sendJson(downloadStateJson("none", 0))
         }
 
         "delete" -> {
             val manager = localServerEntryPoint(dbHelper.appContext).videoDownloadManager()
             runBlocking { manager.deleteDownload(videoId) }
-            sendJson(os, downloadStateJson("none", 0))
+            reply.sendJson(downloadStateJson("none", 0))
         }
 
         else -> {
-            sendJson(os, dbHelper.downloadStateFor(videoId))
+            reply.sendJson(dbHelper.downloadStateFor(videoId))
         }
     }
 }

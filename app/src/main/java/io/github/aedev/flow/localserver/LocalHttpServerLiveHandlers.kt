@@ -48,12 +48,12 @@ internal fun isLiveGateway(url: String): Boolean {
 /** Relays one HLS playlist/segment of a Bilibili CDN or live gateway; other addresses refused (not an open proxy). */
 @Throws(Exception::class)
 internal fun ClientHandler.handleHlsProxy(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val url = params["u"]
     if (url.isNullOrEmpty() || !url.startsWith("https://") || !(BilibiliCdn.isCdnUrl(url) || isLiveGateway(url))) {
-        sendResponse(os, 404, "Not a Bilibili live address.", "text/plain; charset=UTF-8")
+        reply.send(404, "Not a Bilibili live address.", "text/plain; charset=UTF-8")
         return
     }
     val request =
@@ -65,47 +65,43 @@ internal fun ClientHandler.handleHlsProxy(
     LocalServerCaches.httpClient.newCall(request).execute().use { response ->
         val body = response.body
         if (!response.isSuccessful) {
-            sendResponse(os, 502, "The live server answered ${response.code}.", "text/plain; charset=UTF-8")
+            reply.send(502, "The live server answered ${response.code}.", "text/plain; charset=UTF-8")
             return
         }
         val type = response.header("Content-Type").orEmpty()
         val isPlaylist = url.substringBefore('?').endsWith(".m3u8") || type.contains("mpegurl", ignoreCase = true)
         if (isPlaylist) {
             val text = rewriteHlsPlaylist(body.string(), response.request.url.toString())
-            val bytes = text.toByteArray(Charsets.UTF_8)
-            os.write(
-                (
-                    "HTTP/1.1 200 OK\r\nContent-Type: $PLAYLIST_TYPE\r\nContent-Length: ${bytes.size}\r\n" +
-                        "Cache-Control: no-store\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n"
-                ).toByteArray(Charsets.UTF_8),
+            reply.sendBytes(
+                200,
+                text.toByteArray(Charsets.UTF_8),
+                PLAYLIST_TYPE,
+                mapOf("Cache-Control" to "no-store", "Access-Control-Allow-Origin" to "*"),
             )
-            os.write(bytes)
         } else {
-            val length = body.contentLength()
-            os.write(
-                (
-                    "HTTP/1.1 200 OK\r\nContent-Type: ${type.ifEmpty { "video/mp4" }}\r\n" +
-                        (if (length >= 0) "Content-Length: $length\r\n" else "") +
-                        "Access-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n"
-                ).toByteArray(Charsets.UTF_8),
-            )
-            try {
-                body.byteStream().copyTo(os)
-            } catch (e: IOException) {
-                // Player closed the connection (moved to newer segment).
+            reply.stream(
+                200,
+                type.ifEmpty { "video/mp4" },
+                body.contentLength().takeIf { it >= 0 },
+                mapOf("Access-Control-Allow-Origin" to "*"),
+            ) { out ->
+                try {
+                    body.byteStream().copyTo(out)
+                } catch (e: IOException) {
+                    // Player closed the connection (moved to newer segment).
+                }
             }
         }
-        os.flush()
     }
 }
 
 /** Room chat since last poll's position; first poll (no position) only learns it. */
 @Throws(Exception::class)
 internal fun ClientHandler.handleLiveChat(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val roomId = params["room"]?.toLongOrNull() ?: throw BadRequestException("Missing 'room' parameter")
     val (seq, items) = LocalServerBilibiliLive.chatSince(dbHelper.appContext, roomId, params["since"]?.toLongOrNull())
-    sendJson(os, JSONObject().put("seq", seq).put("items", items))
+    reply.sendJson(JSONObject().put("seq", seq).put("items", items))
 }

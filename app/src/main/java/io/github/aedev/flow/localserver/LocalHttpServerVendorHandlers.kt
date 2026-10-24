@@ -27,13 +27,13 @@ internal fun vendorContentType(path: String): String? =
  */
 @Throws(Exception::class)
 internal fun ClientHandler.handleVendorAsset(
-    os: OutputStream,
+    reply: Reply,
     path: String,
 ) {
     val asset = vendorAssetPath(path)
     val type = vendorContentType(path)
     if (asset == null || type == null) {
-        sendResponse(os, 404, "Page Not Found", "text/plain; charset=UTF-8")
+        reply.send(404, "Page Not Found", "text/plain; charset=UTF-8")
         return
     }
     val text =
@@ -43,8 +43,8 @@ internal fun ClientHandler.handleVendorAsset(
                 .bufferedReader(Charsets.UTF_8)
                 .use { it.readText() }
         } catch (e: FileNotFoundException) {
-            sendResponse(os, 404, "Page Not Found", "text/plain; charset=UTF-8")
+            reply.send(404, "Page Not Found", "text/plain; charset=UTF-8")
             return
         }
-    sendResponse(os, 200, text, type, "public, max-age=31536000, immutable")
+    reply.send(200, text, type, "public, max-age=31536000, immutable")
 }

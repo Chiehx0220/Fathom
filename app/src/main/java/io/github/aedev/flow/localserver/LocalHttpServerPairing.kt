@@ -23,7 +23,7 @@ internal fun gateFor(
 
 /** False when the request was answered here (pairing page or refusal). */
 internal fun ClientHandler.admits(
-    os: OutputStream,
+    reply: Reply,
     path: String,
     headers: Map<String, String>,
 ): Boolean =
@@ -33,24 +33,24 @@ internal fun ClientHandler.admits(
         }
 
         Gate.PAIR_PAGE -> {
-            sendResponse(os, 401, WebAssets.pairPage, "text/html; charset=UTF-8", "no-store")
+            reply.send(401, WebAssets.pairPage, "text/html; charset=UTF-8", "no-store")
             false
         }
 
         Gate.REFUSE -> {
-            sendResponse(os, 401, PAIRING_REQUIRED, "text/plain; charset=UTF-8")
+            reply.send(401, PAIRING_REQUIRED, "text/plain; charset=UTF-8")
             false
         }
     }
 
 /** `/pair?code=`: a right code sets the session cookie. */
 internal fun ClientHandler.handlePair(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     when (val result = pairing.tryPair(remoteAddress.orEmpty(), params["code"].orEmpty().trim())) {
-        is PairResult.Paired -> sendResponse(os, 200, """{"ok":true}""", JSON, "no-store", SessionCookie.header(result.token))
-        is PairResult.Locked -> sendResponse(os, 403, """{"ok":false,"retryAfter":${result.retryAfterSeconds}}""", JSON, "no-store")
-        PairResult.Wrong -> sendResponse(os, 403, """{"ok":false}""", JSON, "no-store")
+        is PairResult.Paired -> reply.send(200, """{"ok":true}""", JSON, "no-store", SessionCookie.header(result.token))
+        is PairResult.Locked -> reply.send(403, """{"ok":false,"retryAfter":${result.retryAfterSeconds}}""", JSON, "no-store")
+        PairResult.Wrong -> reply.send(403, """{"ok":false}""", JSON, "no-store")
     }
 }

@@ -106,15 +106,15 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **111**.
+- Modified upstream files: **0** (0 changed lines). New files: **112**.
 
 ## Build
 
-- Modified upstream files: **2** (14 changed lines). New files: **0**.
+- Modified upstream files: **2** (13 changed lines). New files: **0**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/build.gradle.kts | 10 | 3 |
+| app/build.gradle.kts | 9 | 3 |
 | build.gradle.kts | 1 | 0 |
 
 ## Resources / strings

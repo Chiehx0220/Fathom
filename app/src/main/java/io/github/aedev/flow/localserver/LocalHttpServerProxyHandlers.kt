@@ -171,7 +171,7 @@ private fun dropAfterDenial(
 
 @Throws(Exception::class)
 internal fun ClientHandler.handleStreamProxy(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
     requestHeaders: Map<String, String>,
 ) {
@@ -239,7 +239,7 @@ internal fun ClientHandler.handleStreamProxy(
 
     var directUrl = resolve(useCache = true)
     if (directUrl == null) {
-        sendResponse(os, 404, "Stream URL not found.", "text/plain; charset=UTF-8")
+        reply.send(404, "Stream URL not found.", "text/plain; charset=UTF-8")
         return
     }
 
@@ -269,80 +269,38 @@ internal fun ClientHandler.handleStreamProxy(
             serverLog("WARNING: Range requested ($rangeHeader) but CDN returned $code")
         }
 
-        val headBuilder = StringBuilder()
-        val statusText = if (code == 206) "Partial Content" else "OK"
-        headBuilder
-            .append("HTTP/1.1 ")
-            .append(code)
-            .append(" ")
-            .append(statusText)
-            .append("\r\n")
-
-        val headersToForward =
-            arrayOf(
-                "Content-Type",
-                "Content-Length",
-                "Content-Range",
-                "Accept-Ranges",
-            )
-
-        for (h in headersToForward) {
-            val v = r.header(h)
-            if (v != null) {
-                headBuilder
-                    .append(h)
-                    .append(": ")
-                    .append(v)
-                    .append("\r\n")
-            }
-        }
-
-        if (r.header("Content-Type") == null) {
-            var defaultType = if (requestedItag == 140) "audio/mp4" else "video/mp4"
+        var type = r.header("Content-Type")
+        if (type == null) {
+            type = if (requestedItag == 140) "audio/mp4" else "video/mp4"
             if (requestedItag == -1) {
                 // Itag-less services: manifest mtype decides.
-                defaultType =
-                    if ("audio" == mediaType) {
-                        "audio/mp4"
-                    } else if ("video" == mediaType) {
-                        "video/mp4"
-                    } else {
-                        "application/octet-stream"
+                type =
+                    when (mediaType) {
+                        "audio" -> "audio/mp4"
+                        "video" -> "video/mp4"
+                        else -> "application/octet-stream"
                     }
             }
-            headBuilder.append("Content-Type: ").append(defaultType).append("\r\n")
         }
-
-        if (r.header("Accept-Ranges") == null) {
-            headBuilder.append("Accept-Ranges: bytes\r\n")
-        }
-
-        headBuilder.append("Access-Control-Allow-Origin: *\r\n")
-        headBuilder.append("Access-Control-Allow-Headers: *\r\n")
-        headBuilder.append("Access-Control-Expose-Headers: *\r\n")
-        headBuilder.append("\r\n")
+        val headers =
+            mapOf(
+                "Content-Range" to r.header("Content-Range"),
+                "Accept-Ranges" to (r.header("Accept-Ranges") ?: "bytes"),
+                "Access-Control-Allow-Origin" to "*",
+                "Access-Control-Allow-Headers" to "*",
+                "Access-Control-Expose-Headers" to "*",
+            ).filterValues { it != null }.mapValues { it.value!! }
 
         if (code == 206) serverLog("Successfully returning 206 Partial Content to client")
 
-        os.write(headBuilder.toString().toByteArray(Charsets.UTF_8))
-        os.flush()
-
-        val responseBody = r.body
-        if (responseBody != null) {
+        reply.stream(code, type, r.header("Content-Length")?.toLongOrNull(), headers) { out ->
             try {
-                responseBody.byteStream().use { inputStream ->
-                    val buffer = ByteArray(65536)
-                    var read: Int
-                    while (inputStream.read(buffer).also { read = it } != -1) {
-                        os.write(buffer, 0, read)
-                    }
-                }
+                r.body?.byteStream()?.copyTo(out, 65536)
             } catch (e: IOException) {
                 // Client disconnected (pause/seek).
                 serverLog("Stream proxy: Client connection closed.")
             }
         }
-        os.flush()
     }
 }
 
@@ -384,7 +342,7 @@ internal fun repCacheKey(
 
 @Throws(Exception::class)
 internal fun ClientHandler.handleSubtitlesProxy(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -431,19 +389,10 @@ internal fun ClientHandler.handleSubtitlesProxy(
                 .build()
         LocalServerCaches.httpClient.newCall(req).execute().use { response ->
             val bodyBytes = (response.body?.string() ?: "").withoutCueSettings().toByteArray(Charsets.UTF_8)
-            val contentType = "text/vtt"
-            val headers =
-                "HTTP/1.1 200 OK\r\n" +
-                    "Content-Type: " + contentType + "; charset=UTF-8\r\n" +
-                    "Content-Length: " + bodyBytes.size + "\r\n" +
-                    "Access-Control-Allow-Origin: *\r\n" +
-                    "Connection: close\r\n\r\n"
-            os.write(headers.toByteArray(Charsets.UTF_8))
-            os.write(bodyBytes)
-            os.flush()
+            reply.sendBytes(200, bodyBytes, "text/vtt; charset=UTF-8", mapOf("Access-Control-Allow-Origin" to "*"))
         }
     } else {
-        sendResponse(os, 404, "Subtitles not found", "text/plain; charset=UTF-8")
+        reply.send(404, "Subtitles not found", "text/plain; charset=UTF-8")
     }
 }
 
@@ -454,16 +403,16 @@ private fun String.withoutCueSettings(): String = replace(Regex("""^(\S+ --> \S+
 
 // SPA shell, CSS, JS. ?v= ignored: content change changes WebAssets.appVersion, so max-age=31536000 immutable is safe.
 @Throws(Exception::class)
-internal fun ClientHandler.handleAppShell(os: OutputStream) {
-    sendResponse(os, 200, WebShell.appPage(), "text/html; charset=UTF-8")
+internal fun ClientHandler.handleAppShell(reply: Reply) {
+    reply.send(200, WebShell.appPage(), "text/html; charset=UTF-8")
 }
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleAppCss(os: OutputStream) {
-    sendResponse(os, 200, WebAssets.appCss, "text/css; charset=UTF-8", "public, max-age=31536000, immutable")
+internal fun ClientHandler.handleAppCss(reply: Reply) {
+    reply.send(200, WebAssets.appCss, "text/css; charset=UTF-8", "public, max-age=31536000, immutable")
 }
 
 @Throws(Exception::class)
-internal fun ClientHandler.handleAppJs(os: OutputStream) {
-    sendResponse(os, 200, WebAssets.appJs, "application/javascript; charset=UTF-8", "public, max-age=31536000, immutable")
+internal fun ClientHandler.handleAppJs(reply: Reply) {
+    reply.send(200, WebAssets.appJs, "application/javascript; charset=UTF-8", "public, max-age=31536000, immutable")
 }

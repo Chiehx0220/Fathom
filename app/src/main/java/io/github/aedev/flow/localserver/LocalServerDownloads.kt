@@ -55,7 +55,7 @@ private fun HistoryDbHelper.finishedDownloads(): List<DownloadWithItems> {
         .sortedByDescending { it.download.createdAt }
 }
 
-internal fun ClientHandler.handleApiDownloads(os: OutputStream) {
+internal fun ClientHandler.handleApiDownloads(reply: Reply) {
     val array = JSONArray()
     for (entry in dbHelper.finishedDownloads()) {
         val download = entry.download
@@ -82,7 +82,7 @@ internal fun ClientHandler.handleApiDownloads(os: OutputStream) {
         json.put("sizeBytes", entry.totalSize)
         array.put(json)
     }
-    sendJson(os, JSONObject().put("videos", array))
+    reply.sendJson(JSONObject().put("videos", array))
 }
 
 /** Length + stream at offset (file or SAF document). */
@@ -151,7 +151,7 @@ internal fun parseByteRange(
 }
 
 internal fun ClientHandler.handleDownloadFile(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
     requestHeaders: Map<String, String>,
 ) {
@@ -161,62 +161,37 @@ internal fun ClientHandler.handleDownloadFile(
     val item = download?.takeIf { it.overallStatus == DownloadItemStatus.COMPLETED }?.playableItem()
     val source = item?.let { dbHelper.sourceOf(it.filePath) }
     if (item == null || source == null) {
-        sendResponse(os, 404, "This video is not downloaded.", "text/plain; charset=UTF-8")
+        reply.send(404, "This video is not downloaded.", "text/plain; charset=UTF-8")
         return
     }
 
     val rangeHeader = requestHeaders.entries.firstOrNull { it.key.equals("Range", ignoreCase = true) }?.value
     val range = parseByteRange(rangeHeader, source.length)
     if (rangeHeader != null && range == null && source.length > 0) {
-        val head = "HTTP/1.1 416 Range Not Satisfiable\r\nContent-Range: bytes */${source.length}\r\nContent-Length: 0\r\n\r\n"
-        os.write(head.toByteArray(Charsets.UTF_8))
-        os.flush()
+        reply.sendBytes(416, ByteArray(0), "text/plain", mapOf("Content-Range" to "bytes */${source.length}"))
         return
     }
     val start = range?.first ?: 0L
     val end = range?.last ?: (source.length - 1)
     val count = if (source.length == 0L) 0L else end - start + 1
 
-    val head =
-        StringBuilder()
-            .append(if (range != null) "HTTP/1.1 206 Partial Content\r\n" else "HTTP/1.1 200 OK\r\n")
-            .append("Content-Type: ")
-            .append(contentTypeOf(item.filePath))
-            .append("\r\n")
-            .append("Accept-Ranges: bytes\r\n")
-            .append("Content-Length: ")
-            .append(count)
-            .append("\r\n")
-    if (range !=
-        null
-    ) {
-        head
-            .append("Content-Range: bytes ")
-            .append(start)
-            .append('-')
-            .append(end)
-            .append('/')
-            .append(source.length)
-            .append("\r\n")
-    }
-    head.append("\r\n")
-    os.write(head.toString().toByteArray(Charsets.UTF_8))
-    os.flush()
-
-    if (count == 0L) return
-    try {
-        source.streamFrom(start).use { input ->
-            val buffer = ByteArray(64 * 1024)
-            var left = count
-            while (left > 0) {
-                val read = input.read(buffer, 0, minOf(buffer.size.toLong(), left).toInt())
-                if (read < 0) break
-                os.write(buffer, 0, read)
-                left -= read
+    val headers = mutableMapOf("Accept-Ranges" to "bytes")
+    if (range != null) headers["Content-Range"] = "bytes $start-$end/${source.length}"
+    reply.stream(if (range != null) 206 else 200, contentTypeOf(item.filePath), count, headers) { out ->
+        if (count == 0L) return@stream
+        try {
+            source.streamFrom(start).use { input ->
+                val buffer = ByteArray(64 * 1024)
+                var left = count
+                while (left > 0) {
+                    val read = input.read(buffer, 0, minOf(buffer.size.toLong(), left).toInt())
+                    if (read < 0) break
+                    out.write(buffer, 0, read)
+                    left -= read
+                }
             }
-            os.flush()
+        } catch (e: IOException) {
+            // client closed the connection (seek)
         }
-    } catch (e: IOException) {
-        // client closed the connection (seek)
     }
 }

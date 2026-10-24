@@ -74,28 +74,28 @@ private fun proxiedImageHeaders(url: String): Map<String, String>? {
 
 @Throws(Exception::class)
 internal fun ClientHandler.handleThumbnailsProxy(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
     val mediaUrl = params["id"] ?: throw BadRequestException("Missing 'id' parameter")
     val frameset = LocalServerSource.streamInfo(dbHelper.appContext, serviceId, mediaUrl).previewFrames.bestForSeekBar()
     if (frameset == null) {
-        sendResponse(os, 404, "No preview thumbnails.", "text/plain; charset=UTF-8")
+        reply.send(404, "No preview thumbnails.", "text/plain; charset=UTF-8")
         return
     }
-    sendResponse(os, 200, frameset.toWebVtt(), "text/vtt; charset=UTF-8")
+    reply.send(200, frameset.toWebVtt(), "text/vtt; charset=UTF-8")
 }
 
 @Throws(Exception::class)
 internal fun ClientHandler.handleImageProxy(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val url = params["u"]
     val extraHeaders = url?.let { proxiedImageHeaders(it) }
     if (url == null || extraHeaders == null) {
-        sendResponse(os, 400, "Not a proxiable image.", "text/plain; charset=UTF-8")
+        reply.send(400, "Not a proxiable image.", "text/plain; charset=UTF-8")
         return
     }
     val reqBuilder =
@@ -107,20 +107,11 @@ internal fun ClientHandler.handleImageProxy(
     LocalServerCaches.httpClient.newCall(reqBuilder.build()).execute().use { response ->
         val body = response.body?.bytes() ?: ByteArray(0)
         if (!response.isSuccessful) {
-            sendResponse(os, 502, "Image unavailable.", "text/plain; charset=UTF-8")
+            reply.send(502, "Image unavailable.", "text/plain; charset=UTF-8")
             return
         }
         val contentType = response.header("Content-Type") ?: "image/jpeg"
-        val head =
-            listOf(
-                "HTTP/1.1 200 OK",
-                "Content-Type: $contentType",
-                "Content-Length: ${body.size}",
-                "Cache-Control: public, max-age=21600",
-            ).joinToString(separator = "\r\n", postfix = "\r\n") + connectionHeaders() + "\r\n"
-        os.write(head.toByteArray(Charsets.UTF_8))
-        os.write(body)
-        os.flush()
+        reply.sendBytes(200, body, contentType, mapOf("Cache-Control" to "public, max-age=21600"))
     }
 }
 

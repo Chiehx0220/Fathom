@@ -41,13 +41,4 @@ class NetworkAccessTest {
             assertThat(isLocalNetworkAddress(peer(address))).isFalse()
         }
     }
-
-    @Test
-    fun `a peer outside the network is told why, not just dropped`() {
-        val text = String(outsideNetworkResponse(), Charsets.UTF_8)
-
-        assertThat(text).startsWith("HTTP/1.1 403 Forbidden")
-        assertThat(text).endsWith(OUTSIDE_NETWORK_REFUSAL)
-        assertThat(text).contains("Content-Length: ${OUTSIDE_NETWORK_REFUSAL.length}")
-    }
 }

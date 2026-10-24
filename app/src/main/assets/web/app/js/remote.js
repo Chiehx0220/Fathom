@@ -199,7 +199,7 @@ const restartReports = () => {
 
 const connect = () => {
     if (socket) return;
-    socket = new WebSocket('ws://' + location.hostname + ':8081');
+    socket = new WebSocket('ws://' + location.host + '/remote');
     socket.onmessage = (event) => handle(String(event.data));
     socket.onclose = (event) => {
         socket = null;

@@ -26,14 +26,14 @@ private fun parseSharedVideoParams(params: Map<String, String>): SharedVideoPara
 }
 
 // Toggle handlers answer alike (api.js act()).
-private fun ClientHandler.sendActionResult(os: OutputStream) {
-    sendJson(os, "{\"status\":\"success\"}")
+private fun ClientHandler.sendActionResult(reply: Reply) {
+    reply.sendJson("{\"status\":\"success\"}")
 }
 
 private fun unknownAction(): Nothing = throw BadRequestException("Unknown action")
 
 internal fun ClientHandler.handleSubscribeAction(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val channelUrl = params.required("id")
@@ -42,11 +42,11 @@ internal fun ClientHandler.handleSubscribeAction(
         "unsubscribe" -> dbHelper.nativeRemoveSubscription(channelUrl)
         else -> unknownAction()
     }
-    sendActionResult(os)
+    sendActionResult(reply)
 }
 
 internal fun ClientHandler.handleBlockChannelAction(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val channelUrl = params.required("id")
@@ -55,11 +55,11 @@ internal fun ClientHandler.handleBlockChannelAction(
         "unblock" -> dbHelper.nativeUnblockChannel(channelUrl)
         else -> unknownAction()
     }
-    sendActionResult(os)
+    sendActionResult(reply)
 }
 
 internal fun ClientHandler.handlePlaylistBookmarkAction(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val playlistUrl = params.required("id")
@@ -68,11 +68,11 @@ internal fun ClientHandler.handlePlaylistBookmarkAction(
         "unbookmark" -> dbHelper.nativeUnbookmarkPlaylist(playlistUrl)
         else -> unknownAction()
     }
-    sendActionResult(os)
+    sendActionResult(reply)
 }
 
 internal fun ClientHandler.handleHistoryAction(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     when (params["action"]) {
@@ -80,11 +80,11 @@ internal fun ClientHandler.handleHistoryAction(
         "clear" -> dbHelper.nativeClearHistory()
         else -> unknownAction()
     }
-    sendActionResult(os)
+    sendActionResult(reply)
 }
 
 internal fun ClientHandler.handleWatchLaterAction(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val url = params.required("url")
@@ -102,11 +102,11 @@ internal fun ClientHandler.handleWatchLaterAction(
             unknownAction()
         }
     }
-    sendActionResult(os)
+    sendActionResult(reply)
 }
 
 internal fun ClientHandler.handleRateVideoAction(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val url = params.required("url")
@@ -117,11 +117,11 @@ internal fun ClientHandler.handleRateVideoAction(
         "remove" -> dbHelper.nativeRemoveLikeState(url)
         else -> unknownAction()
     }
-    sendActionResult(os)
+    sendActionResult(reply)
 }
 
 internal fun ClientHandler.handleSendLink(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
     clientIp: String?,
 ) {
@@ -158,19 +158,19 @@ internal fun ClientHandler.handleSendLink(
             } else {
                 serverLog("Remote connected (pairing only) from client IP $clientIp")
             }
-            sendJson(os, JSONObject().put("status", "success").put("release_code", currentLockCode))
+            reply.sendJson(JSONObject().put("status", "success").put("release_code", currentLockCode))
         } else {
             val title = RemoteSession.getActiveVideoTitle()
             val busyMsg =
                 "Server is currently controlled by device at IP ${RemoteSession.getActiveClientIp()}" +
                     (title?.let { " playing: $it" } ?: "")
-            sendJson(os, JSONObject().put("status", "busy").put("message", busyMsg))
+            reply.sendJson(JSONObject().put("status", "busy").put("message", busyMsg))
         }
     }
 }
 
 internal fun ClientHandler.handleReleaseLock(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val clientReleaseCode = params.required("release_code")
@@ -178,9 +178,9 @@ internal fun ClientHandler.handleReleaseLock(
         if (RemoteSession.getActiveLockCode() == clientReleaseCode) {
             RemoteSession.releaseLock()
             serverLog("Lock released by client.")
-            sendJson(os, "{\"status\":\"success\"}")
+            reply.sendJson("{\"status\":\"success\"}")
         } else {
-            sendJson(os, "{\"status\":\"error\",\"message\":\"Invalid or expired lock code\"}")
+            reply.sendJson("{\"status\":\"error\",\"message\":\"Invalid or expired lock code\"}")
         }
     }
 }
@@ -198,12 +198,12 @@ private fun parseChapterTitles(raw: String?): List<String> {
 
 // Paired page reports playback ~1/s: phone remote progress + mode.
 internal fun ClientHandler.handleRemoteState(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val code = RemoteSession.getActiveLockCode()
     if (code == null || code != params["release_code"]) {
-        sendJson(os, "{\"status\":\"error\"}")
+        reply.sendJson("{\"status\":\"error\"}")
         return
     }
     RemoteSession.markSeen()
@@ -237,14 +237,14 @@ internal fun ClientHandler.handleRemoteState(
             rating = RemoteSession.choiceHold.rating(params["like"], previous.rating),
         ),
     )
-    sendJson(os, "{\"status\":\"success\"}")
+    reply.sendJson("{\"status\":\"success\"}")
 }
 
 private const val HANDOFF_TITLE_MAX = 200
 
 /** `/handoff`: saves the position to history, then emits a [Handoff] for the app. */
 internal fun ClientHandler.handleHandoff(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val url = params["id"].orEmpty().trim()
@@ -256,5 +256,5 @@ internal fun ClientHandler.handleHandoff(
     val positionMs = position?.let { (it * 1000).toLong() }
     if (positionMs != null && duration != null) dbHelper.nativeUpdateWatchPosition(url, positionMs, (duration * 1000).toLong())
     RemoteSession.handOff(Handoff(url, params["title"].orEmpty().take(HANDOFF_TITLE_MAX), LocalServerMedia.getVideoId(url), positionMs))
-    sendActionResult(os)
+    sendActionResult(reply)
 }

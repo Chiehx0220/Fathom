@@ -46,7 +46,7 @@ class RequestGuardTest {
         assertThat(isSameOriginRequest(headers("sec-fetch-site" to "cross-site"))).isFalse()
         assertThat(isSameOriginRequest(headers("sec-fetch-site" to "same-site"))).isFalse()
         assertThat(isSameOriginRequest(headers("origin" to "https://evil.example"))).isFalse()
-        assertThat(isSameOriginRequest(headers("origin" to "http://192.168.1.5:8081"))).isFalse()
+        assertThat(isSameOriginRequest(headers("origin" to "http://192.168.1.5:9090"))).isFalse()
         assertThat(isSameOriginRequest(headers("origin" to "null"))).isFalse()
         assertThat(isSameOriginRequest(headers("sec-fetch-site" to "same-origin", "origin" to "https://evil.example"))).isTrue()
     }
@@ -106,29 +106,29 @@ class RequestGuardTest {
 
     @Test
     fun `a socket opened by the server's own page is let in`() {
-        assertThat(isAllowedWebSocketOrigin("http://192.168.1.5:8080", "192.168.1.5:8081")).isTrue()
-        assertThat(isAllowedWebSocketOrigin("http://[::1]:8080", "[::1]:8081")).isTrue()
-        assertThat(isAllowedWebSocketOrigin("http://PIXEL.local:8080", "pixel.local:8081")).isTrue()
+        assertThat(isAllowedWebSocketOrigin("http://192.168.1.5:8080", "192.168.1.5:8080")).isTrue()
+        assertThat(isAllowedWebSocketOrigin("http://[::1]:8080", "[::1]:8080")).isTrue()
+        assertThat(isAllowedWebSocketOrigin("http://PIXEL.local:8080", "pixel.local:8080")).isTrue()
     }
 
     @Test
     fun `a program that sends no origin is let in`() {
-        assertThat(isAllowedWebSocketOrigin(null, "192.168.1.5:8081")).isTrue()
+        assertThat(isAllowedWebSocketOrigin(null, "192.168.1.5:8080")).isTrue()
         assertThat(isAllowedWebSocketOrigin(null, null)).isTrue()
     }
 
     @Test
     fun `a socket opened by another site's page is refused`() {
-        assertThat(isAllowedWebSocketOrigin("https://evil.example", "192.168.1.5:8081")).isFalse()
-        assertThat(isAllowedWebSocketOrigin("http://evil.example", "192.168.1.5:8081")).isFalse()
-        assertThat(isAllowedWebSocketOrigin("http://192.168.1.6:8080", "192.168.1.5:8081")).isFalse()
-        assertThat(isAllowedWebSocketOrigin("null", "192.168.1.5:8081")).isFalse()
+        assertThat(isAllowedWebSocketOrigin("https://evil.example", "192.168.1.5:8080")).isFalse()
+        assertThat(isAllowedWebSocketOrigin("http://evil.example", "192.168.1.5:8080")).isFalse()
+        assertThat(isAllowedWebSocketOrigin("http://192.168.1.6:8080", "192.168.1.5:8080")).isFalse()
+        assertThat(isAllowedWebSocketOrigin("null", "192.168.1.5:8080")).isFalse()
         assertThat(isAllowedWebSocketOrigin("http://192.168.1.5:8080", null)).isFalse()
     }
 
     @Test
     fun `a re-pointed public domain is refused even when page and host agree`() {
-        assertThat(isAllowedWebSocketOrigin("http://rebind.attacker.com:8080", "rebind.attacker.com:8081")).isFalse()
+        assertThat(isAllowedWebSocketOrigin("http://rebind.attacker.com:8080", "rebind.attacker.com:8080")).isFalse()
     }
 
     @Test

@@ -22,29 +22,29 @@ internal fun castStateJson(
 
 /** `scan=1` starts discovery if idle; reported as running before its coroutine starts. */
 internal fun ClientHandler.handleCastDevices(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val scan = params["scan"] == "1"
     if (scan && !DlnaCastManager.isDiscovering.value) DlnaCastManager.startDiscovery(dbHelper.appContext)
     val discovering = scan || DlnaCastManager.isDiscovering.value
-    sendJson(os, castStateJson(DlnaCastManager.devices.value, discovering, DlnaCastManager.currentDevice.value))
+    reply.sendJson(castStateJson(DlnaCastManager.devices.value, discovering, DlnaCastManager.currentDevice.value))
 }
 
 internal fun ClientHandler.handleCastStart(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val url = params["id"].orEmpty().trim()
     val device = DlnaCastManager.devices.value.firstOrNull { it.usn == params["usn"] }
     if (device == null || url.isEmpty()) {
-        sendResponse(os, 404, "{\"status\":\"no_device\"}", "application/json")
+        reply.send(404, "{\"status\":\"no_device\"}", "application/json")
         return
     }
     val info = LocalServerSource.streamInfo(dbHelper.appContext, getServiceId(params), url)
     DlnaCastManager.castStreamInfo(device, params["title"].orEmpty().ifEmpty { info.name }, info, null)
     if (!awaitCasting(device)) {
-        sendResponse(os, 502, "{\"status\":\"failed\"}", "application/json")
+        reply.send(502, "{\"status\":\"failed\"}", "application/json")
         return
     }
     val position = params["t"]?.toDoubleOrNull()?.toLong() ?: 0L
@@ -52,12 +52,12 @@ internal fun ClientHandler.handleCastStart(
         Thread.sleep(SEEK_SETTLE_MS)
         DlnaCastManager.seekTo(device, position)
     }
-    sendJson(os, "{\"status\":\"success\"}")
+    reply.sendJson("{\"status\":\"success\"}")
 }
 
-internal fun ClientHandler.handleCastStop(os: OutputStream) {
+internal fun ClientHandler.handleCastStop(reply: Reply) {
     DlnaCastManager.disconnect()
-    sendJson(os, "{\"status\":\"success\"}")
+    reply.sendJson("{\"status\":\"success\"}")
 }
 
 private fun awaitCasting(device: DlnaDevice): Boolean {

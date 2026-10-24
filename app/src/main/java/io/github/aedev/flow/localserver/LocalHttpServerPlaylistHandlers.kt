@@ -9,28 +9,28 @@ private const val MAX_PLAYLIST_NAME = 100
 
 /** `id`: video being saved; marks the playlists that hold it. */
 internal fun ClientHandler.handleApiPlaylists(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val containing = params["id"]?.let { dbHelper.nativePlaylistIdsOf(it) }.orEmpty()
-    sendJson(os, JSONObject().put("playlists", playlistChoicesJson(dbHelper.nativeUserPlaylists(), containing)))
+    reply.sendJson(JSONObject().put("playlists", playlistChoicesJson(dbHelper.nativeUserPlaylists(), containing)))
 }
 
 internal fun ClientHandler.handleApiMyList(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val info = dbHelper.nativeUserPlaylist(params["id"].orEmpty()) ?: throw BadRequestException("Unknown playlist")
     val header = JSONObject().put("id", info.id).put("name", info.name).put("videoCount", info.videoCount)
-    sendJson(os, JSONObject().put("playlist", header).put("videos", mixedVideosJson(dbHelper.nativeUserPlaylistItems(info.id))))
+    reply.sendJson(JSONObject().put("playlist", header).put("videos", mixedVideosJson(dbHelper.nativeUserPlaylistItems(info.id))))
 }
 
-internal fun ClientHandler.handleApiLiked(os: OutputStream) =
-    sendJson(os, JSONObject().put("videos", mixedVideosJson(dbHelper.nativeLikedItems())))
+internal fun ClientHandler.handleApiLiked(reply: Reply) =
+    reply.sendJson(JSONObject().put("videos", mixedVideosJson(dbHelper.nativeLikedItems())))
 
 /** `create` takes `name`; `add`, `remove`, `rename`, `delete` take `playlist`; `add`/`remove` take the video's `url`. */
 internal fun ClientHandler.handlePlaylistAction(
-    os: OutputStream,
+    reply: Reply,
     params: Map<String, String>,
 ) {
     val url = params["url"].orEmpty()
@@ -63,7 +63,7 @@ internal fun ClientHandler.handlePlaylistAction(
             "delete" -> existing().also { dbHelper.nativeDeletePlaylist(it) }
             else -> throw BadRequestException("Unknown action")
         }
-    sendJson(os, JSONObject().put("status", "success").put("playlist", playlistId))
+    reply.sendJson(JSONObject().put("status", "success").put("playlist", playlistId))
 }
 
 private fun videoOf(

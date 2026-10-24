@@ -9,12 +9,7 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
-import java.io.BufferedInputStream
-import java.io.IOException
-import java.io.OutputStream
-import java.net.Socket
-import java.net.URLDecoder
-import java.util.Locale
+import java.net.InetAddress
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
@@ -22,113 +17,13 @@ import java.util.concurrent.TimeUnit
 
 // Handler groups: extension functions in sibling files.
 internal class ClientHandler(
-    private val socket: Socket,
+    internal val peer: InetAddress,
     internal val dbHelper: HistoryDbHelper,
-    private val context: android.content.Context,
     private val executorService: ExecutorService,
     internal val pairing: Pairing,
-) : Runnable {
-    // Set after run() reads the request; sendResponse() checks Accept-Encoding.
-    private var requestHeaders: MutableMap<String, String>? = null
-
-    internal val remoteAddress: String? get() = socket.inetAddress.hostAddress
-    internal val remoteIsLoopback: Boolean get() = socket.inetAddress.isLoopbackAddress
-
-    // Per-request keep-alive state.
-    private var reusable = false
-    private var keptAlive = false
-
-    private fun closeAfterResponse() {
-        reusable = false
-        keptAlive = false
-    }
-
-    /** `Connection` headers for a response with a known length. */
-    internal fun connectionHeaders(): String {
-        keptAlive = reusable
-        return if (reusable) "Connection: keep-alive\r\nKeep-Alive: timeout=${KEEP_ALIVE_IDLE_MS / 1000}\r\n" else "Connection: close\r\n"
-    }
-
-    override fun run() {
-        try {
-            socket.tcpNoDelay = true
-            val input = BufferedInputStream(socket.getInputStream())
-            val os = socket.getOutputStream()
-            var served = 0
-            do {
-                // Browsers open idle spare connections; unlimited → thread held forever.
-                socket.soTimeout = if (served == 0) REQUEST_READ_TIMEOUT_MS else KEEP_ALIVE_IDLE_MS
-                val head = readRequestHead(input) ?: return
-                socket.soTimeout = 0
-                served++
-            } while (serve(head, os, last = served >= MAX_REQUESTS_PER_CONNECTION))
-        } catch (e: IOException) {
-            // Client gone or no request sent.
-        } catch (e: Exception) {
-            serverLog("Request failed: $e")
-        } finally {
-            try {
-                socket.close()
-            } catch (ignored: IOException) {
-            }
-        }
-    }
-
-    /** Serves one request; true if the connection stays open. */
-    private fun serve(
-        head: List<String>,
-        os: OutputStream,
-        last: Boolean,
-    ): Boolean {
-        val requestLine = head[0].split(" ")
-        if (requestLine.size < 2) return false
-        val method = requestLine[0]
-        val rawUri = requestLine[1]
-        val path = rawUri.substringBefore('?')
-        val query = if (rawUri.contains('?')) rawUri.substringAfter('?') else null
-        val params = parseQueryParams(query)
-        serverLog("Request: $method $path" + (if (query != null) "?$query" else ""))
-
-        val requestHeaders = parseRequestHeaders(head)
-        this.requestHeaders = requestHeaders
-        reusable = !last && allowsReuse(requestLine, requestHeaders) && !method.equals("HEAD", ignoreCase = true)
-        keptAlive = false
-
-        val refusal = refusalFor(method, path, requestHeaders)
-        if (refusal != null) {
-            serverLog("Refused $method $path: $refusal")
-            closeAfterResponse()
-            sendResponse(os, 403, refusal, "text/plain; charset=UTF-8")
-            return false
-        }
-        if (!admits(os, path, requestHeaders)) return keptAlive
-        if ("OPTIONS".equals(method, ignoreCase = true)) {
-            os.write(CORS_PREFLIGHT.toByteArray(Charsets.UTF_8))
-            os.flush()
-            return false
-        }
-        try {
-            val route = ROUTES[path]
-            if (route != null) {
-                route(this, os, params, requestHeaders)
-            } else if (path.startsWith("/vendor/")) {
-                handleVendorAsset(os, path)
-            } else {
-                sendResponse(os, 404, "Page Not Found", "text/plain; charset=UTF-8")
-            }
-        } catch (e: BadRequestException) {
-            closeAfterResponse()
-            val (body, type) = failureBody(path, 400, e.message)
-            sendResponse(os, 400, body, type)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            serverLog("Error during route handling: " + e.message)
-            closeAfterResponse()
-            val (body, type) = failureBody(path, 500, e.message)
-            sendResponse(os, 500, body, type)
-        }
-        return keptAlive
-    }
+) {
+    internal val remoteAddress: String? get() = peer.hostAddress
+    internal val remoteIsLoopback: Boolean get() = peer.isLoopbackAddress
 
     // Subscribed channels' uploads → one newest-first feed (cap 60); channel resolved by own URL (subscriptions mix services).
     internal fun fetchSubscriptionFeed(channels: List<InfoItem>?): List<InfoItem> {
@@ -211,95 +106,18 @@ internal class ClientHandler(
         return LocalServerMedia.SERVICE_YOUTUBE
     }
 
-    private fun parseQueryParams(query: String?): MutableMap<String, String> {
-        val params = HashMap<String, String>()
-        if (query.isNullOrEmpty()) return params
-        val pairs = query.split("&")
-        for (pair in pairs) {
-            val idx = pair.indexOf("=")
-            try {
-                val key = URLDecoder.decode(if (idx > 0) pair.substring(0, idx) else pair, "UTF-8")
-                val value = if (idx > 0 && pair.length > idx + 1) URLDecoder.decode(pair.substring(idx + 1), "UTF-8") else ""
-                params[key] = value
-            } catch (e: Exception) {
-            }
-        }
-        return params
-    }
-
-    @Throws(IOException::class)
-    internal fun sendResponse(
-        os: OutputStream,
-        code: Int,
-        content: String,
-        contentType: String,
-    ) {
-        sendResponse(os, code, content, contentType, null)
-    }
-
-    // cacheControl: header value or null; static handlers only.
-    @Throws(IOException::class)
-    internal fun sendResponse(
-        os: OutputStream,
-        code: Int,
-        content: String,
-        contentType: String,
-        cacheControl: String?,
-        setCookie: String? = null,
-    ) {
-        var bytes = content.toByteArray(Charsets.UTF_8)
-        val status = statusText(code)
-
-        // gzip for HTML/CSS/JS; not media or bodies < 512 bytes.
-        var contentEncodingHeader = ""
-        val currentRequestHeaders = requestHeaders
-        if (bytes.size > 512 && currentRequestHeaders != null) {
-            val acceptEncoding = currentRequestHeaders["accept-encoding"]
-            if (acceptEncoding != null && acceptEncoding.lowercase(Locale.US).contains("gzip")) {
-                val gzBuffer = java.io.ByteArrayOutputStream()
-                java.util.zip.GZIPOutputStream(gzBuffer).use { gzos ->
-                    gzos.write(bytes)
-                }
-                bytes = gzBuffer.toByteArray()
-                contentEncodingHeader = "Content-Encoding: gzip\r\n"
-            }
-        }
-
-        val response =
-            "HTTP/1.1 " + code + " " + status + "\r\n" +
-                "Content-Type: " + contentType + "\r\n" +
-                contentEncodingHeader +
-                (if (cacheControl != null) "Cache-Control: $cacheControl\r\n" else "") +
-                (if (setCookie != null) "Set-Cookie: $setCookie\r\n" else "") +
-                "Content-Length: " + bytes.size + "\r\n" +
-                connectionHeaders() + "\r\n"
-        os.write(response.toByteArray(Charsets.UTF_8))
-        os.write(bytes)
-        os.flush()
-    }
-
-    internal fun sendJson(
-        os: OutputStream,
-        body: String,
-    ) = sendResponse(os, 200, body, "application/json")
-
-    internal fun sendJson(
-        os: OutputStream,
-        body: JSONObject,
-    ) = sendJson(os, body.toString())
-
     @Throws(Exception::class)
     internal fun handleSearchHistory(
-        os: OutputStream,
+        reply: Reply,
         params: Map<String, String>,
     ) {
         val deleteQuery = params["delete"]
         if (!deleteQuery.isNullOrEmpty()) {
             dbHelper.nativeDeleteSearchQuery(deleteQuery)
-            sendJson(os, "{\"status\":\"success\"}")
+            reply.sendJson("{\"status\":\"success\"}")
             return
         }
-        sendJson(os, JSONArray(dbHelper.nativeSearchHistory()).toString())
+        reply.sendJson(JSONArray(dbHelper.nativeSearchHistory()).toString())
     }
 
     internal fun filterItems(items: List<InfoItem>): List<InfoItem> {
