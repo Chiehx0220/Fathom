@@ -15,6 +15,7 @@ kbd { min-width: 26px; padding: 3px 7px; border-radius: 7px; background: var(--s
 .menu-item { display: flex; align-items: center; gap: 14px; width: 100%; height: 48px; padding: 0 14px; border: 0; border-radius: 14px; background: none; color: var(--fg); text-align: left; font-size: 15px; }
 .menu-item:hover { background: var(--s2); }
 .menu-item.danger { color: var(--danger); }
+.menu-item.on { color: var(--acc); }
 .menu-item.sel { background: var(--acc); color: var(--on-acc); }
 
 /* Remote pointer: tonal disc with a dark core. Press shrinks it and lights a halo; .idle fades it
