@@ -70,6 +70,10 @@ body:not([data-input="keys"]) .row-wrap.can-left.can-right .row { -webkit-mask-i
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr)); gap: 28px clamp(14px, 1.4vw, 24px); padding: 12px var(--pad-x); }
 .grid.channels { grid-template-columns: repeat(auto-fill, minmax(clamp(88px, 7vw, 120px), 1fr)); gap: 20px clamp(10px, 1vw, 18px); }
 
+/* Grid layout: a shelf is a grid; a preview hides the items past its rows. */
+.shelf > .grid { padding: 12px var(--pad-x) 12px 0; }
+.grid > [hidden] { display: none; }
+
 /* List rows (search, history, library): a picture and text, the selected one shown large in the detail pane. */
 .split { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 48px); padding: 8px var(--pad-x); }
 .split.single { grid-template-columns: minmax(0, 1fr); }

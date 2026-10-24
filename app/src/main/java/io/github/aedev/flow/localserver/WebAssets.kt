@@ -23,6 +23,7 @@ object WebAssets {
             "app/js/util.js",
             "app/js/store.js",
             "app/js/theme.js",
+            "app/js/layout.js",
             "app/js/api.js",
             "app/js/ui.js",
             "app/js/deepflow.js",

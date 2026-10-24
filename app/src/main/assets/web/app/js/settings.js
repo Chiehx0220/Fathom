@@ -39,6 +39,17 @@ const modePills = () => {
     return row;
 };
 
+const layoutPills = () => {
+    const row = h('div', { class: 'seg' }, FT.layouts.map(([id, label]) => {
+        const pill = FT.pill(label, null, FT.layout.mode() === id, () => {
+            FT.layout.setMode(id);
+            FT.$$('.pill', row).forEach((p) => p.classList.toggle('on', p === pill));
+        }, 'layout-' + id);
+        return pill;
+    }));
+    return row;
+};
+
 const toggle = (title, hint, on, save, key) => {
     const sw = h('button', { type: 'button', class: 'switch' + (on ? ' on' : ''), role: 'switch', 'aria-checked': String(on), data: { f: '', key }, onclick: () => {
         on = !sw.classList.contains('on');
@@ -65,6 +76,8 @@ FT.register('settings', {
         const sections = [
             h('section', {}, h('h2', {}, FT.t('settings_theme')), h('p', { class: 'hint' }, FT.t('settings_theme_hint')),
                 h('div', { style: 'margin-top:12px' }, modePills()), h('div', { class: 'swatches' }, FT.palettes.map(swatch))),
+            h('section', {}, h('h2', {}, FT.t('settings_layout')), h('p', { class: 'hint' }, FT.t('settings_layout_hint')),
+                h('div', { style: 'margin-top:12px' }, layoutPills())),
         ];
         if (values) {
             FT.deepFlow.adopt(values);

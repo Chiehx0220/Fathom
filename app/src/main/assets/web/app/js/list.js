@@ -18,8 +18,11 @@ const paneFor = (el) => {
 };
 
 // options: { fetch(cursor) -> { items, next }, decorate(el), empty: { icon, title, text }, before: [elements] }
+// Grid layout: card grid without the detail pane; the next page loads when `more` nears the viewport.
 FT.listView = async (root, options, isCurrent) => {
-    const list = h('div', { class: 'list' });
+    const wide = FT.layout.current() === 'grid';
+    const itemSelector = wide ? '.card' : '.row-item';
+    const list = h('div', { class: wide ? 'grid' : 'list' });
     const pane = h('aside', { class: 'pane' });
     const more = h('div', { class: 'more', hidden: true });
     let cursor = null;
@@ -30,22 +33,22 @@ FT.listView = async (root, options, isCurrent) => {
     FT.screenSelect = (el) => {
         if (!list.contains(el)) return;
         showPane(el);
-        const rows = FT.$$('.row-item', list);
+        const rows = FT.$$(itemSelector, list);
         if (!done && rows.length - rows.indexOf(el) <= 3) loadMore();
     };
 
     const remove = (el) => {
-        const rows = FT.$$('.row-item', list);
+        const rows = FT.$$(itemSelector, list);
         const at = rows.indexOf(el);
         const neighbour = rows[at + 1] || rows[at - 1];
         el.remove();
         if (neighbour) FT.focus.select(neighbour); else FT.focus.first();
-        if (!FT.$('.row-item', list)) root.replaceChildren(...(options.before || []), FT.empty(options.empty.icon, options.empty.title, options.empty.text));
+        if (!FT.$(itemSelector, list)) root.replaceChildren(...(options.before || []), FT.empty(options.empty.icon, options.empty.title, options.empty.text));
     };
 
     const append = (items) => {
         for (const item of items) {
-            const row = FT.videoRow(item);
+            const row = wide ? FT.videoCard(item) : FT.videoRow(item);
             if (options.decorate) options.decorate(row);
             row.onRemoved = () => remove(row);
             list.append(row);
@@ -70,6 +73,11 @@ FT.listView = async (root, options, isCurrent) => {
     }
 
     more.append(FT.button(FT.t('load_more'), 'expand_more', loadMore, '', 'load-more'));
+    if (wide) {
+        const nearEnd = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) loadMore(); }, { rootMargin: '600px' });
+        nearEnd.observe(more);
+        activeEnds.push(nearEnd);
+    }
     const first = await options.fetch(null);
     if (!isCurrent()) return;
     if (!first.items.length && !(first.extra && first.extra.length)) {
@@ -80,14 +88,18 @@ FT.listView = async (root, options, isCurrent) => {
     cursor = first.next || null;
     done = !cursor;
     more.hidden = done;
-    root.replaceChildren(...[...(options.before || []), ...(first.extra || []), first.items.length ? h('div', { class: 'split' }, h('div', {}, list, more), pane) : null].filter(Boolean));
-    const firstRow = FT.$('.row-item', list);
-    if (firstRow) showPane(firstRow);
+    const body = wide ? h('div', {}, list, more) : h('div', { class: 'split' }, h('div', {}, list, more), pane);
+    root.replaceChildren(...[...(options.before || []), ...(first.extra || []), first.items.length ? body : null].filter(Boolean));
+    const firstRow = FT.$(itemSelector, list);
+    if (firstRow && !wide) showPane(firstRow);
 };
 
 // A history list redraws on history changes (scroll and selection kept by FT.reload).
 let stopHistory = null;
+// Grid layout end observers; disconnected on leave.
+const activeEnds = [];
 const cleanup = () => {
+    activeEnds.splice(0).forEach((o) => o.disconnect());
     FT.screenSelect = null;
     if (stopHistory) stopHistory();
     stopHistory = null;

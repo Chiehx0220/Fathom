@@ -13,8 +13,13 @@ const SHELF_CHUNK = 14;
 // list is exhausted, appended to the same row.
 // options.expand: hash link to the shelf's full contents as a list.js view, for keyboard/mouse
 // navigation (a row's overflow is otherwise only reachable by dragging it).
+// options.rows: grid layout preview rows for a shelf without loadMore.
+// Grid layout: the shelf is a grid and its sentinel watches the viewport.
 const shelfOf = (title, sub, items, options = {}) => {
-    const row = h('div', { class: 'row' });
+    const wide = FT.layout.current() === 'grid';
+    const preview = wide && !options.loadMore;
+    const row = h('div', { class: wide ? 'grid' : 'row' });
+    const tail = wide ? h('div') : row;
     let shown = 0;
     let io = null;
     let loading = false;
@@ -26,10 +31,10 @@ const shelfOf = (title, sub, items, options = {}) => {
             row.append(card);
         }
         shown = Math.min(shown + SHELF_CHUNK, items.length);
-        if (shown >= items.length && !hasMore) { if (io) io.disconnect(); return; }
-        const sentinel = h('div', { style: 'flex:none;width:1px' });
-        row.append(sentinel);
-        if (!io) { io = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) reach(sentinel); }, { root: row, rootMargin: '600px' }); activeObservers.push(io); }
+        if (preview || (shown >= items.length && !hasMore)) { if (io) io.disconnect(); return; }
+        const sentinel = h('div', { style: wide ? 'height:1px' : 'flex:none;width:1px' });
+        tail.append(sentinel);
+        if (!io) { io = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) reach(sentinel); }, { root: wide ? null : row, rootMargin: '600px' }); activeObservers.push(io); }
         io.observe(sentinel);
     };
     // Sentinel intersected: show the next local chunk, else (if loadMore was given) fetch one.
@@ -45,11 +50,23 @@ const shelfOf = (title, sub, items, options = {}) => {
         }).catch(() => { hasMore = false; if (io) io.disconnect(); }).finally(() => { loading = false; });
     };
     step();
+    if (preview) {
+        const rows = options.rows || 1;
+        const fit = () => {
+            const columns = getComputedStyle(row).gridTemplateColumns;
+            if (columns === 'none') return;
+            const count = columns.split(' ').length * rows;
+            [...row.children].forEach((card, i) => { card.hidden = i >= count; });
+        };
+        const resize = new ResizeObserver(fit);
+        resize.observe(row);
+        activeObservers.push(resize);
+    }
     const head = options.expand
         ? h('a', { class: 'shelf-head expand', href: options.expand, 'aria-label': FT.t('see_all_named', { title }), data: { f: '', key: 'shelf:' + title } },
             h('h2', {}, title), FT.icon('chevron_right', 'shelf-chev'), sub ? h('span', { class: 'shelf-sub' }, sub) : null, h('em', { class: 'shelf-all' }, FT.t('see_all')))
         : h('div', { class: 'shelf-head' }, h('h2', {}, title), sub ? h('span', {}, sub) : null);
-    return h('section', { class: 'shelf' }, head, FT.scroller(row));
+    return h('section', { class: 'shelf' }, head, wide ? row : FT.scroller(row), wide ? tail : null);
 };
 
 const hero = (v, resuming) => h('div', { class: 'hero' },
@@ -64,6 +81,7 @@ const hero = (v, resuming) => h('div', { class: 'hero' },
 
 const render = async (root, params, isCurrent) => {
     const service = FT.store.service;
+    const wide = FT.layout.current() === 'grid';
     const [recs, hist] = await Promise.all([
         FT.api.recommendations(service).catch(() => FT.api.home(service)),
         FT.api.history().catch(() => ({ videos: [] })),
@@ -93,16 +111,16 @@ const render = async (root, params, isCurrent) => {
 
     const paintResume = (resuming) => {
         const first = resuming[0] || picks[0];
-        slotHero.replaceChildren(...(first ? [hero(first, resuming[0] === first)] : []));
+        slotHero.replaceChildren(...(first && !wide ? [hero(first, resuming[0] === first)] : []));
         slotSeen.replaceChildren(...(resuming.length
-            ? [shelfOf(FT.t('continue_watching'), FT.t('from_history'), resuming, { expand: '#/history?filter=continuing' })] : []));
+            ? [shelfOf(FT.t('continue_watching'), FT.t('from_history'), resuming, { expand: '#/history?filter=continuing', rows: 1 })] : []));
     };
     paintResume(seen);
 
     const page = [
         slotHero,
         slotSeen,
-        picks.length ? shelfOf(FT.t('recommended'), FT.t('for_you'), picks, { ...(loadMoreRecs ? { loadMore: loadMoreRecs } : {}), expand: '#/recommended' }) : null,
+        picks.length ? shelfOf(FT.t('recommended'), FT.t('for_you'), picks, { ...(loadMoreRecs ? { loadMore: loadMoreRecs } : {}), expand: '#/recommended', rows: 3 }) : null,
         slotSubs,
         slotLater,
     ];
@@ -121,7 +139,7 @@ const render = async (root, params, isCurrent) => {
         if (!isCurrent()) return;
         const items = (body.videos || []).filter((v) => v.serviceId === service);
         if (!items.length) return;
-        slotSubs.replaceChildren(shelfOf(FT.t('from_subscriptions'), FT.t('newest_first'), items, { expand: '#/subscriptions?tab=feed' }));
+        slotSubs.replaceChildren(shelfOf(FT.t('from_subscriptions'), FT.t('newest_first'), items, { expand: '#/subscriptions?tab=feed', rows: 2 }));
         slotSubs.hidden = false;
     }).catch(() => {});
 
@@ -129,7 +147,7 @@ const render = async (root, params, isCurrent) => {
         if (!isCurrent()) return;
         const items = (lib.watchLater || []).filter((v) => v.serviceId === service);
         if (!items.length) return;
-        slotLater.replaceChildren(shelfOf(FT.t('watch_later'), FT.t('saved_by_you'), items, { later: true, expand: '#/library?tab=later' }));
+        slotLater.replaceChildren(shelfOf(FT.t('watch_later'), FT.t('saved_by_you'), items, { later: true, expand: '#/library?tab=later', rows: 1 }));
         slotLater.hidden = false;
     }).catch(() => {});
 };
