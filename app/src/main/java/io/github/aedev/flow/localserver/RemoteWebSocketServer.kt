@@ -30,6 +30,7 @@ class RemoteWebSocketServer internal constructor(
         }
         connections.add(conn)
         serverLog("WebSocket client connected: " + conn.remoteSocketAddress)
+        RemoteSession.takeHeldCommands().forEach(conn::send)
     }
 
     private fun admits(
@@ -89,6 +90,10 @@ class RemoteWebSocketServer internal constructor(
         serverLog("WebSocket server started on port $port")
     }
 
+    fun closeAll() {
+        for (conn in connections) conn.close(CloseFrame.NORMAL, TAKEN_OVER_REASON)
+    }
+
     @JvmOverloads
     fun broadcastCommand(
         command: String?,
@@ -105,3 +110,6 @@ class RemoteWebSocketServer internal constructor(
         }
     }
 }
+
+/** Close reason marking a takeover. */
+internal const val TAKEN_OVER_REASON = "taken_over"

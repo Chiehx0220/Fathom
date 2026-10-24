@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.concurrent.LinkedBlockingQueue
 
 /** Web page → app hand-off request. */
 data class Handoff(
@@ -69,6 +70,12 @@ data class RemoteState(
 
 /** Paired page, last report, pending commands. */
 object RemoteSession {
+    const val PENDING_TTL_MS = 120_000L
+    const val HELD_TTL_MS = 300_000L
+
+    /** Max silence of a page without an open socket. */
+    const val PAGE_ALIVE_MS = 10_000L
+
     private val remoteLockState = MutableStateFlow(RemoteLock(false, null, null))
     val remoteLock: StateFlow<RemoteLock> = remoteLockState.asStateFlow()
 
@@ -93,37 +100,120 @@ object RemoteSession {
     private var activeClientIp: String? = null
 
     @Volatile
+    private var lastSeenAt = 0L
+
+    @Volatile
     private var activeVideoTitle: String? = null
 
     /** Delivers commands to connected remote pages; set by running server. */
     @Volatile
     var commandBroadcaster: ((String) -> Unit)? = null
 
-    private val pendingCommands = java.util.concurrent.LinkedBlockingQueue<String>()
+    /** Open socket count; set by the running server. */
+    @Volatile
+    var listenerCount: () -> Int = { 0 }
 
-    fun getAndClearPendingCommands(): List<String> {
-        val copy = ArrayList<String>()
-        var cmd: String?
-        while (pendingCommands.poll().also { cmd = it } != null) {
-            copy.add(cmd!!)
+    /** Closes open sockets; set by the running server. */
+    @Volatile
+    var listenerCloser: (() -> Unit)? = null
+
+    private class ExpiringQueue(
+        private val capacity: Int,
+        private val ttlMs: Long,
+    ) {
+        private class Entry(
+            val at: Long,
+            val command: String,
+        )
+
+        private val entries = LinkedBlockingQueue<Entry>()
+
+        fun add(
+            command: String,
+            now: Long,
+        ) {
+            if (entries.size > capacity) entries.poll() // Cap growth
+            entries.offer(Entry(now, command))
         }
-        return copy
+
+        fun drain(now: Long): List<String> {
+            val taken = ArrayList<String>()
+            while (true) {
+                val entry = entries.poll() ?: break
+                if (now - entry.at <= ttlMs) taken.add(entry.command)
+            }
+            return taken
+        }
     }
 
-    fun addPendingCommand(cmd: String?) {
-        if (pendingCommands.size > 500) {
-            pendingCommands.poll() // Prevent infinite growth if client disconnects
-        }
-        pendingCommands.offer(cmd!!)
+    private val pendingCommands = ExpiringQueue(capacity = 500, ttlMs = PENDING_TTL_MS)
+    private val heldCommands = ExpiringQueue(capacity = 20, ttlMs = HELD_TTL_MS)
+
+    fun getAndClearPendingCommands(now: Long = System.currentTimeMillis()): List<String> = pendingCommands.drain(now)
+
+    fun addPendingCommand(
+        cmd: String?,
+        now: Long = System.currentTimeMillis(),
+    ) {
+        pendingCommands.add(cmd!!, now)
 
         commandBroadcaster?.invoke(cmd)
     }
+
+    /** Broadcasts [cmd] when a socket is open, else holds it for the next page. True when broadcast. */
+    fun sendOrHold(
+        cmd: String,
+        now: Long = System.currentTimeMillis(),
+    ): Boolean {
+        if (listenerCount() > 0) {
+            addPendingCommand(cmd, now)
+            return true
+        }
+        heldCommands.add(cmd, now)
+        return false
+    }
+
+    fun takeHeldCommands(now: Long = System.currentTimeMillis()): List<String> = heldCommands.drain(now)
 
     fun getActiveClientIp(): String? = activeClientIp
 
     fun getActiveVideoTitle(): String? = activeVideoTitle
 
     fun getActiveLockCode(): String? = activeLockCode
+
+    fun markSeen(now: Long = System.currentTimeMillis()) {
+        lastSeenAt = now
+    }
+
+    /** False when unpaired; releases a lock whose page is gone. */
+    fun isPageAlive(now: Long = System.currentTimeMillis()): Boolean =
+        synchronized(this) {
+            when {
+                !remoteLockState.value.locked -> {
+                    false
+                }
+
+                listenerCount() > 0 || now - lastSeenAt <= PAGE_ALIVE_MS -> {
+                    true
+                }
+
+                else -> {
+                    releaseLock()
+                    false
+                }
+            }
+        }
+
+    /** Replaces the lock holder: closes its sockets and drops its state; held commands stay. */
+    fun takeOver(
+        code: String,
+        clientIp: String,
+        title: String?,
+    ) = synchronized(this) {
+        releaseLock()
+        listenerCloser?.invoke()
+        tryLock(code, clientIp, title)
+    }
 
     fun releaseLock() {
         activeLockCode = null
@@ -143,6 +233,7 @@ object RemoteSession {
             activeLockCode = code
             activeClientIp = clientIp
             activeVideoTitle = title
+            lastSeenAt = System.currentTimeMillis()
             remoteLockState.value = RemoteLock(true, clientIp, title)
             return true
         } else if (currentLockCode == code) {

@@ -141,6 +141,7 @@ internal fun ClientHandler.handleSendLink(
 ) {
     val videoUrl = params["id"]
     val clientReleaseCode = params["release_code"]
+    val takeover = params["takeover"] == "1"
     var videoTitle = params["title"]
     if (videoTitle.isNullOrEmpty()) {
         videoTitle = "Video"
@@ -163,6 +164,12 @@ internal fun ClientHandler.handleSendLink(
         } else if (currentLockCode == clientReleaseCode) {
             RemoteSession.tryLock(currentLockCode, clientIp ?: "", videoTitle)
             hasLock = true
+        } else if (takeover) {
+            val newLockCode = UUID.randomUUID().toString()
+            RemoteSession.takeOver(newLockCode, clientIp ?: "", videoTitle)
+            currentLockCode = newLockCode
+            hasLock = true
+            serverLog("Remote taken over by client IP $clientIp")
         }
 
         if (hasLock) {
@@ -252,6 +259,7 @@ internal fun ClientHandler.handleRemoteState(
         sendResponse(os, 200, "{\"status\":\"error\"}", "application/json; charset=UTF-8")
         return
     }
+    RemoteSession.markSeen()
     val watching = params["watching"] == "1"
     val previous = RemoteSession.remoteState.value
     RemoteSession.updateRemoteState(

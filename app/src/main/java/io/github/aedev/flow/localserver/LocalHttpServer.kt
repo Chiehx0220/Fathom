@@ -33,6 +33,8 @@ class LocalHttpServer(
             wsServer = server
             server.start()
             RemoteSession.commandBroadcaster = server::broadcastCommand
+            RemoteSession.listenerCount = { server.connections.size }
+            RemoteSession.listenerCloser = server::closeAll
         }
 
         threadPool.execute {
@@ -67,6 +69,8 @@ class LocalHttpServer(
             }
             wsServer = null
             RemoteSession.commandBroadcaster = null
+            RemoteSession.listenerCount = { 0 }
+            RemoteSession.listenerCloser = null
         }
         threadPool.shutdownNow()
         serverLog("Local server stopped.")
