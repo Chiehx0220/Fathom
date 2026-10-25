@@ -114,20 +114,3 @@ internal fun SearchResultsPage.toResults(
     filter: SearchFilter,
     shortsEnabled: Boolean,
 ): List<SearchResultItem> = if (filter.contentType == ContentType.SHORTS) toShortsResults(shortsEnabled) else toResultItems(shortsEnabled)
-
-fun openInBilibili(
-    context: android.content.Context,
-    videoId: String,
-) = context.startActivity(
-    android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://www.bilibili.com/video/$videoId")),
-)
-
-@androidx.compose.runtime.Composable
-fun openInSourceServiceLabel(isYouTube: Boolean): String =
-    if (isYouTube) {
-        androidx.compose.ui.res
-            .stringResource(io.github.aedev.flow.R.string.ui_open_in_youtube)
-    } else {
-        androidx.compose.ui.res
-            .stringResource(io.github.aedev.flow.R.string.ui_open_in_service, "Bilibili")
-    }

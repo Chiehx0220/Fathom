@@ -31,10 +31,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
+import io.github.aedev.flow.bilibili.openInBilibili
+import io.github.aedev.flow.bilibili.openInSourceServiceLabel
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.model.isYouTubeServiceId
-import io.github.aedev.flow.data.paging.openInBilibili
-import io.github.aedev.flow.data.paging.openInSourceServiceLabel
 import io.github.aedev.flow.player.error.PlayerDiagnostics
 import io.github.aedev.flow.utils.openInYouTube
 

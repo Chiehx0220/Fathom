@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **112** (1312 changed lines). New files: **263**.
+- Modified upstream files: **112** (1296 changed lines). New files: **263**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -36,9 +36,9 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/PlayerPreferences.kt | 39 | 0 |
 | data/local/SubscriptionRecordCodec.kt | 23 | 15 |
 | data/local/BackupRepository.kt | 20 | 17 |
-| data/paging/SearchPagingSource.kt | 23 | 11 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
+| data/paging/SearchPagingSource.kt | 17 | 12 |
 | data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
 | ui/screens/channel/ChannelViewModel.kt | 23 | 4 |
 | data/video/VideoDownloadManager.kt | 23 | 3 |
@@ -50,7 +50,6 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/search/SearchViewModel.kt | 20 | 4 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | ui/screens/home/HomeFeedSources.kt | 20 | 3 |
-| ui/screens/player/content/PlayerErrorPanel.kt | 19 | 3 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 18 | 3 |
 | utils/ShareVideo.kt | 14 | 7 |
 | data/local/dao/WatchHistoryDao.kt | 20 | 0 |
@@ -74,6 +73,7 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/LikedVideosRepository.kt | 10 | 1 |
 | ui/FlowApp.kt | 2 | 9 |
 | ui/screens/player/WatchSessionTracker.kt | 8 | 3 |
+| ui/screens/player/content/PlayerErrorPanel.kt | 8 | 3 |
 | utils/ThumbnailUrlResolver.kt | 6 | 5 |
 | data/video/downloader/work/DownloadTransfer.kt | 9 | 1 |
 | player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
