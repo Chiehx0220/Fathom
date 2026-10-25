@@ -8,8 +8,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
-import io.github.aedev.flow.bilibili.BilibiliPlaylistId
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.engagement.LikedMediaUseCase
 import io.github.aedev.flow.data.local.LikedVideoInfo
 import io.github.aedev.flow.data.local.LikedVideosRepository
@@ -446,7 +445,7 @@ class PlaylistDetailViewModel
 
         private suspend fun loadRemotePlaylist() {
             val page =
-                if (BilibiliPlaylistId.parse(playlistId) != null) {
+                if (BilibiliRef.Series.ofId(playlistId) != null) {
                     bilibiliPlaylistPage(context, playlistId)
                 } else {
                     playlistRepository.cachedComplete(playlistId) ?: playlistRepository.firstPage(playlistId)
@@ -567,7 +566,7 @@ class PlaylistDetailViewModel
                     stubs.chunked(ENRICHMENT_CHUNK_SIZE).forEach { chunk ->
                         chunk.forEach { video ->
                             try {
-                                if (BilibiliVideoId.isBilibili(video.id)) return@forEach
+                                if (BilibiliRef.isVideoId(video.id)) return@forEach
                                 val refreshed = youTubeRepository.getVideo(video.id) ?: return@forEach
                                 repository.updateVideoMetadata(refreshed)
                             } catch (_: Exception) {

@@ -6,10 +6,9 @@
  */
 package io.github.aedev.flow.bilibili
 
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
-/** Comments: hot-ordered, pinned first; replies per comment. Closed section → empty, not failure. */
+/** Comments: hot order, pinned first; replies per comment; closed → empty. */
 internal class BilibiliComments(
     private val session: BilibiliSession,
     private val json: Json,
@@ -71,14 +70,9 @@ internal class BilibiliComments(
             isLikedByUploader = upAction.like,
         )
 
-    private fun decode(body: String): CommentsResponse =
-        try {
-            json.decodeFromString(body)
-        } catch (e: SerializationException) {
-            throw BilibiliContentNotAvailableException("Unreadable Bilibili comments: ${e.message}")
-        }
+    private fun decode(body: String): CommentsResponse = json.decodeBilibili(body, "comments")
 
-    private fun videoUrl(bvid: String) = "https://www.bilibili.com/video/$bvid"
+    private fun videoUrl(bvid: String) = BilibiliRef.Video(bvid).url
 
     private fun escapeJson(value: String) = value.replace("\\", "\\\\").replace("\"", "\\\"")
 

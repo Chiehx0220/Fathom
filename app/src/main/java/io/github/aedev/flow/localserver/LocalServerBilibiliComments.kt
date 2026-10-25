@@ -2,13 +2,13 @@ package io.github.aedev.flow.localserver
 
 import android.content.Context
 import io.github.aedev.flow.bilibili.BilibiliDanmaku
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.di.bilibiliApi
 import kotlinx.coroutines.runBlocking
 import org.schabi.newpipe.extractor.Page
 
 /**
- * Local server Bilibili comments + danmaku. Comment page continuation: [Page] url "c:<offset>"; replies: "r:<rpid>:<page>".
+ * Comments + danmaku. Continuation [Page] url: "c:<offset>"; replies "r:<rpid>:<page>".
  */
 internal object LocalServerBilibiliComments {
     fun comments(
@@ -16,7 +16,7 @@ internal object LocalServerBilibiliComments {
         videoUrl: String,
         nextPage: Page?,
     ): CommentsResult {
-        val bvid = BilibiliVideoId.parse(LocalServerBilibili.videoIdOf(videoUrl)).first
+        val bvid = BilibiliRef.Video.parse(LocalServerBilibili.videoIdOf(videoUrl)).bvid
         val api = bilibiliApi(context)
         val token = nextPage?.url.orEmpty()
         if (token.startsWith("r:")) {
@@ -38,10 +38,10 @@ internal object LocalServerBilibiliComments {
         mediaUrl: String,
     ): List<Bullet> {
         val api = bilibiliApi(context)
-        val (bvid, part) = BilibiliVideoId.parse(LocalServerBilibili.videoIdOf(mediaUrl))
+        val ref = BilibiliRef.Video.parse(LocalServerBilibili.videoIdOf(mediaUrl))
         val danmaku =
             runBlocking {
-                val info = api.videoInfo(bvid, part)
+                val info = api.videoInfo(ref.bvid, ref.part)
                 api.danmaku(info)
             }
         return danmaku.map { it.toBullet() }

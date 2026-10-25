@@ -1,7 +1,7 @@
 package io.github.aedev.flow.data.comments
 
 import android.util.Log
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.distinctByNonBlankKey
 import io.github.aedev.flow.data.model.mergeDistinctByNonBlankKey
@@ -96,7 +96,7 @@ internal class CommentsPager(
     private var activeSortToken: String? = null
     private val repliesInFlight = mutableSetOf<String>()
 
-    private fun source(videoId: String): CommentsSource = if (BilibiliVideoId.isBilibili(videoId)) bilibili ?: youtube else youtube
+    private fun source(videoId: String): CommentsSource = if (BilibiliRef.isVideoId(videoId)) bilibili ?: youtube else youtube
 
     /** Empties the list, for a video with no comments to fetch and for a player being torn down. */
     fun clear() {

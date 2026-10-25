@@ -2,7 +2,7 @@ package io.github.aedev.flow.ui
 
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
-import io.github.aedev.flow.bilibili.BilibiliChannelId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
 import io.github.aedev.flow.ui.components.layout.navigation.FlowTab
 import java.net.URI
@@ -50,7 +50,7 @@ internal fun youtubeChannelUrl(channelIdOrHandle: String): String? {
     if (value.isEmpty()) return null
     return when {
         value.startsWith("http://") || value.startsWith("https://") -> normalizeYoutubeChannelUrl(value)
-        BilibiliChannelId.isMid(value) -> "https://space.bilibili.com/$value"
+        BilibiliRef.Uploader.ofId(value) != null -> "https://space.bilibili.com/$value"
         value.startsWith("UC") -> "https://www.youtube.com/channel/$value"
         value.startsWith("@") -> "https://www.youtube.com/$value"
         else -> "https://www.youtube.com/@$value"

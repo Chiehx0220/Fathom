@@ -38,8 +38,8 @@ internal fun PlayerDialogsContainer(
 
     // Download Quality Dialog
     if (screenState.activeSheet == PlayerSheet.Download &&
-        io.github.aedev.flow.bilibili.BilibiliVideoId
-            .isBilibili(video.id)
+        io.github.aedev.flow.bilibili.BilibiliRef
+            .isVideoId(video.id)
     ) {
         // Bilibili streams not in player InnerTube state: card menu loader offers them.
         val quickActions =

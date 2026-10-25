@@ -1,6 +1,6 @@
 package io.github.aedev.flow.localserver
 
-import io.github.aedev.flow.bilibili.BilibiliLink
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.recommendation.FeedExclusions
@@ -329,7 +329,7 @@ internal fun RequestContext.subscriptionFeed(channels: List<InfoItem>?): List<In
             executor.submit(
                 Callable {
                     val uploads =
-                        if (BilibiliLink.isBilibili(url)) {
+                        if (BilibiliRef.isBilibiliUrl(url)) {
                             LocalServerBilibili.uploads(
                                 dbHelper.appContext,
                                 url,
@@ -354,7 +354,7 @@ internal fun RequestContext.subscriptionFeed(channels: List<InfoItem>?): List<In
     for ((index, future) in futures.withIndex()) {
         try {
             // Bilibili first request of a session: cookies + signing key setup, slower.
-            val waitSeconds = if (BilibiliLink.isBilibili(channels[index].url)) 20L else 5L
+            val waitSeconds = if (BilibiliRef.isBilibiliUrl(channels[index].url)) 20L else 5L
             val res = future.get(waitSeconds, TimeUnit.SECONDS)
             if (res != null) {
                 feed.addAll(res)

@@ -4,8 +4,8 @@ import android.content.Context
 import android.util.Log
 import io.github.aedev.flow.R
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliChannelId
 import io.github.aedev.flow.bilibili.BilibiliChannelSort
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
 import io.github.aedev.flow.utils.PerformanceDispatcher
@@ -59,7 +59,7 @@ internal class BilibiliChannelLoader(
      * Loads the channel if [channelUrl] is a Bilibili uploader; returns true. Checked before service lookup: Bilibili never falls through to YouTube.
      */
     fun load(channelUrl: String): Boolean {
-        val mid = BilibiliChannelId.midOf(channelUrl) ?: return false
+        val mid = BilibiliRef.Uploader.ofLink(channelUrl)?.mid ?: return false
         scope.launch(PerformanceDispatcher.networkIO) { loadChannel(mid) }
         return true
     }

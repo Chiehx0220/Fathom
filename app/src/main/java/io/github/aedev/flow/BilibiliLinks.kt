@@ -1,7 +1,7 @@
 package io.github.aedev.flow
 
 import io.github.aedev.flow.bilibili.BilibiliDeepLink
-import io.github.aedev.flow.bilibili.BilibiliLinkTarget
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.ui.IncomingLinks
 import io.github.aedev.flow.ui.youtubeChannelRoute
 import kotlinx.coroutines.CoroutineScope
@@ -15,14 +15,19 @@ internal object BilibiliLinks {
         scope: CoroutineScope,
         links: IncomingLinks,
     ): Boolean {
-        fun open(target: BilibiliLinkTarget) {
+        fun open(target: BilibiliRef) {
             when (target) {
-                is BilibiliLinkTarget.Video -> {
-                    links.openVideo(target.videoId)
+                is BilibiliRef.Video, is BilibiliRef.Live -> {
+                    links.openVideo(target.id)
                 }
 
-                is BilibiliLinkTarget.Uploader -> {
-                    links.openRoute(youtubeChannelRoute(target.mid.toString()))
+                is BilibiliRef.Uploader -> {
+                    links.openRoute(youtubeChannelRoute(target.id))
+                }
+
+                // no link form
+                is BilibiliRef.Series -> {
+                    Unit
                 }
             }
         }

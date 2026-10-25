@@ -2,8 +2,7 @@ package io.github.aedev.flow.data.video
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.aedev.flow.bilibili.BilibiliLiveId
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
@@ -43,8 +42,8 @@ class VideoDownloadOptionsLoader
         suspend fun load(video: Video): VideoDownloadOptions? =
             withContext(PerformanceDispatcher.networkIO) {
                 // Live room: nothing to download.
-                if (BilibiliLiveId.isLive(video.id)) return@withContext null
-                if (BilibiliVideoId.isBilibili(video.id)) return@withContext loadBilibili(video)
+                if (BilibiliRef.Live.ofId(video.id) != null) return@withContext null
+                if (BilibiliRef.isVideoId(video.id)) return@withContext loadBilibili(video)
                 val result =
                     withTimeoutOrNull(EXTRACT_TIMEOUT_MS) {
                         runCatching { InnerTubeVideoStreamExtractor.extract(video.id) }.getOrNull()
@@ -65,9 +64,9 @@ class VideoDownloadOptionsLoader
             }
 
         private suspend fun loadBilibili(video: Video): VideoDownloadOptions? {
-            val (bvid, page) = BilibiliVideoId.parse(video.id)
+            val ref = BilibiliRef.Video.parse(video.id)
             val playback =
-                withTimeoutOrNull(EXTRACT_TIMEOUT_MS) { runCatching { bilibiliApi(context).playback(bvid, page) }.getOrNull() }
+                withTimeoutOrNull(EXTRACT_TIMEOUT_MS) { runCatching { bilibiliApi(context).playback(ref.bvid, ref.part) }.getOrNull() }
                     ?: return null
             val (videoFormats, audioFormats) = playback.toDownloadFormats()
             if (videoFormats.isEmpty()) return null

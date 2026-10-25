@@ -1,6 +1,6 @@
 package io.github.aedev.flow.localserver
 
-import io.github.aedev.flow.bilibili.BilibiliLink
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.local.subscribeOrUpdateInfo
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
@@ -41,7 +41,7 @@ fun HistoryDbHelper.addSubscription(
 ) {
     val channelId = channelUrlToId(channelUrl) ?: return
     val serviceId =
-        if (BilibiliLink.isBilibili(channelUrl)) {
+        if (BilibiliRef.isBilibiliUrl(channelUrl)) {
             LocalServerBilibili.serviceId
         } else {
             LocalServerMedia.serviceIdOfUrl(channelUrl)

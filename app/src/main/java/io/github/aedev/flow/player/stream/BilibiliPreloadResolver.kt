@@ -3,7 +3,7 @@ package io.github.aedev.flow.player.stream
 import android.content.Context
 import android.util.Log
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliLiveId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.resolvedServiceId
@@ -24,7 +24,7 @@ internal object BilibiliPreloadResolver {
         video: Video,
         context: Context,
     ): ResolvedStreamData? {
-        if (video.resolvedServiceId != BILIBILI_SERVICE_ID || BilibiliLiveId.isLive(video.id)) return null
+        if (video.resolvedServiceId != BILIBILI_SERVICE_ID || BilibiliRef.Live.ofId(video.id) != null) return null
         return try {
             resolve(video, context)
         } catch (e: CancellationException) {

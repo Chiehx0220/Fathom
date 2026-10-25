@@ -3,7 +3,7 @@ package io.github.aedev.flow.ui.screens.playlists
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliChannelVideo
-import io.github.aedev.flow.bilibili.BilibiliPlaylistId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.model.Playlist
 import io.github.aedev.flow.data.model.Video
 import java.time.Instant
@@ -18,14 +18,14 @@ internal object BilibiliPlaylistLoader {
     suspend fun load(
         api: BilibiliApi,
         playlistId: String,
-        ref: BilibiliPlaylistId.Parsed,
+        ref: BilibiliRef.Series,
     ): Playlist {
         val uploader = runCatching { api.channelInfo(ref.mid) }.getOrNull()
         val videos = mutableListOf<BilibiliChannelVideo>()
         var total = 0
         var page = 1
         while (page <= MAX_PAGES) {
-            val result = api.playlistVideos(ref.kind, ref.mid, ref.id, page)
+            val result = api.playlistVideos(ref.kind, ref.mid, ref.seriesId, page)
             total = result.total
             if (result.videos.isEmpty()) break
             videos += result.videos

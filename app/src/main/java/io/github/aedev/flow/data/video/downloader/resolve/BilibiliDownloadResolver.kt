@@ -1,8 +1,7 @@
 package io.github.aedev.flow.data.video.downloader.resolve
 
 import io.github.aedev.flow.bilibili.BilibiliApi
-import io.github.aedev.flow.bilibili.BilibiliLiveId
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.video.downloader.request.DownloadRequest
 import io.github.aedev.flow.data.video.toDownloadFormats
 import kotlinx.coroutines.CancellationException
@@ -24,12 +23,12 @@ class BilibiliDownloadResolver
             avoidItags: Set<Int>,
             defaults: suspend () -> DownloadStreamResolver.SelectionDefaults,
         ): ResolveOutcome? {
-            if (BilibiliLiveId.isLive(request.videoId)) return ResolveOutcome.Unavailable
-            if (!BilibiliVideoId.isBilibili(request.videoId)) return null
-            val (bvid, page) = BilibiliVideoId.parse(request.videoId)
+            if (BilibiliRef.Live.ofId(request.videoId) != null) return ResolveOutcome.Unavailable
+            if (!BilibiliRef.isVideoId(request.videoId)) return null
+            val ref = BilibiliRef.Video.parse(request.videoId)
             val playback =
                 try {
-                    api.playback(bvid, page)
+                    api.playback(ref.bvid, ref.part)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

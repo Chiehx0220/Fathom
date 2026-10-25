@@ -1,8 +1,8 @@
 package io.github.aedev.flow.data.repository
 
 import io.github.aedev.flow.bilibili.BilibiliApi
-import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliLiveMessage
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.model.LiveChatMessage
 import io.github.aedev.flow.data.model.LiveChatMessageType
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +38,11 @@ class BilibiliLiveChatFeed internal constructor(
     private var session: Session? = null
     private var idle: Job? = null
 
-    fun seed(videoId: String): String? = BilibiliLiveId.roomIdOf(videoId)?.let { "$TOKEN_PREFIX$it" }
+    fun seed(videoId: String): String? =
+        BilibiliRef.Live
+            .ofId(videoId)
+            ?.roomId
+            ?.let { "$TOKEN_PREFIX$it" }
 
     /** Null when [continuation] is not a [seed] token. */
     fun poll(continuation: String): LiveChatRepository.LiveChatPage? {

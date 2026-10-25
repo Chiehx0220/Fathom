@@ -1,7 +1,7 @@
 package io.github.aedev.flow.data.video.downloader.work
 
 import android.util.Log
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.local.entity.DownloadItemStatus
 import io.github.aedev.flow.data.video.DownloadProgressUpdate
 import io.github.aedev.flow.data.video.VideoDownloadManager
@@ -161,7 +161,7 @@ class DownloadTransfer
                 }
             }
             // SABR = YouTube streaming protocol; refused Bilibili URL has no fallback.
-            if (BilibiliVideoId.isBilibili(request.videoId)) return FetchOutcome.Failed(FetchFailure.REFUSED)
+            if (BilibiliRef.isVideoId(request.videoId)) return FetchOutcome.Failed(FetchFailure.REFUSED)
             return viaSabr(request, staging, itemId)
         }
 

@@ -1,6 +1,6 @@
 package io.github.aedev.flow.localserver
 
-import io.github.aedev.flow.bilibili.BilibiliChannelId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import org.schabi.newpipe.extractor.ServiceList
@@ -37,7 +37,7 @@ fun channelUrlToId(url: String?): String? {
             if (id.isNotEmpty()) return if (marker == "/@") "@$id" else id
         }
     }
-    return BilibiliChannelId.midOf(normalized)?.toString()
+    return BilibiliRef.Uploader.ofLink(normalized)?.id
 }
 
 /**

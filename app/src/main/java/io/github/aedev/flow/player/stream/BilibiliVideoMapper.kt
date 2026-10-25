@@ -2,9 +2,9 @@ package io.github.aedev.flow.player.stream
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliChannelVideo
-import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliLiveItem
 import io.github.aedev.flow.bilibili.BilibiliLiveRoom
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.bilibili.BilibiliRelated
 import io.github.aedev.flow.bilibili.BilibiliSearchItem
 import io.github.aedev.flow.bilibili.BilibiliVideoInfo
@@ -136,7 +136,7 @@ object BilibiliVideoMapper {
     /** Live room from a list (recommendations, search); playing now: no duration. */
     fun videoFromLiveItem(item: BilibiliLiveItem): Video =
         Video(
-            id = BilibiliLiveId.of(item.roomId),
+            id = BilibiliRef.Live(item.roomId).id,
             title = item.title,
             channelName = item.uploaderName,
             channelId = "",

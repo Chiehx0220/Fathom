@@ -3,15 +3,12 @@ package io.github.aedev.flow.player.stream
 import android.util.Log
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliContentNotAvailableException
-import io.github.aedev.flow.bilibili.BilibiliLiveId
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.model.Video
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.VideoStream
 
 /**
  * Bilibili leg of [PlaybackLoadResolver] (YouTube: [InnerTubeVideoStreamExtractor]). Streams + related lane (or live room stream) via native client
@@ -20,18 +17,24 @@ import org.schabi.newpipe.extractor.stream.VideoStream
 internal class BilibiliPlaybackSource(
     private val api: BilibiliApi,
 ) {
+    /** Room or video by id. */
+    suspend fun resolveAny(
+        request: PlaybackResolutionRequest,
+        preferences: StreamPreferences,
+    ): ResolvedPlayback = if (BilibiliRef.Live.ofId(request.videoId) != null) resolveLive(request) else resolve(request, preferences)
+
     suspend fun resolve(
         request: PlaybackResolutionRequest,
         preferences: StreamPreferences,
     ): VodFromBilibili =
         coroutineScope {
-            val (bvid, page) = BilibiliVideoId.parse(request.videoId)
+            val ref = BilibiliRef.Video.parse(request.videoId)
             // Started first: requests overlap; failure costs only related lane.
             val related =
                 async {
                     try {
                         withTimeoutOrNull(RELATED_TIMEOUT_MS) {
-                            relatedVideos(api, bvid)
+                            relatedVideos(api, ref.bvid)
                         }.orEmpty()
                     } catch (e: CancellationException) {
                         throw e
@@ -40,7 +43,7 @@ internal class BilibiliPlaybackSource(
                         emptyList<Video>()
                     }
                 }
-            val playback = api.playback(bvid, page)
+            val playback = api.playback(ref.bvid, ref.part)
             VodFromBilibili(
                 playback = playback,
                 relatedVideos = related.await(),
@@ -53,7 +56,7 @@ internal class BilibiliPlaybackSource(
 
     /** Live room: no related lane, no parts; plays the room's stream. */
     suspend fun resolveLive(request: PlaybackResolutionRequest): LiveFromBilibili {
-        val roomId = BilibiliLiveId.roomIdOf(request.videoId) ?: throw BilibiliContentNotAvailableException("Not a live room id")
+        val roomId = BilibiliRef.Live.ofId(request.videoId)?.roomId ?: throw BilibiliContentNotAvailableException("Not a live room id")
         return LiveFromBilibili(api.livePlayback(roomId))
     }
 
@@ -72,28 +75,4 @@ internal class BilibiliPlaybackSource(
                 .map { BilibiliVideoMapper.videoFromRelated(it) }
                 .distinctBy { it.id }
     }
-}
-
-/** Step streams in player types + preference-selected pair. */
-internal class BilibiliStreams(
-    val videoStreams: List<VideoStream>,
-    val audioStreams: List<AudioStream>,
-    val selectedVideo: VideoStream?,
-    val selectedAudio: AudioStream?,
-)
-
-/** Shared by player screen + gapless preload: same preferences → same streams. */
-internal fun VodFromBilibili.buildStreams(): BilibiliStreams {
-    val bvid = playback.info.bvid
-    val videoStreams = BilibiliStreamBridge.convertVideoFormats(bvid, playback.videoFormats)
-    val audioStreams = BilibiliStreamBridge.convertAudioFormats(bvid, playback.audioFormats)
-    val selected =
-        ServicePlaybackStreamSelector.selectStreams(
-            videoCandidates = videoStreams,
-            audioCandidatesAll = audioStreams,
-            preferredQuality = preferredQuality,
-            preferredAudioLanguage = preferredAudioLanguage,
-            preferredCodecKey = preferredCodecKey,
-        )
-    return BilibiliStreams(videoStreams, audioStreams, selected.first, selected.second)
 }

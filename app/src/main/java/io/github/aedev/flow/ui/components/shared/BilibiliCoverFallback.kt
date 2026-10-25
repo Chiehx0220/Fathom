@@ -5,8 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.LocalContext
-import io.github.aedev.flow.bilibili.BilibiliLiveId
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.local.ThumbnailQuality
 import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
@@ -38,8 +37,8 @@ internal fun List<Any>.orBilibiliCover(
 ): List<Any> {
     val context = LocalContext.current
     val bvid =
-        if (isEmpty() && quality != null && !BilibiliLiveId.isLive(videoId) && BilibiliVideoId.isBilibili(videoId)) {
-            BilibiliVideoId.parse(videoId).first
+        if (isEmpty() && quality != null && BilibiliRef.ofVideoId(videoId) is BilibiliRef.Video) {
+            BilibiliRef.Video.parse(videoId).bvid
         } else {
             null
         }

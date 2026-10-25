@@ -2,8 +2,8 @@ package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliChannelVideo
 import io.github.aedev.flow.bilibili.BilibiliComment
-import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliLiveItem
+import io.github.aedev.flow.bilibili.BilibiliRef
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.localization.DateWrapper
@@ -44,7 +44,7 @@ internal fun bilibiliVideoItem(
 internal fun bilibiliLiveItem(room: BilibiliLiveItem): StreamInfoItem =
     StreamInfoItem(
         LocalServerBilibili.serviceId,
-        BilibiliLiveId.toUrl(BilibiliLiveId.of(room.roomId)),
+        BilibiliRef.Live(room.roomId).url,
         room.title,
         StreamType.LIVE_STREAM,
     ).apply {

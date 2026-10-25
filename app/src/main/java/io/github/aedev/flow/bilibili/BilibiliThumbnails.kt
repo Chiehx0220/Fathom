@@ -9,13 +9,13 @@ import io.github.aedev.flow.data.localmedia.LocalMediaIds
  */
 
 /** No `i.ytimg.com` thumbnail exists: device file, or Bilibili video (cover known only to Bilibili). */
-fun hasNoYoutubeThumbnail(id: String): Boolean = LocalMediaIds.isLocal(id) || BilibiliVideoId.isBilibili(id)
+fun hasNoYoutubeThumbnail(id: String): Boolean = LocalMediaIds.isLocal(id) || BilibiliRef.isVideoId(id)
 
 private val RESIZABLE_COVER = Regex("""^https?://[^/@]+\.hdslb\.com/bfs/[^@]+$""", RegexOption.IGNORE_CASE)
 
 /**
- * [url] resized for [quality], best first, ending in [url]; null if [url] is not a resizable Bilibili cover
- * (other host, or size already set). HIGH = original. OFF = no fetch, no resize.
+ * [url] resized for [quality], best first, ending in [url]; null if not a resizable cover (other host, size set).
+ * HIGH = original; OFF = no fetch.
  */
 fun bilibiliThumbnailCandidates(
     url: String,

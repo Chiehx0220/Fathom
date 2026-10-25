@@ -1,7 +1,7 @@
 package io.github.aedev.flow.data.backup
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliChannelId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.local.ChannelSubscription
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -114,7 +114,7 @@ object NewPipeSubscriptionCodec {
     private fun refFor(item: ImportItem): NewPipeChannelRef? =
         when (item.serviceId) {
             YOUTUBE_SERVICE_ID -> parseChannelUrl(item.url)
-            BILIBILI_SERVICE_ID -> BilibiliChannelId.midOf(item.url)?.let(NewPipeChannelRef::Bilibili)
+            BILIBILI_SERVICE_ID -> BilibiliRef.midOfLink(item.url)?.let(NewPipeChannelRef::Bilibili)
             else -> null
         }
 

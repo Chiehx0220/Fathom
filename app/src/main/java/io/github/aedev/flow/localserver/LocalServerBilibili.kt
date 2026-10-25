@@ -2,12 +2,10 @@ package io.github.aedev.flow.localserver
 
 import android.content.Context
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliChannelId
 import io.github.aedev.flow.bilibili.BilibiliChannelPageKey
-import io.github.aedev.flow.bilibili.BilibiliPlaylistId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.bilibili.BilibiliSearchItem
 import io.github.aedev.flow.bilibili.BilibiliSearchType
-import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.di.bilibiliApi
 import kotlinx.coroutines.runBlocking
 import org.schabi.newpipe.extractor.InfoItem
@@ -15,9 +13,8 @@ import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 
 /**
- * Local server Bilibili side (native client): ids, links, lists (home, search, uploader, playlist). Pages are built from NewPipe
- * item/page types; results returned in those shapes. Comments, danmaku, streams: [LocalServerBilibiliComments],
- * [LocalServerBilibiliStreams]; rows: LocalServerBilibiliItems.kt.
+ * Server Bilibili lists (home, search, uploader, playlist) as NewPipe item/page types.
+ * Comments, danmaku: [LocalServerBilibiliComments]; streams: [LocalServerBilibiliStreams]; rows: LocalServerBilibiliItems.kt.
  *
  * All functions block (one thread per request).
  *
@@ -31,12 +28,12 @@ internal object LocalServerBilibili {
 
     fun isBilibili(serviceId: Int): Boolean = serviceId == this.serviceId
 
-    fun videoUrl(id: String): String = BilibiliVideoId.toUrl(id)
+    fun videoUrl(id: String): String = BilibiliRef.ofVideoId(id)?.url ?: "https://www.bilibili.com/video/$id"
 
     fun channelUrl(mid: String): String = "https://space.bilibili.com/$mid"
 
     /** "https://www.bilibili.com/video/BV1xx?p=2" -> "BV1xx?p=2". */
-    fun videoIdOf(url: String): String = BilibiliVideoId.fromUrl(url) ?: url
+    fun videoIdOf(url: String): String = BilibiliRef.Video.ofUrl(url)?.id ?: url
 
     // region Lists
 
@@ -107,7 +104,7 @@ internal object LocalServerBilibili {
         channelName: String,
         channelAvatarUrl: String,
     ): List<InfoItem> {
-        val mid = BilibiliChannelId.midOf(channelLink) ?: throw IllegalArgumentException("Not a Bilibili channel: $channelLink")
+        val mid = BilibiliRef.Uploader.ofLink(channelLink)?.mid ?: throw IllegalArgumentException("Not a Bilibili channel: $channelLink")
         val page = runBlocking { bilibiliApi(context).channelVideos(mid, BilibiliChannelPageKey(1, 0L)) }
         return page.videos.map { it.toStreamItem(channelName, channelAvatarUrl, channelUrl(mid.toString())) }
     }
@@ -118,7 +115,7 @@ internal object LocalServerBilibili {
         tab: String,
         nextPage: Page?,
     ): ChannelPage {
-        val mid = BilibiliChannelId.midOf(channelLink) ?: throw IllegalArgumentException("Not a Bilibili channel: $channelLink")
+        val mid = BilibiliRef.Uploader.ofLink(channelLink)?.mid ?: throw IllegalArgumentException("Not a Bilibili channel: $channelLink")
         val api = bilibiliApi(context)
         val info = runBlocking { api.channelInfo(mid) }
         val url = channelUrl(mid.toString())
@@ -129,7 +126,7 @@ internal object LocalServerBilibili {
             val lists = runBlocking { api.channelPlaylists(mid, page) }
             val items =
                 lists.items.map { ref ->
-                    PlaylistInfoItem(serviceId, BilibiliPlaylistId.encode(ref.kind, ref.mid, ref.id, ref.name), ref.name).apply {
+                    PlaylistInfoItem(serviceId, BilibiliRef.Series(ref.kind, ref.mid, ref.id, ref.name).id, ref.name).apply {
                         thumbnailUrl = ref.coverUrl
                         setUploaderName(info.name)
                         setStreamCount(ref.videoCount.toLong())
@@ -153,10 +150,10 @@ internal object LocalServerBilibili {
         playlistUrl: String,
         nextPage: Page?,
     ): PlaylistPage {
-        val parsed = BilibiliPlaylistId.parse(playlistUrl) ?: throw IllegalArgumentException("Not a Bilibili playlist: $playlistUrl")
+        val parsed = BilibiliRef.Series.ofId(playlistUrl) ?: throw IllegalArgumentException("Not a Bilibili playlist: $playlistUrl")
         val api = bilibiliApi(context)
         val page = nextPage?.url?.toIntOrNull() ?: 1
-        val result = runBlocking { api.playlistVideos(parsed.kind, parsed.mid, parsed.id, page) }
+        val result = runBlocking { api.playlistVideos(parsed.kind, parsed.mid, parsed.seriesId, page) }
         val owner = runCatching { runBlocking { api.channelInfo(parsed.mid) } }.getOrNull()
         val ownerUrl = channelUrl(parsed.mid.toString())
         val items = result.videos.map { it.toStreamItem(owner?.name.orEmpty(), owner?.avatarUrl.orEmpty(), ownerUrl) }

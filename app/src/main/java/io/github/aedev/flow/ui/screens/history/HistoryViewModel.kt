@@ -3,7 +3,7 @@ package io.github.aedev.flow.ui.screens.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.local.VideoHistoryEntry
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.local.dao.VideoDao
@@ -271,7 +271,7 @@ class HistoryViewModel
                         chunk.forEach { stub ->
                             try {
                                 // YouTube lookup cannot fill a Bilibili row.
-                                if (BilibiliVideoId.isBilibili(stub.videoId)) return@forEach
+                                if (BilibiliRef.isVideoId(stub.videoId)) return@forEach
                                 val video = youTubeRepository.getVideo(stub.videoId) ?: return@forEach
                                 val entity = VideoEntity.fromDomain(video)
                                 videoDao.insertVideoOrIgnore(entity)

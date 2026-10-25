@@ -1,7 +1,7 @@
 package io.github.aedev.flow.ui.screens.player
 
 import android.util.Log
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.recommendation.FeedExclusions
@@ -360,7 +360,7 @@ internal class PlayerSecondaryMetadataLoader(
 
                 // YouTube related feed: nothing for a Bilibili video.
                 val fallbackCandidates =
-                    if (BilibiliVideoId.isBilibili(videoId)) {
+                    if (BilibiliRef.isVideoId(videoId)) {
                         emptyList()
                     } else {
                         withTimeoutOrNull(RELATED_FALLBACK_TIMEOUT_MS) {

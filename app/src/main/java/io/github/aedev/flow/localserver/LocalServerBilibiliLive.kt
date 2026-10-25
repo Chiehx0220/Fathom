@@ -2,8 +2,8 @@ package io.github.aedev.flow.localserver
 
 import android.content.Context
 import io.github.aedev.flow.bilibili.BilibiliContentNotAvailableException
-import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliLiveMessage
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.di.bilibiliApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,10 +32,10 @@ internal object LocalServerBilibiliLive {
     private const val CHAT_SWEEP_MS = 10_000L
 
     /** Room number of a live room link; null if [mediaUrl] is not one. */
-    fun roomIdOf(mediaUrl: String): Long? = BilibiliLiveId.fromUrl(mediaUrl)?.let(BilibiliLiveId::roomIdOf)
+    fun roomIdOf(mediaUrl: String): Long? = BilibiliRef.Live.ofUrl(mediaUrl)?.roomId
 
     /**
-     * Room metadata + HLS playlist, watch-page shape. FLV-only room: not browser-playable → fails with message, not empty player.
+     * Room metadata + HLS playlist. FLV-only room: not browser-playable → fails.
      */
     fun streamInfo(
         context: Context,
@@ -47,7 +47,7 @@ internal object LocalServerBilibiliLive {
             playback.streams.hlsMasterUrl
                 ?: throw BilibiliContentNotAvailableException("This room streams FLV only, which the web page cannot play")
         val room = playback.room
-        val url = BilibiliLiveId.toUrl(BilibiliLiveId.of(room.roomId))
+        val url = BilibiliRef.Live(room.roomId).url
 
         val info = StreamInfo(LocalServerBilibili.serviceId, url, url, StreamType.LIVE_STREAM, room.roomId.toString(), room.title, 0)
         info.thumbnails = listOf(Image(room.coverUrl, -1, -1, Image.ResolutionLevel.UNKNOWN))

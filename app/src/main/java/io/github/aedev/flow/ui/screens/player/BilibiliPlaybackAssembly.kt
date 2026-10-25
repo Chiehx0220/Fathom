@@ -9,7 +9,17 @@ import io.github.aedev.flow.player.stream.VideoQualityOptions
 import io.github.aedev.flow.player.stream.VodFromBilibili
 import io.github.aedev.flow.player.stream.buildStreams
 
-// Bilibili halves of PlaybackStreamPreparer, PlaybackPreparer: extensions (upstream files Bilibili-free); members there handle InnerTube variants.
+// Bilibili halves of PlaybackStreamPreparer, PlaybackPreparer; extensions keep upstream files Bilibili-free.
+
+private fun identityOf(video: Video) =
+    PlaybackStreamPreparer.StreamIdentity(
+        enrichedVideo = video,
+        title = video.title,
+        channel = video.channelName,
+        thumbnail = video.thumbnailUrl,
+        channelId = video.channelId,
+        embeddedAvatarUrls = listOfNotNull(video.channelThumbnailUrl.takeIf { it.isNotBlank() }),
+    )
 
 /** Bilibili counterpart: streams + identity without a watch response. */
 internal fun PlaybackStreamPreparer.assembleVod(
@@ -21,17 +31,8 @@ internal fun PlaybackStreamPreparer.assembleVod(
     val streams = step.buildStreams()
     val videoStreams = streams.videoStreams
     val audioStreams = streams.audioStreams
-    val video = BilibiliVideoMapper.videoFromInfo(videoId, info, cached)
     return PlaybackStreamPreparer.VodStreams(
-        identity =
-            PlaybackStreamPreparer.StreamIdentity(
-                enrichedVideo = video,
-                title = video.title,
-                channel = video.channelName,
-                thumbnail = video.thumbnailUrl,
-                channelId = video.channelId,
-                embeddedAvatarUrls = listOfNotNull(video.channelThumbnailUrl.takeIf { it.isNotBlank() }),
-            ),
+        identity = identityOf(BilibiliVideoMapper.videoFromInfo(videoId, info, cached)),
         durationSeconds = info.durationSec.toLong(),
         videoStreams = videoStreams,
         audioStreams = audioStreams,
@@ -53,15 +54,7 @@ internal fun PlaybackStreamPreparer.assembleLive(
     val video = BilibiliVideoMapper.videoFromLive(videoId, step.playback.room, cached)
     val streams = step.playback.streams
     return PlaybackStreamPreparer.LiveStreams(
-        identity =
-            PlaybackStreamPreparer.StreamIdentity(
-                enrichedVideo = video,
-                title = video.title,
-                channel = video.channelName,
-                thumbnail = video.thumbnailUrl,
-                channelId = video.channelId,
-                embeddedAvatarUrls = listOfNotNull(video.channelThumbnailUrl.takeIf { it.isNotBlank() }),
-            ),
+        identity = identityOf(video),
         hlsUrl = streams.hlsMasterUrl,
         dashManifestUrl = null,
         subtitles = emptyList(),

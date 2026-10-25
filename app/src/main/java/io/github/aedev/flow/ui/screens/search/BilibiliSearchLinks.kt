@@ -5,7 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import io.github.aedev.flow.R
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.ui.components.search.SearchServiceSwitcher
@@ -15,7 +15,7 @@ import io.github.aedev.flow.ui.components.search.SearchServiceSwitcher
  */
 internal fun resolvePastedBilibiliVideoLink(url: String): String? {
     if (!url.startsWith("http")) return null
-    return BilibiliVideoId.fromUrl(url)
+    return BilibiliRef.Video.ofUrl(url)?.id
 }
 
 internal fun sharedBilibiliVideo(

@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **112** (1296 changed lines). New files: **263**.
+- Modified upstream files: **112** (1294 changed lines). New files: **263**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -39,9 +39,9 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/paging/SearchPagingSource.kt | 17 | 12 |
-| data/video/VideoDownloadOptionsLoader.kt | 26 | 1 |
 | ui/screens/channel/ChannelViewModel.kt | 23 | 4 |
 | data/video/VideoDownloadManager.kt | 23 | 3 |
+| data/video/VideoDownloadOptionsLoader.kt | 25 | 1 |
 | ui/screens/player/PlaybackSessionApplier.kt | 26 | 0 |
 | player/resolver/VideoPlaybackResolver.kt | 22 | 3 |
 | data/innertube/RssSubscriptionService.kt | 21 | 3 |
@@ -78,10 +78,10 @@ in it). **New files** never conflict; they are ours alone.
 | data/video/downloader/work/DownloadTransfer.kt | 9 | 1 |
 | player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
-| ui/screens/playlists/PlaylistDetailViewModel.kt | 9 | 1 |
 | data/local/entity/VideoEntity.kt | 6 | 3 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
 | ui/screens/channel/ChannelCommunityController.kt | 8 | 1 |
+| ui/screens/playlists/PlaylistDetailViewModel.kt | 8 | 1 |
 | sync/merge/CollectionMergers.kt | 4 | 4 |
 | ui/PlayerNavigation.kt | 5 | 3 |
 | ui/components/shared/quickactions/VideoQuickActionsSheet.kt | 6 | 2 |
@@ -102,11 +102,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **80**.
+- Modified upstream files: **0** (0 changed lines). New files: **138**.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **124**.
+- Modified upstream files: **0** (0 changed lines). New files: **125**.
 
 ## Build
 
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **17** (128 changed lines). New files: **26**.
+- Modified upstream files: **17** (128 changed lines). New files: **86**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|

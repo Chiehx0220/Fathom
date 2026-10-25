@@ -7,7 +7,6 @@
 package io.github.aedev.flow.bilibili
 
 import android.util.Log
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -189,12 +188,7 @@ internal class BilibiliUserSpace(
         url: String,
     ): String = session.guardedGet(json, "https://space.bilibili.com/$mid") { url }
 
-    private inline fun <reified T> decode(body: String): T =
-        try {
-            json.decodeFromString<T>(body)
-        } catch (e: SerializationException) {
-            throw BilibiliContentNotAvailableException("Unreadable Bilibili response: ${e.message}")
-        }
+    private inline fun <reified T> decode(body: String): T = json.decodeBilibili<T>(body)
 
     internal companion object {
         private const val TAG = "BilibiliUserSpace"

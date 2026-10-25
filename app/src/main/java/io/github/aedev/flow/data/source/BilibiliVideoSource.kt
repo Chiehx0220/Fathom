@@ -2,10 +2,9 @@ package io.github.aedev.flow.data.source
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliApi
-import io.github.aedev.flow.bilibili.BilibiliLiveId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.bilibili.BilibiliSearchItem
 import io.github.aedev.flow.bilibili.BilibiliSearchType
-import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.player.stream.BilibiliVideoMapper
 import kotlinx.coroutines.async
@@ -61,11 +60,11 @@ class BilibiliVideoSource
         suspend fun lives(): List<Video> = boundedOrEmpty(TIMEOUT_MS) { api.recommendedLives().map(BilibiliVideoMapper::videoFromLiveItem) }
 
         override suspend fun related(videoId: String): List<Video> =
-            if (BilibiliLiveId.isLive(videoId)) {
+            if (BilibiliRef.Live.ofId(videoId) != null) {
                 emptyList()
             } else {
                 boundedOrEmpty(TIMEOUT_MS) {
-                    api.related(BilibiliVideoId.parse(videoId).first).map(BilibiliVideoMapper::videoFromRelated)
+                    api.related(BilibiliRef.Video.parse(videoId).bvid).map(BilibiliVideoMapper::videoFromRelated)
                 }
             }
 

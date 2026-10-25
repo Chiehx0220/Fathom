@@ -3,7 +3,6 @@ package io.github.aedev.flow.player.stream
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.di.bilibiliApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
@@ -31,11 +30,7 @@ class NonYouTubeResolver
             val videoId = request.videoId
             val step =
                 try {
-                    if (BilibiliLiveId.isLive(videoId)) {
-                        bilibili.resolveLive(request)
-                    } else {
-                        bilibili.resolve(request, preferences)
-                    }
+                    bilibili.resolveAny(request, preferences)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

@@ -2,7 +2,7 @@ package io.github.aedev.flow.ui.screens.player
 
 import android.content.Context
 import android.util.Log
-import io.github.aedev.flow.bilibili.BilibiliLiveId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.bilibili.BilibiliVideoInfo
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.model.Video
@@ -112,7 +112,7 @@ internal class BilibiliPlaybackApplier(
         )
         val roomId = step.playback.room.roomId
         playerManager.danmaku.startLive(roomId)
-        liveChat.start(BilibiliLiveId.of(roomId))
+        liveChat.start(BilibiliRef.Live(roomId).id)
     }
 
     /**

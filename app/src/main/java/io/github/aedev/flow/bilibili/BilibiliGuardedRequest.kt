@@ -1,5 +1,7 @@
 package io.github.aedev.flow.bilibili
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
 /**
@@ -28,3 +30,20 @@ internal suspend fun BilibiliSession.guardedGet(
     }
     throw BilibiliContentNotAvailableException("Bilibili blocked the request: ${last.take(120)}")
 }
+
+/** Unreadable body → content unavailable. */
+internal inline fun <reified T> Json.decodeBilibili(
+    body: String,
+    what: String = "response",
+): T =
+    try {
+        decodeFromString<T>(body)
+    } catch (e: SerializationException) {
+        throw BilibiliContentNotAvailableException("Unreadable Bilibili $what: ${e.message}")
+    }
+
+@Serializable
+internal data class CodeOnly(
+    val code: Int = 0,
+    val message: String = "",
+)

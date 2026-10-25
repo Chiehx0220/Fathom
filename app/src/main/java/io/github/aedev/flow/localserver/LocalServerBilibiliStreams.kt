@@ -1,7 +1,7 @@
 package io.github.aedev.flow.localserver
 
 import android.content.Context
-import io.github.aedev.flow.bilibili.BilibiliVideoId
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.player.stream.BilibiliStreamBridge
 import kotlinx.coroutines.runBlocking
@@ -27,8 +27,7 @@ internal object LocalServerBilibiliStreams {
     private val infoCache = ConcurrentHashMap<String, CachedInfo>()
 
     /**
-     * Video metadata, DASH streams, related list, watch-page shape. Video-only + audio-only streams, as Bilibili serves. Short-lived cache:
-     * watch page, manifest, each stream request ask for the same video.
+     * Metadata, video-only + audio-only DASH streams, related list. Short-lived cache (watch page, manifest, stream requests share one video).
      */
     fun streamInfo(
         context: Context,
@@ -36,8 +35,9 @@ internal object LocalServerBilibiliStreams {
     ): StreamInfo {
         LocalServerBilibiliLive.roomIdOf(mediaUrl)?.let { return LocalServerBilibiliLive.streamInfo(context, it) }
         val id = LocalServerBilibili.videoIdOf(mediaUrl)
-        val (bvid, part) = BilibiliVideoId.parse(id)
-        val key = "$bvid?p=$part"
+        val ref = BilibiliRef.Video.parse(id)
+        val (bvid, part) = ref.bvid to ref.part
+        val key = BilibiliRef.Video.of(bvid, part).id
         infoCache[key]?.takeIf { it.expiresAtMs > System.currentTimeMillis() }?.let { return it.info }
 
         val api = bilibiliApi(context)

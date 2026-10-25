@@ -1,6 +1,6 @@
 package io.github.aedev.flow.localserver
 
-import io.github.aedev.flow.bilibili.BilibiliLink
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.utils.YouTubeLink
 import io.github.aedev.flow.utils.parseYouTubeLink
 import kotlinx.serialization.json.Json
@@ -217,7 +217,7 @@ private const val HANDOFF_TITLE_MAX = 200
 internal fun RequestContext.handleHandoff(params: Query): Status {
     val url = params["id"].orEmpty().trim()
     val link = parseYouTubeLink(url)
-    val playable = link is YouTubeLink.Video || link is YouTubeLink.Short || BilibiliLink.isBilibili(url)
+    val playable = link is YouTubeLink.Video || link is YouTubeLink.Short || BilibiliRef.isBilibiliUrl(url)
     if (!playable) throw BadRequestException("Unsupported link")
     val position = params.double("t")?.takeIf { it.isFinite() && it >= 0 }
     val duration = params.double("d")?.takeIf { it.isFinite() && it > 0 }

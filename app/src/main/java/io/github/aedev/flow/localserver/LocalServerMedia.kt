@@ -36,10 +36,12 @@ object LocalServerMedia {
             return if (end == -1) url.substring(start) else url.substring(start, end)
         }
         // Bilibili video/live room stored as "BV1xx?p=1" / "live:123" (app history ids); a whole link → second row, link inside link.
-        return io.github.aedev.flow.bilibili.BilibiliVideoId
-            .fromUrl(url)
-            ?: io.github.aedev.flow.bilibili.BilibiliLiveId
-                .fromUrl(url)
+        return io.github.aedev.flow.bilibili.BilibiliRef.Video
+            .ofUrl(url)
+            ?.id
+            ?: io.github.aedev.flow.bilibili.BilibiliRef.Live
+                .ofUrl(url)
+                ?.id
             ?: url
     }
 
