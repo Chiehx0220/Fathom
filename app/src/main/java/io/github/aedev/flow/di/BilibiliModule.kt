@@ -32,5 +32,9 @@ interface BilibiliEntryPoint {
     fun bilibiliApi(): BilibiliApi
 }
 
-fun bilibiliApi(context: Context): BilibiliApi =
+/** Client source of [bilibiliApi]; test hook. */
+internal var bilibiliApiProvider: (Context) -> BilibiliApi = { context ->
     EntryPointAccessors.fromApplication(context.applicationContext, BilibiliEntryPoint::class.java).bilibiliApi()
+}
+
+fun bilibiliApi(context: Context): BilibiliApi = bilibiliApiProvider(context)

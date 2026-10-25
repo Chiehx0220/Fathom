@@ -53,30 +53,21 @@ internal class CommentsResult(
     val disabled: Boolean = false,
 )
 
-/** List sources: Bilibili client, YouTube NewPipe; service-agnostic. */
+/** Routes by service id to its [LocalServerBackend]. */
 internal object LocalServerSource {
-    /** Feed of a service without a personalised one; Bilibili only. */
+    /** Plain home feed (services without a personalised one). */
     fun home(
         context: Context,
         serviceId: Int,
         nextPage: Page?,
-    ): ListPage {
-        require(LocalServerBilibili.isBilibili(serviceId)) { "Service $serviceId has no plain home feed" }
-        return LocalServerBilibili.home(context, nextPage)
-    }
+    ): ListPage = backendFor(serviceId).home(context, nextPage)
 
     fun search(
         context: Context,
         serviceId: Int,
         query: String,
         nextPage: Page?,
-    ): ListPage {
-        if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibili.search(context, query, nextPage)
-        if (serviceId == 0) LocalServerYouTubeSearch.search(query, nextPage)?.let { return it }
-        val extractor = LocalServerMedia.getDefaultSearchExtractor(NewPipe.getService(serviceId), query)
-        val page = LocalServerMedia.fetchInitialOrPage(extractor, nextPage)
-        return ListPage(page.items, page.nextPage)
-    }
+    ): ListPage = backendFor(serviceId).search(context, query, nextPage)
 
     /** [sort]: YouTube channel videos tab only. */
     fun channel(
@@ -86,85 +77,28 @@ internal object LocalServerSource {
         tab: String,
         sort: String?,
         nextPage: Page?,
-    ): ChannelPage {
-        if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibili.channel(context, channelUrl, tab, nextPage)
-        if (serviceId == 0) LocalServerYouTubeChannel.videos(channelUrl, tab, sort, nextPage)?.let { return it }
-
-        val service = NewPipe.getService(serviceId)
-        val channelExtractor = service.getChannelExtractor(channelUrl)
-        channelExtractor.fetchPage()
-
-        // Non-default sort: tab link handler built by hand (tab list handlers carry default order).
-        val tabHandler: ListLinkHandler =
-            if (sort != null) {
-                service.channelTabLHFactory.fromQuery(channelExtractor.id, listOf(tab), sort, channelExtractor.baseUrl)
-            } else {
-                LocalServerMedia.resolveChannelTabHandler(channelExtractor, tab)
-            }
-        val tabExtractor = service.getChannelTabExtractor(tabHandler)
-        val page = LocalServerMedia.fetchInitialOrPage(tabExtractor, nextPage)
-        LocalServerMedia.backfillUploaderUrl(page.items, channelUrl)
-
-        val avatar =
-            WebFormat.getThumbnailUrl(channelExtractor.avatars).takeIf {
-                WebFormat.hasThumbnail(channelExtractor.avatars)
-            }
-        val banner =
-            WebFormat.getThumbnailUrl(channelExtractor.banners).takeIf {
-                WebFormat.hasThumbnail(channelExtractor.banners)
-            }
-        val header =
-            ChannelHeader(
-                name = channelExtractor.name ?: "",
-                url = channelExtractor.linkHandler.url,
-                avatarUrl = avatar,
-                bannerUrl = banner,
-                subscriberCount = channelExtractor.subscriberCount,
-                description = channelExtractor.description ?: "",
-            )
-        return ChannelPage(header, page.items, page.nextPage)
-    }
+    ): ChannelPage = backendFor(serviceId).channel(context, channelUrl, tab, sort, nextPage)
 
     fun playlist(
         context: Context,
         serviceId: Int,
         playlistUrl: String,
         nextPage: Page?,
-    ): PlaylistPage {
-        if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibili.playlist(context, playlistUrl, nextPage)
-        if (serviceId == 0) LocalServerYouTubePlaylist.page(context, playlistUrl, nextPage)?.let { return it }
-        val extractor = NewPipe.getService(serviceId).getPlaylistExtractor(playlistUrl)
-        val page = LocalServerMedia.fetchInitialOrPage(extractor, nextPage)
-        val header = PlaylistHeader(extractor.name, extractor.linkHandler.url, extractor.uploaderName ?: "", extractor.streamCount)
-        return PlaylistPage(header, page.items, page.nextPage)
-    }
+    ): PlaylistPage = backendFor(serviceId).playlist(context, playlistUrl, nextPage)
 
     fun comments(
         context: Context,
         serviceId: Int,
         videoUrl: String,
         nextPage: Page?,
-    ): CommentsResult {
-        if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibiliComments.comments(context, videoUrl, nextPage)
-        LocalServerYouTubeComments.comments(context, videoUrl, nextPage)?.let { return it }
-        val extractor = NewPipe.getService(serviceId).getCommentsExtractor(videoUrl)
-        if (nextPage != null) {
-            // getPage() reads only nextPage continuation token, not fetchPage() state: safe on fresh extractor.
-            val page = extractor.getPage(nextPage)
-            return CommentsResult(page.items, page.nextPage)
-        }
-        extractor.fetchPage()
-        if (extractor.isCommentsDisabled) return CommentsResult(emptyList(), null, disabled = true)
-        val page = extractor.initialPage
-        return CommentsResult(page.items, page.nextPage)
-    }
+    ): CommentsResult = backendFor(serviceId).comments(context, videoUrl, nextPage)
 
-    /** Bilibili only, uploaded videos only (no live). */
+    /** Uploaded videos only; none where unsupported. */
     fun danmaku(
         context: Context,
         serviceId: Int,
         mediaUrl: String,
-    ): List<Bullet> = if (LocalServerBilibili.isBilibili(serviceId)) LocalServerBilibiliComments.danmaku(context, mediaUrl) else emptyList()
+    ): List<Bullet> = backendFor(serviceId).danmaku(context, mediaUrl)
 }
 
 /** Stream lists for proxy and DASH manifest, any service. */
@@ -176,7 +110,7 @@ internal interface StreamLists {
     val hlsUrl: String?
 }
 
-private class ExtractorStreams(
+internal class ExtractorStreams(
     private val extractor: StreamExtractor,
 ) : StreamLists {
     // Extractor getters not thread-safe; watch page may read the same one.
@@ -202,44 +136,23 @@ internal fun LocalServerSource.streams(
     serviceId: Int,
     mediaUrl: String,
     fresh: Boolean,
-): StreamLists {
-    if (LocalServerBilibili.isBilibili(serviceId)) return InfoStreams(LocalServerBilibiliStreams.streamInfo(context, mediaUrl))
-    val service = NewPipe.getService(serviceId)
-    val extractorStreams =
-        if (!fresh) {
-            ExtractorStreams(LocalServerMedia.getCachedExtractor(service, serviceId, mediaUrl))
-        } else {
-            val extractor = service.getStreamExtractor(mediaUrl)
-            extractor.fetchPage()
-            ExtractorStreams(extractor)
-        }
-    if (!InnerTubeVideoStreamExtractor.supportsService(serviceId)) return extractorStreams
-    val videoId = youtubeVideoIdFromUrl(mediaUrl) ?: return extractorStreams
-    return MergedYouTubeStreams(extractorStreams, videoId)
-}
+): StreamLists = backendFor(serviceId).streams(context, mediaUrl, fresh)
 
 /** One video's data for watch page, downloads, subtitles. */
 internal fun LocalServerSource.streamInfo(
     context: Context,
     serviceId: Int,
     mediaUrl: String,
-): StreamInfo {
-    if (LocalServerBilibili.isBilibili(serviceId)) return LocalServerBilibiliStreams.streamInfo(context, mediaUrl)
-    val extractor = LocalServerMedia.getCachedExtractor(NewPipe.getService(serviceId), serviceId, mediaUrl)
-    val info = synchronized(extractor) { StreamInfo.getInfo(extractor) }
-    if (InnerTubeVideoStreamExtractor.supportsService(serviceId)) {
-        youtubeVideoIdFromUrl(mediaUrl)?.let { LocalServerYouTubeStreams.overlay(info, it) }
-    }
-    return info
-}
+): StreamInfo = backendFor(serviceId).streamInfo(context, mediaUrl)
 
-/** [streamInfo] + watch-page related list: Bilibili's own or YouTube's ranked. */
+/** [streamInfo] + related list (service's own or ranked). */
 internal fun LocalServerSource.watchInfo(
     dbHelper: HistoryDbHelper,
     serviceId: Int,
     mediaUrl: String,
 ): StreamInfo {
-    val info = streamInfo(dbHelper.appContext, serviceId, mediaUrl)
-    if (!LocalServerBilibili.isBilibili(serviceId)) info.relatedItems = dbHelper.relatedVideos(info, serviceId)
+    val backend = backendFor(serviceId)
+    val info = backend.streamInfo(dbHelper.appContext, mediaUrl)
+    if (!backend.ownsRelated) info.relatedItems = dbHelper.relatedVideos(info, serviceId)
     return info
 }

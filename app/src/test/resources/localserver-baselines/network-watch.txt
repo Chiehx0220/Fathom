@@ -254,6 +254,39 @@ GET /danmaku?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&serviceId=0
   "danmaku": []
 }
 
+GET /live_chat?room=545068
+=> 200 application/json
+{
+  "items": [
+    {
+      "color": "#FFFFFF",
+      "position": "scroll",
+      "text": "hello room"
+    }
+  ],
+  "seq": 4
+}
+
+GET /live_chat?room=545068&since=3
+=> 200 application/json
+{
+  "items": [
+    {
+      "color": "#FFFFFF",
+      "position": "scroll",
+      "text": "hello room"
+    }
+  ],
+  "seq": 4
+}
+
+GET /live_chat
+=> 400 application/json
+{
+  "error": "Missing 'room' parameter",
+  "status": "error"
+}
+
 GET /api/v1/watch_progress?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&percent=40&durationSeconds=19&serviceId=0
 => 200 application/json
 {
@@ -267,5 +300,7 @@ comments service=0 url=https://www.youtube.com/watch?v=disabled0000 next=null
 sponsor video=jNQXAC9IVRw
 danmaku service=5 url=https://www.youtube.com/watch?v=jNQXAC9IVRw
 danmaku service=0 url=https://www.youtube.com/watch?v=jNQXAC9IVRw
+liveChat room=545068 since=null
+liveChat room=545068 since=3
 streamInfo service=0 url=https://www.youtube.com/watch?v=jNQXAC9IVRw
 

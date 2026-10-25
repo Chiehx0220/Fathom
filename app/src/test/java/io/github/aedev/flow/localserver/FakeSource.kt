@@ -56,6 +56,11 @@ internal object NoNetwork : ContentSource {
         mediaUrl: String,
     ) = refuse()
 
+    override fun liveChat(
+        roomId: Long,
+        since: Long?,
+    ) = refuse()
+
     override fun sponsorSegments(videoId: String) = refuse()
 }
 
@@ -155,6 +160,14 @@ internal class FakeSource : ContentSource {
         } else {
             emptyList()
         }
+    }
+
+    override fun liveChat(
+        roomId: Long,
+        since: Long?,
+    ): Pair<Long, List<Bullet>> {
+        calls += "liveChat room=$roomId since=$since"
+        return 4L to listOf(Bullet("hello room", "#FFFFFF", "scroll"))
     }
 
     override fun sponsorSegments(videoId: String): List<SponsorBlockClient.Segment> {

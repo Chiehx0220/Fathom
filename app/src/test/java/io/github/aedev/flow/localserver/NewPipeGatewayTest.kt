@@ -7,11 +7,11 @@ import java.io.File
 
 /**
  * NewPipeExtractor is on its way out of the app. The fork's own code may keep its item types, but a call that
- * reaches an extractor must stay in [LocalServerSource] and [LocalServerMedia], so replacing the source of
+ * reaches an extractor must stay in the NewPipe backend ([LocalServerBackend]) and [LocalServerMedia], so replacing the source of
  * YouTube's data is a change in those two files.
  */
 class NewPipeGatewayTest {
-    private val gateway = setOf("LocalServerSource.kt", "LocalServerMedia.kt")
+    private val gateway = setOf("LocalServerBackend.kt", "LocalServerMedia.kt")
 
     private val extractorCalls =
         Regex(

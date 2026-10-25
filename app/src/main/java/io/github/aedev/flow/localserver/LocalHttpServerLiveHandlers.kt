@@ -93,6 +93,6 @@ internal fun RequestContext.handleHlsProxy(
 /** Room chat since last poll's position; first poll (no position) only learns it. */
 internal fun RequestContext.handleLiveChat(params: Query): LiveChat {
     val roomId = params.long("room") ?: throw BadRequestException("Missing 'room' parameter")
-    val (seq, items) = LocalServerBilibiliLive.chatSince(dbHelper.appContext, roomId, params.long("since"))
+    val (seq, items) = source.liveChat(roomId, params.long("since"))
     return LiveChat(seq, items)
 }

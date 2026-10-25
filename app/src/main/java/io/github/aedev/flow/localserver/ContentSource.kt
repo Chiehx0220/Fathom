@@ -56,6 +56,12 @@ internal interface ContentSource {
         mediaUrl: String,
     ): List<Bullet>
 
+    /** Room chat after [since] (null: only learn the position): (position, lines). */
+    fun liveChat(
+        roomId: Long,
+        since: Long?,
+    ): Pair<Long, List<Bullet>>
+
     fun sponsorSegments(videoId: String): List<SponsorBlockClient.Segment>
 }
 
@@ -111,6 +117,11 @@ internal class AppContentSource(
         serviceId: Int,
         mediaUrl: String,
     ) = LocalServerSource.danmaku(context, serviceId, mediaUrl)
+
+    override fun liveChat(
+        roomId: Long,
+        since: Long?,
+    ) = LocalServerBilibiliLive.chatSince(context, roomId, since)
 
     override fun sponsorSegments(videoId: String) = SponsorBlockClient.fetchSegments(videoId)
 }

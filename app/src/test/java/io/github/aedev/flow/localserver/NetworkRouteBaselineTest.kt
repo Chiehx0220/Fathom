@@ -54,6 +54,9 @@ class NetworkRouteBaselineTest {
                 get("/api/v1/sponsor?serviceId=0")
                 get("/danmaku?id=$VIDEO&serviceId=5")
                 get("/danmaku?id=$VIDEO&serviceId=0")
+                get("/live_chat?room=545068")
+                get("/live_chat?room=545068&since=3")
+                get("/live_chat")
                 get("/api/v1/watch_progress?id=$VIDEO&percent=40&durationSeconds=19&serviceId=0")
                 note(source.calls.joinToString("\n"))
             }
