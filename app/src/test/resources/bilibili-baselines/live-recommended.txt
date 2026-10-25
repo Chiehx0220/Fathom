@@ -1,0 +1,24 @@
+[
+  BilibiliLiveItem(
+    roomId=1001,
+    title=Rec 1,
+    coverUrl=https://i0.hdslb.com/bfs/c1.jpg,
+    uploaderName=S1,
+    uploaderAvatarUrl=https://i0.hdslb.com/bfs/f1.jpg,
+    viewerCount=50,
+    startedAtSec=0
+  ),
+  BilibiliLiveItem(
+    roomId=1002,
+    title=Rec 2,
+    coverUrl=https://i0.hdslb.com/bfs/sc2.jpg,
+    uploaderName=S2,
+    uploaderAvatarUrl=,
+    viewerCount=0,
+    startedAtSec=0
+  )
+]
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.live.bilibili.com/room/v1/room/get_user_recommend?page_size=30&platform=web  cookie=anon

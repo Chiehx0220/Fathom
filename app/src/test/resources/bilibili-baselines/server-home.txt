@@ -1,0 +1,6 @@
+page1 next=2
+StreamInfoItem name=Rec 1 url=https://live.bilibili.com/1001 thumb=https://i0.hdslb.com/bfs/c1.jpg type=LIVE_STREAM uploader=S1 uploaderUrl=null avatar=https://i0.hdslb.com/bfs/f1.jpg duration=-1 views=50 date=null
+StreamInfoItem name=Rec 2 url=https://live.bilibili.com/1002 thumb=https://i0.hdslb.com/bfs/sc2.jpg type=LIVE_STREAM uploader=S2 uploaderUrl=null avatar=null duration=-1 views=0 date=null
+StreamInfoItem name=Hot 1 url=https://www.bilibili.com/video/BV1xx411c7mD?p=1 thumb=https://i0.hdslb.com/bfs/h1.jpg type=VIDEO_STREAM uploader=Hot Up uploaderUrl=https://space.bilibili.com/21 avatar=https://i0.hdslb.com/bfs/hu.jpg duration=120 views=999999 date=null
+page2 next=3
+StreamInfoItem name=Hot 1 url=https://www.bilibili.com/video/BV1xx411c7mD?p=1 thumb=https://i0.hdslb.com/bfs/h1.jpg type=VIDEO_STREAM uploader=Hot Up uploaderUrl=https://space.bilibili.com/21 avatar=https://i0.hdslb.com/bfs/hu.jpg duration=120 views=999999 date=null

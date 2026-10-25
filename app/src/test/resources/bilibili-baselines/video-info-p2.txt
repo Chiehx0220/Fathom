@@ -1,0 +1,35 @@
+BilibiliVideoInfo(
+  bvid=BV1GJ411x7h7,
+  aid=80433022,
+  cid=1002,
+  title=Sample video,
+  description=Sample description,
+  thumbnailUrl=https://i0.hdslb.com/bfs/archive/cover.jpg,
+  durationSec=200,
+  uploader=BilibiliUploader(
+    mid=546195,
+    name=Uploader,
+    avatarUrl=https://i0.hdslb.com/bfs/face/up.jpg
+  ),
+  viewCount=123456,
+  likeCount=7890,
+  uploadTimeSec=1600000000,
+  pages=[
+    BilibiliPage(
+      cid=1001,
+      page=1,
+      title=P1,
+      durationSec=100
+    ),
+    BilibiliPage(
+      cid=1002,
+      page=2,
+      title=P2,
+      durationSec=200
+    )
+  ],
+  isPaid=false,
+  category=游戏
+)
+#requests
+api.bilibili.com/x/web-interface/wbi/view?bvid=BV1GJ411x7h7  cookie=empty

@@ -1,0 +1,4 @@
+Uploader https://space.bilibili.com/546195 https://i0.hdslb.com/bfs/face/up.jpg https://i0.hdslb.com/bfs/banner.jpg 55555 bio
+next=2:2
+StreamInfoItem name=Web 1 url=https://www.bilibili.com/video/BV1GJ411x7h7?p=1 thumb=//i0.hdslb.com/bfs/w1.jpg type=VIDEO_STREAM uploader=Uploader uploaderUrl=https://space.bilibili.com/546195 avatar=https://i0.hdslb.com/bfs/face/up.jpg duration=310 views=100 date=2020-09-13
+StreamInfoItem name=Web 2 av only url=https://www.bilibili.com/video/BV1xx411c7mD?p=1 thumb=null type=VIDEO_STREAM uploader=Uploader uploaderUrl=https://space.bilibili.com/546195 avatar=https://i0.hdslb.com/bfs/face/up.jpg duration=3723 views=9 date=null

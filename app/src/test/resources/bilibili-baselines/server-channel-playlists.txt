@@ -1,0 +1,3 @@
+next=2
+PlaylistInfoItem name=Season A url=bilibili:season:546195:71:Season+A thumb=https://i0.hdslb.com/bfs/sa.jpg uploader=Uploader count=5
+PlaylistInfoItem name=Series B url=bilibili:series:546195:81:Series+B thumb=https://i0.hdslb.com/bfs/sb.jpg uploader=Uploader count=3

@@ -1,0 +1,25 @@
+BilibiliPlaylistPage(
+  items=[
+    BilibiliPlaylistRef(
+      kind=SEASON,
+      mid=546195,
+      id=71,
+      name=Season A,
+      coverUrl=https://i0.hdslb.com/bfs/sa.jpg,
+      videoCount=5
+    ),
+    BilibiliPlaylistRef(
+      kind=SERIES,
+      mid=546195,
+      id=81,
+      name=Series B,
+      coverUrl=https://i0.hdslb.com/bfs/sb.jpg,
+      videoCount=3
+    )
+  ],
+  hasMore=true
+)
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/polymer/web-space/seasons_series_list?mid=546195&page_num=1&page_size=10  cookie=anon

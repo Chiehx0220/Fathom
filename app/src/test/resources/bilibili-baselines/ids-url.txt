@@ -1,0 +1,17 @@
+url=https://www.bilibili.com/video/BV1GJ411x7h7 | isBilibili=true | video=BV1GJ411x7h7 | live=null | mid=null | channelUrlToId=null | shortLink=false | deepLink=Video(videoId=BV1GJ411x7h7?p=1)
+url=https://www.bilibili.com/video/BV1GJ411x7h7/?p=2&spm_id_from=333.1007 | isBilibili=true | video=BV1GJ411x7h7?p=2 | live=null | mid=null | channelUrlToId=null | shortLink=false | deepLink=Video(videoId=BV1GJ411x7h7?p=2)
+url=https://m.bilibili.com/video/BV1GJ411x7h7?p=0 | isBilibili=true | video=BV1GJ411x7h7 | live=null | mid=null | channelUrlToId=null | shortLink=false | deepLink=Video(videoId=BV1GJ411x7h7?p=1)
+url=https://live.bilibili.com/545068 | isBilibili=true | video=null | live=live:545068 | mid=null | channelUrlToId=null | shortLink=false | deepLink=Video(videoId=live:545068)
+url=https://live.bilibili.com/blanc/545068?x=1 | isBilibili=true | video=null | live=live:545068 | mid=null | channelUrlToId=null | shortLink=false | deepLink=Video(videoId=live:545068)
+url=https://live.bilibili.com/ | isBilibili=true | video=null | live=null | mid=null | channelUrlToId=null | shortLink=false | deepLink=null
+url=https://space.bilibili.com/546195 | isBilibili=true | video=null | live=null | mid=546195 | channelUrlToId=546195 | shortLink=false | deepLink=Uploader(mid=546195)
+url=https://space.bilibili.com/546195/video | isBilibili=true | video=null | live=null | mid=546195 | channelUrlToId=546195 | shortLink=false | deepLink=Uploader(mid=546195)
+url=https://www.bilibili.com/space/546195 | isBilibili=true | video=null | live=null | mid=546195 | channelUrlToId=546195 | shortLink=false | deepLink=Uploader(mid=546195)
+url=https://b23.tv/abc | isBilibili=false | video=null | live=null | mid=null | channelUrlToId=null | shortLink=true | deepLink=null
+url=https://www.youtube.com/watch?v=dQw4w9WgXcQ | isBilibili=false | video=null | live=null | mid=null | channelUrlToId=null | shortLink=false | deepLink=null
+url=https://www.youtube.com/channel/UC1234 | isBilibili=false | video=null | live=null | mid=null | channelUrlToId=UC1234 | shortLink=false | deepLink=null
+url=https://evilbilibili.com/video/BV1GJ411x7h7 | isBilibili=false | video=BV1GJ411x7h7 | live=null | mid=null | channelUrlToId=null | shortLink=false | deepLink=null
+url=546195 | isBilibili=false | video=null | live=null | mid=546195 | channelUrlToId=546195 | shortLink=false | deepLink=null
+url= 546195  | isBilibili=false | video=null | live=null | mid=546195 | channelUrlToId=546195 | shortLink=false | deepLink=null
+url=UC1234 | isBilibili=false | video=null | live=null | mid=null | channelUrlToId=null | shortLink=false | deepLink=null
+url= | isBilibili=false | video=null | live=null | mid=null | channelUrlToId=null | shortLink=false | deepLink=null

@@ -1,0 +1,7 @@
+BilibiliContentNotAvailableException: Bilibili blocked the request: {"code":-404,"message":"no user","data":null}
+
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/web-interface/card?mid=1&photo=true  cookie=anon
+api.bilibili.com/x/web-interface/card?mid=1&photo=true  cookie=anon

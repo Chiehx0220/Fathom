@@ -1,0 +1,20 @@
+[
+  BilibiliRelated(
+    bvid=BV1xx411c7mD,
+    title=Hot 1,
+    thumbnailUrl=https://i0.hdslb.com/bfs/h1.jpg,
+    durationSec=120,
+    viewCount=999999,
+    uploader=BilibiliUploader(
+      mid=21,
+      name=Hot Up,
+      avatarUrl=https://i0.hdslb.com/bfs/hu.jpg
+    ),
+    uploadTimeSec=1600000100,
+    category=音乐
+  )
+]
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/web-interface/popular?pn=2&ps=20  cookie=anon

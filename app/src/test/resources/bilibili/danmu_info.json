@@ -1,0 +1,1 @@
+{"code":0,"data":{"token":"TOKEN","host_list":[{"host":"h1.example.com","wss_port":443},{"host":"","wss_port":1},{"host":"h2.example.com","wss_port":2245}]}}

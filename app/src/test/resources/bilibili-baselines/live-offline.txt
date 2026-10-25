@@ -1,0 +1,5 @@
+BilibiliLiveNotStartedException: Live is not started
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.live.bilibili.com/xlive/web-room/v1/index/getRoomBaseInfo?req_biz=web_room_componet&room_ids=545068  cookie=anon

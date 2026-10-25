@@ -1,0 +1,20 @@
+BilibiliSearchPage(
+  items=[
+    Live(
+      room=BilibiliLiveItem(
+        roomId=545068,
+        title=live title,
+        coverUrl=https://i0.hdslb.com/bfs/lc.jpg,
+        uploaderName=Streamer,
+        uploaderAvatarUrl=https://i0.hdslb.com/bfs/sf.jpg,
+        viewerCount=777,
+        startedAtSec=0
+      )
+    )
+  ],
+  hasMore=true
+)
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/web-interface/search/type?keyword=l&page=1&search_type=live_room  cookie=anon

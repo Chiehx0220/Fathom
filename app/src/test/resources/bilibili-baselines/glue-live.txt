@@ -1,0 +1,24 @@
+BilibiliLivePlayback(
+  room=BilibiliLiveRoom(
+    roomId=545068,
+    title=Live title,
+    coverUrl=https://i0.hdslb.com/bfs/user_cover.jpg,
+    uploader=BilibiliUploader(
+      mid=71,
+      name=Streamer,
+      avatarUrl=https://i0.hdslb.com/bfs/face/up.jpg
+    ),
+    viewerCount=1234,
+    startedAtSec=1704081600,
+    tags=[
+      游戏,
+      a,
+      b
+    ],
+    status=LIVE
+  ),
+  streams=BilibiliLiveStreams(
+    hlsMasterUrl=https://cn-a.example.com/live/master.m3u8,
+    flvUrl=https://cn-a.example.com/live/a.flv?t=2
+  )
+)

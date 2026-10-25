@@ -1,0 +1,7 @@
+BilibiliContentNotAvailableException: Bilibili code -404
+#requests
+api.bilibili.com/x/web-interface/wbi/view?bvid=BV1GJ411x7h7  cookie=empty
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/web-interface/nav  cookie=anon
+api.bilibili.com/x/player/wbi/playurl?avid=80433022&bvid=BV1GJ411x7h7&cid=1001&dm_cover_img_str=*&dm_img_inter=*&dm_img_list=*&dm_img_str=*&fnval=4048&fnver=0&fourk=1&qn=120&try_look=1&w_rid=*&web_location=1315873&wts=*  cookie=anon

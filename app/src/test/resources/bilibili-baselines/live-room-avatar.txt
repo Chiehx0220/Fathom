@@ -1,0 +1,20 @@
+BilibiliLiveRoom(
+  roomId=545068,
+  title=Off,
+  coverUrl=,
+  uploader=BilibiliUploader(
+    mid=71,
+    name=Streamer,
+    avatarUrl=https://i0.hdslb.com/bfs/f.jpg
+  ),
+  viewerCount=0,
+  startedAtSec=0,
+  tags=[
+    
+  ],
+  status=OFFLINE
+)
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.live.bilibili.com/xlive/web-room/v1/index/getRoomBaseInfo?req_biz=web_room_componet&room_ids=545068  cookie=anon

@@ -1,0 +1,4 @@
+page1 next=2
+StreamInfoItem name=cat & dog url=https://www.bilibili.com/video/BV1GJ411x7h7?p=1 thumb=https://i0.hdslb.com/bfs/s1.jpg type=VIDEO_STREAM uploader=Au uploaderUrl=https://space.bilibili.com/31 avatar=https://i0.hdslb.com/bfs/au.jpg duration=205 views=4242 date=null
+page2 next=3
+StreamInfoItem name=cat & dog url=https://www.bilibili.com/video/BV1GJ411x7h7?p=1 thumb=https://i0.hdslb.com/bfs/s1.jpg type=VIDEO_STREAM uploader=Au uploaderUrl=https://space.bilibili.com/31 avatar=https://i0.hdslb.com/bfs/au.jpg duration=205 views=4242 date=null

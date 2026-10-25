@@ -1,0 +1,5 @@
+BilibiliContentNotAvailableException: Bilibili search code -412
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/web-interface/search/type?keyword=x&page=1&search_type=video  cookie=anon

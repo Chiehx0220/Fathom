@@ -1,0 +1,28 @@
+[
+  BilibiliDanmaku(
+    text=hello & bye,
+    timeMs=15000,
+    argbColor=-1,
+    position=SCROLL,
+    relativeFontSize=0.6
+  ),
+  BilibiliDanmaku(
+    text=top,
+    timeMs=32500,
+    argbColor=-65536,
+    position=TOP,
+    relativeFontSize=0.6
+  ),
+  BilibiliDanmaku(
+    text=bottom,
+    timeMs=33500,
+    argbColor=-16776961,
+    position=BOTTOM,
+    relativeFontSize=0.5
+  )
+]
+#requests
+api.bilibili.com/x/web-interface/wbi/view?bvid=BV1GJ411x7h7  cookie=empty
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/v1/dm/list.so?oid=1001  cookie=anon

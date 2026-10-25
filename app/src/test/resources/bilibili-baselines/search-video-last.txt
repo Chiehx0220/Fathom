@@ -1,0 +1,28 @@
+BilibiliSearchPage(
+  items=[
+    Video(
+      bvid=BV1GJ411x7h7,
+      title=cat & dog,
+      thumbnailUrl=https://i0.hdslb.com/bfs/s1.jpg,
+      durationSec=205,
+      viewCount=4242,
+      uploader=BilibiliUploader(
+        mid=31,
+        name=Au,
+        avatarUrl=https://i0.hdslb.com/bfs/au.jpg
+      ),
+      uploadTimeSec=1600000200,
+      category=动物圈,
+      tags=[
+        cat,
+        dog,
+        pets
+      ]
+    )
+  ],
+  hasMore=false
+)
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/web-interface/search/type?keyword=猫&page=3&search_type=video  cookie=anon

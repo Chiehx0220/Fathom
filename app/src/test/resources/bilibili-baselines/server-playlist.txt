@@ -1,0 +1,3 @@
+My series bilibili:series:546195:81:My+series Uploader 7
+next=null
+StreamInfoItem name=Ep 1 url=https://www.bilibili.com/video/BV1GJ411x7h7?p=1 thumb=https://i0.hdslb.com/bfs/e1.jpg type=VIDEO_STREAM uploader=Uploader uploaderUrl=https://space.bilibili.com/546195 avatar=https://i0.hdslb.com/bfs/face/up.jpg duration=100 views=10 date=2020-09-13

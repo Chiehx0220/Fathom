@@ -1,0 +1,5 @@
+null
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.live.bilibili.com/room/v1/Room/get_status_info_by_uids?uids[]=71  cookie=anon

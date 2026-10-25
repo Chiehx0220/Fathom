@@ -1,0 +1,17 @@
+BilibiliSearchPage(
+  items=[
+    User(
+      mid=41,
+      name=User Row,
+      avatarUrl=https://i0.hdslb.com/bfs/ur.jpg,
+      description=hello,
+      followerCount=321,
+      videoCount=12
+    )
+  ],
+  hasMore=false
+)
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/web-interface/search/type?keyword=u&page=1&search_type=bili_user  cookie=anon

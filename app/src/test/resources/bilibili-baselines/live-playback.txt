@@ -1,0 +1,30 @@
+BilibiliLivePlayback(
+  room=BilibiliLiveRoom(
+    roomId=545068,
+    title=Live title,
+    coverUrl=https://i0.hdslb.com/bfs/user_cover.jpg,
+    uploader=BilibiliUploader(
+      mid=71,
+      name=Streamer,
+      avatarUrl=https://i0.hdslb.com/bfs/face/up.jpg
+    ),
+    viewerCount=1234,
+    startedAtSec=1704081600,
+    tags=[
+      游戏,
+      a,
+      b
+    ],
+    status=LIVE
+  ),
+  streams=BilibiliLiveStreams(
+    hlsMasterUrl=https://cn-a.example.com/live/master.m3u8,
+    flvUrl=https://cn-a.example.com/live/a.flv?t=2
+  )
+)
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.live.bilibili.com/xlive/web-room/v1/index/getRoomBaseInfo?req_biz=web_room_componet&room_ids=545068  cookie=anon
+api.bilibili.com/x/web-interface/card?mid=71&photo=true  cookie=anon
+api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo?codec=0,1&dm_disabled=1&format=0,1,2&platform=web&protocol=0,1&qn=10000&room_id=545068  cookie=anon

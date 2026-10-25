@@ -1,0 +1,19 @@
+BilibiliPlaylistVideos(
+  videos=[
+    BilibiliChannelVideo(
+      bvid=BV1GJ411x7h7,
+      aid=80433022,
+      title=Ep 1,
+      thumbnailUrl=https://i0.hdslb.com/bfs/e1.jpg,
+      durationSec=100,
+      viewCount=10,
+      uploadTimeSec=1600000500,
+      authorName=Uploader
+    )
+  ],
+  total=7
+)
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/series/archives?mid=546195&only_normal=true&pn=1&ps=30&series_id=81&sort=desc  cookie=anon

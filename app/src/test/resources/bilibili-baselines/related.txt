@@ -1,0 +1,34 @@
+[
+  BilibiliRelated(
+    bvid=BV1xx411c7mD,
+    title=Related A,
+    thumbnailUrl=https://i0.hdslb.com/bfs/a.jpg,
+    durationSec=90,
+    viewCount=1000,
+    uploader=BilibiliUploader(
+      mid=11,
+      name=Ra,
+      avatarUrl=https://i0.hdslb.com/bfs/ra.jpg
+    ),
+    uploadTimeSec=1500000000,
+    category=生活
+  ),
+  BilibiliRelated(
+    bvid=BV17x411w7KC,
+    title=Related by av,
+    thumbnailUrl=//i0.hdslb.com/bfs/b.jpg,
+    durationSec=45,
+    viewCount=5,
+    uploader=BilibiliUploader(
+      mid=12,
+      name=Rb,
+      avatarUrl=
+    ),
+    uploadTimeSec=1500000001,
+    category=
+  )
+]
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/web-interface/archive/related?bvid=BV1GJ411x7h7  cookie=anon

@@ -1,0 +1,13 @@
+name=Sample video url=https://www.bilibili.com/video/BV1GJ411x7h7?p=2 id=BV1GJ411x7h7?p=2 type=VIDEO_STREAM duration=200 views=123456 likes=7890
+description=Sample description
+uploader=Uploader url=https://space.bilibili.com/546195 avatars=[https://i0.hdslb.com/bfs/face/up.jpg]
+date=2020-09-13T12:26:40Z thumbs=[https://i0.hdslb.com/bfs/archive/cover.jpg]
+hls=
+videoOnly:
+bilibili-BV1GJ411x7h7-video-80-0 1080p https://upos-sz-mirrorcos.bilivideo.com/v1.m4s avc1.640032
+bilibili-BV1GJ411x7h7-video-64-1 720p https://upos-sz-mirrorcos.bilivideo.com/v2.m4s hev1.1.6.L120
+audio:
+bilibili-BV1GJ411x7h7-audio-30280-0 https://upos-sz-mirrorcos.bilivideo.com/a1.m4s mp4a.40.2 192000
+related:
+StreamInfoItem name=Related A url=https://www.bilibili.com/video/BV1xx411c7mD?p=1 thumb=https://i0.hdslb.com/bfs/a.jpg type=VIDEO_STREAM uploader=Ra uploaderUrl=https://space.bilibili.com/11 avatar=https://i0.hdslb.com/bfs/ra.jpg duration=90 views=1000 date=null
+StreamInfoItem name=Related by av url=https://www.bilibili.com/video/BV17x411w7KC?p=1 thumb=//i0.hdslb.com/bfs/b.jpg type=VIDEO_STREAM uploader=Rb uploaderUrl=https://space.bilibili.com/12 avatar=null duration=45 views=5 date=null

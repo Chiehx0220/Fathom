@@ -1,0 +1,7 @@
+id=546195 | isMid=true | serviceOf=5 | serviceOfSaved3=5
+id=0 | isMid=true | serviceOf=5 | serviceOfSaved3=5
+id= | isMid=false | serviceOf=0 | serviceOfSaved3=3
+id=12a | isMid=false | serviceOf=0 | serviceOfSaved3=3
+id=UC1234 | isMid=false | serviceOf=0 | serviceOfSaved3=3
+id=@name | isMid=false | serviceOf=0 | serviceOfSaved3=3
+id= 546195  | isMid=false | serviceOf=5 | serviceOfSaved3=5

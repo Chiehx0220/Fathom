@@ -1,0 +1,18 @@
+[
+  BilibiliChapter(
+    title=Intro,
+    startSeconds=0,
+    imageUrl=http://i0.hdslb.com/bfs/vp1.jpg
+  ),
+  BilibiliChapter(
+    title=Main,
+    startSeconds=60,
+    imageUrl=null
+  )
+]
+#requests
+api.bilibili.com/x/web-interface/wbi/view?bvid=BV1GJ411x7h7  cookie=empty
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/web-interface/nav  cookie=anon
+api.bilibili.com/x/player/wbi/v2?aid=80433022&cid=1001&w_rid=*&wts=*  cookie=anon

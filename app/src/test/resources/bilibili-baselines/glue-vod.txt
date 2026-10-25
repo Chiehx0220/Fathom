@@ -1,0 +1,10 @@
+info=BV1GJ411x7h7/1002
+related=[BV1xx411c7mD?p=1, BV17x411w7KC?p=1]
+resume=1500
+video:
+bilibili-BV1GJ411x7h7-video-80-0 | 1080p | https://upos-sz-mirrorcos.bilivideo.com/v1.m4s | codec=avc1.640032 | 2000000b | 1920x1080 | 30fps | videoOnly=true
+bilibili-BV1GJ411x7h7-video-64-1 | 720p | https://upos-sz-mirrorcos.bilivideo.com/v2.m4s | codec=hev1.1.6.L120 | 1000000b | 1280x720 | 30fps | videoOnly=true
+audio:
+bilibili-BV1GJ411x7h7-audio-30280-0 | https://upos-sz-mirrorcos.bilivideo.com/a1.m4s | codec=mp4a.40.2 | 192000b
+selectedVideo=null
+selectedAudio=bilibili-BV1GJ411x7h7-audio-30280-0

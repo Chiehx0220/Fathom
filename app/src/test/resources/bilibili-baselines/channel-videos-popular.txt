@@ -1,0 +1,31 @@
+BilibiliChannelVideosPage(
+  videos=[
+    BilibiliChannelVideo(
+      bvid=BV1GJ411x7h7,
+      aid=80433022,
+      title=Web 1,
+      thumbnailUrl=//i0.hdslb.com/bfs/w1.jpg,
+      durationSec=310,
+      viewCount=100,
+      uploadTimeSec=1600000300,
+      authorName=Uploader
+    ),
+    BilibiliChannelVideo(
+      bvid=BV1xx411c7mD,
+      aid=2,
+      title=Web 2 av only,
+      thumbnailUrl=,
+      durationSec=3723,
+      viewCount=9,
+      uploadTimeSec=0,
+      authorName=Uploader
+    )
+  ],
+  hasMore=true,
+  lastAid=2
+)
+#requests
+api.bilibili.com/x/frontend/finger/spi  cookie=none
+api.bilibili.com/bapis/bilibili.api.ticket.v1.Ticket/GenWebTicket?context[ts]=*&csrf=&hexsign=*&key_id=ec02  cookie=anon
+api.bilibili.com/x/web-interface/nav  cookie=anon
+api.bilibili.com/x/space/wbi/arc/search?dm_cover_img_str=*&dm_img_inter=*&dm_img_list=*&dm_img_str=*&mid=546195&order=click&order_avoided=true&platform=web&pn=1&ps=25&w_rid=*&web_location=333.1387&wts=*  cookie=anon

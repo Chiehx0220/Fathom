@@ -1,0 +1,8 @@
+id=bilibili:series:546195:81:My+series%3A+%E6%97%A5%E6%9C%AC%E8%AA%9E+%26+more | parse=Parsed(kind=SERIES, mid=546195, id=81, name=My series: 日本語 & more)
+id=bilibili:season:546195:71: | parse=Parsed(kind=SEASON, mid=546195, id=71, name=)
+id=bilibili:series:1:2:name | parse=Parsed(kind=SERIES, mid=1, id=2, name=name)
+id=bilibili:SEASON:1:2:a%3Ab | parse=Parsed(kind=SEASON, mid=1, id=2, name=a:b)
+id=bilibili:other:1:2:n | parse=null
+id=bilibili:series:x:2:n | parse=null
+id=bilibili:series:1:2 | parse=null
+id=PLabc | parse=null

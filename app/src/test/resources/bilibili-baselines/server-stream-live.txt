@@ -1,0 +1,12 @@
+name=Live title url=https://live.bilibili.com/545068 id=545068 type=LIVE_STREAM duration=-1 views=1234 likes=-1
+description=游戏 a b
+uploader=Streamer url=https://space.bilibili.com/71 avatars=[https://i0.hdslb.com/bfs/face/up.jpg]
+date=2024-01-01T04:00Z thumbs=[https://i0.hdslb.com/bfs/user_cover.jpg]
+hls=https://cn-a.example.com/live/master.m3u8
+videoOnly:
+
+audio:
+
+related:
+StreamInfoItem name=Rec 1 url=https://live.bilibili.com/1001 thumb=https://i0.hdslb.com/bfs/c1.jpg type=LIVE_STREAM uploader=S1 uploaderUrl=null avatar=https://i0.hdslb.com/bfs/f1.jpg duration=-1 views=50 date=null
+StreamInfoItem name=Rec 2 url=https://live.bilibili.com/1002 thumb=https://i0.hdslb.com/bfs/sc2.jpg type=LIVE_STREAM uploader=S2 uploaderUrl=null avatar=null duration=-1 views=0 date=null
