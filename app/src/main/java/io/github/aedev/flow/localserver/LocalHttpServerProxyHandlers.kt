@@ -19,7 +19,7 @@ private fun RequestContext.resolveDirectUrl(
     requestedItag: Int,
     requestedTrackId: String?,
     mediaType: String?,
-    params: Map<String, String>,
+    params: Query,
 ): String? {
     // Bilibili itag=-1 for all; manifest tags each Representation with mtype.
     if (requestedItag == -1 && mediaType != null) {
@@ -172,7 +172,7 @@ private fun dropAfterDenial(
 @Throws(Exception::class)
 internal fun RequestContext.handleStreamProxy(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
     requestHeaders: Map<String, String>,
 ) {
     val serviceId = getServiceId(params)
@@ -343,7 +343,7 @@ internal fun repCacheKey(
 @Throws(Exception::class)
 internal fun RequestContext.handleSubtitlesProxy(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val serviceId = getServiceId(params)
     val mediaUrl = params["id"]

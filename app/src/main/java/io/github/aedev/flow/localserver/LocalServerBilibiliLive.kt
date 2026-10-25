@@ -14,8 +14,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.json.JSONArray
-import org.json.JSONObject
 import org.schabi.newpipe.extractor.Image
 import org.schabi.newpipe.extractor.localization.DateWrapper
 import org.schabi.newpipe.extractor.stream.Description
@@ -84,24 +82,22 @@ internal object LocalServerBilibiliLive {
 
     private class Chat {
         private val lock = Any()
-        private val items = ArrayDeque<Pair<Long, JSONObject>>()
+        private val items = ArrayDeque<Pair<Long, Bullet>>()
         private var seq = 0L
 
         @Volatile
         var lastPolledMs = System.currentTimeMillis()
 
-        fun add(item: JSONObject) =
+        fun add(item: Bullet) =
             synchronized(lock) {
                 items.addLast(++seq to item)
                 if (items.size > CHAT_KEPT) items.removeFirst()
             }
 
         /** Everything after [since]; null [since] = first look, learns position only. */
-        fun after(since: Long?): Pair<Long, JSONArray> =
+        fun after(since: Long?): Pair<Long, List<Bullet>> =
             synchronized(lock) {
-                val out = JSONArray()
-                if (since != null) items.filter { it.first > since }.forEach { out.put(it.second) }
-                seq to out
+                seq to if (since == null) emptyList() else items.filter { it.first > since }.map { it.second }
             }
     }
 
@@ -115,7 +111,7 @@ internal object LocalServerBilibiliLive {
         context: Context,
         roomId: Long,
         since: Long?,
-    ): Pair<Long, JSONArray> {
+    ): Pair<Long, List<Bullet>> {
         val chat = chats.computeIfAbsent(roomId) { open(context, roomId, Chat()) }
         chat.lastPolledMs = System.currentTimeMillis()
         return chat.after(since)
@@ -128,7 +124,7 @@ internal object LocalServerBilibiliLive {
     ): Chat {
         val api = bilibiliApi(context)
         chatScope.launch {
-            launch { api.liveMessages(roomId).collect { chat.add(it.toJson()) } }
+            launch { api.liveMessages(roomId).collect { chat.add(it.toBullet()) } }
             while (isActive) {
                 delay(CHAT_SWEEP_MS)
                 if (System.currentTimeMillis() - chat.lastPolledMs > CHAT_IDLE_MS) {
@@ -140,25 +136,10 @@ internal object LocalServerBilibiliLive {
         return chat
     }
 
-    private fun BilibiliLiveMessage.toJson(): JSONObject =
+    private fun BilibiliLiveMessage.toBullet(): Bullet =
         when (this) {
-            is BilibiliLiveMessage.Chat -> {
-                JSONObject()
-                    .put("text", text)
-                    .put("color", hex(argbColor))
-                    .put(
-                        "position",
-                        when (position) {
-                            BilibiliDanmakuPosition.TOP -> "top"
-                            BilibiliDanmakuPosition.BOTTOM -> "bottom"
-                            BilibiliDanmakuPosition.SCROLL -> "scroll"
-                        },
-                    )
-            }
-
-            is BilibiliLiveMessage.SuperChat -> {
-                JSONObject().put("text", text).put("color", hex(argbColor)).put("position", "top")
-            }
+            is BilibiliLiveMessage.Chat -> Bullet(text, hex(argbColor), position.webName())
+            is BilibiliLiveMessage.SuperChat -> Bullet(text, hex(argbColor), "top")
         }
 
     private fun hex(argb: Int) = String.format("#%06X", argb and 0xFFFFFF)

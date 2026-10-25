@@ -3,7 +3,6 @@ package io.github.aedev.flow.localserver
 import android.content.Context
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
 import io.github.aedev.flow.utils.youtubeVideoIdFromUrl
-import org.json.JSONArray
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.Page
@@ -167,7 +166,7 @@ internal object LocalServerSource {
         context: Context,
         serviceId: Int,
         mediaUrl: String,
-    ): JSONArray = if (LocalServerBilibili.isBilibili(serviceId)) LocalServerBilibiliComments.danmaku(context, mediaUrl) else JSONArray()
+    ): List<Bullet> = if (LocalServerBilibili.isBilibili(serviceId)) LocalServerBilibiliComments.danmaku(context, mediaUrl) else emptyList()
 }
 
 /** Stream lists for proxy and DASH manifest, any service. */

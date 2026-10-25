@@ -2,7 +2,6 @@ package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliCdn
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import org.json.JSONObject
 import java.io.IOException
 import java.io.OutputStream
 import java.net.URI
@@ -49,7 +48,7 @@ internal fun isLiveGateway(url: String): Boolean {
 @Throws(Exception::class)
 internal fun RequestContext.handleHlsProxy(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val url = params["u"]
     if (url.isNullOrEmpty() || !url.startsWith("https://") || !(BilibiliCdn.isCdnUrl(url) || isLiveGateway(url))) {
@@ -99,9 +98,9 @@ internal fun RequestContext.handleHlsProxy(
 @Throws(Exception::class)
 internal fun RequestContext.handleLiveChat(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
-    val roomId = params["room"]?.toLongOrNull() ?: throw BadRequestException("Missing 'room' parameter")
-    val (seq, items) = LocalServerBilibiliLive.chatSince(dbHelper.appContext, roomId, params["since"]?.toLongOrNull())
-    reply.sendJson(JSONObject().put("seq", seq).put("items", items))
+    val roomId = params.long("room") ?: throw BadRequestException("Missing 'room' parameter")
+    val (seq, items) = LocalServerBilibiliLive.chatSince(dbHelper.appContext, roomId, params.long("since"))
+    reply.sendJson(LiveChat(seq, items))
 }

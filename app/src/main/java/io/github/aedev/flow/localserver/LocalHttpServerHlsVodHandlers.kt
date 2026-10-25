@@ -11,7 +11,7 @@ private const val HLS_TYPE = "application/vnd.apple.mpegurl"
 @Throws(Exception::class)
 internal fun RequestContext.handleHlsVod(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val serviceId = getServiceId(params)
     val mediaUrl = params["id"] ?: throw BadRequestException("Missing 'id' parameter")

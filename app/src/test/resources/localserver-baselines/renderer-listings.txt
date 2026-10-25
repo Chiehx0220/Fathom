@@ -1,0 +1,171 @@
+search
+{
+  "channels": [
+    {
+      "id": "https:\/\/www.youtube.com\/channel\/UCchan",
+      "name": "Channel",
+      "serviceId": 0,
+      "subscriberCount": 4200,
+      "thumbnailUrl": "https:\/\/yt3.example\/chan.jpg",
+      "url": "https:\/\/www.youtube.com\/channel\/UCchan"
+    }
+  ],
+  "nextPage": "rO0ABXNyACFvcmcuc2NoYWJpLm5ld3BpcGUuZXh0cmFjdG9yLlBhZ2UXoeHzgN3fxQIABVsABGJvZHl0AAJbQkwAB2Nvb2tpZXN0AA9MamF2YS91dGlsL01hcDtMAAJpZHQAEkxqYXZhL2xhbmcvU3RyaW5nO0wAA2lkc3QAEExqYXZhL3V0aWwvTGlzdDtMAAN1cmxxAH4AA3hwcHB0AANpZDFwdAARaHR0cHM6Ly9uZXh0L3BhZ2U",
+  "playlists": [
+    {
+      "id": "https:\/\/www.youtube.com\/playlist?list=PLx",
+      "isLocal": false,
+      "name": "Playlist",
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/pl.jpg",
+      "videoCount": 12
+    }
+  ],
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "aaaaaaaaaaa",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/aaaaaaaaaaa.jpg",
+      "title": "Title aaaaaaaaaaa",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=aaaaaaaaaaa",
+      "viewCount": 1234567
+    },
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 0,
+      "id": "bbbbbbbbbbb",
+      "isLive": true,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/bbbbbbbbbbb.jpg",
+      "title": "Title bbbbbbbbbbb",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=bbbbbbbbbbb",
+      "viewCount": 1234567
+    },
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 45,
+      "id": "ccccccccccc",
+      "isLive": false,
+      "isShort": true,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/ccccccccccc.jpg",
+      "title": "Title ccccccccccc",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=ccccccccccc",
+      "viewCount": 1234567
+    }
+  ]
+}
+
+last page
+{
+  "channels": [],
+  "playlists": [],
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "aaaaaaaaaaa",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/aaaaaaaaaaa.jpg",
+      "title": "Title aaaaaaaaaaa",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=aaaaaaaaaaa",
+      "viewCount": 1234567
+    }
+  ]
+}
+
+mixed list
+[
+  {
+    "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+    "channelName": "Uploader",
+    "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+    "duration": 212,
+    "id": "aaaaaaaaaaa",
+    "isLive": false,
+    "isShort": false,
+    "serviceId": 0,
+    "thumbnailUrl": "https:\/\/i.ytimg.example\/aaaaaaaaaaa.jpg",
+    "title": "Title aaaaaaaaaaa",
+    "uploadDate": "2 years ago",
+    "url": "https:\/\/www.youtube.com\/watch?v=aaaaaaaaaaa",
+    "viewCount": 1234567
+  },
+  {
+    "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+    "channelName": "Uploader",
+    "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+    "duration": 0,
+    "id": "bbbbbbbbbbb",
+    "isLive": true,
+    "isShort": false,
+    "serviceId": 0,
+    "thumbnailUrl": "https:\/\/i.ytimg.example\/bbbbbbbbbbb.jpg",
+    "title": "Title bbbbbbbbbbb",
+    "uploadDate": "2 years ago",
+    "url": "https:\/\/www.youtube.com\/watch?v=bbbbbbbbbbb",
+    "viewCount": 1234567
+  },
+  {
+    "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+    "channelName": "Uploader",
+    "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+    "duration": 45,
+    "id": "ccccccccccc",
+    "isLive": false,
+    "isShort": true,
+    "serviceId": 0,
+    "thumbnailUrl": "https:\/\/i.ytimg.example\/ccccccccccc.jpg",
+    "title": "Title ccccccccccc",
+    "uploadDate": "2 years ago",
+    "url": "https:\/\/www.youtube.com\/watch?v=ccccccccccc",
+    "viewCount": 1234567
+  },
+  {
+    "id": "https:\/\/www.youtube.com\/channel\/UCchan",
+    "name": "Channel",
+    "serviceId": 0,
+    "subscriberCount": 4200,
+    "thumbnailUrl": "https:\/\/yt3.example\/chan.jpg",
+    "url": "https:\/\/www.youtube.com\/channel\/UCchan"
+  },
+  {
+    "id": "https:\/\/www.youtube.com\/playlist?list=PLx",
+    "isLocal": false,
+    "name": "Playlist",
+    "serviceId": 0,
+    "thumbnailUrl": "https:\/\/i.ytimg.example\/pl.jpg",
+    "videoCount": 12
+  }
+]
+
+error
+{
+  "error": "boom",
+  "status": "error"
+}
+
+error without message
+{
+  "error": "Unknown error",
+  "status": "error"
+}

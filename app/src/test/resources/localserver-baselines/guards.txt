@@ -1,0 +1,28 @@
+GET /nope
+=> 404 text/plain
+Page Not Found
+
+GET /vendor/none.bin
+=> 404 text/plain
+Page Not Found
+
+GET /api/v1/history  {Host=evil.example.com}
+=> 403 text/plain
+Forbidden: this address is not recognised
+
+OPTIONS /api/v1/history
+=> 403 text/plain
+Forbidden: cross-origin requests are not accepted here
+
+OPTIONS /stream  {Origin=http://other.example.com}
+=> 204 text/plain
+
+
+POST /playlist_action?action=create&name=x  {Origin=http://evil.example.com}
+=> 403 text/plain
+Forbidden: this request did not come from the server's own page
+
+GET /remote  {Origin=http://evil.example.com}
+=> 403 text/plain
+Forbidden: this page is not the server's own
+

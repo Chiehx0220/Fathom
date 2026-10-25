@@ -5,8 +5,6 @@ import io.github.aedev.flow.data.local.LikedVideosRepository
 import io.github.aedev.flow.data.model.PlaylistInfo
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.json.JSONArray
-import org.json.JSONObject
 import org.schabi.newpipe.extractor.InfoItem
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
@@ -72,26 +70,13 @@ fun HistoryDbHelper.likedItems(): List<InfoItem> =
         }
     }
 
-private fun PlaylistInfo.toJson() = JSONObject().put("id", id).put("name", name).put("videoCount", videoCount)
+internal fun PlaylistInfo.ref() = PlaylistRef(id, name, videoCount)
 
-/** Library cards; `isLocal` routes to the in-app playlist screen. */
-internal fun myPlaylistsJson(playlists: List<PlaylistInfo>): JSONArray =
-    JSONArray(
-        playlists.map {
-            it
-                .toJson()
-                .put("serviceId", LocalServerMedia.SERVICE_YOUTUBE)
-                .put("thumbnailUrl", it.thumbnailUrl)
-                .put("isLocal", true)
-        },
-    )
+/** Library card; `isLocal` routes to the in-app playlist screen. */
+internal fun PlaylistInfo.toCard() = PlaylistCard(id, LocalServerMedia.SERVICE_YOUTUBE, name, thumbnailUrl, videoCount, isLocal = true)
 
 /** Picker rows; `contains` marks playlists holding the video. */
-internal fun playlistChoicesJson(
+internal fun playlistChoices(
     playlists: List<PlaylistInfo>,
     containing: Set<String>,
-): JSONArray = JSONArray(playlists.map { it.toJson().put("contains", it.id in containing) })
-
-/** Cards of mixed sources; each takes the service of its own id. */
-internal fun mixedVideosJson(items: List<InfoItem>): JSONArray =
-    JSONArray(items.map { ApiRenderer.infoItemsToJson(listOf(it), it.serviceId).getJSONObject(0) })
+): List<PlaylistChoice> = playlists.map { PlaylistChoice(it.id, it.name, it.videoCount, it.id in containing) }

@@ -1,0 +1,264 @@
+GET /api/v1/cast/devices
+=> 200 application/json
+{
+  "casting": null,
+  "devices": [],
+  "discovering": false
+}
+
+GET /api/v1/cast/start
+=> 404 application/json
+{
+  "status": "no_device"
+}
+
+GET /api/v1/cast/stop
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /api/v1/channel
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /api/v1/comments
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /api/v1/download
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /api/v1/feed
+=> 200 application/json
+{
+  "channels": [],
+  "playlists": [],
+  "videos": []
+}
+
+GET /api/v1/history
+=> 200 application/json
+{
+  "videos": []
+}
+
+GET /api/v1/library
+=> 200 application/json
+{
+  "channels": [],
+  "mine": [],
+  "playlists": [],
+  "watchLater": []
+}
+
+GET /api/v1/liked
+=> 200 application/json
+{
+  "videos": []
+}
+
+GET /api/v1/mylist
+=> 400 application/json
+{
+  "error": "Unknown playlist",
+  "status": "error"
+}
+
+GET /api/v1/playlist
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /api/v1/playlists
+=> 200 application/json
+{
+  "playlists": []
+}
+
+GET /api/v1/search
+=> 400 application/json
+{
+  "error": "Missing 'q' parameter",
+  "status": "error"
+}
+
+GET /api/v1/settings
+=> 200 application/json
+{
+  "deepFlow": false,
+  "deepFlowEndsAt": 0,
+  "hideShorts": false,
+  "hideWatched": false
+}
+
+GET /api/v1/state
+=> 200 application/json
+{
+  "blocked": false,
+  "like": null,
+  "subscribed": false,
+  "watchLater": false
+}
+
+GET /api/v1/video
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /api/v1/watch_progress
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /block_channel
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /bookmark_playlist
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /danmaku
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /downloadfile
+=> 400 text/plain
+Bad Request: Missing 'id' parameter
+
+GET /handoff
+=> 400 application/json
+{
+  "error": "Unsupported link",
+  "status": "error"
+}
+
+GET /history_action
+=> 400 application/json
+{
+  "error": "Unknown action",
+  "status": "error"
+}
+
+GET /hls
+=> 404 text/plain
+Not a Bilibili live address.
+
+GET /hlsvod
+=> 400 text/plain
+Bad Request: Missing 'id' parameter
+
+GET /image-proxy
+=> 400 text/plain
+Not a proxiable image.
+
+GET /live_chat
+=> 400 application/json
+{
+  "error": "Missing 'room' parameter",
+  "status": "error"
+}
+
+GET /pair
+=> 403 application/json
+{
+  "ok": false
+}
+
+GET /play
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /playlist_action
+=> 400 application/json
+{
+  "error": "Unknown action",
+  "status": "error"
+}
+
+GET /rate_video
+=> 400 application/json
+{
+  "error": "Missing 'url' parameter",
+  "status": "error"
+}
+
+GET /release-lock
+=> 400 application/json
+{
+  "error": "Missing 'release_code' parameter",
+  "status": "error"
+}
+
+GET /remote-state
+=> 200 application/json
+{
+  "status": "error"
+}
+
+GET /search-history
+=> 200 application/json
+[]
+
+GET /send-link
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /stream
+=> 400 text/plain
+Bad Request: Missing 'id' parameter
+
+GET /subscribe
+=> 400 application/json
+{
+  "error": "Missing 'id' parameter",
+  "status": "error"
+}
+
+GET /subtitles
+=> 400 text/plain
+Bad Request: Missing 'id' parameter
+
+GET /thumbnails
+=> 400 text/plain
+Bad Request: Missing 'id' parameter
+
+GET /watch_later_action
+=> 400 application/json
+{
+  "error": "Missing 'url' parameter",
+  "status": "error"
+}
+

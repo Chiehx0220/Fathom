@@ -1,0 +1,83 @@
+{
+  "channelId": "https:\/\/www.youtube.com\/channel\/UC4QobU6STFB0P71PMvOGN5A",
+  "channelName": "jawed",
+  "channelThumbnailUrl": "https:\/\/yt3.example\/jawed.jpg",
+  "chapters": [
+    {
+      "s": 0,
+      "t": "Intro",
+      "thumb": ""
+    },
+    {
+      "s": 5,
+      "t": "Zoo",
+      "thumb": "https:\/\/i.ytimg.example\/seg.jpg"
+    }
+  ],
+  "description": "<b>Hi<\/b> at 0:05",
+  "descriptionType": "html",
+  "duration": 19,
+  "id": "jNQXAC9IVRw",
+  "isLive": false,
+  "isShort": true,
+  "likeCount": 12345,
+  "playback": {
+    "formats": [
+      {
+        "bitrate": 0,
+        "format": "mp4",
+        "itag": 18,
+        "kind": "video",
+        "resolution": "360p"
+      },
+      {
+        "bitrate": 128,
+        "format": "m4a",
+        "itag": 140,
+        "kind": "audio",
+        "resolution": ""
+      }
+    ],
+    "isAdaptive": true,
+    "playlistUrl": "\/hlsvod?serviceId=0&id=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DjNQXAC9IVRw",
+    "qualities": [
+      {
+        "codecs": [
+          "h264"
+        ],
+        "height": 1080
+      },
+      {
+        "codecs": [
+          "h264"
+        ],
+        "height": 360
+      }
+    ],
+    "streamUrl": "\/stream?serviceId=0&id=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DjNQXAC9IVRw"
+  },
+  "relatedVideos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "rrrrrrrrrrr",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/rrrrrrrrrrr.jpg",
+      "title": "Title rrrrrrrrrrr",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=rrrrrrrrrrr",
+      "viewCount": 1234567
+    }
+  ],
+  "serviceId": 0,
+  "subtitles": [],
+  "thumbnailUrl": "https:\/\/i.ytimg.example\/zoo.jpg",
+  "title": "Me at the zoo",
+  "uploadDate": "19 years ago",
+  "url": "https:\/\/www.youtube.com\/watch?v=jNQXAC9IVRw",
+  "viewCount": 9000000
+}

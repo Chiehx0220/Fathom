@@ -13,9 +13,13 @@ import io.ktor.server.plugins.compression.minimumSize
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.request.queryString
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
+import io.ktor.util.AttributeKey
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.net.InetAddress
@@ -32,7 +36,9 @@ private val PREFLIGHT_HEADERS =
         "Access-Control-Max-Age" to "86400",
     )
 
-/** Per request: network gate → header guard → pairing gate → [ROUTES]; blocking handlers on [executor]. */
+private val CONTEXT = AttributeKey<RequestContext>("RequestContext")
+
+/** Per request: network gate → header guard → pairing gate → [localRoutes]; blocking handlers on [executor]. */
 internal fun Application.installLocalServer(
     dbHelper: HistoryDbHelper,
     executor: ExecutorService,
@@ -51,17 +57,26 @@ internal fun Application.installLocalServer(
     }
     val blocking = executor.asCoroutineDispatcher()
     intercept(ApplicationCallPipeline.Call) {
-        val handler = RequestContext(InetAddress.getByName(call.request.local.remoteAddress), dbHelper, executor, pairing)
-        if (!withContext(blocking) { serve(call, handler) }) return@intercept
+        val context =
+            RequestContext(InetAddress.getByName(call.request.local.remoteAddress), dbHelper, executor, pairing, call.request.path())
+        call.attributes.put(CONTEXT, context)
+        if (withContext(blocking) { admit(call, context) }) return@intercept
         finish()
     }
-    routing { webSocket(REMOTE_PATH) { sockets.serve(this) } }
+    routing {
+        webSocket(REMOTE_PATH) { sockets.serve(this) }
+        localRoutes(blocking)
+    }
 }
 
-/** False = passed to routing (WebSocket upgrade). */
-private fun serve(
+private fun ApplicationCall.headerMap() = request.headers.entries().associate { (name, values) -> name.lowercase() to values.first() }
+
+private fun ApplicationCall.query() = Query(request.queryParameters.entries().associate { (name, values) -> name to values.last() })
+
+/** True = continue to routing; false = answered here. */
+private fun admit(
     call: ApplicationCall,
-    handler: RequestContext,
+    context: RequestContext,
 ): Boolean {
     val reply = KtorReply(call)
     val request = call.request
@@ -70,57 +85,71 @@ private fun serve(
     val query = request.queryString()
     serverLog("Request: $method $path" + if (query.isNotEmpty()) "?$query" else "")
 
-    if (!isLocalNetworkAddress(handler.peer)) {
+    if (!isLocalNetworkAddress(context.peer)) {
         serverLog("Refused a peer outside the local network")
         reply.send(403, OUTSIDE_NETWORK_REFUSAL, "text/plain; charset=UTF-8")
-        return true
+        return false
     }
-    val headers = request.headers.entries().associate { (name, values) -> name.lowercase() to values.first() }
-    val params = request.queryParameters.entries().associate { (name, values) -> name to values.last() }
-
+    val headers = call.headerMap()
     val refusal = refusalFor(method, path, headers)
     if (refusal != null) {
         serverLog("Refused $method $path: $refusal")
         reply.send(403, refusal, "text/plain; charset=UTF-8")
-        return true
+        return false
     }
-    if (!handler.admits(reply, path, headers)) return true
-    if (path == REMOTE_PATH) {
-        if (isAllowedWebSocketOrigin(headers["origin"], headers["host"])) return false
+    if (!context.admits(reply, path, headers)) return false
+    if (path == REMOTE_PATH && !isAllowedWebSocketOrigin(headers["origin"], headers["host"])) {
         serverLog("Refused WebSocket from origin ${headers["origin"]}")
         reply.send(403, "Forbidden: this page is not the server's own", "text/plain; charset=UTF-8")
-        return true
+        return false
     }
-    if (method == "OPTIONS") {
+    if (method == "OPTIONS" && path != REMOTE_PATH) {
         reply.sendBytes(204, ByteArray(0), "text/plain", PREFLIGHT_HEADERS)
-        return true
-    }
-    try {
-        val route = ROUTES[path]
-        if (route != null) {
-            route(handler, reply, params, headers)
-        } else if (path.startsWith("/vendor/")) {
-            handler.handleVendorAsset(reply, path)
-        } else {
-            reply.send(404, "Page Not Found", "text/plain; charset=UTF-8")
-        }
-    } catch (e: BadRequestException) {
-        failure(call, reply, path, 400, e)
-    } catch (e: Exception) {
-        serverLog("Error during route handling: $e")
-        failure(call, reply, path, 500, e)
+        return false
     }
     return true
+}
+
+/** [handler] on blocking pool; failure body JSON if [json], else text. */
+internal fun Route.serve(
+    path: String,
+    blocking: CoroutineDispatcher,
+    json: Boolean,
+    handler: Handler,
+) {
+    route(path) {
+        handle {
+            val context = call.attributes[CONTEXT]
+            withContext(blocking) { run(call, context, json, handler) }
+        }
+    }
+}
+
+private fun run(
+    call: ApplicationCall,
+    context: RequestContext,
+    json: Boolean,
+    handler: Handler,
+) {
+    val reply = KtorReply(call)
+    try {
+        handler(context, reply, call.query(), call.headerMap())
+    } catch (e: BadRequestException) {
+        failure(call, reply, json, 400, e)
+    } catch (e: Exception) {
+        serverLog("Error during route handling: $e")
+        failure(call, reply, json, 500, e)
+    }
 }
 
 private fun failure(
     call: ApplicationCall,
     reply: Reply,
-    path: String,
+    json: Boolean,
     code: Int,
     cause: Exception,
 ) {
     if (call.response.isCommitted) return
-    val (body, type) = failureBody(path, code, cause.message)
+    val (body, type) = failureBody(json, code, cause.message)
     reply.send(code, body, type)
 }

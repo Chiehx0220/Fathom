@@ -1,7 +1,6 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
-import org.json.JSONObject
 import java.io.OutputStream
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
@@ -10,28 +9,26 @@ private const val MAX_PLAYLIST_NAME = 100
 /** `id`: video being saved; marks the playlists that hold it. */
 internal fun RequestContext.handleApiPlaylists(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val containing = params["id"]?.let { dbHelper.playlistIdsOf(it) }.orEmpty()
-    reply.sendJson(JSONObject().put("playlists", playlistChoicesJson(dbHelper.userPlaylists(), containing)))
+    reply.sendJson(PlaylistChoices(playlistChoices(dbHelper.userPlaylists(), containing)))
 }
 
 internal fun RequestContext.handleApiMyList(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val info = dbHelper.userPlaylist(params["id"].orEmpty()) ?: throw BadRequestException("Unknown playlist")
-    val header = JSONObject().put("id", info.id).put("name", info.name).put("videoCount", info.videoCount)
-    reply.sendJson(JSONObject().put("playlist", header).put("videos", mixedVideosJson(dbHelper.userPlaylistItems(info.id))))
+    reply.sendJson(MyPlaylistPage(info.ref(), dbHelper.userPlaylistItems(info.id).toCards()))
 }
 
-internal fun RequestContext.handleApiLiked(reply: Reply) =
-    reply.sendJson(JSONObject().put("videos", mixedVideosJson(dbHelper.likedItems())))
+internal fun RequestContext.handleApiLiked(reply: Reply) = reply.sendJson(CardListing(dbHelper.likedItems().toCards()))
 
 /** `create` takes `name`; `add`, `remove`, `rename`, `delete` take `playlist`; `add`/`remove` take the video's `url`. */
 internal fun RequestContext.handlePlaylistAction(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val url = params["url"].orEmpty()
 
@@ -63,12 +60,12 @@ internal fun RequestContext.handlePlaylistAction(
             "delete" -> existing().also { dbHelper.deletePlaylist(it) }
             else -> throw BadRequestException("Unknown action")
         }
-    reply.sendJson(JSONObject().put("status", "success").put("playlist", playlistId))
+    reply.sendJson(Status("success", playlist = playlistId))
 }
 
 private fun videoOf(
     url: String,
-    params: Map<String, String>,
+    params: Query,
 ): FlowVideo {
     val videoId = LocalServerMedia.getVideoId(url).ifEmpty { throw BadRequestException("Not a video") }
     return buildFlowVideoFromParams(

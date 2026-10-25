@@ -1,0 +1,156 @@
+GET /history_action?action=clear
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /api/v1/history
+=> 200 application/json
+{
+  "videos": []
+}
+
+GET /api/v1/history
+=> 200 application/json
+{
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UC4QobU6STFB0P71PMvOGN5A",
+      "channelName": "jawed",
+      "channelThumbnailUrl": "",
+      "duration": 0,
+      "id": "jNQXAC9IVRw",
+      "isLive": false,
+      "isShort": false,
+      "progress": 0,
+      "serviceId": 0,
+      "thumbnailUrl": "http:\/\/t\/z.jpg",
+      "title": "Me at the zoo",
+      "uploadDate": "",
+      "url": "https:\/\/www.youtube.com\/watch?v=jNQXAC9IVRw",
+      "viewCount": -1
+    }
+  ]
+}
+
+GET /handoff?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&t=12.5&d=100&title=Me+at+the+zoo
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /handoff?id=https%3A%2F%2Fexample.com%2F
+=> 400 application/json
+{
+  "error": "Unsupported link",
+  "status": "error"
+}
+
+GET /api/v1/history
+=> 200 application/json
+{
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UC4QobU6STFB0P71PMvOGN5A",
+      "channelName": "jawed",
+      "channelThumbnailUrl": "",
+      "duration": 100,
+      "id": "jNQXAC9IVRw",
+      "isLive": false,
+      "isShort": false,
+      "progress": 12,
+      "serviceId": 0,
+      "thumbnailUrl": "http:\/\/t\/z.jpg",
+      "title": "Me at the zoo",
+      "uploadDate": "",
+      "url": "https:\/\/www.youtube.com\/watch?v=jNQXAC9IVRw",
+      "viewCount": -1
+    }
+  ]
+}
+
+GET /api/v1/watch_progress?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&percent=50&durationSeconds=19
+=> 200 application/json
+{
+  "status": "ok"
+}
+
+GET /api/v1/watch_progress?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&percent=x
+=> 400 application/json
+{
+  "error": "Missing or invalid 'percent' parameter",
+  "status": "error"
+}
+
+GET /api/v1/history
+=> 200 application/json
+{
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UC4QobU6STFB0P71PMvOGN5A",
+      "channelName": "jawed",
+      "channelThumbnailUrl": "",
+      "duration": 19,
+      "id": "jNQXAC9IVRw",
+      "isLive": false,
+      "isShort": false,
+      "progress": 50,
+      "serviceId": 0,
+      "thumbnailUrl": "http:\/\/t\/z.jpg",
+      "title": "Me at the zoo",
+      "uploadDate": "",
+      "url": "https:\/\/www.youtube.com\/watch?v=jNQXAC9IVRw",
+      "viewCount": -1
+    }
+  ]
+}
+
+GET /history_action?action=remove&url=https://www.youtube.com/watch?v=jNQXAC9IVRw
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /api/v1/history
+=> 200 application/json
+{
+  "videos": []
+}
+
+GET /api/v1/settings
+=> 200 application/json
+{
+  "deepFlow": false,
+  "deepFlowEndsAt": 0,
+  "hideShorts": false,
+  "hideWatched": false
+}
+
+GET /api/v1/settings?hideWatched=true&hideShorts=true
+=> 200 application/json
+{
+  "deepFlow": false,
+  "deepFlowEndsAt": 0,
+  "hideShorts": true,
+  "hideWatched": true
+}
+
+GET /api/v1/settings?hideWatched=false&hideShorts=false
+=> 200 application/json
+{
+  "deepFlow": false,
+  "deepFlowEndsAt": 0,
+  "hideShorts": false,
+  "hideWatched": false
+}
+
+GET /search-history
+=> 200 application/json
+[]
+
+GET /search-history?delete=none
+=> 200 application/json
+{
+  "status": "success"
+}
+

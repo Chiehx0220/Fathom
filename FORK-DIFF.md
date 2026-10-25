@@ -106,15 +106,15 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **111**.
+- Modified upstream files: **0** (0 changed lines). New files: **118**.
 
 ## Build
 
-- Modified upstream files: **2** (13 changed lines). New files: **0**.
+- Modified upstream files: **2** (14 changed lines). New files: **0**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/build.gradle.kts | 9 | 3 |
+| app/build.gradle.kts | 10 | 3 |
 | build.gradle.kts | 1 | 0 |
 
 ## Resources / strings
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **17** (128 changed lines). New files: **15**.
+- Modified upstream files: **17** (128 changed lines). New files: **24**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|

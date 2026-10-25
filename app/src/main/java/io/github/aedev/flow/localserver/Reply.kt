@@ -1,6 +1,5 @@
 package io.github.aedev.flow.localserver
 
-import org.json.JSONObject
 import java.io.OutputStream
 
 /** Response of one request. */
@@ -31,7 +30,3 @@ internal interface Reply {
         write: (OutputStream) -> Unit,
     )
 }
-
-internal fun Reply.sendJson(body: String) = send(200, body, "application/json")
-
-internal fun Reply.sendJson(body: JSONObject) = sendJson(body.toString())

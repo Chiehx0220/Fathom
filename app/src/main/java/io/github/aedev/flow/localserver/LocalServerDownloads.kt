@@ -11,8 +11,6 @@ import io.github.aedev.flow.data.video.storage.DownloadFiles
 import io.github.aedev.flow.player.stream.VideoCodecUtils
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.json.JSONArray
-import org.json.JSONObject
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.File
 import java.io.FileInputStream
@@ -56,33 +54,33 @@ private fun HistoryDbHelper.finishedDownloads(): List<DownloadWithItems> {
 }
 
 internal fun RequestContext.handleApiDownloads(reply: Reply) {
-    val array = JSONArray()
-    for (entry in dbHelper.finishedDownloads()) {
-        val download = entry.download
-        val id = LocalServerMedia.getVideoId(download.videoId)
-        // recovered rows lack serviceId: derived from id
-        val serviceId = serviceIdOfVideo(id, download.serviceId)
-        val json = JSONObject()
-        json.put("id", id)
-        json.put("url", videoIdToUrl(download.videoId, serviceId))
-        json.put("serviceId", serviceId)
-        json.put("title", download.title)
-        json.put("channelName", download.uploader)
-        json.put("channelId", if (download.channelId.isNotEmpty()) channelIdToUrl(download.channelId, serviceId) else "")
-        json.put("thumbnailUrl", WebFormat.getThumbnailUrl(download.thumbnailUrl))
-        json.put("channelThumbnailUrl", "")
-        json.put("duration", download.duration.toInt())
-        json.put("viewCount", -1)
-        json.put("uploadDate", "")
-        json.put("isLive", false)
-        json.put("isShort", false)
-        json.put("progress", 0)
-        // opened from saved file (watch?...&local=1)
-        json.put("local", true)
-        json.put("sizeBytes", entry.totalSize)
-        array.put(json)
-    }
-    reply.sendJson(JSONObject().put("videos", array))
+    val videos =
+        dbHelper.finishedDownloads().map { entry ->
+            val download = entry.download
+            val id = LocalServerMedia.getVideoId(download.videoId)
+            // recovered rows lack serviceId: derived from id
+            val serviceId = serviceIdOfVideo(id, download.serviceId)
+            VideoCard(
+                id = id,
+                url = videoIdToUrl(download.videoId, serviceId),
+                serviceId = serviceId,
+                title = download.title,
+                channelName = download.uploader,
+                channelId = if (download.channelId.isNotEmpty()) channelIdToUrl(download.channelId, serviceId) else "",
+                thumbnailUrl = WebFormat.getThumbnailUrl(download.thumbnailUrl),
+                channelThumbnailUrl = "",
+                duration = download.duration.toInt(),
+                viewCount = -1,
+                uploadDate = "",
+                isLive = false,
+                isShort = false,
+                progress = 0,
+                // opened from saved file (watch?...&local=1)
+                local = true,
+                sizeBytes = entry.totalSize,
+            )
+        }
+    reply.sendJson(Listing(videos))
 }
 
 /** Length + stream at offset (file or SAF document). */
@@ -152,7 +150,7 @@ internal fun parseByteRange(
 
 internal fun RequestContext.handleDownloadFile(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
     requestHeaders: Map<String, String>,
 ) {
     val videoId = params["id"]?.let(LocalServerMedia::getVideoId).orEmpty()

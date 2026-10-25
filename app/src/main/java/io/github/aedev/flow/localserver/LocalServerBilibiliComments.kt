@@ -6,8 +6,6 @@ import io.github.aedev.flow.bilibili.BilibiliDanmakuPosition
 import io.github.aedev.flow.bilibili.BilibiliVideoId
 import io.github.aedev.flow.di.bilibiliApi
 import kotlinx.coroutines.runBlocking
-import org.json.JSONArray
-import org.json.JSONObject
 import org.schabi.newpipe.extractor.Page
 
 /**
@@ -39,7 +37,7 @@ internal object LocalServerBilibiliComments {
     fun danmaku(
         context: Context,
         mediaUrl: String,
-    ): JSONArray {
+    ): List<Bullet> {
         val api = bilibiliApi(context)
         val (bvid, part) = BilibiliVideoId.parse(LocalServerBilibili.videoIdOf(mediaUrl))
         val danmaku =
@@ -47,20 +45,9 @@ internal object LocalServerBilibiliComments {
                 val info = api.videoInfo(bvid, part)
                 api.danmaku(info)
             }
-        return JSONArray().also { array -> danmaku.forEach { array.put(it.toJson()) } }
+        return danmaku.map { it.toBullet() }
     }
 
-    private fun BilibiliDanmaku.toJson() =
-        JSONObject()
-            .put("text", text)
-            .put("time", timeMs / 1000.0)
-            .put("color", String.format("#%06X", argbColor and 0xFFFFFF))
-            .put(
-                "position",
-                when (position) {
-                    BilibiliDanmakuPosition.TOP -> "top"
-                    BilibiliDanmakuPosition.BOTTOM -> "bottom"
-                    BilibiliDanmakuPosition.SCROLL -> "scroll"
-                },
-            ).put("size", relativeFontSize)
+    private fun BilibiliDanmaku.toBullet() =
+        Bullet(text, String.format("#%06X", argbColor and 0xFFFFFF), position.webName(), timeMs / 1000.0, relativeFontSize)
 }

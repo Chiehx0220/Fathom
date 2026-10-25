@@ -3,8 +3,9 @@ package io.github.aedev.flow.localserver
 import io.github.aedev.flow.bilibili.BilibiliLink
 import io.github.aedev.flow.utils.YouTubeLink
 import io.github.aedev.flow.utils.parseYouTubeLink
-import org.json.JSONArray
-import org.json.JSONObject
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
 import java.io.OutputStream
 import java.util.UUID
 
@@ -18,7 +19,7 @@ private data class SharedVideoParams(
     val uploaderUrl: String?,
 )
 
-private fun parseSharedVideoParams(params: Map<String, String>): SharedVideoParams {
+private fun parseSharedVideoParams(params: Query): SharedVideoParams {
     val title = params["title"].takeUnless { it.isNullOrEmpty() } ?: "Shared Item"
     val uploader = params["uploader"] ?: ""
     val thumbnail = params["thumbnail"]
@@ -28,14 +29,14 @@ private fun parseSharedVideoParams(params: Map<String, String>): SharedVideoPara
 
 // Toggle handlers answer alike (api.js act()).
 private fun RequestContext.sendActionResult(reply: Reply) {
-    reply.sendJson("{\"status\":\"success\"}")
+    reply.sendJson(SUCCESS)
 }
 
 private fun unknownAction(): Nothing = throw BadRequestException("Unknown action")
 
 internal fun RequestContext.handleSubscribeAction(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val channelUrl = params.required("id")
     when (params["action"]) {
@@ -48,7 +49,7 @@ internal fun RequestContext.handleSubscribeAction(
 
 internal fun RequestContext.handleBlockChannelAction(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val channelUrl = params.required("id")
     when (params["action"]) {
@@ -61,7 +62,7 @@ internal fun RequestContext.handleBlockChannelAction(
 
 internal fun RequestContext.handlePlaylistBookmarkAction(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val playlistUrl = params.required("id")
     when (params["action"]) {
@@ -74,7 +75,7 @@ internal fun RequestContext.handlePlaylistBookmarkAction(
 
 internal fun RequestContext.handleHistoryAction(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     when (params["action"]) {
         "remove" -> dbHelper.removeFromHistory(params.required("url"))
@@ -86,7 +87,7 @@ internal fun RequestContext.handleHistoryAction(
 
 internal fun RequestContext.handleWatchLaterAction(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val url = params.required("url")
     when (params["action"]) {
@@ -108,7 +109,7 @@ internal fun RequestContext.handleWatchLaterAction(
 
 internal fun RequestContext.handleRateVideoAction(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val url = params.required("url")
     val meta = parseSharedVideoParams(params)
@@ -123,12 +124,12 @@ internal fun RequestContext.handleRateVideoAction(
 
 internal fun RequestContext.handleSendLink(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
     clientIp: String?,
 ) {
     val videoUrl = params.required("id")
     val clientReleaseCode = params["release_code"]
-    val takeover = params["takeover"] == "1"
+    val takeover = params.flag("takeover")
     val videoTitle = params["title"].takeUnless { it.isNullOrEmpty() } ?: "Video"
 
     synchronized(RemoteSession) {
@@ -159,29 +160,29 @@ internal fun RequestContext.handleSendLink(
             } else {
                 serverLog("Remote connected (pairing only) from client IP $clientIp")
             }
-            reply.sendJson(JSONObject().put("status", "success").put("release_code", currentLockCode))
+            reply.sendJson(Status("success", releaseCode = currentLockCode))
         } else {
             val title = RemoteSession.getActiveVideoTitle()
             val busyMsg =
                 "Server is currently controlled by device at IP ${RemoteSession.getActiveClientIp()}" +
                     (title?.let { " playing: $it" } ?: "")
-            reply.sendJson(JSONObject().put("status", "busy").put("message", busyMsg))
+            reply.sendJson(Status("busy", message = busyMsg))
         }
     }
 }
 
 internal fun RequestContext.handleReleaseLock(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val clientReleaseCode = params.required("release_code")
     synchronized(RemoteSession) {
         if (RemoteSession.getActiveLockCode() == clientReleaseCode) {
             RemoteSession.releaseLock()
             serverLog("Lock released by client.")
-            reply.sendJson("{\"status\":\"success\"}")
+            reply.sendJson(SUCCESS)
         } else {
-            reply.sendJson("{\"status\":\"error\",\"message\":\"Invalid or expired lock code\"}")
+            reply.sendJson(Status("error", message = "Invalid or expired lock code"))
         }
     }
 }
@@ -190,8 +191,7 @@ internal fun RequestContext.handleReleaseLock(
 private fun parseChapterTitles(raw: String?): List<String> {
     if (raw.isNullOrEmpty()) return emptyList()
     return try {
-        val arr = org.json.JSONArray(raw)
-        (0 until arr.length()).map { arr.optString(it, "") }
+        Json.parseToJsonElement(raw).jsonArray.map { (it as? JsonPrimitive)?.content.orEmpty() }
     } catch (e: Exception) {
         emptyList()
     }
@@ -200,36 +200,36 @@ private fun parseChapterTitles(raw: String?): List<String> {
 // Paired page reports playback ~1/s: phone remote progress + mode.
 internal fun RequestContext.handleRemoteState(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val code = RemoteSession.getActiveLockCode()
     if (code == null || code != params["release_code"]) {
-        reply.sendJson("{\"status\":\"error\"}")
+        reply.sendJson(Status("error"))
         return
     }
     RemoteSession.markSeen()
-    val watching = params["watching"] == "1"
+    val watching = params.flag("watching")
     val previous = RemoteSession.remoteState.value
     RemoteSession.updateRemoteState(
         RemoteState(
             watching = watching,
-            minimized = params["mini"] == "1",
+            minimized = params.flag("mini"),
             title = params["title"]?.takeIf { it.isNotEmpty() },
-            positionSec = params["t"]?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: 0.0,
-            durationSec = params["d"]?.toDoubleOrNull()?.takeIf { it.isFinite() } ?: 0.0,
+            positionSec = params.double("t")?.takeIf { it.isFinite() } ?: 0.0,
+            durationSec = params.double("d")?.takeIf { it.isFinite() } ?: 0.0,
             paused = params["paused"] != "0",
-            volume = params["vol"]?.toFloatOrNull()?.coerceIn(0f, 1f) ?: 1f,
-            muted = params["muted"] == "1",
-            fullscreen = params["fs"] == "1",
+            volume = params.float("vol")?.coerceIn(0f, 1f) ?: 1f,
+            muted = params.flag("muted"),
+            fullscreen = params.flag("fs"),
             chapters = parseChapterTitles(params["chapters"]),
-            chapterIndex = params["chapi"]?.toIntOrNull() ?: -1,
+            chapterIndex = params.int("chapi") ?: -1,
             skipLabel = params["skip"]?.takeIf { it.isNotEmpty() },
             services =
                 params["svcs"].orEmpty().split(',').mapNotNull { entry ->
                     val colon = entry.indexOf(':')
                     if (colon <= 0) null else entry.substring(0, colon).toIntOrNull()?.let { it to entry.substring(colon + 1) }
                 },
-            activeService = params["svc"]?.toIntOrNull(),
+            activeService = params.int("svc"),
             qualities = parseQualities(params["qualities"]),
             quality = params["quality"]?.takeIf { it.isNotEmpty() },
             chosenQuality = RemoteSession.choiceHold.chosenQuality(params["qchosen"], previous.chosenQuality),
@@ -238,7 +238,7 @@ internal fun RequestContext.handleRemoteState(
             rating = RemoteSession.choiceHold.rating(params["like"], previous.rating),
         ),
     )
-    reply.sendJson("{\"status\":\"success\"}")
+    reply.sendJson(SUCCESS)
 }
 
 private const val HANDOFF_TITLE_MAX = 200
@@ -246,14 +246,14 @@ private const val HANDOFF_TITLE_MAX = 200
 /** `/handoff`: saves the position to history, then emits a [Handoff] for the app. */
 internal fun RequestContext.handleHandoff(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val url = params["id"].orEmpty().trim()
     val link = parseYouTubeLink(url)
     val playable = link is YouTubeLink.Video || link is YouTubeLink.Short || BilibiliLink.isBilibili(url)
     if (!playable) throw BadRequestException("Unsupported link")
-    val position = params["t"]?.toDoubleOrNull()?.takeIf { it.isFinite() && it >= 0 }
-    val duration = params["d"]?.toDoubleOrNull()?.takeIf { it.isFinite() && it > 0 }
+    val position = params.double("t")?.takeIf { it.isFinite() && it >= 0 }
+    val duration = params.double("d")?.takeIf { it.isFinite() && it > 0 }
     val positionMs = position?.let { (it * 1000).toLong() }
     if (positionMs != null && duration != null) dbHelper.updateWatchPosition(url, positionMs, (duration * 1000).toLong())
     RemoteSession.handOff(Handoff(url, params["title"].orEmpty().take(HANDOFF_TITLE_MAX), LocalServerMedia.getVideoId(url), positionMs))
@@ -263,13 +263,13 @@ internal fun RequestContext.handleHandoff(
 @Throws(Exception::class)
 internal fun RequestContext.handleSearchHistory(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val deleteQuery = params["delete"]
     if (!deleteQuery.isNullOrEmpty()) {
         dbHelper.deleteSearchQuery(deleteQuery)
-        reply.sendJson("{\"status\":\"success\"}")
+        reply.sendJson(SUCCESS)
         return
     }
-    reply.sendJson(JSONArray(dbHelper.searchHistory()).toString())
+    reply.sendJson(dbHelper.searchHistory())
 }

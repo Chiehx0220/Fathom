@@ -9,11 +9,12 @@ internal class RequestContext(
     internal val dbHelper: HistoryDbHelper,
     internal val executor: ExecutorService,
     internal val pairing: Pairing,
+    internal val requestPath: String,
 ) {
     internal val remoteAddress: String? get() = peer.hostAddress
     internal val remoteIsLoopback: Boolean get() = peer.isLoopbackAddress
 
-    internal fun getServiceId(params: Map<String, String>): Int {
+    internal fun getServiceId(params: Query): Int {
         val raw = params["serviceId"]
         if (raw != null) {
             try {

@@ -1,0 +1,182 @@
+GET /history_action?action=clear
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /subscribe?action=subscribe&id=https://www.youtube.com/channel/UC4QobU6STFB0P71PMvOGN5A&name=jawed&avatar=http%3A%2F%2Ft%2Fa.jpg
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /block_channel?action=block&id=https://www.youtube.com/channel/UCblocked0000000000000000
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /bookmark_playlist?action=bookmark&id=https://www.youtube.com/playlist?list=PLbaseline&name=Baseline+mix
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /watch_later_action?action=add&url=https://www.youtube.com/watch?v=jNQXAC9IVRw&title=Me+at+the+zoo&uploader=jawed&thumbnail=http%3A%2F%2Ft%2Fz.jpg&uploaderUrl=https://www.youtube.com/channel/UC4QobU6STFB0P71PMvOGN5A
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /rate_video?action=like&url=https://www.youtube.com/watch?v=jNQXAC9IVRw&title=Me+at+the+zoo&uploader=jawed&thumbnail=http%3A%2F%2Ft%2Fz.jpg&uploaderUrl=https://www.youtube.com/channel/UC4QobU6STFB0P71PMvOGN5A
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /api/v1/state?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&channel=https://www.youtube.com/channel/UC4QobU6STFB0P71PMvOGN5A
+=> 200 application/json
+{
+  "blocked": false,
+  "like": "LIKED",
+  "subscribed": true,
+  "watchLater": true
+}
+
+GET /api/v1/state?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&channel=https://www.youtube.com/channel/UCblocked0000000000000000
+=> 200 application/json
+{
+  "blocked": true,
+  "like": "LIKED",
+  "subscribed": false,
+  "watchLater": true
+}
+
+GET /api/v1/library
+=> 200 application/json
+{
+  "channels": [
+    {
+      "id": "https:\/\/www.youtube.com\/channel\/UC4QobU6STFB0P71PMvOGN5A",
+      "name": "jawed",
+      "serviceId": 0,
+      "subscriberCount": -1,
+      "thumbnailUrl": "http:\/\/t\/a.jpg",
+      "url": "https:\/\/www.youtube.com\/channel\/UC4QobU6STFB0P71PMvOGN5A"
+    }
+  ],
+  "mine": [],
+  "playlists": [
+    {
+      "id": "https:\/\/www.youtube.com\/playlist?list=PLbaseline",
+      "isLocal": false,
+      "name": "Baseline mix",
+      "serviceId": 0,
+      "thumbnailUrl": "",
+      "videoCount": 0
+    }
+  ],
+  "watchLater": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UC4QobU6STFB0P71PMvOGN5A",
+      "channelName": "jawed",
+      "channelThumbnailUrl": "",
+      "duration": 0,
+      "id": "jNQXAC9IVRw",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "http:\/\/t\/z.jpg",
+      "title": "Me at the zoo",
+      "uploadDate": "",
+      "url": "https:\/\/www.youtube.com\/watch?v=jNQXAC9IVRw",
+      "viewCount": -1
+    }
+  ]
+}
+
+GET /api/v1/liked
+=> 200 application/json
+{
+  "videos": [
+    {
+      "channelId": "",
+      "channelName": "jawed",
+      "channelThumbnailUrl": "",
+      "duration": 0,
+      "id": "jNQXAC9IVRw",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "http:\/\/t\/z.jpg",
+      "title": "Me at the zoo",
+      "uploadDate": "",
+      "url": "https:\/\/www.youtube.com\/watch?v=jNQXAC9IVRw",
+      "viewCount": -1
+    }
+  ]
+}
+
+GET /rate_video?action=dislike&url=https://www.youtube.com/watch?v=jNQXAC9IVRw&title=Me+at+the+zoo&uploader=jawed&thumbnail=http%3A%2F%2Ft%2Fz.jpg&uploaderUrl=https://www.youtube.com/channel/UC4QobU6STFB0P71PMvOGN5A
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /api/v1/state?id=https://www.youtube.com/watch?v=jNQXAC9IVRw
+=> 200 application/json
+{
+  "blocked": false,
+  "like": "DISLIKED",
+  "subscribed": false,
+  "watchLater": true
+}
+
+GET /rate_video?action=remove&url=https://www.youtube.com/watch?v=jNQXAC9IVRw
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /api/v1/state?id=https://www.youtube.com/watch?v=jNQXAC9IVRw
+=> 200 application/json
+{
+  "blocked": false,
+  "like": null,
+  "subscribed": false,
+  "watchLater": true
+}
+
+GET /watch_later_action?action=remove&url=https://www.youtube.com/watch?v=jNQXAC9IVRw
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /bookmark_playlist?action=unbookmark&id=https://www.youtube.com/playlist?list=PLbaseline
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /block_channel?action=unblock&id=https://www.youtube.com/channel/UCblocked0000000000000000
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /subscribe?action=unsubscribe&id=https://www.youtube.com/channel/UC4QobU6STFB0P71PMvOGN5A
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /api/v1/library
+=> 200 application/json
+{
+  "channels": [],
+  "mine": [],
+  "playlists": [],
+  "watchLater": []
+}
+

@@ -1,0 +1,132 @@
+GET /playlist_action?action=create&name=Study&url=https://www.youtube.com/watch?v=jNQXAC9IVRw&title=Me+at+the+zoo&uploader=jawed&thumbnail=http%3A%2F%2Ft%2Fz.jpg&uploaderUrl=https://www.youtube.com/channel/UC4QobU6STFB0P71PMvOGN5A
+=> 200 application/json
+{
+  "playlist": "<playlist>",
+  "status": "success"
+}
+
+GET /api/v1/playlists?id=https://www.youtube.com/watch?v=jNQXAC9IVRw
+=> 200 application/json
+{
+  "playlists": [
+    {
+      "contains": true,
+      "id": "<playlist>",
+      "name": "Study",
+      "videoCount": 1
+    }
+  ]
+}
+
+GET /api/v1/mylist?id=<playlist>
+=> 200 application/json
+{
+  "playlist": {
+    "id": "<playlist>",
+    "name": "Study",
+    "videoCount": 1
+  },
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UC4QobU6STFB0P71PMvOGN5A",
+      "channelName": "jawed",
+      "channelThumbnailUrl": "",
+      "duration": 0,
+      "id": "jNQXAC9IVRw",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "http:\/\/t\/z.jpg",
+      "title": "Me at the zoo",
+      "uploadDate": "",
+      "url": "https:\/\/www.youtube.com\/watch?v=jNQXAC9IVRw",
+      "viewCount": -1
+    }
+  ]
+}
+
+GET /playlist_action?action=rename&playlist=<playlist>&name=Study+2
+=> 200 application/json
+{
+  "playlist": "<playlist>",
+  "status": "success"
+}
+
+GET /playlist_action?action=remove&playlist=<playlist>&url=https://www.youtube.com/watch?v=jNQXAC9IVRw
+=> 200 application/json
+{
+  "playlist": "<playlist>",
+  "status": "success"
+}
+
+GET /api/v1/mylist?id=<playlist>
+=> 200 application/json
+{
+  "playlist": {
+    "id": "<playlist>",
+    "name": "Study 2",
+    "videoCount": 0
+  },
+  "videos": []
+}
+
+GET /playlist_action?action=add&playlist=<playlist>&url=https://www.youtube.com/watch?v=jNQXAC9IVRw&title=Me+at+the+zoo&uploader=jawed&thumbnail=http%3A%2F%2Ft%2Fz.jpg&uploaderUrl=https://www.youtube.com/channel/UC4QobU6STFB0P71PMvOGN5A
+=> 200 application/json
+{
+  "playlist": "<playlist>",
+  "status": "success"
+}
+
+GET /playlist_action?action=add&playlist=<playlist>&url=https%3A%2F%2Fexample.com%2F&title=Me+at+the+zoo&uploader=jawed&thumbnail=http%3A%2F%2Ft%2Fz.jpg&uploaderUrl=https://www.youtube.com/channel/UC4QobU6STFB0P71PMvOGN5A
+=> 200 application/json
+{
+  "playlist": "<playlist>",
+  "status": "success"
+}
+
+GET /playlist_action?action=add&playlist=missing&url=https://www.youtube.com/watch?v=jNQXAC9IVRw
+=> 400 application/json
+{
+  "error": "Unknown playlist",
+  "status": "error"
+}
+
+GET /playlist_action?action=create&name=
+=> 400 application/json
+{
+  "error": "Missing 'name' parameter",
+  "status": "error"
+}
+
+GET /api/v1/library
+=> 200 application/json
+{
+  "channels": [],
+  "mine": [
+    {
+      "id": "<playlist>",
+      "isLocal": true,
+      "name": "Study 2",
+      "serviceId": 0,
+      "thumbnailUrl": "http:\/\/t\/z.jpg",
+      "videoCount": 2
+    }
+  ],
+  "playlists": [],
+  "watchLater": []
+}
+
+GET /playlist_action?action=delete&playlist=<playlist>
+=> 200 application/json
+{
+  "playlist": "<playlist>",
+  "status": "success"
+}
+
+GET /api/v1/mylist?id=<playlist>
+=> 400 application/json
+{
+  "error": "Unknown playlist",
+  "status": "error"
+}
+

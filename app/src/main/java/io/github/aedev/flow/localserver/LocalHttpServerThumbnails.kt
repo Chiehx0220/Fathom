@@ -75,7 +75,7 @@ private fun proxiedImageHeaders(url: String): Map<String, String>? {
 @Throws(Exception::class)
 internal fun RequestContext.handleThumbnailsProxy(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val serviceId = getServiceId(params)
     val mediaUrl = params["id"] ?: throw BadRequestException("Missing 'id' parameter")
@@ -90,7 +90,7 @@ internal fun RequestContext.handleThumbnailsProxy(
 @Throws(Exception::class)
 internal fun RequestContext.handleImageProxy(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val url = params["u"]
     val extraHeaders = url?.let { proxiedImageHeaders(it) }

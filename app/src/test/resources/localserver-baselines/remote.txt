@@ -1,0 +1,52 @@
+GET /release-lock?release_code=none
+=> 200 application/json
+{
+  "message": "Invalid or expired lock code",
+  "status": "error"
+}
+
+GET /send-link?id=__connect_only__&title=Baseline
+=> 200 application/json
+{
+  "release_code": "<lock>",
+  "status": "success"
+}
+
+GET /send-link?id=__connect_only__
+=> 200 application/json
+{
+  "message": "Server is currently controlled by device at IP 127.0.0.1 playing: Baseline",
+  "status": "busy"
+}
+
+GET /remote-state?release_code=none&watching=1
+=> 200 application/json
+{
+  "status": "error"
+}
+
+GET /remote-state?release_code=<lock>&watching=1&title=Baseline&t=3.5&d=19&paused=0&vol=0.5&svcs=0:YouTube,5:Bilibili&svc=0
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /release-lock?release_code=<lock>
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /send-link?id=__connect_only__
+=> 200 application/json
+{
+  "release_code": "<lock>",
+  "status": "success"
+}
+
+GET /release-lock?release_code=<lock>
+=> 200 application/json
+{
+  "status": "success"
+}
+

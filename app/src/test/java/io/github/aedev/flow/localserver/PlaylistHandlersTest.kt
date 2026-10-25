@@ -15,17 +15,17 @@ class PlaylistHandlersTest {
 
     @Test
     fun `a picker row says whether the playlist already holds the video`() {
-        val rows = playlistChoicesJson(listOf(mix, study), setOf("2"))
-        assertThat(rows.getJSONObject(0).getBoolean("contains")).isFalse()
-        assertThat(rows.getJSONObject(1).getBoolean("contains")).isTrue()
+        val rows = playlistChoices(listOf(mix, study), setOf("2"))
+        assertThat(rows[0].contains).isFalse()
+        assertThat(rows[1].contains).isTrue()
     }
 
     @Test
     fun `library cards are marked local so they open in the app`() {
-        val card = myPlaylistsJson(listOf(mix)).getJSONObject(0)
-        assertThat(card.getBoolean("isLocal")).isTrue()
-        assertThat(card.getString("id")).isEqualTo("1")
-        assertThat(card.getInt("videoCount")).isEqualTo(3)
+        val card = mix.toCard()
+        assertThat(card.isLocal).isTrue()
+        assertThat(card.id).isEqualTo("1")
+        assertThat(card.videoCount).isEqualTo(3)
     }
 
     @Test

@@ -6,9 +6,9 @@ import java.io.OutputStream
 @Throws(Exception::class)
 internal fun RequestContext.handleDanmaku(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val serviceId = getServiceId(params)
     val danmaku = LocalServerSource.danmaku(dbHelper.appContext, serviceId, params.required("id"))
-    reply.sendJson(org.json.JSONObject().put("danmaku", danmaku))
+    reply.sendJson(DanmakuList(danmaku))
 }

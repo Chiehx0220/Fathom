@@ -46,7 +46,7 @@ internal fun RequestContext.admits(
 /** `/pair?code=`: a right code sets the session cookie. */
 internal fun RequestContext.handlePair(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     when (val result = pairing.tryPair(remoteAddress.orEmpty(), params["code"].orEmpty().trim())) {
         is PairResult.Paired -> reply.send(200, """{"ok":true}""", JSON, "no-store", SessionCookie.header(result.token))

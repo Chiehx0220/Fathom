@@ -12,9 +12,29 @@ internal class BadRequestException(
     message: String,
 ) : IllegalArgumentException(message)
 
-/** Non-empty param [name], else 400. */
-internal fun Map<String, String>.required(name: String): String =
-    this[name]?.takeIf { it.isNotEmpty() } ?: throw BadRequestException("Missing '$name' parameter")
+/** Query string, last value wins; unparsable number = absent. */
+internal class Query(
+    private val values: Map<String, String>,
+) {
+    operator fun get(name: String): String? = values[name]
+
+    /** Non-empty param [name], else 400. */
+    fun required(name: String): String = values[name]?.takeIf { it.isNotEmpty() } ?: throw BadRequestException("Missing '$name' parameter")
+
+    fun int(name: String): Int? = values[name]?.toIntOrNull()
+
+    fun long(name: String): Long? = values[name]?.toLongOrNull()
+
+    fun double(name: String): Double? = values[name]?.toDoubleOrNull()
+
+    fun float(name: String): Float? = values[name]?.toFloatOrNull()
+
+    /** `name=1`. */
+    fun flag(name: String): Boolean = values[name] == "1"
+
+    /** `name=true` / any other value → false; absent → null. */
+    fun bool(name: String): Boolean? = values[name]?.let { it == "true" }
+}
 
 /** Routes changing device state. */
 internal val MUTATING_PATHS: Set<String> =

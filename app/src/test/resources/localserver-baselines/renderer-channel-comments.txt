@@ -1,0 +1,51 @@
+channel
+{
+  "description": "About",
+  "id": "https:\/\/www.youtube.com\/channel\/UCchan",
+  "isSubscribed": true,
+  "name": "Channel",
+  "subscriberCount": 4200,
+  "thumbnailUrl": "https:\/\/yt3.example\/chan.jpg",
+  "url": "https:\/\/www.youtube.com\/channel\/UCchan"
+}
+
+channel without avatar
+{
+  "description": "",
+  "id": "https:\/\/www.youtube.com\/channel\/UCbare",
+  "isSubscribed": false,
+  "name": "Bare",
+  "subscriberCount": -1,
+  "thumbnailUrl": "",
+  "url": "https:\/\/www.youtube.com\/channel\/UCbare"
+}
+
+comments
+[
+  {
+    "author": "Commenter",
+    "authorChannelId": "https:\/\/www.youtube.com\/channel\/UCcommenter",
+    "authorThumbnail": "https:\/\/yt3.example\/c.jpg",
+    "continuationToken": "rO0ABXNyACFvcmcuc2NoYWJpLm5ld3BpcGUuZXh0cmFjdG9yLlBhZ2UXoeHzgN3fxQIABVsABGJvZHl0AAJbQkwAB2Nvb2tpZXN0AA9MamF2YS91dGlsL01hcDtMAAJpZHQAEkxqYXZhL2xhbmcvU3RyaW5nO0wAA2lkc3QAEExqYXZhL3V0aWwvTGlzdDtMAAN1cmxxAH4AA3hwcHB0AAJjMXB0ACJodHRwczovL3d3dy55b3V0dWJlLmNvbS9yZXBsaWVzL2Mx",
+    "id": "c1",
+    "isPinned": false,
+    "likeCount": 7,
+    "publishedTime": "1 day ago",
+    "replyCount": 2,
+    "text": "text c1",
+    "textType": "text"
+  },
+  {
+    "author": "Commenter",
+    "authorChannelId": "https:\/\/www.youtube.com\/channel\/UCcommenter",
+    "authorThumbnail": "https:\/\/yt3.example\/c.jpg",
+    "continuationToken": "rO0ABXNyACFvcmcuc2NoYWJpLm5ld3BpcGUuZXh0cmFjdG9yLlBhZ2UXoeHzgN3fxQIABVsABGJvZHl0AAJbQkwAB2Nvb2tpZXN0AA9MamF2YS91dGlsL01hcDtMAAJpZHQAEkxqYXZhL2xhbmcvU3RyaW5nO0wAA2lkc3QAEExqYXZhL3V0aWwvTGlzdDtMAAN1cmxxAH4AA3hwcHB0AAJjMnB0ACJodHRwczovL3d3dy55b3V0dWJlLmNvbS9yZXBsaWVzL2My",
+    "id": "c2",
+    "isPinned": true,
+    "likeCount": 7,
+    "publishedTime": "1 day ago",
+    "replyCount": 2,
+    "text": "text c2",
+    "textType": "html"
+  }
+]

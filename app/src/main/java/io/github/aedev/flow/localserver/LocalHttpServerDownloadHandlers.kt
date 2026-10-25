@@ -22,19 +22,14 @@ private fun DownloadItemStatus.webState(): String =
         DownloadItemStatus.CANCELLED -> "none"
     }
 
-private fun downloadStateJson(
-    state: String,
-    progress: Int,
-): String = "{\"state\":\"$state\",\"progress\":$progress}"
-
-private fun HistoryDbHelper.downloadStateFor(videoId: String): String {
+private fun HistoryDbHelper.downloadStateFor(videoId: String): DownloadState {
     val manager = localServerEntryPoint(appContext).videoDownloadManager()
-    val download = runBlocking { manager.getDownloadWithItems(videoId) } ?: return downloadStateJson("none", 0)
+    val download = runBlocking { manager.getDownloadWithItems(videoId) } ?: return DownloadState("none", 0)
     val state = download.overallStatus.webState()
     // Room byte counts stale mid-download (VideoDownloadManager.latestProgress): live cache while active, else persisted progress.
     val live = if (state == "downloading" || state == "pending") manager.latestProgress(videoId) else null
     val progress = ((live?.progress ?: download.progress) * 100).toInt().coerceIn(0, 100)
-    return downloadStateJson(state, progress)
+    return DownloadState(state, progress)
 }
 
 /** `height`: tallest wanted (0 = best); `codec`: vp9/h264/av1/...; absent: default policy. `audio=1`: audio only. */
@@ -44,11 +39,11 @@ internal class DownloadChoice(
     val audioOnly: Boolean,
 )
 
-internal fun downloadChoice(params: Map<String, String>): DownloadChoice =
+internal fun downloadChoice(params: Query): DownloadChoice =
     DownloadChoice(
-        height = params["height"]?.toIntOrNull()?.takeIf { it in 0..MAX_DOWNLOAD_HEIGHT },
+        height = params.int("height")?.takeIf { it in 0..MAX_DOWNLOAD_HEIGHT },
         codec = params["codec"]?.lowercase()?.takeIf { it in DOWNLOAD_CODECS },
-        audioOnly = params["audio"] == "1",
+        audioOnly = params.flag("audio"),
     )
 
 private val DOWNLOAD_CODECS = setOf("vp9", "h264", "av1", "hevc", "vp8")
@@ -95,7 +90,7 @@ private fun HistoryDbHelper.startNativeDownload(
 // Every action answers current {"state","progress"}.
 internal fun RequestContext.handleApiDownload(
     reply: Reply,
-    params: Map<String, String>,
+    params: Query,
 ) {
     val mediaUrl = params.required("id")
     val serviceId = getServiceId(params)
@@ -112,22 +107,22 @@ internal fun RequestContext.handleApiDownload(
                     "Could not start download: " + (e.message ?: "unknown error")
                 }
             if (error != null) {
-                reply.send(500, ApiRenderer.errorJson(error), "application/json")
+                reply.sendJson(ErrorBody(error = error), 500)
                 return
             }
             // Service creates DB rows async: report "pending", not "none" (button flips before first poll).
-            reply.sendJson(downloadStateJson("pending", 0))
+            reply.sendJson(DownloadState("pending", 0))
         }
 
         "cancel" -> {
             localServerEntryPoint(dbHelper.appContext).downloadController().cancel(videoId)
-            reply.sendJson(downloadStateJson("none", 0))
+            reply.sendJson(DownloadState("none", 0))
         }
 
         "delete" -> {
             val manager = localServerEntryPoint(dbHelper.appContext).videoDownloadManager()
             runBlocking { manager.deleteDownload(videoId) }
-            reply.sendJson(downloadStateJson("none", 0))
+            reply.sendJson(DownloadState("none", 0))
         }
 
         else -> {

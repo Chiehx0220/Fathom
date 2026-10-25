@@ -70,31 +70,29 @@ fun HistoryDbHelper.clearHistory() {
     runBlocking { viewHistory().clearAllHistory() }
 }
 
-/** History rows for the JSON API: video fields + progress (0-100). */
-fun HistoryDbHelper.historyJson(): org.json.JSONArray =
+/** History rows: video fields + progress (0-100). */
+internal fun HistoryDbHelper.historyCards(): List<VideoCard> =
     runBlocking {
-        val array = org.json.JSONArray()
         // Video may have two rows (one under a whole link, from web page before id normalisation): most recent wins.
         val seen = HashSet<String>()
-        for (entry in viewHistory().getAllHistory().first()) {
+        viewHistory().getAllHistory().first().mapNotNull { entry ->
             val url = videoIdToUrl(entry.videoId, entry.serviceId)
-            if (!seen.add(url)) continue
-            val json = org.json.JSONObject()
-            json.put("id", LocalServerMedia.getVideoId(entry.videoId))
-            json.put("url", url)
-            json.put("serviceId", entry.serviceId)
-            json.put("title", entry.title)
-            json.put("channelName", entry.channelName)
-            json.put("channelId", if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId, entry.serviceId) else "")
-            json.put("thumbnailUrl", WebFormat.getThumbnailUrl(entry.thumbnailUrl))
-            json.put("channelThumbnailUrl", "")
-            json.put("duration", (entry.duration / 1000).toInt())
-            json.put("viewCount", -1)
-            json.put("uploadDate", "")
-            json.put("isLive", false)
-            json.put("isShort", entry.isShort)
-            json.put("progress", entry.progressPercentage.toInt().coerceIn(0, 100))
-            array.put(json)
+            if (!seen.add(url)) return@mapNotNull null
+            VideoCard(
+                id = LocalServerMedia.getVideoId(entry.videoId),
+                url = url,
+                serviceId = entry.serviceId,
+                title = entry.title,
+                channelName = entry.channelName,
+                channelId = if (entry.channelId.isNotEmpty()) channelIdToUrl(entry.channelId, entry.serviceId) else "",
+                thumbnailUrl = WebFormat.getThumbnailUrl(entry.thumbnailUrl),
+                channelThumbnailUrl = "",
+                duration = (entry.duration / 1000).toInt(),
+                viewCount = -1,
+                uploadDate = "",
+                isLive = false,
+                isShort = entry.isShort,
+                progress = entry.progressPercentage.toInt().coerceIn(0, 100),
+            )
         }
-        array
     }
