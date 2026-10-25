@@ -31,7 +31,7 @@ private fun realAvatar(
     url: () -> String,
 ) = if (hasAvatar) sameOriginImageUrl(url()) else ""
 
-internal fun Page?.token(): String? = WebFormat.serializePage(this)
+internal fun Page?.token(): String? = PageToken.encode(this)
 
 internal fun InfoItem.toVideoCard(): VideoCard {
     val stream = this as? StreamInfoItem

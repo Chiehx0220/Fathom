@@ -15,7 +15,7 @@ internal fun RequestContext.handleApiSearch(
 ) {
     val serviceId = getServiceId(params)
     val query = params.required("q")
-    val nextPage = WebFormat.deserializePage(params["nextPage"])
+    val nextPage = params.page("nextPage")
     if (nextPage == null) dbHelper.addSearchQuery(query)
     val page = LocalServerSource.search(dbHelper.appContext, serviceId, query, nextPage)
     reply.sendJson(dbHelper.withoutHidden(page.items).toSearchResult(page.next))
@@ -26,7 +26,7 @@ internal fun RequestContext.handleApiHome(
     params: Query,
 ) {
     val serviceId = getServiceId(params)
-    val nextPage = WebFormat.deserializePage(params["nextPage"])
+    val nextPage = params.page("nextPage")
     val items: List<InfoItem>
     val next: Page?
     if (serviceId != LocalServerMedia.SERVICE_YOUTUBE) {
@@ -49,7 +49,7 @@ internal fun RequestContext.handleApiRecommendations(
     params: Query,
 ) {
     val serviceId = getServiceId(params)
-    val nextPage = WebFormat.deserializePage(params["nextPage"])
+    val nextPage = params.page("nextPage")
     val loadMore = params.flag("more")
     var items: List<InfoItem>
     var alreadyRanked = false
@@ -85,7 +85,7 @@ internal fun RequestContext.handleApiChannel(
     val tab = params["tab"] ?: "videos"
     // Matches YoutubeChannelTabLinkHandlerFactory SORT_LATEST/POPULAR/OLDEST literals. YouTube "videos" tab only; no-op elsewhere.
     val sort = params["sort"]?.takeIf { it.isNotBlank() }
-    val nextPage = WebFormat.deserializePage(params["nextPage"])
+    val nextPage = params.page("nextPage")
     val channel = LocalServerSource.channel(dbHelper.appContext, serviceId, channelUrl, tab, sort, nextPage)
     val isSubscribed = dbHelper.isSubscribed(channel.header.url)
     reply.sendJson(
@@ -117,7 +117,7 @@ internal fun RequestContext.handleApiComments(
 ) {
     val serviceId = getServiceId(params)
     val videoUrl = params.required("id")
-    val nextPage = WebFormat.deserializePage(params["nextPage"])
+    val nextPage = params.page("nextPage")
     val page = LocalServerSource.comments(dbHelper.appContext, serviceId, videoUrl, nextPage)
     if (page.disabled) {
         reply.sendJson(CommentsDto(emptyList(), JsonNull, commentsDisabled = true))
@@ -179,7 +179,7 @@ internal fun RequestContext.handleApiPlaylist(
 ) {
     val serviceId = getServiceId(params)
     val playlistUrl = params.required("id")
-    val nextPage = WebFormat.deserializePage(params["nextPage"])
+    val nextPage = params.page("nextPage")
     val playlist = LocalServerSource.playlist(dbHelper.appContext, serviceId, playlistUrl, nextPage)
     // -1 when source omits the count
     val header =

@@ -1,14 +1,8 @@
 package io.github.aedev.flow.localserver
 
-import android.util.Base64
 import org.schabi.newpipe.extractor.Image
-import org.schabi.newpipe.extractor.Page
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 
-// Shared page toolbox: formatting, escaping, thumbnails, page (de)serialization.
+// Shared page toolbox: formatting, escaping, thumbnails.
 object WebFormat {
     /** Service display name: Bilibili fixed, others from registered extractor service. */
     @JvmStatic
@@ -22,37 +16,6 @@ object WebFormat {
             if (name.isNullOrEmpty()) "Fathom" else name
         } catch (e: Exception) {
             "Fathom"
-        }
-    }
-
-    @JvmStatic
-    fun serializePage(page: Page?): String? {
-        if (page == null) return null
-        return try {
-            val baos = ByteArrayOutputStream()
-            val oos = ObjectOutputStream(baos)
-            oos.writeObject(page)
-            oos.close()
-            Base64.encodeToString(baos.toByteArray(), Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    @JvmStatic
-    fun deserializePage(b64: String?): Page? {
-        if (b64.isNullOrEmpty()) return null
-        return try {
-            val bytes = Base64.decode(b64, Base64.URL_SAFE)
-            val bais = ByteArrayInputStream(bytes)
-            val ois = ObjectInputStream(bais)
-            val page = ois.readObject() as Page
-            ois.close()
-            page
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
     }
 

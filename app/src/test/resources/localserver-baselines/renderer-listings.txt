@@ -10,7 +10,7 @@ search
       "url": "https:\/\/www.youtube.com\/channel\/UCchan"
     }
   ],
-  "nextPage": "rO0ABXNyACFvcmcuc2NoYWJpLm5ld3BpcGUuZXh0cmFjdG9yLlBhZ2UXoeHzgN3fxQIABVsABGJvZHl0AAJbQkwAB2Nvb2tpZXN0AA9MamF2YS91dGlsL01hcDtMAAJpZHQAEkxqYXZhL2xhbmcvU3RyaW5nO0wAA2lkc3QAEExqYXZhL3V0aWwvTGlzdDtMAAN1cmxxAH4AA3hwcHB0AANpZDFwdAARaHR0cHM6Ly9uZXh0L3BhZ2U",
+  "nextPage": "eyJ1cmwiOiJodHRwczovL25leHQvcGFnZSIsImlkIjoiaWQxIn0",
   "playlists": [
     {
       "id": "https:\/\/www.youtube.com\/playlist?list=PLx",

@@ -1,5 +1,6 @@
 package io.github.aedev.flow.localserver
 
+import org.schabi.newpipe.extractor.Page
 import java.util.Locale
 
 /*
@@ -20,6 +21,8 @@ internal class Query(
 
     /** Non-empty param [name], else 400. */
     fun required(name: String): String = values[name]?.takeIf { it.isNotEmpty() } ?: throw BadRequestException("Missing '$name' parameter")
+
+    fun page(name: String): Page? = PageToken.decode(values[name])
 
     fun int(name: String): Int? = values[name]?.toIntOrNull()
 
