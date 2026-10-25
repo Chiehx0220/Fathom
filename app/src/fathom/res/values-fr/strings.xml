@@ -21,12 +21,12 @@
     <string name="app_icon_picker_warning">La modification de l\'icône peut entraîner la disparition temporaire de Fathom de votre écran d\'accueil. Si nécessaire, rajoutez-la depuis le tiroir d\'applications.</string>
     <string name="content_settings_show_app_logo_subtitle">Afficher l\'icône du logo Fathom à côté du nom de l\'application dans la barre supérieure de l\'écran d\'accueil</string>
     <string name="player_settings_subtitle_language_dialog_body">Les sous-titres s\'affichent dans cette langue lorsqu\'ils sont disponibles. Si la vidéo ne contient aucune piste, Fathom utilise la traduction proposée par YouTube d\'une piste existante. Le choix d\'un sous-titre pendant la lecture met également celle-ci à jour.</string>
-    <string name="donation_prompt_title">Vous appréciez Fathom ?</string>
+    <string name="donation_prompt_title">Vous appréciez Fathom ?</string>
     <string name="donation_prompt_message">Fathom est une application gratuite et open source, conçue sans publicité ni traqueurs. Si elle a trouvé sa place sur votre appareil, pensez à soutenir son développement : cela contribue réellement à assurer la pérennité du projet.</string>
     <string name="welcome_to_flow">Bienvenue dans Fathom</string>
     <string name="flow_control_center">Centre de contrôle de Fathom</string>
     <string name="persona_audiophile_description">Vous utilisez Fathom surtout pour écouter de la musique. L\'ambiance, c\'est ce qui compte le plus.</string>
-    <string name="flow_is_up_to_date">Fathom est à jour !</string>
+    <string name="flow_is_up_to_date">Fathom est à jour !</string>
     <string name="sync_error_qr_not_flow">Ça ne ressemble pas à un code de synchronisation Fathom.</string>
     <string name="sync_collection_recommendation_profile_body">Ce que Fathom a appris sur vos habitudes de visionnage.</string>
     <string name="error_not_supported_hint">Ce format ou ce type de contenu ne peut pas être lu dans Fathom.</string>
@@ -40,7 +40,7 @@
     <string name="widget_quick_actions_description">Rechercher dans « Fathom » et accéder aux téléchargements, à l\'historique ou à la reconnaissance</string>
     <string name="ui_flow_logo">Logo Fathom</string>
     <string name="ui_crashed_last_session">Fathom a planté lors de la dernière session</string>
-    <string name="update_download_prompt">Une nouvelle version de Fathom est disponible (%1$s). Voulez-vous télécharger la dernière version de l\'APK ?</string>
+    <string name="update_download_prompt">Une nouvelle version de Fathom est disponible (%1$s). Voulez-vous télécharger la dernière version de l\'APK ?</string>
     <string name="import_migrate_description">Transférez en toute simplicité vos abonnements et votre historique depuis d\'autres plateformes vers Fathom.</string>
     <string name="import_manage_backups">Gérer vos sauvegardes Fathom</string>
     <string name="discord_presence_playing_fallback">Joué dans Fathom</string>

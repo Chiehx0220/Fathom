@@ -3,7 +3,6 @@ package io.github.aedev.flow.data.paging
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import io.github.aedev.flow.bilibili.BilibiliApi
-import io.github.aedev.flow.data.local.ContentType
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.local.WatchState
 import io.github.aedev.flow.data.model.DistinctKeyTracker
@@ -59,13 +58,7 @@ class SearchPagingSource(
                     if (isYouTube) {
                         val page = loadPage(query, filter.toSearchParams(), continuation)
                         if (params.key == null && requests == 0) onHeader(page.header)
-                        val items =
-                            if (filter.contentType == ContentType.SHORTS) {
-                                page.toShortsResults(shortsEnabled)
-                            } else {
-                                page.toResultItems(shortsEnabled)
-                            }
-                        items to page.continuation
+                        page.toResults(filter, shortsEnabled) to page.continuation
                     } else {
                         val api = checkNotNull(bilibiliApi) { "Searching service $serviceId needs a BilibiliApi" }
                         BilibiliNativeSearch.load(api, query, filter, continuation).let { it.items to it.nextKey }

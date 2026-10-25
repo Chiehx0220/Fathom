@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.model.isYouTubeServiceId
+import io.github.aedev.flow.data.paging.openInBilibili
+import io.github.aedev.flow.data.paging.openInSourceServiceLabel
 import io.github.aedev.flow.player.error.PlayerDiagnostics
 import io.github.aedev.flow.utils.openInYouTube
 
@@ -123,25 +125,12 @@ internal fun PlayerErrorPanel(
             }
             // Row 2: open in source service site/app (full width)
             OutlinedButton(
-                onClick = {
-                    if (isYouTube) {
-                        openInYouTube(context, videoId)
-                    } else {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.bilibili.com/video/$videoId")))
-                    }
-                },
+                onClick = { if (isYouTube) openInYouTube(context, videoId) else openInBilibili(context, videoId) },
                 shape = MaterialTheme.shapes.small,
                 contentPadding = ButtonPadding,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                PanelButtonContent(
-                    Icons.Rounded.OpenInBrowser,
-                    if (isYouTube) {
-                        stringResource(R.string.ui_open_in_youtube)
-                    } else {
-                        stringResource(R.string.ui_open_in_service, "Bilibili")
-                    },
-                )
+                PanelButtonContent(Icons.Rounded.OpenInBrowser, openInSourceServiceLabel(isYouTube))
             }
         }
     }
