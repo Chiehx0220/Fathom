@@ -31,7 +31,7 @@ class LocalHttpServer(
         val sockets = RemoteSockets(scope)
         val server =
             embeddedServer(CIO, host = "0.0.0.0", port = port) {
-                installLocalServer(dbHelper, threadPool, pairing, sockets)
+                installLocalServer(dbHelper, threadPool, pairing, sockets, AppContentSource(dbHelper))
             }
         server.start(wait = false)
         engine = server

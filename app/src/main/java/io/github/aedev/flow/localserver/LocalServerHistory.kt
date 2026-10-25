@@ -3,9 +3,6 @@ package io.github.aedev.flow.localserver
 import io.github.aedev.flow.data.local.ViewHistory
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
-import org.schabi.newpipe.extractor.stream.StreamType
 
 internal fun HistoryDbHelper.viewHistory() = ViewHistory.getInstance(appContext)
 

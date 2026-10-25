@@ -16,7 +16,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
-import java.io.OutputStream
 
 // GET /api/v1/downloads: finished downloads, newest first
 // GET /downloadfile?serviceId&id: saved file, Range supported; path from download row only
@@ -53,7 +52,7 @@ private fun HistoryDbHelper.finishedDownloads(): List<DownloadWithItems> {
         .sortedByDescending { it.download.createdAt }
 }
 
-internal fun RequestContext.handleApiDownloads(reply: Reply) {
+internal fun RequestContext.handleApiDownloads(): Listing {
     val videos =
         dbHelper.finishedDownloads().map { entry ->
             val download = entry.download
@@ -80,7 +79,7 @@ internal fun RequestContext.handleApiDownloads(reply: Reply) {
                 sizeBytes = entry.totalSize,
             )
         }
-    reply.sendJson(Listing(videos))
+    return Listing(videos)
 }
 
 /** Length + stream at offset (file or SAF document). */

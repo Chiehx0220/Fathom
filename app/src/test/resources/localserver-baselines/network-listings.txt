@@ -1,0 +1,324 @@
+GET /api/v1/search?q=zoo&serviceId=0
+=> 200 application/json
+{
+  "channels": [
+    {
+      "id": "https:\/\/www.youtube.com\/channel\/UCchan",
+      "name": "Channel",
+      "serviceId": 0,
+      "subscriberCount": 4200,
+      "thumbnailUrl": "https:\/\/yt3.example\/chan.jpg",
+      "url": "https:\/\/www.youtube.com\/channel\/UCchan"
+    }
+  ],
+  "nextPage": "eyJ1cmwiOiJtb3JlOjIiLCJpZCI6ImN1cnNvciJ9",
+  "playlists": [
+    {
+      "id": "https:\/\/www.youtube.com\/playlist?list=PLx",
+      "isLocal": false,
+      "name": "Playlist",
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/pl.jpg",
+      "videoCount": 12
+    }
+  ],
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "aaaaaaaaaaa",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/aaaaaaaaaaa.jpg",
+      "title": "Title aaaaaaaaaaa",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=aaaaaaaaaaa",
+      "viewCount": 1234567
+    }
+  ]
+}
+
+GET /api/v1/search?q=zoo&serviceId=0&nextPage=eyJ1cmwiOiJtb3JlOjIiLCJpZCI6ImN1cnNvciJ9
+=> 200 application/json
+{
+  "channels": [],
+  "playlists": [],
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "ddddddddddd",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/ddddddddddd.jpg",
+      "title": "Title ddddddddddd",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=ddddddddddd",
+      "viewCount": 1234567
+    }
+  ]
+}
+
+GET /api/v1/search?q=zoo&serviceId=5
+=> 200 application/json
+{
+  "channels": [
+    {
+      "id": "https:\/\/www.youtube.com\/channel\/UCchan",
+      "name": "Channel",
+      "serviceId": 0,
+      "subscriberCount": 4200,
+      "thumbnailUrl": "https:\/\/yt3.example\/chan.jpg",
+      "url": "https:\/\/www.youtube.com\/channel\/UCchan"
+    }
+  ],
+  "nextPage": "eyJ1cmwiOiJtb3JlOjIiLCJpZCI6ImN1cnNvciJ9",
+  "playlists": [
+    {
+      "id": "https:\/\/www.youtube.com\/playlist?list=PLx",
+      "isLocal": false,
+      "name": "Playlist",
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/pl.jpg",
+      "videoCount": 12
+    }
+  ],
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "aaaaaaaaaaa",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/aaaaaaaaaaa.jpg",
+      "title": "Title aaaaaaaaaaa",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=aaaaaaaaaaa",
+      "viewCount": 1234567
+    }
+  ]
+}
+
+GET /api/v1/home?serviceId=0
+=> 200 application/json
+{
+  "channels": [],
+  "playlists": [],
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "ttttttttttt",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/ttttttttttt.jpg",
+      "title": "Title ttttttttttt",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=ttttttttttt",
+      "viewCount": 1234567
+    },
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 60,
+      "id": "uuuuuuuuuuu",
+      "isLive": false,
+      "isShort": true,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/uuuuuuuuuuu.jpg",
+      "title": "Title uuuuuuuuuuu",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=uuuuuuuuuuu",
+      "viewCount": 1234567
+    }
+  ]
+}
+
+GET /api/v1/home?serviceId=5
+=> 200 application/json
+{
+  "channels": [
+    {
+      "id": "https:\/\/www.youtube.com\/channel\/UCchan",
+      "name": "Channel",
+      "serviceId": 0,
+      "subscriberCount": 4200,
+      "thumbnailUrl": "https:\/\/yt3.example\/chan.jpg",
+      "url": "https:\/\/www.youtube.com\/channel\/UCchan"
+    }
+  ],
+  "nextPage": "eyJ1cmwiOiJtb3JlOjIiLCJpZCI6ImN1cnNvciJ9",
+  "playlists": [
+    {
+      "id": "https:\/\/www.youtube.com\/playlist?list=PLx",
+      "isLocal": false,
+      "name": "Playlist",
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/pl.jpg",
+      "videoCount": 12
+    }
+  ],
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "aaaaaaaaaaa",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/aaaaaaaaaaa.jpg",
+      "title": "Title aaaaaaaaaaa",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=aaaaaaaaaaa",
+      "viewCount": 1234567
+    }
+  ]
+}
+
+GET /api/v1/channel?id=https://www.youtube.com/channel/UCchan&tab=playlists&sort=popular
+=> 200 application/json
+{
+  "channel": {
+    "description": "About",
+    "id": "https:\/\/www.youtube.com\/channel\/UCchan",
+    "isSubscribed": false,
+    "name": "Channel",
+    "subscriberCount": 4200,
+    "thumbnailUrl": "https:\/\/yt3.example\/chan.jpg",
+    "url": "https:\/\/www.youtube.com\/channel\/UCchan"
+  },
+  "nextPage": "eyJ1cmwiOiJtb3JlOjIiLCJpZCI6ImN1cnNvciJ9",
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "ccccccccccc",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/ccccccccccc.jpg",
+      "title": "Title ccccccccccc",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=ccccccccccc",
+      "viewCount": 1234567
+    }
+  ]
+}
+
+GET /api/v1/channel?id=https://www.youtube.com/channel/UCchan&nextPage=eyJ1cmwiOiJtb3JlOjIiLCJpZCI6ImN1cnNvciJ9
+=> 200 application/json
+{
+  "channel": {
+    "description": "About",
+    "id": "https:\/\/www.youtube.com\/channel\/UCchan",
+    "isSubscribed": false,
+    "name": "Channel",
+    "subscriberCount": 4200,
+    "thumbnailUrl": "https:\/\/yt3.example\/chan.jpg",
+    "url": "https:\/\/www.youtube.com\/channel\/UCchan"
+  },
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "ccccccccccc",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/ccccccccccc.jpg",
+      "title": "Title ccccccccccc",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=ccccccccccc",
+      "viewCount": 1234567
+    }
+  ]
+}
+
+GET /api/v1/playlist?id=https://www.youtube.com/playlist?list=PLx&serviceId=0
+=> 200 application/json
+{
+  "nextPage": "eyJ1cmwiOiJtb3JlOjIiLCJpZCI6ImN1cnNvciJ9",
+  "playlist": {
+    "id": "https:\/\/www.youtube.com\/playlist?list=PLx",
+    "isBookmarked": false,
+    "name": "Playlist",
+    "uploaderName": "Uploader",
+    "videoCount": 12
+  },
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "ppppppppppp",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/ppppppppppp.jpg",
+      "title": "Title ppppppppppp",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=ppppppppppp",
+      "viewCount": 1234567
+    }
+  ]
+}
+
+GET /api/v1/playlist?id=https://www.youtube.com/playlist?list=PLx&nextPage=eyJ1cmwiOiJtb3JlOjIiLCJpZCI6ImN1cnNvciJ9
+=> 200 application/json
+{
+  "playlist": {
+    "id": "https:\/\/www.youtube.com\/playlist?list=PLx",
+    "isBookmarked": false,
+    "name": "Playlist",
+    "uploaderName": "Uploader",
+    "videoCount": 12
+  },
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "ppppppppppp",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/ppppppppppp.jpg",
+      "title": "Title ppppppppppp",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=ppppppppppp",
+      "viewCount": 1234567
+    }
+  ]
+}
+
+# search service=0 q=zoo next=null
+search service=0 q=zoo next=more:2
+search service=5 q=zoo next=null
+trending service=0
+home service=5 next=null
+channel service=0 url=https://www.youtube.com/channel/UCchan tab=playlists sort=popular next=null
+channel service=0 url=https://www.youtube.com/channel/UCchan tab=videos sort=null next=more:2
+playlist service=0 url=https://www.youtube.com/playlist?list=PLx next=null
+playlist service=0 url=https://www.youtube.com/playlist?list=PLx next=more:2
+

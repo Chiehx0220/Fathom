@@ -66,22 +66,29 @@ internal class Recorder(
         return body
     }
 
+    /** Free-text line in the log. */
+    fun note(text: String) {
+        log.append("# ").append(text).append("\n\n")
+    }
+
     fun text() = masks.fold(log.toString()) { text, (value, label) -> text.replace(value, label) }
 }
 
 /** [installLocalServer] pipeline, Robolectric, loopback peer. */
-internal fun serverScenario(block: suspend ApplicationTestBuilder.() -> Unit) =
-    testApplication {
-        val db = HistoryDbHelper.getInstance(ApplicationProvider.getApplicationContext())
-        val pool = Executors.newCachedThreadPool()
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        application { installLocalServer(db, pool, Pairing(MemoryPairingStorage()), RemoteSockets(scope)) }
-        try {
-            block()
-        } finally {
-            pool.shutdownNow()
-        }
+internal fun serverScenario(
+    source: ContentSource = NoNetwork,
+    block: suspend ApplicationTestBuilder.() -> Unit,
+) = testApplication {
+    val db = HistoryDbHelper.getInstance(ApplicationProvider.getApplicationContext())
+    val pool = Executors.newCachedThreadPool()
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    application { installLocalServer(db, pool, Pairing(MemoryPairingStorage()), RemoteSockets(scope), source) }
+    try {
+        block()
+    } finally {
+        pool.shutdownNow()
     }
+}
 
 internal suspend fun ApplicationTestBuilder.record(
     name: String,

@@ -53,9 +53,7 @@ internal class CommentsResult(
     val disabled: Boolean = false,
 )
 
-/**
- * Local server list sources: Bilibili native client, YouTube NewPipe extractors. Handlers ask a page here, service-agnostic.
- */
+/** List sources: Bilibili client, YouTube NewPipe; service-agnostic. */
 internal object LocalServerSource {
     /** Feed of a service without a personalised one; Bilibili only. */
     fun home(

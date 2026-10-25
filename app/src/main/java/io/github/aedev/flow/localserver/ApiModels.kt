@@ -17,10 +17,13 @@ internal val ApiJson =
 
 internal fun String?.orJsonNull(): JsonElement = this?.let(::JsonPrimitive) ?: JsonNull
 
-internal inline fun <reified T> Reply.sendJson(
+/** Answer [body] with a non-200 [code]. */
+internal inline fun <reified T> fail(
+    code: Int,
     body: T,
-    code: Int = 200,
-) = send(code, ApiJson.encodeToString(body), "application/json")
+): Nothing = throw ApiFailure(code, ApiJson.encodeToString(body))
+
+internal inline fun <reified T> Reply.sendJson(body: T) = send(200, ApiJson.encodeToString(body), "application/json")
 
 @Serializable
 internal class VideoCard(

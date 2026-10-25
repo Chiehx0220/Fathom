@@ -1,14 +1,12 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.utils.youtubeVideoIdFromUrl
-import java.io.OutputStream
 import java.net.URLEncoder
 
 // VOD as HLS: master playlist + media playlist per file.
 
 private const val HLS_TYPE = "application/vnd.apple.mpegurl"
 
-@Throws(Exception::class)
 internal fun RequestContext.handleHlsVod(
     reply: Reply,
     params: Query,

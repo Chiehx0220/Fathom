@@ -1,7 +1,5 @@
 package io.github.aedev.flow.localserver
 
-import java.io.OutputStream
-
 internal const val PAIR_PATH = "/pair"
 internal const val ICON_PATH = "/app-icon.png"
 private const val PAIRING_REQUIRED = "Unauthorized: pair this browser with the code shown on the phone"

@@ -6,7 +6,6 @@ import kotlinx.coroutines.runBlocking
 import java.io.ByteArrayOutputStream
 
 /** `ICON_PATH`: the active launcher icon as PNG; revalidated on every load. */
-@Throws(Exception::class)
 internal fun RequestContext.handleAppIcon(reply: Reply) {
     val png =
         ByteArrayOutputStream().use { out ->

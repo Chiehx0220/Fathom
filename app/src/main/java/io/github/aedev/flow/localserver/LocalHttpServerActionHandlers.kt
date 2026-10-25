@@ -4,9 +4,10 @@ import io.github.aedev.flow.bilibili.BilibiliLink
 import io.github.aedev.flow.utils.YouTubeLink
 import io.github.aedev.flow.utils.parseYouTubeLink
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonArray
-import java.io.OutputStream
 import java.util.UUID
 
 // Toggle actions (subscribe/block/bookmark/history/watch-later/rate) + remote control (send-link/release-lock/remote-state).
@@ -27,68 +28,48 @@ private fun parseSharedVideoParams(params: Query): SharedVideoParams {
     return SharedVideoParams(title, uploader, thumbnail, uploaderUrl)
 }
 
-// Toggle handlers answer alike (api.js act()).
-private fun RequestContext.sendActionResult(reply: Reply) {
-    reply.sendJson(SUCCESS)
-}
-
 private fun unknownAction(): Nothing = throw BadRequestException("Unknown action")
 
-internal fun RequestContext.handleSubscribeAction(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleSubscribeAction(params: Query): Status {
     val channelUrl = params.required("id")
     when (params["action"]) {
         "subscribe" -> dbHelper.addSubscription(channelUrl, params["name"], params["avatar"])
         "unsubscribe" -> dbHelper.removeSubscription(channelUrl)
         else -> unknownAction()
     }
-    sendActionResult(reply)
+    return SUCCESS
 }
 
-internal fun RequestContext.handleBlockChannelAction(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleBlockChannelAction(params: Query): Status {
     val channelUrl = params.required("id")
     when (params["action"]) {
         "block" -> dbHelper.blockChannel(channelUrl)
         "unblock" -> dbHelper.unblockChannel(channelUrl)
         else -> unknownAction()
     }
-    sendActionResult(reply)
+    return SUCCESS
 }
 
-internal fun RequestContext.handlePlaylistBookmarkAction(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handlePlaylistBookmarkAction(params: Query): Status {
     val playlistUrl = params.required("id")
     when (params["action"]) {
         "bookmark" -> dbHelper.bookmarkPlaylist(playlistUrl, params["name"], null)
         "unbookmark" -> dbHelper.unbookmarkPlaylist(playlistUrl)
         else -> unknownAction()
     }
-    sendActionResult(reply)
+    return SUCCESS
 }
 
-internal fun RequestContext.handleHistoryAction(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleHistoryAction(params: Query): Status {
     when (params["action"]) {
         "remove" -> dbHelper.removeFromHistory(params.required("url"))
         "clear" -> dbHelper.clearHistory()
         else -> unknownAction()
     }
-    sendActionResult(reply)
+    return SUCCESS
 }
 
-internal fun RequestContext.handleWatchLaterAction(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleWatchLaterAction(params: Query): Status {
     val url = params.required("url")
     when (params["action"]) {
         "add" -> {
@@ -104,13 +85,10 @@ internal fun RequestContext.handleWatchLaterAction(
             unknownAction()
         }
     }
-    sendActionResult(reply)
+    return SUCCESS
 }
 
-internal fun RequestContext.handleRateVideoAction(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleRateVideoAction(params: Query): Status {
     val url = params.required("url")
     val meta = parseSharedVideoParams(params)
     when (params["action"]) {
@@ -119,20 +97,19 @@ internal fun RequestContext.handleRateVideoAction(
         "remove" -> dbHelper.removeLikeState(url)
         else -> unknownAction()
     }
-    sendActionResult(reply)
+    return SUCCESS
 }
 
 internal fun RequestContext.handleSendLink(
-    reply: Reply,
     params: Query,
     clientIp: String?,
-) {
+): Status {
     val videoUrl = params.required("id")
     val clientReleaseCode = params["release_code"]
     val takeover = params.flag("takeover")
     val videoTitle = params["title"].takeUnless { it.isNullOrEmpty() } ?: "Video"
 
-    synchronized(RemoteSession) {
+    return synchronized(RemoteSession) {
         var hasLock = false
         var currentLockCode = RemoteSession.getActiveLockCode()
 
@@ -160,29 +137,26 @@ internal fun RequestContext.handleSendLink(
             } else {
                 serverLog("Remote connected (pairing only) from client IP $clientIp")
             }
-            reply.sendJson(Status("success", releaseCode = currentLockCode))
+            Status("success", releaseCode = currentLockCode)
         } else {
             val title = RemoteSession.getActiveVideoTitle()
             val busyMsg =
                 "Server is currently controlled by device at IP ${RemoteSession.getActiveClientIp()}" +
                     (title?.let { " playing: $it" } ?: "")
-            reply.sendJson(Status("busy", message = busyMsg))
+            Status("busy", message = busyMsg)
         }
     }
 }
 
-internal fun RequestContext.handleReleaseLock(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleReleaseLock(params: Query): Status {
     val clientReleaseCode = params.required("release_code")
-    synchronized(RemoteSession) {
+    return synchronized(RemoteSession) {
         if (RemoteSession.getActiveLockCode() == clientReleaseCode) {
             RemoteSession.releaseLock()
             serverLog("Lock released by client.")
-            reply.sendJson(SUCCESS)
+            SUCCESS
         } else {
-            reply.sendJson(Status("error", message = "Invalid or expired lock code"))
+            Status("error", message = "Invalid or expired lock code")
         }
     }
 }
@@ -198,14 +172,10 @@ private fun parseChapterTitles(raw: String?): List<String> {
 }
 
 // Paired page reports playback ~1/s: phone remote progress + mode.
-internal fun RequestContext.handleRemoteState(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleRemoteState(params: Query): Status {
     val code = RemoteSession.getActiveLockCode()
     if (code == null || code != params["release_code"]) {
-        reply.sendJson(Status("error"))
-        return
+        return Status("error")
     }
     RemoteSession.markSeen()
     val watching = params.flag("watching")
@@ -238,16 +208,13 @@ internal fun RequestContext.handleRemoteState(
             rating = RemoteSession.choiceHold.rating(params["like"], previous.rating),
         ),
     )
-    reply.sendJson(SUCCESS)
+    return SUCCESS
 }
 
 private const val HANDOFF_TITLE_MAX = 200
 
 /** `/handoff`: saves the position to history, then emits a [Handoff] for the app. */
-internal fun RequestContext.handleHandoff(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleHandoff(params: Query): Status {
     val url = params["id"].orEmpty().trim()
     val link = parseYouTubeLink(url)
     val playable = link is YouTubeLink.Video || link is YouTubeLink.Short || BilibiliLink.isBilibili(url)
@@ -257,19 +224,14 @@ internal fun RequestContext.handleHandoff(
     val positionMs = position?.let { (it * 1000).toLong() }
     if (positionMs != null && duration != null) dbHelper.updateWatchPosition(url, positionMs, (duration * 1000).toLong())
     RemoteSession.handOff(Handoff(url, params["title"].orEmpty().take(HANDOFF_TITLE_MAX), LocalServerMedia.getVideoId(url), positionMs))
-    sendActionResult(reply)
+    return SUCCESS
 }
 
-@Throws(Exception::class)
-internal fun RequestContext.handleSearchHistory(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleSearchHistory(params: Query): JsonElement {
     val deleteQuery = params["delete"]
     if (!deleteQuery.isNullOrEmpty()) {
         dbHelper.deleteSearchQuery(deleteQuery)
-        reply.sendJson(SUCCESS)
-        return
+        return ApiJson.encodeToJsonElement(SUCCESS)
     }
-    reply.sendJson(dbHelper.searchHistory())
+    return ApiJson.encodeToJsonElement(dbHelper.searchHistory())
 }

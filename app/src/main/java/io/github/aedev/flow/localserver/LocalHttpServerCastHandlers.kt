@@ -2,7 +2,6 @@ package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.player.dlna.DlnaCastManager
 import io.github.aedev.flow.player.dlna.DlnaDevice
-import java.io.OutputStream
 
 private const val CAST_START_TIMEOUT_MS = 15_000L
 private const val CAST_POLL_MS = 250L
@@ -17,43 +16,31 @@ internal fun castState(
 ) = CastState(discovering, casting?.usn.orJsonNull(), devices.map { CastDeviceDto(it.friendlyName, it.usn) })
 
 /** `scan=1` starts discovery if idle; reported as running before its coroutine starts. */
-internal fun RequestContext.handleCastDevices(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleCastDevices(params: Query): CastState {
     val scan = params.flag("scan")
     if (scan && !DlnaCastManager.isDiscovering.value) DlnaCastManager.startDiscovery(dbHelper.appContext)
     val discovering = scan || DlnaCastManager.isDiscovering.value
-    reply.sendJson(castState(DlnaCastManager.devices.value, discovering, DlnaCastManager.currentDevice.value))
+    return castState(DlnaCastManager.devices.value, discovering, DlnaCastManager.currentDevice.value)
 }
 
-internal fun RequestContext.handleCastStart(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleCastStart(params: Query): Status {
     val url = params["id"].orEmpty().trim()
     val device = DlnaCastManager.devices.value.firstOrNull { it.usn == params["usn"] }
-    if (device == null || url.isEmpty()) {
-        reply.sendJson(Status("no_device"), 404)
-        return
-    }
-    val info = LocalServerSource.streamInfo(dbHelper.appContext, getServiceId(params), url)
+    if (device == null || url.isEmpty()) fail(404, Status("no_device"))
+    val info = source.streamInfo(getServiceId(params), url)
     DlnaCastManager.castStreamInfo(device, params["title"].orEmpty().ifEmpty { info.name }, info, null)
-    if (!awaitCasting(device)) {
-        reply.sendJson(Status("failed"), 502)
-        return
-    }
+    if (!awaitCasting(device)) fail(502, Status("failed"))
     val position = params.double("t")?.toLong() ?: 0L
     if (position >= MIN_SEEK_SECONDS) {
         Thread.sleep(SEEK_SETTLE_MS)
         DlnaCastManager.seekTo(device, position)
     }
-    reply.sendJson(SUCCESS)
+    return SUCCESS
 }
 
-internal fun RequestContext.handleCastStop(reply: Reply) {
+internal fun RequestContext.handleCastStop(): Status {
     DlnaCastManager.disconnect()
-    reply.sendJson(SUCCESS)
+    return SUCCESS
 }
 
 private fun awaitCasting(device: DlnaDevice): Boolean {

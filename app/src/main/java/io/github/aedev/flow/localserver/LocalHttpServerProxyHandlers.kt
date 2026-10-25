@@ -9,7 +9,6 @@ import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.SubtitlesStream
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.IOException
-import java.io.OutputStream
 
 // Stream, manifest, subtitle proxies. Helpers: LocalServerMedia, LocalServerCaches, RemoteSession.
 
@@ -169,7 +168,6 @@ private fun dropAfterDenial(
     LocalServerCaches.streamUaCache.remove(cacheKey)
 }
 
-@Throws(Exception::class)
 internal fun RequestContext.handleStreamProxy(
     reply: Reply,
     params: Query,
@@ -340,7 +338,6 @@ internal fun repCacheKey(
     repId: String,
 ) = "${serviceId}_${mediaUrl}_rep_$repId"
 
-@Throws(Exception::class)
 internal fun RequestContext.handleSubtitlesProxy(
     reply: Reply,
     params: Query,
@@ -350,7 +347,7 @@ internal fun RequestContext.handleSubtitlesProxy(
     val lang = params["lang"]
     val isAuto = "true" == params["auto"]
 
-    val info = LocalServerSource.streamInfo(dbHelper.appContext, serviceId, mediaUrl ?: throw BadRequestException("Missing 'id' parameter"))
+    val info = source.streamInfo(serviceId, mediaUrl ?: throw BadRequestException("Missing 'id' parameter"))
 
     var targetStream: SubtitlesStream? = null
     var subs: List<SubtitlesStream>? = null

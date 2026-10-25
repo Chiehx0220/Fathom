@@ -5,11 +5,9 @@ import io.github.aedev.flow.data.local.entity.DownloadItemStatus
 import io.github.aedev.flow.data.video.downloader.request.toDownloadRequest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import java.io.OutputStream
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
-// Web "Download" button → DownloadController (queue shared with Quick Actions download). Worker re-extracts + selects stream;
-// this describes video + quality only. YouTube only (button hidden otherwise, app/js/watch.js).
+// Web download button → DownloadController (shared queue); worker re-extracts. YouTube only.
 
 // Web button state names. "none" also covers CANCELLED.
 private fun DownloadItemStatus.webState(): String =
@@ -51,14 +49,14 @@ private val DOWNLOAD_CODECS = setOf("vp9", "h264", "av1", "hevc", "vp8")
 private const val MAX_DOWNLOAD_HEIGHT = 4320
 
 // Enqueue at [choice] or default download quality. Null on success, else user-facing error.
-private fun HistoryDbHelper.startNativeDownload(
+private fun RequestContext.startNativeDownload(
     serviceId: Int,
     mediaUrl: String,
     videoId: String,
     choice: DownloadChoice,
 ): String? {
-    val info = LocalServerSource.streamInfo(appContext, serviceId, mediaUrl)
-    val prefs = PlayerPreferences(appContext)
+    val info = source.streamInfo(serviceId, mediaUrl)
+    val prefs = PlayerPreferences(dbHelper.appContext)
     val targetHeight = choice.height ?: runBlocking { prefs.defaultDownloadQuality.first() }.height
 
     val video =
@@ -76,7 +74,7 @@ private fun HistoryDbHelper.startNativeDownload(
         )
 
     runBlocking {
-        localServerEntryPoint(appContext)
+        localServerEntryPoint(dbHelper.appContext)
             .downloadController()
             .enqueue(
                 video.toDownloadRequest(audioOnly = choice.audioOnly, targetHeight = targetHeight, videoCodec = choice.codec),
@@ -88,45 +86,39 @@ private fun HistoryDbHelper.startNativeDownload(
 
 // GET /api/v1/download?action=status|start|cancel|delete&id=<video url>&serviceId=<n>
 // Every action answers current {"state","progress"}.
-internal fun RequestContext.handleApiDownload(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleApiDownload(params: Query): DownloadState {
     val mediaUrl = params.required("id")
     val serviceId = getServiceId(params)
     val videoId = LocalServerMedia.getVideoId(mediaUrl).ifEmpty { throw BadRequestException("Could not determine video id") }
 
-    when (params["action"]) {
+    return when (params["action"]) {
         "start" -> {
             if (serviceId != 0) throw BadRequestException("Downloads are only supported for YouTube videos")
             val error =
                 try {
-                    dbHelper.startNativeDownload(serviceId, mediaUrl, videoId, downloadChoice(params))
+                    startNativeDownload(serviceId, mediaUrl, videoId, downloadChoice(params))
                 } catch (e: Exception) {
                     serverLog("Download start failed: " + e.message)
                     "Could not start download: " + (e.message ?: "unknown error")
                 }
-            if (error != null) {
-                reply.sendJson(ErrorBody(error = error), 500)
-                return
-            }
+            if (error != null) fail(500, ErrorBody(error = error))
             // Service creates DB rows async: report "pending", not "none" (button flips before first poll).
-            reply.sendJson(DownloadState("pending", 0))
+            DownloadState("pending", 0)
         }
 
         "cancel" -> {
             localServerEntryPoint(dbHelper.appContext).downloadController().cancel(videoId)
-            reply.sendJson(DownloadState("none", 0))
+            DownloadState("none", 0)
         }
 
         "delete" -> {
             val manager = localServerEntryPoint(dbHelper.appContext).videoDownloadManager()
             runBlocking { manager.deleteDownload(videoId) }
-            reply.sendJson(DownloadState("none", 0))
+            DownloadState("none", 0)
         }
 
         else -> {
-            reply.sendJson(dbHelper.downloadStateFor(videoId))
+            dbHelper.downloadStateFor(videoId)
         }
     }
 }

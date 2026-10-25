@@ -9,22 +9,13 @@ internal class RequestContext(
     internal val dbHelper: HistoryDbHelper,
     internal val executor: ExecutorService,
     internal val pairing: Pairing,
+    internal val source: ContentSource,
     internal val requestPath: String,
+    internal val headers: Map<String, String>,
 ) {
     internal val remoteAddress: String? get() = peer.hostAddress
     internal val remoteIsLoopback: Boolean get() = peer.isLoopbackAddress
 
-    internal fun getServiceId(params: Query): Int {
-        val raw = params["serviceId"]
-        if (raw != null) {
-            try {
-                val id = raw.trim().toInt()
-                if (LocalServerMedia.isSupportedService(id)) {
-                    return id
-                }
-            } catch (ignored: NumberFormatException) {
-            }
-        }
-        return LocalServerMedia.SERVICE_YOUTUBE
-    }
+    internal fun getServiceId(params: Query): Int =
+        params["serviceId"]?.trim()?.toIntOrNull()?.takeIf(LocalServerMedia::isSupportedService) ?: LocalServerMedia.SERVICE_YOUTUBE
 }

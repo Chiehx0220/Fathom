@@ -5,7 +5,6 @@ import io.github.aedev.flow.data.local.LikedVideosRepository
 import io.github.aedev.flow.data.local.PlaylistRepository
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.InteractionType
-import io.github.aedev.flow.innertube.YouTube
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.schabi.newpipe.extractor.InfoItem

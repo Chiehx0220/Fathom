@@ -186,7 +186,6 @@ object LocalServerMedia {
     }
 
     // One extractor + page fetch per video, first handler wins.
-    @Throws(Exception::class)
     fun getCachedExtractor(
         service: StreamingService,
         serviceId: Int,

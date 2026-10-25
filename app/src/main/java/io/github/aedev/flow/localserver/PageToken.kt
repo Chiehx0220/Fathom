@@ -17,7 +17,7 @@ private class PageFields(
     val body: String? = null,
 )
 
-/** Next-page cursor held by the web client: base64url JSON of [Page] fields. Anything else decodes to null. */
+/** Next-page cursor: base64url JSON of [Page] fields; anything else decodes to null. */
 internal object PageToken {
     private val json = Json { explicitNulls = false }
     private val encoder = Base64.getUrlEncoder().withoutPadding()

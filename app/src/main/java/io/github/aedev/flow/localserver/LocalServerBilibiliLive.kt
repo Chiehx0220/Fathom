@@ -2,7 +2,6 @@ package io.github.aedev.flow.localserver
 
 import android.content.Context
 import io.github.aedev.flow.bilibili.BilibiliContentNotAvailableException
-import io.github.aedev.flow.bilibili.BilibiliDanmakuPosition
 import io.github.aedev.flow.bilibili.BilibiliLiveId
 import io.github.aedev.flow.bilibili.BilibiliLiveMessage
 import io.github.aedev.flow.di.bilibiliApi
@@ -104,9 +103,7 @@ internal object LocalServerBilibiliLive {
     private val chats = ConcurrentHashMap<Long, Chat>()
     private val chatScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    /**
-     * Chat of [roomId] since [since] (last poll's position). Socket opens on first poll, closes after idle (closed tab holds no connection).
-     */
+    /** Chat of [roomId] since [since]; socket opens on first poll, closes when idle. */
     fun chatSince(
         context: Context,
         roomId: Long,

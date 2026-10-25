@@ -4,14 +4,19 @@ import org.schabi.newpipe.extractor.Page
 import java.util.Locale
 
 /*
- * Header-level request checks: cross-site state change, DNS rebinding (re-pointed domain), foreign WebSocket origin.
- * A program on the network can set any header; that is what [Pairing] is for.
+ * Header checks: cross-site state change, DNS rebinding, foreign WebSocket origin. Headers are forgeable; [Pairing] covers that.
  */
 
-/** Request missing a required part; 400 + message, not server error. */
+/** Missing required part → 400. */
 internal class BadRequestException(
     message: String,
 ) : IllegalArgumentException(message)
+
+/** Non-200 JSON answer, thrown from an API handler. */
+internal class ApiFailure(
+    val code: Int,
+    val body: String,
+) : RuntimeException(body)
 
 /** Query string, last value wins; unparsable number = absent. */
 internal class Query(
@@ -73,10 +78,7 @@ internal val CROSS_ORIGIN_PATHS: Set<String> =
 private val IPV4 = Regex("""\d{1,3}(\.\d{1,3}){3}""")
 private val LOCAL_SUFFIXES = listOf(".local", ".lan", ".home.arpa", ".internal")
 
-/**
- * [hostHeader] names this device by address or local name. Public domain re-pointed at this address sends that domain; browser then treats the device as that page's origin (DNS rebinding):
- * refused. No header = program, not browser.
- */
+/** [hostHeader] = this device's address or local name; a re-pointed public domain (DNS rebinding) is refused. No header = program. */
 internal fun isLocalHostHeader(hostHeader: String?): Boolean {
     val value = hostHeader?.trim().orEmpty()
     if (value.isEmpty()) return hostHeader == null
@@ -92,7 +94,7 @@ internal fun isLocalHostHeader(hostHeader: String?): Boolean {
         LOCAL_SUFFIXES.any { host.endsWith(it) }
 }
 
-/** Same-origin by `Sec-Fetch-Site`, else `Origin`; `none` is a typed address. No such header means a program. */
+/** Same-origin via `Sec-Fetch-Site`, else `Origin`; `none` = typed address; neither header = program. */
 internal fun isSameOriginRequest(headers: Map<String, String>): Boolean {
     val site = headers["sec-fetch-site"]
     if (site != null) return site == "same-origin" || site == "none"
@@ -125,7 +127,7 @@ internal fun refusalFor(
 private fun hostOf(authority: String): String =
     (if (authority.startsWith("[")) authority.substringBefore(']') + "]" else authority.substringBefore(':')).lowercase(Locale.US)
 
-/** Browser WebSockets must come from a page of this server's own address; no `Origin` means a program. */
+/** WebSocket origin must be this server's own; no `Origin` = program. */
 internal fun isAllowedWebSocketOrigin(
     origin: String?,
     hostHeader: String?,

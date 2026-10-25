@@ -3,7 +3,6 @@ package io.github.aedev.flow.localserver
 import io.github.aedev.flow.bilibili.BilibiliCdn
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.IOException
-import java.io.OutputStream
 import java.net.URI
 import java.net.URLEncoder
 
@@ -36,16 +35,13 @@ internal fun rewriteHlsPlaylist(
         }
 }
 
-/**
- * Origin of a live room's master playlist. Segment hosts = stream CDN nodes only; this one path of one Bilibili host allowed alongside.
- */
+/** Live master-playlist origin; allowed besides stream CDN hosts. */
 internal fun isLiveGateway(url: String): Boolean {
     val parsed = url.toHttpUrlOrNull() ?: return false
     return parsed.scheme == "https" && parsed.host == "api.live.bilibili.com" && parsed.encodedPath.startsWith("/xlive/play-gateway/")
 }
 
-/** Relays one HLS playlist/segment of a Bilibili CDN or live gateway; other addresses refused (not an open proxy). */
-@Throws(Exception::class)
+/** HLS playlist/segment relay for Bilibili CDN/live gateway only (not an open proxy). */
 internal fun RequestContext.handleHlsProxy(
     reply: Reply,
     params: Query,
@@ -95,12 +91,8 @@ internal fun RequestContext.handleHlsProxy(
 }
 
 /** Room chat since last poll's position; first poll (no position) only learns it. */
-@Throws(Exception::class)
-internal fun RequestContext.handleLiveChat(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleLiveChat(params: Query): LiveChat {
     val roomId = params.long("room") ?: throw BadRequestException("Missing 'room' parameter")
     val (seq, items) = LocalServerBilibiliLive.chatSince(dbHelper.appContext, roomId, params.long("since"))
-    reply.sendJson(LiveChat(seq, items))
+    return LiveChat(seq, items)
 }

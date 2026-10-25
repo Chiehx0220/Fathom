@@ -1,0 +1,271 @@
+GET /history_action?action=clear
+=> 200 application/json
+{
+  "status": "success"
+}
+
+GET /api/v1/video?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&serviceId=0
+=> 200 application/json
+{
+  "channelId": "https:\/\/www.youtube.com\/channel\/UC4QobU6STFB0P71PMvOGN5A",
+  "channelName": "jawed",
+  "channelThumbnailUrl": "https:\/\/yt3.example\/jawed.jpg",
+  "chapters": [
+    {
+      "s": 0,
+      "t": "Intro",
+      "thumb": ""
+    },
+    {
+      "s": 5,
+      "t": "Zoo",
+      "thumb": "https:\/\/i.ytimg.example\/seg.jpg"
+    }
+  ],
+  "description": "<b>Hi<\/b> at 0:05",
+  "descriptionType": "html",
+  "duration": 19,
+  "id": "jNQXAC9IVRw",
+  "isLive": false,
+  "isShort": true,
+  "likeCount": 12345,
+  "playback": {
+    "formats": [
+      {
+        "bitrate": 0,
+        "format": "mp4",
+        "itag": 18,
+        "kind": "video",
+        "resolution": "360p"
+      },
+      {
+        "bitrate": 128,
+        "format": "m4a",
+        "itag": 140,
+        "kind": "audio",
+        "resolution": ""
+      }
+    ],
+    "isAdaptive": true,
+    "playlistUrl": "\/hlsvod?serviceId=0&id=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DjNQXAC9IVRw",
+    "qualities": [
+      {
+        "codecs": [
+          "h264"
+        ],
+        "height": 1080
+      },
+      {
+        "codecs": [
+          "h264"
+        ],
+        "height": 360
+      }
+    ],
+    "streamUrl": "\/stream?serviceId=0&id=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DjNQXAC9IVRw"
+  },
+  "relatedVideos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UCuploader",
+      "channelName": "Uploader",
+      "channelThumbnailUrl": "https:\/\/yt3.example\/avatar.jpg",
+      "duration": 212,
+      "id": "rrrrrrrrrrr",
+      "isLive": false,
+      "isShort": false,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/rrrrrrrrrrr.jpg",
+      "title": "Title rrrrrrrrrrr",
+      "uploadDate": "2 years ago",
+      "url": "https:\/\/www.youtube.com\/watch?v=rrrrrrrrrrr",
+      "viewCount": 1234567
+    }
+  ],
+  "serviceId": 0,
+  "subtitles": [],
+  "thumbnailUrl": "https:\/\/i.ytimg.example\/zoo.jpg",
+  "title": "Me at the zoo",
+  "uploadDate": "19 years ago",
+  "url": "https:\/\/www.youtube.com\/watch?v=jNQXAC9IVRw",
+  "viewCount": 9000000
+}
+
+GET /api/v1/history
+=> 200 application/json
+{
+  "videos": [
+    {
+      "channelId": "https:\/\/www.youtube.com\/channel\/UC4QobU6STFB0P71PMvOGN5A",
+      "channelName": "jawed",
+      "channelThumbnailUrl": "",
+      "duration": 0,
+      "id": "jNQXAC9IVRw",
+      "isLive": false,
+      "isShort": false,
+      "progress": 0,
+      "serviceId": 0,
+      "thumbnailUrl": "https:\/\/i.ytimg.example\/zoo.jpg",
+      "title": "Me at the zoo",
+      "uploadDate": "",
+      "url": "https:\/\/www.youtube.com\/watch?v=jNQXAC9IVRw",
+      "viewCount": -1
+    }
+  ]
+}
+
+GET /api/v1/comments?id=https://www.youtube.com/watch?v=jNQXAC9IVRw
+=> 200 application/json
+{
+  "comments": [
+    {
+      "author": "Commenter",
+      "authorChannelId": "https:\/\/www.youtube.com\/channel\/UCcommenter",
+      "authorThumbnail": "https:\/\/yt3.example\/c.jpg",
+      "continuationToken": "eyJ1cmwiOiJodHRwczovL3d3dy55b3V0dWJlLmNvbS9yZXBsaWVzL2MxIiwiaWQiOiJjMSJ9",
+      "id": "c1",
+      "isPinned": false,
+      "likeCount": 7,
+      "publishedTime": "1 day ago",
+      "replyCount": 2,
+      "text": "text c1",
+      "textType": "text"
+    },
+    {
+      "author": "Commenter",
+      "authorChannelId": "https:\/\/www.youtube.com\/channel\/UCcommenter",
+      "authorThumbnail": "https:\/\/yt3.example\/c.jpg",
+      "continuationToken": "eyJ1cmwiOiJodHRwczovL3d3dy55b3V0dWJlLmNvbS9yZXBsaWVzL2MyIiwiaWQiOiJjMiJ9",
+      "id": "c2",
+      "isPinned": true,
+      "likeCount": 7,
+      "publishedTime": "1 day ago",
+      "replyCount": 2,
+      "text": "text c2",
+      "textType": "html"
+    }
+  ],
+  "commentsDisabled": false,
+  "nextPage": "eyJ1cmwiOiJtb3JlOjIiLCJpZCI6ImN1cnNvciJ9"
+}
+
+GET /api/v1/comments?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&nextPage=eyJ1cmwiOiJtb3JlOjIiLCJpZCI6ImN1cnNvciJ9
+=> 200 application/json
+{
+  "comments": [
+    {
+      "author": "Commenter",
+      "authorChannelId": "https:\/\/www.youtube.com\/channel\/UCcommenter",
+      "authorThumbnail": "https:\/\/yt3.example\/c.jpg",
+      "continuationToken": "eyJ1cmwiOiJodHRwczovL3d3dy55b3V0dWJlLmNvbS9yZXBsaWVzL2MxIiwiaWQiOiJjMSJ9",
+      "id": "c1",
+      "isPinned": false,
+      "likeCount": 7,
+      "publishedTime": "1 day ago",
+      "replyCount": 2,
+      "text": "text c1",
+      "textType": "text"
+    },
+    {
+      "author": "Commenter",
+      "authorChannelId": "https:\/\/www.youtube.com\/channel\/UCcommenter",
+      "authorThumbnail": "https:\/\/yt3.example\/c.jpg",
+      "continuationToken": "eyJ1cmwiOiJodHRwczovL3d3dy55b3V0dWJlLmNvbS9yZXBsaWVzL2MyIiwiaWQiOiJjMiJ9",
+      "id": "c2",
+      "isPinned": true,
+      "likeCount": 7,
+      "publishedTime": "1 day ago",
+      "replyCount": 2,
+      "text": "text c2",
+      "textType": "html"
+    }
+  ],
+  "commentsDisabled": false
+}
+
+GET /api/v1/comments?id=https://www.youtube.com/watch?v=disabled0000
+=> 200 application/json
+{
+  "comments": [],
+  "commentsDisabled": true,
+  "nextPage": null
+}
+
+GET /api/v1/sponsor?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&serviceId=0
+=> 200 application/json
+{
+  "segments": [
+    {
+      "c": "intro",
+      "e": 4.199,
+      "l": "intro",
+      "s": 0
+    },
+    {
+      "c": "interaction",
+      "e": 20.5,
+      "l": "reminder",
+      "s": 10
+    },
+    {
+      "c": "music_offtopic",
+      "e": 50,
+      "l": "non-music part",
+      "s": 40
+    }
+  ]
+}
+
+GET /api/v1/sponsor?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&serviceId=5
+=> 200 application/json
+{
+  "segments": []
+}
+
+GET /api/v1/sponsor?serviceId=0
+=> 200 application/json
+{
+  "segments": []
+}
+
+GET /danmaku?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&serviceId=5
+=> 200 application/json
+{
+  "danmaku": [
+    {
+      "color": "#FFFFFF",
+      "position": "scroll",
+      "size": 0.6,
+      "text": "hi",
+      "time": 2.5
+    },
+    {
+      "color": "#FF0000",
+      "position": "top",
+      "size": 1,
+      "text": "top",
+      "time": 3
+    }
+  ]
+}
+
+GET /danmaku?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&serviceId=0
+=> 200 application/json
+{
+  "danmaku": []
+}
+
+GET /api/v1/watch_progress?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&percent=40&durationSeconds=19&serviceId=0
+=> 200 application/json
+{
+  "status": "ok"
+}
+
+# watchInfo service=0 url=https://www.youtube.com/watch?v=jNQXAC9IVRw
+comments service=0 url=https://www.youtube.com/watch?v=jNQXAC9IVRw next=null
+comments service=0 url=https://www.youtube.com/watch?v=jNQXAC9IVRw next=more:2
+comments service=0 url=https://www.youtube.com/watch?v=disabled0000 next=null
+sponsor video=jNQXAC9IVRw
+danmaku service=5 url=https://www.youtube.com/watch?v=jNQXAC9IVRw
+danmaku service=0 url=https://www.youtube.com/watch?v=jNQXAC9IVRw
+streamInfo service=0 url=https://www.youtube.com/watch?v=jNQXAC9IVRw
+

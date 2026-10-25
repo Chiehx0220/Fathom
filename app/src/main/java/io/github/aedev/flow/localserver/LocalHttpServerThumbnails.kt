@@ -1,15 +1,11 @@
 package io.github.aedev.flow.localserver
 
 import org.schabi.newpipe.extractor.stream.Frameset
-import java.io.OutputStream
 import java.net.URI
 import java.net.URLEncoder
 import java.util.Locale
 
-/*
- * Seek-bar preview thumbnails. YouTube storyboards: sprite sheets, grid of frames. Web player reads WebVTT with cues at sheet regions
- * (`url#xywh=x,y,w,h`); built here from the storyboard.
- */
+// Seek-bar previews: WebVTT with `url#xywh=` cues built from YouTube storyboard sprite sheets.
 
 /** Storyboard for previews: largest no wider than a seek-bar tooltip. */
 internal fun List<Frameset>.bestForSeekBar(): Frameset? {
@@ -54,10 +50,7 @@ private fun vttTime(millis: Long): String =
 
 private const val MAX_PREVIEW_WIDTH = 320
 
-/*
- * Images from hosts the browser cannot fetch directly: YouTube refuses the player's CORS mode (black previews);
- * Bilibili hotlink-checks Referer (403). Fetched here with the host's header, served same-origin.
- */
+// Image proxy for hosts the browser cannot fetch: YouTube rejects CORS mode (black previews), Bilibili checks Referer (403).
 private const val IMAGE_ROUTE = "/image-proxy?u="
 
 /** Extra request headers [url]'s host needs; null if no proxying needed. */
@@ -72,14 +65,13 @@ private fun proxiedImageHeaders(url: String): Map<String, String>? {
     }
 }
 
-@Throws(Exception::class)
 internal fun RequestContext.handleThumbnailsProxy(
     reply: Reply,
     params: Query,
 ) {
     val serviceId = getServiceId(params)
     val mediaUrl = params["id"] ?: throw BadRequestException("Missing 'id' parameter")
-    val frameset = LocalServerSource.streamInfo(dbHelper.appContext, serviceId, mediaUrl).previewFrames.bestForSeekBar()
+    val frameset = source.streamInfo(serviceId, mediaUrl).previewFrames.bestForSeekBar()
     if (frameset == null) {
         reply.send(404, "No preview thumbnails.", "text/plain; charset=UTF-8")
         return
@@ -87,7 +79,6 @@ internal fun RequestContext.handleThumbnailsProxy(
     reply.send(200, frameset.toWebVtt(), "text/vtt; charset=UTF-8")
 }
 
-@Throws(Exception::class)
 internal fun RequestContext.handleImageProxy(
     reply: Reply,
     params: Query,

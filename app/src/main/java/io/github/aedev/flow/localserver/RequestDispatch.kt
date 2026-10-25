@@ -44,6 +44,7 @@ internal fun Application.installLocalServer(
     executor: ExecutorService,
     pairing: Pairing,
     sockets: RemoteSockets,
+    source: ContentSource,
 ) {
     install(WebSockets) {
         pingPeriodMillis = PING_PERIOD_MS
@@ -58,7 +59,15 @@ internal fun Application.installLocalServer(
     val blocking = executor.asCoroutineDispatcher()
     intercept(ApplicationCallPipeline.Call) {
         val context =
-            RequestContext(InetAddress.getByName(call.request.local.remoteAddress), dbHelper, executor, pairing, call.request.path())
+            RequestContext(
+                InetAddress.getByName(call.request.local.remoteAddress),
+                dbHelper,
+                executor,
+                pairing,
+                source,
+                call.request.path(),
+                call.headerMap(),
+            )
         call.attributes.put(CONTEXT, context)
         if (withContext(blocking) { admit(call, context) }) return@intercept
         finish()
@@ -90,7 +99,7 @@ private fun admit(
         reply.send(403, OUTSIDE_NETWORK_REFUSAL, "text/plain; charset=UTF-8")
         return false
     }
-    val headers = call.headerMap()
+    val headers = context.headers
     val refusal = refusalFor(method, path, headers)
     if (refusal != null) {
         serverLog("Refused $method $path: $refusal")
@@ -110,17 +119,34 @@ private fun admit(
     return true
 }
 
-/** [handler] on blocking pool; failure body JSON if [json], else text. */
-internal fun Route.serve(
-    path: String,
-    blocking: CoroutineDispatcher,
-    json: Boolean,
-    handler: Handler,
+/** Routes of one server; handlers run on [blocking]. */
+internal class RouteTable(
+    private val root: Route,
+    private val blocking: CoroutineDispatcher,
 ) {
-    route(path) {
-        handle {
-            val context = call.attributes[CONTEXT]
-            withContext(blocking) { run(call, context, json, handler) }
+    /** Own reply (text, bytes, stream); failures as text. */
+    fun page(
+        path: String,
+        handler: Handler,
+    ) = serve(path, json = false, handler)
+
+    /** [handler] result as JSON; failures as JSON. */
+    inline fun <reified T> api(
+        path: String,
+        crossinline handler: RequestContext.(Query) -> T,
+    ) = serve(path, json = true) { reply, params -> reply.sendJson(handler(params)) }
+
+    @PublishedApi
+    internal fun serve(
+        path: String,
+        json: Boolean,
+        handler: Handler,
+    ) {
+        root.route(path) {
+            handle {
+                val context = call.attributes[CONTEXT]
+                withContext(blocking) { run(call, context, json, handler) }
+            }
         }
     }
 }
@@ -133,7 +159,9 @@ private fun run(
 ) {
     val reply = KtorReply(call)
     try {
-        handler(context, reply, call.query(), call.headerMap())
+        handler(context, reply, call.query())
+    } catch (e: ApiFailure) {
+        if (!call.response.isCommitted) reply.send(e.code, e.body, "application/json")
     } catch (e: BadRequestException) {
         failure(call, reply, json, 400, e)
     } catch (e: Exception) {

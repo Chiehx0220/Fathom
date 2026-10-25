@@ -1,35 +1,25 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
-import java.io.OutputStream
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
 private const val MAX_PLAYLIST_NAME = 100
 
 /** `id`: video being saved; marks the playlists that hold it. */
-internal fun RequestContext.handleApiPlaylists(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleApiPlaylists(params: Query): PlaylistChoices {
     val containing = params["id"]?.let { dbHelper.playlistIdsOf(it) }.orEmpty()
-    reply.sendJson(PlaylistChoices(playlistChoices(dbHelper.userPlaylists(), containing)))
+    return PlaylistChoices(playlistChoices(dbHelper.userPlaylists(), containing))
 }
 
-internal fun RequestContext.handleApiMyList(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handleApiMyList(params: Query): MyPlaylistPage {
     val info = dbHelper.userPlaylist(params["id"].orEmpty()) ?: throw BadRequestException("Unknown playlist")
-    reply.sendJson(MyPlaylistPage(info.ref(), dbHelper.userPlaylistItems(info.id).toCards()))
+    return MyPlaylistPage(info.ref(), dbHelper.userPlaylistItems(info.id).toCards())
 }
 
-internal fun RequestContext.handleApiLiked(reply: Reply) = reply.sendJson(CardListing(dbHelper.likedItems().toCards()))
+internal fun RequestContext.handleApiLiked() = CardListing(dbHelper.likedItems().toCards())
 
 /** `create` takes `name`; `add`, `remove`, `rename`, `delete` take `playlist`; `add`/`remove` take the video's `url`. */
-internal fun RequestContext.handlePlaylistAction(
-    reply: Reply,
-    params: Query,
-) {
+internal fun RequestContext.handlePlaylistAction(params: Query): Status {
     val url = params["url"].orEmpty()
 
     fun name() =
@@ -60,7 +50,7 @@ internal fun RequestContext.handlePlaylistAction(
             "delete" -> existing().also { dbHelper.deletePlaylist(it) }
             else -> throw BadRequestException("Unknown action")
         }
-    reply.sendJson(Status("success", playlist = playlistId))
+    return Status("success", playlist = playlistId)
 }
 
 private fun videoOf(
