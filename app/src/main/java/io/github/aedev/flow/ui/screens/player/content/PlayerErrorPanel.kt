@@ -1,8 +1,6 @@
 package io.github.aedev.flow.ui.screens.player.content
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,6 +34,7 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.player.error.PlayerDiagnostics
+import io.github.aedev.flow.utils.openInYouTube
 
 private val ButtonPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
 
@@ -125,14 +124,11 @@ internal fun PlayerErrorPanel(
             // Row 2: open in source service site/app (full width)
             OutlinedButton(
                 onClick = {
-                    val intent =
-                        Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse(
-                                if (isYouTube) "https://www.youtube.com/watch?v=$videoId" else "https://www.bilibili.com/video/$videoId",
-                            ),
-                        )
-                    context.startActivity(intent)
+                    if (isYouTube) {
+                        openInYouTube(context, videoId)
+                    } else {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.bilibili.com/video/$videoId")))
+                    }
                 },
                 shape = MaterialTheme.shapes.small,
                 contentPadding = ButtonPadding,

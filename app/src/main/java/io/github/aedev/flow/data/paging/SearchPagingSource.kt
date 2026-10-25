@@ -3,6 +3,7 @@ package io.github.aedev.flow.data.paging
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import io.github.aedev.flow.bilibili.BilibiliApi
+import io.github.aedev.flow.data.local.ContentType
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.local.WatchState
 import io.github.aedev.flow.data.model.DistinctKeyTracker
@@ -58,7 +59,13 @@ class SearchPagingSource(
                     if (isYouTube) {
                         val page = loadPage(query, filter.toSearchParams(), continuation)
                         if (params.key == null && requests == 0) onHeader(page.header)
-                        page.toResultItems(shortsEnabled) to page.continuation
+                        val items =
+                            if (filter.contentType == ContentType.SHORTS) {
+                                page.toShortsResults(shortsEnabled)
+                            } else {
+                                page.toResultItems(shortsEnabled)
+                            }
+                        items to page.continuation
                     } else {
                         val api = checkNotNull(bilibiliApi) { "Searching service $serviceId needs a BilibiliApi" }
                         BilibiliNativeSearch.load(api, query, filter, continuation).let { it.items to it.nextKey }
@@ -132,6 +139,32 @@ internal fun SearchResultsPage.toResultItems(shortsEnabled: Boolean): List<Searc
         index++
     }
     return items
+}
+
+/**
+ * The Shorts filter's results arrive as Shorts strips (#1425), but the Shorts grid lays out single
+ * Shorts, so every Short becomes a result of its own and anything that is not a Short is left out.
+ * Keyed by video, a later page's Shorts also survive de-duplication: its strips reuse the first
+ * page's position-based ids.
+ */
+internal fun SearchResultsPage.toShortsResults(shortsEnabled: Boolean): List<SearchResultItem> {
+    if (!shortsEnabled) return emptyList()
+    return sections
+        .flatMap { section ->
+            when (section) {
+                is SearchSection.Result -> {
+                    listOfNotNull(section.item.videoOrNull())
+                }
+
+                is SearchSection.Strip -> {
+                    section.shelf
+                        .takeIf { it.style == FeedShelfStyle.Grid }
+                        ?.items
+                        .orEmpty()
+                        .mapNotNull { it.videoOrNull() }
+                }
+            }
+        }.map { SearchResultItem.VideoResult(it) }
 }
 
 /**
