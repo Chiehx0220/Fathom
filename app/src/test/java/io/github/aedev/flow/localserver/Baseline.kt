@@ -1,6 +1,7 @@
 package io.github.aedev.flow.localserver
 
 import androidx.test.core.app.ApplicationProvider
+import io.github.aedev.flow.data.local.SearchHistoryRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
 import io.ktor.client.request.request
@@ -12,6 +13,8 @@ import io.ktor.server.testing.testApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -78,15 +81,21 @@ internal class Recorder(
 internal fun serverScenario(
     source: ContentSource = NoNetwork,
     block: suspend ApplicationTestBuilder.() -> Unit,
-) = testApplication {
-    val db = HistoryDbHelper.getInstance(ApplicationProvider.getApplicationContext())
-    val pool = Executors.newCachedThreadPool()
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    application { installLocalServer(db, pool, Pairing(MemoryPairingStorage()), RemoteSockets(scope), source) }
-    try {
-        block()
-    } finally {
-        pool.shutdownNow()
+) {
+    // uncaught exceptions of earlier tests surface in the next runTest
+    runCatching { runTest { } }
+    testApplication {
+        val db = HistoryDbHelper.getInstance(ApplicationProvider.getApplicationContext())
+        // DataStore cache outlives Robolectric's file reset
+        runBlocking { SearchHistoryRepository(db.appContext).clearSearchHistory() }
+        val pool = Executors.newCachedThreadPool()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        application { installLocalServer(db, pool, Pairing(MemoryPairingStorage()), RemoteSockets(scope), source) }
+        try {
+            block()
+        } finally {
+            pool.shutdownNow()
+        }
     }
 }
 
