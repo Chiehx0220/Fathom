@@ -148,13 +148,14 @@ cd Fathom
 
 | 位置 | 內容 |
 |---|---|
-| `bilibili/` | 用戶端本體:API、請求簽章、登入狀態、直播、留言、彈幕、影片 ID、連結開啟 |
+| `bilibili/` | 用戶端本體:依功能拆分的 API(影片、搜尋、留言、直播、頻道)、請求簽章、登入狀態、型別化 ID、資料模型、連結開啟 |
 | `data/paging/`、`player/stream/`、`ui/screens/playlists/`(`Bilibili*`) | 把 Bilibili 接進搜尋、播放和播放清單的轉換與銜接程式碼 |
 | `di/BilibiliModule.kt` | 整個 App 共用同一個登入狀態 |
-| `localserver/` | 網頁伺服器、Bilibili 轉接層,以及網頁播放器頁面 |
-| 約 130 個上游檔案 | 小幅改動,多半只是多傳一個服務代碼 |
+| `localserver/` | 網頁伺服器:路由、各服務各自一個後端、推薦、串流代理、配對、遙控,以及網頁播放器頁面 |
+| `app/src/test/`(`bilibili/`、`localserver/`) | 離線重播測試:以假的 HTTP 層回放錄下的 Bilibili 回應,與存好的基準比對 |
+| 上游檔案(清單見 [FORK-DIFF.md](FORK-DIFF.md)) | 小幅改動,多半只是多傳一個服務代碼 |
 
-原則:新程式碼一律放在新檔案,上游檔案只加一行呼叫,這樣同步上游時衝突會少很多。[FORK-DIFF.md](FORK-DIFF.md) 列出所有改動過的上游檔案(由 `node scripts/fork-diff.js` 產生);`bilibili/PPE-REFERENCE.md` 記錄用戶端是從 PipePipeExtractor 的哪個版本移植而來。
+原則:新程式碼一律放在新檔案,上游檔案只加一行呼叫,這樣同步上游時衝突會少很多,CI 的預算也會在上游被改動的部分變多時讓建置失敗。[FORK-DIFF.md](FORK-DIFF.md) 列出所有改動過的上游檔案(由 `node scripts/fork-diff.js` 產生);`bilibili/PPE-REFERENCE.md` 記錄用戶端是從 PipePipeExtractor 的哪個版本移植而來。
 
 Flow 原有的功能(SponsorBlock、DeArrow、音樂、Shorts、下載、主題)全部保留,詳見[上游說明](https://github.com/A-EDev/Flow#features)。
 
@@ -164,7 +165,7 @@ Flow 原有的功能(SponsorBlock、DeArrow、音樂、Shorts、下載、主題)
 
 專案方向與品質由我負責:開發目標與設計決策由我決定,各項變更由我審查,合併與發布亦由我裁定。未經我的指示,不會進行任何提交、推送或發布。
 
-品質把關方面:每次推送皆執行單元測試與 CodeQL 檢查;並以 CI 預算限制 Fathom 對上游 Flow 程式碼的改動幅度(詳見 [FORK-DIFF.md](FORK-DIFF.md));凡使用者可見的變更,於發布前均會在實體手機上實際測試。
+品質把關方面:每次推送皆執行單元測試與 CodeQL 檢查;以重播基準測試在重構前後固定 Bilibili 與網頁伺服器的行為;並以 CI 預算限制 Fathom 對上游 Flow 程式碼的改動幅度(詳見 [FORK-DIFF.md](FORK-DIFF.md));凡使用者可見的變更,於發布前均會在實體手機上實際測試。
 
 ## 🙏 致謝
 

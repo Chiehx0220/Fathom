@@ -150,13 +150,14 @@ Paths are under `app/src/main/java/io/github/aedev/flow/`.
 
 | Where | What |
 |---|---|
-| `bilibili/` | The client: API, request signing, sessions, live rooms, comments, danmaku, ids, deep links |
+| `bilibili/` | The client: an API facade split by area (video, search, comments, live, uploader), request signing, sessions, typed ids, models, deep links |
 | `data/paging/`, `player/stream/`, `ui/screens/playlists/` (`Bilibili*`) | Mappers and glue that plug it into search, playback, and playlists |
 | `di/BilibiliModule.kt` | One shared session for the whole app |
-| `localserver/` | The web server, its Bilibili adapters, and the web player pages |
-| about 130 upstream files | Small hooks, mostly passing a service id through |
+| `localserver/` | The web server: routing, one backend per service, feeds, stream proxy, pairing, remote control, and the web player pages |
+| `app/src/test/` (`bilibili/`, `localserver/`) | Offline replay tests: recorded Bilibili responses behind a fake HTTP layer, compared with saved baselines |
+| upstream files (see [FORK-DIFF.md](FORK-DIFF.md)) | Small hooks, mostly passing a service id through |
 
-The rule: new code goes in new files, and upstream files only get a call into it. That keeps merges from upstream small. [FORK-DIFF.md](FORK-DIFF.md) lists every upstream file touched (`node scripts/fork-diff.js`), and `bilibili/PPE-REFERENCE.md` records which PipePipeExtractor revision the client was ported from.
+The rule: new code goes in new files, and upstream files only get a call into it. That keeps merges from upstream small, and a CI budget fails the build if the changed part of upstream grows. [FORK-DIFF.md](FORK-DIFF.md) lists every upstream file touched (`node scripts/fork-diff.js`), and `bilibili/PPE-REFERENCE.md` records which PipePipeExtractor revision the client was ported from.
 
 Everything else in Flow (SponsorBlock, DeArrow, music, Shorts, downloads, themes) is still here. See [upstream](https://github.com/A-EDev/Flow#features).
 
@@ -166,7 +167,7 @@ Fathom has been developed with AI assistance from the outset: Claude Code (Anthr
 
 Direction and quality remain my responsibility. I define the goals and make the design decisions, I review each change, and I decide what is merged and released. No commit, push or release is made without my instruction.
 
-Quality is safeguarded as follows: unit tests and CodeQL run on every push; a CI budget limits how much of upstream Flow's code Fathom changes (see [FORK-DIFF.md](FORK-DIFF.md)); and every user-visible change is tested on a physical phone before release.
+Quality is safeguarded as follows: unit tests and CodeQL run on every push; replay baselines pin Bilibili and web server behavior across refactors; a CI budget limits how much of upstream Flow's code Fathom changes (see [FORK-DIFF.md](FORK-DIFF.md)); and every user-visible change is tested on a physical phone before release.
 
 ## 🙏 Credits
 
