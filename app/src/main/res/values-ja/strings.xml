@@ -236,4 +236,5 @@
     <string name="section_top_artists_in">%1$s で人気のアーティスト</string>
     <string name="similar_to">似ているかも</string>
     <string name="music_home_your_subscriptions">登録チャンネル</string>
+    <string name="player_settings_ambient_mode">アンビエント モード</string>
 </resources>

@@ -2794,4 +2794,9 @@
     <string name="notes_filter_all">Tout</string>
     <string name="notes_filter_videos">Vidéos</string>
     <string name="notes_filter_channels">Chaînes</string>
+    <string name="notes_sort_recent">Dernière modification</string>
+    <string name="notes_sort_oldest">Les plus anciens en premier</string>
+    <string name="music_player_tab_lyrics">Paroles</string>
+    <string name="music_player_tab_up_next">Suivant</string>
+    <string name="music_player_lyrics_full_screen">Paroles en plein écran</string>
 </resources>
