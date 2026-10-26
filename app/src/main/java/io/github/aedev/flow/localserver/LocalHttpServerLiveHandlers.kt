@@ -14,10 +14,7 @@ private val URI_ATTRIBUTE = Regex("""URI="([^"]*)"""")
 /** Relay path for [url] (playlist/segment fetched through this server). */
 internal fun hlsRelayPath(url: String): String = "/hls?u=" + URLEncoder.encode(url, "UTF-8")
 
-/**
- * Playlist with all addresses pointed at the relay, absolutized against [base].
- * Content-steering tag dropped (steering server reached without Referer).
- */
+/** Playlist addresses → relay, absolutized against [base]. Content-steering tag dropped (steering server reached without Referer). */
 internal fun rewriteHlsPlaylist(
     playlist: String,
     base: String,

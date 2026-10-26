@@ -12,9 +12,8 @@ import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 
 /**
- * YouTube search via app InnerTube search: page lists what app search lists, follows its fixes.
- *
- * Continuation = [Page] url "yt:s:<token>"; extractor pages lack the prefix: stay there. Plain search only: shelves (Shorts, posts) omitted, as extractor.
+ * YouTube search via app InnerTube (follows app fixes); continuation `yt:s:<token>`, unprefixed: extractor. Plain search only (no shelves),
+ * as extractor.
  */
 internal object LocalServerYouTubeSearch {
     private const val MORE = "yt:s:"

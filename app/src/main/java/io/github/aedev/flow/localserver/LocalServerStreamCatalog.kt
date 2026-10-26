@@ -5,12 +5,7 @@ import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.net.URLEncoder
 
-/**
- * Web-player offer for one video: qualities + audio tracks, each with a short id.
- *
- * Playlists and `/stream` both work from this list; `/stream?rep=` names a representation by id: no reliance on itag uniqueness (Bilibili has none)
- * or video/audio itag agreement.
- */
+/** Web-player offer: qualities + audio tracks with short ids; `/stream?rep=` addresses by id (Bilibili has no unique itag). */
 internal class StreamCatalog(
     val videos: List<Video>,
     val audioTracks: List<AudioTrack>,
@@ -64,10 +59,8 @@ internal class StreamCatalog(
         private const val MIN_LADDER = 3
 
         /**
-         * Catalog from [streams]. [preferredTrack]: starting audio track (player takes first); else best by [LocalServerMedia.audioTrackPriorityComparator].
-         *
-         * Players switch codec families mid-stream unreliably: one family offered. Default H.264 (universal); [highest]: family with tallest picture
-         * (YouTube 1440p/4K = AV1), for players declaring smooth decode.
+         * Catalog from [streams]; [preferredTrack] first, else [LocalServerMedia.audioTrackPriorityComparator]. One codec family (mid-
+         * stream switch unreliable): H.264, [highest] = tallest (AV1 for 1440p/4K).
          */
         fun of(
             streams: StreamLists,
@@ -88,6 +81,9 @@ internal class StreamCatalog(
                 ?: audioTracks(rawAudio, null).firstNotNullOfOrNull { track -> track.audios.firstOrNull { it.id == repId }?.url }
         }
 
+        private val tallestThenAvc =
+            compareBy<Map.Entry<String, List<Video>>>({ e -> e.value.maxOf { it.height } }, { e -> if (e.key == "avc1") 1 else 0 })
+
         private fun pickFamily(
             all: List<Video>,
             highest: Boolean,
@@ -98,21 +94,12 @@ internal class StreamCatalog(
                 if (highest) {
                     families.entries
                         .filter { it.value.size >= MIN_LADDER }
-                        .maxWithOrNull(
-                            compareBy<Map.Entry<String, List<Video>>>({ e -> e.value.maxOf { it.height } }, { e ->
-                                if (e.key ==
-                                    "avc1"
-                                ) {
-                                    1
-                                } else {
-                                    0
-                                }
-                            }),
-                        )?.key
+                        .maxWithOrNull(tallestThenAvc)
+                        ?.key
                 } else {
                     null
                 }
-            val family = chosen ?: if (families.containsKey("avc1")) "avc1" else families.maxByOrNull { it.value.size }!!.key
+            val family = chosen ?: if ("avc1" in families) "avc1" else families.maxBy { it.value.size }.key
             return families.getValue(family)
         }
 
@@ -194,10 +181,7 @@ internal class StreamCatalog(
 
         private fun AudioStream.bitrateOf() = if (averageBitrate > 0) averageBitrate else bitrate
 
-        /**
-         * Representation `bandwidth`, bps. NewPipe static itag table (fallback without live bitrate) reports audio in kbps (≤ 256); live bitrate never that low.
-         * Raw < 5000 = kbps leftover, rescaled; ≥ 5000 = bps.
-         */
+        /** Representation bandwidth, bps; raw < 5000 = kbps from NewPipe static itag table, rescaled. */
         private fun bandwidthBps(
             raw: Long,
             fallbackBps: Long,

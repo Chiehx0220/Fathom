@@ -3,8 +3,8 @@ package io.github.aedev.flow.localserver
 import android.content.Context
 
 /**
- * Single-page app stylesheet + script: `assets/web/app` joined in fixed order, served `/app.css`, `/app.js`.
- * `assets/web/app/strings/<language>.json` embedded in page as one object keyed by language.
+ * App stylesheet + script: `assets/web/app` joined in fixed order → `/app.css`, `/app.js`; `strings/<language>.json` embedded as one object
+ * keyed by language.
  */
 object WebAssets {
     // Single-page app at /app: own stylesheet, script, HTML shell.

@@ -11,8 +11,8 @@ import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
-// Home-feed candidates/ranking: native `YouTubeRepository`/`FlowNeuroEngine`, not a ported copy. `toFlowVideo()`/`toStreamInfoItem()` convert
-// between NewPipeExtractor [InfoItem] (Local Server native type) and Flow's video-only [FlowVideo].
+// Home-feed candidates/ranking use native `YouTubeRepository`/`FlowNeuroEngine`; `toFlowVideo()`/`toStreamInfoItem()` convert [InfoItem] ↔
+// [FlowVideo].
 
 // Singleton shared with native (Hilt provider instance).
 internal fun HistoryDbHelper.youTubeRepository(): YouTubeRepository = YouTubeRepository.getInstance(PlayerPreferences(appContext))

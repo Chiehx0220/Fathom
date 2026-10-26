@@ -4,8 +4,8 @@ import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import kotlinx.coroutines.runBlocking
 
 /**
- * Bridge to native `SponsorBlockRepository` (inherits AppProxyManager proxy handling). 6/8 categories (no preview/filler);
- * POI (single-instant) segments dropped (marker/skip-button UI expects ranges).
+ * Bridge to native `SponsorBlockRepository` (inherits proxy handling). 6/8 categories (no preview/filler); POI segments dropped (UI expects
+ * ranges).
  */
 object SponsorBlockClient {
     data class Segment(

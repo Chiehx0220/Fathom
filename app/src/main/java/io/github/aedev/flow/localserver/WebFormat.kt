@@ -48,7 +48,7 @@ object WebFormat {
 
     // Image shape: items = URL string; StreamInfo/ChannelExtractor = List<Image>. This overload: URL.
     @JvmStatic
-    fun getThumbnailUrl(url: String?): String = if (isUsableImageUrl(url)) normalizeImageUrl(url!!) else ""
+    fun getThumbnailUrl(url: String?): String = url?.takeIf(::isUsableImageUrl)?.let(::normalizeImageUrl).orEmpty()
 
     /** Presence check, singular-URL shape (as [hasThumbnail] list overload). */
     @JvmStatic

@@ -91,4 +91,48 @@ class LocalServerMediaTest {
 
         assertThat(ordered).containsExactly(german, english).inOrder()
     }
+
+    // pre-simplification parse, verbatim
+    private fun legacyHeight(resolution: String?): Int {
+        if (resolution == null || resolution.isEmpty()) return 0
+        try {
+            val parts = resolution.split(Regex("(?i)p"))
+            if (parts.isNotEmpty()) {
+                val numeric = parts[0].replace(Regex("[^0-9]"), "")
+                return if (numeric.isEmpty()) 0 else numeric.toInt()
+            }
+        } catch (e: Exception) {
+        }
+        return 0
+    }
+
+    @Test
+    fun `resolution height matches the pre-simplification parse`() {
+        val inputs =
+            listOf(
+                null,
+                "",
+                "p",
+                "720p",
+                "720p60",
+                "1080P",
+                "1080P60",
+                "abc",
+                "4k",
+                "2160p",
+                "1_0p",
+                "p720",
+                "99999999999p",
+                "٣٦٠p",
+                " 480 p",
+                "144",
+                "0p",
+                "-1p",
+                "HD",
+                "1080i",
+            )
+        for (input in inputs) {
+            assertThat(LocalServerMedia.getResolutionHeight(input)).isEqualTo(legacyHeight(input))
+        }
+    }
 }

@@ -38,10 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/*
- * Keys of every remote screen. Each = ButtonGroup item: row keys share width, pressed key widens, neighbours yield.
- * Same height per row (group aligns items at top).
- */
+// Remote keys: ButtonGroup items; row keys share width, pressed key widens, neighbours yield; same height per row (group top-aligns).
 
 /** Page volume step per volume-key press (0..1). */
 internal const val VOLUME_STEP = 0.1f

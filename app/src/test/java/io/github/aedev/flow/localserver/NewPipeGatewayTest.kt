@@ -6,9 +6,8 @@ import org.junit.Test
 import java.io.File
 
 /**
- * NewPipeExtractor is on its way out of the app. The fork's own code may keep its item types, but a call that
- * reaches an extractor must stay in the NewPipe backend ([LocalServerBackend]) and [LocalServerMedia], so replacing the source of
- * YouTube's data is a change in those two files.
+ * NewPipeExtractor on its way out: extractor calls stay in [LocalServerBackend] and [LocalServerMedia], so replacing YouTube's data source
+ * touches those two files.
  */
 class NewPipeGatewayTest {
     private val gateway = setOf("LocalServerBackend.kt", "LocalServerMedia.kt")

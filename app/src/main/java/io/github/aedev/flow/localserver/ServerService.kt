@@ -24,8 +24,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Foreground promotion + notification for the embedded local web server. Assumes NewPipe.init() ran via FlowApplication:
- * re-init races the app's extraction pipeline (process-global state).
+ * Foreground promotion + notification for embedded web server. Assumes NewPipe.init() ran via FlowApplication (re-init races extraction:
+ * process-global state).
  */
 class ServerService : Service() {
     private var server: LocalHttpServer? = null
@@ -119,8 +119,8 @@ class ServerService : Service() {
         stopSelf()
     }
 
-    // Android 15+ caps dataSync FGS (~6h); system calls this, expects stopSelf() within seconds or ForegroundServiceDidNotStopInTimeException.
-    // stopSelf() → onDestroy() → stopServer(). No restart (background FGS start restriction): down until re-enabled in Settings.
+    // Android 15+ caps dataSync FGS (~6h): stopSelf() expected within seconds (else ForegroundServiceDidNotStopInTimeException) →
+    // onDestroy() → stopServer(). No restart (background FGS start limit).
     override fun onTimeout(
         startId: Int,
         fgsType: Int,
@@ -161,8 +161,8 @@ class ServerService : Service() {
 
         private val mutableRunning = MutableStateFlow(false)
 
-        // True only while socket bound (after startServer(), cleared in stopServer()): Settings UI observes this, not saved "enabled"
-        // (stays true after system stop, e.g. dataSync timeout, or process death → stale "online").
+        // True only while socket bound (startServer() → stopServer()); Settings UI observes this, not saved "enabled" (stale after system
+        // stop or process death).
         val runningState: StateFlow<Boolean> = mutableRunning.asStateFlow()
 
         val isRunning: Boolean

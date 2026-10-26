@@ -13,10 +13,8 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 
 /**
- * YouTube channel Videos tab via the app channel screen's InnerTube calls: page lists what the app lists, follows its fixes.
- *
- * Continuation = [Page] url "yt:u:<token>", owner (id, name, avatar) in id and ids (continuation response has no header).
- * Extractor pages lack the prefix: stay with the extractor. Other tabs and sorts: extractor.
+ * YouTube Videos tab via app InnerTube (follows app fixes). Continuation = [Page] url "yt:u:<token>" with owner in id/ids (no header);
+ * unprefixed pages and other tabs: extractor.
  */
 internal object LocalServerYouTubeChannel {
     private const val MORE = "yt:u:"

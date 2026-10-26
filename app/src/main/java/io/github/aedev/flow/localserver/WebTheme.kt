@@ -1,8 +1,8 @@
 package io.github.aedev.flow.localserver
 
 /**
- * Material You palette → web UI. Stylesheet defines every colour as a role (`--md-primary`, `--md-surface`, ...) with default;
- * this overrides roles with the device scheme. Fixed accent presets (purple, green, ...): plain CSS in themes.css.
+ * Material You palette → web UI: overrides stylesheet's `--md-*` role defaults with device scheme. Fixed accent presets: plain CSS in
+ * themes.css.
  */
 object WebTheme {
     /** Scheme maps by role, set by ServerService. */

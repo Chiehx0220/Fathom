@@ -13,12 +13,8 @@ import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 
 /**
- * Server Bilibili lists (home, search, uploader, playlist) as NewPipe item/page types.
- * Comments, danmaku: [LocalServerBilibiliComments]; streams: [LocalServerBilibiliStreams]; rows: LocalServerBilibiliItems.kt.
- *
- * All functions block (one thread per request).
- *
- * Continuation token = [Page] url: page number ("2") or "<page>:<lastAid>" for uploader videos; survives page serialisation.
+ * Bilibili lists (home, search, uploader, playlist) as NewPipe item/page types; blocking, one thread per request. Continuation = [Page]
+ * url: page number or "<page>:<lastAid>" (uploader videos).
  */
 internal object LocalServerBilibili {
     private const val POPULAR_PAGES = 5

@@ -8,10 +8,8 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 
 /**
- * Short YouTube playlist via the app playlist repository (playlist screen's): page lists what the app lists, follows its fixes.
- *
- * Only a complete first page. Continuation, full first page, or no title (other header kinds) → extractor (pages, knows size);
- * InnerTube response lacks video count: header count unknown (-1), web page omits it.
+ * Short YouTube playlist via app repository (follows app fixes), complete first page only; else extractor. InnerTube lacks video count:
+ * header -1.
  */
 internal object LocalServerYouTubePlaylist {
     private const val YOUTUBE = 0

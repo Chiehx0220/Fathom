@@ -10,10 +10,7 @@ internal class FragmentSpan(
     val durationSec: Double,
 )
 
-/**
- * Reads `sidx` box (segment index at `indexRange` of an MP4) into segment byte spans.
- * [indexEnd]: last byte of the box; first segment follows it, plus the box's first offset.
- */
+/** `sidx` box → segment byte spans; [indexEnd]: box's last byte, first segment follows plus first offset. */
 internal object SidxParser {
     fun parse(
         sidx: ByteArray,

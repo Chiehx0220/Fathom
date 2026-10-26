@@ -10,9 +10,8 @@ import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.stream.Description
 
 /**
- * YouTube comments via app InnerTube client; extractor lacks newer-format avatars.
- *
- * Continuation = [Page] url "yt:c:<token>"; replies "yt:r:<token>". Extractor pages have neither prefix: stay there.
+ * YouTube comments via app InnerTube (extractor lacks newer avatars). Continuation `yt:c:<token>`, replies `yt:r:<token>`; unprefixed
+ * pages: extractor.
  */
 internal object LocalServerYouTubeComments {
     private const val MORE = "yt:c:"

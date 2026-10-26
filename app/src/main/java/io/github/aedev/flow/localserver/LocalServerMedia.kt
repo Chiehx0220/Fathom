@@ -128,10 +128,7 @@ object LocalServerMedia {
         query: String,
     ): SearchExtractor = service.getSearchExtractor(query)
 
-    /**
-     * Normalizes audio codec for DASH manifest. Bilibili's bare `"mp4a"` is invalid RFC 6381 (fails `MediaSource.isTypeSupported()`,
-     * drops the audio Representation) → AAC-LC (`mp4a.40.2`). Qualified YouTube strings unchanged.
-     */
+    /** DASH audio codec: Bilibili bare `"mp4a"` invalid RFC 6381 (drops Representation) → `mp4a.40.2`; qualified strings unchanged. */
     fun normalizeAudioCodec(codec: String?): String {
         if (codec == null || codec.trim().isEmpty()) {
             return "mp4a.40.2"
@@ -173,19 +170,14 @@ object LocalServerMedia {
         }
     }
 
-    fun getResolutionHeight(resolution: String?): Int {
-        if (resolution == null || resolution.isEmpty()) return 0
-        try {
-            // Split by 'p' ("720p60" -> "720"): ignore frame rate
-            val parts = resolution.split(Regex("(?i)p"))
-            if (parts.isNotEmpty()) {
-                val numeric = parts[0].replace(Regex("[^0-9]"), "")
-                return if (numeric.isEmpty()) 0 else numeric.toInt()
-            }
-        } catch (e: Exception) {
-        }
-        return 0
-    }
+    /** Height of "720p60"-style [resolution]; frame rate ignored, 0 if unparseable. */
+    fun getResolutionHeight(resolution: String?): Int =
+        resolution
+            .orEmpty()
+            .split(Regex("(?i)p"))
+            .first()
+            .filter { it in '0'..'9' }
+            .toIntOrNull() ?: 0
 
     // One extractor + page fetch per video, first handler wins.
     fun getCachedExtractor(
@@ -194,10 +186,7 @@ object LocalServerMedia {
         mediaUrl: String,
     ): StreamExtractor {
         val key = serviceId.toString() + "_" + mediaUrl
-        val cached = LocalServerCaches.extractorCache.get(key)
-        if (cached != null) {
-            return cached
-        }
+        LocalServerCaches.extractorCache.get(key)?.let { return it }
         val extractor = service.getStreamExtractor(mediaUrl)
         extractor.fetchPage()
         LocalServerCaches.extractorCache.put(key, extractor, 3600000)

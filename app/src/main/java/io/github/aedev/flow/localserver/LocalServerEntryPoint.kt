@@ -13,10 +13,7 @@ import io.github.aedev.flow.data.video.downloader.work.DownloadController
 import io.github.aedev.flow.ui.screens.home.HomeFeedSources
 import okhttp3.OkHttpClient
 
-/**
- * Local Server HTTP handlers run outside Hilt (plain thread pool), like WidgetEntryPoint, SubscriptionFeedEntryPoint,
- * SubscriptionCheckWorker.Dependencies. Reaches the same app-wide Hilt singletons.
- */
+/** HTTP handlers run outside Hilt (plain thread pool), like WidgetEntryPoint; reaches the same app-wide singletons. */
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface LocalServerEntryPoint {

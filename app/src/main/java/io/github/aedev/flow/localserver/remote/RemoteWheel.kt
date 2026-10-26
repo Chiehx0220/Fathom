@@ -55,8 +55,8 @@ private enum class WheelKey(
 }
 
 /**
- * Direction wheel: whole disc is touch surface (eyes-free): tap = nearest direction, swipe = direction per step (long swipe keeps moving),
- * hold = selected card's options. Centre OK = standard button.
+ * Direction wheel: whole disc is touch surface (eyes-free): tap = nearest direction, swipe = direction per step, hold = card options;
+ * centre OK = standard button.
  */
 @Composable
 internal fun DirectionWheel(
