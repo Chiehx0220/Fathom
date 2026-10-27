@@ -19,10 +19,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * Bilibili uploader channel page for [ChannelViewModel] (upstream file only calls it). Header/tabs from native client (not InnerTube),
- * delivered as [ChannelTabState]: screen is service-agnostic.
- *
- * Writes into the view model's [uiState]; view-model-only work once loaded (subscription, note, first tab) via [onLoaded].
+ * Uploader channel page for [ChannelViewModel]: header/tabs from native client as [ChannelTabState]; writes [uiState]; view-model work
+ * (subscription, note, first tab) via [onLoaded].
  */
 internal class BilibiliChannelLoader(
     private val scope: CoroutineScope,

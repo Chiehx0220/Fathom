@@ -7,6 +7,7 @@ import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
+import io.github.aedev.flow.data.local.homeContentSourceFilter
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.subscriptions.latestVideos
 import io.github.aedev.flow.di.bilibiliApi
@@ -79,8 +80,8 @@ internal fun PlayerPreferences.homeContentSourceFilterIn(
 ): StateFlow<HomeContentSourceFilter> = homeContentSourceFilter.stateIn(scope, started, HomeContentSourceFilter.YOUTUBE)
 
 /**
- * The assembled Home mix under the Home-only source filter (YouTube/Bilibili/mix); Subscriptions and Search untouched.
- * Applied after assembly, not per lane: only the fresh-subs lane can hold a non-YouTube video.
+ * Home mix under source filter (YouTube/Bilibili/mix), applied after assembly (only fresh-subs lane holds non-YouTube); Subscriptions,
+ * Search untouched.
  */
 internal fun List<Video>.shapedBy(filter: HomeContentSourceFilter): List<Video> =
     filter.serviceId?.let { id -> filter { it.serviceId == id } } ?: spreadByService()

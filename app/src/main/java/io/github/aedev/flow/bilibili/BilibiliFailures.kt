@@ -19,11 +19,16 @@ class BilibiliPaidContentException(
     message: String,
 ) : BilibiliException(message)
 
-class BilibiliLiveNotStartedException(
+/** Room cannot be played live. */
+sealed class BilibiliLiveException(
     message: String,
 ) : BilibiliException(message)
+
+class BilibiliLiveNotStartedException(
+    message: String,
+) : BilibiliLiveException(message)
 
 /** Room replays uploads; unsupported by live player. */
 class BilibiliLiveRebroadcastException(
     message: String,
-) : BilibiliException(message)
+) : BilibiliLiveException(message)

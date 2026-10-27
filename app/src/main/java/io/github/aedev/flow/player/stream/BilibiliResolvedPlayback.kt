@@ -5,6 +5,9 @@ import io.github.aedev.flow.bilibili.BilibiliPlayback
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.model.Video
 
+/** Steps resolved by the Bilibili native client. */
+sealed interface BilibiliStep : ResolvedPlayback
+
 /**
  * Bilibili VOD via native client. No live/SABR/upcoming variants: one step = metadata + streams ([playback]) + related lane.
  */
@@ -15,9 +18,9 @@ data class VodFromBilibili(
     val preferredAudioLanguage: String,
     val preferredCodecKey: String,
     val resumePositionOverrideMs: Long?,
-) : ResolvedPlayback
+) : BilibiliStep
 
 /** Bilibili live room via native client: one step (no premiere/SABR variants). */
 data class LiveFromBilibili(
     val playback: BilibiliLivePlayback,
-) : ResolvedPlayback
+) : BilibiliStep

@@ -3,9 +3,8 @@ package io.github.aedev.flow.ui.screens.home
 import io.github.aedev.flow.data.model.Video
 
 /**
- * [HomeSearchPages] whose first pages ask every service the Home source filter allows, not only YouTube.
- * HomeViewModel holds this in place of the bare pages, so its search call sites stay as upstream has them;
- * the rest forwards unchanged (add a forwarder here when upstream adds a method to HomeSearchPages that it uses).
+ * [HomeSearchPages] querying every service the source filter allows; HomeViewModel holds it instead of bare pages; add forwarder when
+ * upstream adds a used method.
  */
 internal class MultiSourceSearchPages(
     private val pages: HomeSearchPages,

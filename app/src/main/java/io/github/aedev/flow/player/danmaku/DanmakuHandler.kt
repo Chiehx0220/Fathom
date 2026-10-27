@@ -27,10 +27,8 @@ data class DanmakuComment(
 )
 
 /**
- * Bilibili danmaku for the current video via native client. Shaped after [io.github.aedev.flow.player.sponsorblock.SponsorBlockHandler]:
- * UI-collected StateFlow, explicit reset() + load per video, nothing automatic.
- *
- * Live room danmaku not loaded here: [liveRoomId] names the room; the layer opens the chat socket while on screen.
+ * Bilibili danmaku of current video, shaped after [io.github.aedev.flow.player.sponsorblock.SponsorBlockHandler]: UI-collected StateFlow,
+ * reset() + load per video. Live room: [liveRoomId]; layer opens chat socket on screen.
  */
 class DanmakuHandler(
     private val scope: CoroutineScope,

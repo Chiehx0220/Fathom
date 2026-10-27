@@ -33,11 +33,8 @@ import javax.crypto.spec.SecretKeySpec
 import kotlin.random.Random
 
 /**
- * Logged-out browser fingerprint for Bilibili: forged device headers, anonymous cookie set
- * (buvid3/4, b_nut, b_lsid, _uuid, bili_ticket, buvid_fp), daily WBI mixin key.
- * Singleton; cookies and key cached, refreshed on expiry.
- *
- * Risk-control changes land here; diff against PipePipeExtractor BilibiliService/utils.
+ * Logged-out fingerprint: forged device headers, anonymous cookies, daily WBI mixin key. Singleton, cached, refreshed on expiry; risk-
+ * control changes land here.
  */
 class BilibiliSession(
     private val http: OkHttpClient,

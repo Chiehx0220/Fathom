@@ -3,9 +3,8 @@ package io.github.aedev.flow.data.local
 import kotlinx.coroutines.flow.first
 
 /**
- * Subscribe, or refresh display info if subscribed, keeping [ChannelSubscription.subscribedAt]/
- * [ChannelSubscription.lastVideoId]/notification state (a fresh [ChannelSubscription] + [subscribe] would reset them).
- * For passive re-confirmation on channel visit (e.g. Local Server).
+ * Subscribe or refresh display info, keeping subscribedAt, lastVideoId, notification state (fresh [subscribe] resets them). Passive re-
+ * confirmation on channel visit.
  */
 suspend fun SubscriptionRepository.subscribeOrUpdateInfo(
     channelId: String,

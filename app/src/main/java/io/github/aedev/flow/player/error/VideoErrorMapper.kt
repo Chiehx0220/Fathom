@@ -3,8 +3,7 @@ package io.github.aedev.flow.player.error
 import android.content.Context
 import android.util.Log
 import io.github.aedev.flow.R
-import io.github.aedev.flow.bilibili.BilibiliLiveNotStartedException
-import io.github.aedev.flow.bilibili.BilibiliLiveRebroadcastException
+import io.github.aedev.flow.bilibili.BilibiliLiveException
 import io.github.aedev.flow.network.appTrafficUsesVpn
 import io.github.aedev.flow.player.stream.PlaybackBlock
 import io.github.aedev.flow.player.stream.PlaybackBlockedException
@@ -196,22 +195,8 @@ object VideoErrorMapper {
                 )
             }
 
-            throwable is BilibiliLiveNotStartedException -> {
-                VideoError(
-                    message = context.getString(R.string.error_live_not_started),
-                    hint = context.getString(R.string.error_live_not_started_hint),
-                    isRetryable = true,
-                    isUserActionable = false,
-                )
-            }
-
-            throwable is BilibiliLiveRebroadcastException -> {
-                VideoError(
-                    message = context.getString(R.string.error_live_rebroadcast),
-                    hint = context.getString(R.string.error_live_rebroadcast_hint),
-                    isRetryable = false,
-                    isUserActionable = false,
-                )
+            throwable is BilibiliLiveException -> {
+                bilibiliLiveError(throwable, context)
             }
 
             // Generic "content not available" must come AFTER the specific sub-classes above

@@ -4,10 +4,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
- * Adds `serviceId` (NewPipe ServiceList id, 0 = YouTube) to record extractor service.
- *
- * From upstream v28 into fork's reserved 10001+ block (AppDatabase FORK VERSIONING POLICY).
- * Idempotent: earlier-numbered runs already have the columns; upstream AutoMigration(26, 27) never ran, so `notes` ensured too.
+ * Adds `serviceId` (0 = YouTube): upstream v28 → fork's 10001+ block (AppDatabase FORK VERSIONING POLICY). Idempotent; ensures `notes`
+ * (upstream AutoMigration(26, 27) never ran).
  */
 class Migration28To10001 : Migration(28, 10001) {
     override fun migrate(db: SupportSQLiteDatabase) {

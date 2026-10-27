@@ -19,8 +19,8 @@ internal data class BilibiliFeedChunk(
 )
 
 /**
- * Bilibili half of subscription refresh; upstream RssSubscriptionService only calls it.
- * No RSS, no channel tabs: latest uploads via native API, after the YouTube phases.
+ * Bilibili half of subscription refresh (upstream RssSubscriptionService only calls it). No RSS/channel tabs: latest uploads via native API
+ * after YouTube phases.
  */
 @Singleton
 class BilibiliSubscriptionFeed

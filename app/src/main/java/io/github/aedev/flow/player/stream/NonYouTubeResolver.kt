@@ -9,11 +9,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import javax.inject.Inject
 
-/**
- * Non-YouTube leg of [PlaybackLoadResolver]: InnerTube is YouTube-only; other services via native client, own step type.
- *
- * Offline copy checked by caller: no offline fallback here.
- */
+/** Non-YouTube leg of [PlaybackLoadResolver]: other services via native client, own step type. Offline copy checked by caller. */
 class NonYouTubeResolver
     @Inject
     constructor(

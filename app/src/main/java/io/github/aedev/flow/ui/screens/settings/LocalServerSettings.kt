@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.data.local.setLocalServerEnabled
 import io.github.aedev.flow.localserver.Pairing
 import io.github.aedev.flow.localserver.RemoteActivity
 import io.github.aedev.flow.localserver.ServerService
@@ -47,7 +48,8 @@ private val EmblemSize = 56.dp
 private val OnlineColor = Color(0xFF2E9E5B)
 
 /**
- * Settings-list local server card, beside taste card (Material 3 Expressive). Outside upstream settings files (no edit collision); follows actual service state, not saved on/off preference.
+ * Settings-list server card beside taste card (M3 Expressive); outside upstream settings files; follows actual service state, not saved
+ * preference.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

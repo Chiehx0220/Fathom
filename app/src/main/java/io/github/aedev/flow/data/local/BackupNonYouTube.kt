@@ -11,8 +11,8 @@ import io.github.aedev.flow.utils.resolveNonYouTubeStreamId
 import kotlinx.coroutines.CancellationException
 
 /*
- * Non-YouTube (Bilibili) carriage for BackupRepository imports/exports; upstream file only calls these.
- * Other services' ids/links go through the service link handler, not YouTube URL shapes.
+ * Non-YouTube (Bilibili) carriage for BackupRepository; upstream only calls these. Other services' ids/links via service link handler, not
+ * YouTube URL shapes.
  */
 
 /** Video id of imported [url] for [serviceId]: YouTube via [youtube] (upstream parser), else link handler. */

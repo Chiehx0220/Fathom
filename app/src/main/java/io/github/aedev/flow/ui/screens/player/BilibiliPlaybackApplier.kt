@@ -11,6 +11,7 @@ import io.github.aedev.flow.innertube.models.response.VideoChapter
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.player.error.VideoErrorMapper
+import io.github.aedev.flow.player.stream.BilibiliStep
 import io.github.aedev.flow.player.stream.LiveFromBilibili
 import io.github.aedev.flow.player.stream.VodFromBilibili
 import io.github.aedev.flow.ui.screens.player.state.*
@@ -40,7 +41,15 @@ internal class BilibiliPlaybackApplier(
     private val recordWatchClick: (Video) -> Unit,
     private val liveChat: LiveChatController,
 ) {
-    suspend fun applyVod(
+    suspend fun apply(
+        step: BilibiliStep,
+        load: LoadContext,
+    ) = when (step) {
+        is VodFromBilibili -> applyVod(load, step)
+        is LiveFromBilibili -> applyLive(load, step)
+    }
+
+    private suspend fun applyVod(
         load: LoadContext,
         step: VodFromBilibili,
     ) {
@@ -57,7 +66,7 @@ internal class BilibiliPlaybackApplier(
         }
     }
 
-    suspend fun applyLive(
+    private suspend fun applyLive(
         load: LoadContext,
         step: LiveFromBilibili,
     ) {
@@ -116,7 +125,7 @@ internal class BilibiliPlaybackApplier(
     }
 
     /**
-     * Bilibili counterpart of [prepareVodStreamFromInnerTube]. No watch-response metadata (heatmap, chapters, category, watch info): only fillable lanes armed.
+     * Counterpart of [prepareVodStreamFromInnerTube]; no watch-response metadata (heatmap, chapters, category): only fillable lanes armed.
      */
     private suspend fun prepareVodStreamFromBilibili(
         load: LoadContext,

@@ -98,18 +98,6 @@ object GlobalPlayerState {
      * Set the current video being played.
      */
     fun setCurrentVideo(video: Video?) {
-        // TEMP: tracing caller clobbering a just-enriched video with a blank-title one for the same id (#quick-panel-metadata). Remove once found.
-        val callers =
-            Thread
-                .currentThread()
-                .stackTrace
-                .drop(3)
-                .take(4)
-                .joinToString(" < ") { "${it.className.substringAfterLast('.')}.${it.methodName}" }
-        val message = "setCurrentVideo id=${video?.id} title=${video?.title} serviceId=${video?.serviceId} from=$callers"
-        Log.w(TAG, message)
-        io.github.aedev.flow.player.error.PlayerDiagnostics
-            .logWarning("GlobalPlayerState", message)
         _currentVideo.value = video
     }
 

@@ -5,9 +5,8 @@ import org.junit.Test
 import kotlin.random.Random
 
 /**
- * The av/bv codec and the mixin-key shuffle are pinned to the values documented in
- * SocialSisterYi/bilibili-API-collect. If one fails after a Bilibili change, the constant tables in
- * [BilibiliSigning] are what to diff against PipePipeExtractor's utils.java.
+ * av/bv codec, mixin-key shuffle pinned to SocialSisterYi/bilibili-API-collect; failure after Bilibili change → diff [BilibiliSigning]
+ * tables vs PipePipeExtractor utils.java.
  */
 class BilibiliSigningTest {
     @Test

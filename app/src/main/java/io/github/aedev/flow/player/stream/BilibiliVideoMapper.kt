@@ -80,7 +80,7 @@ object BilibiliVideoMapper {
         )
 
     /**
-     * [videoId]: screen's id ("BV...?p=N"), kept for queue/history/preload matching; [fallback]: prior screen data (e.g. search-result thumbnail) when Bilibili has none.
+     * [videoId]: screen id ("BV...?p=N"), kept for queue/history/preload matching; [fallback]: prior screen data when Bilibili has none.
      */
     fun videoFromInfo(
         videoId: String,

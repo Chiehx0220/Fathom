@@ -18,7 +18,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import io.github.aedev.flow.data.local.PlayerPreferences
-import io.github.aedev.flow.data.model.supportsBulletComments
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.ui.components.shared.VideoThumbnailImage
 import io.github.aedev.flow.ui.components.videoplayer.MINI_PLAYER_CORNER_RADIUS_DP
@@ -202,20 +201,7 @@ internal fun VideoStage(
                     resizeMode = screenState.resizeMode,
                     modifier = Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced),
                 )
-                if (video.supportsBulletComments) {
-                    if (playerUiState.isLive) {
-                        LiveDanmakuLayer(
-                            enabled = screenState.danmakuEnabled,
-                            modifier = Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced),
-                        )
-                    } else {
-                        DanmakuLayer(
-                            currentPositionMs = screenState.currentPosition,
-                            enabled = screenState.danmakuEnabled,
-                            modifier = Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced),
-                        )
-                    }
-                }
+                DanmakuOverlay(video, playerUiState.isLive, screenState, Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced))
             }
             // Until this video's first frame, the box shows its thumbnail: the card it grew out of,
             // rather than black or the previous video's last frame.

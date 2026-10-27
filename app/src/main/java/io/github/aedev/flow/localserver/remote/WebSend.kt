@@ -2,6 +2,7 @@ package io.github.aedev.flow.localserver.remote
 
 import android.content.Context
 import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.data.local.setLocalServerEnabled
 import io.github.aedev.flow.localserver.RemoteSession
 import io.github.aedev.flow.localserver.ServerService
 import io.github.aedev.flow.localserver.videoIdToUrl

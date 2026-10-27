@@ -19,14 +19,13 @@ import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.player.audio.LoudnessGain
 import io.github.aedev.flow.player.error.VideoErrorMapper
+import io.github.aedev.flow.player.stream.BilibiliStep
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
-import io.github.aedev.flow.player.stream.LiveFromBilibili
 import io.github.aedev.flow.player.stream.PlaybackFailure
 import io.github.aedev.flow.player.stream.ResolvedCaption
 import io.github.aedev.flow.player.stream.ResolvedPlayback
 import io.github.aedev.flow.player.stream.StoryboardSpec
 import io.github.aedev.flow.player.stream.UpcomingDetails
-import io.github.aedev.flow.player.stream.VodFromBilibili
 import io.github.aedev.flow.ui.screens.player.state.*
 import io.github.aedev.flow.utils.NetworkState
 import kotlinx.coroutines.CancellationException
@@ -125,12 +124,8 @@ internal class PlaybackSessionApplier(
                 applyVodFromInnerTube(load, step)
             }
 
-            is VodFromBilibili -> {
-                bilibili.applyVod(load, step)
-            }
-
-            is LiveFromBilibili -> {
-                bilibili.applyLive(load, step)
+            is BilibiliStep -> {
+                bilibili.apply(step, load)
             }
 
             is ResolvedPlayback.Upcoming -> {

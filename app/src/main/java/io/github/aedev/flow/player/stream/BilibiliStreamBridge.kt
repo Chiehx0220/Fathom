@@ -53,8 +53,8 @@ object BilibiliStreamBridge {
         }
 
     /**
-     * FLAC dropped: fails to decode on Bilibili streams (InsufficientCapacityException, per PipePipeClient); Dolby (ec-3) dropped: no opt-in switch.
-     * Remainder keeps API order; selector picks highest bitrate.
+     * FLAC dropped (decode failure, InsufficientCapacityException per PipePipeClient); Dolby (ec-3) dropped (no opt-in). API order kept;
+     * selector picks highest bitrate.
      */
     fun convertAudioFormats(
         bvid: String,
@@ -117,8 +117,8 @@ object BilibiliStreamBridge {
     }
 
     /**
-     * "1080p" or "1080p60" (high-frame-rate ladder). Label read first by [VideoCodecUtils.qualityHeightFromStream]; must be Bilibili's tier name
-     * (720x1280 portrait = "720p"), not raw pixel height.
+     * "1080p"/"1080p60" label: read first by [VideoCodecUtils.qualityHeightFromStream]; Bilibili tier name (720x1280 portrait = "720p"),
+     * not pixel height.
      */
     private fun resolutionLabel(format: BilibiliStreamFormat): String {
         val tier = tierHeight(format)

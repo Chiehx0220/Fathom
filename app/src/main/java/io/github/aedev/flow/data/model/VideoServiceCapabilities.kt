@@ -6,8 +6,8 @@ import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.StreamingService
 
 /**
- * Owning service of this video. Id shape decides (pre-service-id rows carry 0; a Bilibili id is never a YouTube id);
- * [Video.serviceId] is the fallback for shapeless ids.
+ * Owning service: id shape decides (pre-service-id rows carry 0; Bilibili id never a YouTube id); [Video.serviceId] fallback for shapeless
+ * ids.
  */
 val Video.resolvedServiceId: Int
     get() = serviceIdOfVideo(id, serviceId)

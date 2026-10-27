@@ -17,10 +17,8 @@ import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import java.util.concurrent.TimeUnit
 
 /**
- * Background check of a non-YouTube subscription (e.g. Bilibili); [SubscriptionCheckWorker] only calls it.
- *
- * RSS client is YouTube-only: full channel-tabs fetch here. Floored to [MIN_CHECK_INTERVAL_MS] regardless of user interval
- * (tuned for cheap YouTube RSS ping; short interval would hammer Bilibili into risk control).
+ * Background check of non-YouTube subscription (Bilibili); only [SubscriptionCheckWorker] calls it. No RSS: full channel-tabs fetch.
+ * Floored to [MIN_CHECK_INTERVAL_MS] (short interval → risk control).
  */
 internal object NonYouTubeChannelCheck {
     private val MIN_CHECK_INTERVAL_MS = TimeUnit.HOURS.toMillis(2)

@@ -4,9 +4,8 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 
 /**
- * Typed identity, parsed once per boundary; string [id] only for storage/routes.
- * Shapes: video `BV1xx?p=2`, room `live:<roomId>`, uploader `<mid>`, series `bilibili:series:<mid>:<id>:<name>`.
- * Id shape decides ownership (saved service id may be stale).
+ * Typed identity, parsed once per boundary; string [id] only for storage/routes: `BV1xx?p=2`, `live:<roomId>`, `<mid>`,
+ * `bilibili:series:<mid>:<id>:<name>`. Id shape decides ownership.
  */
 sealed interface BilibiliRef {
     /** Storage/route form. */

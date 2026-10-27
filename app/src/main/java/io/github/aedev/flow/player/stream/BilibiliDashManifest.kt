@@ -15,8 +15,8 @@ import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.VideoStream
 
 /**
- * One-representation DASH manifest per Bilibili stream from API init/index ranges (as PipePipe). Plain file: one long request throttled by CDN;
- * DASH: short ranges served fast.
+ * One-representation DASH manifest per stream from API init/index ranges (as PipePipe): plain file = one long request, CDN throttles; short
+ * ranges served fast.
  */
 object BilibiliDashManifest {
     private const val TAG = "BilibiliDashManifest"

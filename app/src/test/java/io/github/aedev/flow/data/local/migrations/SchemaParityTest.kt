@@ -9,9 +9,8 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Upstream numbers its schemas below [FORK_BLOCK_START]; this fork's live in the block above it.
- * Merging an upstream schema change drops a new upstream file here, and nothing else notices if the
- * fork's own schema and migrations were not brought along. These tests do.
+ * Upstream schemas below [FORK_BLOCK_START], fork's above; merged upstream schema goes unnoticed unless fork schema/migrations follow:
+ * caught here.
  */
 class SchemaParityTest {
     private val schemaDir =

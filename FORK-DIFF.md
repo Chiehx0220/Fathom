@@ -26,14 +26,13 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **112** (1294 changed lines). New files: **263**.
+- Modified upstream files: **111** (1217 changed lines). New files: **265**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | ui/screens/home/chips/HomeChipFeeds.kt | 33 | 37 |
-| ui/screens/home/HomeViewModel.kt | 38 | 9 |
-| ui/screens/categories/CategoriesScreen.kt | 34 | 6 |
-| data/local/PlayerPreferences.kt | 39 | 0 |
+| ui/screens/home/HomeViewModel.kt | 40 | 9 |
+| ui/screens/categories/CategoriesScreen.kt | 36 | 6 |
 | data/local/SubscriptionRecordCodec.kt | 23 | 15 |
 | data/local/BackupRepository.kt | 20 | 17 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
@@ -42,7 +41,6 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/channel/ChannelViewModel.kt | 23 | 4 |
 | data/video/VideoDownloadManager.kt | 23 | 3 |
 | data/video/VideoDownloadOptionsLoader.kt | 25 | 1 |
-| ui/screens/player/PlaybackSessionApplier.kt | 26 | 0 |
 | player/resolver/VideoPlaybackResolver.kt | 22 | 3 |
 | data/innertube/RssSubscriptionService.kt | 21 | 3 |
 | data/local/ViewHistory.kt | 24 | 0 |
@@ -51,9 +49,9 @@ in it). **New files** never conflict; they are ours alone.
 | data/update/UpdateRepository.kt | 14 | 9 |
 | ui/screens/home/HomeFeedSources.kt | 20 | 3 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 18 | 3 |
+| ui/screens/player/PlaybackSessionApplier.kt | 21 | 0 |
 | utils/ShareVideo.kt | 14 | 7 |
 | data/local/dao/WatchHistoryDao.kt | 20 | 0 |
-| player/error/VideoErrorMapper.kt | 20 | 0 |
 | ui/screens/home/HomeScreen.kt | 16 | 4 |
 | ui/tv/components/TvNavRail.kt | 3 | 17 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 19 | 0 |
@@ -63,11 +61,9 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 13 | 2 |
-| ui/screens/player/stage/VideoStage.kt | 15 | 0 |
 | data/update/GitHubRelease.kt | 7 | 7 |
 | ui/FlowNavigation.kt | 7 | 7 |
 | data/comments/CommentsPager.kt | 9 | 3 |
-| player/GlobalPlayerState.kt | 12 | 0 |
 | player/stream/PlaybackLoadResolver.kt | 11 | 1 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
 | data/local/LikedVideosRepository.kt | 10 | 1 |
@@ -90,7 +86,11 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
 | data/model/Models.kt | 6 | 0 |
 | data/repository/LiveChatRepository.kt | 5 | 1 |
-| ... 52 more, each small | | |
+| player/stream/PlaybackPrefetcher.kt | 6 | 0 |
+| sync/canonical/Canonical.kt | 6 | 0 |
+| sync/mapping/SimpleMappers.kt | 6 | 0 |
+| ui/AppHooks.kt | 2 | 4 |
+| ... 51 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -102,11 +102,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **138**.
+- Modified upstream files: **0** (0 changed lines). New files: **139**.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **125**.
+- Modified upstream files: **0** (0 changed lines). New files: **132**.
 
 ## Build
 

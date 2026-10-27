@@ -24,9 +24,8 @@ import io.github.aedev.flow.player.danmaku.toDanmakuComment
 private const val MAX_ON_SCREEN = 60
 
 /**
- * Live Bilibili room chat over video. No playback position: play clock advances only while playing; pause freezes, messages arriving meanwhile dropped (no resume burst).
- *
- * Chat socket opened/closed by the collection below: open only while composed + enabled; frame loop only while something on screen and playing.
+ * Live room chat over video: play clock advances only while playing, messages arriving paused dropped. Socket open only while composed +
+ * enabled; frame loop only with something on screen.
  */
 @Composable
 internal fun BoxScope.LiveDanmakuLayer(

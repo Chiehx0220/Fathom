@@ -33,7 +33,7 @@ internal fun resolveMigratedHideWatchedPreference(
     legacyValue: Boolean?,
 ): Boolean = splitValue ?: legacyValue ?: false
 
-private val Context.playerPreferencesDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "player_preferences")
+internal val Context.playerPreferencesDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "player_preferences")
 
 const val DEEP_FLOW_NEVER_EXPIRES_HOURS = 0
 private const val PLAYLIST_SORT_SEPARATOR = "|"
@@ -65,7 +65,7 @@ private fun String?.decodeUnplayableIds(): Set<String> =
 class PlayerPreferences(
     context: Context,
 ) {
-    private val context: Context = context.applicationContext
+    internal val context: Context = context.applicationContext
 
     private object Keys {
         val DEFAULT_QUALITY_WIFI = stringPreferencesKey("default_quality_wifi")
@@ -95,7 +95,6 @@ class PlayerPreferences(
         val PLAYBACK_SPEED = floatPreferencesKey("playback_speed")
         val SLEEP_TIMER_CLOSE_APP_ON_EXPIRY = booleanPreferencesKey("sleep_timer_close_app_on_expiry")
         val TRENDING_REGION = stringPreferencesKey("trending_region")
-        val LOCAL_SERVER_ENABLED = booleanPreferencesKey("local_server_enabled")
         val APP_LANGUAGE = stringPreferencesKey("app_language")
         val CONTENT_LANGUAGE = stringPreferencesKey("content_language")
         val ORIGINAL_TITLES = booleanPreferencesKey("original_titles")
@@ -193,8 +192,6 @@ class PlayerPreferences(
         val SHOW_WATCH_PROGRESS = booleanPreferencesKey("show_watch_progress")
         val WATCH_HISTORY_PAUSED = booleanPreferencesKey("watch_history_paused")
         val HOME_NAVIGATION_ENABLED = booleanPreferencesKey("home_navigation_enabled")
-        val HOME_CONTENT_SOURCE_FILTER = stringPreferencesKey("home_content_source_filter")
-        val EXPLORE_SOURCE = stringPreferencesKey("explore_source")
         val SHORTS_NAVIGATION_ENABLED = booleanPreferencesKey("shorts_navigation_enabled")
         val BOTTOM_NAV_HIDE_ON_SCROLL = booleanPreferencesKey("bottom_nav_hide_on_scroll")
         val MUSIC_NAVIGATION_ENABLED = booleanPreferencesKey("music_navigation_enabled")
@@ -1178,30 +1175,6 @@ class PlayerPreferences(
         }
     }
 
-    val homeContentSourceFilter: Flow<HomeContentSourceFilter> =
-        context.playerPreferencesDataStore.data
-            .map { preferences -> HomeContentSourceFilter.fromStoredName(preferences[Keys.HOME_CONTENT_SOURCE_FILTER]) }
-
-    suspend fun setHomeContentSourceFilter(filter: HomeContentSourceFilter) {
-        context.playerPreferencesDataStore.edit { preferences ->
-            preferences[Keys.HOME_CONTENT_SOURCE_FILTER] = filter.name
-        }
-    }
-
-    val exploreSource: Flow<HomeContentSourceFilter> =
-        context.playerPreferencesDataStore.data
-            .map { preferences ->
-                HomeContentSourceFilter
-                    .fromStoredName(preferences[Keys.EXPLORE_SOURCE])
-                    .takeIf { it == HomeContentSourceFilter.BILIBILI } ?: HomeContentSourceFilter.YOUTUBE
-            }
-
-    suspend fun setExploreSource(source: HomeContentSourceFilter) {
-        context.playerPreferencesDataStore.edit { preferences ->
-            preferences[Keys.EXPLORE_SOURCE] = source.name
-        }
-    }
-
     // Shorts navigation enabled preference
     val shortsNavigationEnabled: Flow<Boolean> =
         context.playerPreferencesDataStore.data
@@ -1412,18 +1385,6 @@ class PlayerPreferences(
     suspend fun setTrendingRegion(region: String) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.TRENDING_REGION] = region
-        }
-    }
-
-    val localServerEnabled: Flow<Boolean> =
-        context.playerPreferencesDataStore.data
-            .map { preferences ->
-                preferences[Keys.LOCAL_SERVER_ENABLED] ?: false
-            }
-
-    suspend fun setLocalServerEnabled(enabled: Boolean) {
-        context.playerPreferencesDataStore.edit { preferences ->
-            preferences[Keys.LOCAL_SERVER_ENABLED] = enabled
         }
     }
 

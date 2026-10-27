@@ -16,6 +16,8 @@ import io.github.aedev.flow.data.local.HomeFeedCacheFilters
 import io.github.aedev.flow.data.local.HomeFeedCacheRepository
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.local.ViewHistory
+import io.github.aedev.flow.data.local.homeContentSourceFilter
+import io.github.aedev.flow.data.local.setHomeContentSourceFilter
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.toVideo
 import io.github.aedev.flow.data.recommendation.ChannelMemoryRepository

@@ -14,10 +14,8 @@ import io.github.aedev.flow.player.error.PlayerDiagnostics
 import io.github.aedev.flow.player.error.StreamDenialClassifier
 
 /**
- * One Bilibili CDN transfer, opened by [BilibiliRoutingDataSource] instead of [YouTubeHttpDataSource] (upstream, untouched).
- *
- * Two mirrors per file; with a fallback available both may be tried ([HedgedOpen]): stalled mirror costs a short delay.
- * Per-mirror speed reported to [BilibiliMirrors] at transfer end (next ordering).
+ * One Bilibili CDN transfer ([BilibiliRoutingDataSource], not [YouTubeHttpDataSource]). Two mirrors per file, both tried with fallback
+ * ([HedgedOpen]); speed → [BilibiliMirrors] at end.
  */
 @UnstableApi
 internal class BilibiliHttpDataSource(

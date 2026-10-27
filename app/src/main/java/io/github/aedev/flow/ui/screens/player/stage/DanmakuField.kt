@@ -24,8 +24,8 @@ internal class ActiveDanmaku(
 )
 
 /**
- * On-screen comments + lanes, on the layer's clock: playback position (video danmaku), accumulated play time (live room).
- * [active] = snapshot state read in draw only: appear/leave redraws without recomposition.
+ * On-screen comments + lanes on layer clock: playback position (video), accumulated play time (live). [active] read in draw only: no
+ * recomposition.
  */
 internal class DanmakuField {
     val active = mutableStateListOf<ActiveDanmaku>()

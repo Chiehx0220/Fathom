@@ -8,8 +8,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Bilibili behavior for [BilibiliRoutingDataSource], [BilibiliHttpDataSource]: CDN host detection, request headers, mirror-hedging tuning.
- * Outside [YouTubeHttpDataSource]: upstream edits merge cleanly.
+ * Bilibili CDN host detection, headers, hedging tuning for [BilibiliRoutingDataSource]/[BilibiliHttpDataSource]; outside
+ * [YouTubeHttpDataSource] (clean merges).
  */
 object BilibiliHttpSupport {
     // Mirror silent this long is raced against the next. Measured: ~0.2s median, 2-7s slow tail: normal case untouched, tail cut.
@@ -21,8 +21,7 @@ object BilibiliHttpSupport {
     val hedgeExecutor: ExecutorService =
         Executors.newCachedThreadPool { runnable -> Thread(runnable, "bili-hedge").apply { isDaemon = true } }
 
-    // Matches desktop UA of the verified localserver Bilibili CDN proxy (LocalHttpServer.kt), not player default mobile UA
-    // (unconfirmed whether Akamai edges check UA shape).
+    // Desktop UA of verified localserver CDN proxy, not player mobile UA (unconfirmed whether Akamai checks UA shape).
     const val USER_AGENT =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
             "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"

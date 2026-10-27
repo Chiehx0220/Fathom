@@ -4,8 +4,8 @@ import io.github.aedev.flow.data.local.ThumbnailQuality
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 
 /*
- * hdslb.com resizes on request: "<cover url>@320w.webp" = same cover, 320 px wide, aspect kept.
- * Covers are often multi-MB PNGs; thumbnail quality setting must apply like YouTube tiers.
+ * hdslb.com resizes on request: "<cover url>@320w.webp" = same cover, 320 px wide. Covers often multi-MB PNGs: thumbnail quality setting
+ * applies like YouTube tiers.
  */
 
 /** No `i.ytimg.com` thumbnail exists: device file, or Bilibili video (cover known only to Bilibili). */

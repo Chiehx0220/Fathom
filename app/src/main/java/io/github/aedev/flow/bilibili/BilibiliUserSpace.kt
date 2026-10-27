@@ -11,10 +11,7 @@ import kotlinx.serialization.json.Json
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Uploader space: profile, videos, series/seasons.
- *
- * Endpoints blocked more readily: three interchangeable video-list APIs (web, keyword search, app);
- * blocked one hands over to the next, choice kept for later calls (as PipePipe).
+ * Uploader space: profile, videos, series/seasons. Three interchangeable video-list APIs (web, keyword, app): blocked → next, choice kept.
  */
 internal class BilibiliUserSpace(
     private val session: BilibiliSession,

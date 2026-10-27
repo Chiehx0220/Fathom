@@ -1,8 +1,8 @@
 package io.github.aedev.flow.player.datasource
 
 /**
- * Mirror URLs per Bilibili stream (own CDN, Akamai). Player holds one URL per stream; [BilibiliHttpDataSource] looks up the rest here.
- * Fastest first by measured host transfer speed ([recordSpeed]); last first-answerer breaks ties.
+ * Mirror URLs per stream (own CDN, Akamai): player holds one, rest looked up here. Fastest host first ([recordSpeed]); last first-answerer
+ * breaks ties.
  */
 object BilibiliMirrors {
     /** Mirrors of one stream in listed order + last winner. */

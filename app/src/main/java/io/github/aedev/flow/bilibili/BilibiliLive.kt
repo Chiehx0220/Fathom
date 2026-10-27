@@ -49,10 +49,7 @@ internal class BilibiliLive(
         )
     }
 
-    /**
-     * One request, both shapes: fmp4 HLS master playlist (all qualities, adaptive) and FLV (~1 in 50 rooms).
-     * [roomId]: long room number from [room].
-     */
+    /** One request: fmp4 HLS master (all qualities) + FLV (~1 in 50 rooms). [roomId]: room number from [room]. */
     suspend fun streams(roomId: Long): BilibiliLiveStreams {
         val headers = session.headers(liveReferer(roomId))
         val url = "$ROOM_PLAY_INFO_URL?room_id=$roomId&protocol=0,1&format=0,1,2&codec=0,1&qn=10000&platform=web&dm_disabled=1"

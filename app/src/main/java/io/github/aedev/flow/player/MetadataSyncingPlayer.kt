@@ -10,12 +10,8 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
- * [ForwardingPlayer] letting the media session re-read [getMediaMetadata].
- *
- * Media3 session attaches its Player.Listener to the wrapped player (ForwardingPlayer default addListener/removeListener) and re-asks
- * getMediaMetadata() only on real-player events (transition, timeline change). GlobalPlayerState.currentVideo enriches after that event:
- * overriding the getter alone is invisible (session keeps first read). Tracking the session listener here (still forwarded)
- * lets [notifyMediaMetadataChanged] push the corrected value once available.
+ * [ForwardingPlayer] so the media session re-reads [getMediaMetadata]: session re-asks only on player events,
+ * GlobalPlayerState.currentVideo enriches later. Tracks session listener for [notifyMediaMetadataChanged].
  */
 internal open class MetadataSyncingPlayer(
     wrapped: Player,

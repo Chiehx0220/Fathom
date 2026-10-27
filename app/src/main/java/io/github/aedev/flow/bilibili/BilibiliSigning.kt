@@ -11,10 +11,7 @@ import java.security.MessageDigest
 import java.util.TreeMap
 import kotlin.random.Random
 
-/**
- * Pure computation of Bilibili request validation: av/bv codec, WBI signature, fake dm_img_* danmaku-image telemetry.
- * No network; unit-testable. WBI mixin key fetched by [BilibiliSession].
- */
+/** Pure request validation: av/bv codec, WBI signature, fake dm_img_* telemetry. No network; WBI key from [BilibiliSession]. */
 object BilibiliSigning {
     // region av <-> bv
     private val XOR_CODE = BigInteger("23442827791579")
@@ -136,8 +133,8 @@ object BilibiliSigning {
     fun percentSpaceEncode(value: String): String = URLEncoder.encode(value, "UTF-8").replace("+", "%20")
 
     /**
-     * Adds w_rid, wts to [params]; returns query string in PipePipe's shape:
-     * hash over percent-encoded key-sorted query; wire query is plain insertion-ordered "key=value" join (HTTP layer escapes).
+     * Adds w_rid, wts to [params]; returns query in PipePipe's shape: hash over percent-encoded key-sorted query, wire query plain
+     * insertion-ordered "key=value".
      */
     fun signWbi(
         params: LinkedHashMap<String, String>,

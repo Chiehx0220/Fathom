@@ -22,8 +22,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
 
 /*
- * Bilibili cover not derivable from video id: a card saved without one (e.g. import lacking covers) asks Bilibili on display:
- * visible covers only, once each, never when a cover exists.
+ * Cover not derivable from video id (e.g. import lacking covers): asked from Bilibili on display, visible cards only, once each, never when
+ * a cover exists.
  */
 
 /**
@@ -49,8 +49,8 @@ internal fun List<Any>.orBilibiliCover(
 }
 
 /**
- * Bilibili covers: one request per video (shared across cards), max [MAX_PARALLEL] concurrent, failures skipped for [RETRY_MS] (no per-recomposition retry).
- * Runs on [scope]: card scroll-away does not cancel another card's pending answer.
+ * One request per video (shared across cards), max [MAX_PARALLEL] concurrent, failures skipped [RETRY_MS]; runs on [scope] (scroll-away
+ * keeps pending answer).
  */
 internal class BilibiliCoverCache(
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),

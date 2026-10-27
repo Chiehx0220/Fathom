@@ -3,10 +3,8 @@ package io.github.aedev.flow.data.local.migrations
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
- * [table] already has [column].
- *
- * Earlier-numbered fork migrations (Migration28To10001, Migration10001To10002) may have added it;
- * blind ALTER TABLE → "duplicate column name", database unopenable.
+ * [table] already has [column]: earlier fork migrations may have added it; blind ALTER TABLE → "duplicate column name", database
+ * unopenable.
  */
 internal fun SupportSQLiteDatabase.hasColumn(
     table: String,
@@ -34,10 +32,8 @@ internal fun SupportSQLiteDatabase.addColumnIfMissing(
 }
 
 /**
- * Creates `notes` if missing.
- *
- * Upstream AutoMigration(26, 27) never runs past fork's old v27 (Room walks forward only).
- * Called first by both fork migrations; no-op if present.
+ * Creates `notes` if missing: upstream AutoMigration(26, 27) never runs past fork's old v27 (Room walks forward only). First call of both
+ * fork migrations; no-op if present.
  */
 internal fun SupportSQLiteDatabase.ensureNotesTable() {
     execSQL(
