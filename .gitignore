@@ -52,3 +52,6 @@ Flow-desktop/
 
 # macOS Finder metadata
 .DS_Store
+
+# web test dependencies
+scripts/web-tests/node_modules/

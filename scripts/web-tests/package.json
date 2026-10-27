@@ -1,0 +1,8 @@
+{
+  "name": "fathom-web-tests",
+  "private": true,
+  "description": "DOM-level tests for the Fathom web page (jsdom); dev only, not shipped in the APK",
+  "devDependencies": {
+    "jsdom": "27.0.1"
+  }
+}

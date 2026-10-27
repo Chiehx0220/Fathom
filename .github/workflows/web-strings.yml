@@ -1,9 +1,8 @@
 name: Web strings
 
-# Validates the local web UI strings (app/src/main/assets/web/app/strings/*.json) against the scripts that use them,
-# and runs the web page's own tests.
+# Web UI strings (assets/web/app/strings/*.json) against the scripts that use them, plus the web tests.
 #   node scripts/check-web-strings.js --report
-#   node --test scripts/web-tests/*.test.js
+#   npm ci --prefix scripts/web-tests && node --test scripts/web-tests/*.test.js
 
 on:
   push:
@@ -30,6 +29,9 @@ jobs:
 
       - name: Compare the strings with the page
         run: node scripts/check-web-strings.js --report
+
+      - name: Install the web test dependencies
+        run: npm ci --prefix scripts/web-tests --no-audit --no-fund
 
       - name: Run the web tests
         run: node --test scripts/web-tests/*.test.js
