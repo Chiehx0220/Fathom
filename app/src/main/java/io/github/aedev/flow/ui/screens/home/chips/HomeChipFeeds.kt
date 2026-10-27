@@ -391,7 +391,7 @@ class HomeChipFeeds
         }
 
         private suspend fun live(): List<Video> {
-            val pool = storedUploads().filter { it.isLive } + search(interestQuery(), SearchFilter.LIVE)
+            val pool = storedUploads().filter { it.isLive } + search(liveQueries(interests), SearchFilter.LIVE)
             return ranked(pool.filter { it.isLive && !it.isUpcoming }).take(HomeChipParams.MAX_VIDEOS)
         }
 

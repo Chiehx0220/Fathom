@@ -188,6 +188,7 @@ internal fun OrientationListenerEffect(
     isFullscreen: Boolean,
     videoAspectRatio: Float = 16f / 9f,
     isPortraitFullscreen: Boolean = false,
+    ignoreRotationLock: Boolean = false,
     onEnterFullscreen: () -> Unit,
     onExitFullscreen: () -> Unit,
 ) {
@@ -197,6 +198,7 @@ internal fun OrientationListenerEffect(
     val currentIsFullscreen by rememberUpdatedState(isFullscreen)
     val currentAspectRatio by rememberUpdatedState(videoAspectRatio)
     val currentIsPortraitFullscreen by rememberUpdatedState(isPortraitFullscreen)
+    val currentIgnoreRotationLock by rememberUpdatedState(ignoreRotationLock)
     val currentEnter by rememberUpdatedState(onEnterFullscreen)
     val currentExit by rememberUpdatedState(onExitFullscreen)
 
@@ -206,14 +208,15 @@ internal fun OrientationListenerEffect(
                 override fun onOrientationChanged(orientation: Int) {
                     if (orientation == ORIENTATION_UNKNOWN) return
 
-                    val autoRotateOn =
+                    val autoRotateOn = {
                         try {
                             Settings.System.getInt(context.contentResolver, Settings.System.ACCELEROMETER_ROTATION) == 1
                         } catch (e: Exception) {
                             true
                         }
+                    }
 
-                    if (!autoRotateOn) return
+                    if (!followsTilt(currentIgnoreRotationLock, autoRotateOn)) return
 
                     val newOrientation = heldOrientation(orientation, physicalOrientation)
 
@@ -233,18 +236,18 @@ internal fun OrientationListenerEffect(
 
     LaunchedEffect(physicalOrientation, isExpanded) {
         delay(150)
+        if (physicalOrientation != 1 || !isExpanded) return@LaunchedEffect
+        if (currentIsPortraitFullscreen || currentAspectRatio < 1f) return@LaunchedEffect
+        if (!currentIsFullscreen) currentEnter()
+    }
 
-        if (physicalOrientation == -1) return@LaunchedEffect
-
-        val isVerticalVideo = currentAspectRatio < 1f
-
-        if (currentIsPortraitFullscreen) return@LaunchedEffect
-
-        if (physicalOrientation == 1 && isExpanded && !currentIsFullscreen && !isVerticalVideo) {
-            currentEnter()
-        } else if (physicalOrientation == 0 && currentIsFullscreen && !isVerticalVideo) {
-            currentExit()
-        }
+    // Exit answers only the phone turning upright, not the sheet expanding: "Open videos in
+    // fullscreen" enters as the sheet settles, and a re-run on that flip left it again 150 ms later.
+    LaunchedEffect(physicalOrientation) {
+        delay(150)
+        if (physicalOrientation != 0) return@LaunchedEffect
+        if (currentIsPortraitFullscreen || currentAspectRatio < 1f) return@LaunchedEffect
+        if (currentIsFullscreen) currentExit()
     }
 }
 
@@ -262,3 +265,13 @@ internal fun heldOrientation(
         in 0..30, in 330..359 -> 0
         else -> previous
     }
+
+/**
+ * Whether a tilt may move the player in or out of fullscreen. Fullscreen asks for
+ * SENSOR_LANDSCAPE, which turns the window even under the system rotation lock, so the lock only
+ * matters when the viewer has not asked to tilt through it (#1219).
+ */
+internal fun followsTilt(
+    ignoreRotationLock: Boolean,
+    autoRotateOn: () -> Boolean,
+): Boolean = ignoreRotationLock || autoRotateOn()

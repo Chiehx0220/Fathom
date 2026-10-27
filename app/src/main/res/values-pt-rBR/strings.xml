@@ -1537,7 +1537,7 @@
     <string name="download_menu_style_title">Estilo do menu de baixar</string>
     <string name="download_menu_style_subtitle">Escolha como a caixa de diálogo de baixar parece</string>
     <string name="download_menu_style_classic">Clássico</string>
-    <string name="download_menu_style_classic_desc">Lista completa de cada qualidade e codec</string>
+    <string name="download_menu_style_classic_desc">Todas as qualidades em uma só tela</string>
     <string name="download_menu_style_compact">Compacto</string>
     <string name="download_menu_style_compact_desc">Título editável, menus suspensos e contagem de núcleos</string>
     <string name="downloading_template">Baixando %1$s...</string>
@@ -2838,12 +2838,12 @@
     <string name="start_radio_desc">Tocar rádio baseada nesta música</string>
     <plurals name="playlists_count_template">
         <item quantity="one">%1$d playlist</item>
-        <item quantity="many">%1$d playlists</item>
+        <item quantity="many">%1$d de playlists</item>
         <item quantity="other">%1$d playlists</item>
     </plurals>
     <plurals name="shorts_count_template">
         <item quantity="one">%1$d Short</item>
-        <item quantity="many">%1$d Shorts</item>
+        <item quantity="many">%1$d de Shorts</item>
         <item quantity="other">%1$d Shorts</item>
     </plurals>
     <plurals name="library_items_count">
@@ -3844,8 +3844,8 @@
     <string name="settings_backup_full">Backup completo</string>
     <string name="settings_backup_one_copy">Cada backup substitui o anterior na pasta.</string>
     <string name="settings_backup_needs_folder">Escolha uma pasta primeiro</string>
-    <string name="settings_quick_download_quality">Qualidade de download rápida</string>
-    <string name="settings_quick_download_quality_summary">Usada quando você baixa a partir de um cartão de vídeo</string>
+    <string name="settings_quick_download_quality">Qualidade de download</string>
+    <string name="settings_quick_download_quality_summary">Selecionada primeiro quando você baixa</string>
     <string name="settings_music_download_quality">Qualidade de download de música</string>
     <string name="settings_music_download_quality_summary">Usada para músicas, álbuns e playlists de música</string>
     <string name="settings_section_storage_access">Acesso ao armazenamento</string>
@@ -4353,7 +4353,7 @@
         <item quantity="many">%1$d temas importados</item>
         <item quantity="other">%1$d temas importados</item>
     </plurals>
-    <string name="taste_keywords">persona, perfil, algoritmo, recomendações, interesses, cérebro, motor, centro de controle</string>
+    <string name="taste_keywords">persona, perfil, algoritmo, recomendações, interesses, cérebro, motor, central de controle</string>
     <string name="taste_shape_header">Perfil de gosto</string>
     <plurals name="taste_hidden_count">
         <item quantity="one">%d item oculto</item>
@@ -4413,8 +4413,22 @@
     </plurals>
     <plurals name="songs_download_queued">
         <item quantity="one">%d música adicionada à fila para download</item>
-        <item quantity="many">%d músicas adicionada à fila para baixar</item>
-        <item quantity="other">%d músicas adicionada à fila para baixar</item>
+        <item quantity="many">%d de músicas adicionadas à fila para baixar</item>
+        <item quantity="other">%d músicas adicionadas à fila para baixar</item>
     </plurals>
     <string name="channel_about_handle">Manusear</string>
+    <string name="settings_downloads_nav_tab_title">Aba de downloads na navegação</string>
+    <string name="settings_downloads_nav_tab_subtitle">Adicione uma aba de Downloads na barra de navegação</string>
+    <string name="home_new_videos">Vídeos novos</string>
+    <string name="playback_background_restricted_title">O funcionamento em segundo plano está restrito</string>
+    <string name="download_ask_every_time_title">Perguntar sempre</string>
+    <string name="share_download_with_flow">Baixar com o Flow</string>
+    <string name="share_download_not_a_video">Apenas vídeos podem ser baixados de um link compartilhado</string>
+    <string name="downloads_storage_card_title">Resumo do armazenamento</string>
+    <string name="downloads_storage_card_summary">Mostrar o espaço usado e livre no topo dos Downloads</string>
+    <string name="downloads_confirm_delete_title">Perguntar antes de excluir</string>
+    <string name="download_sheet_button">Baixar %1$s</string>
+    <string name="download_sheet_save_folder">%1$s · %2$s livre</string>
+    <string name="download_sheet_change_folder">Mudar</string>
+    <string name="download_sheet_all_languages">Todos os idiomas</string>
 </resources>
