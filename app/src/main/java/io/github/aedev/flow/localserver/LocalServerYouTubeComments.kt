@@ -21,7 +21,7 @@ internal object LocalServerYouTubeComments {
     fun owns(page: Page?): Boolean = page?.url?.startsWith("yt:") == true
 
     /**
-     * One page; null if InnerTube gave nothing on a first page → extractor answers (also knows comments-off). Failed continuation ends the list.
+     * One page; null on empty first page → extractor answers (knows comments-off). Failed continuation ends the list.
      */
     fun comments(
         context: Context,

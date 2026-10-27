@@ -34,9 +34,7 @@ import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.localserver.RemoteState
 
-/**
- * Directions page: search, subscriptions/library, direction wheel, shortcut keys.
- */
+/** Directions page: search, subscriptions/library, direction wheel, shortcut keys. */
 @Composable
 internal fun DirectionsMode(
     state: RemoteState,

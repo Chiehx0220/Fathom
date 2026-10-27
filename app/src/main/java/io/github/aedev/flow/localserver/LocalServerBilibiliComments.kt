@@ -7,9 +7,7 @@ import io.github.aedev.flow.di.bilibiliApi
 import kotlinx.coroutines.runBlocking
 import org.schabi.newpipe.extractor.Page
 
-/**
- * Comments + danmaku. Continuation [Page] url: "c:<offset>"; replies "r:<rpid>:<page>".
- */
+/** Comments + danmaku. Continuation [Page] url: "c:<offset>"; replies "r:<rpid>:<page>". */
 internal object LocalServerBilibiliComments {
     fun comments(
         context: Context,

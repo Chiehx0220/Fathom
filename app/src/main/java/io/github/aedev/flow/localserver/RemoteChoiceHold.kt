@@ -7,9 +7,7 @@ internal const val CHOICE_HOLD_MS = 2500L
 /** Phone-changed settings, shown optimistically. */
 internal enum class RemoteChoice { QUALITY, RATE, DANMAKU, RATING }
 
-/**
- * Optimistic-update guard: for [CHOICE_HOLD_MS] after a command, page report field ignored (in-flight report predates the command).
- */
+/** Optimistic-update guard: for [CHOICE_HOLD_MS] after a command, page report field ignored (in-flight report predates the command). */
 internal class RemoteChoiceHold(
     private val now: () -> Long = System::currentTimeMillis,
 ) {

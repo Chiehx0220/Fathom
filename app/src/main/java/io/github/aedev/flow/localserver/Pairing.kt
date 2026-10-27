@@ -26,10 +26,7 @@ internal sealed interface PairResult {
     ) : PairResult
 }
 
-/**
- * Six-digit code → session cookie, once. Guessing bounded per peer ([PeerLockout]) and per code ([MISSES_BEFORE_NEW_CODE]). Plain HTTP:
- * code/cookie observable.
- */
+/** Six-digit code → session cookie, once. Guessing bounded per peer ([PeerLockout]) and per code. Plain HTTP. */
 internal class Pairing(
     private val storage: PairingStorage,
     private val random: SecureRandom = SecureRandom(),

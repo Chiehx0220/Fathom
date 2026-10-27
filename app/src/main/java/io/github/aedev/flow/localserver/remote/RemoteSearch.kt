@@ -59,9 +59,7 @@ import kotlinx.coroutines.withContext
 private const val HISTORY_LOOKBACK = 50
 private const val MAX_SUGGESTIONS = 8
 
-/**
- * Remote typing workarounds: type here, tap a past search, speak. Page runs the search.
- */
+/** Remote typing workarounds: type here, tap a past search, speak. Page runs the search. */
 @Composable
 internal fun SearchField(send: (String) -> Unit) {
     val context = LocalContext.current

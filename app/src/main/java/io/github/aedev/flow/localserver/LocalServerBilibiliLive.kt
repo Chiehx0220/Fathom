@@ -34,9 +34,7 @@ internal object LocalServerBilibiliLive {
     /** Room number of a live room link; null if [mediaUrl] is not one. */
     fun roomIdOf(mediaUrl: String): Long? = BilibiliRef.Live.ofUrl(mediaUrl)?.roomId
 
-    /**
-     * Room metadata + HLS playlist. FLV-only room: not browser-playable → fails.
-     */
+    /** Room metadata + HLS playlist. FLV-only room: not browser-playable → fails. */
     fun streamInfo(
         context: Context,
         roomId: Long,

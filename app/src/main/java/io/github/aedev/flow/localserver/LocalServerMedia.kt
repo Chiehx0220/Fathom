@@ -1,6 +1,7 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.bilibili.BilibiliRef
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.ListExtractor
 import org.schabi.newpipe.extractor.ListExtractor.InfoItemsPage
@@ -36,10 +37,10 @@ object LocalServerMedia {
             return if (end == -1) url.substring(start) else url.substring(start, end)
         }
         // Bilibili video/live room stored as "BV1xx?p=1" / "live:123" (app history ids); a whole link → second row, link inside link.
-        return io.github.aedev.flow.bilibili.BilibiliRef.Video
+        return BilibiliRef.Video
             .ofUrl(url)
             ?.id
-            ?: io.github.aedev.flow.bilibili.BilibiliRef.Live
+            ?: BilibiliRef.Live
                 .ofUrl(url)
                 ?.id
             ?: url

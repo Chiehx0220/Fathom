@@ -24,10 +24,7 @@ import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * YouTube streams: PoToken-attested multi-client InnerTube (native player's), not NewPipe's unattested client. Playable URLs only; metadata
- * stays on NewPipeExtractor.
- */
+/** YouTube streams: PoToken-attested multi-client InnerTube, not NewPipe's unattested client. Metadata stays on extractor. */
 internal object LocalServerYouTubeStreams {
     private const val TAG = "LocalServerYouTube"
     private const val EXTRACTION_TTL_MS = 50 * 60 * 1000L
@@ -135,10 +132,7 @@ internal object LocalServerYouTubeStreams {
         extractionCache.remove(videoId)
     }
 
-    /**
-     * Overlays [info] streams with InnerTube's, NewPipe's kept as union: InnerTube favors AV1/VP9 (some browsers cannot decode); NewPipe
-     * H.264 = [StreamCatalog] fallback.
-     */
+    /** Overlays [info] streams with InnerTube's, NewPipe's kept: InnerTube favors AV1/VP9; NewPipe H.264 = [StreamCatalog] fallback. */
     fun overlay(
         info: StreamInfo,
         videoId: String,

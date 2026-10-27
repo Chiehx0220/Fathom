@@ -5,9 +5,7 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.comments.CommentsInfoItem
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 
-/**
- * One image per item. NewPipeExtractor keeps a size list; these read the biggest, write a single-entry list.
- */
+/** One image per item. NewPipeExtractor keeps a size list; these read the biggest, write a single-entry list. */
 internal var InfoItem.thumbnailUrl: String?
     get() = thumbnails.bestUrl()
     set(value) {

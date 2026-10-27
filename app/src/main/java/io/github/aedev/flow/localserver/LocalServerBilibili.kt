@@ -12,10 +12,7 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 
-/**
- * Bilibili lists (home, search, uploader, playlist) as NewPipe item/page types; blocking, one thread per request. Continuation = [Page]
- * url: page number or "<page>:<lastAid>" (uploader videos).
- */
+/** Bilibili lists as NewPipe item/page types; blocking. Continuation = [Page] url: page number or "<page>:<lastAid>". */
 internal object LocalServerBilibili {
     private const val POPULAR_PAGES = 5
     private const val SEARCH_LIVES = 3

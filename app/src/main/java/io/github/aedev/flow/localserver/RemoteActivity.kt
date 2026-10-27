@@ -18,7 +18,7 @@ import io.github.aedev.flow.ui.startup.themeSettings
 import javax.inject.Inject
 
 /**
- * Phone as remote for the paired page: direction pad, playback keys, touchpad. Commands → server → page; page reports state. Screens: `remote` package.
+ * Phone as remote: direction pad, playback keys, touchpad. Command → server → page; page reports state.
  */
 @AndroidEntryPoint
 class RemoteActivity : ComponentActivity() {

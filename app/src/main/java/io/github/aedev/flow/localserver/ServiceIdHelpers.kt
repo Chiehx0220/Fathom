@@ -20,9 +20,7 @@ fun channelIdToUrl(
         "https://www.youtube.com/channel/$channelId"
     }
 
-/**
- * Channel URL → bare id (YouTube, Bilibili); else null.
- */
+/** Channel URL → bare id (YouTube, Bilibili); else null. */
 fun channelUrlToId(url: String?): String? {
     if (url == null) return null
     var normalized = url.trim()
@@ -40,9 +38,7 @@ fun channelUrlToId(url: String?): String? {
     return BilibiliRef.Uploader.ofLink(normalized)?.id
 }
 
-/**
- * Bare video id → URL: YouTube canonical or Bilibili video link. Rendering keys off `item.url`: must be readable back to the id.
- */
+/** Bare video id → YouTube canonical or Bilibili video URL; `item.url` must parse back to the id. */
 fun videoIdToUrl(
     videoId: String,
     serviceId: Int = ServiceList.YouTube.serviceId,

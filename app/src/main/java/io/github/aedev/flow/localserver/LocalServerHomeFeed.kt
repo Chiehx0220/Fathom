@@ -93,10 +93,7 @@ private suspend fun HistoryDbHelper.rankAndConvert(
     return ranked.map { it.toStreamInfoItem(serviceId) }
 }
 
-/**
- * Home feed via native wave-1 pipeline ([buildHomeFeedLanes]/[assembleHomeFeed]); YouTube-only, no wave-2 / persistent cache. Upstream-
- * owned: re-verify after sync. Second = more available (no Page token).
- */
+/** Home feed via native wave-1 pipeline; YouTube-only, no wave-2 / persistent cache. Upstream-owned: re-verify after sync. */
 fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int): Pair<List<InfoItem>, Boolean> =
     runBlocking {
         val cacheKey = serviceId

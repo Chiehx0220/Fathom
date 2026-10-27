@@ -12,9 +12,7 @@ fun HistoryDbHelper.watchedUrls(): Set<String> =
         viewHistory().getAllWatchedVideoIdentities().map { videoIdToUrl(it.videoId, it.serviceId) }.toSet()
     }
 
-/**
- * Create-or-touch history entry, saved position kept. `uploaderAvatar` dropped (no column).
- */
+/** Create-or-touch history entry, saved position kept. `uploaderAvatar` dropped (no column). */
 fun HistoryDbHelper.saveToHistory(
     title: String,
     url: String,

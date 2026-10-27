@@ -1,8 +1,7 @@
 package io.github.aedev.flow.localserver
 
 /**
- * Material You palette → web UI: overrides stylesheet's `--md-*` role defaults with device scheme. Fixed accent presets: plain CSS in
- * themes.css.
+ * Material You palette → web UI: overrides stylesheet `--md-*` role defaults; fixed accent presets live in themes.css.
  */
 object WebTheme {
     /** Scheme maps by role, set by ServerService. */

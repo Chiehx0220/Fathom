@@ -12,10 +12,7 @@ import kotlinx.coroutines.runBlocking
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 
-/**
- * YouTube Videos tab via app InnerTube (follows app fixes). Continuation = [Page] url "yt:u:<token>" with owner in id/ids (no header);
- * unprefixed pages and other tabs: extractor.
- */
+/** YouTube Videos tab via app InnerTube. Continuation `yt:u:<token>` with owner in id/ids; unprefixed pages: extractor. */
 internal object LocalServerYouTubeChannel {
     private const val MORE = "yt:u:"
     private const val YOUTUBE = 0

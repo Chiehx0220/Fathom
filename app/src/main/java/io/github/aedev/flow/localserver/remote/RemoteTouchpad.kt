@@ -106,8 +106,7 @@ private fun Touchpad(
 }
 
 /**
- * One gesture loop: tap, drag, two-finger scroll never contend. Travel batched, fractions carried (no rounding loss), remainder sent on
- * lift.
+ * One gesture loop: tap, drag, two-finger scroll never contend; travel batched, fractions carried, remainder sent on lift.
  */
 private fun Modifier.touchpadGestures(
     send: (String) -> Unit,

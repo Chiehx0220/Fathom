@@ -2,10 +2,7 @@ package io.github.aedev.flow.localserver
 
 import android.content.Context
 
-/**
- * App stylesheet + script: `assets/web/app` joined in fixed order → `/app.css`, `/app.js`; `strings/<language>.json` embedded as one object
- * keyed by language.
- */
+/** App stylesheet + script from `assets/web/app` in fixed order (`/app.css`, `/app.js`); `strings/<language>.json` embedded. */
 object WebAssets {
     // Single-page app at /app: own stylesheet, script, HTML shell.
     private val APP_CSS_FILES =

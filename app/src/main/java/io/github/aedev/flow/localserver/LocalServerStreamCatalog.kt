@@ -58,10 +58,7 @@ internal class StreamCatalog(
         // Ladder shorter than this: codec switch not worth it.
         private const val MIN_LADDER = 3
 
-        /**
-         * Catalog from [streams]; [preferredTrack] first, else [LocalServerMedia.audioTrackPriorityComparator]. One codec family (mid-
-         * stream switch unreliable): H.264, [highest] = tallest (AV1 for 1440p/4K).
-         */
+        /** Catalog from [streams]; [preferredTrack] first. One codec family: H.264, [highest] = tallest (AV1 for 1440p/4K). */
         fun of(
             streams: StreamLists,
             preferredTrack: String? = null,

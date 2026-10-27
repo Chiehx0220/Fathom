@@ -8,8 +8,7 @@ import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.Page
 
 /**
- * Short YouTube playlist via app repository (follows app fixes), complete first page only; else extractor. InnerTube lacks video count:
- * header -1.
+ * Short YouTube playlist via app repository, first page only, else extractor; InnerTube lacks video count (header -1).
  */
 internal object LocalServerYouTubePlaylist {
     private const val YOUTUBE = 0
