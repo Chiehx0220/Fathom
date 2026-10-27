@@ -8,7 +8,7 @@ import io.github.aedev.flow.data.model.resolvedServiceId
 import io.github.aedev.flow.data.music.model.MusicTrack
 import org.junit.Test
 
-/** The service of a video or channel is worked out from its id, so a caller that builds one cannot forget to say. */
+/** Service derived from the id, so a caller cannot omit it. */
 class DerivedServiceIdTest {
     private fun video(id: String) = Video(id, "t", "c", "ch", "", 60, 1, uploadDate = "1 day ago")
 

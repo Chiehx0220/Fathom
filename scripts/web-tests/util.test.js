@@ -78,3 +78,13 @@ test('h builds elements: text as text, props by kind, empty values skipped', () 
   assert.strictEqual(el.listeners.click.length, 1);
   assert.deepStrictEqual(el.children.map((kid) => kid.text), ['a < b', '0', 'nested']);
 });
+
+test('a card picture asks YouTube for hqdefault instead of hq720 and leaves other addresses alone', () => {
+  const { FT } = load({});
+  assert.strictEqual(FT.cardThumb('https://i.ytimg.com/vi/dQw4w9WgXcQ/hq720.jpg'), 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
+  assert.strictEqual(FT.cardThumb('https://i.ytimg.com/vi/a-b_C/hq720.jpg'), 'https://i.ytimg.com/vi/a-b_C/hqdefault.jpg');
+  for (const same of ['https://i.ytimg.com/vi/x/maxresdefault.jpg', 'https://i.ytimg.com/vi/x/hq720.jpg?sqp=1', 'https://i0.hdslb.com/bfs/archive/x.jpg', '']) {
+    assert.strictEqual(FT.cardThumb(same), same);
+  }
+  assert.strictEqual(FT.cardThumb(undefined), '');
+});

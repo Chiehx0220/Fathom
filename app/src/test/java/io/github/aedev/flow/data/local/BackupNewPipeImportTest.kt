@@ -16,7 +16,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.ConscryptMode
 import java.io.File
 
-/** A NewPipe/PipePipe export keeps each stream's service in `service_id`; both services must survive the import. */
+/** NewPipe/PipePipe export keeps each stream's service in `service_id`; both services must survive import. */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [34], application = Application::class)
 @ConscryptMode(ConscryptMode.Mode.OFF)
@@ -72,7 +72,7 @@ class BackupNewPipeImportTest {
             assertThat(byId.getValue("BV1xx411c7mD").serviceId).isEqualTo(BILIBILI_SERVICE_ID)
             assertThat(byId.getValue("BV1xx411c7mD").channelId).isEqualTo("12345")
             assertThat(byId.getValue("BV1xx411c7mD").thumbnailUrl).isEqualTo("https://i0.hdslb.com/cover.jpg")
-            // No cover in the export: none is made up, rather than a YouTube link that does not exist.
+            // No cover in the export: none invented (not a nonexistent YouTube link).
             assertThat(byId.getValue("BV1yy411c7mE").thumbnailUrl).isEmpty()
         }
 

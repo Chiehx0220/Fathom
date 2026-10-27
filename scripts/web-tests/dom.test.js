@@ -183,3 +183,12 @@ test('settings toggles save through the phone', async () => {
   assert.strictEqual(save.length, 1);
   assert.strictEqual(save[0].params.hideShorts, 'true');
 });
+
+test('cards load the smaller YouTube picture while the featured video keeps the large one', async () => {
+  const big = (n) => video(n, { thumbnailUrl: `https://i.ytimg.com/vi/id${n}/hq720.jpg` });
+  const page = await open({ routes: { '/api/v1/recommendations': { videos: [big(1), big(2)], hasMore: false }, '/api/v1/history': { videos: [] } } });
+  const { document } = page.window;
+  assert.strictEqual(document.querySelector('#screen .hero img').getAttribute('src'), 'https://i.ytimg.com/vi/id1/hq720.jpg');
+  assert.deepStrictEqual([...document.querySelectorAll('#screen .card img')].map((img) => img.getAttribute('src')),
+    ['https://i.ytimg.com/vi/id1/hqdefault.jpg', 'https://i.ytimg.com/vi/id2/hqdefault.jpg']);
+});

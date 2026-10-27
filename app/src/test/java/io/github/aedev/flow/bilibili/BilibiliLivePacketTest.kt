@@ -20,7 +20,7 @@ class BilibiliLivePacketTest {
         """{"cmd":"SUPER_CHAT_MESSAGE","data":{"price":30,"message":"thanks","background_bottom_color":"#2A60B2",""" +
             """"background_color_start":"#3171D2","user_info":{"uname":"fan","face":"https://i0.hdslb.com/face.jpg"}}}"""
 
-    /** A packet the way the server wraps a batch: version 2, holding zlib-compressed packets. */
+    /** Server batch packet: version 2, zlib-compressed packets inside. */
     private fun compressed(vararg bodies: String): ByteArray {
         val inner = bodies.map { BilibiliLivePacket.encode(BilibiliLivePacket.OP_MESSAGE, it) }.reduce { a, b -> a + b }
         val zipped = ByteArrayOutputStream().also { out -> DeflaterOutputStream(out).use { it.write(inner) } }.toByteArray()

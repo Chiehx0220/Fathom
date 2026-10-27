@@ -5,7 +5,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
 
-/** Extractor calls stay in [LocalServerBackend] and [LocalServerMedia]: replacing YouTube's data source touches those two files. */
+/** Extractor calls only in [LocalServerBackend] / [LocalServerMedia] (a YouTube data-source swap touches two files). */
 class NewPipeGatewayTest {
     private val gateway = setOf("LocalServerBackend.kt", "LocalServerMedia.kt")
 

@@ -14,7 +14,7 @@ const meta = (v) => [v.channelName, FT.views(v.viewCount), v.uploadDate].filter(
 FT.meta = meta;
 
 const thumb = (v, badge) => {
-    const box = h('div', { class: 'thumb' }, v.thumbnailUrl ? h('img', { src: v.thumbnailUrl, alt: '', loading: 'lazy' }) : null);
+    const box = h('div', { class: 'thumb' }, v.thumbnailUrl ? h('img', { src: FT.cardThumb(v.thumbnailUrl), alt: '', loading: 'lazy' }) : null);
     if (v.isLive) box.append(h('span', { class: 'dur live' }, FT.t('live')));
     else if (v.duration > 0) box.append(h('span', { class: 'dur' }, FT.duration(v.duration)));
     if (v.progress > 0 && v.progress < 100) box.append(h('div', { class: 'prog' }, h('i', { style: `width:${v.progress}%` })));
