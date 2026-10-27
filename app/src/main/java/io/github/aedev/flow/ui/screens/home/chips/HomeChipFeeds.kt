@@ -231,8 +231,9 @@ class HomeChipFeeds
         private suspend fun ranked(videos: List<Video>): List<Video> {
             val exclusions = context.exclusions()
             val pool =
-                context
-                    .inSource(videos.distinctBy { it.id })
+                videos
+                    .distinctBy { it.id }
+                    .let { context.inSource(it) }
                     .filterValid()
                     .filter { !it.isShort }
                     .filterWatched(context.watched())
