@@ -105,6 +105,14 @@ class VideoSourcesTest {
     }
 
     @Test
+    fun `Bilibili asks for live even with no interest queries, since the query is ignored`() {
+        val bilibiliSource = BilibiliVideoSource(mockk())
+
+        assertThat(bilibiliSource.queriesFor(emptyList(), SearchFilter.LIVE)).hasSize(1)
+        assertThat(bilibiliSource.queriesFor(emptyList(), SearchFilter.ANY)).isEmpty()
+    }
+
+    @Test
     fun `popular merges its pages, drops repeats and survives a failing page`() =
         runTest {
             fun related(bvid: String) = BilibiliRelated(bvid, "t", "", 60, 1, BilibiliUploader(1, "u", ""), 0)

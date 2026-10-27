@@ -44,7 +44,7 @@ class BilibiliVideoSource
         override fun queriesFor(
             queries: List<String>,
             filter: SearchFilter,
-        ): List<String> = if (filter == SearchFilter.LIVE) queries.take(1) else queries.take(MAX_QUERIES)
+        ): List<String> = if (filter == SearchFilter.LIVE) listOf(queries.firstOrNull().orEmpty()) else queries.take(MAX_QUERIES)
 
         /** Popular list: [pages] fetched together; a failed page costs only its videos. */
         suspend fun popular(pages: Int = POPULAR_PAGES): List<Video> =
