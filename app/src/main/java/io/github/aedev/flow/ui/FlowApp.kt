@@ -36,6 +36,7 @@ import io.github.aedev.flow.player.SleepTimerManager
 import io.github.aedev.flow.ui.components.equalizer.LocalEqualizerState
 import io.github.aedev.flow.ui.components.layout.FlowBottomInsets
 import io.github.aedev.flow.ui.components.layout.LocalFlowBottomInsets
+import io.github.aedev.flow.ui.components.layout.LocalFlowSnackbarHostState
 import io.github.aedev.flow.ui.components.layout.navigation.FlowNavigationChrome
 import io.github.aedev.flow.ui.components.layout.navigation.FlowNavigationDefaults
 import io.github.aedev.flow.ui.components.layout.navigation.NavigationVisibility
@@ -82,6 +83,8 @@ fun FlowApp(
     onDeeplinkConsumed: () -> Unit = {},
     pendingRoute: String? = null,
     onPendingRouteConsumed: () -> Unit = {},
+    downloadVideoId: String? = null,
+    onDownloadConsumed: () -> Unit = {},
     onStartDestinationKnown: () -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -102,6 +105,7 @@ fun FlowApp(
     val isMusicNavigationEnabled by preferences.musicNavigationEnabled.collectAsState(initial = true)
     val isSearchNavigationEnabled by preferences.searchNavigationEnabled.collectAsState(initial = false)
     val isCategoriesNavigationEnabled by preferences.categoriesNavigationEnabled.collectAsState(initial = false)
+    val isDownloadsNavigationEnabled by preferences.downloadsNavigationEnabled.collectAsState(initial = false)
     val disableShortsPlayer by preferences.effectiveDisableShortsPlayer.collectAsState(initial = false)
     val musicPlayerBackgroundStyle by preferences.musicPlayerBackgroundStyle.collectAsState(
         initial = io.github.aedev.flow.data.local.MusicPlayerBackgroundStyle.BLUR_GRADIENT,
@@ -121,10 +125,14 @@ fun FlowApp(
             music = isMusicNavigationEnabled,
             search = isSearchNavigationEnabled,
             categories = isCategoriesNavigationEnabled,
+            downloads = isDownloadsNavigationEnabled,
         )
     val navigationTabs = remember(navTabOrder, navigationVisibility) { visibleFlowTabs(navTabOrder, navigationVisibility) }
     val defaultTab = resolveDefaultFlowTab(defaultNavTabIndex, navTabOrder, navigationVisibility)
     val defaultStartRoute = defaultTab.route
+    val currentNavigationTabs by rememberUpdatedState(navigationTabs)
+    val currentStartRoute by rememberUpdatedState(defaultStartRoute)
+    val openDownloads = remember(navController) { { navController.openDownloads(currentNavigationTabs, currentStartRoute) } }
 
     // Mini Player Customizations
     val miniPlayerScale by preferences.miniPlayerScale.collectAsState(initial = 0.45f)
@@ -165,7 +173,8 @@ fun FlowApp(
     )
 
     HandleIncomingVideo(deeplinkVideoId, isShort, isSharedLink, navController, preferences, onDeeplinkConsumed)
-    OfflineMonitor(context, navController, snackbarHostState, currentRoute)
+    HandleIncomingDownload(downloadVideoId, onDownloadConsumed)
+    OfflineMonitor(context, snackbarHostState, currentRoute, openDownloads)
 
     val currentEntry by navController.currentBackStackEntryAsState()
     val statusBarHero = remember { StatusBarHeroState() }
@@ -231,6 +240,8 @@ fun FlowApp(
             pendingRoute,
             navController,
             defaultStartRoute,
+            // Read from the setting itself: a widget opening a cold start runs before the bar's state has loaded.
+            downloadsTab = { preferences.downloadsNavigationEnabled.first() },
             onPendingRouteConsumed,
             onBeforeNavigate = collapseExpandedPlayers,
         )
@@ -489,6 +500,7 @@ fun FlowApp(
                                     LocalMusicMenus provides musicMenus,
                                     LocalEqualizerState provides equalizerViewModel.state,
                                     LocalFlowBottomInsets provides bottomInsets,
+                                    LocalFlowSnackbarHostState provides snackbarHostState,
                                     LocalStatusBarHero provides statusBarHero,
                                 ) {
                                     NavHost(
@@ -514,6 +526,7 @@ fun FlowApp(
                                             disableShortsPlayer = disableShortsPlayer,
                                             defaultStartRoute = defaultStartRoute,
                                             onMusicStarted = onMusicStarted,
+                                            openDownloads = openDownloads,
                                         )
                                     }
                                 }

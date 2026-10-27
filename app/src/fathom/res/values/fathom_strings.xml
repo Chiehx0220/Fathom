@@ -221,4 +221,5 @@
     <string name="music_service_disabled">Music can\'t play. Fathom\'s music service is turned off on this device.</string>
     <string name="deep_flow_long_press_hint">Long-press the Fathom logo or name on Home to switch Deep Flow</string>
     <string name="playback_background_restricted_subtitle">Your phone may stop Fathom when you swipe it away. Tap to allow it.</string>
+    <string name="share_download_with_flow">Download with Fathom</string>
 </resources>

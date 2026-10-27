@@ -25,6 +25,12 @@ class LauncherAliasManifestTest {
             .getElementsByTagName("activity-alias")
             .let { nodes -> (0 until nodes.length).map { nodes.item(it) as Element } }
 
+    // Other aliases, such as the share menu's Download with Flow, are not app icons.
+    private fun Element.isLauncherEntry(): Boolean {
+        val categories = getElementsByTagName("category")
+        return (0 until categories.length).any { (categories.item(it) as Element).android("name") == LAUNCHER }
+    }
+
     // Fathom's overlay manifest removes the launcher icons it does not ship; the merged manifest has what is left.
     private val removedByOverlay: Set<String> =
         aliasesIn("src/fathom/AndroidManifest.xml")
@@ -32,7 +38,8 @@ class LauncherAliasManifestTest {
             .map { it.android("name") }
             .toSet()
 
-    private val aliases: List<Element> = aliasesIn("src/main/AndroidManifest.xml").filterNot { it.android("name") in removedByOverlay }
+    private val aliases: List<Element> =
+        aliasesIn("src/main/AndroidManifest.xml").filter { it.isLauncherEntry() && it.android("name") !in removedByOverlay }
 
     private fun Element.android(name: String) = getAttributeNS(androidNs, name)
 
@@ -56,5 +63,9 @@ class LauncherAliasManifestTest {
         val missing = icons.map { it.removePrefix("@mipmap/") }.filterNot { File(nightlyMipmaps, "$it.xml").isFile }
 
         assertThat(missing).isEmpty()
+    }
+
+    private companion object {
+        const val LAUNCHER = "android.intent.category.LAUNCHER"
     }
 }
