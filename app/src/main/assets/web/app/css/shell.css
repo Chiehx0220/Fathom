@@ -1,4 +1,4 @@
-/* The frame around every screen: page basics, the top bar, focus, and small shared pieces. */
+/* Frame around every screen: page basics, top bar, focus, shared pieces. */
 * { box-sizing: border-box; margin: 0; }
 html { background: var(--bg); scroll-behavior: smooth; }
 body { min-height: 100vh; background: var(--bg); color: var(--fg); font: 400 15px/1.4 Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
@@ -11,7 +11,7 @@ body[data-input="pointer"] { cursor: auto; }
 .row [data-f] { scroll-margin-top: calc(var(--bar-h) + 84px); }
 body[data-input="keys"] { cursor: none; }
 
-/* Icons: the bundled Material Symbols font. Without the font the ligature text would show, so the box is clipped to one glyph. */
+/* Icons: bundled Material Symbols font; box clipped to one glyph (ligature text shows without the font). */
 .i { display: inline-block; width: 1em; height: 1em; overflow: hidden; font-family: 'Material Symbols Rounded'; font-size: 22px; line-height: 1; font-weight: 400; font-style: normal; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; font-feature-settings: 'liga'; -webkit-font-feature-settings: 'liga'; vertical-align: middle; flex: none; user-select: none; }
 .i.fill { font-variation-settings: 'FILL' 1; }
 
@@ -32,8 +32,7 @@ body[data-input="keys"] { cursor: none; }
 .dfbadge { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px 0 12px; border-radius: 22px; background: color-mix(in srgb, var(--acc) 16%, transparent); color: var(--acc); font-size: 14px; font-weight: 500; white-space: nowrap; }
 .dfbadge:hover { background: color-mix(in srgb, var(--acc) 26%, transparent); }
 
-/* Selection. The engine puts .sel on the stop the keys or the remote are on. It only shows while keys or a remote are in use; the
- * mouse gets hover instead. */
+/* Selection: .sel marks the stop under keys/remote; shown only in key/remote input, the mouse gets hover. */
 [data-f] { outline: none; scroll-margin: calc(var(--bar-h) + 24px) var(--pad-x) 120px var(--pad-x); }
 body[data-input="keys"] .tab.sel, body[data-input="keys"] .dfbadge.sel, body[data-input="keys"] .chip.sel, body[data-input="keys"] .rbtn.sel, body[data-input="keys"] .btn.sel,
 body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[data-input="keys"] .row-item.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc2); }
@@ -61,8 +60,7 @@ body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[da
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
-  /* Danmaku is video content, not decorative motion; exempted or it never scrolls and never
-   * fires animationend, leaving comments stacked at the left edge permanently. */
+  /* Danmaku is video content: exempt, else it never scrolls or fires animationend (comments pile up on the left). */
   .danmaku-item.scroll { animation: danmaku-scroll var(--dur, 8s) linear forwards !important; }
   .danmaku-item.top, .danmaku-item.bottom { animation: danmaku-fade 4s linear forwards !important; }
 }
@@ -72,7 +70,7 @@ body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[da
   .tab { padding: 0 14px; }
 }
 @media (max-width: 720px) {
-  /* Phone width: the tabs become a bar along the bottom, the top bar keeps the brand and the tools. */
+  /* Phone width: tabs become a bottom bar; top bar keeps brand and tools. */
   #top { grid-template-columns: 1fr auto; gap: 10px; padding: 0 16px; }
   #screen { padding-bottom: 120px; }
   .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 35; justify-content: space-around; gap: 0; padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)); border-radius: 0; background: var(--s1); }

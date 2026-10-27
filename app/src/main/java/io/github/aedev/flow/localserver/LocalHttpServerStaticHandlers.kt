@@ -6,7 +6,7 @@ import java.io.FileNotFoundException
 
 private val VENDOR_PATH = Regex("""/vendor/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*""")
 
-/** Asset path of a /vendor/ request; null if it escapes the vendor folder or is not a plain file name. */
+/** /vendor/ asset path; null if outside vendor folder or not a plain file name. */
 internal fun vendorAssetPath(path: String): String? {
     if (!VENDOR_PATH.matches(path) || path.split('/').any { it == ".." || it == "." }) return null
     return "web" + path
@@ -21,7 +21,7 @@ internal fun vendorContentType(path: String): String? =
         else -> null
     }
 
-/** One vendor text file. Video.js chunk names carry a content hash; entry files requested with page version: cacheable forever. */
+/** Vendor text file; Video.js chunk names are content-hashed, entry files carry page version: cacheable forever. */
 internal fun RequestContext.handleVendorAsset(
     reply: Reply,
     path: String,

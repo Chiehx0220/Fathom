@@ -10,7 +10,7 @@ internal class FragmentSpan(
     val durationSec: Double,
 )
 
-/** `sidx` box → segment byte spans; [indexEnd]: box's last byte, first segment follows plus first offset. */
+/** `sidx` → segment byte spans; [indexEnd] = box's last byte, first segment follows plus first offset. */
 internal object SidxParser {
     fun parse(
         sidx: ByteArray,
@@ -37,7 +37,7 @@ internal object SidxParser {
         val spans = ArrayList<FragmentSpan>(count)
         repeat(count) {
             val word = buf.getInt(pos)
-            // Reference to another sidx (top bit set) is not a media segment; not met by such players.
+            // Reference to another sidx (top bit set): not a media segment.
             require(word >= 0) { "nested sidx" }
             val size = word.toLong()
             val duration = (buf.getInt(pos + 4).toLong() and 0xFFFFFFFFL).toDouble() / timescale

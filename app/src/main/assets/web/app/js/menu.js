@@ -1,4 +1,4 @@
-// Options menu for selected card. Opened by Menu key, `m`, phone wheel long press, card button; holds focus while open.
+// Options menu of the selected card: Menu key, `m`, phone wheel long press, card button; holds focus while open.
 (() => {
 const h = FT.h;
 let opener = null;

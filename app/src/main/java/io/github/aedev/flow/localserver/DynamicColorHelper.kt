@@ -24,7 +24,7 @@ object DynamicColorHelper {
         p["surfaceContainerLow"] = if (dark) "#1d1b20" else "#f7f2fa"
         p["surfaceContainerHigh"] = if (dark) "#2b2930" else "#ece6f0"
         p["outline"] = if (dark) "#938f99" else "#79747e"
-        // Roles: every CSS variable derives from one tonal scheme (no hardcoded baseline-purple fallback clashing with neutral dynamic palette).
+        // Every CSS variable derives from one tonal scheme (no baseline-purple fallback vs dynamic palette).
         p["onPrimary"] = if (dark) "#381e72" else "#ffffff"
         p["onSecondaryContainer"] = if (dark) "#e8def8" else "#1d192b"
         p["onSurfaceVariant"] = if (dark) "#cac4d0" else "#49454f"

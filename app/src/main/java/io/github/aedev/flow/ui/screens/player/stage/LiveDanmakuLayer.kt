@@ -23,7 +23,7 @@ import io.github.aedev.flow.player.danmaku.toDanmakuComment
 // Hot room exceeds screen capacity: newcomers dropped past this on-screen count.
 private const val MAX_ON_SCREEN = 60
 
-/** Live room chat over video: clock runs only while playing (paused messages dropped); socket only while composed + enabled. */
+/** Live chat over video: clock runs while playing (paused messages dropped); socket only while composed + enabled. */
 @Composable
 internal fun BoxScope.LiveDanmakuLayer(
     enabled: Boolean,

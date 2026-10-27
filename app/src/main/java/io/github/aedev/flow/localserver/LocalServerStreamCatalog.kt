@@ -5,7 +5,7 @@ import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.net.URLEncoder
 
-/** Web-player offer: qualities + audio tracks with short ids; `/stream?rep=` addresses by id (Bilibili has no unique itag). */
+/** Web-player offer: qualities + audio tracks by short id; `/stream?rep=` (Bilibili has no unique itag). */
 internal class StreamCatalog(
     val videos: List<Video>,
     val audioTracks: List<AudioTrack>,

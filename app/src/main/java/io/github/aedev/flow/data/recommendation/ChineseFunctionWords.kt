@@ -6,7 +6,7 @@
 
 package io.github.aedev.flow.data.recommendation
 
-/** Chinese function words (Simplified + Traditional + colloquial): unfiltered, the word breaker emits them as topics. */
+/** Chinese stopwords (Simplified, Traditional, colloquial); else emitted as topics by the word breaker. */
 internal object ChineseFunctionWords {
     private val words =
         hashSetOf(

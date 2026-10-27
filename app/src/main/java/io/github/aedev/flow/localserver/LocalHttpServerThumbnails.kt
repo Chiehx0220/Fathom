@@ -50,7 +50,7 @@ private fun vttTime(millis: Long): String =
 
 private const val MAX_PREVIEW_WIDTH = 320
 
-// Image proxy for hosts the browser cannot fetch: YouTube rejects CORS mode (black previews), Bilibili checks Referer (403).
+// Proxy for hosts the browser cannot fetch: YouTube rejects CORS mode, Bilibili checks Referer (403).
 private const val IMAGE_ROUTE = "/image-proxy?u="
 
 /** Extra request headers [url]'s host needs; null if no proxying needed. */

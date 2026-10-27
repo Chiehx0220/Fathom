@@ -54,7 +54,7 @@ const WORDS = {
   en: { prompt: 'Enter the pairing code shown on your phone', ok: 'Paired', wrong: 'That code is not right', locked: 'Too many tries. Try again in {n} min', net: 'Could not reach the phone' },
   zh_Hant: { prompt: '輸入手機上顯示的配對碼', ok: '配對成功', wrong: '配對碼不正確', locked: '嘗試次數過多，請 {n} 分鐘後再試', net: '無法連線到手機' },
 };
-// First preferred language wins; Traditional Chinese tags map to zh_Hant, anything unsupported falls back to English.
+// First preferred language wins; Traditional Chinese tags → zh_Hant, unsupported → English.
 const tags = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'];
 const pickLang = () => {
   for (const tag of tags) {

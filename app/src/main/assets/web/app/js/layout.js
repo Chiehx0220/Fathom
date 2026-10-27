@@ -1,4 +1,4 @@
-// Layout: "tv" = shelves + detail pane, "grid" = grids; "auto" follows (hover: hover) and (pointer: fine). Persisted per browser.
+// Layout: "tv" = shelves + detail pane, "grid" = grids, "auto" follows (hover: hover) and (pointer: fine); persisted per browser.
 (() => {
 
 const KEY = 'fathom-layout';

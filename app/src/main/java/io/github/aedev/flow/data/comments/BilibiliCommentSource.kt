@@ -9,7 +9,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-/** Bilibili comments for [CommentsPager]: main-list continuation is Bilibili's offset string; reply-list continuation is next page number. */
+/** Bilibili comments for [CommentsPager]; main list: offset string, replies: page number. */
 internal class BilibiliCommentSource(
     apiProvider: () -> BilibiliApi,
 ) : CommentsSource {

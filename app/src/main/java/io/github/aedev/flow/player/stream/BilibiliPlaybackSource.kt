@@ -10,7 +10,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** Bilibili leg of [PlaybackLoadResolver]: streams + related lane (or live room) via native client → one [ResolvedPlayback] step. */
+/** Bilibili leg of [PlaybackLoadResolver]: streams + related lane (or live room) → one [ResolvedPlayback] step. */
 internal class BilibiliPlaybackSource(
     private val api: BilibiliApi,
 ) {

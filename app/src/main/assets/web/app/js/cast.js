@@ -1,4 +1,4 @@
-// Cast menu: DLNA devices via phone; Continue on phone. Opened from skin cast button, watch page.
+// Cast menu: DLNA devices via phone, Continue on phone; opened from the skin cast button and watch page.
 (() => {
 const h = FT.h;
 const POLL_MS = 2000;

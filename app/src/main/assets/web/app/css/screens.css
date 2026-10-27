@@ -1,15 +1,12 @@
 /* Screen-specific layout: home, search, library, channel and settings. */
 
-/* Home: the featured video, then shelves. A thumbnail is someone else's art (any colour, any
- * composition) blown up to fill a huge box, so it is toned down and washed toward the page's own
- * colour on every edge rather than pasted on raw - the same trick streaming apps use to make an
- * arbitrary poster sit inside their own frame. */
+/* Home: featured video, then shelves. Thumbnails are toned down and washed toward the page colour at every edge to sit in the frame. */
 .hero { position: relative; height: clamp(260px, 32vw, 400px); margin: 6px var(--pad-x) 0; overflow: hidden; border-radius: 26px; background: var(--s2); }
 .hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(0.82) contrast(1.03); }
 .hero::before { content: ''; position: absolute; inset: 0; background:
     linear-gradient(180deg, color-mix(in srgb, var(--bg) 22%, transparent) 0%, transparent 30%, color-mix(in srgb, var(--bg) 45%, transparent) 62%, color-mix(in srgb, var(--bg) 92%, transparent) 100%),
     linear-gradient(100deg, color-mix(in srgb, var(--bg) 80%, transparent) 0%, color-mix(in srgb, var(--bg) 30%, transparent) 40%, transparent 62%); }
-/* The caption sits on clear glass: the poster shows through, blurred, under only a light wash of the page colour. */
+/* Caption on clear glass: poster blurred through a light wash of the page colour. */
 .hero-cap { position: absolute; left: 20px; bottom: 20px; z-index: 1; max-width: min(620px, calc(100% - 40px)); padding: 16px 22px 18px; border-radius: 22px;
     background: color-mix(in srgb, var(--bg) 38%, transparent);
     -webkit-backdrop-filter: blur(26px) saturate(1.6); backdrop-filter: blur(26px) saturate(1.6); }
@@ -26,8 +23,7 @@
 .subs-group > h2 { padding: 14px var(--pad-x) 0; font-size: 20px; font-weight: 500; }
 .pill { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 18px; border: 0; border-radius: 20px; background: var(--s1); color: var(--mute); font-weight: 500; }
 .pill:hover { background: var(--s2); color: var(--fg); }
-/* A full-height inset shadow on a stadium shape (radius = half the height) rides the curve at
- * each end instead of stopping flat, so the "selected" mark is its own short, centred bar instead. */
+/* Inset full-height shadow on a stadium shape follows the end curves, so the "selected" mark is a short centred bar instead. */
 .pill.on { background: var(--s3); color: var(--fg); }
 .pill.on::after { content: ''; position: absolute; left: 50%; bottom: 6px; width: 18px; height: 3px; margin-left: -9px; border-radius: 2px; background: var(--acc); }
 body[data-input="keys"] .pill.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc2); }

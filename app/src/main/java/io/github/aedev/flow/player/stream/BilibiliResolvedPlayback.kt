@@ -8,7 +8,7 @@ import io.github.aedev.flow.data.model.Video
 /** Steps resolved by the Bilibili native client. */
 sealed interface BilibiliStep : ResolvedPlayback
 
-/** Bilibili VOD via native client. No live/SABR/upcoming variants: one step = metadata + streams ([playback]) + related lane. */
+/** Bilibili VOD: no live/SABR/upcoming; one step = metadata + streams ([playback]) + related lane. */
 data class VodFromBilibili(
     val playback: BilibiliPlayback,
     val relatedVideos: List<Video>,

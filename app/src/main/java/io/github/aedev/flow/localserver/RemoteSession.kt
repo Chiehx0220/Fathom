@@ -151,7 +151,7 @@ object RemoteSession {
         commandBroadcaster?.invoke(cmd)
     }
 
-    /** Broadcasts [cmd] when a socket is open, else holds it for the next page. True when broadcast. */
+    /** Broadcasts [cmd] if a socket is open, else holds for next page; true if broadcast. */
     fun sendOrHold(
         cmd: String,
         now: Long = System.currentTimeMillis(),

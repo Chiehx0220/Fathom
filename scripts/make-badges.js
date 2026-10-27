@@ -1,13 +1,12 @@
 #!/usr/bin/env node
-// Writes the README badges to Assets/badges as light and dark SVGs, with the text drawn as paths so they
-// look the same everywhere. The release and downloads values come from GitHub; run it again after a release.
+// Writes the README badges to Assets/badges as light and dark SVGs, text drawn as paths (identical everywhere).
+// Release and downloads values come from GitHub; run again after a release.
 //
 //   node scripts/make-badges.js                              read the values with `gh`
 //   node scripts/make-badges.js --release v0.1.5 --downloads 1200   use these values instead
 //
-// glyphs.json is Roboto Bold (Apache-2.0) with the four Noto Sans TC Bold characters the language chips use (OFL-1.1),
-// and icons.json is Material Symbols Rounded (Apache-2.0) plus the
-// GitHub and Obtainium marks from Simple Icons (CC0), both cut down to what the badges use.
+// glyphs.json = Roboto Bold (Apache-2.0) + the four Noto Sans TC Bold characters of the language chips (OFL-1.1);
+// icons.json = Material Symbols Rounded (Apache-2.0) + GitHub and Obtainium marks from Simple Icons (CC0), cut down to what the badges use.
 
 const fs = require('fs');
 const path = require('path');
@@ -57,7 +56,7 @@ function svg(width, height, label, body) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${num(width)}" height="${height}" viewBox="0 0 ${num(width)} ${height}" role="img" aria-label="${label}"><title>${label}</title>${body}</svg>\n`;
 }
 
-// A label on the primary colour and a value on the container colour, 32 px high.
+// Label on the primary colour, value on the container colour, 32 px high.
 function split({ label, value, icon: iconName }, t) {
   const H = 32;
   const size = 13.5;
@@ -92,7 +91,7 @@ function pill({ small, big, icon: iconName }, t) {
   ].join(''));
 }
 
-// A language chip, 32 px high: filled with a check when it is the page being read, outlined when it links away.
+// Language chip, 32 px high: filled with a check when it is the page being read, outlined when it links away.
 function chip({ label, current }, t) {
   const H = 32;
   const size = 14;

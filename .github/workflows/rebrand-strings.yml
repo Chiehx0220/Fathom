@@ -1,10 +1,10 @@
 name: Rebrand strings
 
-# Fails when the generated Fathom strings (app/src/fathom/res/values-*/strings.xml) no longer match what
-# scripts/rebrand-strings.js would write from upstream's translations. Those files are generated, not
-# edited by hand: put Fathom's own wording in fathom_strings.xml, then run
+# Fails when generated Fathom strings (app/src/fathom/res/values-*/strings.xml) differ from
+# what scripts/rebrand-strings.js writes from upstream translations. Generated, not hand-edited:
+# Fathom wording goes in fathom_strings.xml, then run
 #   node scripts/rebrand-strings.js
-# Also run it, and --report, after every merge of upstream.
+# Also run it, and --report, after every upstream merge.
 
 on:
   push:

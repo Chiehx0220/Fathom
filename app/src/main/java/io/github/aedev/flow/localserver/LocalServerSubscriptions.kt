@@ -9,7 +9,7 @@ import kotlinx.coroutines.runBlocking
 import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 
-/** Native storage read/write, no bridge; bare-ID models ↔ URL-keyed [InfoItem]. `runBlocking`: handlers on background thread pool. */
+/** Native storage, no bridge; bare-ID models ↔ URL-keyed [InfoItem]. `runBlocking`: handlers run on background pool. */
 
 internal fun HistoryDbHelper.subscriptionRepository() = SubscriptionRepository.getInstance(appContext)
 

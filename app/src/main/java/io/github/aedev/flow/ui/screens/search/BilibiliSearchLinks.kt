@@ -10,7 +10,7 @@ import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.ui.components.search.SearchServiceSwitcher
 
-/** Video id of a pasted Bilibili video / b23.tv link, else null; YouTube shapes are [parseYouTubeLink]'s. */
+/** Video id of a pasted Bilibili / b23.tv link, else null; YouTube shapes: [parseYouTubeLink]. */
 internal fun resolvePastedBilibiliVideoLink(url: String): String? {
     if (!url.startsWith("http")) return null
     return BilibiliRef.Video.ofUrl(url)?.id

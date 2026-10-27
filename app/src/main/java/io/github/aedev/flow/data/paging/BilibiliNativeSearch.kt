@@ -19,7 +19,7 @@ internal class BilibiliSearchPage(
     val nextKey: String?,
 )
 
-/** Bilibili native search; paging key = next page number. Page only: dedup, blocked-channel filter in [SearchPagingSource]. */
+/** Native search; key = next page; dedup and blocked-channel filter in [SearchPagingSource]. */
 internal object BilibiliNativeSearch {
     private const val SECONDS_PER_HOUR = 3_600L
 

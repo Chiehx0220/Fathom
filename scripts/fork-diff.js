@@ -1,13 +1,13 @@
 const {execSync}=require("child_process");const fs=require("fs");
 const path=require("path");
-// Budget: how much of upstream's own code this fork has changed. Merge conflicts come from there, so the
-// numbers may only go down. `--check` fails when one grows; `--update-budget` locks in a lower number.
+// Budget of upstream code edited by this fork (merge-conflict surface); numbers may only go down.
+// `--check` fails on growth; `--update-budget` locks a lower number.
 const UPSTREAM="refs/remotes/upstream/main";
 const BUDGET_FILE=path.join(__dirname,"fork-diff-budget.json");
 const SCOPE=["app/src/main","build.gradle.kts","app/build.gradle.kts","gradle"];
 function measure(){
  const git=c=>execSync(c,{encoding:"utf8",maxBuffer:1<<28,stdio:["ignore","pipe","ignore"]});
- // Measured from the last upstream commit this branch contains, so upstream moving ahead does not count as our change.
+ // Measured from the last upstream commit this branch contains: upstream moving ahead does not count as our change.
  const base=git(`git merge-base HEAD ${UPSTREAM}`).trim();
  const upstream=new Set(git(`git ls-tree -r --name-only ${base}`).split("\n"));
  const files=new Set();let lines=0,hunks=0,file=null;
@@ -35,9 +35,9 @@ if(process.argv.includes("--check")||process.argv.includes("--update-budget")){
  process.exit(0);
 }
 const sh=c=>execSync(c,{encoding:"utf8",maxBuffer:1<<26,stdio:["ignore","pipe","ignore"]});
-// The same base as the budget: the document does not change when upstream moves ahead without a merge.
+// Same base as the budget: the document does not change when upstream moves ahead without a merge.
 const BASE=sh(`git merge-base HEAD ${UPSTREAM}`).trim();
-// From HEAD, not the working tree: an untracked new file is invisible to `git diff`, and CI sees only what is committed.
+// From HEAD, not the working tree: an untracked new file is invisible to `git diff`; CI sees only what is committed.
 const num=sh(`git diff ${BASE} HEAD --numstat --no-renames -- app/src/main app/src/test build.gradle.kts gradle app/build.gradle.kts`).trim().split("\n").filter(Boolean).map(l=>{const [a,d,p]=l.split("\t");return {a:+a||0,d:+d||0,p}});
 const isNew=p=>{try{sh(`git cat-file -e ${BASE}:${p}`);return false}catch(e){return true}};
 const rows=num.map(r=>({...r,isNew:isNew(r.p)}));

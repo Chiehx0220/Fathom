@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.localserver.RemoteState
 
-/** Session-level controls above the mode pages: source menu (paired, 2+ sources) and Deep Flow. Outside the page transition. */
+/** Session controls above the mode pages: source menu (paired, 2+ sources), Deep Flow; outside page transition. */
 @Composable
 internal fun RemoteStatusStrip(
     state: RemoteState,

@@ -45,7 +45,7 @@ FT.duration = (seconds) => {
 };
 
 // ---- i18n ----
-// window.FT_STRINGS: { <language code>: { key: text } } from strings/*.json; `en` is the fallback for missing keys.
+// window.FT_STRINGS: { <language code>: { key: text } } from strings/*.json; `en` is the fallback.
 const STRINGS = window.FT_STRINGS || {};
 
 // BCP 47 tag -> file code: zh-TW -> zh_Hant, zh-CN -> zh_Hans, pt-BR -> pt_BR, pt.
@@ -109,7 +109,7 @@ FT.frame = (fn) => {
     };
 };
 
-// Clipboard copy, true on success. navigator.clipboard needs secure context (plain HTTP here); execCommand is the real fallback.
+// Clipboard copy, true on success; navigator.clipboard needs a secure context (plain HTTP here), execCommand fallback.
 FT.copyText = async (text) => {
     try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -132,7 +132,7 @@ FT.copyText = async (text) => {
     return false;
 };
 
-// Description/comment text: HTML (YouTube) vs plain (Bilibili) per ApiRenderer type field; plain '<' never markup. Links in new tab.
+// Description/comment text: HTML (YouTube) or plain (Bilibili) per ApiRenderer type field; plain '<' never markup; links open in a new tab.
 FT.description = (text, type) => {
     const box = FT.h('div');
     if (type === 'html' && text) {

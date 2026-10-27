@@ -14,7 +14,7 @@ import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.VideoStream
 
-/** One-representation DASH manifest per stream from init/index ranges: plain file throttled by CDN, short ranges fast. */
+/** One-representation DASH manifest per stream from init/index ranges (plain file is CDN-throttled, short ranges fast). */
 object BilibiliDashManifest {
     private const val TAG = "BilibiliDashManifest"
 

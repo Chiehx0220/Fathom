@@ -11,7 +11,7 @@ import java.security.MessageDigest
 import java.util.TreeMap
 import kotlin.random.Random
 
-/** Pure request validation: av/bv codec, WBI signature, fake dm_img_* telemetry. No network; WBI key from [BilibiliSession]. */
+/** Pure request validation: av/bv codec, WBI signature, fake dm_img_*; WBI key from [BilibiliSession]. */
 object BilibiliSigning {
     // region av <-> bv
     private val XOR_CODE = BigInteger("23442827791579")

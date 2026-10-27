@@ -19,7 +19,7 @@ object WebFormat {
         }
     }
 
-    // Stock placeholder image of earlier builds; saved history/library entries still carry it: treated as no image.
+    // Stock placeholder of earlier builds still in saved entries: treated as no image.
     private const val LEGACY_PLACEHOLDER_ID = "photo-1611162617213-7d7a39e9b1d7"
 
     private fun isUsableImageUrl(url: String?): Boolean = !url.isNullOrBlank() && !url.contains(LEGACY_PLACEHOLDER_ID)

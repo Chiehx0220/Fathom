@@ -1,4 +1,4 @@
-// Watch screen: docked player over details, chapters, related, comments. Remote: focus starts on player; Down → details, Up → player.
+// Watch screen: docked player over details, chapters, related, comments; remote: focus starts on player, Down → details, Up → player.
 (() => {
 const h = FT.h;
 let observer = null;

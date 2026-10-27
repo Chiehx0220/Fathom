@@ -14,7 +14,7 @@ internal fun playVideoAtCommand(
     positionMs: Long,
 ) = PLAY_VIDEO_AT + String.format(Locale.US, "%.1f", positionMs.coerceAtLeast(0L) / 1000.0) + ":" + url
 
-/** Sends the playing video to the paired page at the current position and pauses the phone. */
+/** Sends the playing video to the paired page at current position; pauses the phone. */
 internal fun sendPhoneVideoToPage(): Boolean {
     val video = GlobalPlayerState.currentVideo.value ?: return false
     val player = EnhancedPlayerManager.getInstance()

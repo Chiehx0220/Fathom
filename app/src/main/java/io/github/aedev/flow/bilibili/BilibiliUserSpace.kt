@@ -194,7 +194,7 @@ internal class BilibiliUserSpace(
         const val MODE_APP = 2
         private const val VIDEO_API_MODES = 3
 
-        /** The search API ignores `order=click` and lists the latest: popular goes through the app API for that call only. */
+        /** Search API ignores `order=click`; popular via app API for that call only. */
         fun apiFor(
             mode: Int,
             sort: BilibiliChannelSort,

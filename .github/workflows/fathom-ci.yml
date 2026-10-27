@@ -1,7 +1,7 @@
 name: Fathom CI
 
-# Formatting, unit tests for both flavors and a compile of the instrumentation tests on every push and pull
-# request. Upstream's "Android CI/CD" stays disabled here: it builds and publishes with Flow's signing keys.
+# Format, unit tests (both flavors) and instrumentation-test compile on every push and pull request.
+# Upstream "Android CI/CD" stays disabled: it builds and publishes with Flow's signing keys.
 
 on:
   push:

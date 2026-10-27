@@ -54,7 +54,7 @@ private enum class WheelKey(
     RIGHT("key:right"),
 }
 
-/** Direction wheel (eyes-free): tap = nearest direction, swipe = direction per step, hold = card options; centre OK. */
+/** Eyes-free wheel: tap = nearest direction, swipe = step per direction, hold = card options; centre OK. */
 @Composable
 internal fun DirectionWheel(
     send: (String) -> Unit,

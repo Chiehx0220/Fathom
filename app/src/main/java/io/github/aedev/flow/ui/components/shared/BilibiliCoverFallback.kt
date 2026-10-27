@@ -21,9 +21,9 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
 
-// Cover not derivable from video id: asked from Bilibili on display, visible cards only, once each.
+// Cover not derivable from id: fetched on display, visible cards only, once each.
 
-/** Card thumbnail candidates: [this] if any; else for Bilibili, the cover Bilibili returns (placeholder until then). */
+/** Thumbnail candidates: [this], else Bilibili's cover (placeholder until then). */
 @Composable
 internal fun List<Any>.orBilibiliCover(
     videoId: String,

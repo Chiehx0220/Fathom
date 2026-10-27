@@ -38,12 +38,12 @@ fun channelUrlToId(url: String?): String? {
     return BilibiliRef.Uploader.ofLink(normalized)?.id
 }
 
-/** Bare video id → YouTube canonical or Bilibili video URL; `item.url` must parse back to the id. */
+/** Bare id → YouTube or Bilibili URL; `item.url` must parse back to the id. */
 fun videoIdToUrl(
     videoId: String,
     serviceId: Int = ServiceList.YouTube.serviceId,
 ): String {
-    // Rows from before id normalisation hold a whole Bilibili link as id: reads as its id.
+    // Pre-normalisation rows hold a whole Bilibili link as id: read as its id.
     val id = LocalServerMedia.getVideoId(videoId)
     val isYouTube = serviceIdOfVideo(id, serviceId).isYouTubeServiceId
     return if (isYouTube) "https://www.youtube.com/watch?v=$id" else LocalServerBilibili.videoUrl(id)

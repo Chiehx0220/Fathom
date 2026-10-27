@@ -30,7 +30,7 @@ internal object LocalServerYouTubeStreams {
     private const val EXTRACTION_TTL_MS = 50 * 60 * 1000L
     private const val EXTRACTION_TIMEOUT_MS = 45_000L
 
-    // Mint shares native player's single PoToken WebView: wait past this = likely queued behind in-app mint (adb logcat).
+    // Mint shares the player's single PoToken WebView: longer wait = queued behind in-app mint.
     private const val SLOW_EXTRACTION_WARNING_MS = 4000L
 
     private class CachedExtraction(
@@ -44,7 +44,7 @@ internal object LocalServerYouTubeStreams {
     /** InnerTube extraction for [videoId], cached; null if all clients failed. */
     fun extractionFor(videoId: String): InnerTubeVideoStreamExtractor.VideoExtractionResult? {
         cached(videoId)?.let { return it.result }
-        // One extraction at a time: PoToken WebView and NewPipe player parser shared; parallel calls lose replies.
+        // Serialised: shared PoToken WebView + player parser lose replies under parallel calls.
         return runBlocking { extractionLock.withLock { cached(videoId)?.result ?: extract(videoId) } }
     }
 
@@ -76,7 +76,7 @@ internal object LocalServerYouTubeStreams {
     val WEB_CLIENTS = setOf("MWEB", "WEB")
     private val walled: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
-    // Player's swap: refused URL reopened at the byte-identical file of a source that still serves it.
+    // Swap: refused URL reopened on a byte-identical file of a source that still serves it.
     private val swapTable = StreamSwapTable()
     private val swapper = RefusedStreamSwapper(swapTable, reportDenied = ::reportDenied, resolve = ::replacementsFor)
 

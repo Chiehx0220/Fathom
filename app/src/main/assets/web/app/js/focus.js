@@ -1,4 +1,4 @@
-// Focus engine: selection by keys/phone remote; arrow target by control position. Screens only mark controls with data-f.
+// Focus engine: selection by keys / phone remote; arrow target by control position; screens only mark controls with data-f.
 (() => {
 const state = { el: null, trap: null, memory: new Map(), routeKey: '' };
 
@@ -8,7 +8,7 @@ const visible = (el) => {
     return r.width > 0 && r.height > 0;
 };
 
-// Selectable controls: open menu/dialog holds all, else top bar + screen. Paired phone: top bar excluded (its keys are on the phone).
+// Selectable controls: open menu/dialog holds all, else top bar + screen; paired phone excludes the top bar (its keys are on the phone).
 const stops = () => {
     const scope = state.trap ? [state.trap] : FT.remote.active ? [FT.$('#screen')] : [FT.$('#top'), FT.$('#screen')];
     return scope.flatMap((root) => FT.$$('[data-f]', root)).filter(visible);

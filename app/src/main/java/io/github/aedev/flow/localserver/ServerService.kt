@@ -116,7 +116,7 @@ class ServerService : Service() {
         stopSelf()
     }
 
-    // Android 15+ caps dataSync FGS (~6h): stopSelf() expected within seconds → stopServer(). No restart (background start limit).
+    // Android 15+ caps dataSync FGS (~6h): stopSelf() → stopServer(), no restart (background start limit).
     override fun onTimeout(
         startId: Int,
         fgsType: Int,
@@ -157,7 +157,7 @@ class ServerService : Service() {
 
         private val mutableRunning = MutableStateFlow(false)
 
-        // True only while socket bound; Settings UI observes this, not saved "enabled" (stale after system stop).
+        // Socket-bound state; Settings observes it, not saved "enabled" (stale after system stop).
         val runningState: StateFlow<Boolean> = mutableRunning.asStateFlow()
 
         val isRunning: Boolean

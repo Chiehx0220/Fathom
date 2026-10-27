@@ -1,4 +1,4 @@
-// Video-list screens (search, subscriptions, library, playlists): rows left, selected drawn large right, load more (auto near end).
+// Video-list screens (search, subscriptions, library, playlists): rows left, selection large right, auto load-more near the end.
 (() => {
 const h = FT.h;
 

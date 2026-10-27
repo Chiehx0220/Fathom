@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// Copies the parts of Video.js 10's CDN build that the web UI uses into app/src/main/assets/web/vendor/videojs,
-// so the page loads the player from the phone and needs no outside host.
+// Copies the parts of Video.js 10's CDN build the web UI uses into app/src/main/assets/web/vendor/videojs
+// (the page loads the player from the phone, no outside host).
 //
 //   node scripts/vendor-videojs.js            vendor the version in VERSION below
 //   node scripts/vendor-videojs.js 10.0.2     vendor another version
 //
-// The CDN entry files import shared, content-hashed chunks, so a file cannot be copied alone: this follows every
-// import from the entries and copies exactly what they reach. Source maps, development builds, type files, locale
-// packs and the media components the UI does not use stay behind. Run it again to upgrade, and commit the result.
+// CDN entry files import shared, content-hashed chunks, so a file cannot be copied alone: follows every import
+// from the entries and copies exactly what they reach. Source maps, dev builds, type files, locale packs and unused media components stay behind.
+// Run again to upgrade, then commit the result.
 
 const fs = require('fs');
 const os = require('os');

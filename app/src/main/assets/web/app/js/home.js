@@ -9,10 +9,10 @@ let stopHistory = null;
 // Cards per chunk on scroll-in.
 const SHELF_CHUNK = 14;
 
-// options.loadMore: () => Promise<{items, hasMore}>; deeper server round when local list exhausted, appended to same row.
-// options.expand: hash link to full list.js view (keyboard/mouse; row overflow otherwise drag-only).
-// options.rows: grid layout preview rows for a shelf without loadMore.
-// Grid layout: shelf is grid; sentinel watches viewport.
+// options.loadMore: () => Promise<{items, hasMore}>; deeper server round once local items run out, same row.
+// options.expand: hash link to the full list.js view (row overflow is drag-only otherwise).
+// options.rows: preview rows in grid layout for a shelf without loadMore.
+// Grid layout: shelf is a grid; sentinel watches the viewport.
 const shelfOf = (title, sub, items, options = {}) => {
     const wide = FT.layout.current() === 'grid';
     const preview = wide && !options.loadMore;

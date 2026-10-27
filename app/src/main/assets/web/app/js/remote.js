@@ -1,4 +1,4 @@
-// Phone-remote endpoint: pairing, commands (WebSocket), state reports (HTTP). Pairing code per tab (sessionStorage); new tab takes over.
+// Phone-remote endpoint: pairing, commands (WebSocket), state reports (HTTP); pairing code per tab (sessionStorage), new tab takes over.
 (() => {
 const KEY = 'server_play_release_code';
 // Explicit disconnect; suppresses auto-pair until a manual connect.

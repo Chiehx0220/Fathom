@@ -1,8 +1,8 @@
 name: Fork diff budget
 
-# Fails when a change grows the part of upstream Flow's code this fork has edited, since that is where
-# merge conflicts come from. Put new code in a new file and leave only a call in the upstream file.
-# After a cleanup, lower the budget: node scripts/fork-diff.js --update-budget
+# Fails when upstream-owned code edited by the fork grows (merge-conflict surface).
+# Put new code in a new file, leave only a call in the upstream file.
+# After a cleanup: node scripts/fork-diff.js --update-budget
 
 on:
   push:

@@ -10,7 +10,7 @@ internal object LocalServerCaches {
     // InnerTube client that minted each cached URL: googlevideo 403s on UA/client mismatch.
     internal val streamUaCache = StreamUrlCache()
 
-    // One extraction per video, shared by watch + manifest handlers. Smaller than streamUrlCache (parsed extractor state).
+    // One extraction per video for watch + manifest handlers; smaller than streamUrlCache.
     internal val extractorCache = ExtractorCache()
     internal val httpClient: okhttp3.OkHttpClient =
         okhttp3.OkHttpClient

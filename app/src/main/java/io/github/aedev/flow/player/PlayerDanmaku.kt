@@ -28,7 +28,7 @@ class PlayerDanmaku {
         handler?.loadBilibili(api, info)
     }
 
-    /** A video finished loading: its danmaku when it is a Bilibili one, otherwise clear the previous video's. */
+    /** On video load: Bilibili danmaku, else clear the previous video's. */
     fun onPlaybackLoaded(
         info: BilibiliVideoInfo?,
         context: Context?,

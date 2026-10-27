@@ -38,7 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-// Remote keys: ButtonGroup items; row keys share width, pressed key widens, neighbours yield; same height per row (group top-aligns).
+// ButtonGroup items; row keys share width, pressed key widens, neighbours yield; equal height per row.
 
 /** Page volume step per volume-key press (0..1). */
 internal const val VOLUME_STEP = 0.1f

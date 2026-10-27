@@ -36,7 +36,7 @@ object LocalServerMedia {
             val end = url.indexOf("?", start)
             return if (end == -1) url.substring(start) else url.substring(start, end)
         }
-        // Bilibili video/live room stored as "BV1xx?p=1" / "live:123" (app history ids); a whole link → second row, link inside link.
+        // Stored as "BV1xx?p=1" / "live:123" (app history ids); whole link → second row.
         return BilibiliRef.Video
             .ofUrl(url)
             ?.id
@@ -102,7 +102,7 @@ object LocalServerMedia {
             ?: channelExtractor.tabs.firstOrNull()
             ?: throw ExtractionException("Channel exposes no tabs: ${channelExtractor.url}")
 
-    // Resume from nextPage token, else first page. getPage() reads only the token: fresh extractor can resume.
+    // Resume from nextPage token, else first page; getPage() reads only the token.
     internal fun <R : InfoItem> fetchInitialOrPage(
         extractor: ListExtractor<R>,
         nextPage: Page?,
@@ -129,7 +129,7 @@ object LocalServerMedia {
         query: String,
     ): SearchExtractor = service.getSearchExtractor(query)
 
-    /** DASH audio codec: Bilibili bare `"mp4a"` invalid RFC 6381 (drops Representation) → `mp4a.40.2`; qualified strings unchanged. */
+    /** DASH audio codec: bare `"mp4a"` is invalid RFC 6381 (Representation dropped) → `mp4a.40.2`. */
     fun normalizeAudioCodec(codec: String?): String {
         if (codec == null || codec.trim().isEmpty()) {
             return "mp4a.40.2"

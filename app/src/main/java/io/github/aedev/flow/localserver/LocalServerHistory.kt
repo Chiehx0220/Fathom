@@ -68,7 +68,7 @@ fun HistoryDbHelper.clearHistory() {
 /** History rows: video fields + progress (0-100). */
 internal fun HistoryDbHelper.historyCards(): List<VideoCard> =
     runBlocking {
-        // Video may have two rows (one under a whole link, from web page before id normalisation): most recent wins.
+        // Two rows possible (whole link, pre-normalisation): latest wins.
         val seen = HashSet<String>()
         viewHistory().getAllHistory().first().mapNotNull { entry ->
             val url = videoIdToUrl(entry.videoId, entry.serviceId)

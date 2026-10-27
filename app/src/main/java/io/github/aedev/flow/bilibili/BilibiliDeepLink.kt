@@ -6,7 +6,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
-/** VIEW intent URL / shared text → link; first link wins (share sheet: title + link, often b23.tv). */
+/** VIEW URL / shared text → first link (share sheet: title + link, often b23.tv). */
 object BilibiliDeepLink {
     private val URL = Regex("""https?://[^\s]+""")
     private val SHORT_HOST = Regex("""^https?://b23\.tv/""", RegexOption.IGNORE_CASE)

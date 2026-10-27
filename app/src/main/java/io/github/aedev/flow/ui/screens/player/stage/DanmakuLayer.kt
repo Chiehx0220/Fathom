@@ -37,7 +37,7 @@ internal fun BoxScope.DanmakuLayer(
 
     val playbackState by EnhancedPlayerManager.getInstance().playerState.collectAsStateWithLifecycle()
 
-    // anchor = (real position, when); smoothed = anchor + elapsed × speed; re-anchored on fresh position and play/pause/speed.
+    // anchor = (position, when); smoothed = anchor + elapsed × speed; re-anchored on fresh position, play/pause, speed.
     var anchorPositionMs by remember { mutableLongStateOf(currentPositionMs) }
     var anchorAtElapsedMs by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     var smoothedPositionMs by remember { mutableLongStateOf(currentPositionMs) }

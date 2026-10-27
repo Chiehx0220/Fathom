@@ -14,7 +14,7 @@ import io.github.aedev.flow.data.model.Video as FlowVideo
 
 internal fun HistoryDbHelper.playlistRepository() = PlaylistRepository(appContext)
 
-/** Playlist bookmarks and Watch Later: native PlaylistRepository (Room); Watch Later = internal playlist, same table as Flow UI saves. */
+/** Playlist bookmarks, Watch Later: native PlaylistRepository (Room); Watch Later = internal playlist, same table as Flow UI. */
 fun HistoryDbHelper.isPlaylistBookmarked(playlistUrl: String?): Boolean {
     val playlistId = playlistUrlToId(playlistUrl) ?: return false
     return runBlocking { playlistRepository().isExternalPlaylistSaved(playlistId) }

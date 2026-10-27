@@ -25,7 +25,7 @@ class BilibiliSubscriptionFeed
     constructor(
         private val bilibiliApi: BilibiliApi,
     ) {
-        /** Latest uploads of one Bilibili uploader; [channelId] = numeric id, [label] = subscribed name + avatar. */
+        /** Latest uploads of one uploader; [channelId] numeric, [label] = name + avatar. */
         suspend fun latestVideos(
             channelId: String,
             limit: Int = 5,

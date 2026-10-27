@@ -1,4 +1,4 @@
-/* Things that float above the screens: toast, options menu, remote pointer, the connected banner, and the key hints. */
+/* Floating layers: toast, options menu, remote pointer, connected banner, key hints. */
 #layer { position: relative; z-index: 3000; }
 .toast { position: fixed; left: 50%; bottom: 90px; z-index: 3100; max-width: 80vw; padding: 12px 22px; border-radius: 22px; background: var(--s3); color: var(--fg); font-weight: 500; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4); opacity: 0; pointer-events: none; transform: translate(-50%, 12px); transition: opacity 0.2s, transform 0.2s var(--ease); }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -22,8 +22,7 @@ kbd { min-width: 26px; padding: 3px 7px; border-radius: 7px; background: var(--s
 .picker-new { margin: 6px 4px 4px; }
 .menu-item.sel { background: var(--acc); color: var(--on-acc); }
 
-/* Remote pointer: tonal disc with a dark core. Press shrinks it and lights a halo; .idle fades it
- * out on inactivity (see remote.js). */
+/* Remote pointer: tonal disc, dark core; press shrinks it and lights a halo; .idle fades it (remote.js). */
 .vptr { position: fixed; z-index: 3300; width: 32px; height: 32px; margin: -16px 0 0 -16px; pointer-events: none; transition: left 0.04s linear, top 0.04s linear, opacity 0.3s ease; }
 .vptr.idle { opacity: 0; }
 .vptr-disc { position: absolute; left: 4px; top: 4px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--acc) 28%, #fff); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.15); transition: transform 0.12s; }

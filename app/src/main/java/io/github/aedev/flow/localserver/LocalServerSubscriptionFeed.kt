@@ -9,7 +9,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
-// Subscribed channels' uploads → one newest-first feed (cap 60); channel resolved by own URL (subscriptions mix services).
+// Subscribed uploads → one newest-first feed (cap 60); channel resolved by own URL (mixed services).
 internal fun RequestContext.subscriptionFeed(channels: List<InfoItem>?): List<InfoItem> {
     if (channels.isNullOrEmpty()) return emptyList()
     val pending = channels.map { channel -> channel to executor.submit(Callable { uploadsOf(channel) }) }

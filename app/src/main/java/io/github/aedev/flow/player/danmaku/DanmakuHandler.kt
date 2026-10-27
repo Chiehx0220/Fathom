@@ -26,7 +26,7 @@ data class DanmakuComment(
     val relativeFontSize: Float,
 )
 
-/** Bilibili danmaku of current video, shaped after [SponsorBlockHandler]: reset() + load per video. Live room: [liveRoomId]. */
+/** Danmaku of current video, after [SponsorBlockHandler]: reset() + load per video; live: [liveRoomId]. */
 class DanmakuHandler(
     private val scope: CoroutineScope,
 ) {
@@ -53,7 +53,7 @@ class DanmakuHandler(
         _liveRoomId.value = roomId
     }
 
-    /** Danmaku of one Bilibili part via native client, no StreamInfo fetch (part cid already in [info]). */
+    /** Danmaku of one Bilibili part via native client, no StreamInfo fetch (cid in [info]). */
     fun loadBilibili(
         api: BilibiliApi,
         info: BilibiliVideoInfo,

@@ -1,7 +1,7 @@
 name: Fathom release
 
-# Run it from the Actions tab: "Fathom release" -> "Run workflow", and type the tag (for example v2.2.1).
-# The tag must match versionName in app/build.gradle.kts, which is what the in-app updater compares.
+# Run from the Actions tab ("Fathom release"), tag e.g. v2.2.1.
+# Tag must match versionName in app/build.gradle.kts (the in-app updater compares it).
 on:
   workflow_dispatch:
     inputs:
@@ -87,9 +87,8 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      # The in-app updater picks an APK by these names: fathom.apk is the universal build,
-      # fathom-<abi>.apk the one for a device's CPU. Do not rename them. The foss builds (no updater,
-      # no Discord) are named fathom-foss*.apk, which the updater never picks.
+      # In-app updater picks by name: fathom.apk = universal, fathom-<abi>.apk = per CPU; do not rename.
+      # foss builds (no updater, no Discord): fathom-foss*.apk, never picked.
       - name: Name the APKs
         run: |
           set -euo pipefail
@@ -104,8 +103,8 @@ jobs:
           cp "$foss/app-foss-armeabi-v7a-release.apk"     dist/fathom-foss-armeabi-v7a.apk
           (cd dist && sha256sum fathom*.apk > checksums.txt && cat checksums.txt)
 
-      # Installed copies only update to an APK signed with the same certificate, so a wrong key must stop the release.
-      # The value is the SHA-256 of Fathom's signing certificate; change it only when the key is replaced on purpose.
+      # Updates need the same signing certificate: a wrong key must stop the release.
+      # Value = SHA-256 of Fathom's signing certificate; change only on deliberate key rotation.
       - name: Confirm the APKs are signed with the Fathom key
         env:
           EXPECTED_SIGNER_SHA256: 2e3571c4f521f71c655042d9d96fbd11c295b74e288e2f317266cd61932174ea

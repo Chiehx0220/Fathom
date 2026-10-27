@@ -4,9 +4,8 @@
 //   node scripts/check-web-strings.js           exit 1 on a problem
 //   node scripts/check-web-strings.js --report  also list untranslated keys per language
 //
-// en.json is the base. Every key referenced via FT.t / FT.tn / data-t-label must exist in it, every key in it must be
-// referenced, and other languages may only contain en.json keys with identical {placeholders}. Plural keys use CLDR
-// suffixes (_one, _other, ...) and are referenced by their stem.
+// en.json = base: every key used via FT.t / FT.tn / data-t-label must exist and every key must be used;
+// other languages may only hold en.json keys with identical {placeholders}. Plurals: CLDR suffixes (_one, _other, ...), referenced by stem.
 
 const fs = require('fs');
 const path = require('path');

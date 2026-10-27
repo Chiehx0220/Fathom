@@ -73,7 +73,7 @@ internal suspend fun List<Video>.allowedBy(preferences: PlayerPreferences): List
     return filter { filter.allows(it) }
 }
 
-/** [HomeContentSourceFilter] as the Home state upstream has no notion of: persisted, with YouTube as the initial value. */
+/** Persisted [HomeContentSourceFilter] (not in upstream Home state); initial YouTube. */
 internal fun PlayerPreferences.homeContentSourceFilterIn(
     scope: CoroutineScope,
     started: SharingStarted,

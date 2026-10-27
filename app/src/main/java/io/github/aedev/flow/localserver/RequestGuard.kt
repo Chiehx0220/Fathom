@@ -78,7 +78,7 @@ internal val CROSS_ORIGIN_PATHS: Set<String> =
 private val IPV4 = Regex("""\d{1,3}(\.\d{1,3}){3}""")
 private val LOCAL_SUFFIXES = listOf(".local", ".lan", ".home.arpa", ".internal")
 
-/** [hostHeader] = this device's address or local name; a re-pointed public domain (DNS rebinding) is refused. No header = program. */
+/** [hostHeader] = device address or local name; re-pointed public domain (DNS rebinding) refused; no header = program. */
 internal fun isLocalHostHeader(hostHeader: String?): Boolean {
     val value = hostHeader?.trim().orEmpty()
     if (value.isEmpty()) return hostHeader == null

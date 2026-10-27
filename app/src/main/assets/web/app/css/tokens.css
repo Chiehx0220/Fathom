@@ -1,12 +1,8 @@
-/* Colour and size tokens. Every colour in the app is one of these roles, so a theme is only a set of values for them:
- *   --bg      the page          --s1..--s3  surfaces, one step lighter each
- *   --fg      text              --mute      secondary text
- *   --acc     the accent        --on-acc    text and icons on the accent
- *   --acc2    the marker: where you are (the focus ring, the watched-so-far bar), the gold of the Fathom mark's play arrow
- * A theme is two attributes on <html>: `data-palette` (which colours) and `data-scheme` (light or dark; `data-oled` also
- * marks the true-black dark). A palette gives, for each scheme, a hue for its surfaces, its text and its accent; a scheme
- * turns those into the surface steps. Nothing here is tied to <html>, so a swatch can carry both attributes and show its own
- * colours. The choice is made in theme.js and set before paint by the script in index.html. */
+/* Colour and size tokens; every colour is one of these roles, a theme = a set of values:
+ *   --bg page          --s1..--s3 surfaces (each step lighter)   --fg text   --mute secondary text
+ *   --acc accent       --on-acc on accent                        --acc2 marker (focus ring, watched bar; gold of the mark's play arrow)
+ * Theme = `data-palette` + `data-scheme` (light/dark; `data-oled` = true black) on <html>. A palette gives, per scheme, a hue for
+ * surfaces, text and accent; swatches can carry both attributes. Chosen in theme.js, set before paint by the script in index.html. */
 
 :root {
   --bar-h: 72px;
@@ -16,7 +12,7 @@
   --ease: cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* Palettes. Light and dark are designed separately, because a light Fathom is ivory paper and a dark one is deep water:
+/* Palettes (light and dark designed separately: ivory paper / deep water):
  *   --hl --sl   hue and saturation (0-100) of the light surfaces     --hd --sd   the same for the dark surfaces
  *   --fg-l --mute-l   text on light      --fg-d --mute-d   text on dark
  *   --acc-l --on-l    accent on light and what sits on it      --acc-d --on-d   the same on dark
@@ -85,7 +81,7 @@
   --scrim: rgba(0, 0, 0, 0.88);
 }
 
-/* The phone's own Material You colours (the server fills the --md-* roles for this phone; the two selectors it uses are in index.html). */
+/* Phone's Material You colours (server fills the --md-* roles; the two selectors are in index.html). */
 [data-palette="device"] {
   --bg: var(--md-surface, #10131A); --s1: var(--md-surface-container-low, #181B22); --s2: var(--md-surface-container, #1D2027);
   --s3: var(--md-surface-container-high, #272A32); --fg: var(--md-on-surface, #E1E2EB); --mute: var(--md-on-surface-variant, #C1C6D4);

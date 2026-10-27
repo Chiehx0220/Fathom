@@ -1,7 +1,7 @@
-/* The stage (the one player, kept for the whole visit) and the watch screen around it. */
+/* Stage (the one player, kept for the whole visit) and the watch screen around it. */
 .stage { position: absolute; z-index: 5; top: var(--bar-h); left: 0; right: 0; height: var(--stage-h, 56vw); background: #000; overflow: hidden; }
 .stage-player { width: 100%; height: 100%; }
-/* The Video.js skin and the media component inside it fill the stage; the skin's own look follows the app's accent. */
+/* Video.js skin and media component fill the stage; skin look follows the app accent. */
 .stage-player video-skin, .stage-player live-video-skin {
     display: block; width: 100%; height: 100%;
     --media-accent-color: var(--acc); --media-accent-text-color: var(--on-acc);
@@ -16,15 +16,13 @@
 .stage.audio-only .audio-art { display: flex; }
 .stage.audio-only.mini .audio-art { display: none; }
 
-/* Docked small in a corner while another screen is open (or the picture has scrolled away).
- * Starts in the corner set here; player.js can then drag it anywhere by switching left/top
- * to real pixel values, which is why right/bottom (not left/top) are what CSS resets on undock. */
+/* Mini player docked in a corner while another screen is open (or the picture scrolled away).
+ * player.js drags it by switching to left/top pixels, so undock resets right/bottom. */
 .stage.mini { position: fixed; top: auto; left: auto; right: 24px; bottom: 24px; width: clamp(280px, 24vw, 420px); height: auto; aspect-ratio: 16 / 9; border-radius: 16px; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5); cursor: grab; touch-action: none; user-select: none; }
 .stage.mini.dragging { cursor: grabbing; transition: none; }
-/* The mini player has no controls of its own, only the .mini-ctrl buttons below: player.js sets data-mini on the skin and hides its controls (see SKIN_STYLE there). */
-/* Shared chrome for the mini player's controls (close/expand/play - see player.js's MINI_CTRL);
- * each subclass below only overrides position and icon size. Hidden until hovered, like YouTube's
- * own mini player, so the picture itself is what shows the rest of the time. */
+/* Mini player has no controls of its own, only the .mini-ctrl buttons: player.js sets data-mini on the skin and hides its controls (SKIN_STYLE). */
+/* Shared chrome of the mini controls (close/expand/play, player.js MINI_CTRL); subclasses override position and icon size.
+ * Hidden until hover, like YouTube's mini player. */
 .mini-ctrl { position: absolute; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.65); color: #fff; opacity: 0; pointer-events: none; transition: opacity 0.15s; }
 .mini-ctrl .i { font-size: 20px; }
 .stage:not(.mini) .mini-ctrl { display: none; }
@@ -35,7 +33,7 @@
 .mini-play { left: 50%; top: 50%; transform: translate(-50%, -50%); width: 44px; height: 44px; }
 .mini-play .i { font-size: 24px; }
 
-/* Fullscreen the browser refused (it wants a tap on the page itself): the stage fills the window instead. */
+/* Fullscreen refused by the browser (needs a tap on the page): stage fills the window instead. */
 body.remote-fs { overflow: hidden; }
 body.remote-fs .stage { position: fixed; inset: 0; z-index: 2000; width: auto; height: auto; border-radius: 0; box-shadow: none; }
 body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
@@ -48,7 +46,7 @@ body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
 .stage.mini .dm-hint { display: none; }
 .hud { position: absolute; top: 24px; left: 50%; z-index: 12; display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 22px; background: rgba(0, 0, 0, 0.8); color: #fff; transform: translateX(-50%); font-weight: 500; }
 
-/* The SponsorBlock marks on the seek bar are drawn inside the skin, so their rules are in player.js (SKIN_STYLE). */
+/* SponsorBlock marks on the seek bar are drawn inside the skin: rules in player.js (SKIN_STYLE). */
 
 /* The watch screen: room for the stage, then the details. */
 .watch-slot { height: var(--stage-h, 56vw); }

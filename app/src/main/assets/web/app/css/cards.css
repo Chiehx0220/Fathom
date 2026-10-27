@@ -1,10 +1,8 @@
-/* Videos as cards (shelves and grids) and as list rows, plus the pieces they share. */
+/* Video cards (shelves, grids), list rows and shared pieces. */
 .card { position: relative; display: block; color: inherit; outline: none; }
 .thumb { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius); background: var(--s2); transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease); }
 .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
-/* No picture (the server sends an empty address): a tonal cookie with a rounded play mark - the expressive shape the app
- * wears for its action badges - instead of a bare block. The cookie is a tint of the accent over the surface, the mark is
- * the accent itself. */
+/* No picture: tonal cookie with a rounded play mark (accent tint over the surface). */
 .thumb:not(:has(img))::before, .thumb:not(:has(img))::after { content: ''; position: absolute; left: 50%; top: 50%; aspect-ratio: 1; transform: translate(-50%, -50%); }
 .thumb:not(:has(img))::before { width: 38%; max-width: 104px; background: color-mix(in srgb, var(--acc) 22%, var(--s2)); -webkit-mask: var(--cookie) center / contain no-repeat; mask: var(--cookie) center / contain no-repeat; }
 .thumb:not(:has(img))::after { width: 15%; max-width: 42px; background: var(--acc); -webkit-mask: var(--play) center / contain no-repeat; mask: var(--play) center / contain no-repeat; }
@@ -31,9 +29,8 @@ body[data-input="keys"] .card.sel .opt { display: flex; }
 .shelf-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
 .shelf-head h2 { font-size: 20px; font-weight: 500; }
 .shelf-head span { color: var(--mute); font-size: 13px; }
-/* The title is the link into the shelf's full list (home.js `expand` option). The whole title area is the control: on hover (or the remote's
- * selection) it tints with the accent colour, the arrow's circle fills, and the subtitle gives way to a "See all" label. The link is only as
- * wide as its content, with padding that a negative margin takes back, so the title does not move from a plain shelf-head. */
+/* Title = link to the shelf's full list (home.js `expand`); the whole title area is the control: hover/selection
+ * tints it, fills the arrow circle and swaps the subtitle for "See all". Padding offset by a negative margin keeps the title in place. */
 a.shelf-head.expand { width: fit-content; max-width: 100%; padding: 6px 12px 6px 10px; margin: -6px 0 6px -10px; border-radius: 16px; outline: none; color: inherit; transition: background 0.15s; }
 a.shelf-head.expand .shelf-chev { align-self: center; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; margin-left: -4px; border-radius: 50%; background: var(--s2); font-size: 20px; color: var(--mute); transition: transform 0.15s, color 0.15s, background 0.15s; }
 a.shelf-head.expand h2, a.shelf-head.expand .shelf-sub { transition: color 0.15s; }
@@ -45,10 +42,10 @@ a.shelf-head.expand:hover .shelf-chev, a.shelf-head.expand:focus-visible .shelf-
 a.shelf-head.expand:hover .shelf-sub, a.shelf-head.expand:focus-visible .shelf-sub, body[data-input="keys"] a.shelf-head.expand.sel .shelf-sub { display: none; }
 a.shelf-head.expand:hover .shelf-all, a.shelf-head.expand:focus-visible .shelf-all, body[data-input="keys"] a.shelf-head.expand.sel .shelf-all { max-width: 70px; opacity: 1; }
 body[data-input="keys"] a.shelf-head.expand.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc2); }
-/* The padding is room for the selection ring and the zoomed picture, which reach about 15px past a card; the negative margins take it back. */
+/* Padding leaves room for the selection ring and zoomed picture (~15px past a card); negative margins take it back. */
 .row { display: flex; gap: clamp(14px, 1.4vw, 24px); margin: -6px 0 -6px -20px; padding: 16px var(--pad-x) 20px 20px; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
 .row::-webkit-scrollbar { display: none; }
-/* The edges fade where the row scrolls on (not for the remote, which moves a selection instead). */
+/* Edges fade where the row scrolls on (not for the remote, which moves a selection). */
 .row-wrap { position: relative; }
 body:not([data-input="keys"]) .row-wrap.can-right .row { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
 body:not([data-input="keys"]) .row-wrap.can-left .row { -webkit-mask-image: linear-gradient(to right, transparent, #000 56px); mask-image: linear-gradient(to right, transparent, #000 56px); }
@@ -70,11 +67,11 @@ body:not([data-input="keys"]) .row-wrap.can-left.can-right .row { -webkit-mask-i
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr)); gap: 28px clamp(14px, 1.4vw, 24px); padding: 12px var(--pad-x); }
 .grid.channels { grid-template-columns: repeat(auto-fill, minmax(clamp(88px, 7vw, 120px), 1fr)); gap: 20px clamp(10px, 1vw, 18px); }
 
-/* Grid layout: a shelf is a grid; a preview hides the items past its rows. */
+/* Grid layout: shelf is a grid; a preview hides items past its rows. */
 .shelf > .grid { padding: 12px var(--pad-x) 12px 0; }
 .grid > [hidden] { display: none; }
 
-/* List rows (search, history, library): a picture and text, the selected one shown large in the detail pane. */
+/* List rows (search, history, library): picture + text; selected row shown large in the detail pane. */
 .split { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 48px); padding: 8px var(--pad-x); }
 .split.single { grid-template-columns: minmax(0, 1fr); }
 .list { display: flex; flex-direction: column; gap: 6px; min-width: 0; }

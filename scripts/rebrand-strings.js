@@ -1,15 +1,15 @@
 #!/usr/bin/env node
-// Builds the Fathom string overlay for every locale from upstream's own translations.
+// Builds the Fathom string overlay for every locale from upstream's translations.
 //
 //   node scripts/rebrand-strings.js           write app/src/fathom/res/values-*/strings.xml
 //   node scripts/rebrand-strings.js --check   exit 1 if those files are out of date
 //   node scripts/rebrand-strings.js --report  list "Flow" the script does not touch and nobody has decided on
 //
-// app/src/main/res/values*/strings.xml stay identical to upstream, so merging upstream never conflicts
-// there. Fathom's own text lives in app/src/fathom/res, which the build lays over main:
-//   fathom_strings.xml   written by hand: Fathom-only strings and fork-specific wording
-//   strings.xml          generated here: upstream's translation with "Flow" turned into "Fathom"
-// A key written by hand is never generated. Run this after every merge of upstream.
+// app/src/main/res/values*/strings.xml stay identical to upstream (merges never conflict there). Fathom text lives in
+// app/src/fathom/res, laid over main by the build:
+//   fathom_strings.xml   hand-written: Fathom-only strings and fork-specific wording
+//   strings.xml          generated: upstream translation with "Flow" → "Fathom"
+// A hand-written key is never generated. Run after every upstream merge.
 
 const fs = require('fs');
 const path = require('path');

@@ -2,7 +2,7 @@ package io.github.aedev.flow.ui.screens.home
 
 import io.github.aedev.flow.data.model.Video
 
-/** [HomeSearchPages] querying every service the source filter allows; add forwarder when upstream adds a used method. */
+/** [HomeSearchPages] over every service the filter allows; add forwarder when upstream adds a used method. */
 internal class MultiSourceSearchPages(
     private val pages: HomeSearchPages,
     private val feedSources: HomeFeedSources,

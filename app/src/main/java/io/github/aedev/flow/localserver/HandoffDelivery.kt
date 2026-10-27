@@ -28,7 +28,7 @@ internal class HandoffDelivery(
         if (visible) context.startActivity(open) else notify(handoff, open)
     }
 
-    // A loaded video is not reloaded by the player route, so history does not reseed it.
+    // Loaded video not reloaded by player route: history does not reseed it.
     private fun seekLoadedVideo(
         handoff: Handoff,
         play: Boolean,

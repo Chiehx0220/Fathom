@@ -11,7 +11,7 @@ object BilibiliMirrors {
         @Volatile
         private var preferred = 0
 
-        /** Mirrors in try order: fastest measured host first; unmeasured before measured; last winner first among equals. */
+        /** Try order: fastest measured first; unmeasured before measured; last winner first on ties. */
         fun order(nowMs: Long = System.currentTimeMillis()): List<String> {
             val start = preferred
             return urls.indices
@@ -27,7 +27,7 @@ object BilibiliMirrors {
 
     private const val MAX_GROUPS = 1024
 
-    // Sample = bytes / time waiting inside reads: network rate, not player consumption rate. Short transfers ignored.
+    // Sample = bytes / time waiting in reads (network rate, not consumption); short transfers ignored.
     private const val MIN_SAMPLE_BYTES = 128L * 1024
     private const val MIN_SAMPLE_NANOS = 100_000_000L
     private const val SMOOTHING = 0.5

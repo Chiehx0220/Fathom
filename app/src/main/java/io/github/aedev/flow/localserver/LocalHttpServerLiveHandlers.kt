@@ -6,7 +6,7 @@ import java.io.IOException
 import java.net.URI
 import java.net.URLEncoder
 
-// Bilibili live rooms for the web page: HLS relay (CDN needs a Referer browsers cannot send) + chat poll.
+// Bilibili live for web page: HLS relay (CDN needs Referer) + chat poll.
 
 private const val PLAYLIST_TYPE = "application/vnd.apple.mpegurl"
 private val URI_ATTRIBUTE = Regex("""URI="([^"]*)"""")

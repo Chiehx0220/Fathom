@@ -9,7 +9,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import javax.inject.Inject
 
-/** Non-YouTube leg of [PlaybackLoadResolver]: other services via native client, own step type. Offline copy checked by caller. */
+/** Non-YouTube leg of [PlaybackLoadResolver]: native client, own step type; caller checks offline copy. */
 class NonYouTubeResolver
     @Inject
     constructor(

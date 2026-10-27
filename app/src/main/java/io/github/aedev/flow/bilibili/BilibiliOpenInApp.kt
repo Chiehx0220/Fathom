@@ -14,7 +14,7 @@ import io.github.aedev.flow.localserver.videoIdToUrl
 
 private const val BILIBILI_PACKAGE = "tv.danmaku.bili"
 
-/** Bilibili app first; a bare link would return here (Fathom handles bilibili.com), so the chooser excludes [MainActivity]. */
+/** Bilibili app first; chooser excludes [MainActivity] (a bare link would loop back). */
 fun openInBilibili(
     context: Context,
     videoId: String,

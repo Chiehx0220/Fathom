@@ -34,7 +34,7 @@ internal fun RequestContext.handleApiHome(params: Query): SearchResult {
     return dbHelper.withoutHidden(items).toSearchResult(next)
 }
 
-// Ranked home (YouTube: FlowNeuro); `more=1` = next discovery round; `hasMore` replaces nextPage (no Page behind it).
+// Ranked home (YouTube: FlowNeuro); `more=1` = next discovery round; `hasMore` replaces nextPage.
 internal fun RequestContext.handleApiRecommendations(params: Query): SearchResult {
     val serviceId = getServiceId(params)
     val nextPage = params.page("nextPage")

@@ -1,4 +1,4 @@
-// Screen building blocks: cards, rows, shelves, buttons; item kept on `el.item` (options menu, detail pane).
+// Screen building blocks: cards, rows, shelves, buttons; item on `el.item` (options menu, detail pane).
 (() => {
 const h = FT.h;
 
@@ -60,7 +60,7 @@ FT.playlistCard = (p) => {
 // Card for any API list item.
 FT.itemCard = (item) => (item.subscriberCount !== undefined && item.name ? FT.channelCard(item) : item.videoCount !== undefined && item.name ? FT.playlistCard(item) : FT.videoCard(item));
 
-// Sideways row: edge fade; pointer users get arrow buttons (CSS shows mouse only; swipe/remote scroll natively); buttons not data-f.
+// Sideways row: edge fade; arrow buttons for pointer only (CSS; swipe/remote scroll natively), not data-f.
 FT.scroller = (row) => {
     const wrap = h('div', { class: 'row-wrap' });
     const arrow = (dir) => h('button', { type: 'button', class: 'row-arrow ' + dir, tabindex: '-1', 'aria-label': FT.t(dir === 'left' ? 'scroll_left' : 'scroll_right'),
