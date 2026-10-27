@@ -9,6 +9,10 @@
   <link rel="icon" type="image/png" href="/app-icon.png">
   <link rel="apple-touch-icon" href="/app-icon.png">
   <link rel="stylesheet" href="/app.css?v={{version}}">
+  <!-- Faces every screen uses (icons, text 400/500): fetched with the stylesheet, not after it. -->
+  <link rel="preload" href="/fonts/material-symbols-rounded.c87b1d7e.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/roboto-400.425c0713.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/roboto-500.5bcc3aa1.woff2" as="font" type="font/woff2" crossorigin>
   <!-- Video.js 10 served from this device (assets/web/vendor/videojs, updated by scripts/vendor-videojs.js); modules load from
        player-build.js on first video, only the space-reserving stylesheet is linked here. -->
   <link rel="stylesheet" href="/vendor/videojs/global.css?v={{version}}">

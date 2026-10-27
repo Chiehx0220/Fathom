@@ -63,6 +63,7 @@ internal fun Route.localRoutes(blocking: CoroutineDispatcher) =
         api("/api/v1/settings") { handleApiSettings(it) }
 
         page("/vendor/{file...}") { reply, _ -> handleVendorAsset(reply, requestPath) }
+        page("/fonts/{file...}") { reply, _ -> handleAppFont(reply, requestPath) }
         page("/{path...}") { reply, _ -> reply.send(404, "Page Not Found", "text/plain; charset=UTF-8") }
     }
 
