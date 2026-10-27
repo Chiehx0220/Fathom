@@ -6,15 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import io.github.aedev.flow.data.local.DownloadDialogStyle
 import io.github.aedev.flow.data.model.ShortVideo
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.toVideo
 import io.github.aedev.flow.data.shorts.ShortAudioTrack
 import io.github.aedev.flow.data.shorts.ShortVideoQuality
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
-import io.github.aedev.flow.ui.components.shared.MediaDownloadDialog
-import io.github.aedev.flow.ui.components.shared.MediaDownloadDialogCompact
+import io.github.aedev.flow.ui.components.shared.MediaDownloadPrompt
+import io.github.aedev.flow.ui.components.shared.MediaSheetSlot
 import io.github.aedev.flow.ui.screens.shorts.ShortsViewModel
 
 internal enum class ShortsSettingsPage {
@@ -85,29 +84,20 @@ internal class ShortsSettingsSheetState {
     }
 }
 
+/** The download sheet [ShortsSettingsSheetState.prepareDownload] readied, opened in [slot] like the reel's other sheets. */
 @Composable
-internal fun ShortsDownloadDialog(
+internal fun ShortsDownloadSheet(
     state: ShortsSettingsSheetState,
-    style: DownloadDialogStyle,
+    slot: MediaSheetSlot,
 ) {
     val video = state.downloadVideo ?: return
     if (state.videoFormats.isEmpty()) return
-    val onDismiss = { state.downloadVideo = null }
-    if (style == DownloadDialogStyle.COMPACT) {
-        MediaDownloadDialogCompact(
-            streamSizes = state.streamSizes,
-            innerTubeVideoFormats = state.videoFormats,
-            innerTubeAudioFormats = state.audioFormats,
-            video = video,
-            onDismiss = onDismiss,
-        )
-    } else {
-        MediaDownloadDialog(
-            streamSizes = state.streamSizes,
-            innerTubeVideoFormats = state.videoFormats,
-            innerTubeAudioFormats = state.audioFormats,
-            video = video,
-            onDismiss = onDismiss,
-        )
-    }
+    MediaDownloadPrompt(
+        streamSizes = state.streamSizes,
+        videoFormats = state.videoFormats,
+        audioFormats = state.audioFormats,
+        video = video,
+        slot = slot,
+        onDismiss = { state.downloadVideo = null },
+    )
 }

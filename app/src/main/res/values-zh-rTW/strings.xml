@@ -4191,4 +4191,6 @@
     <string name="keyboard_shortcut_exit_fullscreen">結束全螢幕</string>
     <string name="keyboard_shortcut_faster">加快</string>
     <string name="keyboard_shortcut_slower">放慢</string>
+    <string name="music_audio_offload_title">硬體音訊解碼</string>
+    <string name="music_audio_offload_desc">較省電。部分手機開啟後可能沒有聲音</string>
 </resources>

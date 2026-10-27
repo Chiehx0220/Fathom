@@ -6,13 +6,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.localserver.remote.CastPickerWithWebPage
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.dlna.DlnaCastManager
 import io.github.aedev.flow.player.state.EnhancedPlayerState
-import io.github.aedev.flow.ui.components.shared.MediaDownloadDialog
-import io.github.aedev.flow.ui.components.shared.MediaDownloadDialogCompact
+import io.github.aedev.flow.ui.components.videoplayer.DlnaDevicePickerDialog
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
 import io.github.aedev.flow.ui.screens.player.state.PlayerScreenState
 import io.github.aedev.flow.ui.screens.player.state.PlayerSheet
@@ -36,46 +36,19 @@ internal fun PlayerDialogsContainer(
     val playerPreferences = prefs.preferences
     val coroutineScope = rememberCoroutineScope()
 
-    // Download Quality Dialog
-    if (screenState.activeSheet == PlayerSheet.Download &&
-        io.github.aedev.flow.bilibili.BilibiliRef
-            .isVideoId(video.id)
-    ) {
-        // Bilibili streams not in player InnerTube state: card menu loader offers them.
-        val quickActions =
-            io.github.aedev.flow.ui.components.shared.quickactions
-                .sharedQuickActionsViewModel()
-        androidx.compose.runtime.LaunchedEffect(video.id) {
-            quickActions.requestDownload(video)
-            screenState.closeSheet()
-        }
-    } else if (screenState.activeSheet == PlayerSheet.Download) {
-        when (prefs.downloadDialogStyle) {
-            io.github.aedev.flow.data.local.DownloadDialogStyle.COMPACT -> {
-                MediaDownloadDialogCompact(
-                    streamSizes = uiState.streamSizes,
-                    innerTubeVideoFormats = uiState.innerTubeVideoFormats,
-                    innerTubeAudioFormats = uiState.innerTubeAudioFormats,
-                    video = video,
-                    currentPlayingHeight = playerState.effectiveQuality,
-                    subtitles = playerState.availableSubtitles,
-                    onDismiss = { screenState.closeSheet() },
-                )
-            }
-
-            io.github.aedev.flow.data.local.DownloadDialogStyle.FULL -> {
-                MediaDownloadDialog(
-                    streamSizes = uiState.streamSizes,
-                    innerTubeVideoFormats = uiState.innerTubeVideoFormats,
-                    innerTubeAudioFormats = uiState.innerTubeAudioFormats,
-                    video = video,
-                    subtitles = playerState.availableSubtitles,
-                    onDismiss = { screenState.closeSheet() },
-                )
-            }
-
-            null -> { }
-        }
+    if (screenState.activeSheet == PlayerSheet.Download && !hostedInSidePanel && BilibiliRef.isVideoId(video.id)) {
+        BilibiliDownloadRedirect(video, onDismiss = { screenState.closeSheet() })
+    } else if (screenState.activeSheet == PlayerSheet.Download && !hostedInSidePanel) {
+        PlayerDownloadSheetHost(
+            video = video,
+            uiState = uiState,
+            playerState = playerState,
+            asSidePanel = false,
+            expandedHeight = mediaSheetExpandedHeight,
+            collapsedHeight = mediaSheetCollapsedHeight,
+            onSheetProgressChange = onMediaSheetProgressChange,
+            onDismiss = { screenState.closeSheet() },
+        )
     }
 
     if (screenState.isSettingsOpen && !hostedInSidePanel) {

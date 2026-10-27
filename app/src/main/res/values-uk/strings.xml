@@ -2286,7 +2286,7 @@
     <string name="duration_hours_short">%1$d год</string>
     <string name="duration_minutes_short">%1$d хв</string>
     <string name="player_appearance_seek_gesture_title">Жест перемотування</string>
-    <string name="player_appearance_seek_gesture_subtitle">Змахніть убік у повноекранному режимі, щоби перемотати відео</string>
+    <string name="player_appearance_seek_gesture_subtitle">Проведіть убік під час відео, щоби перемотати</string>
     <string name="player_settings_subtitle_language">Бажана мова субтитрів</string>
     <string name="player_settings_subtitle_language_dialog_title">Мова субтитрів</string>
     <string name="player_settings_subtitle_language_dialog_body">Субтитри цією мовою будуть показані, якщо доступні. В іншому разі Flow перекладає наявну доріжку.</string>
@@ -4380,4 +4380,24 @@
     </plurals>
     <string name="deep_flow_on_search_title">Показати у результатах пошуку</string>
     <string name="deep_flow_on_search_subtitle">Перемикач «Deep Flow» над останніми пошуковими запитами</string>
+    <string name="lyrics_auto_romanize_japanese">Наразі недоступно японською</string>
+    <string name="notifications_already_in_watch_later">Уже в «Переглянути пізніше»</string>
+    <string name="notifications_save_to_watch_later">Зберегти в «Переглянути пізніше»</string>
+    <string name="notif_check_interval_off_new_videos">Вимкнено, коли функція «Нові відео» вимкнена</string>
+    <string name="queue_swipe_left">Проведіть пальцем вліво по черзі</string>
+    <string name="queue_swipe_right">Проведіть пальцем вправо по черзі</string>
+    <string name="queue_swipe_subtitle">Для пісень у розділі «Далі»</string>
+    <string name="queue_move_to_end">Перейти до кінця</string>
+    <string name="lyrics_provider_lrc_red">lrc.red</string>
+    <string name="lyrics_provider_kugou">KuGou</string>
+    <string name="lyrics_provider_paxsenix">Apple Music (Paxsenix)</string>
+    <string name="lyrics_provider_unison">Unison</string>
+    <string name="lyrics_provider_youtube_captions">Субтитри на YouTube</string>
+    <string name="lyrics_provider_youtube_music">YouTube Music</string>
+    <string name="lyrics_provider_better_lyrics_desc">Синхронізація слів · Тексти пісень у Apple Music</string>
+    <string name="lyrics_provider_lrc_red_desc">Синхронізація слів · збіг за записом</string>
+    <string name="lyrics_provider_lyrics_plus_desc">Синхронізація слів</string>
+    <string name="lyrics_provider_simpmusic_desc">Синхронізація слів · збіг за відео</string>
+    <string name="lyrics_provider_kugou_desc">Синхронізація рядків · чудово підходить для китайських пісень</string>
+    <string name="lyrics_provider_paxsenix_desc">Синхронізація слів</string>
 </resources>

@@ -24,6 +24,14 @@ internal object PlaybackIndex {
             section = R.string.playback_header,
             destination = page,
         )
+    val openFullscreen =
+        SettingEntry(
+            key = "playback.open_fullscreen",
+            title = R.string.player_settings_open_fullscreen,
+            summary = R.string.player_settings_open_fullscreen_subtitle,
+            section = R.string.playback_header,
+            destination = page,
+        )
     val autoplay =
         SettingEntry(
             key = "playback.autoplay",
@@ -485,6 +493,14 @@ internal object PlaybackIndex {
             section = R.string.settings_section_music,
             destination = page,
         )
+    val resumeFromHeadphones =
+        SettingEntry(
+            key = "playback.resume_from_headphones",
+            title = R.string.settings_resume_from_headphones_title,
+            summary = R.string.settings_resume_from_headphones_summary,
+            section = R.string.settings_section_music,
+            destination = page,
+        )
     val musicSideSwipes =
         SettingEntry(
             key = "playback.music_side_swipes",
@@ -514,6 +530,7 @@ internal object PlaybackIndex {
         listOf(
             backgroundPlay,
             startPaused,
+            openFullscreen,
             autoplay,
             queueAutoplay,
             autoplayCountdown,
@@ -571,6 +588,7 @@ internal object PlaybackIndex {
             endlessRadio,
             pauseMusicWhenMuted,
             musicResume,
+            resumeFromHeadphones,
             musicSideSwipes,
             musicVideoSwitch,
             lyricsProviders,

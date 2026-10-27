@@ -47,8 +47,10 @@ import io.github.aedev.flow.data.local.VideoHistoryEntry
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
 import io.github.aedev.flow.player.DeepFlowManager
+import io.github.aedev.flow.ui.TabScrollEventBus
 import io.github.aedev.flow.ui.components.layout.LocalFlowBottomInsets
 import io.github.aedev.flow.ui.components.layout.floatAboveBottomChrome
+import io.github.aedev.flow.ui.components.layout.navigation.FlowTab
 import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
 import io.github.aedev.flow.ui.components.rememberFeedGridLayout
 import io.github.aedev.flow.ui.components.shared.FlowPullToRefreshBox
@@ -108,11 +110,14 @@ fun HomeScreen(
     )
 
     val haptic = LocalHapticFeedback.current
+    val homeLabel = stringResource(R.string.nav_home)
     val deepFlowLabel = stringResource(R.string.deep_flow_mode_title)
+    val reselectHome: () -> Unit = { TabScrollEventBus.emitScrollToTop(FlowTab.Home.route) }
     val toggleDeepFlow: () -> Unit = {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         coroutineScope.launch { DeepFlowManager.toggle(context) }
     }
+    val logoClicks = Modifier.homeLogoClicks(homeLabel, deepFlowLabel, onClick = reselectHome, onLongClick = toggleDeepFlow)
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -125,7 +130,7 @@ fun HomeScreen(
                 title = {
                     Text(
                         stringResource(R.string.app_name_uppercase),
-                        modifier = Modifier.deepFlowLongPress(deepFlowLabel, toggleDeepFlow),
+                        modifier = logoClicks,
                         style =
                             MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.ExtraBold,
@@ -138,7 +143,7 @@ fun HomeScreen(
                         {
                             FathomHeaderLogoIcon(
                                 isDeepFlowActive = deepFlowActive,
-                                modifier = Modifier.size(26.dp).deepFlowLongPress(deepFlowLabel, toggleDeepFlow),
+                                modifier = Modifier.size(26.dp).then(logoClicks),
                             )
                         }
                     } else {

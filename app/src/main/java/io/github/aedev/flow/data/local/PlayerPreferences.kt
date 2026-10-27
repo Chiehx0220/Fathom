@@ -51,7 +51,7 @@ const val DEFAULT_BACKGROUND_PLAY_ENABLED = true
 
 val DEFAULT_NAV_TAB_ORDER = listOf(0, 1, 2, 3, 4, 5, 6)
 
-private const val MAX_UNPLAYABLE_VIDEO_IDS = 300
+private const val MAX_UNPLAYABLE_VIDEO_IDS = 1_000
 
 /**
  * Preferences that never leave the device in a backup: the proxy password, and SponsorBlock's
@@ -76,6 +76,8 @@ class PlayerPreferences(
         val AUTOPLAY_ENABLED = booleanPreferencesKey("autoplay_enabled")
         val QUEUE_AUTOPLAY_ENABLED = booleanPreferencesKey("queue_autoplay_enabled")
         val START_VIDEOS_PAUSED = booleanPreferencesKey("start_videos_paused")
+        val OPEN_VIDEOS_FULLSCREEN = booleanPreferencesKey("open_videos_fullscreen")
+        val RESUME_FROM_HEADPHONES = booleanPreferencesKey("resume_from_headphones")
         val MUSIC_ENDLESS_RADIO_ENABLED = booleanPreferencesKey("music_endless_radio_enabled")
         val AUTOPLAY_COUNTDOWN_SECONDS = intPreferencesKey("autoplay_countdown_seconds")
         val SHOW_CONTROLS_WHILE_LOADING = booleanPreferencesKey("show_controls_while_loading")
@@ -130,6 +132,7 @@ class PlayerPreferences(
 
         // Download dialog style + remembered last-used download options (compact dialog)
         val DOWNLOAD_DIALOG_STYLE = stringPreferencesKey("download_dialog_style")
+        val DOWNLOAD_ASK_EVERY_TIME = booleanPreferencesKey("download_ask_every_time")
         val LAST_DOWNLOAD_TYPE = stringPreferencesKey("last_download_type")
         val LAST_DOWNLOAD_HEIGHT = intPreferencesKey("last_download_height")
         val LAST_DOWNLOAD_CODEC = stringPreferencesKey("last_download_codec")
@@ -1611,6 +1614,28 @@ class PlayerPreferences(
     suspend fun setStartVideosPaused(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.START_VIDEOS_PAUSED] = enabled
+        }
+    }
+
+    /** A video the viewer opens goes straight to fullscreen; what plays after it stays where the viewer is. */
+    val openVideosFullscreen: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.OPEN_VIDEOS_FULLSCREEN] ?: false }
+
+    suspend fun setOpenVideosFullscreen(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.OPEN_VIDEOS_FULLSCREEN] = enabled
+        }
+    }
+
+    /** A Play button on headphones may start the last songs after Flow was closed. */
+    val resumeFromHeadphones: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.RESUME_FROM_HEADPHONES] ?: true }
+
+    suspend fun setResumeFromHeadphones(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.RESUME_FROM_HEADPHONES] = enabled
         }
     }
 
@@ -3178,6 +3203,17 @@ class PlayerPreferences(
         }
     }
 
+    /** Download opens the download menu; off, it downloads the default choice at once. */
+    val downloadAskEveryTime: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.DOWNLOAD_ASK_EVERY_TIME] ?: true }
+
+    suspend fun setDownloadAskEveryTime(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.DOWNLOAD_ASK_EVERY_TIME] = enabled
+        }
+    }
+
     /** Whether a video the viewer opens is also saved for offline, and on which networks. */
     val autoDownloadOpenedVideos: Flow<AutoDownloadMode> =
         context.playerPreferencesDataStore.data
@@ -3885,7 +3921,7 @@ enum class BufferProfile(
     AGGRESSIVE("Fast Start", 5_000, 30_000, 500, 2_500),
 
     // Balanced: Good default for most connections
-    STABLE("Balanced", 30_000, 50_000, 2_500, 5_000),
+    STABLE("Balanced", 20_000, 50_000, 2_500, 5_000),
 
     // Data Saver: Minimize data usage with smaller buffers
     DATASAVER("Data Saver", 12_000, 25_000, 1_500, 3_000),

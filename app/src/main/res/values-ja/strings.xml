@@ -113,7 +113,7 @@
     <string name="collaborator">コラボレーター</string>
     <string name="library_history_label">履歴</string>
     <string name="library_downloads_label">ダウンロード</string>
-    <string name="local_media_permission_title">権限が必要です</string>
+    <string name="local_media_permission_title">権限がありません</string>
     <string name="library_settings_data_header"><![CDATA[設定とデータ]]></string>
     <string name="library_manage_data_label">データを管理</string>
     <string name="about">説明</string>
@@ -237,4 +237,51 @@
     <string name="similar_to">似ているかも</string>
     <string name="music_home_your_subscriptions">登録チャンネル</string>
     <string name="player_settings_ambient_mode">アンビエント モード</string>
+    <string name="home_load_more_failed">より多くのビデオを読み込むことができません</string>
+    <string name="home_load_more_failed_body">接続を確認する</string>
+    <string name="home_refresh_failed">フィードを更新できません</string>
+    <plurals name="subscriptions_refresh_checks_template">
+        <item quantity="other">%1$d の %2$d チャネルのショートカットとライブのチェック</item>
+    </plurals>
+    <plurals name="subscriptions_last_refreshed_template">
+        <item quantity="other">最終更新 %1$s - %2$d チェックされた動画</item>
+    </plurals>
+    <plurals name="subscriptions_failed_channels_title">
+        <item quantity="other">%d チャンネルをロードできません</item>
+    </plurals>
+    <string name="content_settings_channel_group_badge_subtitle">サブスクリプショングループでラベルアバター</string>
+    <string name="channel_add_to_group">グループに追加</string>
+    <string name="channel_groups_sheet_title">チャンネルグループ</string>
+    <string name="channel_groups_empty">グループはまだありません</string>
+    <string name="subscriptions_failed_channels_body">最近の動画は、このフィードから欠落しています: %1$s</string>
+    <string name="subscriptions_failed_channels_more">%1$s と %2$d より</string>
+    <string name="retry">リトリート</string>
+    <string name="copy_logs">ログのコピー</string>
+    <string name="logs_copied">コピーされたログ</string>
+    <string name="logs_copy_failed">ログをコピーできない</string>
+    <string name="channel_error_log_clip_label">フローチャンネルエラーログ</string>
+    <string name="failed_to_load_channel">チャネルをロードできなかった</string>
+    <string name="conjunction_and">そして、</string>
+    <string name="streamed_date_template">ストリーミング %1$s</string>
+    <string name="channel_and_more_template">%1$s と %2$d より</string>
+    <string name="library_section_header">あなたのコンテンツ</string>
+    <string name="library_music_playlists_subtitle">あなたの音楽コレクション</string>
+    <string name="library_saved_shorts_label">保存されたショートパンツ</string>
+    <string name="local_media_rescan">再読み込み</string>
+    <string name="local_media_scanning">デバイスをスキャンしています…</string>
+    <string name="library_local_media_label">ローカルメディア</string>
+    <string name="library_local_media_subtitle">このデバイスで動画や音楽を再生する</string>
+    <string name="local_media_empty_title">%1$s が見つかりませんでした</string>
+    <string name="local_media_empty_body">このデバイスに保存されている動画や音楽はここに表示されます。</string>
+    <string name="local_media_permission_body">Flowがローカルの動画や音楽を見つけて再生できるように、メディアへのアクセスを許可してください。</string>
+    <string name="local_media_grant">アクセスを許可</string>
+    <string name="cancel">キャンセル</string>
+    <string name="empty_watch_history">視聴履歴がありません</string>
+    <string name="clear">クリア</string>
+    <string name="empty_watch_history_body">視聴した動画がここに表示されます</string>
+    <string name="library_manage_data_subtitle">キャッシュと履歴を削除</string>
+    <string name="empty_description">説明はありません</string>
+    <string name="clear_all">全て削除</string>
+    <string name="clear_watch_history_alert_title">再生履歴を削除しますか？</string>
+    <string name="clear_watch_history_alert_body">これにより、視聴履歴からすべての動画が削除されます。この操作は元に戻せません。</string>
 </resources>

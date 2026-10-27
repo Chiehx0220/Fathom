@@ -1,3 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    </resources>
+    <string name="app_name">Flow</string>
+    <string name="subscriptions_search_placeholder">Feliratkozások keresése...</string>
+    <string name="subscriptions_sort_label">Csatornák rendezése</string>
+    <string name="subscriptions_sort_default">Alapértelmezett</string>
+    <string name="subscriptions_sort_name">Név (A-Z)</string>
+    <string name="subscriptions_sort_recent">Mostanában frissítve</string>
+    <string name="top_bar_subscriptions_title">Feliratkozások</string>
+    <string name="top_bar_close_search">Keresés bezárása</string>
+    <string name="view_all_button_label">Mind</string>
+    <string name="subscribed">Feliratkozva</string>
+    <string name="empty_subscriptions_body">Iratkozz fel csatornákra hogy itt lásd a legutóbbi videóikat</string>
+    <string name="no_subscriptions_yet">Nincsenek még feliratkozások</string>
+    <string name="home_refresh_feed">Hírfolyam frissítése</string>
+    <string name="home_load_more_failed">Több videót nem lehet betölteni</string>
+    <string name="home_load_more_failed_body">Ellenőrizd az internetkapcsolatod</string>
+    <string name="home_refresh_failed">Nem lehet frissíteni a hírfolyamot</string>
+    <plurals name="subscriptions_refresh_progress_template">
+        <item quantity="one">%2$d csatornából %1$d frissítve</item>
+        <item quantity="other">%2$d csatornából %1$d frissítve</item>
+    </plurals>
+</resources>

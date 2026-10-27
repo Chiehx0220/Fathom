@@ -59,13 +59,21 @@
     <string name="downloads_storage_used">%1$s no Fathom</string>
     <string name="import_migrate_description">Migre suas inscrições e histórico de outras plataformas para o Fathom sem problemas.</string>
     <string name="import_manage_backups">Gerencie seus backups do Fathom</string>
+    <string name="taste_summary">Como o Fathom lhe vê, e o que define o seu feed</string>
+    <string name="taste_card_hint">Veja como o Fathom lhe vê</string>
+    <string name="taste_reset_video_body">O Fathom esquece o que aprendeu dos seus vídeos e pesquisas. Seu histórico, curtidas, playlists e itens ocultos permanecem, e a aba Início ainda os utiliza.</string>
+    <string name="taste_reset_music_body">Isto limpa o que o Fathom aprendeu das suas músicas e recomeça do zero. Seu recap permanece.</string>
+    <string name="content_settings_shared_links_subtitle">O que fazer com um vídeo compartilhado com o Fathom</string>
+    <string name="taste_starter_searches_detail">%1$s. Usado até o Fathom aprender o que você assiste.</string>
     <string name="recap_title">Retrospectiva Fathom</string>
     <string name="recap_total_time">Tempo no Fathom</string>
     <string name="recap_empty_body">O Fathom mantém essas estatísticas apenas neste dispositivo. Assista e ouça por um tempo e elas preenchem.</string>
     <string name="recap_story_intro">Seu %1$s no Fathom</string>
     <string name="recap_story_share_text">Meu %1$s no Fathom: %2$s</string>
     <string name="recap_story_made_with">Feito com Fathom</string>
+    <string name="playlist_import_too_new">Esta playlist precisa de uma versão mais recente do Fathom</string>
     <string name="subtitle_add_file_failed">Fathom não consegue ler este arquivo como legenda</string>
+    <string name="playlist_import_not_a_playlist">Este arquivo não é uma playlist do Fathom</string>
     <string name="scrobbling_import_offer_body">Fathom adiciona seus 20 artistas mais tocados do ano passado aos seus artistas favoritos. Você pode remover qualquer um deles mais tarde.</string>
     <string name="discord_presence_playing_fallback">Tocando no Fathom</string>
     <string name="export_watch_history_desc">Exportar como YouTube-history JSON (importa para LibreTube e Fathom)</string>
@@ -78,4 +86,7 @@
     <string name="downloads_recover_body">Fathom salva downloads em Download/Fathom e Music/Fathom. Para listar os arquivos que uma instalação anterior salvou lá, permita o acesso a vídeos e áudio.</string>
     <string name="location_downloads_label">Downloads / Fathom</string>
     <string name="location_movies_label">Filmes / Fathom</string>
+    <string name="settings_music_folder_label">Música / Fathom</string>
+    <string name="music_service_disabled">Não é possível reproduzir as música. O serviço de música do Fathom está desativado neste dispositivo.</string>
+    <string name="deep_flow_long_press_hint">Pressione e segure o logotipo ou o nome do Fathom na tela inicial para ativar o Flow Profundo</string>
 </resources>

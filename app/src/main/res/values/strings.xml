@@ -237,6 +237,7 @@
     <string name="play_mode_suggestion_body">This video is less than 2 minutes long. Would you like to switch to a specialized player?</string>
     <string name="shorts_player">Shorts Player</string>
     <string name="music_player">Music Player</string>
+    <string name="music_service_disabled">Music can\'t play. Flow\'s music service is turned off on this device.</string>
     <plurals name="channels_count">
         <item quantity="one">%d channel</item>
         <item quantity="other">%d channels</item>
@@ -697,6 +698,7 @@
     <string name="deep_flow_scrobble_subtitle">Keep sending listens to Last.fm, Libre.fm and ListenBrainz</string>
     <string name="deep_flow_on_search_title">Show on search</string>
     <string name="deep_flow_on_search_subtitle">A Deep Flow switch above recent searches</string>
+    <string name="deep_flow_long_press_hint">Long-press the Flow logo or name on Home to switch Deep Flow</string>
     <string name="deep_flow_dialog_title">Pause Duration</string>
     <string name="deep_flow_dialog_body">How long should learning stay paused?</string>
     <string name="deep_flow_enabled_message">Deep Flow enabled</string>
@@ -1291,6 +1293,8 @@
     </plurals>
     <string name="player_settings_start_paused">Start videos paused</string>
     <string name="player_settings_start_paused_subtitle">Open a video without playing it until you press play</string>
+    <string name="player_settings_open_fullscreen">Open videos in fullscreen</string>
+    <string name="player_settings_open_fullscreen_subtitle">A video you open starts in fullscreen</string>
     <string name="player_settings_autoplay">Autoplay related videos</string>
     <string name="player_settings_autoplay_subtitle">Play a suggested video when nothing is queued</string>
     <string name="player_settings_queue_autoplay">Autoplay queued videos</string>
@@ -1483,6 +1487,7 @@
     <string name="buffer_desc_datasaver">Smaller buffers that use less data</string>
     <string name="buffer_profile_custom_desc">Manually configure buffer sizes</string>
     <string name="buffer_custom_mode_desc">Larger buffers stall less but take longer to start.</string>
+    <string name="buffer_long_memory_note">Long buffers stop early when memory runs low.</string>
     <string name="buffer_switch_to_custom">Switch to \'Custom\' to enable sliders.</string>
     <string name="buffer_label_min">Min Buffer: %1$ds</string>
     <string name="buffer_label_max">Max Buffer: %1$ds</string>
@@ -2151,6 +2156,11 @@
     <string name="settings_pause_music_muted_summary">Resume when the volume comes back</string>
     <string name="settings_music_resume_title">Resume podcasts and long tracks</string>
     <string name="settings_music_resume_summary">Start tracks over 10 minutes where you left off</string>
+    <string name="home_new_videos">New videos</string>
+    <string name="settings_resume_from_headphones_title">Resume from headphones</string>
+    <string name="settings_resume_from_headphones_summary">A Play button on headphones restarts your last songs</string>
+    <string name="playback_background_restricted_title">Background activity is restricted</string>
+    <string name="playback_background_restricted_subtitle">Your phone may stop Flow when you swipe it away. Tap to allow it.</string>
     <string name="settings_music_side_swipes_title">Speed and volume swipes</string>
     <string name="settings_music_side_swipes_summary">Swipe the left side for speed, the right for volume</string>
     <string name="music_watch_video_desc">Open the music video in the video player</string>
@@ -2456,11 +2466,17 @@
     <string name="download_size_estimate">~%1$s</string>
     <!-- Download dialog style (Content settings) -->
     <string name="download_menu_style_title">Download menu style</string>
-    <string name="download_menu_style_subtitle">Choose how the download dialog looks</string>
+    <string name="download_menu_style_subtitle">Choose how the download sheet looks</string>
     <string name="download_menu_style_classic">Classic</string>
-    <string name="download_menu_style_classic_desc">Full list of every quality and codec</string>
+    <string name="download_menu_style_classic_desc">Every quality on one screen</string>
     <string name="download_menu_style_compact">Compact</string>
     <string name="download_menu_style_compact_desc">Editable title, dropdowns and thread count</string>
+    <string name="download_ask_every_time_title">Ask every time</string>
+    <string name="download_ask_every_time_summary">When off, Download uses your download quality</string>
+    <string name="download_sheet_button">Download %1$s</string>
+    <string name="download_sheet_save_folder">%1$s · %2$s free</string>
+    <string name="download_sheet_change_folder">Change</string>
+    <string name="download_sheet_all_languages">All languages</string>
     <string name="downloading_template">Downloading %1$s...</string>
     <string name="download_quality_hdr">HDR</string>
     <string name="download_storage_access_prompt">Grant storage access to save downloads in public folders (optional)</string>
@@ -3780,8 +3796,8 @@
     <string name="settings_backup_one_copy">Each backup replaces the previous one in the folder.</string>
     <string name="settings_backup_needs_folder">Choose a folder first</string>
     <string name="settings_keywords_backup">export, import, restore, migrate, transfer, takeout, newpipe, libretube, freetube</string>
-    <string name="settings_quick_download_quality">Quick download quality</string>
-    <string name="settings_quick_download_quality_summary">Used when you download straight from a video card</string>
+    <string name="settings_quick_download_quality">Download quality</string>
+    <string name="settings_quick_download_quality_summary">Selected first when you download</string>
     <string name="settings_music_download_quality">Song download quality</string>
     <string name="settings_music_download_quality_summary">Used for songs, albums and music playlists</string>
     <string name="download_retag_title">Tags for older downloads</string>

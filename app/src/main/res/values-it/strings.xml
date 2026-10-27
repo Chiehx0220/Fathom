@@ -2853,4 +2853,5 @@
     <string name="search_watch_empty_watched">Nessun video guardato presente</string>
     <string name="search_watch_empty_unwatched">Nessun video non guardato presente</string>
     <string name="deep_flow_on_search_title">Mostra in ricerca</string>
+    <string name="lyrics_auto_romanize_japanese">Non ancora disponibile per Giapponese</string>
 </resources>

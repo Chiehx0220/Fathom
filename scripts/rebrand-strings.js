@@ -43,6 +43,8 @@ const KEEP_KEYS = new Set([
   'deep_flow_enabled_message',
   'deep_flow_expired_message',
   'deep_flow_mode_title',
+  'deep_flow_on_search_subtitle',
+  'deep_flow_scrobble_title',
   'flow_neural_profile_export_subject',
   'import_engine_data',
   'import_engine_section_title',
@@ -56,6 +58,7 @@ const KEEP_KEYS = new Set([
   'import_flow_backup_failed_template',
   'import_flow_backup_item_title',
   'import_flow_backup_success',
+  'settings_custom_theme_empty_body',
   'theme_desc_classic_dark',
   'theme_name_classic_dark',
   // supporting and crediting the original author
@@ -67,7 +70,7 @@ const KEEP_KEYS = new Set([
 ]);
 
 // Names of Flow's engine and other products stay as they are.
-const KEEP = /^(?:\s*(?:Neuro|Engine|Brain|Personality|Neural|Desktop|Mode|Official|_))/;
+const KEEP = /^(?:\s*(?:Neuro|Engine|Brain|Personality|Neural|Desktop|Mode|Official|Profundo|_))/;
 const KEEP_BEFORE = /Deep $/;
 const BRAND = /\b(Flow|FLOW)\b/g;
 

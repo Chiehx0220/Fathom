@@ -3374,6 +3374,7 @@ class EnhancedPlayerManager private constructor() {
         audioSessionAnnouncer = null
         player?.release()
         player = null
+        playerFactory.clearPreferences()
         trackSelector = null
         appContext = null
         cacheManager?.release()
