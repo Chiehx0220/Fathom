@@ -13,10 +13,7 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import io.github.aedev.flow.player.error.PlayerDiagnostics
 import io.github.aedev.flow.player.error.StreamDenialClassifier
 
-/**
- * One Bilibili CDN transfer ([BilibiliRoutingDataSource], not [YouTubeHttpDataSource]). Two mirrors per file, both tried with fallback
- * ([HedgedOpen]); speed → [BilibiliMirrors] at end.
- */
+/** One Bilibili CDN transfer; two mirrors, both tried with fallback ([HedgedOpen]); speed → [BilibiliMirrors]. */
 @UnstableApi
 internal class BilibiliHttpDataSource(
     private val defaultRequestProperties: Map<String, String>,

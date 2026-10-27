@@ -3,10 +3,7 @@ package io.github.aedev.flow.bilibili
 import java.net.URLDecoder
 import java.net.URLEncoder
 
-/**
- * Typed identity, parsed once per boundary; string [id] only for storage/routes: `BV1xx?p=2`, `live:<roomId>`, `<mid>`,
- * `bilibili:series:<mid>:<id>:<name>`. Id shape decides ownership.
- */
+/** Typed identity, parsed once per boundary; string [id] only for storage/routes. Id shape decides ownership. */
 sealed interface BilibiliRef {
     /** Storage/route form. */
     val id: String

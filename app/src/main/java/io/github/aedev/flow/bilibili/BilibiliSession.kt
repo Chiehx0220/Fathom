@@ -32,10 +32,7 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.random.Random
 
-/**
- * Logged-out fingerprint: forged device headers, anonymous cookies, daily WBI mixin key. Singleton, cached, refreshed on expiry; risk-
- * control changes land here.
- */
+/** Logged-out fingerprint: forged device headers, anonymous cookies, daily WBI key; cached, refreshed on expiry. */
 class BilibiliSession(
     private val http: OkHttpClient,
     private val json: Json = Json { ignoreUnknownKeys = true },

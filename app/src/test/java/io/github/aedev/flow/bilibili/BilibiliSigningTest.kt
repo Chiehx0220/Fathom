@@ -4,10 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import kotlin.random.Random
 
-/**
- * av/bv codec, mixin-key shuffle pinned to SocialSisterYi/bilibili-API-collect; failure after Bilibili change → diff [BilibiliSigning]
- * tables vs PipePipeExtractor utils.java.
- */
+/** av/bv codec, mixin-key shuffle pinned to bilibili-API-collect values; failure → diff [BilibiliSigning] tables. */
 class BilibiliSigningTest {
     @Test
     fun `av170001 encodes to the well known bvid and back`() {

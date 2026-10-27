@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Opens a resource on several mirrors, keeps first answer. First mirror alone; next starts if slow past hedge delay or failed; others cancelled on win.
+ * Hedged open over mirrors: first alone, next after hedge delay or failure; first answer wins, rest cancelled.
  */
 internal object HedgedOpen {
     class Winner<T>(

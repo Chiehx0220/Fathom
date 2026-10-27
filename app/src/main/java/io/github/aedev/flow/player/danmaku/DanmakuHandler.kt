@@ -26,10 +26,7 @@ data class DanmakuComment(
     val relativeFontSize: Float,
 )
 
-/**
- * Bilibili danmaku of current video, shaped after [io.github.aedev.flow.player.sponsorblock.SponsorBlockHandler]: UI-collected StateFlow,
- * reset() + load per video. Live room: [liveRoomId]; layer opens chat socket on screen.
- */
+/** Bilibili danmaku of current video, shaped after [SponsorBlockHandler]: reset() + load per video. Live room: [liveRoomId]. */
 class DanmakuHandler(
     private val scope: CoroutineScope,
 ) {
@@ -56,9 +53,7 @@ class DanmakuHandler(
         _liveRoomId.value = roomId
     }
 
-    /**
-     * Danmaku of one Bilibili part via native client, no StreamInfo fetch (part cid already in [info]).
-     */
+    /** Danmaku of one Bilibili part via native client, no StreamInfo fetch (part cid already in [info]). */
     fun loadBilibili(
         api: BilibiliApi,
         info: BilibiliVideoInfo,

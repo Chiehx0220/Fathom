@@ -1,8 +1,7 @@
 package io.github.aedev.flow.player.datasource
 
 /**
- * Mirror URLs per stream (own CDN, Akamai): player holds one, rest looked up here. Fastest host first ([recordSpeed]); last first-answerer
- * breaks ties.
+ * Mirror URLs per stream (own CDN, Akamai); fastest host first ([recordSpeed]), last first-answerer breaks ties.
  */
 object BilibiliMirrors {
     /** Mirrors of one stream in listed order + last winner. */
@@ -12,10 +11,7 @@ object BilibiliMirrors {
         @Volatile
         private var preferred = 0
 
-        /**
-         * Mirrors in try order: fastest measured host first. Host without a fresh measurement goes before measured ones (gets measured);
-         * last winner first among equals.
-         */
+        /** Mirrors in try order: fastest measured host first; unmeasured before measured; last winner first among equals. */
         fun order(nowMs: Long = System.currentTimeMillis()): List<String> {
             val start = preferred
             return urls.indices

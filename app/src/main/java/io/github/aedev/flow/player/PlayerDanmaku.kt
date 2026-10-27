@@ -10,10 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-/**
- * Bilibili danmaku of [EnhancedPlayerManager]: manager forwards lifecycle only (attach, reset, playback loaded); rest lives here (few fork
- * lines in upstream file).
- */
+/** Bilibili danmaku of [EnhancedPlayerManager]: manager forwards lifecycle only; rest lives here. */
 class PlayerDanmaku {
     private var handler: DanmakuHandler? = null
 

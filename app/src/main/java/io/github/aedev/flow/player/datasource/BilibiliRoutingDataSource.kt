@@ -7,10 +7,7 @@ import androidx.media3.datasource.BaseDataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource
 
-/**
- * [YouTubeHttpDataSource.Factory] data source: Bilibili CDN URLs → [BilibiliHttpDataSource], else [youTube]; chosen per [open] (one
- * instance serves both).
- */
+/** Bilibili CDN URLs → [BilibiliHttpDataSource], else [youTube]; chosen per [open]. */
 @UnstableApi
 internal class BilibiliRoutingDataSource(
     private val youTube: HttpDataSource,

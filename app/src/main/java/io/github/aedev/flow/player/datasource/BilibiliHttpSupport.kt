@@ -7,12 +7,9 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
-/**
- * Bilibili CDN host detection, headers, hedging tuning for [BilibiliRoutingDataSource]/[BilibiliHttpDataSource]; outside
- * [YouTubeHttpDataSource] (clean merges).
- */
+/** Bilibili CDN host detection, headers, hedging tuning; outside [YouTubeHttpDataSource] (clean merges). */
 object BilibiliHttpSupport {
-    // Mirror silent this long is raced against the next. Measured: ~0.2s median, 2-7s slow tail: normal case untouched, tail cut.
+    // Mirror silent this long is raced against the next (median ~0.2s, slow tail 2-7s).
     const val HEDGE_DELAY_MS = 600L
 
     // Opens no faster than this logged even if not hedged.

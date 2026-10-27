@@ -16,9 +16,7 @@ import org.schabi.newpipe.extractor.stream.Stream
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.util.Locale
 
-/**
- * Bilibili counterpart of [InnerTubeStreamBridge]: native formats → player [VideoStream]/[AudioStream]. Init/index ranges kept for [BilibiliDashManifest].
- */
+/** Bilibili counterpart of [InnerTubeStreamBridge]: native formats → player streams; init/index ranges kept for DASH. */
 object BilibiliStreamBridge {
     private const val TAG = "BilibiliStreamBridge"
 
@@ -52,10 +50,7 @@ object BilibiliStreamBridge {
             }
         }
 
-    /**
-     * FLAC dropped (decode failure, InsufficientCapacityException per PipePipeClient); Dolby (ec-3) dropped (no opt-in). API order kept;
-     * selector picks highest bitrate.
-     */
+    /** FLAC dropped (decode failure); Dolby (ec-3) dropped (no opt-in). API order kept; highest bitrate picked. */
     fun convertAudioFormats(
         bvid: String,
         formats: List<BilibiliStreamFormat>,

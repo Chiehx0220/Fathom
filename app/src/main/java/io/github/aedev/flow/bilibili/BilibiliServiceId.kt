@@ -5,10 +5,7 @@ import org.schabi.newpipe.extractor.ServiceList
 /** Bilibili service id in saved data (subscriptions, history, playlists). PipePipeExtractor numbering, kept for saved-data compatibility. */
 const val BILIBILI_SERVICE_ID = 5
 
-/*
- * Service of a saved id; id shape decides (rows saved before service ids carry 0).
- * All service-id reads/writes beside a video/channel id go through here.
- */
+// Service of a saved id by id shape (rows saved before service ids carry 0); all service-id access goes through here.
 
 /** Video without saved service id: YouTube unless [videoId] has Bilibili shape. */
 fun serviceIdOfVideo(videoId: String): Int = serviceIdOfVideo(videoId, ServiceList.YouTube.serviceId)

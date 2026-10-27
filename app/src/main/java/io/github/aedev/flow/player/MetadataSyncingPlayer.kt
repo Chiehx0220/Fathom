@@ -9,10 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.util.concurrent.CopyOnWriteArraySet
 
-/**
- * [ForwardingPlayer] so the media session re-reads [getMediaMetadata]: session re-asks only on player events,
- * GlobalPlayerState.currentVideo enriches later. Tracks session listener for [notifyMediaMetadataChanged].
- */
+/** [ForwardingPlayer] so the media session re-reads [getMediaMetadata] after GlobalPlayerState enriches the video. */
 internal open class MetadataSyncingPlayer(
     wrapped: Player,
     private val log: (String) -> Unit,

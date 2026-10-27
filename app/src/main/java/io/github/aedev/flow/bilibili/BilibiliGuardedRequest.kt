@@ -5,8 +5,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
 /**
- * Up to 2 tries; HTML or code -352 = risk control, retry with fresh device and cookies.
- * Body read regardless of HTTP status (block = 412).
+ * 2 tries; HTML or -352 (risk control) → fresh device and cookies. Body read on any status (block = 412).
  *
  * @param referer claimed origin page.
  * @param okCodes codes that are answers, not blocks (0, "comments closed").

@@ -149,9 +149,7 @@ object BilibiliVideoMapper {
             serviceId = BILIBILI_SERVICE_ID,
         )
 
-    /**
-     * Subject tags for the recommender: partition + uploader tags.
-     */
+    /** Subject tags for the recommender: partition + uploader tags. */
     private fun tagsOf(
         category: String,
         tags: List<String> = emptyList(),

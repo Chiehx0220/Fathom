@@ -132,10 +132,7 @@ object BilibiliSigning {
 
     fun percentSpaceEncode(value: String): String = URLEncoder.encode(value, "UTF-8").replace("+", "%20")
 
-    /**
-     * Adds w_rid, wts to [params]; returns query in PipePipe's shape: hash over percent-encoded key-sorted query, wire query plain
-     * insertion-ordered "key=value".
-     */
+    /** Adds w_rid, wts to [params]: hash over percent-encoded key-sorted query, wire query plain insertion-ordered. */
     fun signWbi(
         params: LinkedHashMap<String, String>,
         mixinKey: String,
