@@ -22,7 +22,7 @@ class LauncherIconArtTest {
     private val size = 96
 
     @Test
-    fun `every launcher icon draws a rounded tile with art in the middle`() {
+    fun `every launcher icon is clipped to the device mask with art in the middle`() {
         val context = ApplicationProvider.getApplicationContext<Application>()
         AppIcons.ALL.forEach { icon ->
             val tile = LauncherIconArt.render(context, icon, size)
@@ -36,7 +36,7 @@ class LauncherIconArtTest {
     fun `the tile persisted by the previous run is read back`() {
         val context = ApplicationProvider.getApplicationContext<Application>()
         val tile = LauncherIconArt.render(context, AppIcons.ALL.first(), size)
-        File(context.cacheDir, "launcher_icon_tile.png").outputStream().use { tile.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        File(context.cacheDir, "launcher_icon_mask.png").outputStream().use { tile.compress(Bitmap.CompressFormat.PNG, 100, it) }
 
         val cached = LauncherIconArt.cached(context)
 

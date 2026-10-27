@@ -6,7 +6,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -17,8 +16,8 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.res.colorResource
 import io.github.aedev.flow.R
-import io.github.aedev.flow.platform.LauncherIconArt
 import io.github.aedev.flow.ui.components.LauncherIconImage
+import io.github.aedev.flow.ui.components.LauncherIconShape
 
 private const val INCOGNITO_SCALE = 0.78f
 
@@ -48,7 +47,7 @@ internal fun FathomHeaderLogoIcon(
                 Modifier
                     .fillMaxSize()
                     .alpha(incognitoAlpha)
-                    .background(tileColor, RoundedCornerShape(LauncherIconArt.CORNER_PERCENT)),
+                    .background(tileColor, LauncherIconShape),
             ) {
                 val unit = size.width / 24f
                 val inset = 12f * (1f - INCOGNITO_SCALE)

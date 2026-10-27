@@ -36,7 +36,7 @@ FT.brandMark = () => FT.h('img', { class: 'brand-mark', src: document.querySelec
 
 FT.enc = encodeURIComponent;
 
-// Card picture: YouTube hqdefault (480x360, cropped by cover) instead of hq720 (~90% fewer bytes); other hosts unchanged.
+// Card picture: YouTube hq720 → hqdefault (480x360, cover-cropped, ~90% fewer bytes); other hosts unchanged.
 FT.cardThumb = (url) => (url || '').replace(/^(https:\/\/i\.ytimg\.com\/vi\/[\w-]+\/)hq720\.jpg$/, '$1hqdefault.jpg');
 
 FT.duration = (seconds) => {

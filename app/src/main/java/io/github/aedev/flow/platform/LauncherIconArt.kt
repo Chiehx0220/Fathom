@@ -4,11 +4,11 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
-import android.graphics.RectF
 import android.graphics.drawable.AdaptiveIconDrawable
 import androidx.core.content.ContextCompat
 import dagger.hilt.EntryPoint
@@ -31,16 +31,16 @@ interface LauncherIconEntryPoint {
     fun playerPreferences(): PlayerPreferences
 }
 
-/** Renders a launcher alias as a rounded tile. */
+/** Renders a launcher alias clipped to the device icon mask, as the launcher draws it. */
 object LauncherIconArt {
     const val TILE_PX = 192
-    const val CORNER_PERCENT = 22
+    private const val MASK_UNITS = 100
 
     // Adaptive canvas 108dp, mask-visible area 72dp.
     private const val CANVAS_DP = 108f
     private const val VISIBLE_DP = 72f
 
-    private const val CACHE_NAME = "launcher_icon_tile"
+    private const val CACHE_NAME = "launcher_icon_mask"
 
     /** Last bitmap from [renderActive]; seeds composables so they skip the empty first frame. */
     @Volatile
@@ -109,13 +109,14 @@ object LauncherIconArt {
             layer.draw(canvas)
         }
         // CLEAR over the inverse fill; a DST_IN mask leaves the pixels outside its shape untouched.
-        val radius = sizePx * CORNER_PERCENT / 100f
-        val outside =
-            Path().apply {
-                addRoundRect(RectF(0f, 0f, sizePx.toFloat(), sizePx.toFloat()), radius, radius, Path.Direction.CW)
-                fillType = Path.FillType.INVERSE_WINDING
-            }
+        val outside = mask(sizePx.toFloat()).apply { fillType = Path.FillType.INVERSE_WINDING }
         canvas.drawPath(outside, Paint(Paint.ANTI_ALIAS_FLAG).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR) })
         return bitmap
+    }
+
+    /** Device icon mask scaled to [size]. */
+    fun mask(size: Float): Path {
+        val system = AdaptiveIconDrawable(null, null).apply { setBounds(0, 0, MASK_UNITS, MASK_UNITS) }.iconMask
+        return Path(system).apply { transform(Matrix().apply { setScale(size / MASK_UNITS, size / MASK_UNITS) }) }
     }
 }

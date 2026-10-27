@@ -1,4 +1,4 @@
-// jsdom page of the real shell (index.html) + the whole script bundle: `open(options)` → { window, FT, requests, settle }; `closeAll()` after each test.
+// jsdom page: real shell (index.html) + script bundle; `open(options)` → { window, FT, requests, settle }; `closeAll()` after each test.
 
 const fs = require('fs');
 const path = require('path');
@@ -36,7 +36,7 @@ const respond = (routes, requests) => async (input) => {
   return { ok: status < 400, status, json: async () => body || {} };
 };
 
-// jsdom has no layout: every element gets a box, `[data-f]` controls laid out left to right in document order.
+// jsdom has no layout: every element gets a box; `[data-f]` controls run left to right in document order.
 const layout = (window) => {
   window.Element.prototype.getBoundingClientRect = function () {
     const stops = Array.from(this.ownerDocument.querySelectorAll('[data-f]'));
