@@ -84,7 +84,7 @@ internal class BilibiliPlaybackApplier(
     }
 
     /**
-     * Bilibili live room: HLS master via the YouTube live-stream player path. No related lane; chat socket shared by the danmaku layer and [liveChat].
+     * Bilibili live room: HLS master on the YouTube live path; no related lane; chat socket shared with [liveChat].
      */
     private suspend fun prepareLiveStreamFromBilibili(
         load: LoadContext,

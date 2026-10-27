@@ -21,14 +21,9 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.ConcurrentHashMap
 
-/*
- * Cover not derivable from video id (e.g. import lacking covers): asked from Bilibili on display, visible cards only, once each, never when
- * a cover exists.
- */
+// Cover not derivable from video id: asked from Bilibili on display, visible cards only, once each.
 
-/**
- * Card thumbnail candidates: [this] if any; else for Bilibili, the cover Bilibili returns (placeholder until then).
- */
+/** Card thumbnail candidates: [this] if any; else for Bilibili, the cover Bilibili returns (placeholder until then). */
 @Composable
 internal fun List<Any>.orBilibiliCover(
     videoId: String,
@@ -48,10 +43,7 @@ internal fun List<Any>.orBilibiliCover(
     return ThumbnailUrlResolver.resolveVideoThumbnailCandidates(videoId, resolved, quality, portrait)
 }
 
-/**
- * One request per video (shared across cards), max [MAX_PARALLEL] concurrent, failures skipped [RETRY_MS]; runs on [scope] (scroll-away
- * keeps pending answer).
- */
+/** One request per video, max [MAX_PARALLEL] concurrent, failures skipped [RETRY_MS]; runs on [scope]. */
 internal class BilibiliCoverCache(
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
     private val now: () -> Long = System::currentTimeMillis,

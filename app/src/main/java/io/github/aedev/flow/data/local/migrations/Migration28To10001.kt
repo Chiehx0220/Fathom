@@ -3,10 +3,7 @@ package io.github.aedev.flow.data.local.migrations
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-/**
- * Adds `serviceId` (0 = YouTube): upstream v28 → fork's 10001+ block (AppDatabase FORK VERSIONING POLICY). Idempotent; ensures `notes`
- * (upstream AutoMigration(26, 27) never ran).
- */
+/** Adds `serviceId` (0 = YouTube): upstream v28 → fork's 10001+ block. Idempotent; ensures `notes`. */
 class Migration28To10001 : Migration(28, 10001) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.ensureNotesTable()

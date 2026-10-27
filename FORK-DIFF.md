@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **112** (1207 changed lines). New files: **265**.
+- Modified upstream files: **111** (1207 changed lines). New files: **265**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -76,6 +76,7 @@ in it). **New files** never conflict; they are ours alone.
 | data/local/entity/VideoEntity.kt | 6 | 3 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
 | ui/screens/channel/ChannelCommunityController.kt | 8 | 1 |
+| ui/screens/player/dialogs/PlayerDialogsContainer.kt | 7 | 2 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 8 | 1 |
 | sync/merge/CollectionMergers.kt | 4 | 4 |
 | ui/PlayerNavigation.kt | 5 | 3 |
@@ -89,8 +90,7 @@ in it). **New files** never conflict; they are ours alone.
 | sync/canonical/Canonical.kt | 6 | 0 |
 | sync/mapping/SimpleMappers.kt | 6 | 0 |
 | ui/AppHooks.kt | 2 | 4 |
-| ui/components/videoplayer/settings/PlayerSettingsSheet.kt | 6 | 0 |
-| ... 52 more, each small | | |
+| ... 51 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -102,7 +102,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **140**.
+- Modified upstream files: **0** (0 changed lines). New files: **141**.
 
 ## Local server (fork-only feature)
 

@@ -8,10 +8,7 @@ import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Bilibili download resolution via Bilibili API; [DownloadStreamResolver] asks first, falls back to InnerTube on `null`.
- * Plain MP4 URLs, same selection as YouTube.
- */
+/** Bilibili download resolution; [DownloadStreamResolver] asks first, InnerTube fallback on `null`. */
 @Singleton
 class BilibiliDownloadResolver
     @Inject

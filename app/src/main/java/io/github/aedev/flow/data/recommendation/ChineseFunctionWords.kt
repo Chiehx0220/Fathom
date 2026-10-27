@@ -6,10 +6,7 @@
 
 package io.github.aedev.flow.data.recommendation
 
-/**
- * Chinese function words (pronouns, particles, fillers, subscribe calls, hype), Simplified + Traditional + colloquial: word breaker emits
- * them as topics ("我们", "这个") unfiltered.
- */
+/** Chinese function words (Simplified + Traditional + colloquial): unfiltered, the word breaker emits them as topics. */
 internal object ChineseFunctionWords {
     private val words =
         hashSetOf(

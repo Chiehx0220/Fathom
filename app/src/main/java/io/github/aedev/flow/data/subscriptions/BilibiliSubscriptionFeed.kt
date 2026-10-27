@@ -18,10 +18,7 @@ internal data class BilibiliFeedChunk(
     val failureReasons: Map<String, String>,
 )
 
-/**
- * Bilibili half of subscription refresh (upstream RssSubscriptionService only calls it). No RSS/channel tabs: latest uploads via native API
- * after YouTube phases.
- */
+/** Bilibili half of subscription refresh: no RSS/channel tabs, latest uploads via native API. */
 @Singleton
 class BilibiliSubscriptionFeed
     @Inject

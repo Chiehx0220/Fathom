@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Push-to-poll adapter: a room's socket feeds a bounded inbox that each [poll] drains; the reader stops [IDLE_MS] after the last poll. */
+/** Push-to-poll adapter: room socket → bounded inbox drained by [poll]; reader stops [IDLE_MS] after the last poll. */
 @Singleton
 class BilibiliLiveChatFeed internal constructor(
     private val source: (roomId: Long) -> Flow<BilibiliLiveMessage>,

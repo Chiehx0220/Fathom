@@ -18,10 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
-/**
- * Uploader channel page for [ChannelViewModel]: header/tabs from native client as [ChannelTabState]; writes [uiState]; view-model work
- * (subscription, note, first tab) via [onLoaded].
- */
+/** Uploader channel page for [ChannelViewModel]: header/tabs from native client as [ChannelTabState]. */
 internal class BilibiliChannelLoader(
     private val scope: CoroutineScope,
     private val appContext: Context,
@@ -54,7 +51,7 @@ internal class BilibiliChannelLoader(
         }
 
     /**
-     * Loads the channel if [channelUrl] is a Bilibili uploader; returns true. Checked before service lookup: Bilibili never falls through to YouTube.
+     * Loads [channelUrl] if a Bilibili uploader; true when handled. Runs before service lookup: never falls through to YouTube.
      */
     fun load(channelUrl: String): Boolean {
         val mid = BilibiliRef.Uploader.ofLink(channelUrl)?.mid ?: return false

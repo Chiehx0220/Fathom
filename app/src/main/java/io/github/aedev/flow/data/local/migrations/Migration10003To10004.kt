@@ -3,10 +3,7 @@ package io.github.aedev.flow.data.local.migrations
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-/**
- * Carries upstream AutoMigrations 29-32 (Room walks forward only): note target columns (30, 32),
- * feed-cache collaboration columns (31). Idempotent, as [Migration28To10001].
- */
+/** Carries upstream AutoMigrations 29-32 (Room walks forward only). Idempotent. */
 class Migration10003To10004 : Migration(10003, 10004) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.addColumnIfMissing("notes", "title", "TEXT")

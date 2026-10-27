@@ -25,7 +25,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 // Home feed Bilibili lane, outside HomeViewModel.kt: upstream YouTube-side changes merge cleanly.
 
 /**
- * Wave-1 candidate fetch, written once: skip when nothing to fetch, time-bounded (slow service can't stall the wave), failure → no candidates.
+ * Wave-1 candidate fetch: skipped when nothing to fetch, time-bounded, failure → no candidates.
  */
 internal suspend fun <T> fetchSafely(
     enabled: Boolean = true,
@@ -93,7 +93,7 @@ internal fun List<Video>.onlyFrom(filter: HomeContentSourceFilter): List<Video> 
 /** Home page of cards: [filter]-allowed services only, spread evenly. */
 internal fun List<Video>.forSourceFilter(filter: HomeContentSourceFilter): List<Video> = filter { filter.allows(it) }.spreadByService()
 
-// Bilibili wave-1 fetches (subs, trending + live), factored out of loadFlowFeed() supervisorScope: less merge surface with upstream YouTube fetch logic.
+// Bilibili wave-1 fetches (subs, trending + live), out of loadFlowFeed(): smaller merge surface.
 internal fun CoroutineScope.launchBilibiliWave1Feeds(
     subscriptionRepository: SubscriptionRepository,
     context: Context,
@@ -149,9 +149,7 @@ internal fun CoroutineScope.launchBilibiliWave1Feeds(
         )
     }
 
-/**
- * Spreads each service's videos evenly, relative order kept (a ranker favouring one service would put it first, the other last).
- */
+/** Interleaves services evenly, order within each kept (a ranker would otherwise put one service first). */
 internal fun List<Video>.spreadByService(): List<Video> {
     val byService = groupBy { it.serviceId }
     if (byService.size < 2) return this

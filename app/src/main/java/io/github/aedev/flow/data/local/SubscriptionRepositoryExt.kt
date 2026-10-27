@@ -2,10 +2,7 @@ package io.github.aedev.flow.data.local
 
 import kotlinx.coroutines.flow.first
 
-/**
- * Subscribe or refresh display info, keeping subscribedAt, lastVideoId, notification state (fresh [subscribe] resets them). Passive re-
- * confirmation on channel visit.
- */
+/** Subscribe or refresh display info, keeping subscribedAt, lastVideoId, notification state. */
 suspend fun SubscriptionRepository.subscribeOrUpdateInfo(
     channelId: String,
     channelName: String,

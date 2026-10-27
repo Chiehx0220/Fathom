@@ -31,10 +31,7 @@ internal fun SupportSQLiteDatabase.addColumnIfMissing(
     }
 }
 
-/**
- * Creates `notes` if missing: upstream AutoMigration(26, 27) never runs past fork's old v27 (Room walks forward only). First call of both
- * fork migrations; no-op if present.
- */
+/** Creates `notes` if missing (upstream AutoMigration(26, 27) never runs past fork's v27). */
 internal fun SupportSQLiteDatabase.ensureNotesTable() {
     execSQL(
         "CREATE TABLE IF NOT EXISTS `notes` (`id` TEXT NOT NULL, `targetId` TEXT NOT NULL, " +

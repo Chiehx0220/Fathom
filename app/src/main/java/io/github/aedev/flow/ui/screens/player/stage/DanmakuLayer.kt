@@ -22,11 +22,7 @@ import kotlin.math.abs
 private const val STALE_THRESHOLD_MS = 1_200L
 private const val SEEK_JUMP_THRESHOLD_MS = 1_500L
 
-/**
- * Bilibili danmaku overlay (native counterpart of app/js/player-danmaku.js); progress = f(position), pause freezes. [currentPositionMs]
- * ~250ms ticks: linear extrapolation at wall-clock rate while playing, corrected per fresh value. Duration = Bilibili default
- * ([DanmakuField]); live: [LiveDanmakuLayer].
- */
+/** Bilibili danmaku overlay: progress = f(position), pause freezes; ~250ms position ticks extrapolated at wall-clock rate. */
 @Composable
 internal fun BoxScope.DanmakuLayer(
     currentPositionMs: Long,
@@ -41,8 +37,7 @@ internal fun BoxScope.DanmakuLayer(
 
     val playbackState by EnhancedPlayerManager.getInstance().playerState.collectAsStateWithLifecycle()
 
-    // anchor = (real position, when); smoothed = anchor + elapsed × speed. Re-anchored on fresh position (no drift) and on play/pause/speed
-    // change (no jump).
+    // anchor = (real position, when); smoothed = anchor + elapsed × speed; re-anchored on fresh position and play/pause/speed.
     var anchorPositionMs by remember { mutableLongStateOf(currentPositionMs) }
     var anchorAtElapsedMs by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     var smoothedPositionMs by remember { mutableLongStateOf(currentPositionMs) }
