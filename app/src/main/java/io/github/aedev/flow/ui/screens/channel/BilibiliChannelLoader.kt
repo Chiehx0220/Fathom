@@ -6,6 +6,7 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliChannelSort
 import io.github.aedev.flow.bilibili.BilibiliRef
+import io.github.aedev.flow.data.shorts.withoutShorts
 import io.github.aedev.flow.di.bilibiliApi
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
 import io.github.aedev.flow.utils.PerformanceDispatcher
@@ -44,11 +45,19 @@ internal class BilibiliChannelLoader(
         youTube.selectFilter(kind, tabParams, groupIndex, optionIndex)
     }
 
-    /** [youTube] tab states, or Bilibili's while the open channel is Bilibili. */
-    fun tabStates(youTube: Flow<Map<ChannelTabKind, ChannelTabState>>): Flow<Map<ChannelTabKind, ChannelTabState>> =
-        combine(uiState, youTube, native.states) { state, youTubeStates, bilibiliStates ->
-            if (state.serviceId == BILIBILI_SERVICE_ID) bilibiliStates else youTubeStates
+    /** [youTube] tab states (Shorts dropped while [shortsEnabled] is off), or Bilibili's while the open channel is Bilibili. */
+    fun tabStates(
+        youTube: Flow<Map<ChannelTabKind, ChannelTabState>>,
+        shortsEnabled: Flow<Boolean>,
+    ): Flow<Map<ChannelTabKind, ChannelTabState>> {
+        val youTubeStates =
+            combine(youTube, shortsEnabled) { states, enabled ->
+                if (enabled) states else states.mapValues { (_, state) -> state.copy(sections = state.sections.withoutShorts()) }
+            }
+        return combine(uiState, youTubeStates, native.states) { state, youTubeTabs, bilibiliTabs ->
+            if (state.serviceId == BILIBILI_SERVICE_ID) bilibiliTabs else youTubeTabs
         }
+    }
 
     /**
      * Loads [channelUrl] if a Bilibili uploader; true when handled. Runs before service lookup: never falls through to YouTube.

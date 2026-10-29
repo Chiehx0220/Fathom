@@ -42,9 +42,18 @@
     <string name="tv_remote_guide_subtitle">Una referencia rápida para navegar por Fathom desde el sofá</string>
     <string name="widget_now_playing_description">Controla la música que se reproduce en Fathom</string>
     <string name="widget_quick_actions_description">Busca en Fathom y accede a descargas, historial o reconocimiento</string>
+    <string name="settings_widgets_summary">Pon Fathom en tu pantalla de inicio</string>
     <string name="ui_flow_logo">Logo de Fathom</string>
+    <string name="crash_title">Fathom se cerró inesperadamente</string>
     <string name="ui_crashed_last_session">Fathom se cerró inesperadamente en la última sesión</string>
     <string name="update_download_prompt">Hay una nueva versión de Fathom disponible (%1$s). ¿Descargar el APK más reciente?</string>
+    <string name="notification_channel_downloads_name">Descargas de Fathom</string>
+    <string name="update_downloading_notification">Descargando Fathom %1$s</string>
+    <string name="update_ready_notification">Fathom %1$s está listo</string>
+    <string name="update_title">Fathom %1$s ya está aquí</string>
+    <string name="update_permission_notice">Permite que Fathom instale actualizaciones. Android lo pregunta una vez.</string>
+    <string name="update_failed_package">El archivo no era una actualización de Fathom, así que se ha eliminado.</string>
+    <string name="local_partial_access_title">Fathom solo puede ver los vídeos que hayas elegido</string>
     <string name="import_migrate_description">Migra tus suscripciones e historial desde otras plataformas a Fathom sin complicaciones.</string>
     <string name="import_manage_backups">Gestiona tus copias de seguridad de Fathom</string>
     <string name="taste_reset_video_body">Fathom olvida lo que ha aprendido de tus vídeos y búsquedas. El historial, «Me gusta», listas y los elementos ocultos se mantienen, y Inicio sigue usándolos.</string>
@@ -59,4 +68,8 @@
     <string name="downloads_recover_body">Fathom guarda las descargas en Download/Fathom y Music/Fathom. Para ver los archivos que guardó una instalación anterior ahí, permite el acceso a vídeos y audio.</string>
     <string name="location_downloads_label">Descargas / Fathom</string>
     <string name="location_movies_label">Películas / Fathom</string>
+    <string name="music_service_disabled">La música no se puede reproducir. El servicio de música de Fathom está desactivado en este dispositivo.</string>
+    <string name="deep_flow_long_press_hint">Mantén pulsado el logotipo o el nombre de Fathom en Inicio para cambiar Deep Flow</string>
+    <string name="playback_background_restricted_subtitle">Tu teléfono puede detener Fathom cuando lo cierres deslizándolo. Toca para permitirlo.</string>
+    <string name="share_download_with_flow">Descargar con Fathom</string>
 </resources>

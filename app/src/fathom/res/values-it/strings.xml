@@ -22,7 +22,8 @@
     <string name="app_icon_picker_warning">Cambiare icona potrebbe rimuovere momentaneamente Fathom dalla schermata home. Aggiungila nuovamente dal drawer delle app, se necessario.</string>
     <string name="content_settings_show_app_logo_subtitle">Mostra il logo Fathom nella barra superiore della schermata home</string>
     <string name="content_settings_nav_order_subtitle">Trascina per riordinare. Scegli la scheda in cui si apre Fathom.</string>
-    <string name="player_settings_subtitle_language_dialog_body">I sottotitoli si aprono in questa lingua quando disponibili. Se il video non ha una traccia al suo interno, Fathom utilizza la traduzione di YouTube di una traccia esistente. La selezione di un sottotitolo durante la riproduzione aggiorna anche questo.</string>
+    <string name="player_settings_subtitle_language_dialog_body">I sottotitolo si aprono in questa lingua quando disponibili. Altrimenti Fathom traduce una traccia esistente.</string>
+    <string name="player_settings_video_codec_dialog_body">Il codec che Fathom sceglie per primo. Puoi comunque scegliere qualsiasi codec dal menu di qualità. H.264 funziona meglio nella maggior parte dei dispositivi. AV1 e VP9 usano meno dati ma hanno bisogno di più potenza.</string>
     <string name="donation_prompt_title">Ti piace Fathom?</string>
     <string name="donation_prompt_message">Fathom è gratuito, open-source e creato senza pubblicità o tracciamenti. Se ha trovato spazio sul tuo dispositivo, considera di sostenerne lo svilupp e aiuta concretamente a mantenere in vita il progetto.</string>
     <string name="welcome_to_flow">Benvenuto in Fathom</string>
@@ -50,4 +51,6 @@
     <string name="downloads_recover_body">Fathom salva i download nella cartella Download/Fathom e Music/Fathom. Per vedere i file che una precedente installazione ha salvato consenti l\'accesso a video e audio.</string>
     <string name="location_downloads_label">Downloads / Fathom</string>
     <string name="location_movies_label">Movies / Fathom</string>
+    <string name="music_service_disabled">Impossibile riprodurre la musica. Il servizio musicale di Fathom è disattivato su questo dispositivo.</string>
+    <string name="deep_flow_long_press_hint">Tieni premuto il logo Fathom o il nome in Home per attivare Deep Flow</string>
 </resources>

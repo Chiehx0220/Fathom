@@ -88,4 +88,8 @@
     <string name="location_downloads_label">Downloads / Fathom</string>
     <string name="location_movies_label">Movies / Fathom</string>
     <string name="settings_music_folder_label">الموسيقى / Fathom</string>
+    <string name="music_service_disabled">تعذّر تشغيل الموسيقى. خدمة الموسيقى في Fathom متوقفة على هذا الجهاز.</string>
+    <string name="deep_flow_long_press_hint">اضغط مطولًا على شعار Fathom أو اسمه في الشاشة الرئيسية للتبديل إلى Deep Flow</string>
+    <string name="playback_background_restricted_subtitle">قد يتوقف تطبيق Fathom عند إزالته من التطبيقات المفتوحة. اضغط للسماح له بالاستمرر في العمل.</string>
+    <string name="share_download_with_flow">التنزيل باستخدام Fathom</string>
 </resources>

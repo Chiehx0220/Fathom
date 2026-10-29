@@ -3,4 +3,8 @@
 <resources>
     <string name="content_settings_shared_links_subtitle">分享到 Fathom 的影片要如何處理</string>
     <string name="taste_starter_searches_detail">%1$s。在 Fathom 瞭解你的觀看內容之前會先使用。</string>
+    <string name="music_service_disabled">無法播放音樂。這部裝置上的 Fathom 音樂服務已關閉。</string>
+    <string name="deep_flow_long_press_hint">在首頁長按 Fathom 標誌或名稱即可切換 Deep Flow</string>
+    <string name="playback_background_restricted_subtitle">將 Fathom 滑掉後，手機可能會將它停止。點一下即可允許。</string>
+    <string name="share_download_with_flow">使用 Fathom 下載</string>
 </resources>
