@@ -57,6 +57,7 @@ import io.github.aedev.flow.ui.components.shared.card.rememberCollaboratorItems
 import io.github.aedev.flow.ui.components.shared.card.rememberWatchProgress
 import io.github.aedev.flow.ui.components.shared.collaboratorRows
 import io.github.aedev.flow.ui.components.shared.rememberVideoShareAction
+import io.github.aedev.flow.ui.components.shared.sharedSubscriptionBellViewModel
 import io.github.aedev.flow.utils.youtubeWatchUrl
 import kotlinx.coroutines.launch
 
@@ -246,6 +247,8 @@ private fun channelRow(
 ): QuickActionRow {
     val channelLabel = rememberCollaboratorChannelDisplayName(video.channelName, collaborators)
     val subscribedChannelIds by viewModel.subscribedChannelIds.collectAsStateWithLifecycle()
+    val bell = sharedSubscriptionBellViewModel()
+    val notifyingChannelIds by bell.notifyingChannelIds.collectAsStateWithLifecycle()
     val navigator = LocalMediaNavigator.current
     val isCollaboration = collaborators.size > 1
     val ringColor = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -292,6 +295,8 @@ private fun channelRow(
                             isSubscribed = video.channelId in subscribedChannelIds,
                             onSubscribeClick = toggle,
                             onUnsubscribeClick = toggle,
+                            isNotificationsEnabled = video.channelId in notifyingChannelIds,
+                            onNotificationChange = { bell.setNotifications(video.channelId, it) },
                             size = FlowSubscribeButtonSize.Compact,
                         )
                     }

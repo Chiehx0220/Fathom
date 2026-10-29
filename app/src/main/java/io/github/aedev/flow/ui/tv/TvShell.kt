@@ -45,6 +45,7 @@ import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.ui.TabScrollEventBus
 import io.github.aedev.flow.ui.components.layout.FlowBottomInsets
 import io.github.aedev.flow.ui.components.layout.LocalFlowBottomInsets
+import io.github.aedev.flow.ui.components.settings.SettingsTarget
 import io.github.aedev.flow.ui.components.shared.MediaMiniBarDefaults
 import io.github.aedev.flow.ui.screens.home.HomeViewModel
 import io.github.aedev.flow.ui.screens.music.MusicPlayerViewModel
@@ -52,9 +53,11 @@ import io.github.aedev.flow.ui.screens.music.MusicViewModel
 import io.github.aedev.flow.ui.screens.search.SearchViewModel
 import io.github.aedev.flow.ui.screens.subscriptions.SubscriptionsViewModel
 import io.github.aedev.flow.ui.tv.components.TvNavRail
+import io.github.aedev.flow.ui.tv.components.TvRailProfile
 import io.github.aedev.flow.ui.tv.music.TvMiniPlayer
 import io.github.aedev.flow.ui.tv.navigation.TvNavHost
 import io.github.aedev.flow.ui.tv.navigation.TvNavigation
+import io.github.aedev.flow.ui.tv.navigation.TvRoutes
 import io.github.aedev.flow.ui.tv.theme.LocalTvDimens
 
 /**
@@ -79,7 +82,9 @@ fun TvShell(
     onExpandMusic: () -> Unit,
     onDismissMusic: () -> Unit,
     modifier: Modifier = Modifier,
+    startSettings: SettingsTarget? = null,
 ) {
+    LaunchedEffect(startSettings) { startSettings?.let { navController.navigate(TvRoutes.settingsPage(it)) } }
     val dimens = LocalTvDimens.current
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -244,6 +249,7 @@ fun TvShell(
             onOtherEntry = { contentFocusRequester.requestFocus().also { taken -> railHoldsFocusForPage = !taken } },
             nowPlayingTitle = activeMusicTrack?.title,
             onOpenNowPlaying = onExpandMusic,
+            profile = { expanded -> TvRailProfile(expanded, onOpenSettings = { navController.navigate(TvRoutes.settingsPage(it)) }) },
             modifier =
                 Modifier
                     .align(Alignment.CenterStart)

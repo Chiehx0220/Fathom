@@ -86,7 +86,7 @@ class BackupNewPipeImportTest {
             assertThat(result.getOrNull()).isEqualTo(3)
             val videos =
                 AppDatabase
-                    .getDatabase(context)
+                    .profile(context)
                     .videoDao()
                     .getAllVideos()
                     .associateBy { it.id }

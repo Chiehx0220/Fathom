@@ -6,13 +6,14 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.safePreferencesDataStore
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.videoQueueStore by safePreferencesDataStore(name = "video_queue")
+private val Context.videoQueueStore by safePreferencesDataStore(name = "video_queue", scope = StoreScope.PROFILE_PRIVATE)
 private val QueueKey = stringPreferencesKey("queue_json")
 private val QueueJson = Json { ignoreUnknownKeys = true }
 

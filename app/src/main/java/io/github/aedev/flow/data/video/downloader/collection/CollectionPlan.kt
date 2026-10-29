@@ -12,6 +12,8 @@ data class CollectionSpec(
     val author: String? = null,
     val authorId: String? = null,
     val thumbnailUrl: String? = null,
+    /** A playlist of the running profile's own, rather than one from YouTube; see [CollectionOwners]. */
+    val ownPlaylist: Boolean = kind == DownloadCollectionKind.LOCAL_PLAYLIST,
 )
 
 /** What one download of a collection's current list changes in its membership. Pure, so it is unit tested. */

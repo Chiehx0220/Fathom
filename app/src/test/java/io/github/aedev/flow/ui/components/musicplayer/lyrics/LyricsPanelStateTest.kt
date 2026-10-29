@@ -81,9 +81,10 @@ class LyricsPanelStateTest {
                 LyricsListItem.Line(0, LyricsEntry(0L, "a")),
                 LyricsListItem.Indicator(0, 1_000L, 9_000L),
                 LyricsListItem.Line(1, LyricsEntry(9_000L, "b")),
+                LyricsListItem.Line(2, LyricsEntry(10_000L, "(echo)", isBackground = true)),
             )
         val metrics = LyricsRowMetrics(lineHeightPx = 60f, indicatorHeightPx = 72f, constraintLineHeightPx = 120f, gapPx = 16f)
-        val offsets = lyricsRowOffsets(items, heights = mapOf(0 to 100, 1 to 50, 2 to 100), activeIndex = 0, metrics = metrics)
-        assertThat(offsets).containsExactly(0, 0f, 1, 100f, 2, 166f)
+        val offsets = lyricsRowOffsets(items, heights = mapOf(0 to 100, 1 to 50, 2 to 100, 3 to 40), activeIndex = 0, metrics = metrics)
+        assertThat(offsets).containsExactly(0, 0f, 1, 100f, 2, 166f, 3, 266f)
     }
 }

@@ -36,6 +36,7 @@ internal fun SettingsListScope.playbackSections(
 ) {
     group(key = "playback.general", header = R.string.playback_header) {
         switch(PlaybackIndex.backgroundPlay, viewModel.backgroundPlay, viewModel::setBackgroundPlay)
+        switch(PlaybackIndex.keepPlayingAfterSwipe, viewModel.keepPlayingAfterSwipe, viewModel::setKeepPlayingAfterSwipe)
         if (state.backgroundRestricted) {
             row("playback.background_restricted") { shape ->
                 FlowNavRow(

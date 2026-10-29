@@ -10,6 +10,10 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.paging.ChannelSearch
+import io.github.aedev.flow.data.profile.Profile
+import io.github.aedev.flow.data.profile.ProfileRegistryState
+import io.github.aedev.flow.data.profile.ProfileRepository
+import io.github.aedev.flow.data.profile.RunningProfile
 import io.github.aedev.flow.data.recommendation.OnboardingCompleter
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -40,6 +44,7 @@ class OnboardingViewModelTest {
     private val channelSearch: ChannelSearch = mockk()
     private val completer: OnboardingCompleter = mockk()
     private val preferences: PlayerPreferences = mockk(relaxed = true)
+    private val defaultProfiles: ProfileRepository = mockk { every { running() } returns RunningProfile(id = "d", isDefault = true) }
     private val channel = Channel(id = "UCabc", name = "Circuit Bench", thumbnailUrl = "https://t", subscriberCount = 10)
 
     @Before
@@ -56,17 +61,37 @@ class OnboardingViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) =
-        OnboardingViewModel(
-            saved,
-            subscriptions,
-            backup,
-            channelSearch,
-            completer,
-            preferences,
-            mockk(relaxed = true),
-            mockk(relaxed = true),
-        )
+    private fun viewModel(
+        saved: SavedStateHandle = SavedStateHandle(),
+        profiles: ProfileRepository = defaultProfiles,
+    ) = OnboardingViewModel(
+        saved,
+        subscriptions,
+        backup,
+        channelSearch,
+        completer,
+        preferences,
+        mockk(relaxed = true),
+        mockk(relaxed = true),
+        mockk(relaxed = true),
+        profiles,
+    )
+
+    @Test
+    fun `outside Default the import step names the profile imports go into`() =
+        runTest(dispatcher) {
+            val study =
+                mockk<ProfileRepository> {
+                    every { running() } returns RunningProfile(id = "s", isDefault = false)
+                    every { state } returns flowOf(ProfileRegistryState(profiles = listOf(Profile("d"), Profile("s", name = "Study"))))
+                }
+
+            val viewModel = viewModel(profiles = study)
+            advanceUntilIdle()
+
+            assertThat(viewModel.state.value.importProfileName).isEqualTo("Study")
+            assertThat(viewModel(profiles = defaultProfiles).state.value.importProfileName).isNull()
+        }
 
     @Test
     fun `a recreated screen resumes on the same step with the same choices`() =

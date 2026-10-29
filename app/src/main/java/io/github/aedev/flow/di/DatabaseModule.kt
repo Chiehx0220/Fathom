@@ -10,59 +10,103 @@ import io.github.aedev.flow.data.local.AppDatabase
 import io.github.aedev.flow.data.local.dao.NotificationDao
 import io.github.aedev.flow.data.local.dao.PlaylistDao
 import io.github.aedev.flow.data.local.dao.VideoDao
+import javax.inject.Qualifier
 import javax.inject.Singleton
+
+/** The running profile's database. With Default running it is the same instance as [DeviceDb]. */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ProfileDb
+
+/** Default's database, which holds the download tables every profile shares. */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class DeviceDb
 
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
     @Provides
     @Singleton
-    fun provideAppDatabase(
+    @ProfileDb
+    fun provideProfileDatabase(
         @ApplicationContext context: Context,
-    ): AppDatabase = AppDatabase.getDatabase(context)
+    ): AppDatabase = AppDatabase.profile(context)
 
     @Provides
-    fun provideVideoDao(database: AppDatabase): VideoDao = database.videoDao()
+    @Singleton
+    @DeviceDb
+    fun provideDeviceDatabase(
+        @ApplicationContext context: Context,
+    ): AppDatabase = AppDatabase.device(context)
 
     @Provides
-    fun providePlaylistDao(database: AppDatabase): PlaylistDao = database.playlistDao()
+    fun provideVideoDao(
+        @ProfileDb database: AppDatabase,
+    ): VideoDao = database.videoDao()
 
     @Provides
-    fun provideNotificationDao(database: AppDatabase): NotificationDao = database.notificationDao()
+    fun providePlaylistDao(
+        @ProfileDb database: AppDatabase,
+    ): PlaylistDao = database.playlistDao()
 
     @Provides
-    fun provideNoteDao(database: AppDatabase): io.github.aedev.flow.data.local.dao.NoteDao = database.noteDao()
+    fun provideNotificationDao(
+        @ProfileDb database: AppDatabase,
+    ): NotificationDao = database.notificationDao()
 
     @Provides
-    fun provideCacheDao(database: AppDatabase): io.github.aedev.flow.data.local.dao.CacheDao = database.cacheDao()
+    fun provideNoteDao(
+        @ProfileDb database: AppDatabase,
+    ): io.github.aedev.flow.data.local.dao.NoteDao = database.noteDao()
 
     @Provides
-    fun provideHomeFeedCacheDao(database: AppDatabase): io.github.aedev.flow.data.local.dao.HomeFeedCacheDao = database.homeFeedCacheDao()
+    fun provideCacheDao(
+        @ProfileDb database: AppDatabase,
+    ): io.github.aedev.flow.data.local.dao.CacheDao = database.cacheDao()
 
     @Provides
-    fun provideDownloadDao(database: AppDatabase): io.github.aedev.flow.data.local.dao.DownloadDao = database.downloadDao()
+    fun provideHomeFeedCacheDao(
+        @ProfileDb database: AppDatabase,
+    ): io.github.aedev.flow.data.local.dao.HomeFeedCacheDao = database.homeFeedCacheDao()
 
     @Provides
-    fun provideDownloadCollectionDao(database: AppDatabase): io.github.aedev.flow.data.local.dao.DownloadCollectionDao =
-        database.downloadCollectionDao()
+    fun provideDownloadDao(
+        @DeviceDb database: AppDatabase,
+    ): io.github.aedev.flow.data.local.dao.DownloadDao = database.downloadDao()
 
     @Provides
-    fun provideRecognitionHistoryDao(database: AppDatabase): io.github.aedev.flow.data.local.dao.RecognitionHistoryDao =
-        database.recognitionHistoryDao()
+    fun provideDownloadCollectionDao(
+        @DeviceDb database: AppDatabase,
+    ): io.github.aedev.flow.data.local.dao.DownloadCollectionDao = database.downloadCollectionDao()
 
     @Provides
-    fun provideSubscriptionGroupDao(database: AppDatabase): io.github.aedev.flow.data.local.dao.SubscriptionGroupDao =
-        database.subscriptionGroupDao()
+    fun provideRecognitionHistoryDao(
+        @ProfileDb database: AppDatabase,
+    ): io.github.aedev.flow.data.local.dao.RecognitionHistoryDao = database.recognitionHistoryDao()
 
     @Provides
-    fun provideWatchHistoryDao(database: AppDatabase): io.github.aedev.flow.data.local.dao.WatchHistoryDao = database.watchHistoryDao()
+    fun provideSubscriptionGroupDao(
+        @ProfileDb database: AppDatabase,
+    ): io.github.aedev.flow.data.local.dao.SubscriptionGroupDao = database.subscriptionGroupDao()
 
     @Provides
-    fun provideSyncLogDao(database: AppDatabase): io.github.aedev.flow.data.local.dao.SyncLogDao = database.syncLogDao()
+    fun provideWatchHistoryDao(
+        @ProfileDb database: AppDatabase,
+    ): io.github.aedev.flow.data.local.dao.WatchHistoryDao = database.watchHistoryDao()
 
     @Provides
-    fun provideSyncPeerDao(database: AppDatabase): io.github.aedev.flow.data.local.dao.SyncPeerDao = database.syncPeerDao()
+    fun provideSyncLogDao(
+        @ProfileDb database: AppDatabase,
+    ): io.github.aedev.flow.data.local.dao.SyncLogDao = database.syncLogDao()
 
     @Provides
-    fun provideMusicGraphDao(database: AppDatabase): io.github.aedev.flow.data.local.dao.MusicGraphDao = database.musicGraphDao()
+    fun provideSyncPeerDao(
+        @ProfileDb database: AppDatabase,
+    ): io.github.aedev.flow.data.local.dao.SyncPeerDao = database.syncPeerDao()
+
+    @Provides
+    fun provideMusicGraphDao(
+        @ProfileDb database: AppDatabase,
+    ): io.github.aedev.flow.data.local.dao.MusicGraphDao = database.musicGraphDao()
 }

@@ -12,7 +12,9 @@ import io.github.aedev.flow.data.local.entity.DownloadItemStatus
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.music.DownloadManager
 import io.github.aedev.flow.data.music.model.MusicTrack
+import io.github.aedev.flow.data.profile.ActiveProfile
 import io.github.aedev.flow.data.video.VideoDownloadManager
+import io.github.aedev.flow.data.video.downloader.collection.CollectionOwners.asPage
 import io.github.aedev.flow.data.video.storage.DownloadFiles
 import io.github.aedev.flow.data.video.storage.DownloadNaming
 import kotlinx.coroutines.flow.Flow
@@ -35,9 +37,25 @@ class DownloadedCollections
         private val downloads: VideoDownloadManager,
         private val musicDownloads: DownloadManager,
     ) {
-        val summaries: Flow<List<DownloadCollectionSummary>> = collectionDao.observeSummaries()
+        private val profile get() = ActiveProfile.get(context)
+
+        /** The running profile's collections and the shared ones, each under the playlist id its page opens with. */
+        val summaries: Flow<List<DownloadCollectionSummary>> =
+            collectionDao.observeSummaries().map { list ->
+                val visible = list.filter { CollectionOwners.isVisible(it.collection, profile) }
+                // A playlist of this profile's own hides a shared collection that happens to have its id.
+                val own =
+                    visible
+                        .map { it.collection.id }
+                        .filter { it != CollectionOwners.playlistId(it) }
+                        .mapTo(HashSet(), CollectionOwners::playlistId)
+                visible.filterNot { it.collection.id in own }.map { it.copy(collection = it.collection.asPage()) }
+            }
 
         fun observe(id: String): Flow<DownloadCollectionSummary?> = summaries.map { list -> list.firstOrNull { it.collection.id == id } }
+
+        /** The id [spec]'s collection is stored under, which its download requests carry. */
+        fun storedId(spec: CollectionSpec): String = CollectionOwners.storedId(spec.id, spec.ownPlaylist, profile)
 
         /**
          * Records [spec] with [ids] as its current list and returns the videos to queue. The folder
@@ -48,7 +66,8 @@ class DownloadedCollections
             ids: List<String>,
             complete: Boolean,
         ): List<String> {
-            val existing = collectionDao.getCollection(spec.id)
+            val storedId = storedId(spec)
+            val existing = collectionDao.getCollection(storedId)
             val folderName =
                 existing?.folderName ?: run {
                     val taken = collectionDao.folderNames().toSet()
@@ -56,7 +75,7 @@ class DownloadedCollections
                     DownloadNaming.unique(name, hasExtension = false) { it in taken }
                 }
             val collection =
-                (existing ?: DownloadCollectionEntity(id = spec.id, kind = spec.kind, title = spec.title, folderName = folderName)).copy(
+                (existing ?: DownloadCollectionEntity(id = storedId, kind = spec.kind, title = spec.title, folderName = folderName)).copy(
                     title = spec.title.ifBlank { existing?.title.orEmpty() },
                     author = spec.author ?: existing?.author.orEmpty(),
                     authorId = spec.authorId ?: existing?.authorId,
@@ -67,9 +86,9 @@ class DownloadedCollections
             val downloaded = ids.filterTo(HashSet()) { isDownloadedOrQueued(it) }
             val plan =
                 CollectionPlan.of(
-                    collectionId = spec.id,
+                    collectionId = storedId,
                     ids = ids,
-                    existing = collectionDao.itemsOf(spec.id),
+                    existing = collectionDao.itemsOf(storedId),
                     isDownloaded = { it in downloaded },
                     complete = complete,
                     now = System.currentTimeMillis(),
@@ -83,8 +102,9 @@ class DownloadedCollections
          * network; null when [id] was never downloaded as a collection.
          */
         suspend fun offline(id: String): OfflineCollection? {
-            val collection = collectionDao.getCollection(id) ?: return null
-            val wanted = wantedIds(id)
+            val stored = find(id) ?: return null
+            val wanted = wantedIds(stored.id)
+            val collection = stored.asPage()
             return if (collection.kind.isMusic) {
                 val byId = musicDownloads.downloadedTracks.first().associateBy { it.track.videoId }
                 OfflineCollection(collection, tracks = wanted.mapNotNull { byId[it]?.track }, videos = emptyList())
@@ -93,7 +113,7 @@ class DownloadedCollections
             }
         }
 
-        suspend fun collection(id: String): DownloadCollectionEntity? = collectionDao.getCollection(id)
+        suspend fun collection(id: String): DownloadCollectionEntity? = find(id)?.asPage()
 
         /**
          * Removes the collection. With [deleteFiles], a download goes only when this collection
@@ -103,14 +123,25 @@ class DownloadedCollections
             id: String,
             deleteFiles: Boolean,
         ) {
-            val collection = collectionDao.getCollection(id) ?: return
-            val members = collectionDao.itemsOf(id)
-            collectionDao.deleteCollection(id)
+            val collection = find(id) ?: return
+            val members = collectionDao.itemsOf(collection.id)
+            collectionDao.deleteCollection(collection.id)
             if (!deleteFiles) return
             members
                 .filter { it.ownsDownload && collectionDao.membershipsOf(it.videoId).isEmpty() }
                 .forEach { downloads.deleteDownload(it.videoId) }
             collection.folderLocation?.let { DownloadFiles.deleteIfEmpty(context, it) }
+        }
+
+        /** Forgets a deleted profile's own playlists. Their downloads stay, like every other download. */
+        suspend fun forgetProfile(profileId: String) = collectionDao.deleteCollectionsStartingWith(CollectionOwners.prefixOf(profileId))
+
+        /** The stored collection the page of playlist [id] shows here. */
+        private suspend fun find(id: String): DownloadCollectionEntity? {
+            val profile = profile
+            return CollectionOwners
+                .candidates(id, profile)
+                .firstNotNullOfOrNull { collectionDao.getCollection(it)?.takeIf { found -> CollectionOwners.isVisible(found, profile) } }
         }
 
         private suspend fun wantedIds(id: String): List<String> =

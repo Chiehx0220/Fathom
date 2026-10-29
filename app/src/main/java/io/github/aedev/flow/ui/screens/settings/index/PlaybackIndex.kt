@@ -16,6 +16,14 @@ internal object PlaybackIndex {
             section = R.string.playback_header,
             destination = page,
         )
+    val keepPlayingAfterSwipe =
+        SettingEntry(
+            key = "playback.keep_playing_after_swipe",
+            title = R.string.player_settings_keep_playing_after_swipe,
+            summary = R.string.player_settings_keep_playing_after_swipe_subtitle,
+            section = R.string.playback_header,
+            destination = page,
+        )
     val startPaused =
         SettingEntry(
             key = "playback.start_paused",
@@ -450,6 +458,7 @@ internal object PlaybackIndex {
     val all =
         listOf(
             backgroundPlay,
+            keepPlayingAfterSwipe,
             startPaused,
             openFullscreen,
             tiltFullscreen,

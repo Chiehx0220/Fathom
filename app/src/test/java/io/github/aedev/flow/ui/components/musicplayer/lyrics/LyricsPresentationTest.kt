@@ -1,5 +1,8 @@
 package io.github.aedev.flow.ui.components.musicplayer.lyrics
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.text.style.TextAlign
 import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.data.lyrics.LyricsEntry
 import org.junit.Test
@@ -117,5 +120,17 @@ class LyricsPresentationTest {
         assertThat(spaceBetweenScripts("사랑해baby")).isEqualTo("사랑해 baby")
         assertThat(spaceBetweenScripts("引き裂かれた")).isEqualTo("引き裂かれた")
         assertThat(spaceBetweenScripts("Café 123")).isEqualTo("Café 123")
+    }
+
+    @Test
+    fun `dimmed lyrics are opaque over a known backdrop, so overlapping glyphs never blend twice`() {
+        val backdrop = Color(0xFF101010)
+        val look = LyricsLineLook(24f, 1.3f, Color(0xFFE0C080), TextAlign.Center, backdrop)
+
+        val ink = look.ink(0.45f)
+
+        assertThat(ink.alpha).isEqualTo(1f)
+        assertThat(ink).isEqualTo(Color(0xFFE0C080).copy(alpha = 0.45f).compositeOver(backdrop))
+        assertThat(LyricsLineLook(24f, 1.3f, Color(0xFFE0C080), TextAlign.Center, null).ink(0.45f).alpha).isWithin(0.01f).of(0.45f)
     }
 }

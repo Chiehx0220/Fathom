@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.local.SubscriptionRepository
+import io.github.aedev.flow.data.local.notifyingIds
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.paging.ChannelSearch
 import io.github.aedev.flow.data.recommendation.ChannelMemoryRepository
@@ -136,7 +137,7 @@ internal class DiscoverChannelsViewModel
                     suggestionAvatars = avatarsById,
                     results = found,
                     subscribedIds = subscribed.mapTo(HashSet()) { it.channelId },
-                    notifyingIds = subscribed.filter { it.isNotificationEnabled }.mapTo(HashSet()) { it.channelId },
+                    notifyingIds = notifyingIds(subscribed),
                 )
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DiscoverChannelsState())
 

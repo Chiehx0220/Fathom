@@ -52,6 +52,8 @@ internal fun collaboratorRows(
     viewModel: QuickActionsViewModel,
 ): List<QuickActionRow> {
     val subscribedChannelIds = subscribedCollaboratorIds(collaborators, viewModel)
+    val bell = sharedSubscriptionBellViewModel()
+    val notifyingChannelIds by bell.notifyingChannelIds.collectAsStateWithLifecycle()
     val navigator = LocalMediaNavigator.current
     val fallbackName = stringResource(R.string.collaborator)
     val ringColor = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -87,6 +89,8 @@ internal fun collaboratorRows(
                                 isSubscribed = collaborator.channelId in subscribedChannelIds,
                                 onSubscribeClick = toggle,
                                 onUnsubscribeClick = toggle,
+                                isNotificationsEnabled = collaborator.channelId in notifyingChannelIds,
+                                onNotificationChange = { bell.setNotifications(collaborator.channelId, it) },
                                 size = FlowSubscribeButtonSize.Compact,
                             )
                         }

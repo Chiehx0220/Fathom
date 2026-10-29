@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.safePreferencesDataStore
+import io.github.aedev.flow.data.profile.StoreScope
 import io.github.aedev.flow.sync.canonical.CanonicalMusicBrain
 import io.github.aedev.flow.sync.canonical.OrSet
 import kotlinx.coroutines.flow.first
@@ -13,7 +14,7 @@ import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.musicBrainCrdtDataStore by safePreferencesDataStore(name = "sync_music_brain_crdt")
+private val Context.musicBrainCrdtDataStore by safePreferencesDataStore(name = "sync_music_brain_crdt", scope = StoreScope.DEFAULT_ONLY)
 
 /**
  * The sync-owned CRDT state the music brain itself cannot hold (the music twin of

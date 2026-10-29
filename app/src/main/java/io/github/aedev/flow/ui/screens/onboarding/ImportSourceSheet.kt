@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.aedev.flow.R
 import io.github.aedev.flow.data.backup.ImportKind
 import io.github.aedev.flow.data.backup.ImportSource
 import io.github.aedev.flow.ui.components.shared.FlowNavRow
@@ -27,6 +28,7 @@ private val SheetBottomPadding = 16.dp
 @Composable
 internal fun ImportSourceSheet(
     source: ImportSource,
+    importProfileName: String?,
     onImport: (ImportKind) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -44,7 +46,13 @@ internal fun ImportSourceSheet(
             source.kinds.forEachIndexed { index, kind ->
                 FlowNavRow(
                     title = stringResource(kind.titleRes),
-                    supportingText = stringResource(kind.descriptionRes),
+                    // Outside Default, say that a master backup reaches every profile it holds, not just this one.
+                    supportingText =
+                        if (kind == ImportKind.MASTER && importProfileName != null) {
+                            stringResource(R.string.onboarding_import_master_profile)
+                        } else {
+                            stringResource(kind.descriptionRes)
+                        },
                     leadingIcon = Icons.Outlined.FileOpen,
                     showChevron = false,
                     shape = flowRowGroupShape(index, source.kinds.size),

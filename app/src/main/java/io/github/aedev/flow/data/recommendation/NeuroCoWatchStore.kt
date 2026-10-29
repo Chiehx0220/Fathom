@@ -13,9 +13,11 @@ package io.github.aedev.flow.data.recommendation
 import android.content.Context
 import android.util.Log
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
-import androidx.datastore.dataStore
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.profile.ProfileFiles
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -122,11 +124,12 @@ internal class NeuroCoWatchStore(
         }
     }
 
-    private val Context.coWatchDataStore: DataStore<CoWatchIndex>
-        by dataStore(
-            fileName = "flow_neuro_cowatch_v1.json",
+    private val coWatchDataStore: DataStore<CoWatchIndex> by lazy {
+        DataStoreFactory.create(
             serializer = CoWatchSerializer,
+            produceFile = { ProfileFiles.dataStore(appContext, StoreScope.PROFILE_PRIVATE, "flow_neuro_cowatch_v1.json") },
         )
+    }
 
     @Volatile
     private var sources: Map<String, Source> = emptyMap()
@@ -138,7 +141,7 @@ internal class NeuroCoWatchStore(
         withContext(Dispatchers.IO) {
             try {
                 sources =
-                    appContext.coWatchDataStore.data
+                    coWatchDataStore.data
                         .first()
                         .sources
             } catch (e: Exception) {
@@ -196,7 +199,7 @@ internal class NeuroCoWatchStore(
         withContext(Dispatchers.IO) {
             try {
                 val snapshot = sources
-                appContext.coWatchDataStore.updateData { CoWatchIndex(snapshot) }
+                coWatchDataStore.updateData { CoWatchIndex(snapshot) }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to persist co-watch index", e)
             }
@@ -208,7 +211,7 @@ internal class NeuroCoWatchStore(
         dirty = false
         withContext(Dispatchers.IO) {
             try {
-                appContext.coWatchDataStore.updateData { CoWatchIndex() }
+                coWatchDataStore.updateData { CoWatchIndex() }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to clear co-watch index", e)
             }

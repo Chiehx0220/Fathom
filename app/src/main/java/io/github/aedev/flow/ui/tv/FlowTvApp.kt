@@ -26,6 +26,7 @@ import io.github.aedev.flow.ui.components.music.common.ProvideMusicPlaybackState
 import io.github.aedev.flow.ui.components.music.sheet.LocalMusicMenus
 import io.github.aedev.flow.ui.components.music.sheet.MusicMenuSheets
 import io.github.aedev.flow.ui.components.music.sheet.rememberMusicMenus
+import io.github.aedev.flow.ui.components.settings.SettingsTarget
 import io.github.aedev.flow.ui.components.shared.LocalFlowSheetPresenter
 import io.github.aedev.flow.ui.screens.home.HomeViewModel
 import io.github.aedev.flow.ui.screens.music.MusicPlayerViewModel
@@ -45,6 +46,7 @@ fun FlowTvApp(
     deeplinkVideoId: String? = null,
     isShort: Boolean = false,
     onDeeplinkConsumed: () -> Unit = {},
+    startSettings: SettingsTarget? = null,
 ) {
     val context = LocalContext.current
     val activity = context as ComponentActivity
@@ -164,6 +166,7 @@ fun FlowTvApp(
                             onPlayVideoId = { playById(it) },
                             activeMusicTrack = visibleMusicTrack,
                             onExpandMusic = { musicExpanded = true },
+                            startSettings = startSettings,
                             onDismissMusic = {
                                 musicExpanded = false
                                 musicSessionActive = false

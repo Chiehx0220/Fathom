@@ -14,12 +14,16 @@ class BackupRulesTest {
     private val settings =
         setOf(
             "file:datastore/player_preferences.preferences_pb",
+            "file:datastore/device_preferences.preferences_pb",
             "file:datastore/flow_preferences.preferences_pb",
             "file:datastore/app_font.preferences_pb",
             "file:datastore/app_ui_mode.preferences_pb",
             "file:datastore/audio_settings.preferences_pb",
             "file:datastore/local_media.preferences_pb",
             "sharedpref:flow_language_prefs.xml",
+            "file:datastore/profiles_registry.json",
+            "file:profile_settings",
+            "file:profile_avatars",
         )
 
     private val library =
@@ -41,6 +45,7 @@ class BackupRulesTest {
             "file:datastore/flow_video_stats_hot_v1.json",
             "file:datastore/flow_music_stats_v1.json",
             "file:datastore/flow_music_stats_hot_v1.json",
+            "file:profile_library",
         )
 
     /** Stores that belong to this install: the engine, sync, secrets, queues, widgets and caches. */

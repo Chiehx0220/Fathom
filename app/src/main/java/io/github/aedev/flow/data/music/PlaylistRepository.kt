@@ -10,12 +10,16 @@ import com.google.gson.reflect.TypeToken
 import io.github.aedev.flow.data.local.safePreferencesDataStore
 import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.data.music.model.withTypedArtists
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 
-private val Context.playlistDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "playlists")
+private val Context.playlistDataStore: DataStore<Preferences> by safePreferencesDataStore(
+    name = "playlists",
+    scope = StoreScope.PROFILE_LIBRARY,
+)
 
 /**
  * Repository for managing playlists and favorites

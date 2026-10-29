@@ -87,6 +87,21 @@ object StreamProcessor {
     }
 
     /**
+     * The formats of [current]'s logical track, else of the original track, else [streams] as given.
+     * Dubs share one itag and bitrate, so a pick by bitrate alone lands on an arbitrary language.
+     */
+    fun streamsOfTrack(
+        streams: List<AudioStream>,
+        current: AudioStream?,
+    ): List<AudioStream> {
+        if (current != null) {
+            val key = extractTrackLanguageKey(current)
+            streams.filter { extractTrackLanguageKey(it) == key }.takeIf { it.isNotEmpty() }?.let { return it }
+        }
+        return streams.filter { it.audioTrackType == AudioTrackType.ORIGINAL }.ifEmpty { streams }
+    }
+
+    /**
      * True when this stream is a track chosen over YouTube's default. Neither YouTube's own DASH
      * manifest nor a SABR session can serve such a choice — both carry only the default track — so
      * playback has to fall through to a manifest generated from this specific stream.

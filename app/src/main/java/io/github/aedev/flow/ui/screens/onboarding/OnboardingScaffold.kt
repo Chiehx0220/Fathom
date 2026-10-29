@@ -242,7 +242,11 @@ internal fun stepCopy(
         }
 
         OnboardingStep.IMPORT -> {
-            StepCopy(stringResource(R.string.onboarding_import_title), stringResource(R.string.onboarding_import_subtitle))
+            StepCopy(
+                stringResource(R.string.onboarding_import_title),
+                state.importProfileName?.let { stringResource(R.string.onboarding_import_subtitle_profile, it) }
+                    ?: stringResource(R.string.onboarding_import_subtitle),
+            )
         }
 
         OnboardingStep.WELCOME, OnboardingStep.READY -> {

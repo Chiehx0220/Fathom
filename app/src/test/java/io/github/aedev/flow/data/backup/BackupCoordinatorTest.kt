@@ -5,8 +5,13 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.data.local.BackupRepository
+import io.github.aedev.flow.data.profile.ActiveProfile
+import io.github.aedev.flow.data.profile.MasterRestored
+import io.github.aedev.flow.data.profile.ProfileSlices
+import io.github.aedev.flow.data.profile.RunningProfile
 import io.github.aedev.flow.data.recommendation.music.FavouriteArtistsStore
 import io.github.aedev.flow.notification.NotificationHelper
+import io.github.aedev.flow.sync.apply.SyncChangeLedgerStore
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -31,6 +36,8 @@ class BackupCoordinatorTest {
     private val first: Uri = mockk()
     private val second: Uri = mockk()
     private val favourites: FavouriteArtistsStore = mockk(relaxed = true)
+    private val syncLedger: SyncChangeLedgerStore = mockk(relaxed = true)
+    private val slices: ProfileSlices = mockk(relaxed = true)
 
     private fun coordinator() =
         BackupCoordinator(
@@ -38,9 +45,8 @@ class BackupCoordinatorTest {
             repository,
             mockk(relaxed = true),
             mockk(relaxed = true),
-            mockk(relaxed = true),
-            favourites,
-            mockk(relaxed = true),
+            syncLedger,
+            slices,
         )
 
     @Before
@@ -50,6 +56,8 @@ class BackupCoordinatorTest {
         mockkObject(NotificationHelper)
         every { NotificationHelper.cancelImportNotification(any()) } returns Unit
         every { NotificationHelper.hasNotificationPermission(any()) } returns false
+        mockkObject(ActiveProfile)
+        every { ActiveProfile.get(any()) } returns RunningProfile(id = "d", isDefault = true)
     }
 
     @After
@@ -96,7 +104,7 @@ class BackupCoordinatorTest {
         }
 
     @Test
-    fun `the master backup carries the picked artists and restores them`() =
+    fun `a profile's backup carries the picked artists and its restore puts them back`() =
         runBlocking {
             val picks = "[]".toByteArray()
             coEvery { favourites.export() } returns picks
@@ -106,22 +114,39 @@ class BackupCoordinatorTest {
                 restore.captured(picks)
                 Result.success(Unit)
             }
-            val coordinator = coordinator()
+            val realSlices = ProfileSlices(context, repository, mockk(relaxed = true), mockk(relaxed = true), favourites, syncLedger)
 
-            coordinator.exportMaster(first)
-            withTimeout(2_000) { coordinator.operation.first { it is BackupOperation.Succeeded } }
-            coordinator.dismiss()
-            coordinator.importMaster(second)
-            withTimeout(2_000) { coordinator.operation.first { it is BackupOperation.Succeeded } }
+            realSlices.export(first)
+            realSlices.import(second)
 
             coVerify { repository.exportMasterBackup(first, any(), any(), picks) }
             coVerify { favourites.restore(picks) }
         }
 
     @Test
+    fun `a backup from before profiles asks which profile it goes into, and only a yes restores it`() =
+        runBlocking {
+            coEvery { slices.oldMasterTarget(second) } returns "Study"
+            coEvery { slices.restoreMaster(second) } returns Result.success(MasterRestored(restoredNow = true, waiting = emptyList()))
+            val coordinator = coordinator()
+
+            coordinator.importMaster(second)
+            withTimeout(2_000) { coordinator.operation.first { it is BackupOperation.Confirming } }
+            coordinator.cancelConfirmation()
+            coVerify(exactly = 0) { slices.restoreMaster(any()) }
+
+            coordinator.importMaster(second)
+            withTimeout(2_000) { coordinator.operation.first { it is BackupOperation.Confirming } }
+            coordinator.confirm()
+            withTimeout(2_000) { coordinator.operation.first { it is BackupOperation.Succeeded } }
+            coVerify(exactly = 1) { slices.restoreMaster(second) }
+        }
+
+    @Test
     fun `the outcome is published after the last notification call`() =
         runBlocking {
-            coEvery { repository.importMasterBackup(second, any(), any(), any()) } returns Result.success(Unit)
+            coEvery { slices.oldMasterTarget(second) } returns null
+            coEvery { slices.restoreMaster(second) } returns Result.success(MasterRestored(restoredNow = true, waiting = emptyList()))
             val coordinator = coordinator()
             val seen = CopyOnWriteArrayList<BackupOperation>()
             every { NotificationHelper.hasNotificationPermission(any()) } answers {
@@ -134,5 +159,24 @@ class BackupCoordinatorTest {
 
             assertThat(seen).isNotEmpty()
             assertThat(seen.filterIsInstance<BackupOperation.Succeeded>()).isEmpty()
+        }
+
+    @Test
+    fun `an import resets the sync ledgers only in Default, the profile they describe`() =
+        runBlocking {
+            coEvery { slices.oldMasterTarget(second) } returns null
+            coEvery { slices.restoreMaster(second) } returns Result.success(MasterRestored(restoredNow = true, waiting = emptyList()))
+            val coordinator = coordinator()
+
+            every { ActiveProfile.get(any()) } returns RunningProfile(id = "b", isDefault = false)
+            coordinator.importMaster(second)
+            withTimeout(2_000) { coordinator.operation.first { it is BackupOperation.Succeeded } }
+            coVerify(exactly = 0) { syncLedger.reset() }
+
+            coordinator.dismiss()
+            every { ActiveProfile.get(any()) } returns RunningProfile(id = "d", isDefault = true)
+            coordinator.importMaster(second)
+            withTimeout(2_000) { coordinator.operation.first { it is BackupOperation.Succeeded } }
+            coVerify(exactly = 1) { syncLedger.reset() }
         }
 }

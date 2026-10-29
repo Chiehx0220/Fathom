@@ -41,6 +41,8 @@ internal fun ChannelRow(
     isSubscribed: Boolean? = null,
     onSubscribeClick: () -> Unit = {},
     onUnsubscribeClick: () -> Unit = {},
+    isNotificationsEnabled: Boolean = false,
+    onNotificationChange: ((Boolean) -> Unit)? = null,
 ) {
     Row(
         modifier =
@@ -82,6 +84,8 @@ internal fun ChannelRow(
                 isSubscribed = isSubscribed,
                 onSubscribeClick = onSubscribeClick,
                 onUnsubscribeClick = onUnsubscribeClick,
+                isNotificationsEnabled = isNotificationsEnabled,
+                onNotificationChange = onNotificationChange,
                 size = FlowSubscribeButtonSize.Compact,
             )
         }

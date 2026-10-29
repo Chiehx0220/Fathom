@@ -26,6 +26,8 @@ import io.github.aedev.flow.ui.screens.settings.network.NetworkSettingsScreen
 import io.github.aedev.flow.ui.screens.settings.notifications.NotificationSettingsScreen
 import io.github.aedev.flow.ui.screens.settings.playback.BufferSettingsScreen
 import io.github.aedev.flow.ui.screens.settings.playback.PlaybackSettingsScreen
+import io.github.aedev.flow.ui.screens.settings.profiles.ProfileEditScreen
+import io.github.aedev.flow.ui.screens.settings.profiles.ProfilesScreen
 import io.github.aedev.flow.ui.screens.settings.quality.QualitySettingsScreen
 import io.github.aedev.flow.ui.screens.settings.region.LanguageRegionScreen
 import io.github.aedev.flow.ui.screens.settings.scrobbling.ScrobblingScreen
@@ -159,6 +161,14 @@ internal fun SettingsDetail(
 
         SettingsDestination.SYNC -> {
             SyncScreen(onBack = onBack)
+        }
+
+        SettingsDestination.PROFILES -> {
+            ProfilesScreen(onBack = onBack, highlight = target.highlight, onNavigate = onNavigate)
+        }
+
+        SettingsDestination.PROFILE_EDIT -> {
+            ProfileEditScreen(profileId = target.tab, onBack = onBack, highlight = target.highlight)
         }
 
         SettingsDestination.HISTORY -> {

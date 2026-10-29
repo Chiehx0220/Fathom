@@ -9,6 +9,7 @@ import io.github.aedev.flow.utils.PerformanceDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,7 +26,11 @@ class MusicResumeTracker
         private val preferences: PlayerPreferences,
     ) {
         // Outlives the service, so the save from onDestroy still lands.
-        private val scope = CoroutineScope(SupervisorJob() + PerformanceDispatcher.diskIO)
+        private val writes = SupervisorJob()
+        private val scope = CoroutineScope(writes + PerformanceDispatcher.diskIO)
+
+        /** Waits for saves still being written, before a profile switch restarts the process. */
+        suspend fun awaitWrites() = writes.children.toList().joinAll()
 
         fun attach(player: Player) {
             player.addListener(

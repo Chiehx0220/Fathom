@@ -5,11 +5,12 @@ import android.net.Uri
 import androidx.room.withTransaction
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.AppDatabase
-import io.github.aedev.flow.data.local.BackupRepository
 import io.github.aedev.flow.data.local.dao.SyncLogDao
 import io.github.aedev.flow.data.local.dao.SyncPeerDao
 import io.github.aedev.flow.data.local.entity.SyncLogEntity
 import io.github.aedev.flow.data.local.entity.SyncPeerEntity
+import io.github.aedev.flow.data.profile.ProfileSlices
+import io.github.aedev.flow.di.ProfileDb
 import io.github.aedev.flow.sync.identity.DeviceIdentity
 import io.github.aedev.flow.sync.merge.LikesMerger
 import io.github.aedev.flow.sync.merge.NotesMerger
@@ -50,13 +51,14 @@ class SyncApplier
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
-        private val db: AppDatabase,
+        @ProfileDb private val db: AppDatabase,
         private val dataAccess: SyncDataAccess,
         private val tracker: SyncChangeTracker,
         private val brains: BrainSyncAccess,
         private val syncLogDao: SyncLogDao,
         private val syncPeerDao: SyncPeerDao,
         private val deviceIdentity: DeviceIdentity,
+        private val slices: ProfileSlices,
     ) {
         // --- sender ---
 
@@ -288,19 +290,19 @@ class SyncApplier
             return ApplyStats(added = added, updated = updated, tombstoned = tombstoned)
         }
 
-        // --- pre-merge backup (cross-store rollback net; reuses the existing master backup) ---
+        // --- pre-merge backup (cross-store rollback net: a slice of Default, the only profile that syncs) ---
 
         private fun snapshotFile() = File(context.cacheDir, "sync_premerge_backup.zip")
 
         private suspend fun takeBackup() {
-            val result = BackupRepository(context).exportMasterBackup(Uri.fromFile(snapshotFile()))
+            val result = slices.export(snapshotFile())
             if (result.isFailure) {
                 throw SyncApplyException("Could not take the pre-merge safety backup; aborting merge", result.exceptionOrNull())
             }
         }
 
         private suspend fun restoreBackup() {
-            BackupRepository(context).importMasterBackup(Uri.fromFile(snapshotFile()))
+            slices.import(Uri.fromFile(snapshotFile()))
         }
     }
 

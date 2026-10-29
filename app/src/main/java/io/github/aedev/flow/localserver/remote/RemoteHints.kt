@@ -30,10 +30,11 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.safePreferencesDataStore
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-private val Context.remoteHints by safePreferencesDataStore(name = "remote_hints")
+private val Context.remoteHints by safePreferencesDataStore(name = "remote_hints", scope = StoreScope.DEVICE)
 private val VolumeKeysSeen = booleanPreferencesKey("volume_keys_seen")
 
 /** One-time card: hardware volume keys control page volume. */

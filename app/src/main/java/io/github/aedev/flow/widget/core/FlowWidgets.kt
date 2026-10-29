@@ -64,8 +64,11 @@ object FlowWidgets {
         }
     }
 
-    suspend fun updateAll(context: Context) {
-        catalog.forEach { it.widget().updateAll(context) }
+    suspend fun updateAll(
+        context: Context,
+        except: Set<KClass<out GlanceAppWidget>> = emptySet(),
+    ) {
+        catalog.map { it.widget() }.filterNot { it::class in except }.forEach { it.updateAll(context) }
     }
 
     /**

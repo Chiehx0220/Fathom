@@ -41,6 +41,8 @@ enum class SettingsDestination(
     SCROBBLING("scrobbling", R.string.scrobbling_title, INTEGRATIONS),
     BACKUP("backup", R.string.settings_backup_title),
     SYNC("sync", R.string.sync_devices_title),
+    PROFILES("profiles", R.string.profiles_title),
+    PROFILE_EDIT("profile_edit", R.string.profiles_edit_title, PROFILES),
     HISTORY("history", R.string.settings_history_title),
     DOWNLOADS("downloads", R.string.settings_downloads_title),
     LOCAL_MEDIA("local_media", R.string.settings_local_media_title, DOWNLOADS),

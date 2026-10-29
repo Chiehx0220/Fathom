@@ -42,6 +42,8 @@ data class OnboardingUiState(
     val notifying: Set<String> = emptySet(),
     val importedSources: Set<ImportSource> = emptySet(),
     val completed: Boolean = false,
+    /** Outside Default, the profile whatever is imported goes into. */
+    val importProfileName: String? = null,
 ) {
     val topicsLeft: Int get() = (MIN_TOPICS - topics.size).coerceAtLeast(0)
 

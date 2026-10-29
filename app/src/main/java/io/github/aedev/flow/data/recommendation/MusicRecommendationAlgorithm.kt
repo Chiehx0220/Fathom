@@ -8,6 +8,7 @@ import io.github.aedev.flow.data.music.PlaylistRepository
 import io.github.aedev.flow.data.music.model.MusicArtist
 import io.github.aedev.flow.data.music.model.MusicItemType
 import io.github.aedev.flow.data.music.model.MusicTrack
+import io.github.aedev.flow.data.profile.ProfileFiles
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.AlbumItem
 import io.github.aedev.flow.innertube.models.PlaylistItem
@@ -64,7 +65,7 @@ class MusicRecommendationAlgorithm
         }
 
         private val cachePrefs by lazy {
-            context.getSharedPreferences("music_home_cache_prefs", Context.MODE_PRIVATE)
+            context.getSharedPreferences(ProfileFiles.sharedPreferencesName(context, "music_home_cache_prefs"), Context.MODE_PRIVATE)
         }
 
         private fun currentLocaleKey(): String =

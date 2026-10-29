@@ -5,13 +5,14 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.safePreferencesDataStore
+import io.github.aedev.flow.data.profile.StoreScope
 import io.github.aedev.flow.data.recommendation.music.MusicBrainEngine
 import kotlinx.coroutines.flow.first
 import java.time.YearMonth
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.recapPreferences by safePreferencesDataStore(name = "flow_recap")
+private val Context.recapPreferences by safePreferencesDataStore(name = "flow_recap", scope = StoreScope.PROFILE_LIBRARY)
 private val LAST_SHOWN = stringPreferencesKey("last_shown_month")
 
 /**

@@ -1,5 +1,6 @@
 package io.github.aedev.flow.data.local
 
+import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room.databaseBuilder
@@ -43,6 +44,7 @@ import io.github.aedev.flow.data.local.entity.VideoEntity
 import io.github.aedev.flow.data.local.entity.WatchHistoryEntity
 import io.github.aedev.flow.data.local.migrations.MIGRATIONS
 import io.github.aedev.flow.data.local.migrations.Migration24To25
+import io.github.aedev.flow.data.profile.ProfileFiles
 
 @Database(
     entities = [
@@ -116,22 +118,36 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun musicGraphDao(): MusicGraphDao
 
     companion object {
-        @Volatile
-        @Suppress("ktlint:standard:property-naming")
-        private var INSTANCE: AppDatabase? = null
+        const val DEFAULT_NAME = "flow_database"
 
-        fun getDatabase(context: android.content.Context): AppDatabase =
-            INSTANCE ?: synchronized(this) {
-                val instance =
-                    databaseBuilder(
-                        context.applicationContext,
-                        AppDatabase::class.java,
-                        "flow_database",
-                    ).addMigrations(*MIGRATIONS)
-                        .fallbackToDestructiveMigration(false)
-                        .build()
-                INSTANCE = instance
-                instance
+        @Volatile
+        private var deviceDatabase: AppDatabase? = null
+
+        @Volatile
+        private var profileDatabase: AppDatabase? = null
+
+        /** Default's file, which also holds the download tables every profile shares. */
+        fun device(context: Context): AppDatabase =
+            deviceDatabase ?: synchronized(this) {
+                deviceDatabase ?: open(context.applicationContext, DEFAULT_NAME).also { deviceDatabase = it }
             }
+
+        /** The running profile's own file. With Default running it is [device]: Room must never open one file twice. */
+        fun profile(context: Context): AppDatabase =
+            profileDatabase ?: synchronized(this) {
+                profileDatabase ?: ProfileFiles
+                    .database(context, DEFAULT_NAME)
+                    .let { name -> if (name == DEFAULT_NAME) device(context) else open(context.applicationContext, name) }
+                    .also { profileDatabase = it }
+            }
+
+        internal fun open(
+            context: Context,
+            name: String,
+        ): AppDatabase =
+            databaseBuilder(context, AppDatabase::class.java, name)
+                .addMigrations(*MIGRATIONS)
+                .fallbackToDestructiveMigration(false)
+                .build()
     }
 }

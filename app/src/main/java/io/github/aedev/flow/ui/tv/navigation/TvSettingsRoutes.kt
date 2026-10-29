@@ -1,5 +1,6 @@
 package io.github.aedev.flow.ui.tv.navigation
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.navigation.NavGraphBuilder
@@ -8,6 +9,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import io.github.aedev.flow.ui.components.settings.SettingsDestination
+import io.github.aedev.flow.ui.components.settings.SettingsTarget
 import io.github.aedev.flow.ui.screens.recap.RecapRoutes
 import io.github.aedev.flow.ui.screens.recap.RecapScreen
 import io.github.aedev.flow.ui.screens.recap.story.RecapStoryScreen
@@ -22,27 +24,12 @@ import io.github.aedev.flow.ui.tv.screens.TvRemoteGuideScreen
 
 /** Settings, hosted from the phone with TV's own Sync and remote guide pages, and the screens it opens. */
 internal fun NavGraphBuilder.tvSettingsRoutes(navController: NavHostController) {
-    composable(TV_SETTINGS_ROUTE) {
-        val options =
-            remember {
-                SettingsHostOptions(
-                    pages =
-                        mapOf(
-                            SettingsDestination.SYNC to { onBack -> SyncScreen(onBack = onBack, hostOnly = true) },
-                            SettingsDestination.REMOTE_GUIDE to { onBack -> TvRemoteGuideScreen(onBack = onBack) },
-                        ),
-                )
-            }
-        TvScreenFrame {
-            SettingsHost(
-                start = null,
-                onExit = { navController.popBackStack() },
-                onOpenDonations = { navController.navigate(TvRoutes.DONATIONS) },
-                onOpenRecap = { navController.navigate(RecapRoutes.stats()) },
-                onOpenUpdate = { navController.navigate(UPDATE_ROUTE) },
-                options = options,
-            )
-        }
+    composable(TV_SETTINGS_ROUTE) { TvSettings(start = null, navController = navController) }
+    composable(
+        route = TvRoutes.SETTINGS_PAGE,
+        arguments = listOf(navArgument(TvRoutes.SETTINGS_PAGE_ARG) { type = NavType.StringType }),
+    ) { entry ->
+        TvSettings(start = SettingsTarget.decode(entry.arguments?.getString(TvRoutes.SETTINGS_PAGE_ARG)), navController = navController)
     }
     composable(TvRoutes.DONATIONS) {
         TvScreenFrame { DonationsScreen(onNavigateBack = { navController.popBackStack() }) }
@@ -91,5 +78,32 @@ internal fun NavGraphBuilder.tvSettingsRoutes(navController: NavHostController) 
                 onClose = { navController.popBackStack() },
             )
         }
+    }
+}
+
+@Composable
+private fun TvSettings(
+    start: SettingsTarget?,
+    navController: NavHostController,
+) {
+    val options =
+        remember {
+            SettingsHostOptions(
+                pages =
+                    mapOf(
+                        SettingsDestination.SYNC to { onBack -> SyncScreen(onBack = onBack, hostOnly = true) },
+                        SettingsDestination.REMOTE_GUIDE to { onBack -> TvRemoteGuideScreen(onBack = onBack) },
+                    ),
+            )
+        }
+    TvScreenFrame {
+        SettingsHost(
+            start = start,
+            onExit = { navController.popBackStack() },
+            onOpenDonations = { navController.navigate(TvRoutes.DONATIONS) },
+            onOpenRecap = { navController.navigate(RecapRoutes.stats()) },
+            onOpenUpdate = { navController.navigate(UPDATE_ROUTE) },
+            options = options,
+        )
     }
 }

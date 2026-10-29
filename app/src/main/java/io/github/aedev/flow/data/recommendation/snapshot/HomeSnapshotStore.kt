@@ -9,6 +9,7 @@ package io.github.aedev.flow.data.recommendation.snapshot
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.profile.ProfileFiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -35,7 +36,7 @@ class HomeSnapshotStore
             val json = Json { encodeDefaults = true }
         }
 
-        private val directory: File get() = File(context.noBackupFilesDir, "neuro/$DIRECTORY")
+        private val directory: File get() = File(ProfileFiles.noBackupRoot(context), "neuro/$DIRECTORY")
 
         private fun files(): List<File> =
             directory

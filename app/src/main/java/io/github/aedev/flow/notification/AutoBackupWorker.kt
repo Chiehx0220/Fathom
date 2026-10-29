@@ -21,12 +21,21 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.BackupRepository
 import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.data.local.PlayerPreferences
-import io.github.aedev.flow.data.recommendation.music.MusicBrainEngine
+import io.github.aedev.flow.data.profile.ActiveProfile
+import io.github.aedev.flow.data.profile.ProfileSlices
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
+
+/** Days between automatic backups, or null when they are off. */
+fun LocalDataManager.AutoBackupFrequency.periodDays(): Long? =
+    when (this) {
+        LocalDataManager.AutoBackupFrequency.NONE -> null
+        LocalDataManager.AutoBackupFrequency.DAILY -> 1L
+        LocalDataManager.AutoBackupFrequency.WEEKLY -> 7L
+        LocalDataManager.AutoBackupFrequency.MONTHLY -> 30L
+    }
 
 /** What the worker needs from the app graph; it is created by WorkManager, not by Hilt. */
 @EntryPoint
@@ -34,11 +43,8 @@ import java.util.concurrent.TimeUnit
 interface AutoBackupEntryPoint {
     fun backupRepository(): BackupRepository
 
-    fun musicBrainEngine(): MusicBrainEngine
+    fun profileSlices(): ProfileSlices
 }
-
-private suspend fun MusicBrainEngine.exportedBytes(): ByteArray? =
-    runCatching { ByteArrayOutputStream().also { exportBrainToStream(it) }.toByteArray() }.getOrNull()
 
 class AutoBackupWorker(
     private val appContext: Context,
@@ -46,7 +52,7 @@ class AutoBackupWorker(
 ) : CoroutineWorker(appContext, params) {
     companion object {
         const val WORK_NAME = "auto_backup_work"
-        private const val NOTIFICATION_CHANNEL_ID = "auto_backup_channel"
+        const val NOTIFICATION_CHANNEL_ID = "auto_backup_channel"
         private const val NOTIFICATION_ID_SUCCESS = 5001
         private const val NOTIFICATION_ID_FAILURE = 5002
 
@@ -54,24 +60,34 @@ class AutoBackupWorker(
             context: Context,
             frequencyDays: Long,
         ) {
-            val constraints =
-                Constraints
-                    .Builder()
-                    .setRequiresBatteryNotLow(true)
-                    .build()
-            val workRequest =
-                PeriodicWorkRequestBuilder<AutoBackupWorker>(frequencyDays, TimeUnit.DAYS)
-                    .setConstraints(constraints)
-                    .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, WorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
-                    .build()
             WorkManager
                 .getInstance(context)
-                .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.REPLACE, workRequest)
+                .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.REPLACE, request(frequencyDays))
         }
+
+        private fun request(frequencyDays: Long) =
+            PeriodicWorkRequestBuilder<AutoBackupWorker>(frequencyDays, TimeUnit.DAYS)
+                .setConstraints(Constraints.Builder().setRequiresBatteryNotLow(true).build())
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, WorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
+                .build()
 
         fun cancelBackup(context: Context) {
             WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
         }
+
+        /** A restored install brings the schedule back in settings but not in WorkManager, which isn't backed up. */
+        suspend fun keepScheduled(context: Context) {
+            val days = PlayerPreferences(context).autoBackupFrequency.first().periodDays() ?: return
+            WorkManager
+                .getInstance(context)
+                .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request(days))
+        }
+
+        /** With two or more profiles only a master backup holds them all, so that is what the schedule writes. */
+        fun effectiveType(
+            chosen: LocalDataManager.AutoBackupType,
+            profileCount: Int,
+        ): LocalDataManager.AutoBackupType = if (profileCount >= 2) LocalDataManager.AutoBackupType.MASTER else chosen
     }
 
     override suspend fun doWork(): Result =
@@ -89,7 +105,13 @@ class AutoBackupWorker(
                     ?: return@withContext Result.failure()
 
             val folderUri = Uri.parse(folderUriStr)
-            val type = playerPrefs.autoBackupType.first()
+            val profileCount =
+                ActiveProfile
+                    .registry(appContext)
+                    .state
+                    .first()
+                    .profiles.size
+            val type = effectiveType(playerPrefs.autoBackupType.first(), profileCount)
             val dependencies = EntryPointAccessors.fromApplication(appContext, AutoBackupEntryPoint::class.java)
             val backupRepo = dependencies.backupRepository()
 
@@ -104,7 +126,7 @@ class AutoBackupWorker(
                     }
 
                     LocalDataManager.AutoBackupType.MASTER -> {
-                        backupRepo.exportMasterToFolder(folderUri, musicBrain = dependencies.musicBrainEngine().exportedBytes())
+                        dependencies.profileSlices().exportMasterToFolder(folderUri)
                     }
                 }
 

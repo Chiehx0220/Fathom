@@ -38,7 +38,7 @@ internal fun selectReservePageFromCache(
 class HomeFeedCacheRepository(
     context: Context,
 ) {
-    private val dao = AppDatabase.getDatabase(context).homeFeedCacheDao()
+    private val dao = AppDatabase.profile(context).homeFeedCacheDao()
 
     suspend fun loadLastFeed(
         filters: HomeFeedCacheFilters,

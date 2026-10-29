@@ -8,14 +8,16 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.data.profile.ActiveProfile
+import io.github.aedev.flow.data.profile.ProfileWork
 import java.util.concurrent.TimeUnit
 
 class UpcomingVideoReminderWorker(
     appContext: Context,
-    params: WorkerParameters
+    params: WorkerParameters,
 ) : CoroutineWorker(appContext, params) {
-
     override suspend fun doWork(): Result {
+        if (!ProfileWork.belongsHere(this)) return Result.success()
         val videoId = inputData.getString(KEY_VIDEO_ID).orEmpty()
         val title = inputData.getString(KEY_TITLE).orEmpty()
         val channelName = inputData.getString(KEY_CHANNEL_NAME).orEmpty()
@@ -30,7 +32,7 @@ class UpcomingVideoReminderWorker(
             videoId = videoId,
             title = title,
             channelName = channelName,
-            thumbnailUrl = thumbnailUrl
+            thumbnailUrl = thumbnailUrl,
         )
         PlayerPreferences(applicationContext).setUpcomingVideoReminder(videoId, enabled = false)
         return Result.success()
@@ -48,32 +50,54 @@ class UpcomingVideoReminderWorker(
             releaseTimeMs: Long,
             title: String,
             channelName: String,
-            thumbnailUrl: String?
+            thumbnailUrl: String?,
+        ) = enqueue(context, UpcomingReminder(videoId, releaseTimeMs, title, channelName, thumbnailUrl), ExistingWorkPolicy.REPLACE)
+
+        /** Queues [reminder] again unless it is already queued, as at the start of its profile. */
+        fun restore(
+            context: Context,
+            reminder: UpcomingReminder,
+        ) = enqueue(context, reminder, ExistingWorkPolicy.KEEP)
+
+        fun cancelReminder(
+            context: Context,
+            videoId: String,
         ) {
-            val delayMs = (releaseTimeMs - System.currentTimeMillis()).coerceAtLeast(0L)
-            val inputData = Data.Builder()
-                .putString(KEY_VIDEO_ID, videoId)
-                .putString(KEY_TITLE, title)
-                .putString(KEY_CHANNEL_NAME, channelName)
-                .putString(KEY_THUMBNAIL_URL, thumbnailUrl)
-                .build()
-
-            val request = OneTimeWorkRequestBuilder<UpcomingVideoReminderWorker>()
-                .setInputData(inputData)
-                .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
-                .build()
-
-            WorkManager.getInstance(context).enqueueUniqueWork(
-                uniqueWorkName(videoId),
-                ExistingWorkPolicy.REPLACE,
-                request
-            )
+            WorkManager.getInstance(context).cancelUniqueWork(uniqueWorkName(context, videoId))
         }
 
-        fun cancelReminder(context: Context, videoId: String) {
-            WorkManager.getInstance(context).cancelUniqueWork(uniqueWorkName(videoId))
+        private fun enqueue(
+            context: Context,
+            reminder: UpcomingReminder,
+            policy: ExistingWorkPolicy,
+        ) {
+            val delayMs = (reminder.releaseTimeMs - System.currentTimeMillis()).coerceAtLeast(0L)
+            val inputData =
+                Data
+                    .Builder()
+                    .putString(KEY_VIDEO_ID, reminder.videoId)
+                    .putString(KEY_TITLE, reminder.title)
+                    .putString(KEY_CHANNEL_NAME, reminder.channelName)
+                    .putString(KEY_THUMBNAIL_URL, reminder.thumbnailUrl)
+                    .build()
+
+            val request =
+                OneTimeWorkRequestBuilder<UpcomingVideoReminderWorker>()
+                    .setInputData(ProfileWork.data(context, inputData))
+                    .addTag(ProfileWork.tag(context))
+                    .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
+                    .build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName(context, reminder.videoId), policy, request)
         }
 
-        private fun uniqueWorkName(videoId: String): String = "upcoming-video-reminder-$videoId"
+        // Default keeps the name reminders had before profiles; two profiles may remind the same premiere.
+        private fun uniqueWorkName(
+            context: Context,
+            videoId: String,
+        ): String {
+            val profile = ActiveProfile.get(context)
+            return if (profile.isDefault) "upcoming-video-reminder-$videoId" else "upcoming-video-reminder-${profile.id}-$videoId"
+        }
     }
 }

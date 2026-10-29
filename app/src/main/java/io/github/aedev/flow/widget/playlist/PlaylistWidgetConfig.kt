@@ -7,19 +7,19 @@ import androidx.glance.appwidget.state.getAppWidgetState
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.state.PreferencesGlanceStateDefinition
 
-/** Which playlist one Playlist widget shows, kept in that widget's own Glance state. */
+/** Which playlist one Playlist widget shows, kept per profile in that widget's own Glance state. */
 object PlaylistWidgetConfig {
     suspend fun load(
         context: Context,
         id: GlanceId,
-    ): String? = getAppWidgetState<Preferences>(context, PreferencesGlanceStateDefinition, id)[PlaylistWidget.PLAYLIST_ID]
+    ): String? = getAppWidgetState<Preferences>(context, PreferencesGlanceStateDefinition, id)[PlaylistWidget.playlistKey(context)]
 
     suspend fun save(
         context: Context,
         id: GlanceId,
         playlistId: String,
     ) {
-        updateAppWidgetState(context, id) { prefs -> prefs[PlaylistWidget.PLAYLIST_ID] = playlistId }
+        updateAppWidgetState(context, id) { prefs -> prefs[PlaylistWidget.playlistKey(context)] = playlistId }
         PlaylistWidget().update(context, id)
     }
 }

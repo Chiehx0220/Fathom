@@ -151,22 +151,34 @@ class VideoStatsRecorder
             }
         }
 
+        /** Writes a pending save now instead of after its delay, before a profile switch restarts the process. */
+        suspend fun awaitWrites() {
+            val pending = pendingSave ?: return
+            if (!pending.isActive) return
+            pending.cancel()
+            saveNow()
+        }
+
         private fun scheduleSave() {
             pendingSave?.cancel()
             pendingSave =
                 scope.launch {
                     delay(SAVE_DEBOUNCE_MS)
-                    mutex.withLock {
-                        val currentKey = LedgerTime.at(System.currentTimeMillis()).monthKey
-                        store.save(
-                            currentKey = currentKey,
-                            current = ledger.months[currentKey]?.toRecord(),
-                            closedKeys = ledger.months.keys - currentKey,
-                            knownKeys = ledger.seedChannels,
-                        ) { ledger.months.filterKeys { it != currentKey }.mapValues { it.value.toRecord() } }
-                    }
-                    saved.tryEmit(Unit)
+                    saveNow()
                 }
+        }
+
+        private suspend fun saveNow() {
+            mutex.withLock {
+                val currentKey = LedgerTime.at(System.currentTimeMillis()).monthKey
+                store.save(
+                    currentKey = currentKey,
+                    current = ledger.months[currentKey]?.toRecord(),
+                    closedKeys = ledger.months.keys - currentKey,
+                    knownKeys = ledger.seedChannels,
+                ) { ledger.months.filterKeys { it != currentKey }.mapValues { it.value.toRecord() } }
+            }
+            saved.tryEmit(Unit)
         }
 
         private companion object {

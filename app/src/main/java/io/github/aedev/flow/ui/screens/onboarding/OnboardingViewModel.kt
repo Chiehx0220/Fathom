@@ -1,10 +1,12 @@
 package io.github.aedev.flow.ui.screens.onboarding
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.backup.BackupCoordinator
 import io.github.aedev.flow.data.backup.BackupOperation
 import io.github.aedev.flow.data.backup.ImportKind
@@ -14,6 +16,8 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.paging.ChannelSearch
+import io.github.aedev.flow.data.profile.ProfileRepository
+import io.github.aedev.flow.data.profile.displayName
 import io.github.aedev.flow.data.recommendation.OnboardingCompleter
 import io.github.aedev.flow.data.recommendation.music.FavouriteArtistCatalog
 import io.github.aedev.flow.data.recommendation.music.FavouriteArtistPicker
@@ -24,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
@@ -56,6 +61,8 @@ class OnboardingViewModel
         private val preferences: PlayerPreferences,
         favouriteArtists: FavouriteArtistsStore,
         artistCatalog: FavouriteArtistCatalog,
+        @ApplicationContext context: Context,
+        profiles: ProfileRepository,
     ) : ViewModel() {
         private val _state = MutableStateFlow(restore())
         val state: StateFlow<OnboardingUiState> = _state.asStateFlow()
@@ -74,6 +81,18 @@ class OnboardingViewModel
 
         init {
             if (_state.value.query.isNotBlank()) search(_state.value.query)
+            val running = profiles.running()
+            if (!running.isDefault) {
+                viewModelScope.launch {
+                    val name =
+                        profiles.state
+                            .first()
+                            .profiles
+                            .firstOrNull { it.id == running.id }
+                            ?.displayName(context)
+                    _state.update { it.copy(importProfileName = name) }
+                }
+            }
             viewModelScope.launch {
                 backup.operation.collect { operation ->
                     val source = pendingSource
@@ -171,6 +190,13 @@ class OnboardingViewModel
         }
 
         fun dismissImport() = backup.dismiss()
+
+        fun confirmImport() = backup.confirm()
+
+        fun cancelImport() {
+            pendingSource = null
+            backup.cancelConfirmation()
+        }
 
         /** Seeds the engine once; a second tap while it runs does nothing. */
         fun complete() {

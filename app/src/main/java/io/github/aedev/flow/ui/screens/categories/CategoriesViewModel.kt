@@ -7,6 +7,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
@@ -14,6 +15,8 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.paging.FeedTabPagingSource
 import io.github.aedev.flow.data.repository.YouTubeRepository
+import io.github.aedev.flow.data.shorts.isShort
+import io.github.aedev.flow.data.shorts.withoutShorts
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
 import io.github.aedev.flow.innertube.pages.explore.ExploreDestination
@@ -30,9 +33,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -73,6 +79,12 @@ class CategoriesViewModel
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(CategoriesUiState())
         val uiState: StateFlow<CategoriesUiState> = _uiState.asStateFlow()
+
+        /** The shelves to draw: [CategoriesUiState.shelves] without Shorts while they are switched off (#1507). */
+        val visibleShelves: StateFlow<List<FeedShelf>> =
+            combine(_uiState.map { it.shelves }.distinctUntilChanged(), preferences.shortsContentEnabled) { shelves, shortsEnabled ->
+                if (shortsEnabled) shelves else shelves.withoutShorts()
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_GRACE_MS), emptyList())
 
         val trendingRegion: StateFlow<String> =
             preferences.trendingRegion.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_GRACE_MS), "US")
@@ -133,6 +145,9 @@ class CategoriesViewModel
                         },
                     ).flow
                 }.cachedIn(viewModelScope)
+                .combine(preferences.shortsContentEnabled) { items, shortsEnabled ->
+                    if (shortsEnabled) items else items.filter { !it.isShort() }
+                }
 
         private var loadJob: Job? = null
 

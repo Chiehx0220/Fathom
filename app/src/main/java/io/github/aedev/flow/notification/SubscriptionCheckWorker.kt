@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
@@ -19,6 +20,7 @@ import dagger.hilt.components.SingletonComponent
 import io.github.aedev.flow.data.local.ChannelSubscription
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
+import io.github.aedev.flow.data.profile.ProfileWork
 import io.github.aedev.flow.data.shorts.ChannelReelIndex
 import io.github.aedev.flow.data.subscriptions.ChannelRssClient
 import io.github.aedev.flow.data.subscriptions.ChannelRssParser
@@ -70,12 +72,21 @@ class SubscriptionCheckWorker(
         /** How many channels are polled concurrently. */
         private const val CHANNEL_CHUNK_SIZE = 10
 
-        /** Schedules the periodic check; [BackgroundCheckScheduler] decides whether it should run at all. */
-        fun schedulePeriodicCheck(
+        /**
+         * Schedules the periodic check; [BackgroundCheckScheduler] decides whether it should run at all. A check
+         * another profile left behind is replaced, so it runs with this profile's interval.
+         */
+        suspend fun schedulePeriodicCheck(
             context: Context,
             intervalMinutes: Long,
             reschedule: Boolean,
         ) {
+            val leftByOther =
+                WorkManager
+                    .getInstance(context)
+                    .getWorkInfosForUniqueWorkFlow(WORK_NAME)
+                    .first()
+                    .any { !it.state.isFinished && ProfileWork.queuedByOther(context, it.tags) }
             val constraints =
                 Constraints
                     .Builder()
@@ -91,13 +102,15 @@ class SubscriptionCheckWorker(
                         BackoffPolicy.EXPONENTIAL,
                         WorkRequest.MIN_BACKOFF_MILLIS,
                         TimeUnit.MILLISECONDS,
-                    ).build()
+                    ).setInputData(ProfileWork.data(context))
+                    .addTag(ProfileWork.tag(context))
+                    .build()
 
             WorkManager.getInstance(context).apply {
                 cancelUniqueWork(LEGACY_WORK_NAME)
                 enqueueUniquePeriodicWork(
                     WORK_NAME,
-                    periodicWorkPolicy(reschedule),
+                    if (leftByOther) ExistingPeriodicWorkPolicy.REPLACE else periodicWorkPolicy(reschedule),
                     workRequest,
                 )
             }
@@ -127,7 +140,9 @@ class SubscriptionCheckWorker(
                             .Builder()
                             .setRequiredNetworkType(NetworkType.CONNECTED)
                             .build(),
-                    ).build()
+                    ).setInputData(ProfileWork.data(context))
+                    .addTag(ProfileWork.tag(context))
+                    .build()
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 IMMEDIATE_WORK_NAME,
@@ -144,6 +159,7 @@ class SubscriptionCheckWorker(
 
     override suspend fun doWork(): Result =
         withContext(Dispatchers.IO) {
+            if (!ProfileWork.belongsHere(this@SubscriptionCheckWorker)) return@withContext Result.success()
             Log.d(TAG, "Starting subscription check via RSS...")
 
             val preferences = dependencies.playerPreferences()

@@ -5,10 +5,14 @@
 -->
 <full-backup-content>
     <include domain="file" path="datastore/player_preferences.preferences_pb" />
+    <include domain="file" path="datastore/device_preferences.preferences_pb" />
     <include domain="file" path="datastore/flow_preferences.preferences_pb" />
     <include domain="file" path="datastore/app_font.preferences_pb" />
     <include domain="file" path="datastore/app_ui_mode.preferences_pb" />
     <include domain="file" path="datastore/audio_settings.preferences_pb" />
     <include domain="file" path="datastore/local_media.preferences_pb" />
     <include domain="sharedpref" path="flow_language_prefs.xml" />
+    <include domain="file" path="datastore/profiles_registry.json" />
+    <include domain="file" path="profile_settings" />
+    <include domain="file" path="profile_avatars" />
 </full-backup-content>

@@ -22,4 +22,6 @@ class DiscordPresenceController
         suspend fun retry(): DiscordLinkResult = DiscordPresenceRuntime.retry()
 
         suspend fun unlink(): Boolean = DiscordPresenceRuntime.unlink()
+
+        suspend fun endForSwitch() = DiscordPresenceRuntime.endForSwitch()
     }

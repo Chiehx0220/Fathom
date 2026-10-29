@@ -155,6 +155,9 @@ class EnhancedPlayerManager private constructor() {
     private var currentVideoId: String? = null
     private var availableVideoStreams: List<VideoStream> = emptyList()
     private var availableAudioStreams: List<AudioStream> = emptyList()
+
+    // processAudioStreams keeps one stream per track, usually Opus; DLNA casting needs the AAC ones.
+    private var castAudioStreams: List<AudioStream> = emptyList()
     private val subtitleTracks = SubtitleTracks()
     private val subtitleDelay = SubtitleDelay()
     private var subtitleDelayVideoId: String? = null
@@ -1197,6 +1200,7 @@ class EnhancedPlayerManager private constructor() {
         // Process streams using StreamProcessor
         availableVideoStreams = StreamProcessor.processVideoStreams(videoStreams)
         availableAudioStreams = StreamProcessor.processAudioStreams(audioStreams)
+        castAudioStreams = audioStreams
         subtitleTracks.load(videoId, StreamProcessor.processCaptions(subtitles), acceptsEmbedded = localFilePath != null)
         if (audioStream == null && availableAudioStreams.isEmpty()) {
             Log.w(TAG, "setStreams: no separate audio stream for $videoId; attempting video-only/muxed playback")
@@ -2310,6 +2314,7 @@ class EnhancedPlayerManager private constructor() {
 
         availableVideoStreams = StreamProcessor.processVideoStreams(data.videoStreams)
         availableAudioStreams = StreamProcessor.processAudioStreams(data.audioStreams)
+        castAudioStreams = data.audioStreams
         subtitleTracks.load(data.enrichedVideo.id, StreamProcessor.processCaptions(data.subtitles), acceptsEmbedded = false)
         resetSubtitleDelayFor(data.enrichedVideo.id)
         val ladder = AdaptiveLadder.forPreload(data.videoStream, availableVideoStreams, data.preferredCodec)
@@ -2636,6 +2641,10 @@ class EnhancedPlayerManager private constructor() {
     }
 
     fun getPlayer(): ExoPlayer? = player
+
+    fun getCastVideoStreams(): List<VideoStream> = availableVideoStreams
+
+    fun getCastAudioStreams(): List<AudioStream> = StreamProcessor.streamsOfTrack(castAudioStreams, currentAudioStream)
 
     fun getCurrentPosition(): Long = player?.currentPosition ?: 0L
 

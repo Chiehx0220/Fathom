@@ -29,6 +29,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -895,6 +897,19 @@ class FlowNeuroEngine internal constructor(
             pending.cancel()
             pendingSaveJob = launchSave(0L)
         }
+    }
+
+    /**
+     * Waits for interactions still being learned, then writes a pending save now, before a profile switch restarts
+     * the process. Interactions are learned first because each one can schedule its own save.
+     */
+    suspend fun awaitWrites() {
+        saveScope.coroutineContext.job.children
+            .filter { it !== pendingSaveJob }
+            .toList()
+            .joinAll()
+        flushPendingSave()
+        pendingSaveJob?.join()
     }
 
     private fun launchSave(delayMs: Long): Job =

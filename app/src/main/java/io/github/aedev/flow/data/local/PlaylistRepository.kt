@@ -24,8 +24,8 @@ class PlaylistRepository
         private val videoDao: VideoDao,
     ) {
         constructor(context: android.content.Context) : this(
-            AppDatabase.getDatabase(context).playlistDao(),
-            AppDatabase.getDatabase(context).videoDao(),
+            AppDatabase.profile(context).playlistDao(),
+            AppDatabase.profile(context).videoDao(),
         )
 
         // Watch Later Logic (using a special hardcoded playlist ID "watch_later")

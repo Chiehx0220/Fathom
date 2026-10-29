@@ -8,6 +8,7 @@ import io.github.aedev.flow.data.local.entity.PlaylistEntity
 import io.github.aedev.flow.data.local.entity.PlaylistVideoCrossRef
 import io.github.aedev.flow.data.local.entity.VideoEntity
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
+import io.github.aedev.flow.di.ProfileDb
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -38,7 +39,7 @@ private const val WATCH_BATCH = 500
  */
 internal class YouTubeTakeoutImporter(
     private val context: Context,
-    private val database: AppDatabase,
+    @ProfileDb private val database: AppDatabase,
     private val viewHistory: ViewHistory,
     private val searchHistory: SearchHistoryRepository,
     private val subscriptions: SubscriptionRepository,

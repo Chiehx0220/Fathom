@@ -9,6 +9,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.PlaylistRepository
+import io.github.aedev.flow.data.local.dao.PlaylistDao
+import io.github.aedev.flow.data.local.dao.VideoDao
 import io.github.aedev.flow.data.local.entity.DownloadCollectionKind
 import io.github.aedev.flow.data.local.entity.VideoEntity
 import io.github.aedev.flow.data.model.PlaylistInfo
@@ -44,6 +46,8 @@ class MusicPlaylistsViewModel
     constructor(
         @ApplicationContext private val context: Context,
         private val playlistRepository: PlaylistRepository,
+        private val videoDao: VideoDao,
+        private val playlistDao: PlaylistDao,
         private val downloadQueuer: BackgroundDownloadQueuer,
         private val youTubeRepository: YouTubeRepository,
     ) : ViewModel() {
@@ -67,11 +71,6 @@ class MusicPlaylistsViewModel
             if (!isEnrichingMusic.compareAndSet(false, true)) return
             viewModelScope.launch(Dispatchers.IO) {
                 try {
-                    val db =
-                        io.github.aedev.flow.data.local.AppDatabase
-                            .getDatabase(context)
-                    val videoDao = db.videoDao()
-                    val playlistDao = db.playlistDao()
                     val stubs = playlistDao.getMusicPlaylistStubVideos()
                     if (stubs.isNotEmpty()) {
                         Log.d("MusicPlaylistsVM", "Enriching ${stubs.size} music playlist stubs")

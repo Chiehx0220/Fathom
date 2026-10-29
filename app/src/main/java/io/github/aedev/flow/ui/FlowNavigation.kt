@@ -95,6 +95,7 @@ fun NavGraphBuilder.flowAppGraph(
             onSearchClick = {
                 navController.navigate("search")
             },
+            onOpenSettings = { target -> navController.navigate("settings?target=${target.encode()}") },
             onNavigateToHistory = {
                 navController.navigate("history")
             },

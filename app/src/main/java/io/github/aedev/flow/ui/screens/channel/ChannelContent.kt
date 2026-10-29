@@ -84,6 +84,8 @@ internal fun ChannelContent(
     showShortsTab: Boolean,
     onFilterSelected: (ChannelTabKind, Int, Int) -> Unit,
     subscribedChannelIds: Set<String>,
+    notifyingChannelIds: Set<String>,
+    onChannelNotificationChange: (String, Boolean) -> Unit,
     channelNote: String?,
     onEditNote: (() -> Unit)?,
     onSubscribeChannel: (io.github.aedev.flow.data.model.Channel, Boolean) -> Unit,
@@ -333,7 +335,7 @@ internal fun ChannelContent(
                 tab.kind == ChannelTabKind.Home -> {
                     FeedShelfSections(
                         sections = tabStates[tab.kind]?.sections.orEmpty(),
-                        isLoading = tabStates[tab.kind]?.sections.isNullOrEmpty(),
+                        isLoading = tabStates[tab.kind]?.loaded != true,
                         listState = homeListState,
                         columnPreference = columnPreference,
                         contentPadding = listPadding,
@@ -382,6 +384,8 @@ internal fun ChannelContent(
                                         isSubscribed = isSubscribed,
                                         onSubscribeClick = { onSubscribeChannel(channel, true) },
                                         onUnsubscribeClick = { onSubscribeChannel(channel, false) },
+                                        isNotificationsEnabled = channel.id in notifyingChannelIds,
+                                        onNotificationChange = { onChannelNotificationChange(channel.id, it) },
                                     )
                                 },
                             ),

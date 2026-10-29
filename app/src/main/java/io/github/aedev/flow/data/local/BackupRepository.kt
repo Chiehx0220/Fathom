@@ -24,6 +24,8 @@ import io.github.aedev.flow.data.local.entity.PlaylistVideoCrossRef
 import io.github.aedev.flow.data.local.entity.SubscriptionGroupEntity
 import io.github.aedev.flow.data.local.entity.VideoEntity
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.profile.SlicePart
+import io.github.aedev.flow.data.profile.seedFor
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.platform.AppIconEntryPoint
@@ -62,6 +64,7 @@ data class SettingsBackup(
     val ints: Map<String, Int> = emptyMap(),
     val floats: Map<String, Float> = emptyMap(),
     val longs: Map<String, Long> = emptyMap(),
+    val stringSets: Map<String, Set<String>> = emptyMap(),
 )
 
 data class ContentPreferencesBackup(
@@ -172,7 +175,7 @@ class BackupRepository(
     private val searchHistoryRepo = SearchHistoryRepository(context)
     private val subscriptionRepo = SubscriptionRepository.getInstance(context)
     private val likedVideosRepo = LikedVideosRepository.getInstance(context)
-    private val database = AppDatabase.getDatabase(context)
+    private val database = AppDatabase.profile(context)
     private val takeoutImporter by lazy {
         YouTubeTakeoutImporter(
             context = context,
@@ -197,12 +200,12 @@ class BackupRepository(
         )
     }
 
-    private suspend fun getMergedSettingsBackup(): SettingsBackup {
-        val playerSettings = playerPreferences.getExportData()
+    private suspend fun getMergedSettingsBackup(includeDevice: Boolean = true): SettingsBackup {
+        val playerSettings = playerPreferences.getExportData(includeDevice)
         val localSettings = localDataManager.getExportData()
         val searchSettings = searchHistoryRepo.getSettingsBackup()
         val fontSettings = appFontPreferences.getSettingsBackup()
-        val activeIconSuffix = detectActiveIconSuffix()
+        val activeIconSuffix = detectActiveIconSuffix().takeIf { includeDevice }
         val equalizerSettings = mapOf(EqStateJson.KEY to equalizer.exportJson())
         val exportedStrings =
             if (activeIconSuffix != null) {
@@ -221,6 +224,7 @@ class BackupRepository(
             ints = playerSettings.ints + localSettings.ints + searchSettings.ints,
             floats = playerSettings.floats + localSettings.floats + searchSettings.floats,
             longs = playerSettings.longs + localSettings.longs + searchSettings.longs,
+            stringSets = playerSettings.stringSets,
         )
     }
 
@@ -281,6 +285,19 @@ class BackupRepository(
         }
     }
 
+    /** The whole profile, or a new profile's seed of [seed]: see [seedFor]. */
+    private suspend fun buildSliceData(seed: Set<SlicePart>?): BackupData =
+        if (seed == null) {
+            buildBackupData()
+        } else {
+            BackupData(
+                subscriptions = if (SlicePart.SUBSCRIPTIONS in seed) subscriptionRepo.getAllSubscriptions().first() else null,
+                subscriptionGroups = if (SlicePart.SUBSCRIPTIONS in seed) database.subscriptionGroupDao().getAllGroupsOnce() else null,
+                contentPreferences = if (SlicePart.RECOMMENDATIONS in seed) getContentPreferencesBackup() else null,
+                settings = if (SlicePart.SETTINGS in seed) getMergedSettingsBackup(includeDevice = false) else null,
+            ).seedFor(seed)
+        }
+
     private suspend fun buildBackupData(): BackupData =
         BackupData(
             viewHistory = viewHistory.getAllHistory().first(),
@@ -301,7 +318,7 @@ class BackupRepository(
     private fun writeMasterZip(
         out: java.io.OutputStream,
         appDataJson: String,
-        brainBytes: ByteArray,
+        brainBytes: ByteArray?,
         musicBrain: ByteArray?,
         recap: ByteArray?,
         favouriteArtists: ByteArray?,
@@ -310,9 +327,11 @@ class BackupRepository(
             zip.putNextEntry(ZipEntry(MASTER_APP_DATA_ENTRY))
             zip.write(appDataJson.toByteArray(Charsets.UTF_8))
             zip.closeEntry()
-            zip.putNextEntry(ZipEntry(MASTER_ENGINE_ENTRY))
-            zip.write(brainBytes)
-            zip.closeEntry()
+            if (brainBytes != null) {
+                zip.putNextEntry(ZipEntry(MASTER_ENGINE_ENTRY))
+                zip.write(brainBytes)
+                zip.closeEntry()
+            }
             if (musicBrain != null) {
                 zip.putNextEntry(ZipEntry(MASTER_MUSIC_BRAIN_ENTRY))
                 zip.write(musicBrain)
@@ -1729,18 +1748,20 @@ class BackupRepository(
 
     // ── Master Backup (app data + engine brain in one ZIP) ──
 
+    /** Without [seed] the whole profile; with it, a new profile's seed of only those parts. */
     suspend fun exportMasterBackup(
         uri: Uri,
         musicBrain: ByteArray? = null,
         recap: ByteArray? = null,
         favouriteArtists: ByteArray? = null,
+        seed: Set<SlicePart>? = null,
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
             try {
-                val backupData = buildBackupData()
+                val backupData = buildSliceData(seed)
                 val appDataJson = gson.toJson(backupData)
 
-                val brainBytes = exportBrainBytes()
+                val brainBytes = if (seed == null || SlicePart.RECOMMENDATIONS in seed) exportBrainBytes() else null
 
                 context.contentResolver.openOutputStream(uri, "wt")?.use { out ->
                     writeMasterZip(out, appDataJson, brainBytes, musicBrain, recap, favouriteArtists)
@@ -1878,7 +1899,7 @@ class BackupRepository(
         }
     }
 
-    private suspend fun writeToFolder(
+    internal suspend fun writeToFolder(
         folderUri: Uri,
         filename: String,
         mimeType: String,

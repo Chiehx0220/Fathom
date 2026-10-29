@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- DUMP is held by adb's shell and the system only, so nothing installed on the device can send to it. -->
+        <receiver
+            android:name="io.github.aedev.flow.data.profile.ProfileProbeReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
+    </application>
+</manifest>

@@ -11,6 +11,9 @@ internal object AutoBrowseTree {
     const val PLAYLISTS = "auto:playlists"
     const val QUEUE = "auto:queue"
 
+    /** The root and its tabs, which a car keeps showing until told they changed. */
+    val TABS = listOf(ROOT, FOR_YOU, LIBRARY, PLAYLISTS, QUEUE)
+
     const val ON_REPEAT = "auto:on_repeat"
     const val REDISCOVER = "auto:rediscover"
     const val RIGHT_NOW = "auto:right_now"

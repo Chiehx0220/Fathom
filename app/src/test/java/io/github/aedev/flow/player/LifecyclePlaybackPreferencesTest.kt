@@ -29,6 +29,13 @@ class LifecyclePlaybackPreferencesTest {
     }
 
     @Test
+    fun `a swipe keeps playback going before the preferences load`() {
+        // A media-button cold start has no activity to load the snapshot, so the cold value is
+        // what onTaskRemoved reads; it must keep the behaviour a user who never chose has (#1468).
+        assertThat(LifecyclePlaybackSettings().keepPlayingAfterSwipe).isTrue()
+    }
+
+    @Test
     fun `loaded settings outlive the observing scope`() =
         runTest {
             val source = MutableStateFlow(LifecyclePlaybackSettings())

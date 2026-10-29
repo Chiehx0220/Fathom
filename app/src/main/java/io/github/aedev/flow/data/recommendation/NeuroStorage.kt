@@ -17,9 +17,10 @@ package io.github.aedev.flow.data.recommendation
 import android.content.Context
 import android.util.Log
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
-import androidx.datastore.dataStore
-import androidx.datastore.dataStoreFile
+import io.github.aedev.flow.data.profile.ProfileFiles
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -197,11 +198,17 @@ internal class NeuroStorage(
         }
     }
 
-    private val Context.brainDataStore: DataStore<SerializableBrain>
-        by dataStore(
-            fileName = BRAIN_DATASTORE_FILE,
+    private val brainDataStore: DataStore<SerializableBrain> by lazy {
+        DataStoreFactory.create(
             serializer = BrainSerializer,
+            produceFile = ::brainFile,
         )
+    }
+
+    private fun brainFile() = ProfileFiles.dataStore(appContext, StoreScope.PROFILE_PRIVATE, BRAIN_DATASTORE_FILE)
+
+    // Legacy formats exist only in Default; elsewhere these resolve inside the profile's own folder and are absent.
+    private fun previousBrainFile(fileName: String) = ProfileFiles.dataStore(appContext, StoreScope.DEFAULT_ONLY, fileName)
 
     // ── Conversion functions ──
 
@@ -316,7 +323,7 @@ internal class NeuroStorage(
     suspend fun save(brain: UserBrain) =
         withContext(Dispatchers.IO) {
             try {
-                appContext.brainDataStore.updateData {
+                brainDataStore.updateData {
                     brain.toSerializable()
                 }
             } catch (e: Exception) {
@@ -327,7 +334,7 @@ internal class NeuroStorage(
     suspend fun load(): UserBrain? =
         withContext(Dispatchers.IO) {
             try {
-                val data = appContext.brainDataStore.data.first()
+                val data = brainDataStore.data.first()
                 if (data.hasAnyUserState()) {
                     val brain = data.toUserBrain()
                     Log.i(
@@ -426,7 +433,7 @@ internal class NeuroStorage(
 
     suspend fun migrateLegacy(): UserBrain? =
         withContext(Dispatchers.IO) {
-            val legacyFile = File(appContext.filesDir, BRAIN_FILENAME)
+            val legacyFile = ProfileFiles.file(appContext, StoreScope.DEFAULT_ONLY, BRAIN_FILENAME)
             if (legacyFile.exists()) {
                 try {
                     Log.i(TAG, "Migrating legacy JSON brain...")
@@ -458,29 +465,34 @@ internal class NeuroStorage(
         brain: UserBrain,
         toSchema: Int,
     ) = withContext(Dispatchers.IO) {
-        val file = File(appContext.noBackupFilesDir, "$PRE_MIGRATION_PREFIX$toSchema.json")
+        val file = File(ProfileFiles.noBackupRoot(appContext), "$PRE_MIGRATION_PREFIX$toSchema.json")
         if (file.exists()) return@withContext
-        runCatching { file.writeText(Json { encodeDefaults = true }.encodeToString(brain.toSerializable())) }
-            .onFailure { Log.e(TAG, "Could not keep the brain before migration $toSchema", it) }
+        runCatching {
+            file.parentFile?.mkdirs()
+            file.writeText(Json { encodeDefaults = true }.encodeToString(brain.toSerializable()))
+        }.onFailure { Log.e(TAG, "Could not keep the brain before migration $toSchema", it) }
     }
 
     /** Removes the copies [keepCopyBeforeMigration] kept: a reset forgets what was learned. */
     suspend fun deleteCopiesBeforeMigration() =
         withContext(Dispatchers.IO) {
-            appContext.noBackupFilesDir
+            ProfileFiles
+                .noBackupRoot(appContext)
                 .listFiles { file -> file.name.startsWith(PRE_MIGRATION_PREFIX) }
                 ?.forEach { it.delete() }
         }
 
     /** True once any brain, even an empty one after a reset, has been saved in the current format. */
-    suspend fun hasSavedBrain(): Boolean = withContext(Dispatchers.IO) { appContext.dataStoreFile(BRAIN_DATASTORE_FILE).exists() }
+    suspend fun hasSavedBrain(): Boolean = withContext(Dispatchers.IO) { brainFile().exists() }
 
     /** Removes the brain files of earlier formats once a current one is saved, so nothing can bring an old brain back. */
     suspend fun deleteOldBrainFiles() =
         withContext(Dispatchers.IO) {
-            if (!appContext.dataStoreFile(BRAIN_DATASTORE_FILE).exists()) return@withContext
-            (listOf(File(appContext.filesDir, BRAIN_FILENAME)) + PREVIOUS_DATASTORE_FILES.map(appContext::dataStoreFile))
-                .filter { it.exists() }
+            if (!brainFile().exists()) return@withContext
+            (
+                listOf(ProfileFiles.file(appContext, StoreScope.DEFAULT_ONLY, BRAIN_FILENAME)) +
+                    PREVIOUS_DATASTORE_FILES.map(::previousBrainFile)
+            ).filter { it.exists() }
                 .forEach { file ->
                     if (file.delete()) Log.i(TAG, "Deleted old brain file ${file.name}")
                 }
@@ -641,7 +653,7 @@ internal class NeuroStorage(
     private suspend fun tryMigrateFromPreviousDataStore(): UserBrain? {
         for (fileName in PREVIOUS_DATASTORE_FILES) {
             try {
-                val file = appContext.dataStoreFile(fileName)
+                val file = previousBrainFile(fileName)
                 if (!file.exists()) continue
 
                 Log.i(TAG, "Found $fileName, migrating...")

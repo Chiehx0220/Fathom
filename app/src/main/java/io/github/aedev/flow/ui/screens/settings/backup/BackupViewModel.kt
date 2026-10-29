@@ -11,8 +11,11 @@ import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.data.local.LocalDataManager.AutoBackupFrequency
 import io.github.aedev.flow.data.local.LocalDataManager.AutoBackupType
 import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.data.profile.ProfileRepository
 import io.github.aedev.flow.notification.AutoBackupWorker
+import io.github.aedev.flow.notification.periodDays
 import io.github.aedev.flow.ui.screens.settings.SettingsViewModel
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 /** Backup & restore: manual exports and imports through the coordinator, and the automatic schedule. */
@@ -24,12 +27,16 @@ class BackupViewModel
         val coordinator: BackupCoordinator,
         private val preferences: PlayerPreferences,
         localDataManager: LocalDataManager,
+        profiles: ProfileRepository,
     ) : SettingsViewModel() {
         val operation = coordinator.operation
         val frequency = preferences.autoBackupFrequency.asState(AutoBackupFrequency.NONE)
         val type = preferences.autoBackupType.asState(AutoBackupType.APP_DATA)
         val folder = preferences.autoBackupFolderUri.asState(null)
         val lastRun = localDataManager.autoBackupLastRun.asState(0L)
+
+        /** Two or more profiles: only a master backup holds them all, so the type is fixed. */
+        val severalProfiles = profiles.state.map { it.profiles.size >= 2 }.asState(false)
 
         fun dismiss() = coordinator.dismiss()
 
@@ -66,6 +73,6 @@ class BackupViewModel
 
         fun backUpNow() {
             val target = folder.value?.let(Uri::parse) ?: return
-            coordinator.backUpNow(type.value, target)
+            coordinator.backUpNow(AutoBackupWorker.effectiveType(type.value, if (severalProfiles.value) 2 else 1), target)
         }
     }

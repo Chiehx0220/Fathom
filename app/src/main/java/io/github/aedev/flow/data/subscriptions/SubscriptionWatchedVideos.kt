@@ -4,6 +4,7 @@ import io.github.aedev.flow.data.local.AppDatabase
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.shorts.finishedShortIds
+import io.github.aedev.flow.di.DeviceDb
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -16,7 +17,7 @@ class SubscriptionWatchedVideos
     constructor(
         private val viewHistory: ViewHistory,
         private val playerPreferences: PlayerPreferences,
-        private val database: AppDatabase,
+        @DeviceDb private val database: AppDatabase,
     ) {
         val ids: Flow<Set<String>> =
             combine(

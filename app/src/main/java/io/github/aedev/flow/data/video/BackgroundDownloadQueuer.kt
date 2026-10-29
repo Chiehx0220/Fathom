@@ -85,12 +85,13 @@ class BackgroundDownloadQueuer
             complete: Boolean,
         ) {
             val byId = videos.associateBy { it.id }
+            val collectionId = collections.storedId(spec)
             runCollection(spec, videos.map { it.id }, complete) { id, _ ->
                 val video = byId.getValue(id)
                 if (video.isMusic) {
-                    controller.enqueue(video.toMusicTrack().toDownloadRequest(collectionId = spec.id)).toQueueOutcome()
+                    controller.enqueue(video.toMusicTrack().toDownloadRequest(collectionId = collectionId)).toQueueOutcome()
                 } else {
-                    controller.enqueue(video.toDownloadRequest(collectionId = spec.id)).toQueueOutcome()
+                    controller.enqueue(video.toDownloadRequest(collectionId = collectionId)).toQueueOutcome()
                 }
             }
         }
@@ -103,11 +104,12 @@ class BackgroundDownloadQueuer
         ) {
             val byId = tracks.associateBy { it.videoId }
             val isAlbum = spec.kind == DownloadCollectionKind.MUSIC_ALBUM
+            val collectionId = collections.storedId(spec)
             runCollection(spec, tracks.map { it.videoId }, complete) { id, position ->
                 controller
                     .enqueue(
                         byId.getValue(id).toDownloadRequest(
-                            collectionId = spec.id,
+                            collectionId = collectionId,
                             trackNumber = if (isAlbum) position + 1 else null,
                             trackTotal = if (isAlbum) byId.size else null,
                             albumArtist = spec.author.takeIf { isAlbum },

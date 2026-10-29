@@ -179,6 +179,7 @@ private fun StepBody(
                 header = header,
                 importOperation = importOperation,
                 importedSources = state.importedSources,
+                importProfileName = state.importProfileName,
                 onImport = actions.onPick,
                 contentPadding = contentPadding,
             )

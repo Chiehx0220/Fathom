@@ -58,6 +58,7 @@ internal class AutoBackupState(
     val noFolderLabel: String,
     val lastRun: String?,
     val running: Boolean,
+    val severalProfiles: Boolean,
     val frequencyOptions: List<FlowToggleOption<AutoBackupFrequency>>,
     val typeLabels: Map<AutoBackupType, String>,
 )
@@ -72,13 +73,19 @@ internal fun SettingsListScope.autoBackupPage(
     group(key = "backup.auto.schedule.group", header = R.string.auto_backup_schedule_section) {
         toggleGroup(BackupIndex.schedule, state.frequencyOptions, state.frequency, onFrequency)
     }
-    group(key = BackupIndex.type.key, header = R.string.auto_backup_type_section) {
-        AutoBackupType.entries.forEach { type ->
+    val type = if (state.severalProfiles) AutoBackupType.MASTER else state.type
+    group(
+        key = BackupIndex.type.key,
+        header = R.string.auto_backup_type_section,
+        footer = R.string.auto_backup_type_all_profiles.takeIf { state.severalProfiles },
+    ) {
+        AutoBackupType.entries.forEach { option ->
             option(
-                key = "backup.auto.type.${type.name}",
-                label = state.typeLabels.getValue(type),
-                selected = state.type == type,
-                onClick = { onType(type) },
+                key = "backup.auto.type.${option.name}",
+                label = state.typeLabels.getValue(option),
+                selected = type == option,
+                onClick = { onType(option) },
+                enabled = !state.severalProfiles,
             )
         }
     }

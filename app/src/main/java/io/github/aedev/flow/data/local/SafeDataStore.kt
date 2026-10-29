@@ -2,11 +2,17 @@ package io.github.aedev.flow.data.local
 
 import android.content.Context
 import android.util.Log
+import androidx.datastore.core.DataMigration
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.preferencesDataStore
+import io.github.aedev.flow.data.profile.ProfileFiles
+import io.github.aedev.flow.data.profile.StoreScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -19,16 +25,16 @@ private const val SAFE_DATA_STORE_TAG = "SafeDataStore"
 private const val READ_RETRY_ATTEMPTS = 3
 private const val READ_RETRY_DELAY_MS = 100L
 
-fun safePreferencesDataStore(name: String): ReadOnlyProperty<Context, DataStore<Preferences>> {
-    val delegate =
-        preferencesDataStore(
-            name = name,
-            corruptionHandler =
-                ReplaceFileCorruptionHandler { corruption ->
-                    Log.w(SAFE_DATA_STORE_TAG, "Resetting corrupted preferences DataStore: $name", corruption)
-                    emptyPreferences()
-                },
-        )
+/**
+ * A preferences DataStore whose file depends on [scope] and the profile this process runs as (see [ProfileFiles]).
+ * The scope has no default so every store is placed deliberately; StoreScopeGuardTest checks it against the
+ * inventory.
+ */
+fun safePreferencesDataStore(
+    name: String,
+    scope: StoreScope,
+    produceMigrations: (Context) -> List<DataMigration<Preferences>> = { emptyList() },
+): ReadOnlyProperty<Context, DataStore<Preferences>> {
     var wrapped: DataStore<Preferences>? = null
     return object : ReadOnlyProperty<Context, DataStore<Preferences>> {
         override fun getValue(
@@ -36,10 +42,27 @@ fun safePreferencesDataStore(name: String): ReadOnlyProperty<Context, DataStore<
             property: KProperty<*>,
         ): DataStore<Preferences> =
             wrapped ?: synchronized(this) {
-                wrapped ?: ReadSafeDataStore(name, delegate.getValue(thisRef, property)).also { wrapped = it }
+                wrapped ?: ReadSafeDataStore(name, create(thisRef.applicationContext, name, scope, produceMigrations)).also { wrapped = it }
             }
     }
 }
+
+private fun create(
+    context: Context,
+    name: String,
+    scope: StoreScope,
+    produceMigrations: (Context) -> List<DataMigration<Preferences>>,
+): DataStore<Preferences> =
+    PreferenceDataStoreFactory.create(
+        corruptionHandler =
+            ReplaceFileCorruptionHandler { corruption ->
+                Log.w(SAFE_DATA_STORE_TAG, "Resetting corrupted preferences DataStore: $name", corruption)
+                emptyPreferences()
+            },
+        migrations = produceMigrations(context),
+        scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+        produceFile = { ProfileFiles.preferences(context, scope, name) },
+    )
 
 internal class ReadSafeDataStore(
     private val name: String,

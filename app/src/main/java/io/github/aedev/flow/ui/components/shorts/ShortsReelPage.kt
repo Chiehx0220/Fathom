@@ -52,6 +52,7 @@ import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.player.shorts.ShortsPlayerPool
 import io.github.aedev.flow.player.toDisplayAspectRatioOrNull
 import io.github.aedev.flow.ui.components.shared.MediaSeekBar
+import io.github.aedev.flow.ui.components.shared.sharedSubscriptionBellViewModel
 import io.github.aedev.flow.ui.components.videoplayer.ambient.VideoAmbientBackground
 import io.github.aedev.flow.ui.components.videoplayer.ambient.rememberAmbientFrame
 import io.github.aedev.flow.ui.components.videoplayer.overlay.SpeedBoostOverlay
@@ -99,6 +100,8 @@ internal fun ShortsReelPage(
 
     val isLiked by remember(short.id) { viewModel.isVideoLikedState(short.id) }.collectAsState()
     val isSubscribed by remember(short.channelId) { viewModel.isChannelSubscribedState(short.channelId) }.collectAsState()
+    val bell = sharedSubscriptionBellViewModel()
+    val notifyingChannelIds by bell.notifyingChannelIds.collectAsState()
     val isSaved by remember(short.id) { viewModel.isShortSavedState(short.id) }.collectAsState()
 
     // In Picture-in-Picture the window is a thumbnail: every overlay drawn at its authored size
@@ -322,6 +325,8 @@ internal fun ShortsReelPage(
                     onChannelClick = actions.onChannelClick,
                     onSubscribeToggle = ::toggleSubscription,
                     onDescriptionClick = actions.onDescriptionClick,
+                    isNotificationsEnabled = short.channelId in notifyingChannelIds,
+                    onNotificationChange = { bell.setNotifications(short.channelId, it) },
                     modifier =
                         Modifier
                             .weight(1f)

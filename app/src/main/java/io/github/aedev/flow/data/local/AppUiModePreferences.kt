@@ -6,12 +6,13 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.profile.StoreScope
 import io.github.aedev.flow.platform.AppUiMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-private val Context.appUiModeDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "app_ui_mode")
+private val Context.appUiModeDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "app_ui_mode", scope = StoreScope.DEVICE)
 
 /** Stores the interface override independently from playback preferences. */
 class AppUiModePreferences

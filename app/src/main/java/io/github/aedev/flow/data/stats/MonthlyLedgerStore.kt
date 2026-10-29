@@ -7,7 +7,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
-import androidx.datastore.dataStoreFile
+import io.github.aedev.flow.data.profile.ProfileFiles
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -110,7 +111,7 @@ class MonthlyLedgerStore<M>(
         DataStoreFactory.create(
             serializer = LedgerFileSerializer(fileSerializer, tag),
             corruptionHandler = ReplaceFileCorruptionHandler { StoredLedger() },
-            produceFile = { appContext.dataStoreFile(fileName) },
+            produceFile = { ProfileFiles.dataStore(appContext, StoreScope.PROFILE_LIBRARY, fileName) },
         )
 }
 

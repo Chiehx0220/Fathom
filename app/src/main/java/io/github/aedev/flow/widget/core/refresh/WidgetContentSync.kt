@@ -4,10 +4,12 @@ import android.content.Context
 import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.safePreferencesDataStore
+import io.github.aedev.flow.data.profile.StoreScope
 import io.github.aedev.flow.widget.downloads.DownloadsSource
 import io.github.aedev.flow.widget.onrepeat.OnRepeatSource
 import io.github.aedev.flow.widget.playlist.PlaylistWidgetSource
@@ -35,8 +37,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.reflect.KClass
 
-private val Context.widgetContentStore by safePreferencesDataStore(name = "widget_content")
+private val Context.widgetContentStore by safePreferencesDataStore(name = "widget_content", scope = StoreScope.DEVICE)
 
 /**
  * Re-renders a content widget when what it draws has changed, and only while one is placed.
@@ -72,6 +75,15 @@ class WidgetContentSync
         /** Starts following only when a content widget is on the home screen, which most installs never have. */
         suspend fun startIfPlaced() {
             if (sources.any { isPlaced(it) }) ensureStarted()
+        }
+
+        /** The widgets that redraw through this sync rather than through [io.github.aedev.flow.widget.core.FlowWidgets]. */
+        val widgets: Set<KClass<out GlanceAppWidget>> get() = sources.mapTo(HashSet()) { it.widget::class }
+
+        /** After a profile switch: what was rendered belongs to the previous profile, so every placed content widget draws again. */
+        suspend fun redrawAfterSwitch() {
+            context.widgetContentStore.edit { it.clear() }
+            startIfPlaced()
         }
 
         /** A widget of some kind was added or the last of a kind removed. */

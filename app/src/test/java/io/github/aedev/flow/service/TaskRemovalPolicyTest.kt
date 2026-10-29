@@ -10,7 +10,8 @@ class TaskRemovalPolicyTest {
         playWhenReady: Boolean = true,
         state: Int = Player.STATE_READY,
         hasMedia: Boolean = true,
-    ) = keepsPlayingOnTaskRemoved(ongoing, playWhenReady, state, hasMedia)
+        keepPlayingAfterSwipe: Boolean = true,
+    ) = keepsPlayingOnTaskRemoved(keepPlayingAfterSwipe, ongoing, playWhenReady, state, hasMedia)
 
     @Test
     fun `playing media keeps the service`() {
@@ -33,6 +34,12 @@ class TaskRemovalPolicyTest {
         assertThat(keeps(state = Player.STATE_IDLE)).isFalse()
         assertThat(keeps(state = Player.STATE_ENDED)).isFalse()
         assertThat(keeps(hasMedia = false)).isFalse()
+    }
+
+    @Test
+    fun `with the switch off a swipe stops even playing media`() {
+        assertThat(keeps(keepPlayingAfterSwipe = false)).isFalse()
+        assertThat(keeps(keepPlayingAfterSwipe = false, state = Player.STATE_BUFFERING)).isFalse()
     }
 
     @Test

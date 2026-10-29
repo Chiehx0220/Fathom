@@ -231,6 +231,10 @@ private fun applyExactPrefix(
     return "$prefix $value"
 }
 
+private val StreamOrPremiereWords = Regex("(?i)^(streamed|premiered)\\s+(live\\s+)?(on\\s+)?")
+
+internal fun withoutStreamOrPremiereWords(text: String): String = text.replace(StreamOrPremiereWords, "").trim()
+
 fun parseToTimestamp(
     text: String?,
     hl: String? = YouTube.locale.hl,
@@ -239,13 +243,10 @@ fun parseToTimestamp(
     if (raw.isEmpty()) return null
     raw.toLongOrNull()?.takeIf { it > 100_000_000_000L }?.let { return it }
 
-    val cleanRaw =
-        raw
-            // "Streamed live on Jun 19, 2020" and "Premiered on Jan 1, 2020" carry the date behind
-            // words no format string matches, so without dropping them the parse fails and the
-            // caller falls back to whatever timestamp it already had.
-            .replace(Regex("(?i)^(streamed|premiered)\\s+(live\\s+)?(on\\s+)?"), "")
-            .trim()
+    // "Streamed live on Jun 19, 2020" and "Premiered on Jan 1, 2020" carry the date behind words no
+    // format string matches, so without dropping them the parse fails and the caller falls back to
+    // whatever timestamp it already had.
+    val cleanRaw = withoutStreamOrPremiereWords(raw)
 
     val absFormats =
         listOf(

@@ -28,7 +28,15 @@ internal fun RequestContext.handleCastStart(params: Query): Status {
     val device = DlnaCastManager.devices.value.firstOrNull { it.usn == params["usn"] }
     if (device == null || url.isEmpty()) fail(404, Status("no_device"))
     val info = source.streamInfo(getServiceId(params), url)
-    DlnaCastManager.castStreamInfo(device, params["title"].orEmpty().ifEmpty { info.name }, info, null)
+    DlnaCastManager.castStreamInfo(
+        device = device,
+        title = params["title"].orEmpty().ifEmpty { info.name },
+        currentPlayerUrl = null,
+        videoOnlyStreams = info.videoOnlyStreams.orEmpty(),
+        audioStreams = info.audioStreams.orEmpty(),
+        muxedStreams = info.videoStreams.orEmpty(),
+        durationSeconds = info.duration,
+    )
     if (!awaitCasting(device)) fail(502, Status("failed"))
     val position = params.double("t")?.toLong() ?: 0L
     if (position >= MIN_SEEK_SECONDS) {

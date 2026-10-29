@@ -31,6 +31,7 @@ import io.github.aedev.flow.data.local.LocalDataManager.AutoBackupFrequency
 import io.github.aedev.flow.data.local.LocalDataManager.AutoBackupType
 import io.github.aedev.flow.ui.components.settings.SettingsPage
 import io.github.aedev.flow.ui.components.settings.SettingsTabs
+import io.github.aedev.flow.ui.components.shared.FlowConfirmDialog
 import io.github.aedev.flow.ui.components.shared.FlowConnectedToggleGroup
 import io.github.aedev.flow.ui.components.shared.FlowProgressBanner
 import io.github.aedev.flow.ui.components.shared.FlowToggleOption
@@ -56,6 +57,7 @@ internal fun BackupScreen(
     val operation by viewModel.operation.collectAsStateWithLifecycle()
     val frequency by viewModel.frequency.collectAsStateWithLifecycle()
     val type by viewModel.type.collectAsStateWithLifecycle()
+    val severalProfiles by viewModel.severalProfiles.collectAsStateWithLifecycle()
     val folder by viewModel.folder.collectAsStateWithLifecycle()
     val lastRun by viewModel.lastRun.collectAsStateWithLifecycle()
     var selectedTab by rememberSaveable { mutableStateOf(tab ?: SettingsTabs.BACKUP_EXPORT) }
@@ -65,6 +67,16 @@ internal fun BackupScreen(
     val scope = rememberCoroutineScope()
     val busy = stringResource(R.string.backup_busy)
     val start: (Boolean) -> Unit = { started -> if (!started) scope.launch { snackbarHostState.showSnackbar(busy) } }
+
+    (operation as? BackupOperation.Confirming)?.let { confirming ->
+        FlowConfirmDialog(
+            title = stringResource(R.string.master_restore_confirm_title),
+            text = confirming.message,
+            confirmLabel = stringResource(R.string.master_restore_confirm),
+            onConfirm = viewModel.coordinator::confirm,
+            onDismiss = viewModel.coordinator::cancelConfirmation,
+        )
+    }
 
     LaunchedEffect(operation) {
         val message =
@@ -110,6 +122,7 @@ internal fun BackupScreen(
             noFolderLabel = stringResource(R.string.auto_backup_no_folder),
             lastRun = lastRun.takeIf { it > 0 }?.let { stringResource(R.string.auto_backup_last_run, formatLastRun(it)) },
             running = operation is BackupOperation.Running,
+            severalProfiles = severalProfiles,
             frequencyOptions =
                 listOf(
                     FlowToggleOption(AutoBackupFrequency.NONE, stringResource(R.string.auto_backup_frequency_none)),

@@ -13,9 +13,11 @@ package io.github.aedev.flow.data.recommendation
 import android.content.Context
 import android.util.Log
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
-import androidx.datastore.dataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.profile.ProfileFiles
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -86,13 +88,17 @@ class NeuroNeighbourStore
             }
         }
 
-        private val Context.neighbourDataStore: DataStore<Index>
-            by dataStore(fileName = "flow_neuro_neighbours_v1.json", serializer = IndexSerializer)
+        private val neighbourDataStore: DataStore<Index> by lazy {
+            DataStoreFactory.create(
+                serializer = IndexSerializer,
+                produceFile = { ProfileFiles.dataStore(appContext, StoreScope.PROFILE_PRIVATE, "flow_neuro_neighbours_v1.json") },
+            )
+        }
 
         suspend fun entries(): Map<String, Entry> =
             withContext(Dispatchers.IO) {
                 runCatching {
-                    appContext.neighbourDataStore.data
+                    neighbourDataStore.data
                         .first()
                         .channels
                 }.getOrDefault(emptyMap())
@@ -101,7 +107,7 @@ class NeuroNeighbourStore
         suspend fun update(transform: (Map<String, Entry>) -> Map<String, Entry>) =
             withContext(Dispatchers.IO) {
                 runCatching {
-                    appContext.neighbourDataStore.updateData { index ->
+                    neighbourDataStore.updateData { index ->
                         val updated = transform(index.channels)
                         Index(
                             if (updated.size <= MAX_CHANNELS) {

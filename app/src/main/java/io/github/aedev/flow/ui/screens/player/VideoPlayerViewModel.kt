@@ -13,6 +13,7 @@ import io.github.aedev.flow.data.localmedia.LocalMediaDetails
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.profile.BeforeProfileSwitch
 import io.github.aedev.flow.data.repository.SponsorBlockRepository
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.transcript.TranscriptRepository
@@ -215,8 +216,11 @@ class VideoPlayerViewModel
 
         fun setAutoplayHold(hold: Boolean) = playerManager.setAutoplayHold(hold)
 
+        private val unregisterBeforeSwitch = BeforeProfileSwitch.register(watchSessions::finalizeActiveSession)
+
         override fun onCleared() {
             super.onCleared()
+            unregisterBeforeSwitch()
             watchSessions.finalizeActiveSession()
             stopLiveChat()
         }

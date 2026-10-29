@@ -7,6 +7,7 @@ import android.content.Intent
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
+import io.github.aedev.flow.data.profile.ProfileSwitchGate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -53,6 +54,7 @@ class WidgetPlaybackReceiver : BroadcastReceiver() {
         intent: Intent,
     ) {
         val command = WidgetPlaybackCommand.from(intent.action) ?: return
+        if (ProfileSwitchGate.isSwitching) return
         val pending = goAsync()
         scope.launch {
             try {

@@ -38,6 +38,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -55,11 +56,14 @@ import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.music.YouTubeMusicService
 import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.data.newmusic.InnertubeMusicService
+import io.github.aedev.flow.data.profile.ActiveProfile
+import io.github.aedev.flow.data.profile.ProfileSwitchGate
 import io.github.aedev.flow.data.recommendation.music.MusicBrainEngine
 import io.github.aedev.flow.data.scrobble.ScrobbleRules
 import io.github.aedev.flow.extensions.setOffloadEnabled
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.WatchEndpoint
+import io.github.aedev.flow.player.LifecyclePlaybackPreferences
 import io.github.aedev.flow.player.MusicFailureStreak
 import io.github.aedev.flow.player.MusicLoadErrorPolicy
 import io.github.aedev.flow.player.MusicMutePause
@@ -86,6 +90,7 @@ import io.github.aedev.flow.player.restoredMusicQueue
 import io.github.aedev.flow.player.sessionArtworkBitmapLoader
 import io.github.aedev.flow.player.stream.ClientGateTracker
 import io.github.aedev.flow.player.stream.PlaybackBlock
+import io.github.aedev.flow.service.auto.AutoBrowseTree
 import io.github.aedev.flow.service.auto.AutoLibrary
 import io.github.aedev.flow.service.auto.AutoLibraryBrowser
 import io.github.aedev.flow.utils.MusicPlayerUtils
@@ -101,6 +106,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.math.min
 
@@ -146,14 +152,14 @@ class Media3MusicService : MediaLibraryService() {
          * Stops playback and the service from inside it. Sent through the controller, it lands after
          * the player commands the caller already queued, which a direct stopService() overtakes.
          */
-        fun requestStop(controller: MediaController) {
+        fun requestStop(controller: MediaController): ListenableFuture<SessionResult> =
             controller.sendCustomCommand(CommandStop, Bundle.EMPTY)
-        }
     }
 
     private lateinit var mediaLibrarySession: MediaLibrarySession
     private lateinit var player: ExoPlayer
     private val equalizer = EqualizerAudioProcessor()
+    private val carTreeRefreshed = AtomicBoolean(false)
     private val musicAudioAttributes =
         AudioAttributes
             .Builder()
@@ -216,6 +222,9 @@ class Media3MusicService : MediaLibraryService() {
 
     @Inject
     lateinit var downloadUtil: DownloadUtil
+
+    @Inject
+    lateinit var lifecyclePlaybackPreferences: LifecyclePlaybackPreferences
 
     @Inject
     lateinit var legacySongs: LegacySongDownloads
@@ -526,7 +535,8 @@ class Media3MusicService : MediaLibraryService() {
                             }
                         }
 
-                        if (!versionSwap && !videoId.isNullOrBlank() && !title.isNullOrBlank() && !artist.isNullOrBlank()) {
+                        val wantsLyrics = !versionSwap && !videoId.isNullOrBlank() && !LocalMediaIds.isLocal(videoId)
+                        if (wantsLyrics && !title.isNullOrBlank() && !artist.isNullOrBlank()) {
                             lifecycleScope.launch(Dispatchers.IO) {
                                 try {
                                     Log.d(TAG, "Pre-warming lyrics cache in background for: $videoId - \"$title\"")
@@ -1343,10 +1353,11 @@ class Media3MusicService : MediaLibraryService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? =
         mediaLibrarySession.takeUnless {
-            controllerInfo.declinesMediaButtonStart(
-                hasMediaItem = ::player.isInitialized && player.currentMediaItem != null,
-                canResume = queuePersistence.hasSavedQueueFile() && HeadphoneResume.isAllowed(this),
-            )
+            ProfileSwitchGate.isSwitching ||
+                controllerInfo.declinesMediaButtonStart(
+                    hasMediaItem = ::player.isInitialized && player.currentMediaItem != null,
+                    canResume = queuePersistence.hasSavedQueueFile() && HeadphoneResume.isAllowed(this),
+                )
         }
 
     /**
@@ -1363,7 +1374,9 @@ class Media3MusicService : MediaLibraryService() {
      */
     @OptIn(UnstableApi::class)
     override fun onTaskRemoved(rootIntent: Intent?) {
-        val keepsPlaying = ::player.isInitialized && player.keepsPlayingOnTaskRemoved(isPlaybackOngoing())
+        val keepsPlaying =
+            ::player.isInitialized &&
+                player.keepsPlayingOnTaskRemoved(lifecyclePlaybackPreferences.settings.keepPlayingAfterSwipe, isPlaybackOngoing())
         PlayerDiagnostics.logInfo(TAG, "onTaskRemoved keepsPlaying=$keepsPlaying ${taskRemovalSnapshot()}")
         if (keepsPlaying) return
         pauseAllPlayersAndStopSelf()
@@ -1754,6 +1767,7 @@ class Media3MusicService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             isForPlayback: Boolean,
         ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+            if (ProfileSwitchGate.isSwitching) return Futures.immediateFailedFuture(IllegalStateException("Switching profile"))
             val result = SettableFuture.create<MediaSession.MediaItemsWithStartPosition>()
             lifecycleScope.launch {
                 val restored = withContext(Dispatchers.IO) { queuePersistence.restoreQueue() }?.let(::restoredMusicQueue)
@@ -1788,7 +1802,7 @@ class Media3MusicService : MediaLibraryService() {
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             params: MediaLibraryService.LibraryParams?,
-        ): ListenableFuture<LibraryResult<MediaItem>> = autoBrowser.root(browser, params)
+        ): ListenableFuture<LibraryResult<MediaItem>> = switchingError() ?: autoBrowser.root(browser, params)
 
         override fun onGetChildren(
             session: MediaLibrarySession,
@@ -1797,20 +1811,20 @@ class Media3MusicService : MediaLibraryService() {
             page: Int,
             pageSize: Int,
             params: MediaLibraryService.LibraryParams?,
-        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = autoBrowser.children(parentId, params)
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = switchingError() ?: autoBrowser.children(parentId, params)
 
         override fun onGetItem(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             mediaId: String,
-        ): ListenableFuture<LibraryResult<MediaItem>> = autoBrowser.item(mediaId)
+        ): ListenableFuture<LibraryResult<MediaItem>> = switchingError() ?: autoBrowser.item(mediaId)
 
         override fun onSearch(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             query: String,
             params: MediaLibraryService.LibraryParams?,
-        ): ListenableFuture<LibraryResult<Void>> = autoBrowser.search(session, browser, query, params)
+        ): ListenableFuture<LibraryResult<Void>> = switchingError() ?: autoBrowser.search(session, browser, query, params)
 
         override fun onGetSearchResult(
             session: MediaLibrarySession,
@@ -1819,7 +1833,7 @@ class Media3MusicService : MediaLibraryService() {
             page: Int,
             pageSize: Int,
             params: MediaLibraryService.LibraryParams?,
-        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = autoBrowser.searchResult(query, params)
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = switchingError() ?: autoBrowser.searchResult(query, params)
 
         override fun onSetMediaItems(
             mediaSession: MediaSession,
@@ -1828,23 +1842,33 @@ class Media3MusicService : MediaLibraryService() {
             startIndex: Int,
             startPositionMs: Long,
         ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> =
-            autoBrowser.setMediaItems(mediaItems, startIndex, startPositionMs)
-                ?: super.onSetMediaItems(mediaSession, controller, mediaItems, startIndex, startPositionMs)
+            if (ProfileSwitchGate.isSwitching) {
+                Futures.immediateFailedFuture(IllegalStateException("Switching profile"))
+            } else {
+                autoBrowser.setMediaItems(mediaItems, startIndex, startPositionMs)
+                    ?: super.onSetMediaItems(mediaSession, controller, mediaItems, startIndex, startPositionMs)
+            }
 
         override fun onAddMediaItems(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
             mediaItems: List<MediaItem>,
         ): ListenableFuture<List<MediaItem>> =
-            autoBrowser.addMediaItems(mediaItems) ?: super.onAddMediaItems(mediaSession, controller, mediaItems)
+            if (ProfileSwitchGate.isSwitching) {
+                Futures.immediateFailedFuture(IllegalStateException("Switching profile"))
+            } else {
+                autoBrowser.addMediaItems(mediaItems) ?: super.onAddMediaItems(mediaSession, controller, mediaItems)
+            }
 
         override fun onConnect(
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
         ): MediaSession.ConnectionResult {
+            if (ProfileSwitchGate.isSwitching) return MediaSession.ConnectionResult.reject()
             // Music started from the car joins the app's queue, with its saving, radio and learning,
             // even when the app was never opened (#1221).
-            if (session.isAutoCompanionController(controller) || session.isAutomotiveController(controller)) {
+            if (session.isCar(controller)) {
+                MusicServiceState.carConnected()
                 io.github.aedev.flow.player.EnhancedMusicPlayerManager
                     .initialize(applicationContext, musicDownloads::isDownloaded)
             }
@@ -1861,6 +1885,37 @@ class Media3MusicService : MediaLibraryService() {
                 .setAvailableSessionCommands(validCommands)
                 .build()
         }
+
+        override fun onPostConnect(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+        ) {
+            // A car that was browsing the previous profile may keep showing its tabs until told they changed.
+            if (session.isCar(controller) && ActiveProfile.get(this@Media3MusicService).afterSwitch &&
+                carTreeRefreshed.compareAndSet(false, true)
+            ) {
+                AutoBrowseTree.TABS.forEach { mediaLibrarySession.notifyChildrenChanged(it, Int.MAX_VALUE, null) }
+            }
+        }
+
+        override fun onDisconnected(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+        ) {
+            if (session.isCar(controller)) MusicServiceState.carDisconnected()
+        }
+
+        private fun MediaSession.isCar(controller: MediaSession.ControllerInfo) =
+            isAutoCompanionController(controller) || isAutomotiveController(controller)
+
+        private fun <V : Any> switchingError(): ListenableFuture<LibraryResult<V>>? =
+            if (ProfileSwitchGate.isSwitching) {
+                Futures.immediateFuture(
+                    LibraryResult.ofError<V>(SessionError.ERROR_SESSION_DISCONNECTED),
+                )
+            } else {
+                null
+            }
 
         override fun onCustomCommand(
             session: MediaSession,

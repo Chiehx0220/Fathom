@@ -66,6 +66,7 @@ fun CategoriesScreen(
     viewModel: CategoriesViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val shelves by viewModel.visibleShelves.collectAsStateWithLifecycle()
     val trendingRegion by viewModel.trendingRegion.collectAsStateWithLifecycle()
     val pagingItems = viewModel.gridItems.collectAsLazyPagingItems()
     var showRegionDialog by rememberSaveable { mutableStateOf(false) }
@@ -187,7 +188,7 @@ fun CategoriesScreen(
 
                     else -> {
                         CategoryShelfPage(
-                            shelves = uiState.shelves,
+                            shelves = shelves,
                             isLoading = uiState.isLoading,
                             listState = shelfState,
                             columnPreference = columnPreference,

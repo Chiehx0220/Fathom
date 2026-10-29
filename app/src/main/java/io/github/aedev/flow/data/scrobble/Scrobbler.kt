@@ -11,6 +11,7 @@ import io.github.aedev.flow.network.ProxyAwareClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,8 +29,13 @@ class Scrobbler
         private val store: ScrobbleStore,
         private val privacyGate: PrivacyGate,
     ) {
-        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        private val work = SupervisorJob()
+        private val scope = CoroutineScope(work + Dispatchers.IO)
         private val http = ProxyAwareClient()
+
+        /** Waits for listens and loves still being queued, before a profile switch restarts the process. */
+        suspend fun awaitWrites() = work.children.toList().joinAll()
+
         private val lastFm = AudioscrobblerClient(AudioscrobblerClient.LASTFM_URL, http::get)
         private val libreFm = AudioscrobblerClient(AudioscrobblerClient.LIBREFM_URL, http::get)
         private val listenBrainz = ListenBrainzClient(http::get)

@@ -3,6 +3,7 @@ package io.github.aedev.flow.ui.screens.player
 import android.content.Context
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.notification.UpcomingReminder
 import io.github.aedev.flow.notification.UpcomingVideoReminderWorker
 import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.player.error.PlayerDiagnostics
@@ -131,6 +132,9 @@ internal class UpcomingPremiereController(
             val enableReminder = !state.isUpcomingReminderSet
             playerPreferences.setUpcomingVideoReminder(video.id, enableReminder)
             if (enableReminder) {
+                playerPreferences.saveUpcomingReminder(
+                    UpcomingReminder(video.id, releaseTimeMs, video.title, video.channelName, video.thumbnailUrl),
+                )
                 UpcomingVideoReminderWorker.scheduleReminder(
                     context = context,
                     videoId = video.id,

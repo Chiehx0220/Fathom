@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -13,7 +14,10 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.searchDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "search_history")
+private val Context.searchDataStore: DataStore<Preferences> by safePreferencesDataStore(
+    name = "search_history",
+    scope = StoreScope.PROFILE_LIBRARY,
+)
 
 data class SearchHistoryItem(
     val id: String = UUID.randomUUID().toString(),

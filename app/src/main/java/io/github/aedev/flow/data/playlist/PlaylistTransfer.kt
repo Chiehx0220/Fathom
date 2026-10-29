@@ -17,7 +17,7 @@ import javax.inject.Singleton
 private const val SHARE_DIR = "playlists"
 
 // Far above any real playlist (5,000 videos is about 2.5 MB), low enough that a wrong file can't exhaust memory.
-private const val MAX_FILE_BYTES = 16L * 1024 * 1024
+internal const val PLAYLIST_FILE_MAX_BYTES = 16L * 1024 * 1024
 
 /** What an import did. */
 sealed interface PlaylistImport {
@@ -117,7 +117,7 @@ class PlaylistTransfer
                 val read = read(buffer)
                 if (read < 0) break
                 total += read
-                if (total > MAX_FILE_BYTES) return null
+                if (total > PLAYLIST_FILE_MAX_BYTES) return null
                 out.write(buffer, 0, read)
             }
             return out.toString(Charsets.UTF_8.name())

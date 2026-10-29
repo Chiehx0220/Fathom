@@ -3,9 +3,11 @@ package io.github.aedev.flow.data.recommendation
 import android.content.Context
 import android.util.Log
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
-import androidx.datastore.dataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.profile.ProfileFiles
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -55,13 +57,17 @@ class BlockedChannelNameStore
             }
         }
 
-        private val Context.blockedNamesDataStore: DataStore<Index>
-            by dataStore(fileName = "flow_blocked_channel_names_v1.json", serializer = IndexSerializer)
+        private val blockedNamesDataStore: DataStore<Index> by lazy {
+            DataStoreFactory.create(
+                serializer = IndexSerializer,
+                produceFile = { ProfileFiles.dataStore(appContext, StoreScope.PROFILE_PRIVATE, "flow_blocked_channel_names_v1.json") },
+            )
+        }
 
         suspend fun names(): Map<String, String> =
             withContext(Dispatchers.IO) {
                 runCatching {
-                    appContext.blockedNamesDataStore.data
+                    blockedNamesDataStore.data
                         .first()
                         .names
                 }.getOrDefault(emptyMap())
@@ -86,7 +92,7 @@ class BlockedChannelNameStore
         private suspend fun update(transform: (Map<String, String>) -> Map<String, String>) =
             withContext(Dispatchers.IO) {
                 runCatching {
-                    appContext.blockedNamesDataStore.updateData { index -> Index(transform(index.names)) }
+                    blockedNamesDataStore.updateData { index -> Index(transform(index.names)) }
                 }.onFailure { Log.e(TAG, "Failed to update blocked channel names", it) }
             }
     }

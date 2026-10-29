@@ -5,11 +5,15 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /** Shared with the equalizer store: one file may only ever have one DataStore instance. */
-internal val Context.audioSettingsDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "audio_settings")
+internal val Context.audioSettingsDataStore: DataStore<Preferences> by safePreferencesDataStore(
+    name = "audio_settings",
+    scope = StoreScope.PROFILE_SETTINGS,
+)
 
 class AudioSettingsPersistence private constructor(
     private val context: Context,

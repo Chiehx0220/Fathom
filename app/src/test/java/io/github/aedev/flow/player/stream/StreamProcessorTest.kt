@@ -171,4 +171,26 @@ class StreamProcessorTest {
         assertFalse(StreamProcessor.overridesDefaultAudioTrack(null))
         assertFalse(StreamProcessor.overridesDefaultAudioTrack(audioStream(null, trackType = null)))
     }
+
+    @Test
+    fun `cast audio follows the playing track, not the first dub at the same bitrate`() {
+        val raw =
+            listOf(
+                audioStream("ar.3", "Arabic"),
+                audioStream("en.4", "English original"),
+                audioStream("es.3", "Spanish"),
+                audioStream("es.3", "Spanish", bitrate = 50_000),
+            )
+
+        assertEquals(listOf("es.3", "es.3"), StreamProcessor.streamsOfTrack(raw, audioStream("es.3", "Spanish")).map { it.audioTrackId })
+        assertEquals(listOf("en.4"), StreamProcessor.streamsOfTrack(raw, null).map { it.audioTrackId })
+        assertEquals(listOf("en.4"), StreamProcessor.streamsOfTrack(raw, audioStream("fr.3", "French")).map { it.audioTrackId })
+    }
+
+    @Test
+    fun `cast audio without track identity is passed through`() {
+        val raw = listOf(audioStream(null), audioStream(null, bitrate = 50_000))
+
+        assertEquals(raw, StreamProcessor.streamsOfTrack(raw, null))
+    }
 }

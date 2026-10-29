@@ -34,10 +34,12 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.stream.AudioStream
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
 import kotlin.math.pow
 
 @OptIn(UnstableApi::class)
@@ -94,6 +96,7 @@ object EnhancedMusicPlayerManager {
 
     private var retryCount = 0
     private const val MAX_RETRIES = 3
+    private const val STOP_COMMAND_TIMEOUT_MS = 1_500L
     private var positionUpdateJob: kotlinx.coroutines.Job? = null
 
     // Persistence
@@ -880,19 +883,23 @@ object EnhancedMusicPlayerManager {
      * Uses cached position from StateFlow for thread safety.
      */
     fun saveQueueNow() {
-        scope.launch(Dispatchers.IO) {
-            val currentQ = _queue.value
-            if (currentQ.isNotEmpty()) {
-                queuePersistence?.saveQueueImmediate(
-                    queue = currentQ,
-                    currentIndex = _currentQueueIndex.value,
-                    currentPosition = _currentPosition.value, // Use StateFlow for thread safety
-                    currentTrackId = _currentTrack.value?.videoId,
-                    shuffleEnabled = _shuffleEnabled.value,
-                    repeatMode = _repeatMode.value.savedCode,
-                    automix = _automixItems.value,
-                )
-            }
+        scope.launch(Dispatchers.IO) { persistQueueNow() }
+    }
+
+    /** [saveQueueNow], awaited: a profile switch saves the queue before the player stops and clears it. */
+    suspend fun persistQueueNow() {
+        queuePersistence?.cancelPendingSave()
+        val currentQ = _queue.value
+        if (currentQ.isNotEmpty()) {
+            queuePersistence?.saveQueueImmediate(
+                queue = currentQ,
+                currentIndex = _currentQueueIndex.value,
+                currentPosition = _currentPosition.value, // Use StateFlow for thread safety
+                currentTrackId = _currentTrack.value?.videoId,
+                shuffleEnabled = _shuffleEnabled.value,
+                repeatMode = _repeatMode.value.savedCode,
+                automix = _automixItems.value,
+            )
         }
     }
 
@@ -1166,6 +1173,28 @@ object EnhancedMusicPlayerManager {
             (player as? MediaController)?.let(Media3MusicService::requestStop)
         }
     }
+
+    /**
+     * Stops music for a profile switch and lets the service end. The service handles the stop first, then the
+     * controller is released, because Android keeps a service alive while a controller is bound to it.
+     */
+    suspend fun stopForProfileSwitch() =
+        withContext(Dispatchers.Main) {
+            val controller = player
+            controller?.pause()
+            controller?.stop()
+            controller?.clearMediaItems()
+            resetQueueState()
+            positionUpdateJob?.cancel()
+            (controller as? MediaController)?.let { connected ->
+                val stopped = Media3MusicService.requestStop(connected)
+                withContext(Dispatchers.IO) { runCatching { stopped.get(STOP_COMMAND_TIMEOUT_MS, TimeUnit.MILLISECONDS) } }
+            }
+            controllerFuture?.let(MediaController::releaseFuture)
+            controllerFuture = null
+            player = null
+            _playerInstance.value = null
+        }
 
     /** Called by the service once it has stopped itself, so the UI drops the track it showed. */
     fun onServiceStopped() {

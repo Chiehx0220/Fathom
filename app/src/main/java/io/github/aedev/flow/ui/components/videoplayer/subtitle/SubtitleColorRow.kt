@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -21,12 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
+import io.github.aedev.flow.ui.components.shared.FlowColorSwatch
+import io.github.aedev.flow.ui.components.shared.FlowColorSwatchDefaults
 
 /**
  * A labelled row of colour swatches ending in a custom one. The custom swatch wears the chosen
@@ -49,7 +49,7 @@ internal fun SubtitleColorRow(
         Text(label, style = MaterialTheme.typography.labelLarge)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             items(swatches) { color ->
-                ColorSwatch(
+                FlowColorSwatch(
                     color = color.copy(alpha = alpha),
                     selected = !isOff && sameRgb(selected, color),
                     onClick = { onSelect(color) },
@@ -57,42 +57,11 @@ internal fun SubtitleColorRow(
             }
             item {
                 if (isCustom) {
-                    ColorSwatch(color = selected.copy(alpha = alpha), selected = true, onClick = onCustom)
+                    FlowColorSwatch(color = selected.copy(alpha = alpha), selected = true, onClick = onCustom)
                 } else {
                     CustomSwatch(onClick = onCustom)
                 }
             }
-        }
-    }
-}
-
-/**
- * A swatch marks its selection with a check inside the colour rather than a ring around it: an
- * accent-coloured outline reads as decoration next to a row of colours.
- */
-@Composable
-private fun ColorSwatch(
-    color: Color,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .size(SwatchSize)
-                .clip(CircleShape)
-                .background(color)
-                .border(SwatchBorderWidth, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (selected) {
-            Icon(
-                imageVector = Icons.Rounded.Check,
-                contentDescription = null,
-                tint = if (color.luminance() > SWATCH_LUMINANCE_SPLIT) Color.Black else Color.White,
-                modifier = Modifier.size(SwatchIconSize),
-            )
         }
     }
 }
@@ -102,10 +71,10 @@ private fun CustomSwatch(onClick: () -> Unit) {
     Box(
         modifier =
             Modifier
-                .size(SwatchSize)
+                .size(FlowColorSwatchDefaults.Size)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                .border(SwatchBorderWidth, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                .border(FlowColorSwatchDefaults.BorderWidth, MaterialTheme.colorScheme.outlineVariant, CircleShape)
                 .selectable(selected = false, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -113,7 +82,7 @@ private fun CustomSwatch(onClick: () -> Unit) {
             imageVector = Icons.Rounded.Palette,
             contentDescription = stringResource(R.string.subtitle_custom_color),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(SwatchIconSize),
+            modifier = Modifier.size(FlowColorSwatchDefaults.IconSize),
         )
     }
 }
@@ -123,9 +92,5 @@ internal fun sameRgb(
     second: Color,
 ): Boolean = (first.toArgb() and RGB_MASK) == (second.toArgb() and RGB_MASK)
 
-private val SwatchSize = 42.dp
-private val SwatchBorderWidth = 1.dp
-private val SwatchIconSize = 20.dp
-private const val SWATCH_LUMINANCE_SPLIT = 0.5f
 private const val RGB_MASK = 0x00FFFFFF
 private const val MIN_SWATCH_ALPHA = 0.35f

@@ -80,6 +80,7 @@ internal class MusicCollectionDownloads(
                     title = details.title,
                     author = details.author.takeIf { it.isNotBlank() },
                     thumbnailUrl = details.thumbnailUrl.takeIf { it.isNotBlank() },
+                    ownPlaylist = kind == MusicCollectionKind.OWN,
                 ),
             tracks = details.tracks,
             complete = details.continuation == null,

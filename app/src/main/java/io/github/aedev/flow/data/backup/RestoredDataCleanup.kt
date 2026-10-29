@@ -1,5 +1,6 @@
 package io.github.aedev.flow.data.backup
 
+import io.github.aedev.flow.data.profile.ProfileFolders
 import java.io.File
 
 /**
@@ -24,6 +25,15 @@ internal object RestoredDataCleanup {
             "sync_music_brain_crdt.preferences_pb",
         )
     private const val SYNC_LEDGER_PREFIX = "sync_ledger_"
+
+    /**
+     * Deletes everything of the profiles the restored registry doesn't list, so nothing of a profile that is gone
+     * can resurface, and returns what it removed. Default's files are never touched.
+     */
+    fun deleteUnlistedProfiles(
+        folders: ProfileFolders,
+        profileIds: Set<String>,
+    ): List<String> = (folders.idsOnDisk() - profileIds).flatMap(folders::delete).map { it.name }
 
     /** Deletes those files under [filesDir] and returns the names it removed. */
     fun deleteInstallOnlyFiles(filesDir: File): List<String> {

@@ -8,11 +8,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStoreFile
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.data.music.model.withTypedArtists
+import io.github.aedev.flow.data.profile.ProfileFiles
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,7 +26,10 @@ import kotlinx.coroutines.sync.withLock
 
 private const val QUEUE_STORE_NAME = "music_queue"
 
-private val Context.queueDataStore: DataStore<Preferences> by safePreferencesDataStore(name = QUEUE_STORE_NAME)
+private val Context.queueDataStore: DataStore<Preferences> by safePreferencesDataStore(
+    name = QUEUE_STORE_NAME,
+    scope = StoreScope.PROFILE_PRIVATE,
+)
 
 class QueuePersistence private constructor(
     private val context: Context,
@@ -93,6 +97,11 @@ class QueuePersistence private constructor(
                 delay(SAVE_DEBOUNCE_MS)
                 saveQueueImmediate(queue, currentIndex, currentPosition, currentTrackId, shuffleEnabled, repeatMode, automix)
             }
+    }
+
+    /** Drops a debounced save that an immediate save is about to supersede; it would write older state. */
+    fun cancelPendingSave() {
+        saveJob?.cancel()
     }
 
     /**
@@ -212,5 +221,5 @@ class QueuePersistence private constructor(
      * button that cold-starts the music service needs this answer on the main thread, before any read
      * of the store could finish.
      */
-    fun hasSavedQueueFile(): Boolean = context.preferencesDataStoreFile(QUEUE_STORE_NAME).exists()
+    fun hasSavedQueueFile(): Boolean = ProfileFiles.preferences(context, StoreScope.PROFILE_PRIVATE, QUEUE_STORE_NAME).exists()
 }

@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.profile.StoreScope
 import io.github.aedev.flow.ui.theme.AppFont
 import io.github.aedev.flow.ui.theme.appFontFamily
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +25,10 @@ data class AppFontSelection(
     val customName: String? = null,
 )
 
-private val Context.appFontDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "app_font")
+private val Context.appFontDataStore: DataStore<Preferences> by safePreferencesDataStore(
+    name = "app_font",
+    scope = StoreScope.PROFILE_SETTINGS,
+)
 
 /** The app font choice. The custom font file itself lives in [CustomFontStore] and is not backed up. */
 class AppFontPreferences

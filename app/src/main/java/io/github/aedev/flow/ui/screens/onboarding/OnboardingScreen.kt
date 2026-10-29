@@ -30,11 +30,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.aedev.flow.R
 import io.github.aedev.flow.data.backup.BackupOperation
 import io.github.aedev.flow.data.backup.ImportKind
+import io.github.aedev.flow.ui.components.shared.FlowConfirmDialog
 import io.github.aedev.flow.ui.components.shared.FlowMaxContentWidth
 import io.github.aedev.flow.ui.utils.LocalWindowSizeClass
 import io.github.aedev.flow.ui.utils.isExpandedWidth
@@ -55,6 +58,16 @@ fun OnboardingScreen(
 
     LaunchedEffect(state.completed) { if (state.completed) onComplete() }
     BackHandler(enabled = state.step.index > 0) { viewModel.back() }
+
+    (importOperation as? BackupOperation.Confirming)?.let { confirming ->
+        FlowConfirmDialog(
+            title = stringResource(R.string.master_restore_confirm_title),
+            text = confirming.message,
+            confirmLabel = stringResource(R.string.master_restore_confirm),
+            onConfirm = viewModel::confirmImport,
+            onDismiss = viewModel::cancelImport,
+        )
+    }
 
     LaunchedEffect(importOperation) {
         val message =

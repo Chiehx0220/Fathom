@@ -74,6 +74,8 @@ internal fun ShortsMetadataOverlay(
     onSubscribeToggle: () -> Unit,
     onDescriptionClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isNotificationsEnabled: Boolean = false,
+    onNotificationChange: ((Boolean) -> Unit)? = null,
 ) {
     Column(modifier = modifier) {
         Row(
@@ -114,6 +116,8 @@ internal fun ShortsMetadataOverlay(
                         isSubscribed = isSubscribed,
                         onSubscribeClick = onSubscribeToggle,
                         onUnsubscribeClick = onSubscribeToggle,
+                        isNotificationsEnabled = isNotificationsEnabled,
+                        onNotificationChange = onNotificationChange,
                         size = FlowSubscribeButtonSize.Compact,
                     )
                 }

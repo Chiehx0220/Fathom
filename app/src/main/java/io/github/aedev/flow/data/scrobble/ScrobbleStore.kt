@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.KeystoreSecretBox
 import io.github.aedev.flow.data.local.safePreferencesDataStore
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -18,7 +19,7 @@ import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.scrobbleDataStore by safePreferencesDataStore(name = "scrobbling")
+private val Context.scrobbleDataStore by safePreferencesDataStore(name = "scrobbling", scope = StoreScope.PROFILE_PRIVATE)
 
 data class ScrobbleSettings(
     val accounts: Map<ScrobbleService, ScrobbleAccount> = emptyMap(),

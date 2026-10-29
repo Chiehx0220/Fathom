@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.aedev.flow.data.local.safePreferencesDataStore
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.flow.first
 
 /** A lookup answered before: the loop, or null when the album has none, and when it was asked. */
@@ -23,7 +24,7 @@ internal interface AnimatedArtworkCache {
     suspend fun remove(key: String)
 }
 
-private val Context.animatedArtworkStore by safePreferencesDataStore(name = "animated_artwork")
+private val Context.animatedArtworkStore by safePreferencesDataStore(name = "animated_artwork", scope = StoreScope.DEVICE)
 
 /** Answers kept across launches, so the service is asked about an album once in [MAX_ENTRIES]. */
 internal class DataStoreAnimatedArtworkCache(

@@ -7,13 +7,14 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.safePreferencesDataStore
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.localMediaStore by safePreferencesDataStore(name = "local_media")
+private val Context.localMediaStore by safePreferencesDataStore(name = "local_media", scope = StoreScope.DEVICE)
 
 /** What the local library hides, and how it is laid out. Defaults match what it always hid. */
 data class LocalMediaSettings(

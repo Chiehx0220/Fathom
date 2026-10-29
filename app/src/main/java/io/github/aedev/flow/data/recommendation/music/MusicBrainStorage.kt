@@ -10,8 +10,10 @@ import android.content.Context
 import android.util.Log
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
-import androidx.datastore.dataStore
+import io.github.aedev.flow.data.profile.ProfileFiles
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -96,18 +98,20 @@ internal class MusicBrainStorage(
         }
     }
 
-    private val Context.musicBrainDataStore: DataStore<SerializableMusicBrain> by dataStore(
-        fileName = FILE_NAME,
-        serializer = BrainSerializer,
-        corruptionHandler =
-            androidx.datastore.core.handlers
-                .ReplaceFileCorruptionHandler { SerializableMusicBrain() },
-    )
+    private val musicBrainDataStore: DataStore<SerializableMusicBrain> by lazy {
+        DataStoreFactory.create(
+            serializer = BrainSerializer,
+            corruptionHandler =
+                androidx.datastore.core.handlers
+                    .ReplaceFileCorruptionHandler { SerializableMusicBrain() },
+            produceFile = { ProfileFiles.dataStore(appContext, StoreScope.PROFILE_PRIVATE, FILE_NAME) },
+        )
+    }
 
     suspend fun save(brain: MusicBrain) =
         withContext(Dispatchers.IO) {
             try {
-                appContext.musicBrainDataStore.updateData { brain.toSerializable() }
+                musicBrainDataStore.updateData { brain.toSerializable() }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to persist music brain", e)
             }
@@ -116,7 +120,7 @@ internal class MusicBrainStorage(
     suspend fun load(): MusicBrain? =
         withContext(Dispatchers.IO) {
             try {
-                val stored = appContext.musicBrainDataStore.data.first()
+                val stored = musicBrainDataStore.data.first()
                 if (stored.hasAnyState()) stored.toMusicBrain() else null
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load music brain", e)
@@ -126,7 +130,7 @@ internal class MusicBrainStorage(
 
     suspend fun exportToStream(out: OutputStream) =
         withContext(Dispatchers.IO) {
-            val stored = appContext.musicBrainDataStore.data.first()
+            val stored = musicBrainDataStore.data.first()
             out.write(exportJson.encodeToString(SerializableMusicBrain.serializer(), stored).encodeToByteArray())
         }
 

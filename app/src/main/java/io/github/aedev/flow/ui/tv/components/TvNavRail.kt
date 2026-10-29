@@ -47,7 +47,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
-import io.github.aedev.flow.ui.components.LauncherIconImage
 import io.github.aedev.flow.ui.components.layout.navigation.FlowTab
 import io.github.aedev.flow.ui.components.layout.navigation.icon
 import io.github.aedev.flow.ui.tv.navigation.TV_SETTINGS_ROUTE
@@ -72,6 +71,7 @@ fun TvNavRail(
     modifier: Modifier = Modifier,
     nowPlayingTitle: String? = null,
     onOpenNowPlaying: () -> Unit = {},
+    profile: @Composable (expanded: Boolean) -> Unit,
 ) {
     val state = rememberWideNavigationRailState()
     var hasFocus by remember { mutableStateOf(false) }
@@ -99,7 +99,7 @@ fun TvNavRail(
                 }.focusGroup(),
         state = state,
         colors = WideNavigationRailDefaults.colors(containerColor = if (expanded) colors.surfaceContainer else colors.background),
-        header = { TvRailLogo() },
+        header = { profile(expanded) },
         arrangement = LastItemAtBottom,
     ) {
         tabs.forEach { tab ->
@@ -183,12 +183,6 @@ private fun TvRailItem(
             }
         }
     }
-}
-
-/** The launcher icon. */
-@Composable
-private fun TvRailLogo() {
-    LauncherIconImage(Modifier.padding(start = 20.dp, top = 8.dp, bottom = 8.dp).size(32.dp))
 }
 
 /** Keeps a long song title from widening the open rail past M3's wide-rail width. */

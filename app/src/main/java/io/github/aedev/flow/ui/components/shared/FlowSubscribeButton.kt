@@ -141,7 +141,9 @@ fun FlowSubscribeButton(
             SplitButtonLayout(
                 leadingButton = {
                     SplitButtonDefaults.TonalLeadingButton(
-                        onClick = { onNotificationChange?.invoke(!isNotificationsEnabled) },
+                        onClick = {
+                            if (onNotificationChange != null) onNotificationChange(!isNotificationsEnabled) else menuExpanded = true
+                        },
                         colors = tonalColors,
                         contentPadding =
                             if (compact) {
@@ -160,18 +162,22 @@ fun FlowSubscribeButton(
                                     },
                                 ),
                     ) {
-                        Icon(
-                            imageVector =
-                                if (isNotificationsEnabled) {
-                                    Icons.Rounded.NotificationsActive
-                                } else {
-                                    Icons.Rounded.NotificationsOff
-                                },
-                            contentDescription = if (showSubscribedLabel) null else stringResource(R.string.notifications),
-                            modifier = Modifier.size(leadingIconSize),
-                        )
+                        // A bell nothing listens to would look like a broken control (#1467), so a
+                        // caller that cannot change notifications shows the label alone.
+                        if (onNotificationChange != null || !showSubscribedLabel) {
+                            Icon(
+                                imageVector =
+                                    if (isNotificationsEnabled) {
+                                        Icons.Rounded.NotificationsActive
+                                    } else {
+                                        Icons.Rounded.NotificationsOff
+                                    },
+                                contentDescription = if (showSubscribedLabel) null else stringResource(R.string.notifications),
+                                modifier = Modifier.size(leadingIconSize),
+                            )
+                        }
                         if (showSubscribedLabel) {
-                            Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
+                            if (onNotificationChange != null) Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
                             Text(text = stringResource(R.string.subscribed), maxLines = 1)
                         }
                     }

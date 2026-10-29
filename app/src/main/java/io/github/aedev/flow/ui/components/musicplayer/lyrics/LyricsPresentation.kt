@@ -172,10 +172,10 @@ internal fun lyricsPresentation(
     val looks =
         lines.indices.map { i ->
             when (sides?.getOrNull(i)) {
-                DuetSide.START -> LyricsLineLook(baseTextSize, LINE_SPACING, primary, TextAlign.Start)
-                DuetSide.END -> LyricsLineLook(baseTextSize, LINE_SPACING, secondary, TextAlign.End)
-                DuetSide.BOTH -> LyricsLineLook(baseTextSize, LINE_SPACING, primary, TextAlign.Center)
-                null -> LyricsLineLook(baseTextSize, LINE_SPACING, primary, userAlign)
+                DuetSide.START -> LyricsLineLook(baseTextSize, LINE_SPACING, primary, TextAlign.Start, backdrop)
+                DuetSide.END -> LyricsLineLook(baseTextSize, LINE_SPACING, secondary, TextAlign.End, backdrop)
+                DuetSide.BOTH -> LyricsLineLook(baseTextSize, LINE_SPACING, primary, TextAlign.Center, backdrop)
+                null -> LyricsLineLook(baseTextSize, LINE_SPACING, primary, userAlign, backdrop)
             }
         }
     return LyricsPresentation(looks, nextMainLineTimes(lines), romanizations, showTranslation)

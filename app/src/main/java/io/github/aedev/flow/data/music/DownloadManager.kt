@@ -19,6 +19,7 @@ import io.github.aedev.flow.data.local.safePreferencesDataStore
 import io.github.aedev.flow.data.music.model.MusicArtist
 import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.data.music.model.withTypedArtists
+import io.github.aedev.flow.data.profile.StoreScope
 import io.github.aedev.flow.data.video.VideoDownloadManager
 import io.github.aedev.flow.data.video.downloader.request.StoredArtist
 import io.github.aedev.flow.data.video.downloader.request.toDownloadRequest
@@ -38,7 +39,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.downloadDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "downloads")
+private val Context.downloadDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "downloads", scope = StoreScope.DEVICE)
 
 data class DownloadedTrack(
     val track: MusicTrack,

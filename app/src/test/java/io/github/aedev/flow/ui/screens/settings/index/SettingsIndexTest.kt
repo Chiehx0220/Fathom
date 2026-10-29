@@ -19,9 +19,10 @@ class SettingsIndexTest {
     }
 
     @Test
-    fun `every page but the custom theme editor has an entry`() {
+    fun `every page but the editors, which need something to open, has an entry`() {
         val pages = all.mapNotNull(DestinationIndex::destinationOf).toSet()
-        assertEquals(SettingsDestination.entries.toSet() - SettingsDestination.HOME - SettingsDestination.CUSTOM_THEME_EDIT, pages)
+        val editors = setOf(SettingsDestination.CUSTOM_THEME_EDIT, SettingsDestination.PROFILE_EDIT)
+        assertEquals(SettingsDestination.entries.toSet() - SettingsDestination.HOME - editors, pages)
     }
 
     @Test
@@ -74,9 +75,9 @@ class SettingsIndexTest {
     }
 
     @Test
-    fun `a phone reaches every option but the remote guide`() {
+    fun `a phone reaches every option but the TV-only ones`() {
         val unreachable = all.filterNot { DestinationIndex.isReachable(it, tv = false) }
-        assertEquals(listOf(DestinationIndex.entry(SettingsDestination.REMOTE_GUIDE)), unreachable)
+        assertEquals(listOf(DestinationIndex.entry(SettingsDestination.REMOTE_GUIDE), ProfilesIndex.askWhosWatching), unreachable)
     }
 
     @Test

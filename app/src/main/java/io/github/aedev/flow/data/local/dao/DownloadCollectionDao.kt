@@ -84,6 +84,9 @@ interface DownloadCollectionDao {
     @Query("DELETE FROM download_collections WHERE id = :id")
     suspend fun deleteCollection(id: String)
 
+    @Query("DELETE FROM download_collections WHERE substr(id, 1, length(:prefix)) = :prefix")
+    suspend fun deleteCollectionsStartingWith(prefix: String)
+
     @Query("SELECT folderName FROM download_collections")
     suspend fun folderNames(): List<String>
 

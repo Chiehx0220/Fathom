@@ -7,11 +7,13 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.aedev.flow.data.local.safePreferencesDataStore
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 private val Context.discordDataStore: DataStore<Preferences> by safePreferencesDataStore(
     name = "discord_presence",
+    scope = StoreScope.PROFILE_PRIVATE,
 )
 
 class DiscordPreferences(
@@ -19,13 +21,15 @@ class DiscordPreferences(
 ) {
     constructor(context: Context) : this(context.applicationContext.discordDataStore)
 
-    val enabled: Flow<Boolean> = dataStore.data.map { preferences ->
-        preferences[ENABLED] ?: false
-    }
+    val enabled: Flow<Boolean> =
+        dataStore.data.map { preferences ->
+            preferences[ENABLED] ?: false
+        }
 
-    val linkedAccountLabel: Flow<String?> = dataStore.data.map { preferences ->
-        preferences[LINKED_ACCOUNT_LABEL]?.takeIf(String::isNotBlank)
-    }
+    val linkedAccountLabel: Flow<String?> =
+        dataStore.data.map { preferences ->
+            preferences[LINKED_ACCOUNT_LABEL]?.takeIf(String::isNotBlank)
+        }
 
     suspend fun setEnabled(enabled: Boolean) {
         dataStore.edit { preferences -> preferences[ENABLED] = enabled }

@@ -20,6 +20,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -543,12 +545,30 @@ class MusicBrainEngine
             pendingSaveJob =
                 saveScope.launch {
                     delay(SAVE_DEBOUNCE_MS)
-                    mutex.withLock {
-                        storage.save(brain)
-                        statsStorage.save(ledger)
-                    }
+                    saveNow()
                 }
         }
+
+        /**
+         * Waits for listen sessions still being learned, then writes a pending save now, before a profile switch
+         * restarts the process. Sessions are learned first because each one schedules its own save.
+         */
+        suspend fun awaitWrites() {
+            saveScope.coroutineContext.job.children
+                .filter { it !== pendingSaveJob }
+                .toList()
+                .joinAll()
+            val pending = pendingSaveJob ?: return
+            if (!pending.isActive) return
+            pending.cancel()
+            saveNow()
+        }
+
+        private suspend fun saveNow() =
+            mutex.withLock {
+                storage.save(brain)
+                statsStorage.save(ledger)
+            }
     }
 
 /** Primary-artist key for a UI track: browseId when known, lowercased name otherwise. */

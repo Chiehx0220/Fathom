@@ -2,8 +2,8 @@ package io.github.aedev.flow.ui.screens.settings
 
 import io.github.aedev.flow.data.backup.ExportKind
 import io.github.aedev.flow.data.local.LocalDataManager.AutoBackupFrequency
+import io.github.aedev.flow.notification.periodDays
 import io.github.aedev.flow.ui.screens.settings.backup.folderDisplayName
-import io.github.aedev.flow.ui.screens.settings.backup.periodDays
 import io.github.aedev.flow.ui.screens.settings.topics.unblockedSuggestions
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

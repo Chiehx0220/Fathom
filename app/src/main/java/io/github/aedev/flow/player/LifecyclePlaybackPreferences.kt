@@ -1,6 +1,7 @@
 package io.github.aedev.flow.player
 
 import io.github.aedev.flow.data.local.DEFAULT_BACKGROUND_PLAY_ENABLED
+import io.github.aedev.flow.data.local.DEFAULT_KEEP_PLAYING_AFTER_SWIPE
 import io.github.aedev.flow.data.local.PlayerPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -10,8 +11,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * The playback preferences read synchronously: by the activity lifecycle callbacks, and by opening a
- * video, which has to know whether to start before any stream is handed to the player.
+ * The playback preferences read synchronously: by the activity lifecycle callbacks, by opening a
+ * video, which has to know whether to start before any stream is handed to the player, and by the
+ * media services when Flow is swiped away, which can happen after the activity is gone.
  */
 data class LifecyclePlaybackSettings(
     val autoPipEnabled: Boolean = false,
@@ -20,6 +22,7 @@ data class LifecyclePlaybackSettings(
     val shortsPipEnabled: Boolean = false,
     val startVideosPaused: Boolean = false,
     val openVideosFullscreen: Boolean = false,
+    val keepPlayingAfterSwipe: Boolean = DEFAULT_KEEP_PLAYING_AFTER_SWIPE,
 )
 
 /**
@@ -68,6 +71,11 @@ private fun PlayerPreferences.lifecyclePlaybackSettings(): Flow<LifecyclePlaybac
         },
         startVideosPaused,
         openVideosFullscreen,
-    ) { settings, startPaused, openFullscreen ->
-        settings.copy(startVideosPaused = startPaused, openVideosFullscreen = openFullscreen)
+        keepPlayingAfterSwipe,
+    ) { settings, startPaused, openFullscreen, keepPlaying ->
+        settings.copy(
+            startVideosPaused = startPaused,
+            openVideosFullscreen = openFullscreen,
+            keepPlayingAfterSwipe = keepPlaying,
+        )
     }

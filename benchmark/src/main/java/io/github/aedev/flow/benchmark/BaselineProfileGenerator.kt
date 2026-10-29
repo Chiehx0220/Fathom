@@ -14,10 +14,10 @@ import org.junit.Test
  *
  * Run with a device connected (MIUI/HyperOS needs both "USB debugging (Security settings)" and
  * "Install via USB" enabled in Developer options):
- *   ./gradlew :app:generateGithubReleaseBaselineProfile
+ *   ANDROID_SERIAL=<device> ./gradlew :app:generateBaselineProfile --no-configuration-cache
  *
  * Or on the managed emulator, which needs neither:
- *   ./gradlew :app:generateGithubReleaseBaselineProfile -PbaselineProfileEmulator=true
+ *   ./gradlew :app:generateBaselineProfile --no-configuration-cache -PbaselineProfileEmulator=true
  *
  * Output lands in app/src/main/generated/baselineProfiles, which every shipped variant reads, and
  * should be committed.

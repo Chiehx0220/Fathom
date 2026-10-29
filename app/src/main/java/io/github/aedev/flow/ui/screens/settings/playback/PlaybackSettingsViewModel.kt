@@ -4,6 +4,7 @@ import android.content.Context
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.DEFAULT_BACKGROUND_PLAY_ENABLED
+import io.github.aedev.flow.data.local.DEFAULT_KEEP_PLAYING_AFTER_SWIPE
 import io.github.aedev.flow.data.local.DEFAULT_SPEED_SWIPE_STEP
 import io.github.aedev.flow.data.local.DoubleTapSeekZone
 import io.github.aedev.flow.data.local.PlayerOverlayPreferences
@@ -35,6 +36,7 @@ class PlaybackSettingsViewModel
         private val overlay = PlayerOverlayPreferences()
 
         val backgroundPlay = preferences.backgroundPlayEnabled.asState(DEFAULT_BACKGROUND_PLAY_ENABLED)
+        val keepPlayingAfterSwipe = preferences.keepPlayingAfterSwipe.asState(DEFAULT_KEEP_PLAYING_AFTER_SWIPE)
         val autoplay = preferences.autoplayEnabled.asState(true)
         val startPaused = preferences.startVideosPaused.asState(false)
         val openFullscreen = preferences.openVideosFullscreen.asState(false)
@@ -117,6 +119,8 @@ class PlaybackSettingsViewModel
             }.asState(LyricsProviderOrder.DEFAULT.map { LyricsProviderState(it, true) })
 
         fun setBackgroundPlay(value: Boolean) = write { preferences.setBackgroundPlayEnabled(value) }
+
+        fun setKeepPlayingAfterSwipe(value: Boolean) = write { preferences.setKeepPlayingAfterSwipe(value) }
 
         fun setResumeFromHeadphones(value: Boolean) {
             if (!value) HeadphoneResume.set(context, allowed = false)

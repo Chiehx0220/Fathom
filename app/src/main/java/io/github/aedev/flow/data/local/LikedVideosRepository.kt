@@ -6,13 +6,17 @@ import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-internal val Context.likedVideosDataStore: DataStore<Preferences> by safePreferencesDataStore(name = "liked_videos")
+internal val Context.likedVideosDataStore: DataStore<Preferences> by safePreferencesDataStore(
+    name = "liked_videos",
+    scope = StoreScope.PROFILE_LIBRARY,
+)
 
 class LikedVideosRepository private constructor(
     private val dataStore: DataStore<Preferences>,

@@ -111,6 +111,11 @@ fun SyncScreen(
     hostOnly: Boolean = false,
     viewModel: SyncViewModel = hiltViewModel(),
 ) {
+    if (!viewModel.syncsHere) {
+        val name by viewModel.syncProfileName.collectAsStateWithLifecycle()
+        SyncDefaultOnly(syncProfileName = name, onBack = onBack)
+        return
+    }
     val onNavigateBack = onBack ?: {}
     val state by viewModel.state.collectAsStateWithLifecycle()
     var step by remember { mutableStateOf(Step.CHOOSER) }

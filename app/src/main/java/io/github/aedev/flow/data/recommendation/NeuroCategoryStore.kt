@@ -13,8 +13,10 @@ package io.github.aedev.flow.data.recommendation
 import android.content.Context
 import android.util.Log
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
-import androidx.datastore.dataStore
+import io.github.aedev.flow.data.profile.ProfileFiles
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -68,11 +70,12 @@ internal class NeuroCategoryStore(
         }
     }
 
-    private val Context.categoryDataStore: DataStore<CategoryIndex>
-        by dataStore(
-            fileName = "flow_neuro_categories_v1.json",
+    private val categoryDataStore: DataStore<CategoryIndex> by lazy {
+        DataStoreFactory.create(
             serializer = CategorySerializer,
+            produceFile = { ProfileFiles.dataStore(appContext, StoreScope.PROFILE_PRIVATE, "flow_neuro_categories_v1.json") },
         )
+    }
 
     @Volatile
     private var channels: Map<String, StoredChannel> = emptyMap()
@@ -84,7 +87,7 @@ internal class NeuroCategoryStore(
         withContext(Dispatchers.IO) {
             try {
                 channels =
-                    appContext.categoryDataStore.data
+                    categoryDataStore.data
                         .first()
                         .channels
             } catch (e: Exception) {
@@ -138,7 +141,7 @@ internal class NeuroCategoryStore(
         withContext(Dispatchers.IO) {
             try {
                 val snapshot = channels
-                appContext.categoryDataStore.updateData { CategoryIndex(snapshot) }
+                categoryDataStore.updateData { CategoryIndex(snapshot) }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to persist category index", e)
             }
@@ -150,7 +153,7 @@ internal class NeuroCategoryStore(
         dirty = false
         withContext(Dispatchers.IO) {
             try {
-                appContext.categoryDataStore.updateData { CategoryIndex() }
+                categoryDataStore.updateData { CategoryIndex() }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to clear category index", e)
             }

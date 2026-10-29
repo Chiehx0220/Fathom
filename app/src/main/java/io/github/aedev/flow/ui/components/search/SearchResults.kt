@@ -41,6 +41,8 @@ data class SearchResultActions(
     val dismissKeyboard: () -> Unit,
     val isSubscribed: (String) -> Boolean = { false },
     val onSubscribeToggle: (Channel) -> Unit = {},
+    val isNotifying: (String) -> Boolean = { false },
+    val onNotificationChange: (Channel, Boolean) -> Unit = { _, _ -> },
 )
 
 @Composable
@@ -92,6 +94,8 @@ fun SearchResults(
                         channel = item.channel,
                         isSubscribed = actions.isSubscribed(item.channel.id),
                         onSubscribeToggle = { actions.onSubscribeToggle(item.channel) },
+                        isNotificationsEnabled = actions.isNotifying(item.channel.id),
+                        onNotificationChange = { actions.onNotificationChange(item.channel, it) },
                         onClick = { actions.onChannelClick(item.channel) },
                         latestTitle = item.latestTitle,
                         latestVideos = item.latestVideos,

@@ -12,6 +12,7 @@ import io.github.aedev.flow.data.local.entity.SubscriptionFeedEntity
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.VideoCollaborator
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedMerger.preservingEnrichedMetadata
+import io.github.aedev.flow.di.ProfileDb
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,7 +55,7 @@ class SubscriptionFeedRepository
         private val subscriptionRepository: SubscriptionRepository,
         private val rssSubscriptionService: RssSubscriptionService,
         private val cacheDao: CacheDao,
-        private val database: AppDatabase,
+        @ProfileDb private val database: AppDatabase,
         private val playerPreferences: PlayerPreferences,
         private val collabIndex: ChannelCollabIndex,
     ) {

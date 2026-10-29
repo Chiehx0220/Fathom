@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.os.SystemClock
 import io.github.aedev.flow.R
-import java.lang.ref.WeakReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -13,8 +12,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -24,6 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import okhttp3.OkHttpClient
+import java.lang.ref.WeakReference
 
 object DiscordPresenceRuntime {
     private var scope: CoroutineScope? = null
@@ -36,30 +36,35 @@ object DiscordPresenceRuntime {
     private val isAccountLinkInProgress = MutableStateFlow(false)
     private val accountLinkMutex = Mutex()
 
-    private val unavailableState = DiscordSettingsState(
-        isAvailable = false,
-        isEnabled = false,
-        canEnable = false,
-        connectionState = DiscordConnectionState.UNAVAILABLE,
-        summary = DiscordSettingsSummary.UNAVAILABLE,
-        accountName = null,
-        errorMessage = null,
-    )
+    private val unavailableState =
+        DiscordSettingsState(
+            isAvailable = false,
+            isEnabled = false,
+            canEnable = false,
+            connectionState = DiscordConnectionState.UNAVAILABLE,
+            summary = DiscordSettingsSummary.UNAVAILABLE,
+            accountName = null,
+            errorMessage = null,
+        )
     private val _settingsState = MutableStateFlow(unavailableState)
     val settingsState: StateFlow<DiscordSettingsState> = _settingsState
 
     @Synchronized
-    fun initialize(context: Context, okHttpClient: OkHttpClient) {
+    fun initialize(
+        context: Context,
+        okHttpClient: OkHttpClient,
+    ) {
         if (scope != null) return
         val applicationContext = context.applicationContext
         val runtimeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val runtimePreferences = DiscordPreferences(applicationContext)
         val runtimeTokenStore = DiscordTokenStore(applicationContext)
-        val runtimeTransport = DiscordPlatformTransportFactory().create(
-            context = applicationContext,
-            okHttpClient = okHttpClient,
-            tokenStore = runtimeTokenStore,
-        )
+        val runtimeTransport =
+            DiscordPlatformTransportFactory().create(
+                context = applicationContext,
+                okHttpClient = okHttpClient,
+                tokenStore = runtimeTokenStore,
+            )
 
         scope = runtimeScope
         this.applicationContext = applicationContext
@@ -67,21 +72,22 @@ object DiscordPresenceRuntime {
         tokenStore = runtimeTokenStore
         transport = runtimeTransport
 
-        val state = combine(
-            runtimePreferences.enabled,
-            runtimePreferences.linkedAccountLabel,
-            runtimeTransport.connectionState,
-            runtimeTransport.linkedAccountName,
-            runtimeTransport.lastError,
-        ) { enabled, savedAccount, connection, liveAccount, error ->
-            deriveDiscordSettingsState(
-                preferenceEnabled = enabled,
-                transportAvailable = runtimeTransport.isAvailable,
-                connectionState = connection,
-                accountName = liveAccount ?: savedAccount,
-                errorMessage = error,
-            )
-        }.stateIn(runtimeScope, SharingStarted.Eagerly, unavailableState)
+        val state =
+            combine(
+                runtimePreferences.enabled,
+                runtimePreferences.linkedAccountLabel,
+                runtimeTransport.connectionState,
+                runtimeTransport.linkedAccountName,
+                runtimeTransport.lastError,
+            ) { enabled, savedAccount, connection, liveAccount, error ->
+                deriveDiscordSettingsState(
+                    preferenceEnabled = enabled,
+                    transportAvailable = runtimeTransport.isAvailable,
+                    connectionState = connection,
+                    accountName = liveAccount ?: savedAccount,
+                    errorMessage = error,
+                )
+            }.stateIn(runtimeScope, SharingStarted.Eagerly, unavailableState)
 
         runtimeScope.launch { state.collect { _settingsState.value = it } }
         runtimeScope.launch {
@@ -118,34 +124,38 @@ object DiscordPresenceRuntime {
         context: Context,
         transport: DiscordPresenceTransport,
     ) = coroutineScope {
-        val playback = DiscordPlaybackSource().playback.shareIn(
-            scope = this,
-            started = SharingStarted.Eagerly,
-            replay = 1,
-        )
-        val backgroundPlaybackActive = playback
-            .map { snapshot -> snapshot != null }
-            .delayDiscordPlaybackInactive(BACKGROUND_INACTIVE_DISCONNECT_DELAY_MS)
-            .stateIn(
+        val playback =
+            DiscordPlaybackSource().playback.shareIn(
                 scope = this,
                 started = SharingStarted.Eagerly,
-                initialValue = true,
+                replay = 1,
             )
+        val backgroundPlaybackActive =
+            playback
+                .map { snapshot -> snapshot != null }
+                .delayDiscordPlaybackInactive(BACKGROUND_INACTIVE_DISCONNECT_DELAY_MS)
+                .stateIn(
+                    scope = this,
+                    started = SharingStarted.Eagerly,
+                    initialValue = true,
+                )
 
         launch {
             DiscordPresenceCoordinator(
                 enabled = flowOf(true),
                 playback = playback,
                 transport = transport,
-                mapper = DiscordPresenceMapper(
-                    appName = context.getString(R.string.app_name),
-                    playingFallback = context.getString(
-                        R.string.discord_presence_playing_fallback,
+                mapper =
+                    DiscordPresenceMapper(
+                        appName = context.getString(R.string.app_name),
+                        playingFallback =
+                            context.getString(
+                                R.string.discord_presence_playing_fallback,
+                            ),
+                        creatorLabel = { creator ->
+                            context.getString(R.string.discord_presence_by_creator, creator)
+                        },
                     ),
-                    creatorLabel = { creator ->
-                        context.getString(R.string.discord_presence_by_creator, creator)
-                    },
-                ),
                 nowElapsedMs = SystemClock::elapsedRealtime,
             ).run()
         }
@@ -161,8 +171,7 @@ object DiscordPresenceRuntime {
                 accountLinkInProgress = linking,
                 backgroundPlaybackActive = playbackActive,
             )
-        }
-            .distinctUntilChanged()
+        }.distinctUntilChanged()
             .collect { action ->
                 if (action == DiscordRuntimeAction.DISCONNECT) {
                     transport.disconnect()
@@ -222,10 +231,11 @@ object DiscordPresenceRuntime {
     }
 
     private suspend fun connectAccountLocked(): DiscordLinkResult {
-        val currentTransport = transport
-            ?: return DiscordLinkResult.Failure(
-                applicationContext?.getString(R.string.discord_error_not_initialized).orEmpty(),
-            )
+        val currentTransport =
+            transport
+                ?: return DiscordLinkResult.Failure(
+                    applicationContext?.getString(R.string.discord_error_not_initialized).orEmpty(),
+                )
         if (preferences?.enabled?.first() != true) {
             return DiscordLinkResult.Failure(
                 applicationContext?.getString(R.string.discord_error_enable_before_connect).orEmpty(),
@@ -241,10 +251,11 @@ object DiscordPresenceRuntime {
     }
 
     suspend fun retry(): DiscordLinkResult {
-        val currentTransport = transport
-            ?: return DiscordLinkResult.Failure(
-                applicationContext?.getString(R.string.discord_error_not_initialized).orEmpty(),
-            )
+        val currentTransport =
+            transport
+                ?: return DiscordLinkResult.Failure(
+                    applicationContext?.getString(R.string.discord_error_not_initialized).orEmpty(),
+                )
         return retryDiscordConnection(currentTransport) { tokenStore?.load() }
     }
 
@@ -255,6 +266,14 @@ object DiscordPresenceRuntime {
             disablePreference = { preferences?.setEnabled(false) },
             clearAccountLabel = { preferences?.setLinkedAccountLabel(null) },
         )
+    }
+
+    /** Clears this profile's presence and closes its connection before a profile switch restarts the app. */
+    suspend fun endForSwitch() {
+        val current = transport ?: return
+        transport = null
+        current.closeBeforeExit()
+        shutdown()
     }
 
     fun shutdown() {

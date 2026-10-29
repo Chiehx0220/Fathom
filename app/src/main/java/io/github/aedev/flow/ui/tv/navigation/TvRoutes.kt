@@ -2,6 +2,7 @@ package io.github.aedev.flow.ui.tv.navigation
 
 import android.net.Uri
 import io.github.aedev.flow.innertube.pages.MoodAndGenres
+import io.github.aedev.flow.ui.components.settings.SettingsTarget
 import io.github.aedev.flow.ui.components.shared.MediaKind
 import io.github.aedev.flow.ui.screens.music.collection.MUSIC_COLLECTION_ARG as COLLECTION_ROUTE_ARG
 
@@ -9,6 +10,9 @@ import io.github.aedev.flow.ui.screens.music.collection.MUSIC_COLLECTION_ARG as 
 object TvRoutes {
     const val CHANNEL_ARG = "channelRef"
     const val CHANNEL = "channel?ref={$CHANNEL_ARG}"
+
+    const val SETTINGS_PAGE_ARG = "target"
+    const val SETTINGS_PAGE = "settingsPage/{$SETTINGS_PAGE_ARG}"
 
     const val PLAYLIST_ARG = "playlistId"
     const val PLAYLIST = "playlist/{$PLAYLIST_ARG}"
@@ -46,6 +50,9 @@ object TvRoutes {
     fun playlists(kind: MediaKind?): String = if (kind == null) "playlists" else "playlists?kind=${kind.name}"
 
     fun playlist(playlistId: String): String = "playlist/${Uri.encode(playlistId)}"
+
+    /** One settings page opened directly, such as Profiles from the rail's profile sheet. */
+    fun settingsPage(target: SettingsTarget): String = "settingsPage/${Uri.encode(target.encode())}"
 
     fun musicCollection(collectionId: String): String = "musicCollection/${Uri.encode(collectionId)}"
 

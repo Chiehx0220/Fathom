@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.profile.ProfileFiles
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,7 +22,9 @@ class VisitorIdentityStore
     constructor(
         @ApplicationContext private val context: Context,
     ) {
-        private val prefs: SharedPreferences by lazy { context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
+        private val prefs: SharedPreferences by lazy {
+            context.getSharedPreferences(ProfileFiles.sharedPreferencesName(context, PREFS_NAME), Context.MODE_PRIVATE)
+        }
 
         /** The stored visitor while it is fresh enough to reuse; null means fetch a new one. */
         fun restore(nowMs: Long = System.currentTimeMillis()): String? {

@@ -20,6 +20,7 @@ import io.github.aedev.flow.data.model.toUiModel
 import io.github.aedev.flow.data.notes.NoteKind
 import io.github.aedev.flow.data.notes.NoteSubject
 import io.github.aedev.flow.data.notes.NotesRepository
+import io.github.aedev.flow.data.shorts.withoutShorts
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
 import io.github.aedev.flow.innertube.pages.renderer.CommunityPost
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -88,6 +90,20 @@ class ChannelViewModel
                 .getAllSubscriptions()
                 .map { subscriptions -> subscriptions.map { it.channelId }.toSet() }
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(GROUPS_SUBSCRIPTION_TIMEOUT_MS), emptySet())
+
+        val notifyingChannelIds: StateFlow<Set<String>> =
+            subscriptionRepository
+                .notifyingChannelIds()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(GROUPS_SUBSCRIPTION_TIMEOUT_MS), emptySet())
+
+        fun setChannelNotifications(
+            channelId: String,
+            enabled: Boolean,
+        ) {
+            viewModelScope.launch(PerformanceDispatcher.diskIO) {
+                subscriptionRepository.updateNotificationState(channelId, enabled)
+            }
+        }
 
         fun setChannelSubscription(
             channel: io.github.aedev.flow.data.model.Channel,
@@ -171,7 +187,11 @@ class ChannelViewModel
 
         internal val tabStates: StateFlow<Map<ChannelTabKind, ChannelTabState>> =
             bilibili
-                .tabStates(tabController.states)
+                .tabStates(
+                    combine(tabController.states, playerPreferences.shortsContentEnabled) { states, shortsEnabled ->
+                        if (shortsEnabled) states else states.mapValues { (_, state) -> state.copy(sections = state.sections.withoutShorts()) }
+                    },
+                )
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(GROUPS_SUBSCRIPTION_TIMEOUT_MS), emptyMap())
 
         private fun channelOwner(): FeedItemOwner {

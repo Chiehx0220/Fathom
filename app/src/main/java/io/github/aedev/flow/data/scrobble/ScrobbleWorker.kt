@@ -13,6 +13,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import io.github.aedev.flow.data.profile.ProfileWork
 import java.util.concurrent.TimeUnit
 
 /** Sends the queued listens once there is a connection, retrying with backoff while a service is down. */
@@ -27,6 +28,7 @@ class ScrobbleWorker(
     }
 
     override suspend fun doWork(): Result {
+        if (!ProfileWork.belongsHere(this)) return Result.success()
         val scrobbler = EntryPointAccessors.fromApplication(applicationContext, Dependencies::class.java).scrobbler()
         return if (scrobbler.flush()) Result.success() else Result.retry()
     }
@@ -40,6 +42,8 @@ class ScrobbleWorker(
                 OneTimeWorkRequestBuilder<ScrobbleWorker>()
                     .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                     .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_MINUTES, TimeUnit.MINUTES)
+                    .setInputData(ProfileWork.data(context))
+                    .addTag(ProfileWork.tag(context))
                     .build()
             WorkManager.getInstance(context).enqueueUniqueWork(UNIQUE_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, work)
         }

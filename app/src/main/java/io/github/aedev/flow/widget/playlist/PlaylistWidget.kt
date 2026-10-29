@@ -5,6 +5,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
@@ -16,6 +17,7 @@ import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.provideContent
 import androidx.glance.currentState
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.profile.ActiveProfile
 import io.github.aedev.flow.widget.core.action.WidgetDeepLink
 import io.github.aedev.flow.widget.core.component.WidgetRowSquareThumb
 import io.github.aedev.flow.widget.core.component.WidgetRowThumb
@@ -53,6 +55,7 @@ class PlaylistWidget : GlanceAppWidget() {
         // Row thumbnails are only worth loading when some orientation draws the list.
         val drawsList = sizes.any { PlaylistLayout.forSize(it) == PlaylistLayout.LIST }
         val initialId = PlaylistWidgetConfig.load(context, id) ?: PlaylistWidgetSource.DEFAULT_PLAYLIST_ID
+        val playlistKey = playlistKey(context)
         val initial = withContext(Dispatchers.IO) { source.content(initialId).first() }
         val initialCover = WidgetImageLoader.load(context, initial.playlist?.coverUrl, coverPx, cornerRadiusPx = cornerPx)
         val initialImages = preloadWidgetImages(context, rowImageSpecs(context, initial.items, drawsList, cornerPx))
@@ -62,7 +65,7 @@ class PlaylistWidget : GlanceAppWidget() {
 
         // A running session only recomposes on update, so the chosen playlist and its rows are read here.
         provideContent {
-            val playlistId = currentState(PLAYLIST_ID) ?: PlaylistWidgetSource.DEFAULT_PLAYLIST_ID
+            val playlistId = currentState(playlistKey) ?: PlaylistWidgetSource.DEFAULT_PLAYLIST_ID
             val refreshing = currentState(REFRESHING) == true
             val content by remember(playlistId) { source.content(playlistId) }
                 .collectAsState(initial.takeIf { playlistId == initialId })
@@ -118,7 +121,17 @@ class PlaylistWidget : GlanceAppWidget() {
     }
 
     companion object {
-        val PLAYLIST_ID = stringPreferencesKey("playlist_id")
+        private val PLAYLIST_ID = stringPreferencesKey("playlist_id")
+
+        /**
+         * Where one widget keeps the playlist it shows, per profile: a playlist id means nothing in another
+         * profile, which shows Watch Later until a playlist is chosen there. Default keeps the original key.
+         */
+        fun playlistKey(context: Context): Preferences.Key<String> {
+            val profile = ActiveProfile.get(context)
+            return if (profile.isDefault) PLAYLIST_ID else stringPreferencesKey("playlist_id_${profile.id}")
+        }
+
         val REFRESHING = booleanPreferencesKey("refreshing")
         private const val COVER_FALLBACK_DP = 110f
         private const val COVER_MAX_DP = 200f

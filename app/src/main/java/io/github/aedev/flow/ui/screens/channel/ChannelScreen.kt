@@ -139,6 +139,7 @@ fun ChannelScreen(
     val communityUiState by viewModel.communityUiState.collectAsState()
     val tabStates by viewModel.tabStates.collectAsStateWithLifecycle()
     val subscribedChannelIds by viewModel.subscribedChannelIds.collectAsStateWithLifecycle()
+    val notifyingChannelIds by viewModel.notifyingChannelIds.collectAsStateWithLifecycle()
     val channelNote by viewModel.channelNote.collectAsStateWithLifecycle()
     val notesEnabled by viewModel.notesEnabled.collectAsStateWithLifecycle()
     val showShortsTab by viewModel.showShortsTab.collectAsStateWithLifecycle()
@@ -243,6 +244,8 @@ fun ChannelScreen(
                             showShortsTab = showShorts && showShortsTab,
                             onFilterSelected = viewModel::selectTabFilter,
                             subscribedChannelIds = subscribedChannelIds,
+                            notifyingChannelIds = notifyingChannelIds,
+                            onChannelNotificationChange = viewModel::setChannelNotifications,
                             channelNote = channelNote.takeIf { notesEnabled },
                             onEditNote = { showNoteEditor = true }.takeIf { notesEnabled },
                             onSubscribeChannel = viewModel::setChannelSubscription,

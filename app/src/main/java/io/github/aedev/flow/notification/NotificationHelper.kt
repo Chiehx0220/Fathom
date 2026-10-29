@@ -26,6 +26,7 @@ import io.github.aedev.flow.data.local.AppDatabase
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.ThumbnailQuality
 import io.github.aedev.flow.data.local.entity.NotificationEntity
+import io.github.aedev.flow.data.profile.ActiveProfile
 import io.github.aedev.flow.data.update.AppRelease
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -48,6 +49,35 @@ object NotificationHelper {
     const val CHANNEL_UPDATES = "updates_channel"
     const val EXTRA_OPEN_UPDATE = "io.github.aedev.flow.extra.OPEN_UPDATE"
     const val CHANNEL_IMPORTS = "imports_channel"
+
+    /** On every notification that belongs to one profile, so a tap left over from before a switch opens nothing of it. */
+    const val EXTRA_PROFILE_ID = "io.github.aedev.flow.extra.PROFILE_ID"
+
+    /** Channels whose notifications show one profile's content; a switch clears them. */
+    private val ProfileChannels =
+        setOf(CHANNEL_SUBSCRIPTIONS, CHANNEL_REMINDERS, CHANNEL_GENERAL, CHANNEL_IMPORTS, AutoBackupWorker.NOTIFICATION_CHANNEL_ID)
+
+    private fun profileIntent(context: Context): Intent =
+        Intent(context, MainActivity::class.java).putExtra(EXTRA_PROFILE_ID, ActiveProfile.get(context).id)
+
+    /** Clears the running profile's notifications before a switch; downloads and updates stay. */
+    fun cancelProfileNotifications(context: Context) {
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return
+        manager.activeNotifications
+            .filter { it.notification.channelId in ProfileChannels }
+            .forEach { manager.cancel(it.tag, it.id) }
+    }
+
+    /** False for a notification of another profile, still in the shade from before a switch. */
+    fun opensInRunningProfile(
+        context: Context,
+        intent: Intent,
+    ): Boolean = opensIn(intent.getStringExtra(EXTRA_PROFILE_ID), ActiveProfile.get(context).id)
+
+    internal fun opensIn(
+        stamped: String?,
+        runningId: String,
+    ): Boolean = stamped == null || stamped == runningId
 
     // Notification IDs
     const val NOTIFICATION_DOWNLOAD_PROGRESS = 1001
@@ -75,7 +105,7 @@ object NotificationHelper {
     ) {
         withContext(Dispatchers.IO) {
             try {
-                val db = AppDatabase.getDatabase(context)
+                val db = AppDatabase.profile(context)
                 db.notificationDao().insertNotification(entity)
             } catch (e: Exception) {
                 android.util.Log.e("NotificationHelper", "Failed to store notification", e)
@@ -487,7 +517,7 @@ object NotificationHelper {
         videos.forEach { v ->
             val notifId = NOTIFICATION_NEW_VIDEO + v.videoId.hashCode().and(0xFFFF)
             val watchIntent =
-                Intent(context, MainActivity::class.java).apply {
+                profileIntent(context).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                     putExtra("notification_video_id", v.videoId)
                     putExtra("video_id", v.videoId)
@@ -525,7 +555,7 @@ object NotificationHelper {
         if (!multiple) return
 
         val summaryIntent =
-            Intent(context, MainActivity::class.java).apply {
+            profileIntent(context).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
         val summaryPendingIntent =
@@ -608,7 +638,7 @@ object NotificationHelper {
 
         // Intent to open the video
         val watchIntent =
-            Intent(context, MainActivity::class.java).apply {
+            profileIntent(context).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 putExtra("notification_video_id", videoId)
                 putExtra("video_id", videoId)
@@ -737,7 +767,7 @@ object NotificationHelper {
         if (!runBlocking { PlayerPreferences(context).notifGeneralEnabled.first() }) return
 
         val intent =
-            Intent(context, MainActivity::class.java).apply {
+            profileIntent(context).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
         val pendingIntent =
@@ -777,7 +807,7 @@ object NotificationHelper {
         val notificationId = NOTIFICATION_GENERAL + videoId.hashCode().and(0xFFF)
 
         val watchIntent =
-            Intent(context, MainActivity::class.java).apply {
+            profileIntent(context).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 putExtra("video_id", videoId)
             }
@@ -827,7 +857,7 @@ object NotificationHelper {
         if (!runBlocking { PlayerPreferences(context).notifRemindersEnabled.first() }) return
 
         val intent =
-            Intent(context, MainActivity::class.java).apply {
+            profileIntent(context).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
 
@@ -870,9 +900,10 @@ object NotificationHelper {
         if (!runBlocking { PlayerPreferences(context).notifRemindersEnabled.first() }) return
 
         val intent =
-            Intent(context, MainActivity::class.java).apply {
+            profileIntent(context).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra("open_video_id", videoId)
+                putExtra("notification_video_id", videoId)
+                putExtra("video_id", videoId)
             }
 
         val pendingIntent =

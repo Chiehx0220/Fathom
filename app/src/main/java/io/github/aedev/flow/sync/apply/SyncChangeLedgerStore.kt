@@ -7,8 +7,9 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
-import androidx.datastore.dataStoreFile
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.profile.ProfileFiles
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -52,7 +53,7 @@ class SyncChangeLedgerStore
                 DataStoreFactory.create(
                     serializer = LedgerSerializer,
                     corruptionHandler = ReplaceFileCorruptionHandler { CollectionLedger() },
-                    produceFile = { context.dataStoreFile("sync_ledger_$collection.json") },
+                    produceFile = { ProfileFiles.dataStore(context, StoreScope.DEFAULT_ONLY, "sync_ledger_$collection.json") },
                 )
             }
 

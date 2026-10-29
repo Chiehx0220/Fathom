@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.safePreferencesDataStore
+import io.github.aedev.flow.data.profile.StoreScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -20,7 +21,7 @@ data class FavouriteArtist(
     val thumbnailUrl: String = "",
 )
 
-private val Context.favouriteArtistsDataStore by safePreferencesDataStore(name = "favourite_artists")
+private val Context.favouriteArtistsDataStore by safePreferencesDataStore(name = "favourite_artists", scope = StoreScope.PROFILE_LIBRARY)
 
 /**
  * The artists the viewer picked by hand. The music brain only keeps their affinity, which listening

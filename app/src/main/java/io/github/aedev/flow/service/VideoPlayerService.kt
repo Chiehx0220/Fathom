@@ -12,6 +12,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import dagger.hilt.android.EntryPointAccessors
 import io.github.aedev.flow.R
 import io.github.aedev.flow.notification.NotificationHelper
 import io.github.aedev.flow.player.EnhancedPlayerManager
@@ -163,8 +164,13 @@ class VideoPlayerService : MediaSessionService() {
             return
         }
 
+        val keepPlayingAfterSwipe =
+            EntryPointAccessors
+                .fromApplication(applicationContext, PlaybackServiceEntryPoint::class.java)
+                .lifecyclePlaybackPreferences()
+                .settings.keepPlayingAfterSwipe
         val player = EnhancedPlayerManager.getInstance().getPlayer()
-        if (player?.keepsPlayingOnTaskRemoved(isPlaybackOngoing()) == true) return
+        if (player?.keepsPlayingOnTaskRemoved(keepPlayingAfterSwipe, isPlaybackOngoing()) == true) return
 
         EnhancedPlayerManager.getInstance().stop()
         releaseLocks()

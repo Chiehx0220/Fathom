@@ -38,7 +38,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.aedev.flow.BuildConfig
 import io.github.aedev.flow.R
+import io.github.aedev.flow.data.profile.Profile
+import io.github.aedev.flow.data.profile.SlicePart
 import io.github.aedev.flow.ui.components.settings.SettingsListScope
 import io.github.aedev.flow.ui.components.settings.SettingsPage
 import io.github.aedev.flow.ui.components.settings.info
@@ -74,6 +77,9 @@ internal fun DiagnosticsScreen(
     val session by viewModel.session.collectAsStateWithLifecycle()
     val crashes by viewModel.crashes.collectAsStateWithLifecycle()
     val snapshotCount by viewModel.snapshotCount.collectAsStateWithLifecycle()
+    val profileState by viewModel.profileState.collectAsStateWithLifecycle()
+    var profileToDelete by remember { mutableStateOf<Profile?>(null) }
+    val newProfileName = stringResource(R.string.diagnostics_profile_new_name, (profileState?.profiles?.size ?: 0) + 1)
     var tab by rememberSaveable { mutableStateOf(DiagnosticsTab.SESSION) }
     var dialog by rememberSaveable { mutableStateOf<DiagnosticsDialog?>(null) }
 
@@ -151,6 +157,17 @@ internal fun DiagnosticsScreen(
                 onClick = { exportSnapshot.launch("flow_home_snapshot_${LocalDate.now()}.json.gz") },
             )
         }
+        if (BuildConfig.DEBUG) {
+            debugProfiles(
+                state = profileState,
+                runningId = viewModel.runningProfileId,
+                onAdd = { viewModel.addProfile(newProfileName) },
+                onAddCopy = { viewModel.addProfile(newProfileName, copy = SlicePart.entries.toSet()) },
+                onPhoto = viewModel::setRunningProfilePhoto,
+                onSwitch = viewModel::switchProfile,
+                onDelete = { profileToDelete = it },
+            )
+        }
         item("diagnostics.tabs") {
             FlowConnectedToggleGroup(options = tabs, selected = tab, onSelected = { tab = it })
         }
@@ -207,6 +224,17 @@ internal fun DiagnosticsScreen(
         null -> {
             Unit
         }
+    }
+
+    profileToDelete?.let { profile ->
+        DiagnosticsConfirmDialog(
+            title = stringResource(R.string.diagnostics_profile_delete_title, profile.name),
+            body = stringResource(R.string.diagnostics_profile_delete_body),
+            confirm = stringResource(R.string.delete),
+            destructive = true,
+            onConfirm = { viewModel.deleteProfile(profile.id) },
+            onDismiss = { profileToDelete = null },
+        )
     }
 }
 
