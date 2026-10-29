@@ -77,11 +77,13 @@ object SyncSerialization {
             }
         }
 
-    /** Encode one record as compact, sorted-key canonical JSON. */
+    /** Compact, sorted-key canonical JSON, shared by FLOW-SYNC/1 records and FLOW-SYNC/2 messages. */
+    fun canonicalJson(element: JsonElement): String = json.encodeToString(JsonElement.serializer(), canonicalize(element))
+
     private fun <T> enc(
         serializer: KSerializer<T>,
         value: T,
-    ): String = json.encodeToString(JsonElement.serializer(), canonicalize(json.encodeToJsonElement(serializer, value)))
+    ): String = canonicalJson(json.encodeToJsonElement(serializer, value))
 
     private fun <T> wire(
         records: List<T>,

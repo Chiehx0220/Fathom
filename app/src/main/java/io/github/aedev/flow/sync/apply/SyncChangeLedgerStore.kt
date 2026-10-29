@@ -62,12 +62,13 @@ class SyncChangeLedgerStore
             const val LIKES = "likes"
             const val NOTES = "notes"
             const val GROUPS = "subscriptions"
+            const val GROUP_MEMBERS = "subscription_members"
             const val PLAYLISTS = "playlists"
             const val PLAYLIST_ITEMS = "playlist_items"
             const val SETTINGS = "settings"
             const val SETTINGS_RELAY = "settings_relay"
 
-            val LEDGERED = listOf(WATCH_HISTORY, LIKES, NOTES, GROUPS, PLAYLISTS, PLAYLIST_ITEMS, SETTINGS, SETTINGS_RELAY)
+            val LEDGERED = listOf(WATCH_HISTORY, LIKES, NOTES, GROUPS, GROUP_MEMBERS, PLAYLISTS, PLAYLIST_ITEMS, SETTINGS, SETTINGS_RELAY)
         }
     }
 

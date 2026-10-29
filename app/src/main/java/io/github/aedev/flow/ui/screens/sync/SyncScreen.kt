@@ -37,6 +37,7 @@ import io.github.aedev.flow.ui.components.layout.LocalFlowBottomInsets
 import io.github.aedev.flow.ui.components.layout.topbar.FlowGlobalActionsMode
 import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
 import io.github.aedev.flow.ui.components.shared.dpadFocusOnEnter
+import io.github.aedev.flow.ui.screens.sync.linked.LinkedDevicesSection
 
 /** Where the user is in the pre-session setup. Once a session starts, [SyncState] drives the UI. */
 private enum class Step {
@@ -317,6 +318,7 @@ private fun SyncSetupStep(
                 onSend = { onStepChange(Step.SEND_SELECT) },
                 onReceive = { if (hostOnly) onHost(SyncRole.RECEIVER) else onStepChange(Step.RECEIVE_TRANSPORT) },
             )
+            LinkedDevicesSection(hostOnly)
         }
 
         Step.SEND_SELECT -> {

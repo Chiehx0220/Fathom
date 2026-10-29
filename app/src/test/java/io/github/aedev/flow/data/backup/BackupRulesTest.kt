@@ -62,6 +62,7 @@ class BackupRulesTest {
             "flow_blocked_channel_names_v1.json",
             "flow_music_brain_v1.json",
             "sync_identity",
+            "linked_device",
             "sync_brain_crdt",
             "sync_music_brain_crdt",
             "scrobbling",

@@ -13,13 +13,18 @@ import io.ktor.websocket.readBytes
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 
 /**
  * Show-QR/host role transport: an embedded Ktor **CIO** WebSocket server bound to `0.0.0.0:0`
  * (OS-assigned ephemeral port, read back for the QR). CIO is pure-Kotlin/coroutine so it runs on
- * Android. v1 handles a single 1↔1 session per server instance.
+ * Android. v1 handles a single 1↔1 session per server instance. [path] is FLOW-SYNC/1's unless
+ * FLOW-SYNC/2 serves on its own; with [onConnection], every connection goes to it instead of [awaitConnection].
  */
-class WsServer {
+class WsServer(
+    private val path: String = QrPath.PATH,
+    private val onConnection: (suspend (SyncConnection) -> Unit)? = null,
+) {
     private var server: EmbeddedServer<*, *>? = null
     private val connectionDeferred = CompletableDeferred<SyncConnection>()
 
@@ -34,9 +39,14 @@ class WsServer {
                     timeoutMillis = PING_TIMEOUT_MS
                 }
                 routing {
-                    webSocket(QrPath.PATH) {
+                    webSocket(path) {
                         val conn = KtorServerConnection(this)
-                        if (!connectionDeferred.isCompleted) connectionDeferred.complete(conn)
+                        val handler = onConnection
+                        if (handler != null) {
+                            launch { handler(conn) }
+                        } else if (!connectionDeferred.isCompleted) {
+                            connectionDeferred.complete(conn)
+                        }
                         try {
                             for (frame in incoming) {
                                 if (frame is Frame.Binary) conn.deliver(frame.readBytes())

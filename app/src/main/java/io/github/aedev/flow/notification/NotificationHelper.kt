@@ -48,6 +48,8 @@ object NotificationHelper {
     const val CHANNEL_REMINDERS = "reminders_channel"
     const val CHANNEL_UPDATES = "updates_channel"
     const val EXTRA_OPEN_UPDATE = "io.github.aedev.flow.extra.OPEN_UPDATE"
+    const val EXTRA_OPEN_LINKED = "io.github.aedev.flow.extra.OPEN_LINKED"
+    private const val NOTIFICATION_JOIN_REQUEST = 9998
     const val CHANNEL_IMPORTS = "imports_channel"
 
     /** On every notification that belongs to one profile, so a tap left over from before a switch opens nothing of it. */
@@ -750,6 +752,39 @@ object NotificationHelper {
                 .build()
 
         NotificationManagerCompat.from(context).notify(9999, notification)
+    }
+
+    /** A device asked to join this device's linked group with the admin token; the tap opens Linked devices. */
+    fun showJoinRequest(
+        context: Context,
+        name: String,
+    ) {
+        if (!hasNotificationPermission(context)) return
+        val intent =
+            profileIntent(context).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(EXTRA_OPEN_LINKED, true)
+            }
+        val pendingIntent =
+            PendingIntent.getActivity(
+                context,
+                NOTIFICATION_JOIN_REQUEST,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        val text = context.getString(R.string.linked_join_notification_text, name)
+        val notification =
+            NotificationCompat
+                .Builder(context, CHANNEL_GENERAL)
+                .setSmallIcon(R.drawable.ic_notification_logo)
+                .setContentTitle(context.getString(R.string.linked_join_notification_title))
+                .setContentText(text)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build()
+        NotificationManagerCompat.from(context).notify(NOTIFICATION_JOIN_REQUEST, notification)
     }
 
     // ========== GENERAL NOTIFICATIONS ==========

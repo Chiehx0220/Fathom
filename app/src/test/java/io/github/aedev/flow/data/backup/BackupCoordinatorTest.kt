@@ -11,7 +11,7 @@ import io.github.aedev.flow.data.profile.ProfileSlices
 import io.github.aedev.flow.data.profile.RunningProfile
 import io.github.aedev.flow.data.recommendation.music.FavouriteArtistsStore
 import io.github.aedev.flow.notification.NotificationHelper
-import io.github.aedev.flow.sync.apply.SyncChangeLedgerStore
+import io.github.aedev.flow.sync2.service.LinkedReset
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -36,7 +36,7 @@ class BackupCoordinatorTest {
     private val first: Uri = mockk()
     private val second: Uri = mockk()
     private val favourites: FavouriteArtistsStore = mockk(relaxed = true)
-    private val syncLedger: SyncChangeLedgerStore = mockk(relaxed = true)
+    private val linkedReset: LinkedReset = mockk(relaxed = true)
     private val slices: ProfileSlices = mockk(relaxed = true)
 
     private fun coordinator() =
@@ -45,7 +45,7 @@ class BackupCoordinatorTest {
             repository,
             mockk(relaxed = true),
             mockk(relaxed = true),
-            syncLedger,
+            linkedReset,
             slices,
         )
 
@@ -114,7 +114,7 @@ class BackupCoordinatorTest {
                 restore.captured(picks)
                 Result.success(Unit)
             }
-            val realSlices = ProfileSlices(context, repository, mockk(relaxed = true), mockk(relaxed = true), favourites, syncLedger)
+            val realSlices = ProfileSlices(context, repository, mockk(relaxed = true), mockk(relaxed = true), favourites, linkedReset)
 
             realSlices.export(first)
             realSlices.import(second)
@@ -162,21 +162,14 @@ class BackupCoordinatorTest {
         }
 
     @Test
-    fun `an import resets the sync ledgers only in Default, the profile they describe`() =
+    fun `an import starts both syncs over, so missing records aren't sent as deletions`() =
         runBlocking {
             coEvery { slices.oldMasterTarget(second) } returns null
             coEvery { slices.restoreMaster(second) } returns Result.success(MasterRestored(restoredNow = true, waiting = emptyList()))
             val coordinator = coordinator()
 
-            every { ActiveProfile.get(any()) } returns RunningProfile(id = "b", isDefault = false)
             coordinator.importMaster(second)
             withTimeout(2_000) { coordinator.operation.first { it is BackupOperation.Succeeded } }
-            coVerify(exactly = 0) { syncLedger.reset() }
-
-            coordinator.dismiss()
-            every { ActiveProfile.get(any()) } returns RunningProfile(id = "d", isDefault = true)
-            coordinator.importMaster(second)
-            withTimeout(2_000) { coordinator.operation.first { it is BackupOperation.Succeeded } }
-            coVerify(exactly = 1) { syncLedger.reset() }
+            coVerify(exactly = 1) { linkedReset.dataReplaced() }
         }
 }

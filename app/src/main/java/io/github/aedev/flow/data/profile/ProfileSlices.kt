@@ -10,7 +10,7 @@ import io.github.aedev.flow.data.recommendation.music.FavouriteArtistsStore
 import io.github.aedev.flow.data.recommendation.music.MusicBrainEngine
 import io.github.aedev.flow.data.stats.RecapBackup
 import io.github.aedev.flow.data.stats.VideoStatsRecorder
-import io.github.aedev.flow.sync.apply.SyncChangeLedgerStore
+import io.github.aedev.flow.sync2.service.LinkedReset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -34,7 +34,7 @@ class ProfileSlices
         private val musicBrain: MusicBrainEngine,
         private val videoStats: VideoStatsRecorder,
         private val favouriteArtists: FavouriteArtistsStore,
-        private val syncLedger: SyncChangeLedgerStore,
+        private val linkedReset: LinkedReset,
     ) {
         /** The whole running profile. */
         suspend fun export(uri: Uri): Result<Unit> =
@@ -141,7 +141,7 @@ class ProfileSlices
         /** A seed or restore that waited for the running profile; see [PendingSlice]. */
         suspend fun applyPending(file: File) {
             measured("pending import") { import(Uri.fromFile(file)) }
-                .onSuccess { if (ActiveProfile.get(context).isDefault) syncLedger.reset() }
+                .onSuccess { linkedReset.dataReplaced() }
                 .onFailure { Log.e(TAG, "Could not apply the pending slice", it) }
         }
 

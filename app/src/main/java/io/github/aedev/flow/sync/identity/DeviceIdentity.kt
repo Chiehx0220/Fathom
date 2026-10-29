@@ -3,6 +3,7 @@ package io.github.aedev.flow.sync.identity
 import android.content.Context
 import android.os.Build
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.BuildConfig
@@ -45,6 +46,17 @@ class DeviceIdentity
             store.edit { it[KEY_DEVICE_NAME] = name.trim().take(64) }
         }
 
+        /**
+         * When a local edit happens, for its stamp: never before a stamp this device has applied, so an
+         * edit made after reading another device's change wins even when this clock is behind.
+         */
+        suspend fun editTime(): Long = maxOf(System.currentTimeMillis(), (store.data.first()[KEY_CLOCK] ?: 0L) + 1)
+
+        /** Remembers [physicalMs] if it is the newest time among the stamps this device has applied. */
+        suspend fun observe(physicalMs: Long) {
+            store.edit { if (physicalMs > (it[KEY_CLOCK] ?: 0L)) it[KEY_CLOCK] = physicalMs }
+        }
+
         /** The 8-char HLC node id for this device. */
         suspend fun hlcNode(): String = Hlc.nodeFromDeviceId(deviceId())
 
@@ -59,5 +71,6 @@ class DeviceIdentity
         companion object {
             private val KEY_DEVICE_ID = stringPreferencesKey("device_id")
             private val KEY_DEVICE_NAME = stringPreferencesKey("device_name")
+            private val KEY_CLOCK = longPreferencesKey("clock_ms")
         }
     }

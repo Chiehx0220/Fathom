@@ -1,5 +1,6 @@
 package io.github.aedev.flow.sync.merge
 
+import io.github.aedev.flow.sync.canonical.CanonicalGroupMember
 import io.github.aedev.flow.sync.canonical.CanonicalLike
 import io.github.aedev.flow.sync.canonical.CanonicalLikeMeta
 import io.github.aedev.flow.sync.canonical.CanonicalNote
@@ -203,17 +204,39 @@ object SubscriptionsMerger {
         x: CanonicalSubscriptionGroup,
         y: CanonicalSubscriptionGroup,
     ): CanonicalSubscriptionGroup {
-        val channelIds = (x.channelIds.toSet() + y.channelIds.toSet()).sorted() // OR-Set union
         val sortWinner = Crdt.preferByHlc(x, x.hlc, y, y.hlc) { it.sortOrder.toString() }
-        return CanonicalSubscriptionGroup(
+        return withMembers(
             name = x.name,
-            channelIds = channelIds,
+            members = members(x) + members(y),
             sortOrder = sortWinner.sortOrder,
             hlc = Crdt.maxHlc(x.hlc, y.hlc),
             deleted = Crdt.resolveDeleted(x.deleted, x.hlc, y.deleted, y.hlc),
         )
     }
 
-    /** Canonical form: channelIds sorted + de-duped, so `a ⊕ a == a`. */
-    private fun normalize(g: CanonicalSubscriptionGroup) = g.copy(channelIds = g.channelIds.toSortedSet().toList())
+    /** A record from an app without per-member stamps counts each of its channels as present at the record's stamp. */
+    private fun members(g: CanonicalSubscriptionGroup): List<CanonicalGroupMember> =
+        g.members.ifEmpty { g.channelIds.map { CanonicalGroupMember(it, g.hlc) } }
+
+    /** Per channel, last writer wins and a removal is a tombstone, as for playlist items. */
+    private fun withMembers(
+        name: String,
+        members: List<CanonicalGroupMember>,
+        sortOrder: Int,
+        hlc: String,
+        deleted: Boolean,
+    ): CanonicalSubscriptionGroup {
+        val merged =
+            members
+                .groupBy { it.channelId }
+                .map { (channelId, versions) ->
+                    versions.reduce { a, b ->
+                        CanonicalGroupMember(channelId, Crdt.maxHlc(a.hlc, b.hlc), Crdt.resolveDeleted(a.deleted, a.hlc, b.deleted, b.hlc))
+                    }
+                }.sortedBy { it.channelId }
+        return CanonicalSubscriptionGroup(name, merged.filter { !it.deleted }.map { it.channelId }, sortOrder, hlc, deleted, merged)
+    }
+
+    /** Canonical form: members merged and sorted, channelIds the live ones, so `a ⊕ a == a`. */
+    private fun normalize(g: CanonicalSubscriptionGroup) = withMembers(g.name, members(g), g.sortOrder, g.hlc, g.deleted)
 }

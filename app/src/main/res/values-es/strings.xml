@@ -3744,4 +3744,68 @@
     <string name="local_sort_size">Tamaño</string>
     <string name="local_sort_recently_played">Reproducidos recientemente</string>
     <string name="local_filter_length_any">Cualquier duración</string>
+    <string name="local_filter_length_short">Menos de 4 min</string>
+    <string name="local_filter_length_medium">De 4 a 20 min</string>
+    <string name="local_filter_length_long">Más de 20 min</string>
+    <string name="local_filter_quality_any">Cualquier calidad</string>
+    <string name="local_filter_quality_sd">SD</string>
+    <string name="local_filter_quality_hd">HD</string>
+    <string name="local_filter_quality_full_hd">Full HD</string>
+    <string name="local_filter_quality_4k">4K</string>
+    <string name="local_filter_portrait">Vertical</string>
+    <string name="local_filter_unwatched">Sin ver</string>
+    <string name="local_view_all">Todos</string>
+    <string name="local_view_folders">Carpetas</string>
+    <string name="local_search_hint">Buscar vídeos y música</string>
+    <string name="local_continue_watching">Seguir viendo</string>
+    <string name="local_new_badge">Nuevo</string>
+    <string name="local_grid_view">Mostrar como cuadrícula</string>
+    <string name="local_list_view">Mostrar como lista</string>
+    <plurals name="local_hidden_count">
+        <item quantity="one">%1$d archivo oculto</item>
+        <item quantity="many">%1$d archivos ocultos</item>
+        <item quantity="other">%1$d archivos ocultos</item>
+    </plurals>
+    <string name="local_manage">Gestionar</string>
+    <string name="local_partial_access_title">Flow solo puede ver los vídeos que hayas elegido</string>
+    <string name="local_open_settings">Abrir ajustes</string>
+    <string name="local_load_failed">No se pudieron leer los archivos de este dispositivo</string>
+    <plurals name="local_videos_count">
+        <item quantity="one">%1$d vídeo</item>
+        <item quantity="many">%1$d vídeos</item>
+        <item quantity="other">%1$d vídeos</item>
+    </plurals>
+    <plurals name="local_songs_count">
+        <item quantity="one">%1$d canción</item>
+        <item quantity="many">%1$d canciones</item>
+        <item quantity="other">%1$d canciones</item>
+    </plurals>
+    <string name="local_menu_hide_folder">Ocultar esta carpeta</string>
+    <string name="local_menu_delete_trash">Lo mueve a la papelera durante 30 días</string>
+    <string name="local_menu_delete_permanent">Lo elimina de este dispositivo</string>
+    <plurals name="local_files_trashed">
+        <item quantity="one">%1$d archivo movido a la papelera</item>
+        <item quantity="many">%1$d archivos movidos a la papelera</item>
+        <item quantity="other">%1$d archivos movidos a la papelera</item>
+    </plurals>
+    <plurals name="local_files_deleted">
+        <item quantity="one">%1$d archivo eliminado</item>
+        <item quantity="many">%1$d archivos eliminados</item>
+        <item quantity="other">%1$d archivos eliminados</item>
+    </plurals>
+    <string name="local_delete_failed">No se pudo eliminar ese archivo</string>
+    <string name="local_folder_hidden">%1$s ocultado</string>
+    <string name="local_detail_folder">Carpeta</string>
+    <string name="local_detail_resolution">Resolución</string>
+    <string name="local_detail_frame_rate">Fotogramas por segundo</string>
+    <string name="local_detail_added">Añadido</string>
+    <string name="local_detail_fps">%1$s fps</string>
+    <string name="local_detail_resolution_value">%1$d × %2$d</string>
+    <string name="settings_local_media_title">Archivos locales</string>
+    <string name="settings_local_media_summary">Carpetas ocultas y audio corto</string>
+    <string name="settings_local_media_keywords">local, dispositivo, archivos, sin conexión, ocultos, carpetas, notas de voz, grabaciones</string>
+    <string name="local_setting_hide_app_audio">Ocultar notas de voz y grabaciones</string>
+    <string name="local_setting_hide_app_audio_desc">Carpetas de aplicaciones de chat, grabadora y tonos de llamada</string>
+    <string name="local_setting_min_audio">Ocultar audio de menos de</string>
+    <string name="local_setting_min_audio_off">Mostrar todas las duraciones</string>
 </resources>

@@ -360,15 +360,15 @@ jobs:
             echo '> Release APKs are uploaded individually without compression; GitHub release APKs are built on tags only. Nightly remains a compressed artifact on regular CI runs.'
           } >> "$GITHUB_STEP_SUMMARY"
 
-          # IzzyOnDroid caps the FOSS APK at 30 MB; fail with a 0.5 MB margin so growth is seen before a release.
+          # IzzyOnDroid ships the FOSS arm64-v8a APK and caps it at 30 MB; fail with a 0.5 MB margin so growth is seen before a release.
           foss_limit=29500000
-          foss_bytes=$(stat --format='%s' app/build/outputs/apk/foss/release/app-foss-universal-release*.apk)
+          foss_bytes=$(stat --format='%s' app/build/outputs/apk/foss/release/app-foss-arm64-v8a-release*.apk)
           if (( foss_bytes > foss_limit )); then
-            printf 'flow-foss.apk is %d bytes, over the %d byte budget.\n' "$foss_bytes" "$foss_limit" >&2
+            printf 'flow-foss-arm64-v8a.apk is %d bytes, over the %d byte budget.\n' "$foss_bytes" "$foss_limit" >&2
             exit 1
           fi
 
-      # The universal APKs are what IzzyOnDroid and the README link to.
+      # The universal APKs are the README's download for any device; IzzyOnDroid ships the FOSS arm64-v8a APK.
       - name: Upload GitHub universal APK
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         uses: actions/upload-artifact@v7

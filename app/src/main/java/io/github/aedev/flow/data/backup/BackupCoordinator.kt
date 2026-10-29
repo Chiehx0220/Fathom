@@ -8,14 +8,13 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.BackupRepository
 import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.data.local.NO_LIKES
-import io.github.aedev.flow.data.profile.ActiveProfile
 import io.github.aedev.flow.data.profile.ProfileRegistry
 import io.github.aedev.flow.data.profile.ProfileSlices
 import io.github.aedev.flow.data.profile.TooManyProfiles
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.music.MusicBrainEngine
 import io.github.aedev.flow.notification.NotificationHelper
-import io.github.aedev.flow.sync.apply.SyncChangeLedgerStore
+import io.github.aedev.flow.sync2.service.LinkedReset
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,7 +70,7 @@ class BackupCoordinator
         private val repository: BackupRepository,
         private val musicBrain: MusicBrainEngine,
         private val localDataManager: LocalDataManager,
-        private val syncLedger: SyncChangeLedgerStore,
+        private val linkedReset: LinkedReset,
         private val slices: ProfileSlices,
     ) {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -431,10 +430,7 @@ class BackupCoordinator
                 else -> context.getString(R.string.import_failed_template, error.message ?: context.getString(R.string.unknown_error))
             }
 
-        // The ledgers describe Default's data, the only profile that syncs; an import into another profile leaves them be.
-        private suspend fun resetSyncLedgers() {
-            if (ActiveProfile.get(context).isDefault) syncLedger.reset()
-        }
+        private suspend fun resetSyncLedgers() = linkedReset.dataReplaced()
 
         private suspend fun writeStream(
             uri: Uri,

@@ -6,6 +6,7 @@ import io.github.aedev.flow.sync.canonical.CanonicalPlaylistItem
 import io.github.aedev.flow.sync.canonical.CanonicalSetting
 import io.github.aedev.flow.sync.canonical.CanonicalSubscriptionGroup
 import io.github.aedev.flow.sync.canonical.CanonicalWatchHistory
+import io.github.aedev.flow.sync.identity.DeviceIdentity
 import io.github.aedev.flow.sync.identity.Hlc
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -29,7 +30,14 @@ class SyncChangeTrackerTest {
             }
             coEvery { load(capture(name)) } answers { ledgers[name.captured] ?: CollectionLedger() }
         }
-    private val tracker = SyncChangeTracker(data, store)
+    private var clock = 0L
+    private val identity: DeviceIdentity =
+        mockk {
+            coEvery { editTime() } answers { maxOf(System.currentTimeMillis(), clock + 1) }
+            val seen = slot<Long>()
+            coEvery { observe(capture(seen)) } answers { clock = maxOf(clock, seen.captured) }
+        }
+    private val tracker = SyncChangeTracker(data, store, identity)
 
     private fun history(vararg ids: String) =
         ids.map { CanonicalWatchHistory(videoId = it, watchedAtMs = 10, hlc = Hlc(10, 0, node).encode()) }
@@ -138,5 +146,33 @@ class SyncChangeTrackerTest {
 
             assertEquals(desktopOnly, out.single { it.key == desktopOnly.key })
             assertEquals(0L, Hlc.decode(out.single { it.key == "autoplay" }.hlc).physicalMs)
+        }
+
+    @Test
+    fun an_edit_after_a_newer_peer_stamp_is_stamped_after_it() =
+        runBlocking {
+            val later = System.currentTimeMillis() + 3_600_000
+            val group = CanonicalSubscriptionGroup(name = "Music", channelIds = listOf("c1"), hlc = Hlc(later, 0, "deskuuid").encode())
+            coEvery { data.readSubscriptions("") } returns listOf(group.copy(hlc = ""))
+            tracker.settleGroups(listOf(group))
+            coEvery { data.readSubscriptions("") } returns listOf(group.copy(channelIds = listOf("c1", "c2"), hlc = ""))
+
+            val edited = tracker.groups(node).single()
+
+            assertTrue("a clock an hour behind still stamps after the peer", Hlc.decode(edited.hlc).physicalMs > later)
+        }
+
+    @Test
+    fun a_channel_removed_from_a_group_goes_out_as_a_member_tombstone() =
+        runBlocking {
+            coEvery { data.readSubscriptions("") } returns
+                listOf(CanonicalSubscriptionGroup(name = "Tech", channelIds = listOf("c1", "c2")))
+            tracker.groups(node)
+            coEvery { data.readSubscriptions("") } returns listOf(CanonicalSubscriptionGroup(name = "Tech", channelIds = listOf("c1")))
+
+            val group = tracker.groups(node).single()
+
+            assertEquals(listOf("c1"), group.channelIds)
+            assertEquals(listOf("c1" to false, "c2" to true), group.members.map { it.channelId to it.deleted })
         }
 }

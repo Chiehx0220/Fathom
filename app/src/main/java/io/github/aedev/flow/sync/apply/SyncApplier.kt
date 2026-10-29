@@ -121,10 +121,16 @@ class SyncApplier
 
         // --- receiver ---
 
+        /**
+         * [onceEach] keeps FLOW-SYNC/1's guard: a payload already applied from this peer is skipped and the
+         * applied ones are recorded. FLOW-SYNC/2 turns it off; its stream positions already stop a re-apply,
+         * and an identical payload in a new group must still apply.
+         */
         suspend fun applyPayload(
             peer: PeerInfo,
             received: Map<String, ReceivedCollection>,
             hlc: String,
+            onceEach: Boolean = true,
         ): Map<String, ApplyStats> {
             val node = deviceIdentity.hlcNode()
             val myDeviceId = deviceIdentity.deviceId()
@@ -133,7 +139,7 @@ class SyncApplier
             // Idempotency: drop collections whose exact payload we've already applied from this peer.
             val fresh = HashMap<String, ReceivedCollection>()
             for ((collection, rc) in received) {
-                if (syncLogDao.isAlreadyApplied(peer.deviceId, collection, rc.hash)) {
+                if (onceEach && syncLogDao.isAlreadyApplied(peer.deviceId, collection, rc.hash)) {
                     stats[collection] = ApplyStats(skipped = rc.lines.size)
                 } else {
                     fresh[collection] = rc
@@ -247,7 +253,7 @@ class SyncApplier
 
                 // Ledger: record each applied payload + the peer.
                 val now = System.currentTimeMillis()
-                for ((collection, rc) in fresh) {
+                for ((collection, rc) in fresh.takeIf { onceEach }.orEmpty()) {
                     syncLogDao.insert(SyncLogEntity(peer.deviceId, collection, rc.hash, now, hlc))
                 }
                 recordPeer(peer)

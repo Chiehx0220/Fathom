@@ -18,18 +18,23 @@ import io.github.aedev.flow.R
  * + ongoing notification.
  */
 class SyncForegroundService : Service() {
-
     override fun onBind(intent: Intent?): IBinder? = null
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        ensureChannel()
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.sync_notification_title))
-            .setContentText(getString(R.string.sync_notification_text))
-            .setSmallIcon(android.R.drawable.stat_sys_upload)
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
+        ensureChannel(this)
+        val notification =
+            NotificationCompat
+                .Builder(this, CHANNEL_ID)
+                .setContentTitle(getString(R.string.sync_notification_title))
+                .setContentText(getString(R.string.sync_notification_text))
+                .setSmallIcon(android.R.drawable.stat_sys_upload)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build()
         startForegroundCompat(notification)
         return START_NOT_STICKY
     }
@@ -42,23 +47,9 @@ class SyncForegroundService : Service() {
         }
     }
 
-    private fun ensureChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            if (mgr.getNotificationChannel(CHANNEL_ID) == null) {
-                mgr.createNotificationChannel(
-                    NotificationChannel(
-                        CHANNEL_ID,
-                        getString(R.string.sync_notification_channel),
-                        NotificationManager.IMPORTANCE_LOW,
-                    )
-                )
-            }
-        }
-    }
-
     companion object {
-        private const val CHANNEL_ID = "flow_device_sync"
+        /** The low-importance Device sync channel, which linked sync shares. */
+        const val CHANNEL_ID = "flow_device_sync"
         private const val NOTIF_ID = 4096
 
         fun start(context: Context) {
@@ -67,6 +58,21 @@ class SyncForegroundService : Service() {
                 context.startForegroundService(intent)
             } else {
                 context.startService(intent)
+            }
+        }
+
+        fun ensureChannel(context: Context) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val mgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                if (mgr.getNotificationChannel(CHANNEL_ID) == null) {
+                    mgr.createNotificationChannel(
+                        NotificationChannel(
+                            CHANNEL_ID,
+                            context.getString(R.string.sync_notification_channel),
+                            NotificationManager.IMPORTANCE_LOW,
+                        ),
+                    )
+                }
             }
         }
 

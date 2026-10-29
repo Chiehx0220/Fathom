@@ -1,0 +1,245 @@
+package io.github.aedev.flow.sync2.lan
+
+import io.github.aedev.flow.sync.protocol.SyncSerialization
+import io.github.aedev.flow.sync2.crypto.ProtocolException
+import io.github.aedev.flow.sync2.engine.Session
+import io.github.aedev.flow.sync2.roster.entryHash
+import io.github.aedev.flow.sync2.roster.entryJson
+import io.github.aedev.flow.sync2.roster.parseEntry
+import io.github.aedev.flow.sync2.store.LocalStore
+import io.github.aedev.flow.sync2.store.StorePaths
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
+import kotlinx.serialization.json.longOrNull
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
+
+private const val ANSWER_TIMEOUT_MS = 30_000L
+private const val NEW_LINE = '\n'.code.toByte()
+
+/** One frame of a LAN session: a canonical JSON header line, then the raw bytes the operation carries. */
+private class Message(
+    val header: JsonObject,
+    val bytes: ByteArray?,
+)
+
+private fun encode(
+    header: Map<String, JsonElement>,
+    bytes: ByteArray?,
+): ByteArray {
+    val line = SyncSerialization.canonicalJson(JsonObject(header)).toByteArray()
+    return if (bytes == null) line else line + NEW_LINE + bytes
+}
+
+private fun decode(content: ByteArray): Message? {
+    val split = content.indexOf(NEW_LINE)
+    val line = if (split < 0) content else content.copyOfRange(0, split)
+    val header = runCatching { Json.parseToJsonElement(line.toString(Charsets.UTF_8)).jsonObject }.getOrNull() ?: return null
+    return Message(header, if (split < 0) null else content.copyOfRange(split + 1, content.size))
+}
+
+private fun JsonObject.text(name: String): String? = this[name]?.jsonPrimitive?.contentOrNull
+
+/**
+ * Both sides of a LAN session's requests (spec/live.md, Requests): this device answers from what it
+ * holds, and asks the other member for what it lacks.
+ */
+class LanPeer(
+    private val link: LanLink,
+    private val session: Session,
+    private val local: LocalStore,
+) {
+    private val ids = AtomicLong()
+    private val answers = ConcurrentHashMap<Long, CompletableDeferred<Message>>()
+    private val lastFrame = AtomicLong(System.nanoTime())
+
+    /** Reads frames until the other side closes: answers its requests and hands answers to ours. */
+    fun start(scope: CoroutineScope): Job =
+        scope.launch {
+            try {
+                while (true) {
+                    val content = link.receive() ?: break
+                    lastFrame.set(System.nanoTime())
+                    val message = decode(content) ?: continue
+                    val re = message.header["re"]?.jsonPrimitive?.longOrNull
+                    if (re != null) answers.remove(re)?.complete(message) else answer(message)
+                }
+            } finally {
+                answers.values.forEach { it.cancel() }
+            }
+        }
+
+    private suspend fun request(
+        op: String,
+        fields: Map<String, JsonElement> = emptyMap(),
+    ): Message? {
+        val id = ids.getAndIncrement()
+        val answer = CompletableDeferred<Message>().also { answers[id] = it }
+        link.send(encode(fields + mapOf("id" to JsonPrimitive(id), "op" to JsonPrimitive(op)), null))
+        val message = withTimeout(ANSWER_TIMEOUT_MS) { answer.await() }
+        return message.takeIf { it.header["ok"]?.jsonPrimitive?.booleanOrNull == true }
+    }
+
+    private suspend fun answer(request: Message) {
+        val id = request.header["id"] ?: return
+        val op = request.header.text("op") ?: return
+
+        fun ok(
+            fields: Map<String, JsonElement> = emptyMap(),
+            bytes: ByteArray? = null,
+        ) = encode(fields + mapOf("ok" to JsonPrimitive(true), "re" to id), bytes)
+
+        fun error(code: String) = encode(mapOf("error" to JsonPrimitive(code), "ok" to JsonPrimitive(false), "re" to id), null)
+        val header = request.header
+        val reply =
+            runCatching {
+                when (op) {
+                    "roster" -> {
+                        // An asker whose head isn't on this device's winning chain is on another fork, or lost one
+                        // this device already resolved: it gets everything to choose from.
+                        val head = header.text("head")
+                        val held = local.entries()
+                        val after =
+                            if (head != null &&
+                                local.rosterAfter(-1).none { entryHash(it) == head }
+                            ) {
+                                -1
+                            } else {
+                                header["after"]?.jsonPrimitive?.long ?: -1
+                            }
+                        ok(mapOf("entries" to JsonArray(held.filter { it.seq > after }.map(::entryJson))))
+                    }
+
+                    "key" -> {
+                        val name = header.text("name").orEmpty()
+                        val key =
+                            if (name == "chain" ||
+                                name.matches(DID)
+                            ) {
+                                local.key(header.getValue("epoch").jsonPrimitive.int, name)
+                            } else {
+                                null
+                            }
+                        key?.let { ok(bytes = it) } ?: error("not_found")
+                    }
+
+                    "list" -> {
+                        val vv = header["vv"]?.jsonObject?.mapValues { (_, seq) -> seq.jsonPrimitive.long }.orEmpty()
+                        val (paths, blobs) = local.list(vv)
+                        ok(mapOf("blobs" to JsonArray(blobs.map(::JsonPrimitive)), "paths" to JsonArray(paths.map(::JsonPrimitive))))
+                    }
+
+                    "get" -> {
+                        local.getObject(header.text("path").orEmpty())?.let { ok(bytes = it) } ?: error("not_found")
+                    }
+
+                    "put" -> {
+                        if (put(header.text("path").orEmpty(), request.bytes)) ok() else error("invalid")
+                    }
+
+                    "live" -> {
+                        null
+                    }
+
+                    else -> {
+                        error("invalid")
+                    }
+                }
+            }.getOrElse { error("invalid") }
+        reply?.let { link.send(it) }
+    }
+
+    /** Accepts an object only at the path it belongs at, once steps 1 to 3 of reading an envelope pass. */
+    private suspend fun put(
+        path: String,
+        bytes: ByteArray?,
+    ): Boolean {
+        val (did, seq) = StorePaths.parseLog(path) ?: return false
+        if (bytes == null) return false
+        return try {
+            session.verified(bytes, did, seq)
+            local.putObject(path, bytes)
+            true
+        } catch (_: ProtocolException) {
+            false
+        }
+    }
+
+    /**
+     * Pulls what the other member holds and this device doesn't (spec/live.md, LAN groups): roster
+     * entries after its head, the wraps and chain boxes it lacks, then the objects above its version vector.
+     */
+    suspend fun pull() {
+        val head = local.rosterAfter(-1).lastOrNull()
+        val asked = mapOf("after" to JsonPrimitive(head?.seq ?: -1)) + listOfNotNull(head?.let { "head" to JsonPrimitive(entryHash(it)) })
+        request("roster", asked)?.let { answer ->
+            local.addEntries(
+                answer.header["entries"]
+                    ?.jsonArray
+                    .orEmpty()
+                    .mapNotNull { runCatching { parseEntry(it) }.getOrNull() },
+            )
+        }
+        val epochs = local.rosterAfter(-1).mapNotNull { it.epoch?.n }
+        for (epoch in epochs) {
+            for (name in listOf(session.me, "chain")) {
+                if (local.key(epoch, name) != null) continue
+                request(
+                    "key",
+                    mapOf("epoch" to JsonPrimitive(epoch), "name" to JsonPrimitive(name)),
+                )?.bytes?.let { local.putKey(epoch, name, it) }
+            }
+        }
+        val vv = JsonObject(heldVersions().mapValues { (_, seq) -> JsonPrimitive(seq) })
+        val listed = request("list", mapOf("vv" to vv)) ?: return
+        val wanted =
+            (listed.header["paths"]?.jsonArray.orEmpty() + listed.header["blobs"]?.jsonArray.orEmpty()).mapNotNull {
+                it.jsonPrimitive.contentOrNull
+            }
+        for (path in wanted.filter { StorePaths.isObject(it) }) {
+            if (local.getObject(path) != null) continue
+            request("get", mapOf("path" to JsonPrimitive(path)))?.bytes?.let { local.putObject(path, it) }
+        }
+    }
+
+    /** Waits until the other member has sent nothing for [quietMs]: its own pull is over. */
+    suspend fun awaitQuiet(quietMs: Long) {
+        while (true) {
+            val quiet = (System.nanoTime() - lastFrame.get()) / 1_000_000
+            if (quiet >= quietMs) return
+            delay(quietMs - quiet)
+        }
+    }
+
+    /** For each log, the last `seq` held without a gap after the first one held. */
+    private suspend fun heldVersions(): Map<String, Long> =
+        local
+            .list(emptyMap())
+            .first
+            .mapNotNull(StorePaths::parseLog)
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, seqs) ->
+                val sorted = seqs.sorted()
+                sorted.zipWithNext().firstOrNull { (a, b) -> b != a + 1 }?.first ?: sorted.last()
+            }
+
+    private companion object {
+        val DID = Regex("[0-9a-f]{32}")
+    }
+}

@@ -16,6 +16,8 @@ import io.github.aedev.flow.data.profile.SwitchIntentQueue
 import io.github.aedev.flow.notification.NotificationHelper
 import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.ui.components.library.message
+import io.github.aedev.flow.ui.components.settings.SettingsDestination
+import io.github.aedev.flow.ui.components.settings.SettingsTarget
 import io.github.aedev.flow.ui.screens.update.UPDATE_ROUTE
 import io.github.aedev.flow.utils.PLAYLIST_FILE_MIME_TYPE
 import kotlinx.coroutines.launch
@@ -55,6 +57,11 @@ internal class IncomingIntents(
         if (SwitchIntentQueue.holdIfSwitching(activity, intent, playlistFileIn(intent))) return
         if (!NotificationHelper.opensInRunningProfile(activity, intent)) {
             intent.replaceExtras(Bundle())
+            return
+        }
+        if (intent.getBooleanExtra(NotificationHelper.EXTRA_OPEN_LINKED, false)) {
+            intent.removeExtra(NotificationHelper.EXTRA_OPEN_LINKED)
+            links.openRoute("settings?target=${SettingsTarget(SettingsDestination.SYNC).encode()}")
             return
         }
         if (intent.getBooleanExtra(NotificationHelper.EXTRA_OPEN_UPDATE, false)) {

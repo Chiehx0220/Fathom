@@ -638,7 +638,7 @@
     <string name="upcoming_label">Próximos</string>
     <string name="upcoming_waiting_count">%1$s aguardando</string>
     <string name="upcoming_video_starts_in">Começa em</string>
-    <string name="subscriptions_video_section_title">Vídeos das inscrições</string>
+    <string name="subscriptions_video_section_title">Inscrições de vídeos</string>
     <string name="subscriptions_music_section_title">Inscrições de músicas</string>
     <string name="subscriptions_compact_header">Acesse rapidamente os canais que você assinou recentemente.</string>
     <string name="subscriptions_compact_header_with_music">Os canais de música são marcados juntos para manter o feed compacto.</string>
@@ -1678,7 +1678,7 @@
     <string name="auto_backup_screen_title">Cópias Automáticas</string>
     <string name="auto_backup_schedule_section">Agendar</string>
     <string name="auto_backup_type_section">Tipo de cópia</string>
-    <string name="auto_backup_folder_section">Cópia de pasta</string>
+    <string name="auto_backup_folder_section">Pasta da cópia</string>
     <string name="auto_backup_status_section">Estado</string>
     <string name="auto_backup_frequency_none">Nenhuma</string>
     <string name="auto_backup_frequency_daily">Diariamente</string>
@@ -1812,7 +1812,7 @@
     <string name="metric_filters_detail">itens bloqueados</string>
     <string name="metric_suppressed">Suprimido</string>
     <string name="metric_suppressed_detail">itens congelados</string>
-    <string name="profile_maturity_label">Perfil de maturidade</string>
+    <string name="profile_maturity_label">Maturidade do perfil</string>
     <string name="profile_maturity_detail">Maior maturidade significa que o perfil tem sinais suficientes para ser estável</string>
     <string name="taste_shape_subtitle">Perfil global comparado com o contexto de tempo ativo</string>
     <string name="taste_pacing">Pacto</string>
@@ -3591,7 +3591,7 @@
     <string name="settings_local_media_keywords">local, dispositivo, arquivos, offline, oculto, pastas, gravações de voz, gravações</string>
     <string name="local_setting_hide_app_audio">Esconder gravações de voz e gravações</string>
     <string name="local_setting_min_audio">Esconder áudios menores que</string>
-    <string name="settings_local_media_summary">Pastas áudios curtos escondidos</string>
+    <string name="settings_local_media_summary">Pastas ocultas e áudios curtos</string>
     <string name="local_setting_min_audio_off">Mostrar todos os comprimentos</string>
     <plurals name="local_setting_seconds">
         <item quantity="one">%1$d segundo</item>

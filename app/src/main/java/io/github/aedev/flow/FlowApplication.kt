@@ -28,6 +28,7 @@ import io.github.aedev.flow.notification.BackgroundCheckScheduler
 import io.github.aedev.flow.notification.NotificationHelper
 import io.github.aedev.flow.player.PlaybackShutdown
 import io.github.aedev.flow.player.SleepTimerManager
+import io.github.aedev.flow.sync2.service.LinkedForeground
 import io.github.aedev.flow.ui.screens.home.HomeFeedLanguageReset
 import io.github.aedev.flow.utils.AppLanguageManager
 import io.github.aedev.flow.utils.FlowCrashHandler
@@ -90,6 +91,9 @@ class FlowApplication :
     @Inject
     lateinit var profileSlices: dagger.Lazy<ProfileSlices>
 
+    @Inject
+    lateinit var linkedForeground: LinkedForeground
+
     override fun newImageLoader(context: PlatformContext): ImageLoader = imageLoader
 
     companion object {
@@ -108,6 +112,7 @@ class FlowApplication :
         ProfileWebView.applySuffix(this)
         super.onCreate()
         appContext = applicationContext
+        linkedForeground.install()
         YouTube.cacheDirectory = cacheDir.resolve("innertube_http_cache")
 
         DiscordPresenceRuntime.initialize(this, okHttpClient)

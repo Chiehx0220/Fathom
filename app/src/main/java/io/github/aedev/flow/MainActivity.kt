@@ -35,6 +35,8 @@ import io.github.aedev.flow.player.LifecyclePlaybackPreferences
 import io.github.aedev.flow.player.MemoryPressurePolicy
 import io.github.aedev.flow.player.PictureInPictureHelper
 import io.github.aedev.flow.player.PipQueueNavigation
+import io.github.aedev.flow.sync2.lan.LanSync
+import io.github.aedev.flow.sync2.service.LinkedSyncWorker
 import io.github.aedev.flow.ui.IncomingIntents
 import io.github.aedev.flow.ui.IncomingLinks
 import io.github.aedev.flow.ui.startup.FlowRoot
@@ -80,6 +82,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var widgetContentSync: dagger.Lazy<io.github.aedev.flow.widget.core.refresh.WidgetContentSync>
+
+    @Inject
+    lateinit var lanSync: dagger.Lazy<LanSync>
 
     @Inject
     lateinit var nowPlayingWidgetPublisher: dagger.Lazy<io.github.aedev.flow.widget.nowplaying.NowPlayingWidgetPublisher>
@@ -200,6 +205,8 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         DiscordPresenceRuntime.setAppForeground(true)
+        LinkedSyncWorker.syncOnOpen(this)
+        lanSync.get().start()
     }
 
     override fun onDestroy() {
@@ -350,6 +357,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        lanSync.get().stop()
         DiscordPresenceRuntime.setAppForeground(false)
         super.onStop()
         FlowCrashHandler.recordPhase(
