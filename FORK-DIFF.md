@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **111** (1203 changed lines). New files: **269**.
+- Modified upstream files: **110** (1187 changed lines). New files: **269**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -35,10 +35,10 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/categories/CategoriesScreen.kt | 36 | 6 |
 | data/local/SubscriptionRecordCodec.kt | 23 | 15 |
 | data/local/BackupRepository.kt | 20 | 17 |
+| ui/screens/channel/ChannelViewModel.kt | 26 | 6 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
 | data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/paging/SearchPagingSource.kt | 17 | 12 |
-| ui/screens/channel/ChannelViewModel.kt | 23 | 4 |
 | data/video/VideoDownloadManager.kt | 23 | 3 |
 | data/video/VideoDownloadOptionsLoader.kt | 25 | 1 |
 | player/resolver/VideoPlaybackResolver.kt | 22 | 3 |
@@ -53,7 +53,6 @@ in it). **New files** never conflict; they are ours alone.
 | utils/ShareVideo.kt | 14 | 7 |
 | data/local/dao/WatchHistoryDao.kt | 20 | 0 |
 | ui/screens/home/HomeScreen.kt | 16 | 4 |
-| ui/tv/components/TvNavRail.kt | 3 | 17 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 19 | 0 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 14 | 4 |
 | player/EnhancedPlayerManager.kt | 16 | 2 |
@@ -90,7 +89,8 @@ in it). **New files** never conflict; they are ours alone.
 | sync/canonical/Canonical.kt | 6 | 0 |
 | sync/mapping/SimpleMappers.kt | 6 | 0 |
 | ui/AppHooks.kt | 2 | 4 |
-| ... 51 more, each small | | |
+| ui/components/videoplayer/settings/PlayerSettingsSheet.kt | 6 | 0 |
+| ... 50 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **17** (130 changed lines). New files: **86**.
+- Modified upstream files: **18** (133 changed lines). New files: **86**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -140,6 +140,7 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/ui/screens/crash/CrashSummaryTest.kt | 3 | 1 |
 | app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 2 | 1 |
 | app/src/test/java/io/github/aedev/flow/player/stream/PlaybackLoadResolverTest.kt | 3 | 0 |
+| app/src/test/resources/profiles/store_inventory.tsv | 3 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/backup/BackupRulesTest.kt | 2 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/home/HomeFeedSourcesSeedTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelHarness.kt | 2 | 0 |
