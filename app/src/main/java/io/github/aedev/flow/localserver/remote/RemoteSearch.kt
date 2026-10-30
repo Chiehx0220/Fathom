@@ -67,8 +67,6 @@ internal fun SearchField(send: (String) -> Unit) {
     var text by rememberSaveable { mutableStateOf("") }
     var focused by remember { mutableStateOf(false) }
     var history by remember { mutableStateOf<List<String>>(emptyList()) }
-    val voiceUnavailable = stringResource(R.string.remote_voice_unavailable)
-    val voicePrompt = stringResource(R.string.remote_search_voice_prompt)
 
     // Reloaded on field entry (fresh searches listed).
     LaunchedEffect(focused) {
@@ -86,27 +84,7 @@ internal fun SearchField(send: (String) -> Unit) {
         focus.clearFocus()
     }
 
-    val voice =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result.data
-                    ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-                    ?.firstOrNull()
-                    ?.let(::search)
-            }
-        }
-    val startVoice = {
-        val intent =
-            Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-                .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                .putExtra(RecognizerIntent.EXTRA_PROMPT, voicePrompt)
-        try {
-            voice.launch(intent)
-        } catch (_: ActivityNotFoundException) {
-            Toast.makeText(context, voiceUnavailable, Toast.LENGTH_SHORT).show()
-        }
-    }
-
+    val startVoice = rememberVoiceSearch(::search)
     val suggestions =
         remember(history, text) {
             val typed = text.trim()
@@ -115,34 +93,13 @@ internal fun SearchField(send: (String) -> Unit) {
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextField(
-                value = text,
-                onValueChange = { text = it },
-                modifier = Modifier.weight(1f).onFocusChanged { focused = it.isFocused },
-                placeholder = { Text(stringResource(R.string.remote_search_hint)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (text.isEmpty()) {
-                        IconButton(onClick = startVoice) {
-                            Icon(Icons.Default.Mic, contentDescription = stringResource(R.string.remote_search_voice))
-                        }
-                    } else {
-                        IconButton(onClick = { text = "" }) {
-                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.remote_search_clear))
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = MaterialTheme.shapes.extraLarge,
-                colors =
-                    TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { search(text) }),
+            SearchInput(
+                text = text,
+                onTextChange = { text = it },
+                onFocusChange = { focused = it },
+                onVoice = startVoice,
+                onSearch = { search(text) },
+                modifier = Modifier.weight(1f),
             )
             // Field height, separate: pill keeps own shape.
             FilledIconButton(
@@ -168,6 +125,74 @@ internal fun SearchField(send: (String) -> Unit) {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SearchInput(
+    text: String,
+    onTextChange: (String) -> Unit,
+    onFocusChange: (Boolean) -> Unit,
+    onVoice: () -> Unit,
+    onSearch: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TextField(
+        value = text,
+        onValueChange = onTextChange,
+        modifier = modifier.onFocusChanged { onFocusChange(it.isFocused) },
+        placeholder = { Text(stringResource(R.string.remote_search_hint)) },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+        trailingIcon = {
+            if (text.isEmpty()) {
+                IconButton(onClick = onVoice) {
+                    Icon(Icons.Default.Mic, contentDescription = stringResource(R.string.remote_search_voice))
+                }
+            } else {
+                IconButton(onClick = { onTextChange("") }) {
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.remote_search_clear))
+                }
+            }
+        },
+        singleLine = true,
+        shape = MaterialTheme.shapes.extraLarge,
+        colors =
+            TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+            ),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { onSearch() }),
+    )
+}
+
+/** Speech recognizer launcher; [onResult] gets the top hypothesis. */
+@Composable
+private fun rememberVoiceSearch(onResult: (String) -> Unit): () -> Unit {
+    val context = LocalContext.current
+    val unavailable = stringResource(R.string.remote_voice_unavailable)
+    val prompt = stringResource(R.string.remote_search_voice_prompt)
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data
+                    ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                    ?.firstOrNull()
+                    ?.let(onResult)
+            }
+        }
+    return {
+        val intent =
+            Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                .putExtra(RecognizerIntent.EXTRA_PROMPT, prompt)
+        try {
+            launcher.launch(intent)
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
         }
     }
 }

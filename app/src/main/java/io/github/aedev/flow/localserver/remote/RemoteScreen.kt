@@ -48,7 +48,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.zIndex
 import io.github.aedev.flow.R
+import io.github.aedev.flow.localserver.RemoteLock
 import io.github.aedev.flow.localserver.RemoteSession
+import io.github.aedev.flow.localserver.RemoteState
 
 private enum class RemoteMode(
     val label: Int,
@@ -85,85 +87,103 @@ internal fun RemoteScreen(onBack: () -> Unit) {
                         volumeHud.press()
                     }
                 },
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-                title = {
-                    Column {
-                        Text(stringResource(R.string.remote_title))
-                        Text(
-                            if (lock.locked) {
-                                stringResource(
-                                    R.string.remote_connected_to,
-                                    lock.clientIp ?: "",
-                                )
-                            } else {
-                                stringResource(R.string.remote_not_connected)
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.remote_back))
-                    }
-                },
-                actions = {
-                    if (lock.locked) {
-                        IconButton(onClick = { RemoteSession.releaseLock() }) {
-                            Icon(Icons.Default.LinkOff, contentDescription = stringResource(R.string.remote_disconnect))
-                        }
-                    }
-                },
-            )
-        },
+        topBar = { RemoteTopBar(lock, onBack) },
         bottomBar = {
             // Modes require a paired page.
-            if (lock.locked) {
-                ShortNavigationBar(containerColor = MaterialTheme.colorScheme.background) {
-                    RemoteMode.entries.forEach { entry ->
-                        ShortNavigationBarItem(
-                            selected = mode == entry,
-                            onClick = { mode = entry },
-                            icon = { Icon(entry.icon, contentDescription = null) },
-                            label = { Text(stringResource(entry.label)) },
-                        )
-                    }
-                }
-            }
+            if (lock.locked) RemoteModeBar(mode) { mode = it }
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             RemoteStatusStrip(state, connected = lock.locked, send = ::sendRemoteCommand)
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 VolumeHud(volumeHud, state, Modifier.align(BiasAlignment(0f, -0.72f)).zIndex(1f))
-                val motion = MaterialTheme.motionScheme
-                // Slide direction = tab order.
-                AnimatedContent(
-                    targetState = if (lock.locked) mode else null,
-                    transitionSpec = {
-                        val direction = if ((targetState?.ordinal ?: -1) > (initialState?.ordinal ?: -1)) 1 else -1
-                        (
-                            slideInHorizontally(motion.fastSpatialSpec<IntOffset>()) { it / 5 * direction } +
-                                fadeIn(motion.defaultEffectsSpec<Float>())
-                        ) togetherWith
-                            (
-                                slideOutHorizontally(motion.fastSpatialSpec<IntOffset>()) { -it / 5 * direction } +
-                                    fadeOut(motion.defaultEffectsSpec<Float>())
-                            )
+                RemotePages(page = if (lock.locked) mode else null, state = state)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RemoteTopBar(
+    lock: RemoteLock,
+    onBack: () -> Unit,
+) {
+    TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+        title = {
+            Column {
+                Text(stringResource(R.string.remote_title))
+                Text(
+                    if (lock.locked) {
+                        stringResource(R.string.remote_connected_to, lock.clientIp ?: "")
+                    } else {
+                        stringResource(R.string.remote_not_connected)
                     },
-                    label = "remotePage",
-                ) { page ->
-                    when (page) {
-                        null -> NotConnected()
-                        RemoteMode.DIRECTIONS -> DirectionsMode(state, ::sendRemoteCommand)
-                        RemoteMode.PLAYBACK -> PlaybackMode(state, ::sendRemoteCommand)
-                        RemoteMode.TOUCHPAD -> TouchpadMode(state, ::sendRemoteCommand)
-                    }
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.remote_back))
+            }
+        },
+        actions = {
+            if (lock.locked) {
+                IconButton(onClick = { RemoteSession.releaseLock() }) {
+                    Icon(Icons.Default.LinkOff, contentDescription = stringResource(R.string.remote_disconnect))
                 }
             }
+        },
+    )
+}
+
+@Composable
+private fun RemoteModeBar(
+    mode: RemoteMode,
+    onSelect: (RemoteMode) -> Unit,
+) {
+    ShortNavigationBar(containerColor = MaterialTheme.colorScheme.background) {
+        RemoteMode.entries.forEach { entry ->
+            ShortNavigationBarItem(
+                selected = mode == entry,
+                onClick = { onSelect(entry) },
+                icon = { Icon(entry.icon, contentDescription = null) },
+                label = { Text(stringResource(entry.label)) },
+            )
+        }
+    }
+}
+
+/** [page] null = not connected. */
+@Composable
+private fun RemotePages(
+    page: RemoteMode?,
+    state: RemoteState,
+) {
+    val motion = MaterialTheme.motionScheme
+    // Slide direction = tab order.
+    AnimatedContent(
+        targetState = page,
+        transitionSpec = {
+            val direction = if ((targetState?.ordinal ?: -1) > (initialState?.ordinal ?: -1)) 1 else -1
+            (
+                slideInHorizontally(motion.fastSpatialSpec<IntOffset>()) { it / 5 * direction } +
+                    fadeIn(motion.defaultEffectsSpec<Float>())
+            ) togetherWith
+                (
+                    slideOutHorizontally(motion.fastSpatialSpec<IntOffset>()) { -it / 5 * direction } +
+                        fadeOut(motion.defaultEffectsSpec<Float>())
+                )
+        },
+        label = "remotePage",
+    ) {
+        when (it) {
+            null -> NotConnected()
+            RemoteMode.DIRECTIONS -> DirectionsMode(state, ::sendRemoteCommand)
+            RemoteMode.PLAYBACK -> PlaybackMode(state, ::sendRemoteCommand)
+            RemoteMode.TOUCHPAD -> TouchpadMode(state, ::sendRemoteCommand)
         }
     }
 }
