@@ -2,6 +2,7 @@ package io.github.aedev.flow.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.model.Video
 
 @Entity(tableName = "videos")
@@ -35,7 +36,7 @@ data class VideoEntity(
             channelThumbnailUrl = channelThumbnailUrl,
             timestamp = timestamp,
             isMusic = isMusic,
-            serviceId = serviceId
+            serviceId = serviceIdOfVideo(id, serviceId)
         )
     }
 
