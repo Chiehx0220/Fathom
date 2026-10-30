@@ -1,9 +1,11 @@
 package io.github.aedev.flow.ui.screens.settings
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -53,8 +56,6 @@ fun FathomDonationsScreen(
         return
     }
 
-    val uriHandler = LocalUriHandler.current
-
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
@@ -70,93 +71,9 @@ fun FathomDonationsScreen(
             modifier = Modifier.fillMaxSize().padding(paddingValues),
             contentPadding = PaddingValues(bottom = 40.dp),
         ) {
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(top = 32.dp, bottom = 24.dp, start = 24.dp, end = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.VolunteerActivism,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(52.dp),
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = stringResource(R.string.support_fathom_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.support_fathom_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        FATHOM_DONATIONS.forEachIndexed { index, link ->
-                            val label = stringResource(link.buttonLabel)
-                            if (index == 0) {
-                                Button(
-                                    onClick = { uriHandler.openUri(link.url) },
-                                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors =
-                                        ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.onBackground,
-                                            contentColor = MaterialTheme.colorScheme.background,
-                                        ),
-                                ) {
-                                    Text(text = label, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                                }
-                            } else {
-                                OutlinedButton(
-                                    onClick = { uriHandler.openUri(link.url) },
-                                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                                    shape = RoundedCornerShape(8.dp),
-                                ) {
-                                    Text(text = label, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
+            item { FathomSupportSection() }
             item { HorizontalDivider() }
-
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(top = 28.dp, start = 24.dp, end = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = stringResource(R.string.support_upstream_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.support_upstream_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedButton(
-                        onClick = { showFlow = true },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(text = stringResource(R.string.support_upstream_button), fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    }
-                }
-            }
-
+            item { UpstreamSupportSection(onOpen = { showFlow = true }) }
             item {
                 Spacer(modifier = Modifier.height(28.dp))
                 Text(
@@ -169,5 +86,93 @@ fun FathomDonationsScreen(
                 )
             }
         }
+    }
+}
+
+/** Fathom's links; the first is the primary action. */
+@Composable
+private fun FathomSupportSection() {
+    val uriHandler = LocalUriHandler.current
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 32.dp, bottom = 24.dp, start = 24.dp, end = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.VolunteerActivism,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(52.dp),
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        SupportHeading(R.string.support_fathom_title, R.string.support_fathom_desc, MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(24.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            FATHOM_DONATIONS.forEachIndexed { index, link ->
+                SupportButton(
+                    label = stringResource(link.buttonLabel),
+                    onClick = { uriHandler.openUri(link.url) },
+                    primary = index == 0,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpstreamSupportSection(onOpen: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 28.dp, start = 24.dp, end = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        SupportHeading(R.string.support_upstream_title, R.string.support_upstream_desc, MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(16.dp))
+        SupportButton(label = stringResource(R.string.support_upstream_button), onClick = onOpen, primary = false)
+    }
+}
+
+@Composable
+private fun SupportHeading(
+    @StringRes title: Int,
+    @StringRes description: Int,
+    titleStyle: TextStyle,
+) {
+    Text(
+        text = stringResource(title),
+        style = titleStyle,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onBackground,
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+        text = stringResource(description),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+    )
+}
+
+@Composable
+private fun SupportButton(
+    label: String,
+    onClick: () -> Unit,
+    primary: Boolean,
+) {
+    val modifier = Modifier.fillMaxWidth().height(50.dp)
+    val shape = RoundedCornerShape(8.dp)
+    val content: @Composable RowScope.() -> Unit = { Text(text = label, fontWeight = FontWeight.Bold, fontSize = 15.sp) }
+    if (primary) {
+        Button(
+            onClick = onClick,
+            modifier = modifier,
+            shape = shape,
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.onBackground,
+                    contentColor = MaterialTheme.colorScheme.background,
+                ),
+            content = content,
+        )
+    } else {
+        OutlinedButton(onClick = onClick, modifier = modifier, shape = shape, content = content)
     }
 }
