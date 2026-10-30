@@ -91,4 +91,6 @@
     <string name="deep_flow_long_press_hint">Pressione e segure o logotipo ou o nome do Fathom na tela inicial para ativar o Flow Profundo</string>
     <string name="playback_background_restricted_subtitle">Seu telefone pode interromper o Fathom quando você deslizar o dedo para fechar a tela. Toque para permitir.</string>
     <string name="share_download_with_flow">Baixar com o Fathom</string>
+    <string name="player_settings_keep_playing_after_swipe">Continuar reproduzindo após fechar o Fathom</string>
+    <string name="profiles_copy_recommendations_summary">O que o Fathom aprendeu sobre o seu gosto</string>
 </resources>

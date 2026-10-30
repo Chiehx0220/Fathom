@@ -53,4 +53,6 @@
     <string name="location_movies_label">Movies / Fathom</string>
     <string name="music_service_disabled">Impossibile riprodurre la musica. Il servizio musicale di Fathom è disattivato su questo dispositivo.</string>
     <string name="deep_flow_long_press_hint">Tieni premuto il logo Fathom o il nome in Home per attivare Deep Flow</string>
+    <string name="player_settings_keep_playing_after_swipe">Continua a riprodurre alla chiusura di Fathom</string>
+    <string name="player_settings_keep_playing_after_swipe_subtitle">La riproduzione continua quando chiudi Fathom dalle app recenti</string>
 </resources>

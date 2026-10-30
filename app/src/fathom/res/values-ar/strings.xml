@@ -92,4 +92,7 @@
     <string name="deep_flow_long_press_hint">اضغط مطولًا على شعار Fathom أو اسمه في الشاشة الرئيسية للتبديل إلى Deep Flow</string>
     <string name="playback_background_restricted_subtitle">قد يتوقف تطبيق Fathom عند إزالته من التطبيقات المفتوحة. اضغط للسماح له بالاستمرر في العمل.</string>
     <string name="share_download_with_flow">التنزيل باستخدام Fathom</string>
+    <string name="player_settings_keep_playing_after_swipe">مواصلة التشغيل بعد إغلاق Fathom</string>
+    <string name="player_settings_keep_playing_after_swipe_subtitle">يستمر التشغيل عند سحب Fathom بعيدًا عن التطبيقات الحديثة</string>
+    <string name="profiles_copy_recommendations_summary">ما تعلّمه Fathom عن ذوقك</string>
 </resources>

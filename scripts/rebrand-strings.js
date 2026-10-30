@@ -53,6 +53,9 @@ const KEEP_KEYS = new Set([
   'settings_reset_brain_body',
   'settings_reset_brain_title',
   'tv_settings_flow_engine',
+  // the sync server product
+  'linked_create_body',
+  'linked_intro',
   // importing Flow backups, the original theme
   'import_flow_backup_desc',
   'import_flow_backup_failed_template',

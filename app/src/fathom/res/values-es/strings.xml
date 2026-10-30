@@ -72,4 +72,7 @@
     <string name="deep_flow_long_press_hint">Mantén pulsado el logotipo o el nombre de Fathom en Inicio para cambiar Deep Flow</string>
     <string name="playback_background_restricted_subtitle">Tu teléfono puede detener Fathom cuando lo cierres deslizándolo. Toca para permitirlo.</string>
     <string name="share_download_with_flow">Descargar con Fathom</string>
+    <string name="player_settings_keep_playing_after_swipe">Seguir reproduciendo al cerrar Fathom</string>
+    <string name="player_settings_keep_playing_after_swipe_subtitle">La reproducción continúa cuando cierras Fathom desde las aplicaciones recientes</string>
+    <string name="profiles_copy_recommendations_summary">Lo que Fathom ha aprendido sobre tus gustos</string>
 </resources>

@@ -90,4 +90,7 @@
     <string name="deep_flow_long_press_hint">Deep Flow\'a geçmek için Ana Sayfada Fathom logosuna veya adına uzun bas</string>
     <string name="playback_background_restricted_subtitle">Telefonun, Fathom\'u kapattığında durdurabilir. İzin vermek için dokun.</string>
     <string name="share_download_with_flow">Fathom ile İndir</string>
+    <string name="player_settings_keep_playing_after_swipe">Fathom kapatıldıktan sonra oynatmaya devam et</string>
+    <string name="player_settings_keep_playing_after_swipe_subtitle">Son uygulamalardan Fathom\'u kaydırarak kapattığında oynatma devam eder</string>
+    <string name="profiles_copy_recommendations_summary">Fathom\'un zevkin hakkında öğrendikleri</string>
 </resources>
