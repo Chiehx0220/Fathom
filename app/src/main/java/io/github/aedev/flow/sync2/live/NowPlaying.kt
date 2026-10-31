@@ -67,14 +67,13 @@ class NowPlaying
                 }
                 while (true) {
                     delay(REPEAT_MS)
-                    if (current().state == LiveMessage.PLAYING) publish(force = true)
+                    if (onMain().state == LiveMessage.PLAYING) publish(force = true)
                 }
             }
 
         private suspend fun publish(force: Boolean) {
             lock.withLock {
-                // The players live on the main thread.
-                val now = withContext(Dispatchers.Main.immediate) { current() }.copy(link = db.groups().group()?.link)
+                val now = onMain().copy(link = db.groups().group()?.link)
                 val previous = last
                 if (!force && previous != null && !changed(previous, now)) return
                 if (live.send(now) != null) {
@@ -93,6 +92,9 @@ class NowPlaying
             val expected = previous.pos + if (previous.state == LiveMessage.PLAYING) System.currentTimeMillis() - lastAt else 0
             return now.video != null && abs(now.pos - expected) > SEEK_MS
         }
+
+        /** The players live on the main thread. */
+        private suspend fun onMain(): LiveMessage.Now = withContext(Dispatchers.Main.immediate) { current() }
 
         /** The player in use: music while it plays or when the video player is idle, otherwise video. */
         private fun current(): LiveMessage.Now {
