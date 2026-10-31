@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -46,6 +45,8 @@ import io.github.aedev.flow.ui.components.shared.MediaShortsShelf
 import io.github.aedev.flow.ui.components.shared.card.MediaVideoCard
 import io.github.aedev.flow.ui.components.shared.card.VideoCardLayout
 import io.github.aedev.flow.ui.components.shared.dpadFocusGroup
+import io.github.aedev.flow.ui.components.shared.itemsIndexedWithPlatformBadge
+import io.github.aedev.flow.ui.components.shared.mixesServices
 import io.github.aedev.flow.ui.components.shared.rememberFeedGridPlan
 
 private val GroupRowHorizontalPadding = 12.dp
@@ -209,7 +210,8 @@ internal fun SubscriptionsFeedContent(
                     }
                 }
 
-                itemsIndexed(
+                itemsIndexedWithPlatformBadge(
+                    show = videos.mixesServices(),
                     items = videos,
                     key = { _, video -> video.id },
                     contentType = { _, _ -> "video" },

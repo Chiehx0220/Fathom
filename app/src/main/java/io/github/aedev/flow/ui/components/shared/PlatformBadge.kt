@@ -7,6 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridItemScope
+import androidx.compose.foundation.lazy.grid.LazyGridItemSpanScope
+import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.ui.theme.BilibiliPink
 import io.github.aedev.flow.ui.theme.YouTubeRed
 
@@ -39,6 +48,35 @@ fun ProvidePlatformBadge(
     show: Boolean,
     content: @Composable () -> Unit,
 ) = CompositionLocalProvider(LocalShowPlatformBadge provides show, content = content)
+
+/** More than one service in the list. */
+fun List<Video>.mixesServices(): Boolean {
+    val first = firstOrNull()?.serviceId ?: return false
+    return any { it.serviceId != first }
+}
+
+/** [items] with the badge only when [show]. */
+fun LazyListScope.itemsWithPlatformBadge(
+    show: Boolean,
+    count: Int,
+    key: ((Int) -> Any)? = null,
+    contentType: (Int) -> Any? = { null },
+    itemContent: @Composable LazyItemScope.(Int) -> Unit,
+) = items(count = count, key = key, contentType = contentType) { index ->
+    ProvidePlatformBadge(show) { itemContent(index) }
+}
+
+/** [itemsIndexed] with the badge only when [show]. */
+fun <T> LazyGridScope.itemsIndexedWithPlatformBadge(
+    show: Boolean,
+    items: List<T>,
+    key: ((Int, T) -> Any)? = null,
+    span: (LazyGridItemSpanScope.(Int, T) -> GridItemSpan)? = null,
+    contentType: (Int, T) -> Any? = { _, _ -> null },
+    itemContent: @Composable LazyGridItemScope.(Int, T) -> Unit,
+) = itemsIndexed(items = items, key = key, span = span, contentType = contentType) { index, item ->
+    ProvidePlatformBadge(show) { itemContent(index, item) }
+}
 
 /** Service brand color (source color-coding). */
 fun serviceBrandColor(serviceId: Int): Color =

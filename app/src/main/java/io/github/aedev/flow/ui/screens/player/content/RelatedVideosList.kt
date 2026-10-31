@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.data.local.PlayerRelatedCardStyle
@@ -14,6 +13,8 @@ import io.github.aedev.flow.ui.components.FeedGridLayout
 import io.github.aedev.flow.ui.components.partialRowIndices
 import io.github.aedev.flow.ui.components.shared.card.MediaVideoCard
 import io.github.aedev.flow.ui.components.shared.card.VideoCardLayout
+import io.github.aedev.flow.ui.components.shared.itemsWithPlatformBadge
+import io.github.aedev.flow.ui.components.shared.mixesServices
 
 /**
  * Related videos content for LazyListScope.
@@ -24,7 +25,8 @@ internal fun LazyListScope.relatedVideosContent(
     cardStyle: PlayerRelatedCardStyle = PlayerRelatedCardStyle.FULL_WIDTH,
 ) {
     // Video items
-    items(
+    itemsWithPlatformBadge(
+        show = relatedVideos.mixesServices(),
         count = relatedVideos.size,
         key = { index -> relatedVideos[index].id },
     ) { index ->
@@ -63,7 +65,8 @@ internal fun LazyListScope.relatedVideosGridContent(
     val columns = if (cardStyle == PlayerRelatedCardStyle.COMPACT) 1 else layout.columns
     val rows = relatedGridRows(relatedVideos.size, columns)
 
-    items(
+    itemsWithPlatformBadge(
+        show = relatedVideos.mixesServices(),
         count = rows.size,
         key = { index -> rows[index].joinToString { relatedVideos[it].id } },
         contentType = { index -> if (rows[index].size == 1) "related_row" else "related_grid_row" },

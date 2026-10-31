@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **110** (1186 changed lines). New files: **269**.
+- Modified upstream files: **112** (1201 changed lines). New files: **269**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -75,6 +75,7 @@ in it). **New files** never conflict; they are ours alone.
 | player/stream/ResolvedStreamData.kt | 10 | 0 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
 | ui/screens/channel/ChannelCommunityController.kt | 8 | 1 |
+| ui/screens/player/content/RelatedVideosList.kt | 6 | 3 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 7 | 2 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 8 | 1 |
 | sync/merge/CollectionMergers.kt | 4 | 4 |
@@ -89,8 +90,7 @@ in it). **New files** never conflict; they are ours alone.
 | sync/canonical/Canonical.kt | 6 | 0 |
 | sync/mapping/SimpleMappers.kt | 6 | 0 |
 | ui/AppHooks.kt | 2 | 4 |
-| ui/components/videoplayer/settings/PlayerSettingsSheet.kt | 6 | 0 |
-| ... 50 more, each small | | |
+| ... 52 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **18** (133 changed lines). New files: **87**.
+- Modified upstream files: **18** (133 changed lines). New files: **88**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
