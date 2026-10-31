@@ -12,6 +12,10 @@ enum class LinkedError(
     INSECURE,
     UNREACHABLE(retryable = true),
     REFUSED,
+    GROUP_MISSING,
+    ADMIN_REFUSED,
+    ADMIN_BLOCKED,
+    LOGIN_REFUSED,
     BUSY(retryable = true),
     INSTANCE_CHANGED,
     PROTOCOL,
@@ -20,6 +24,7 @@ enum class LinkedError(
     REMOVED,
     DECLINED,
     TIMED_OUT,
+    JOIN_DECLINED,
     WRONG_WORDS,
     RECOVERY_USED,
     ALREADY_LINKED,
@@ -32,40 +37,100 @@ enum class LinkedError(
 
 fun Throwable.linkedError(): LinkedError =
     when (this) {
-        is StoreException.Insecure -> LinkedError.INSECURE
+        is StoreException.Insecure -> {
+            LinkedError.INSECURE
+        }
 
-        is StoreException.Network -> LinkedError.UNREACHABLE
+        is StoreException.Network -> {
+            LinkedError.UNREACHABLE
+        }
 
-        is StoreException.Refused -> if (rateLimited) LinkedError.BUSY else LinkedError.REFUSED
+        is StoreException.Refused -> {
+            when {
+                rateLimited -> LinkedError.BUSY
+                code == "unclaimed" -> LinkedError.GROUP_MISSING
+                else -> LinkedError.REFUSED
+            }
+        }
 
-        is StoreException.InstanceChanged -> LinkedError.INSTANCE_CHANGED
+        is StoreException.AdminRefused -> {
+            LinkedError.ADMIN_REFUSED
+        }
 
-        is StoreException.Malformed, is ProtocolException -> LinkedError.PROTOCOL
+        is StoreException.AdminBlocked -> {
+            LinkedError.ADMIN_BLOCKED
+        }
 
-        is LinkedException.NotLinked -> LinkedError.NOT_LINKED
+        is StoreException.LoginRefused -> {
+            LinkedError.LOGIN_REFUSED
+        }
 
-        is LinkedException.Removed -> LinkedError.REMOVED
+        is StoreException.InstanceChanged -> {
+            LinkedError.INSTANCE_CHANGED
+        }
 
-        is LinkedException.Declined -> LinkedError.DECLINED
+        is StoreException.SignInRefused -> {
+            LinkedError.REMOVED
+        }
 
-        is LinkedException.TimedOut -> LinkedError.TIMED_OUT
+        is StoreException.Malformed, is ProtocolException -> {
+            LinkedError.PROTOCOL
+        }
 
-        is LinkedException.WrongWords -> LinkedError.WRONG_WORDS
+        is LinkedException.NotLinked -> {
+            LinkedError.NOT_LINKED
+        }
 
-        is LinkedException.RecoveryUsed -> LinkedError.RECOVERY_USED
+        is LinkedException.Removed -> {
+            LinkedError.REMOVED
+        }
 
-        is LinkedException.AlreadyLinked -> LinkedError.ALREADY_LINKED
+        is LinkedException.Declined -> {
+            LinkedError.DECLINED
+        }
 
-        is LinkedException.LanUnreachable -> LinkedError.LAN_UNREACHABLE
+        is LinkedException.TimedOut -> {
+            LinkedError.TIMED_OUT
+        }
 
-        is LinkedException.ServerHasGroup -> LinkedError.SERVER_HAS_GROUP
+        is LinkedException.JoinDeclined -> {
+            LinkedError.JOIN_DECLINED
+        }
 
-        is LinkedException.NeedsMember -> LinkedError.NEEDS_MEMBER
+        is LinkedException.WrongWords -> {
+            LinkedError.WRONG_WORDS
+        }
 
-        is LinkedException.Unexpected -> LinkedError.UNEXPECTED
+        is LinkedException.RecoveryUsed -> {
+            LinkedError.RECOVERY_USED
+        }
 
-        is LinkedException.Stopped -> LinkedError.STOPPED
+        is LinkedException.AlreadyLinked -> {
+            LinkedError.ALREADY_LINKED
+        }
+
+        is LinkedException.LanUnreachable -> {
+            LinkedError.LAN_UNREACHABLE
+        }
+
+        is LinkedException.ServerHasGroup -> {
+            LinkedError.SERVER_HAS_GROUP
+        }
+
+        is LinkedException.NeedsMember -> {
+            LinkedError.NEEDS_MEMBER
+        }
+
+        is LinkedException.Unexpected -> {
+            LinkedError.UNEXPECTED
+        }
+
+        is LinkedException.Stopped -> {
+            LinkedError.STOPPED
+        }
 
         // Damaged device keys, a failed merge, the database.
-        else -> LinkedError.LOCAL
+        else -> {
+            LinkedError.LOCAL
+        }
     }

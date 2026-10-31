@@ -56,6 +56,7 @@ class RosterTest {
             put("seq", state.seq)
             put("head", state.head)
             put("epoch", state.epoch)
+            put("rotate", state.rotate)
             put(
                 "members",
                 buildJsonArray {

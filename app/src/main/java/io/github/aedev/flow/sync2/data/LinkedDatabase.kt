@@ -39,10 +39,16 @@ interface SentDao {
         LinkRow::class,
         CollectedRow::class,
         HeldRow::class,
+        LiveCounterRow::class,
+        ConsentRow::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3, spec = HoldObjects::class)],
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3, spec = HoldObjects::class),
+        AutoMigration(from = 3, to = 4),
+    ],
 )
 abstract class LinkedDatabase : RoomDatabase() {
     abstract fun sent(): SentDao
@@ -54,4 +60,6 @@ abstract class LinkedDatabase : RoomDatabase() {
     abstract fun collection(): CollectionDao
 
     abstract fun held(): HeldDao
+
+    abstract fun live(): LiveDao
 }

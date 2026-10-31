@@ -14,6 +14,15 @@ import kotlinx.coroutines.flow.Flow
 /** The [GroupRecord.storeUrl] of a group that lives on its devices alone (spec/live.md, LAN groups). */
 const val LAN_STORE = "lan"
 
+/** What a [GroupRecord.storeUrl] of a group on WebDAV starts with; the folder's URL follows. */
+const val WEBDAV_STORE = "webdav:"
+
+/** The WebDAV folder the group lives in, or null when it lives elsewhere. */
+val GroupRecord.webDavUrl: String? get() = storeUrl.takeIf { it.startsWith(WEBDAV_STORE) }?.removePrefix(WEBDAV_STORE)
+
+/** The Flow server the group lives on, or null for a group on WebDAV or on its devices alone. */
+val GroupRecord.serverUrl: String? get() = storeUrl.takeIf { it != LAN_STORE && webDavUrl == null }
+
 /** The group this device belongs to, where its store is, and how far it has written and read. */
 @Entity(tableName = "group_record")
 data class GroupRecord(

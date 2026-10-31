@@ -63,18 +63,20 @@ class LanSyncTest {
         return Member(keys, db, local)
     }
 
-    /** One session from [client] to [server], both pulling, as LanSync runs it. */
+    /** One session from [client] to [server], both pulling, as LanSync runs it; [envelope] goes along as a live message, which the server keeps in [heard]. */
     private suspend fun meet(
         client: Member,
         server: Member,
+        envelope: ByteArray? = null,
+        heard: MutableList<ByteArray> = ArrayList(),
     ) = withContext(Dispatchers.Default) {
         coroutineScope {
             val accepted = CompletableDeferred<SyncConnection>()
             val listener = WsServer(SESSION_PATH) { accepted.complete(it) }
             val port = listener.start()
             val connection = WsClient(OkHttpClient()).connect("ws://127.0.0.1:$port$SESSION_PATH")
-            val serverSide = async { pullBoth(acceptLink(accepted.await(), server.session()), server) }
-            pullBoth(connectLink(connection, client.session()), client)
+            val serverSide = async { pullBoth(acceptLink(accepted.await(), server.session()), server, heard = heard) }
+            pullBoth(connectLink(connection, client.session()), client, envelope)
             serverSide.await()
             listener.stop()
         }
@@ -83,9 +85,12 @@ class LanSyncTest {
     private suspend fun pullBoth(
         link: LanLink,
         member: Member,
+        envelope: ByteArray? = null,
+        heard: MutableList<ByteArray> = ArrayList(),
     ) = coroutineScope {
-        val peer = LanPeer(link, member.session(), member.local)
+        val peer = LanPeer(link, member.session(), member.local) { heard += it }
         val reader = peer.start(this)
+        envelope?.let { peer.sendLive(it) }
         peer.pull()
         peer.awaitQuiet(500)
         link.close()
@@ -161,5 +166,16 @@ class LanSyncTest {
             meet(client = lost, server = won)
 
             for (member in listOf(a, b)) assertEquals(entryHash(winner), entryHash(member.local.rosterAfter(-1).last()))
+        }
+
+    @Test
+    fun a_live_message_travels_in_a_lan_session() =
+        runTest {
+            val g = LinkedGroup(this).apply { create() }
+            val a = member(g, g.a)
+            val b = member(g, g.b)
+            val heard = ArrayList<ByteArray>()
+            meet(client = a, server = b, envelope = byteArrayOf(7, 7), heard = heard)
+            assertEquals(listOf(listOf<Byte>(7, 7)), heard.map { it.toList() })
         }
 }

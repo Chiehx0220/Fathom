@@ -32,20 +32,26 @@ enum class Op(
     @SerialName("remove")
     REMOVE(0),
 
+    @SerialName("leave")
+    LEAVE(1),
+
     @SerialName("recovery")
-    RECOVERY(1),
+    RECOVERY(2),
 
     @SerialName("restore")
-    RESTORE(2),
+    RESTORE(3),
+
+    @SerialName("rotate")
+    ROTATE(4),
 
     @SerialName("add")
-    ADD(3),
+    ADD(5),
 
     @SerialName("rename")
-    RENAME(4),
+    RENAME(6),
 
     @SerialName("genesis")
-    GENESIS(5),
+    GENESIS(7),
 }
 
 @Serializable
@@ -93,6 +99,8 @@ class RosterState(
     val kc: String,
     val members: Map<String, Member>,
     val seen: Set<String>,
+    /** A device left during this epoch, so the next device to write appends a `rotate` first. */
+    val rotate: Boolean = false,
 )
 
 // Strict: an unknown field is a malformed entry; absent fields are omitted, never null.
@@ -177,6 +185,8 @@ private fun checkShape(entry: Entry) {
             Op.REMOVE -> Triple(0, true, true)
             Op.RENAME -> Triple(0, false, false)
             Op.RECOVERY -> Triple(1, true, true)
+            Op.LEAVE -> Triple(0, true, false)
+            Op.ROTATE -> Triple(0, false, true)
         }
     val added = entry.add?.size ?: 0
     if (added != add || remove != (entry.remove != null) || epoch != (entry.epoch != null)) reject(ProtocolError.ROSTER_OP)
@@ -260,10 +270,12 @@ fun applyEntry(
 
     val members = state?.members.orEmpty().toMutableMap()
     val removedRole = if (entry.op == Op.RECOVERY) Role.RECOVERY else Role.DEVICE
+    // A leave removes exactly its signer; every other removal removes someone else.
     for (id in entry.remove.orEmpty()) {
-        if (id == entry.signer || members[id]?.role != removedRole) reject(ProtocolError.ROSTER_OP)
+        if (members[id]?.role != removedRole || (id == entry.signer) != (entry.op == Op.LEAVE)) reject(ProtocolError.ROSTER_OP)
         members.remove(id)
     }
+    if (entry.op == Op.LEAVE && members.values.none { it.role == Role.DEVICE }) reject(ProtocolError.ROSTER_OP)
     if (entry.op == Op.RESTORE) members[entry.signer] = Member(signer.sig, signer.kem, signer.role, used = true)
     seen += added.keys
     members += added
@@ -290,6 +302,7 @@ fun applyEntry(
         kc = epoch?.kc ?: state?.kc.orEmpty(),
         members = members.toSortedMap(),
         seen = seen,
+        rotate = entry.op == Op.LEAVE || (epoch == null && state?.rotate == true),
     )
 }
 
@@ -301,3 +314,15 @@ fun replayRoster(entries: List<Entry>): RosterState =
  * removal first, then the lowest entry hash.
  */
 fun forkWinner(candidates: List<Entry>): Entry? = candidates.minWithOrNull(compareBy({ it.op.rank }, { entryHash(it) }))
+
+/** The chain every device picks from [entries]: at each `seq`, the winner among the entries valid there (spec/protocol.md, Forks). */
+fun resolveForks(entries: List<Entry>): List<Entry> {
+    val chain = ArrayList<Entry>()
+    var state: RosterState? = null
+    for ((_, candidates) in entries.groupBy { it.seq }.toSortedMap()) {
+        val winner = forkWinner(candidates.filter { runCatching { applyEntry(state, it) }.isSuccess }) ?: break
+        state = applyEntry(state, winner)
+        chain += winner
+    }
+    return chain
+}

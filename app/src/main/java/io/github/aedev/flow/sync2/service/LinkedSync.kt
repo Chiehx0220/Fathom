@@ -15,18 +15,25 @@ import io.github.aedev.flow.sync.protocol.SyncCollection
 import io.github.aedev.flow.sync2.changes.applyBatches
 import io.github.aedev.flow.sync2.crypto.MemberSecrets
 import io.github.aedev.flow.sync2.data.GroupRecord
-import io.github.aedev.flow.sync2.data.LAN_STORE
 import io.github.aedev.flow.sync2.data.LinkedDatabase
+import io.github.aedev.flow.sync2.data.serverUrl
+import io.github.aedev.flow.sync2.data.webDavUrl
 import io.github.aedev.flow.sync2.device.DeviceKeys
+import io.github.aedev.flow.sync2.device.StoreCredentials
+import io.github.aedev.flow.sync2.engine.LinkedException
 import io.github.aedev.flow.sync2.engine.Session
 import io.github.aedev.flow.sync2.engine.collectGarbage
 import io.github.aedev.flow.sync2.engine.isDue
 import io.github.aedev.flow.sync2.engine.writeSnapshot
 import io.github.aedev.flow.sync2.linking.deviceNames
+import io.github.aedev.flow.sync2.linking.rotateEpoch
+import io.github.aedev.flow.sync2.store.FileLayout
 import io.github.aedev.flow.sync2.store.GroupStore
 import io.github.aedev.flow.sync2.store.LocalStore
+import io.github.aedev.flow.sync2.store.Remote
 import io.github.aedev.flow.sync2.store.ServerStore
 import io.github.aedev.flow.sync2.store.StoreException
+import io.github.aedev.flow.sync2.store.WebDavStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -68,6 +75,8 @@ class LinkedSync
         private val identity: DeviceIdentity,
         private val local: LocalStore,
         private val indicator: SyncIndicator,
+        private val reset: LinkedReset,
+        private val credentials: StoreCredentials,
     ) {
         private val running = Mutex()
         private val last = MutableStateFlow<LastSync?>(null)
@@ -85,19 +94,22 @@ class LinkedSync
         fun server(
             record: GroupRecord,
             device: MemberSecrets,
-        ): ServerStore? =
-            if (record.storeUrl ==
-                LAN_STORE
-            ) {
-                null
-            } else {
-                ServerStore.connect(record.storeUrl, device, record.instance, record.groupId)
-            }
+        ): ServerStore? = record.serverUrl?.let { ServerStore.connect(it, device, record.instance, record.groupId) }
 
-        fun groupStore(
+        /** The group's shared store: its Flow server or WebDAV folder, or null for a group on its devices alone. */
+        suspend fun remote(
             record: GroupRecord,
             device: MemberSecrets,
-        ): GroupStore = GroupStore(local, server(record, device))
+        ): Remote? {
+            val folder = record.webDavUrl ?: return server(record, device)
+            val login = credentials.webDav()?.takeIf { !it.refused } ?: throw StoreException.LoginRefused()
+            return FileLayout(WebDavStore.connect(folder, login.user, login.password, login.conditional), SyncBytes.toHex(device.did))
+        }
+
+        suspend fun groupStore(
+            record: GroupRecord,
+            device: MemberSecrets,
+        ): GroupStore = GroupStore(local, remote(record, device))
 
         /** A session on what this device holds, after copying the server's roster and keys. */
         suspend fun open(
@@ -121,6 +133,13 @@ class LinkedSync
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
+                        // Out of the group: a verified roster drops this device, or its server refuses it a token.
+                        // Nothing more goes to a WebDAV server that refused the login until the user enters it again.
+                        when (e) {
+                            is LinkedException.Removed -> reset.removed()
+                            is StoreException.SignInRefused -> LinkedSyncWorker.cancel(context)
+                            is StoreException.LoginRefused -> credentials.webDav()?.let { credentials.save(it.copy(refused = true)) }
+                        }
                         e.linkedError()
                     } finally {
                         active.value = false
@@ -134,7 +153,7 @@ class LinkedSync
             applier.exportPayload(collections, identity.hlcNode(), identity.newClock().now().encode())
 
         private suspend fun run(announce: Boolean) {
-            if (!SyncProfile.syncsHere(context)) return
+            if (!SyncProfile.syncsHere(context) || reset.leaveFailed.value != null) return
             val record = db.groups().group() ?: return
             val device = keys.load()
             val me = SyncBytes.toHex(device.did)
@@ -147,8 +166,15 @@ class LinkedSync
                 } catch (e: StoreException.Network) {
                     e
                 }
-            val session = Session.open(db, if (offline == null) store else GroupStore(local, null), device)
+            val reading = if (offline == null) store else GroupStore(local, null)
+            var session = Session.open(db, reading, device)
             if (!session.adoptLink(ActiveProfile.get(context).id)) return
+            // A device left: start the epoch it never receives before writing anything, then read the roster back (spec/protocol.md, Leaving).
+            if (session.state.rotate && offline == null) {
+                if (rotateEpoch(session, device)) db.snapshots().snapshotSoon()
+                store.download(me, record.serverCursor, objects = false)
+                session = Session.open(db, reading, device)
+            }
             val link = session.record.link
             val pushed = session.push(export())
 

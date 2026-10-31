@@ -4363,4 +4363,5 @@
     <string name="keyboard_shortcut_exit_fullscreen">Tam ekrandan çık</string>
     <string name="keyboard_shortcut_faster">Daha hızlı</string>
     <string name="keyboard_shortcut_slower">Daha yavaş</string>
+    <string name="linked_intro">Flow</string>
 </resources>

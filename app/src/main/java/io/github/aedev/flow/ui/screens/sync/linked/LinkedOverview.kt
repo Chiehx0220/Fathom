@@ -19,6 +19,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -26,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.sync2.data.LAN_STORE
+import io.github.aedev.flow.sync2.data.WEBDAV_STORE
 import io.github.aedev.flow.sync2.service.LinkedDevice
 import io.github.aedev.flow.sync2.service.LinkedError
 import io.github.aedev.flow.ui.components.shared.FlowNavRow
@@ -47,11 +49,13 @@ internal fun LinkedOverview(
     onScanNewDevice: (() -> Unit)?,
     onRename: (id: String, name: String) -> Unit,
     onRemove: (id: String) -> Unit,
+    onLeave: () -> Unit,
     onForget: () -> Unit,
+    onUpdateLogin: (user: String, password: String) -> Unit,
     onAccept: (id: String) -> Unit,
     onDecline: (id: String) -> Unit,
 ) {
-    var confirmForget by rememberSaveable { mutableStateOf(false) }
+    var confirmLeave by rememberSaveable { mutableStateOf(false) }
     if (state.error == LinkedError.REMOVED) {
         SyncStepHeader(
             icon = Icons.Outlined.ErrorOutline,
@@ -72,7 +76,14 @@ internal fun LinkedOverview(
             FlowNavRow(
                 title = stringResource(R.string.linked_server),
                 onClick = {},
-                supportingText = if (state.storeUrl == LAN_STORE) stringResource(R.string.linked_server_lan) else state.storeUrl,
+                supportingText =
+                    if (state.storeUrl ==
+                        LAN_STORE
+                    ) {
+                        stringResource(R.string.linked_server_lan)
+                    } else {
+                        state.storeUrl?.removePrefix(WEBDAV_STORE)
+                    },
                 leadingIcon = Icons.Outlined.Cloud,
                 showChevron = false,
                 shape = shape,
@@ -92,6 +103,7 @@ internal fun LinkedOverview(
             Text(error.message(), Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onErrorContainer)
         }
     }
+    if (state.error == LinkedError.LOGIN_REFUSED) LoginAgain(state.busy, onUpdateLogin)
     if (!state.recoverySaved) SyncInfoRow(icon = Icons.Outlined.Warning, text = stringResource(R.string.linked_recovery_unsaved))
 
     state.requests.forEach { request ->
@@ -118,21 +130,21 @@ internal fun LinkedOverview(
         confirmLabel = stringResource(R.string.linked_add_device),
         onConfirm = onAddDevice,
         confirmEnabled = !state.busy,
-        dismissLabel = stringResource(R.string.linked_forget),
-        onDismiss = { confirmForget = true },
+        dismissLabel = stringResource(R.string.linked_leave),
+        onDismiss = { confirmLeave = true },
     )
-    if (confirmForget) {
+    if (confirmLeave) {
         AlertDialog(
-            onDismissRequest = { confirmForget = false },
-            title = { Text(stringResource(R.string.linked_forget_title)) },
-            text = { Text(stringResource(R.string.linked_forget_body)) },
+            onDismissRequest = { confirmLeave = false },
+            title = { Text(stringResource(R.string.linked_leave_title)) },
+            text = { Text(stringResource(R.string.linked_leave_body)) },
             confirmButton = {
                 TextButton(onClick = {
-                    confirmForget = false
-                    onForget()
-                }) { Text(stringResource(R.string.linked_forget)) }
+                    confirmLeave = false
+                    onLeave()
+                }) { Text(stringResource(R.string.linked_leave)) }
             },
-            dismissButton = { TextButton(onClick = { confirmForget = false }) { Text(stringResource(R.string.linked_cancel)) } },
+            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text(stringResource(R.string.linked_cancel)) } },
         )
     }
 }
@@ -239,5 +251,49 @@ private fun DeviceDialog(
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.linked_cancel)) } },
+    )
+}
+
+/** The WebDAV login the server refused, entered again; nothing is sent to the server until then. */
+@Composable
+private fun LoginAgain(
+    busy: Boolean,
+    onSave: (user: String, password: String) -> Unit,
+) {
+    var user by rememberSaveable { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    Text(stringResource(R.string.linked_login_again), Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium)
+    WebDavLoginFields(user, { user = it }, password, { password = it })
+    SyncActionRow(
+        confirmLabel = stringResource(R.string.linked_save),
+        onConfirm = { onSave(user.trim(), password) },
+        confirmEnabled = !busy && user.isNotBlank() && password.isNotEmpty(),
+    )
+}
+
+/**
+ * A leave that couldn't tell the other devices, for [reason]: forget the group here anyway, as a
+ * leave would, or keep it. The other devices can remove this one themselves.
+ */
+@Composable
+internal fun LeaveAnyway(
+    reason: LinkedError,
+    busy: Boolean,
+    onForget: () -> Unit,
+    onKeep: () -> Unit,
+) {
+    SyncStepHeader(
+        icon = Icons.Outlined.ErrorOutline,
+        title = stringResource(R.string.linked_leave_failed_title),
+        body = stringResource(R.string.linked_leave_failed_body, reason.message()),
+        containerColor = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+    )
+    SyncActionRow(
+        confirmLabel = stringResource(R.string.linked_forget_anyway),
+        onConfirm = onForget,
+        confirmEnabled = !busy,
+        dismissLabel = stringResource(R.string.linked_keep_group),
+        onDismiss = onKeep,
     )
 }

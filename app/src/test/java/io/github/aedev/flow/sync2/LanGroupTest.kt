@@ -89,7 +89,7 @@ class LanGroupTest {
             withContext(Dispatchers.Default) {
                 coroutineScope {
                     val added = async { addDevice(a.session(), null, offer, a.keys) { true } }
-                    join(n.db, n.local, null, null, code, n.keys, meta) { true }
+                    join(n.db, n.local, { null }, null, code, n.keys, meta) { true }
                     added.await()
                 }
             }

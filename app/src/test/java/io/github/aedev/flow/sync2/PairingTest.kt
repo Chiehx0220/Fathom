@@ -54,7 +54,7 @@ class PairingTest {
                             join(
                                 dbN,
                                 heldStore(dbN),
-                                g.store,
+                                { g.store },
                                 g.store,
                                 readCode(offer.qr) as Code.Member,
                                 newcomer,
@@ -100,7 +100,7 @@ class PairingTest {
                                 join(
                                     db,
                                     heldStore(db),
-                                    g.store,
+                                    { g.store },
                                     g.store,
                                     readCode(offer.qr) as Code.Member,
                                     newMember(),

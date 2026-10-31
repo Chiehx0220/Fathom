@@ -1,17 +1,12 @@
 package io.github.aedev.flow.sync2.store
 
-import io.github.aedev.flow.sync.crypto.SyncBytes
-import io.github.aedev.flow.sync2.crypto.ProtocolError
-import io.github.aedev.flow.sync2.crypto.reject
 import io.github.aedev.flow.sync2.data.HeldDao
 import io.github.aedev.flow.sync2.data.HeldRow
 import io.github.aedev.flow.sync2.roster.Entry
-import io.github.aedev.flow.sync2.roster.RosterState
-import io.github.aedev.flow.sync2.roster.applyEntry
 import io.github.aedev.flow.sync2.roster.canonicalEntry
 import io.github.aedev.flow.sync2.roster.entryHash
-import io.github.aedev.flow.sync2.roster.forkWinner
 import io.github.aedev.flow.sync2.roster.parseEntry
+import io.github.aedev.flow.sync2.roster.resolveForks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -27,7 +22,7 @@ private const val PAGE = 500
 class LocalStore(
     private val root: File,
     private val held: HeldDao,
-) : Store {
+) : ChangeList {
     private fun file(path: String) = File(root, path)
 
     private fun read(path: String): ByteArray? = file(path).takeIf { it.isFile }?.readBytes()
@@ -57,17 +52,7 @@ class LocalStore(
                 .sortedBy { it.seq }
         }
 
-    /** The chain every device picks: at each `seq`, the winner among the entries valid there (spec/protocol.md, Forks). */
-    private suspend fun resolved(): List<Entry> {
-        val chain = ArrayList<Entry>()
-        var state: RosterState? = null
-        for ((_, candidates) in entries().groupBy { it.seq }.toSortedMap()) {
-            val winner = forkWinner(candidates.filter { runCatching { applyEntry(state, it) }.isSuccess }) ?: break
-            state = applyEntry(state, winner)
-            chain += winner
-        }
-        return chain
-    }
+    private suspend fun resolved(): List<Entry> = resolveForks(entries())
 
     suspend fun addEntries(entries: List<Entry>) =
         withContext(Dispatchers.IO) {
@@ -105,8 +90,7 @@ class LocalStore(
         val current = resolved()
         val currentHead = current.lastOrNull()?.let(::entryHash).orEmpty()
         if (currentHead != head) return Appended.Conflict(currentHead)
-        val epoch = entry.epoch?.n ?: current.fold(null as RosterState?) { state, e -> applyEntry(state, e) }?.epoch ?: 0
-        hold(entry, epoch, wraps.mapValues { (_, wrap) -> decode(wrap) }, chain?.let(::decode))
+        hold(entry, epochOf(entry, current), wraps.mapValues { (_, wrap) -> wrapBytes(wrap) }, chain?.let(::wrapBytes))
         return Appended.Done
     }
 
@@ -143,13 +127,18 @@ class LocalStore(
         withContext(Dispatchers.IO) { root.deleteRecursively() }
     }
 
+    /** The highest log `seq` held of each sender. */
+    suspend fun logTips(): Map<String, Long> =
+        held
+            .paths()
+            .mapNotNull(StorePaths::parseLog)
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, seqs) -> seqs.max() }
+
     /** What a LAN peer asked for with [vv]: the log objects held above it, and the blobs held. */
     suspend fun list(vv: Map<String, Long>): Pair<List<String>, List<String>> {
         val paths = held.paths()
         val logs = paths.filter { path -> StorePaths.parseLog(path)?.let { (did, seq) -> seq > (vv[did] ?: 0) } == true }
         return logs to paths.filter { StorePaths.parseLog(it) == null }
     }
-
-    private fun decode(b64: String): ByteArray =
-        runCatching { SyncBytes.b64urlDecode(b64) }.getOrNull() ?: reject(ProtocolError.ROSTER_FORMAT)
 }

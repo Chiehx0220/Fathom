@@ -43,6 +43,7 @@ class JoinRequestTest {
     private class Request(
         val name: String,
         var code: String? = null,
+        var declined: Boolean = false,
     )
 
     private val requests = LinkedHashMap<String, Request>()
@@ -74,7 +75,7 @@ class JoinRequestTest {
             }
 
             path == "/v1/join" -> {
-                val open = requests.filterValues { it.code == null }
+                val open = requests.filterValues { it.code == null && !it.declined }
                 val list =
                     buildJsonArray {
                         open.forEach { (id, request) ->
@@ -101,8 +102,16 @@ class JoinRequestTest {
             }
 
             request.httpMethod.value == "DELETE" -> {
-                requests.remove(id)
-                respondJson(204, "")
+                val asked = requests[id]
+                when {
+                    asked == null -> respondJson(404, """{"error":"not_found"}""")
+                    asked.code != null || asked.declined -> respondJson(409, """{"error":"conflict"}""")
+                    else -> respondJson(204, "").also { asked.declined = true }
+                }
+            }
+
+            admin && requests[id]?.declined == true -> {
+                respondJson(410, """{"error":"declined"}""")
             }
 
             else -> {
@@ -141,7 +150,7 @@ class JoinRequestTest {
                             join(
                                 dbN,
                                 heldStore(dbN),
-                                g.store,
+                                { g.store },
                                 g.store,
                                 code,
                                 newcomer,
@@ -165,6 +174,26 @@ class JoinRequestTest {
             assertEquals(codes[0], codes[1])
             assertTrue(SyncBytes.toHex(newcomer.did) in g.store.head().members)
             assertTrue(member().joinRequests().isEmpty())
+        }
+
+    @Test
+    fun a_declined_request_stops_the_asking_device() =
+        runTest {
+            val error =
+                withContext(Dispatchers.Default) {
+                    coroutineScope {
+                        val asking =
+                            async { runCatching { askToJoin(ServerStore.connect(server.url, newMember(), null, null), "admin", "TV") } }
+                        var listed = member().joinRequests()
+                        while (listed.isEmpty()) {
+                            delay(50)
+                            listed = member().joinRequests()
+                        }
+                        member().declineJoin(listed.single().id)
+                        asking.await().exceptionOrNull()
+                    }
+                }
+            assertTrue("$error", error is LinkedException.JoinDeclined)
         }
 
     @Test

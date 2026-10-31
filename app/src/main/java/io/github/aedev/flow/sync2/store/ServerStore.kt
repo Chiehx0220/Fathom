@@ -48,13 +48,6 @@ private const val LIVE_PING_S = 15L
 private val JSON = "application/json".toMediaType()
 private val BYTES = "application/octet-stream".toMediaType()
 
-/** A `.local` name may resolve only to local addresses, checked on every connection. */
-private val LOCAL_ONLY_DNS =
-    Dns { host ->
-        Dns.SYSTEM.lookup(host).takeIf { addresses -> addresses.all { LocalNetworkAddress.isLocal(it.hostAddress.orEmpty()) } }
-            ?: throw UnknownHostException("$host is not on the local network")
-    }
-
 /**
  * The Flow sync server as a store (spec/api.md). Requests are signed in with this member's roster
  * key; the server never sees anything but sealed objects.
@@ -65,8 +58,8 @@ class ServerStore private constructor(
     private val member: MemberSecrets,
     private var instance: String?,
     private var group: String?,
-) : Store,
-    Mailbox {
+) : ChangeList,
+    Remote {
     private val session = Mutex()
     private var token: Pair<String, Long>? = null
 
@@ -83,19 +76,7 @@ class ServerStore private constructor(
             group: String?,
         ): ServerStore {
             val base = url.toHttpUrlOrNull() ?: throw StoreException.Insecure()
-            val builder =
-                OkHttpClient
-                    .Builder()
-                    .followRedirects(false)
-                    .followSslRedirects(false)
-                    .connectTimeout(10, TimeUnit.SECONDS)
-                    .callTimeout(60, TimeUnit.SECONDS)
-            when {
-                base.isHttps || LocalNetworkAddress.isLocal(base.host) -> Unit
-                base.host.endsWith(".local", ignoreCase = true) -> builder.dns(LOCAL_ONLY_DNS)
-                else -> throw StoreException.Insecure()
-            }
-            return ServerStore(base, builder.build(), member, instance, group)
+            return ServerStore(base, storeClient(base), member, instance, group)
         }
     }
 
@@ -145,14 +126,19 @@ class ServerStore private constructor(
                 throw StoreException.Malformed()
             }
         val issued =
-            postJson(
-                "v1/auth/token",
-                buildJsonObject {
-                    put("did", did)
-                    put("challenge", nonce)
-                    put("sig", SyncBytes.b64urlEncode(sign(member.sigSeed, message)))
-                },
-            )
+            try {
+                postJson(
+                    "v1/auth/token",
+                    buildJsonObject {
+                        put("did", did)
+                        put("challenge", nonce)
+                        put("sig", SyncBytes.b64urlEncode(sign(member.sigSeed, message)))
+                    },
+                )
+            } catch (e: StoreException.Refused) {
+                // The server issues tokens only to current devices: this one left or was removed.
+                if (e.status == 401 || e.status == 403) throw StoreException.SignInRefused() else throw e
+            }
         val value = issued["token"]?.jsonPrimitive?.contentOrNull ?: throw StoreException.Malformed()
         val expires = issued["expires"]?.jsonPrimitive?.longOrNull ?: throw StoreException.Malformed()
         instance = instanceId
@@ -206,8 +192,26 @@ class ServerStore private constructor(
                 put("wraps", wrapsJson(wraps))
             }
         send(admin(adminToken, "v1/claim").post(body.toString().toRequestBody(JSON)).build()).use {
-            if (it.code == 409) throw LinkedException.ServerHasGroup() else check(it)
+            if (it.code == 409) throw LinkedException.ServerHasGroup() else adminChecked(it)
         }
+    }
+
+    /** Deletes every group object on the server, which becomes unclaimed (spec/api.md, `POST /v1/admin/reset`). */
+    suspend fun resetServer(adminToken: String) {
+        val body = buildJsonObject { put("confirm", "reset") }
+        adminChecked(send(admin(adminToken, "v1/admin/reset").post(body.toString().toRequestBody(JSON)).build())).close()
+    }
+
+    /** A refused admin token, and the ban after repeated ones, said plainly (spec/api.md, Limits). */
+    private fun adminChecked(response: Response): Response {
+        val refusal =
+            when (response.code) {
+                401, 403 -> StoreException.AdminRefused()
+                429 -> StoreException.AdminBlocked()
+                else -> return check(response)
+            }
+        response.close()
+        throw refusal
     }
 
     private fun admin(
@@ -226,16 +230,17 @@ class ServerStore private constructor(
                 put("id", id)
                 put("name", name)
             }
-        check(send(admin(adminToken, "v1/join").post(body.toString().toRequestBody(JSON)).build())).close()
+        adminChecked(send(admin(adminToken, "v1/join").post(body.toString().toRequestBody(JSON)).build())).close()
     }
 
-    /** The code a member answered a join request with, or null until one does. */
+    /** The code a member answered a join request with, or null until one does; a declined request throws. */
     suspend fun joinAnswer(
         adminToken: String,
         id: String,
     ): String? {
         val response = send(admin(adminToken, "v1/join/$id").build())
         if (response.code == 404) return null.also { response.close() }
+        if (response.code == 410) throw LinkedException.JoinDeclined().also { response.close() }
         return decode(response)["code"]?.jsonPrimitive?.contentOrNull ?: throw StoreException.Malformed()
     }
 
@@ -287,7 +292,8 @@ class ServerStore private constructor(
     }
 
     suspend fun declineJoin(id: String) {
-        authorized("DELETE", "v1/join/$id").use { if (it.code != 404) check(it) }
+        // 404: it expired; 409: another member answered or declined it first.
+        authorized("DELETE", "v1/join/$id").use { if (it.code != 404 && it.code != 409) check(it) }
     }
 
     override suspend fun rosterAfter(after: Long): List<Entry> =

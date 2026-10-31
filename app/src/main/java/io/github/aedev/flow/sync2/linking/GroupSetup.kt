@@ -2,6 +2,7 @@ package io.github.aedev.flow.sync2.linking
 
 import io.github.aedev.flow.sync.crypto.SyncBytes
 import io.github.aedev.flow.sync.crypto.SyncCrypto
+import io.github.aedev.flow.sync.protocol.SyncSerialization
 import io.github.aedev.flow.sync2.crypto.MemberSecrets
 import io.github.aedev.flow.sync2.crypto.recoveryKeys
 import io.github.aedev.flow.sync2.crypto.recoveryWords
@@ -9,6 +10,7 @@ import io.github.aedev.flow.sync2.crypto.wrapEpochKey
 import io.github.aedev.flow.sync2.data.GroupRecord
 import io.github.aedev.flow.sync2.data.LAN_STORE
 import io.github.aedev.flow.sync2.data.LinkedDatabase
+import io.github.aedev.flow.sync2.data.WEBDAV_STORE
 import io.github.aedev.flow.sync2.data.addEntries
 import io.github.aedev.flow.sync2.engine.LinkedException
 import io.github.aedev.flow.sync2.roster.Draft
@@ -20,8 +22,15 @@ import io.github.aedev.flow.sync2.roster.entryHash
 import io.github.aedev.flow.sync2.roster.epochDraft
 import io.github.aedev.flow.sync2.roster.memberSubject
 import io.github.aedev.flow.sync2.roster.sealDeviceMeta
+import io.github.aedev.flow.sync2.store.Appended
+import io.github.aedev.flow.sync2.store.FileLayout
 import io.github.aedev.flow.sync2.store.LocalStore
 import io.github.aedev.flow.sync2.store.ServerStore
+import io.github.aedev.flow.sync2.store.WebDavStore
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+
+private const val STORE_JSON = "store.json"
 
 /** The genesis of a new group with this device and a new recovery key, and the recovery words to show once. */
 private class Genesis(
@@ -81,6 +90,39 @@ suspend fun createGroup(
     db.groups().addEntries(roster)
     db.groups().saveGroup(GroupRecord(SyncBytes.toHex(genesis.group), storeUrl, store.identity().first, link))
     return genesis.words
+}
+
+/**
+ * Creates the group in an empty WebDAV folder: probes it, marks it with `store.json`, then writes the
+ * genesis with its wraps (spec/store.md, Layout). Returns the recovery words to show once, and
+ * whether the server honours `If-None-Match`.
+ */
+suspend fun createWebDavGroup(
+    db: LinkedDatabase,
+    files: WebDavStore,
+    device: MemberSecrets,
+    meta: DeviceMeta,
+    link: String,
+): Pair<String, Boolean> {
+    val conditional = files.probe()
+    if (files.get(STORE_JSON) != null) throw LinkedException.ServerHasGroup()
+    val genesis = Genesis(device, meta)
+    val group = SyncBytes.toHex(genesis.group)
+    files.put(
+        STORE_JSON,
+        SyncSerialization
+            .canonicalJson(
+                buildJsonObject {
+                    put("format", "FLOW-SYNC/2")
+                    put("group", group)
+                },
+            ).toByteArray(),
+    )
+    val layout = FileLayout(files, SyncBytes.toHex(device.did))
+    if (layout.appendRoster("", genesis.entry, genesis.wraps, null) != Appended.Done) throw LinkedException.ServerHasGroup()
+    db.groups().addEntries(listOf(genesis.entry))
+    db.groups().saveGroup(GroupRecord(group, WEBDAV_STORE + files.location, null, link))
+    return genesis.words to conditional
 }
 
 /** Creates a group that lives on its devices alone (spec/live.md, LAN groups): nothing is claimed. */

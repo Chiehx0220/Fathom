@@ -17,7 +17,7 @@ import io.github.aedev.flow.sync2.engine.Tip
 import io.github.aedev.flow.sync2.engine.VersionVector
 import io.github.aedev.flow.sync2.engine.collectGarbage
 import io.github.aedev.flow.sync2.engine.writeSnapshot
-import io.github.aedev.flow.sync2.store.Store
+import io.github.aedev.flow.sync2.store.ChangeList
 import io.github.aedev.flow.sync2.store.StoreException
 import io.github.aedev.flow.sync2.store.StorePaths
 import kotlinx.coroutines.test.TestScope
@@ -137,7 +137,7 @@ class GarbageCollectionTest {
     private class Watched(
         private val inner: MemoryStore,
         private val refuse: Boolean = false,
-    ) : Store by inner {
+    ) : ChangeList by inner {
         val deleted = ArrayList<String>()
 
         override suspend fun deleteObject(path: String) {

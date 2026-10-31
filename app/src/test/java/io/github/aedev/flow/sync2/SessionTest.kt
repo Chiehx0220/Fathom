@@ -19,7 +19,7 @@ import io.github.aedev.flow.sync2.roster.buildEntry
 import io.github.aedev.flow.sync2.roster.epochDraft
 import io.github.aedev.flow.sync2.roster.memberSubject
 import io.github.aedev.flow.sync2.store.Appended
-import io.github.aedev.flow.sync2.store.Store
+import io.github.aedev.flow.sync2.store.ChangeList
 import io.github.aedev.flow.sync2.store.StorePaths
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -52,7 +52,7 @@ class SessionTest {
     /** One sync: push, pull, apply, finish. Returns how many records arrived. */
     private suspend fun sync(
         db: LinkedDatabase,
-        store: Store,
+        store: ChangeList,
         device: MemberSecrets,
         app: App,
     ): Int {

@@ -12,6 +12,7 @@ import io.github.aedev.flow.sync2.crypto.reject
 import io.github.aedev.flow.sync2.crypto.unwrapEpochKey
 import io.github.aedev.flow.sync2.data.GroupRecord
 import io.github.aedev.flow.sync2.data.LinkedDatabase
+import io.github.aedev.flow.sync2.data.WEBDAV_STORE
 import io.github.aedev.flow.sync2.data.addEntries
 import io.github.aedev.flow.sync2.engine.LinkedException
 import io.github.aedev.flow.sync2.roster.Draft
@@ -25,8 +26,10 @@ import io.github.aedev.flow.sync2.roster.memberSubject
 import io.github.aedev.flow.sync2.roster.replayRoster
 import io.github.aedev.flow.sync2.roster.sealDeviceMeta
 import io.github.aedev.flow.sync2.store.Appended
+import io.github.aedev.flow.sync2.store.FileLayout
 import io.github.aedev.flow.sync2.store.ServerStore
 import io.github.aedev.flow.sync2.store.Store
+import io.github.aedev.flow.sync2.store.WebDavStore
 
 /** The roster after a restore, and the new recovery words to show once. */
 class Restored(
@@ -107,16 +110,48 @@ suspend fun restoreGroup(
     device: MemberSecrets,
     meta: DeviceMeta,
 ): String {
+    val asDevice = ServerStore.connect(storeUrl, device, null, null)
+    var asRecovery: ServerStore? = null
+    return restoreOn(db, words, device, meta, { recovery ->
+        ServerStore.connect(storeUrl, recovery, null, null).also { asRecovery = it } to
+            asDevice
+    }) {
+        val (instance, group) = asDevice.identity()
+        if (instance to group != asRecovery?.identity() || group == null) throw LinkedException.Unexpected()
+        GroupRecord(group, storeUrl, instance, link = "")
+    }
+}
+
+/** Restores a group from a WebDAV folder, where the recovery member and [device] write through the same login. */
+suspend fun restoreWebDavGroup(
+    db: LinkedDatabase,
+    files: WebDavStore,
+    words: String,
+    device: MemberSecrets,
+    meta: DeviceMeta,
+): String {
+    val layout = FileLayout(files, SyncBytes.toHex(device.did))
+    return restoreOn(db, words, device, meta, { layout to layout }) { state ->
+        GroupRecord(state.group, WEBDAV_STORE + files.location, null, link = "")
+    }
+}
+
+/** Restores through [stores], the store as the recovery member and as [device], and saves the [record] it names. */
+private suspend fun restoreOn(
+    db: LinkedDatabase,
+    words: String,
+    device: MemberSecrets,
+    meta: DeviceMeta,
+    stores: (recovery: MemberSecrets) -> Pair<Store, Store>,
+    record: suspend (RosterState) -> GroupRecord,
+): String {
     val secret = recoverySecret(words) ?: throw LinkedException.WrongWords()
     val recovery = recoveryKeys(secret)
-    val asRecovery = ServerStore.connect(storeUrl, recovery, null, null)
-    val asDevice = ServerStore.connect(storeUrl, device, null, null)
+    val (asRecovery, asDevice) = stores(recovery)
     val restored = restore(asRecovery, asDevice, recovery, device, meta)
     recovery.wipe()
-    val (instance, group) = asDevice.identity()
-    if (instance to group != asRecovery.identity() || group == null) throw LinkedException.Unexpected()
-    replayRoster(restored.entries)
+    val saved = record(replayRoster(restored.entries))
     db.groups().addEntries(restored.entries)
-    db.groups().saveGroup(GroupRecord(group, storeUrl, instance, link = ""))
+    db.groups().saveGroup(saved)
     return restored.words
 }

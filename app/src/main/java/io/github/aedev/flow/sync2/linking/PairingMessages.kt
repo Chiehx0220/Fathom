@@ -45,6 +45,9 @@ data class WelcomeStore(
     val k: String,
     val u: String? = null,
     val i: String? = null,
+    /** A WebDAV store's user name and password, which travel only inside the pairing boxes. */
+    val n: String? = null,
+    val w: String? = null,
 )
 
 @Serializable

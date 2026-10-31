@@ -149,6 +149,59 @@ class ServerStoreTest {
         }
 
     @Test
+    fun a_device_the_server_no_longer_lets_sign_in_is_told_so() {
+        server =
+            StandInServer {
+                when (request.path()) {
+                    "/v1/auth/challenge" -> {
+                        respondJson(
+                            200,
+                            """{"challenge":"${SyncBytes.b64urlEncode(
+                                ByteArray(32),
+                            )}","instance":"$instanceId","group":"$groupId","time":0}""",
+                        )
+                    }
+
+                    else -> {
+                        respondJson(401, """{"error":"unauthorized"}""")
+                    }
+                }
+            }
+        runTest {
+            val error = runCatching { store().rosterAfter(-1) }.exceptionOrNull()
+            assertTrue("$error", error is StoreException.SignInRefused)
+        }
+    }
+
+    @Test
+    fun a_reset_confirms_with_the_admin_token_and_a_wrong_token_or_a_ban_is_said_plainly() {
+        var body = ""
+        server =
+            StandInServer {
+                when (request.headers["Authorization"]) {
+                    "Bearer admin" -> {
+                        body = receiveText()
+                        respond(HttpStatusCode.NoContent)
+                    }
+
+                    "Bearer banned" -> {
+                        respondJson(429, """{"error":"rate_limited"}""")
+                    }
+
+                    else -> {
+                        respondJson(401, """{"error":"unauthorized"}""")
+                    }
+                }
+            }
+        runTest {
+            store().resetServer("admin")
+            assertEquals("""{"confirm":"reset"}""", body)
+            assertTrue(runCatching { store().resetServer("wrong") }.exceptionOrNull() is StoreException.AdminRefused)
+            assertTrue(runCatching { store().resetServer("banned") }.exceptionOrNull() is StoreException.AdminBlocked)
+        }
+    }
+
+    @Test
     fun redirects_are_not_followed() {
         serve {
             response.header("Location", "https://elsewhere.example/")

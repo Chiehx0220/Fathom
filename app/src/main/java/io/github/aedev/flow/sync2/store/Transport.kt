@@ -1,0 +1,35 @@
+package io.github.aedev.flow.sync2.store
+
+import io.github.aedev.flow.sync.qr.LocalNetworkAddress
+import okhttp3.Dns
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
+import java.net.UnknownHostException
+import java.util.concurrent.TimeUnit
+
+/** A `.local` name may resolve only to local addresses, checked on every connection. */
+private val LOCAL_ONLY_DNS =
+    Dns { host ->
+        Dns.SYSTEM.lookup(host).takeIf { addresses -> addresses.all { LocalNetworkAddress.isLocal(it.hostAddress.orEmpty()) } }
+            ?: throw UnknownHostException("$host is not on the local network")
+    }
+
+/**
+ * The client for a store at [base] (spec/store.md, Transport security): HTTPS anywhere, plain HTTP
+ * only to a private address or a `.local` name, and redirects refused.
+ */
+internal fun storeClient(base: HttpUrl): OkHttpClient {
+    val builder =
+        OkHttpClient
+            .Builder()
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .callTimeout(60, TimeUnit.SECONDS)
+    when {
+        base.isHttps || LocalNetworkAddress.isLocal(base.host) -> Unit
+        base.host.endsWith(".local", ignoreCase = true) -> builder.dns(LOCAL_ONLY_DNS)
+        else -> throw StoreException.Insecure()
+    }
+    return builder.build()
+}

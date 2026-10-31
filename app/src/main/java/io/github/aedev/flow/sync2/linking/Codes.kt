@@ -16,12 +16,17 @@ sealed class Code(
     val qr: QrCode,
     val lan: List<LanEndpoint>,
 ) {
-    /** A member's code, which a new device answers: its Flow server (null for a LAN group), and LAN addresses to try first. */
+    /**
+     * A member's code, which a new device answers: where its group lives (a Flow server or WebDAV
+     * folder, null for a LAN group), and LAN addresses to try first.
+     */
     class Member(
         qr: QrCode,
-        val storeUrl: String?,
+        val store: StoreLocation?,
         lan: List<LanEndpoint>,
-    ) : Code(qr, lan)
+    ) : Code(qr, lan) {
+        val storeUrl: String? get() = store?.u
+    }
 
     /** A new device's code, which a member answers over the LAN. */
     class New(
@@ -35,7 +40,7 @@ sealed class Code(
     internal val showerKey: ByteArray get() = key(qr.e)
 }
 
-/** Reads a FLOW-SYNC/2 code; FLOW-SYNC/1 codes and stores other than a Flow server are refused. */
+/** Reads a FLOW-SYNC/2 code; FLOW-SYNC/1 codes and stores other than a Flow server or WebDAV are refused. */
 fun readCode(text: String): Code {
     val qr =
         try {
@@ -48,7 +53,7 @@ fun readCode(text: String): Code {
     val lan = qr.l.orEmpty()
     val store = qr.s
     return when {
-        qr.v == 2 && qr.r == "m" && store?.k == "server" && store.u != null -> Code.Member(qr, store.u, lan)
+        qr.v == 2 && qr.r == "m" && store?.k in setOf("server", "webdav") && store?.u != null -> Code.Member(qr, store, lan)
         qr.v == 2 && qr.r == "m" && store?.k == "lan" && lan.isNotEmpty() -> Code.Member(qr, null, lan)
         qr.v == 2 && qr.r == "n" && store == null && lan.isNotEmpty() -> Code.New(qr, lan)
         else -> throw LinkedException.Unexpected()

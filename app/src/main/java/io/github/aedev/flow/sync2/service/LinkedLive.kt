@@ -6,9 +6,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.profile.SyncProfile
 import io.github.aedev.flow.di.ApplicationScope
 import io.github.aedev.flow.sync2.data.GroupRecord
-import io.github.aedev.flow.sync2.data.LAN_STORE
 import io.github.aedev.flow.sync2.data.LinkedDatabase
+import io.github.aedev.flow.sync2.data.serverUrl
 import io.github.aedev.flow.sync2.device.DeviceKeys
+import io.github.aedev.flow.sync2.live.LiveChannel
+import io.github.aedev.flow.sync2.live.LiveTransport
 import io.github.aedev.flow.sync2.store.ServerStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -28,12 +30,17 @@ import kotlinx.serialization.json.contentOrNull
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okio.ByteString
+import okio.ByteString.Companion.toByteString
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /** Waits this long after a `changed` frame, so a burst of stored objects leads to one sync. */
 private const val DEBOUNCE_MS = 3_000L
+
+/** Live envelopes held while the device works through earlier ones; the server allows 20 a second per sender. */
+private const val ENVELOPE_BUFFER = 64
 private const val FIRST_RETRY_MS = 5_000L
 private const val LAST_RETRY_MS = 5 * 60_000L
 
@@ -49,6 +56,7 @@ class LinkedLive
         private val db: LinkedDatabase,
         private val keys: DeviceKeys,
         private val sync: LinkedSync,
+        private val live: LiveChannel,
         @ApplicationScope private val scope: CoroutineScope,
     ) {
         private var running: Job? = null
@@ -61,7 +69,7 @@ class LinkedLive
                         .groups()
                         .observeGroup()
                         .distinctUntilChangedBy { it?.let { record -> Triple(record.groupId, record.storeUrl, record.instance) } }
-                        .collectLatest { record -> if (record != null && record.storeUrl != LAN_STORE) stayConnected(record) }
+                        .collectLatest { record -> if (record?.serverUrl != null) stayConnected(record) }
                 }
         }
 
@@ -99,6 +107,9 @@ class LinkedLive
                 val changed = Channel<Boolean>(Channel.CONFLATED)
                 val closed = CompletableDeferred<Outcome>()
                 val opened = AtomicBoolean(false)
+                val ready = CompletableDeferred<Unit>()
+                // Live envelopes from the other devices (spec/live.md, Server relay).
+                val envelopes = Channel<ByteArray>(ENVELOPE_BUFFER)
                 val socket =
                     server.live(
                         object : WebSocketListener() {
@@ -108,6 +119,14 @@ class LinkedLive
                             ) {
                                 opened.set(true)
                                 changed.trySend(false)
+                                ready.complete(Unit)
+                            }
+
+                            override fun onMessage(
+                                webSocket: WebSocket,
+                                bytes: ByteString,
+                            ) {
+                                envelopes.trySend(bytes.toByteArray())
                             }
 
                             override fun onMessage(
@@ -157,10 +176,28 @@ class LinkedLive
                             if (stored || again || (sync.lastSync.value?.atMs ?: 0) < openedAt) sync.syncNow()
                         }
                     }
+                val relaying =
+                    launch {
+                        ready.await()
+                        val detach =
+                            live.attach(
+                                object : LiveTransport {
+                                    override suspend fun send(envelope: ByteArray) {
+                                        socket.send(envelope.toByteString())
+                                    }
+                                },
+                            )
+                        try {
+                            for (envelope in envelopes) live.receive(envelope)
+                        } finally {
+                            detach()
+                        }
+                    }
                 try {
                     closed.await()
                 } finally {
                     syncing.cancel()
+                    relaying.cancel()
                     socket.close(NORMAL_CLOSURE, null)
                 }
             }

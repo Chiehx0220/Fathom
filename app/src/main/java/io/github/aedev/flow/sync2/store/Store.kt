@@ -1,10 +1,15 @@
 package io.github.aedev.flow.sync2.store
 
+import io.github.aedev.flow.sync.crypto.SyncBytes
+import io.github.aedev.flow.sync2.crypto.ProtocolError
+import io.github.aedev.flow.sync2.crypto.reject
 import io.github.aedev.flow.sync2.roster.Entry
+import io.github.aedev.flow.sync2.roster.RosterState
+import io.github.aedev.flow.sync2.roster.applyEntry
 import kotlinx.serialization.Serializable
 import java.io.IOException
 
-/** What the sync engine needs from a store. The Flow server implements it; other backends will too. */
+/** What the sync engine needs from a store: the Flow server, plain file stores through [FileLayout], and what a device holds. */
 interface Store {
     suspend fun rosterAfter(after: Long): List<Entry>
 
@@ -29,10 +34,28 @@ interface Store {
 
     /** Deletes an object; one that is already gone counts as deleted. */
     suspend fun deleteObject(path: String)
+}
 
+/** A group's shared store: a Flow server, or files through [FileLayout]. Both carry the pairing mailbox. */
+interface Remote :
+    Store,
+    Mailbox
+
+/** A store that lists what arrived after a cursor: what a device holds, and the Flow server. File stores keep no such list. */
+interface ChangeList : Store {
     /** Objects that arrived after [cursor], and the cursor to pass next time. */
     suspend fun changes(cursor: Long): Pair<List<ChangedObject>, Long>
 }
+
+/** The epoch an appended [entry]'s wraps belong to: the one it starts, or the current one on [chain]. */
+internal fun epochOf(
+    entry: Entry,
+    chain: List<Entry>,
+): Int = entry.epoch?.n ?: chain.fold(null as RosterState?) { state, e -> applyEntry(state, e) }?.epoch ?: 0
+
+/** A wrap or chain box as an append carries it, in base64url. */
+internal fun wrapBytes(b64: String): ByteArray =
+    runCatching { SyncBytes.b64urlDecode(b64) }.getOrNull() ?: reject(ProtocolError.ROSTER_FORMAT)
 
 /** Whether an append landed, or lost to another device's append at the same head. */
 sealed interface Appended {
@@ -73,6 +96,18 @@ sealed class StoreException(
     ) : StoreException("The server refused the request: $code ($status)") {
         val rateLimited: Boolean get() = status == 429
     }
+
+    /** The Flow server refused the admin token. */
+    class AdminRefused : StoreException("The server refused the admin token")
+
+    /** The Flow server blocks admin requests from this address for a while after repeated wrong tokens. */
+    class AdminBlocked : StoreException("The server is blocking admin requests for now")
+
+    /** The Flow server issues this device no token: it is no longer in the group, and can't read the roster to see that. */
+    class SignInRefused : StoreException("The server refused this device's sign-in")
+
+    /** A file store refused the user name or password; nothing more is sent with them. */
+    class LoginRefused : StoreException("The store refused the user name or password")
 
     class InstanceChanged : StoreException("This is not the server instance this device paired with")
 

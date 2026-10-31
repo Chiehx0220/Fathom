@@ -3,6 +3,7 @@ package io.github.aedev.flow.ui.screens.sync.linked
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.aedev.flow.sync2.device.WebDavLogin
 import io.github.aedev.flow.sync2.service.LastSync
 import io.github.aedev.flow.sync2.service.LinkPhase
 import io.github.aedev.flow.sync2.service.LinkedActions
@@ -101,6 +102,29 @@ internal class LinkedDevicesViewModel
             adminToken: String,
         ) = run { local.update { it.copy(words = actions.create(url, adminToken)) } }
 
+        fun createOnWebDav(
+            url: String,
+            user: String,
+            password: String,
+        ) = run { local.update { it.copy(words = actions.createOnWebDav(url, user, password)) } }
+
+        fun restoreFromWebDav(
+            url: String,
+            user: String,
+            password: String,
+            words: String,
+        ) = run { local.update { it.copy(words = actions.restoreFromWebDav(url, user, password, words)) } }
+
+        fun updateLogin(
+            user: String,
+            password: String,
+        ) = run { actions.updateLogin(user, password) }
+
+        fun resetAndCreate(
+            url: String,
+            adminToken: String,
+        ) = run { local.update { it.copy(words = actions.resetAndCreate(url, adminToken)) } }
+
         fun createOnNetwork() = run { local.update { it.copy(words = actions.createOnNetwork()) } }
 
         fun restore(
@@ -128,6 +152,16 @@ internal class LinkedDevicesViewModel
                 local.update { it.copy(devices = actions.devices()) }
             }
 
+        fun leave() =
+            run {
+                actions.leave()
+                local.value = Local()
+            }
+
+        val leaveFailed: StateFlow<LinkedError?> = actions.leaveFailed
+
+        fun keepGroup() = actions.keepGroup()
+
         fun forget() =
             run {
                 actions.forget()
@@ -136,7 +170,10 @@ internal class LinkedDevicesViewModel
 
         fun syncNow() = actions.syncNow()
 
-        fun enterCode(code: String) = actions.enterCode(code)
+        fun enterCode(
+            code: String,
+            login: WebDavLogin? = null,
+        ) = actions.enterCode(code, login)
 
         fun joinWithAdmin(
             url: String,

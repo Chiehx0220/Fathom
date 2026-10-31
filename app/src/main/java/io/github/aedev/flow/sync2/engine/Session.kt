@@ -29,10 +29,10 @@ import io.github.aedev.flow.sync2.roster.applyEntry
 import io.github.aedev.flow.sync2.roster.entryHash
 import io.github.aedev.flow.sync2.roster.parseEntry
 import io.github.aedev.flow.sync2.roster.replayRoster
+import io.github.aedev.flow.sync2.store.ChangeList
 import io.github.aedev.flow.sync2.store.Header
 import io.github.aedev.flow.sync2.store.ObjectType
 import io.github.aedev.flow.sync2.store.ParsedObject
-import io.github.aedev.flow.sync2.store.Store
 import io.github.aedev.flow.sync2.store.StorePaths
 import io.github.aedev.flow.sync2.store.StreamPosition
 import io.github.aedev.flow.sync2.store.nextInStream
@@ -83,7 +83,7 @@ class Pulled internal constructor(
  */
 class Session private constructor(
     internal val db: LinkedDatabase,
-    internal val store: Store,
+    internal val store: ChangeList,
     internal val device: MemberSecrets,
     record: GroupRecord,
     internal val group: ByteArray,
@@ -111,7 +111,7 @@ class Session private constructor(
         /** Brings the roster up to date and unwraps the current epoch key. */
         suspend fun open(
             db: LinkedDatabase,
-            store: Store,
+            store: ChangeList,
             device: MemberSecrets,
         ): Session {
             val groups = db.groups()

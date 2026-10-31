@@ -12,6 +12,8 @@ sealed class LinkedException(
 
     class TimedOut : LinkedException("The other device did not answer in time")
 
+    class JoinDeclined : LinkedException("A linked device declined the request to join")
+
     class Unexpected : LinkedException("The other device sent something unexpected")
 
     class Stopped : LinkedException("The other device stopped pairing")

@@ -5,13 +5,13 @@ import io.github.aedev.flow.sync2.roster.Entry
 import io.github.aedev.flow.sync2.roster.replayRoster
 
 /**
- * The store a session works on: what this device holds, with the group's server, when it has one,
- * ordering roster appends and receiving deletions. Objects reach the server through [upload].
+ * The store a session works on: what this device holds, with the group's shared store, when it has
+ * one: a Flow server, or files through [FileLayout]. Objects reach it through [upload].
  */
 class GroupStore(
     val local: LocalStore,
-    val server: Store?,
-) : Store {
+    val server: Remote?,
+) : ChangeList {
     override suspend fun rosterAfter(after: Long): List<Entry> = local.rosterAfter(after)
 
     override suspend fun appendRoster(
@@ -39,7 +39,8 @@ class GroupStore(
         bytes: ByteArray,
     ) = local.putObject(path, bytes)
 
-    override suspend fun getObject(path: String): ByteArray? = local.getObject(path)
+    override suspend fun getObject(path: String): ByteArray? =
+        local.getObject(path) ?: (server as? FileLayout)?.blob(path)?.also { local.putObject(path, it) }
 
     // The server first: a delete it refuses leaves the object held, so a later collection tries again.
     override suspend fun deleteObject(path: String) {
@@ -59,7 +60,13 @@ class GroupStore(
         objects: Boolean,
     ): Long {
         val server = server ?: return cursor
-        local.addEntries(server.rosterAfter(local.rosterAfter(-1).lastOrNull()?.seq ?: -1))
+        if (server is FileLayout) {
+            server.pullRoster(local)
+        } else {
+            local.addEntries(
+                server.rosterAfter(local.rosterAfter(-1).lastOrNull()?.seq ?: -1),
+            )
+        }
         val epochs = local.rosterAfter(-1).mapNotNull { it.epoch?.n }
         for (epoch in epochs) {
             for (name in listOf(me, "chain")) {
@@ -67,6 +74,11 @@ class GroupStore(
             }
         }
         if (!objects) return cursor
+        if (server is FileLayout) {
+            server.pullLogs(local)
+            return cursor
+        }
+        if (server !is ChangeList) return cursor
         var next = cursor
         while (true) {
             val (changed, after) = server.changes(next)

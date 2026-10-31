@@ -81,7 +81,7 @@ class LanPairingTest {
                 withContext(Dispatchers.Default) {
                     coroutineScope {
                         val added = async { addDevice(session, g.store, offer, g.a) { true } }
-                        join(db, heldStore(db), g.store, g.store, code, phone, meta) { true }
+                        join(db, heldStore(db), { g.store }, g.store, code, phone, meta) { true }
                         added.await()
                     }
                 }

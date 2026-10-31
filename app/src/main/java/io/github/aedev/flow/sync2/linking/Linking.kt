@@ -19,7 +19,10 @@ import io.github.aedev.flow.sync2.crypto.wrapEpochKey
 import io.github.aedev.flow.sync2.data.GroupRecord
 import io.github.aedev.flow.sync2.data.LAN_STORE
 import io.github.aedev.flow.sync2.data.LinkedDatabase
+import io.github.aedev.flow.sync2.data.WEBDAV_STORE
 import io.github.aedev.flow.sync2.data.addEntries
+import io.github.aedev.flow.sync2.data.webDavUrl
+import io.github.aedev.flow.sync2.device.WebDavLogin
 import io.github.aedev.flow.sync2.engine.LinkedException
 import io.github.aedev.flow.sync2.engine.Session
 import io.github.aedev.flow.sync2.roster.Draft
@@ -33,9 +36,14 @@ import io.github.aedev.flow.sync2.roster.replayRoster
 import io.github.aedev.flow.sync2.roster.sealDeviceMeta
 import io.github.aedev.flow.sync2.roster.signingBytes
 import io.github.aedev.flow.sync2.store.Appended
+import io.github.aedev.flow.sync2.store.FileLayout
 import io.github.aedev.flow.sync2.store.LocalStore
 import io.github.aedev.flow.sync2.store.Mailbox
+import io.github.aedev.flow.sync2.store.Remote
+import io.github.aedev.flow.sync2.store.ServerStore
 import io.github.aedev.flow.sync2.store.Store
+import io.github.aedev.flow.sync2.store.StoreException
+import io.github.aedev.flow.sync2.store.WebDavStore
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.selects.select
@@ -103,6 +111,7 @@ suspend fun addDevice(
     mailbox: Mailbox?,
     offer: Offer,
     device: MemberSecrets,
+    login: WebDavLogin? = null,
     confirm: suspend (String) -> Boolean,
 ): String {
     val slot = SyncBytes.toHex(pairingSlot(offer.token))
@@ -122,7 +131,7 @@ suspend fun addDevice(
                 }
             }
         val (channel, sas) = Channel.shower(pipe, offer, key)
-        return memberSide(session, channel, sas, device, confirm)
+        return memberSide(session, channel, sas, device, login, confirm)
     } finally {
         offer.listening?.stop()
         // The slot expires on its own if this fails.
@@ -135,22 +144,25 @@ suspend fun addScanned(
     session: Session,
     code: Code.New,
     device: MemberSecrets,
+    login: WebDavLogin? = null,
     confirm: suspend (String) -> Boolean,
 ): String {
     val pipe = dial(code.lan) ?: throw LinkedException.LanUnreachable()
     try {
         val (channel, sas) = Channel.scanner(pipe, code)
-        return memberSide(session, channel, sas, device, confirm)
+        return memberSide(session, channel, sas, device, login, confirm)
     } finally {
         pipe.close()
     }
 }
 
+/** [login]: the group's WebDAV login, which the welcome hands the new device. */
 private suspend fun memberSide(
     session: Session,
     channel: Channel,
     sas: String,
     device: MemberSecrets,
+    login: WebDavLogin?,
     confirm: suspend (String) -> Boolean,
 ): String {
     val join = channel.receive() as? Message.Join ?: throw LinkedException.Unexpected()
@@ -177,30 +189,48 @@ private suspend fun memberSide(
     }
 
     val record = session.record
+    val folder = record.webDavUrl
     val welcome =
-        if (record.storeUrl == LAN_STORE) {
-            Message.Welcome(
-                record.groupId,
-                after.head,
-                after.seq,
-                record.link,
-                WelcomeStore("lan"),
-                session.store.rosterAfter(-1),
-                SyncBytes.b64urlEncode(wrap),
-            )
-        } else {
-            Message.Welcome(
-                record.groupId,
-                after.head,
-                after.seq,
-                record.link,
-                WelcomeStore("server", record.storeUrl, record.instance.orEmpty()),
-            )
+        when {
+            record.storeUrl == LAN_STORE -> {
+                Message.Welcome(
+                    record.groupId,
+                    after.head,
+                    after.seq,
+                    record.link,
+                    WelcomeStore("lan"),
+                    session.store.rosterAfter(-1),
+                    SyncBytes.b64urlEncode(wrap),
+                )
+            }
+
+            folder != null -> {
+                val (user, password) = login ?: throw StoreException.LoginRefused()
+                Message.Welcome(record.groupId, after.head, after.seq, record.link, WelcomeStore("webdav", folder, n = user, w = password))
+            }
+
+            else -> {
+                Message.Welcome(
+                    record.groupId,
+                    after.head,
+                    after.seq,
+                    record.link,
+                    WelcomeStore("server", record.storeUrl, record.instance.orEmpty()),
+                )
+            }
         }
     channel.send(welcome)
     if (channel.receive() != Message.Done) throw LinkedException.Unexpected()
     return didHex
 }
+
+/** What a group's record keeps of where it lives (spec/live.md, LAN groups; WebDAV behind a prefix). */
+private fun recordUrl(store: WelcomeStore): String =
+    when (store.k) {
+        "lan" -> LAN_STORE
+        "webdav" -> WEBDAV_STORE + store.u.orEmpty()
+        else -> store.u.orEmpty()
+    }
 
 /** A new device that was welcomed and has yet to check the roster and say it is done. */
 class Welcomed internal constructor(
@@ -210,10 +240,24 @@ class Welcomed internal constructor(
     /** Closes the LAN connection or server the welcome came through. */
     private val close: suspend () -> Unit,
 ) {
-    /** The Flow server to verify the roster on, or null for a LAN group, whose roster came with the welcome. */
+    /** Where the group lives: a Flow server or WebDAV folder, or null for a LAN group, whose roster came with the welcome. */
     val storeUrl: String? get() = welcome.store.u
-    val instance: String? get() = welcome.store.i
     val group: String get() = welcome.group
+
+    /** The WebDAV login the member handed over, for the keystore. */
+    val login: WebDavLogin?
+        get() = welcome.store.takeIf { it.k == "webdav" }?.let { WebDavLogin(it.n.orEmpty(), it.w.orEmpty()) }
+
+    /** The group's shared store, opened as [device]; null for a LAN group. */
+    fun remote(device: MemberSecrets): Remote? {
+        val store = welcome.store
+        val url = store.u ?: return null
+        return when (store.k) {
+            "server" -> ServerStore.connect(url, device, store.i, group)
+            "webdav" -> FileLayout(WebDavStore.connect(url, store.n.orEmpty(), store.w.orEmpty()), SyncBytes.toHex(device.did))
+            else -> null
+        }
+    }
 
     /**
      * Saves the group once the roster verifies up to the head the member named: the one on [server],
@@ -237,7 +281,7 @@ class Welcomed internal constructor(
             db.groups().addEntries(roster)
             // A joined device never had recovery words to confirm; the device that created or restored the group did.
             db.groups().saveGroup(
-                GroupRecord(welcome.group, welcome.store.u ?: LAN_STORE, welcome.store.i, welcome.link, recoverySaved = true),
+                GroupRecord(welcome.group, recordUrl(welcome.store), welcome.store.i, welcome.link, recoverySaved = true),
             )
             channel.send(Message.Done)
         } finally {
@@ -263,24 +307,25 @@ private suspend fun newSide(
     channel.send(Message.Accept(SyncBytes.b64urlEncode(sign(device.sigSeed, signingBytes(entry)))))
 
     val welcome = channel.receive() as? Message.Welcome ?: throw LinkedException.Unexpected()
-    if (welcome.group != entry.group || welcome.store.k !in setOf("server", "lan")) throw LinkedException.Unexpected()
+    if (welcome.group != entry.group || welcome.store.k !in setOf("server", "webdav", "lan")) throw LinkedException.Unexpected()
     return Welcomed(channel, me, welcome, close)
 }
 
 /**
  * The new device's side, on a member's code: tries the LAN addresses it lists, then the store's
- * mailbox, and saves the group once accepted.
+ * mailbox, and saves the group once accepted. [server] opens the store the welcome names, to verify
+ * the roster on.
  */
 suspend fun join(
     db: LinkedDatabase,
     local: LocalStore,
-    server: Store?,
+    server: (Welcomed) -> Store?,
     mailbox: Mailbox?,
     code: Code.Member,
     device: MemberSecrets,
     meta: DeviceMeta,
     confirm: suspend (String) -> Boolean,
-) {
+): Welcomed {
     val pipe =
         dial(code.lan) ?: mailbox?.let { MailboxPipe(it, SyncBytes.toHex(pairingSlot(code.token)), shower = false) }
             ?: throw LinkedException.LanUnreachable()
@@ -294,7 +339,8 @@ suspend fun join(
             close()
             throw e
         }
-    welcomed.finish(db, local, server)
+    welcomed.finish(db, local, server(welcomed))
+    return welcomed
 }
 
 /** The new device's side, on the code it shows: waits on the LAN for a member to scan it. */

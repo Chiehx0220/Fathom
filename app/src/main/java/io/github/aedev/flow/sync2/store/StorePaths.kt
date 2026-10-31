@@ -27,10 +27,17 @@ object StorePaths {
         name: String,
     ): String = "keys/${epochName(epoch)}/$name.k"
 
+    fun pair(
+        slot: String,
+        name: String,
+    ): String = "pair/$slot/$name"
+
     private val BLOB = Regex("dev/[0-9a-f]{32}/blob/[0-9a-f]{64}\\.b")
 
+    fun isBlob(path: String): Boolean = BLOB.matches(path)
+
     /** A path a device may hold an object or blob under; anything else, such as `..`, is refused. */
-    fun isObject(path: String): Boolean = parseLog(path) != null || BLOB.matches(path)
+    fun isObject(path: String): Boolean = parseLog(path) != null || isBlob(path)
 
     private val LOG = Regex("dev/([0-9a-f]{32})/log/[0-9a-f]{16}/([0-9a-f]{16})\\.o")
 

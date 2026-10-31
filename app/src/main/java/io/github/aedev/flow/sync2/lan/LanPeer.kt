@@ -64,6 +64,7 @@ class LanPeer(
     private val link: LanLink,
     private val session: Session,
     private val local: LocalStore,
+    private val onLive: suspend (ByteArray) -> Unit = {},
 ) {
     private val ids = AtomicLong()
     private val answers = ConcurrentHashMap<Long, CompletableDeferred<Message>>()
@@ -94,6 +95,11 @@ class LanPeer(
         link.send(encode(fields + mapOf("id" to JsonPrimitive(id), "op" to JsonPrimitive(op)), null))
         val message = withTimeout(ANSWER_TIMEOUT_MS) { answer.await() }
         return message.takeIf { it.header["ok"]?.jsonPrimitive?.booleanOrNull == true }
+    }
+
+    /** Sends a live envelope; it has no answer (spec/live.md, Requests). */
+    suspend fun sendLive(envelope: ByteArray) {
+        link.send(encode(mapOf("id" to JsonPrimitive(ids.getAndIncrement()), "op" to JsonPrimitive("live")), envelope))
     }
 
     private suspend fun answer(request: Message) {
@@ -154,6 +160,7 @@ class LanPeer(
                     }
 
                     "live" -> {
+                        request.bytes?.let { onLive(it) }
                         null
                     }
 
