@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **112** (1201 changed lines). New files: **269**.
+- Modified upstream files: **113** (1209 changed lines). New files: **269**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -79,6 +79,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 7 | 2 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 8 | 1 |
 | sync/merge/CollectionMergers.kt | 4 | 4 |
+| sync2/live/NowPlaying.kt | 5 | 3 |
 | ui/PlayerNavigation.kt | 5 | 3 |
 | ui/components/shared/quickactions/VideoQuickActionsSheet.kt | 6 | 2 |
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
@@ -89,8 +90,7 @@ in it). **New files** never conflict; they are ours alone.
 | player/stream/PlaybackPrefetcher.kt | 6 | 0 |
 | sync/canonical/Canonical.kt | 6 | 0 |
 | sync/mapping/SimpleMappers.kt | 6 | 0 |
-| ui/AppHooks.kt | 2 | 4 |
-| ... 52 more, each small | | |
+| ... 53 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
