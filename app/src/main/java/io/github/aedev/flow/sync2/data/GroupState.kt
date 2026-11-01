@@ -9,7 +9,11 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import io.github.aedev.flow.sync2.roster.Entry
 import io.github.aedev.flow.sync2.roster.canonicalEntry
+import io.github.aedev.flow.sync2.roster.parseEntry
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.Json
 
 /** The [GroupRecord.storeUrl] of a group that lives on its devices alone (spec/live.md, LAN groups). */
 const val LAN_STORE = "lan"
@@ -89,6 +93,9 @@ interface GroupDao {
     @Query("SELECT * FROM roster ORDER BY seq")
     suspend fun roster(): List<RosterRow>
 
+    @Query("SELECT * FROM roster ORDER BY seq")
+    fun observeRoster(): Flow<List<RosterRow>>
+
     @Upsert
     suspend fun addRoster(rows: List<RosterRow>)
 
@@ -123,6 +130,12 @@ interface GroupDao {
 }
 
 private fun rows(entries: List<Entry>) = entries.map { RosterRow(it.seq, canonicalEntry(it)) }
+
+fun List<RosterRow>.toEntries(): List<Entry> = map { parseEntry(Json.parseToJsonElement(it.entry)) }
+
+/** The verified roster's current epoch, or null while this device holds no roster. */
+fun GroupDao.observeEpoch(): Flow<Int?> =
+    observeRoster().map { rows -> rows.toEntries().mapNotNull { it.epoch?.n }.lastOrNull() }.distinctUntilChanged()
 
 suspend fun GroupDao.addEntries(entries: List<Entry>) = addRoster(rows(entries))
 

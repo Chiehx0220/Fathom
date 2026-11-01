@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -16,6 +17,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.hilt.navigation.compose.hiltViewModel
 import io.github.aedev.flow.data.local.AppUiModePreferences
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.repository.DeArrowRepository
@@ -31,6 +33,8 @@ import io.github.aedev.flow.ui.components.shared.ProvideChannelGroupLabels
 import io.github.aedev.flow.ui.components.shared.ProvideDateDisplaySettings
 import io.github.aedev.flow.ui.components.shared.card.ProvideVideoCardState
 import io.github.aedev.flow.ui.screens.crash.CrashReportScreen
+import io.github.aedev.flow.ui.screens.playon.LocalPlayOn
+import io.github.aedev.flow.ui.screens.playon.PlayOnViewModel
 import io.github.aedev.flow.ui.theme.FlowFontFamily
 import io.github.aedev.flow.ui.tv.FlowTvApp
 import io.github.aedev.flow.ui.tv.screens.TvProfileGate
@@ -125,33 +129,36 @@ internal fun FlowRoot(
                         val downloadVideoId by links.downloadVideoId
 
                         ProvideChannelGroupLabels {
-                            if (appUiRoot == AppUiRoot.TV) {
-                                SideEffect { splashController.contentReady = true }
-                                TvProfileGate(hasLink = deeplinkVideoId != null) { startSettings ->
-                                    FlowTvApp(
+                            // One "Play on" for every player and both shells.
+                            CompositionLocalProvider(LocalPlayOn provides hiltViewModel<PlayOnViewModel>()) {
+                                if (appUiRoot == AppUiRoot.TV) {
+                                    SideEffect { splashController.contentReady = true }
+                                    TvProfileGate(hasLink = deeplinkVideoId != null) { startSettings ->
+                                        FlowTvApp(
+                                            deeplinkVideoId = deeplinkVideoId,
+                                            isShort = isDeeplinkShort,
+                                            onDeeplinkConsumed = links::consumeVideo,
+                                            startSettings = startSettings,
+                                        )
+                                    }
+                                } else {
+                                    FlowApp(
+                                        currentTheme = theme.themeMode,
+                                        themeVariant = theme.themeVariant,
+                                        systemLightThemeMode = theme.systemLightThemeMode,
+                                        systemDarkThemeMode = theme.systemDarkThemeMode,
                                         deeplinkVideoId = deeplinkVideoId,
                                         isShort = isDeeplinkShort,
+                                        isSharedLink = isDeeplinkShared,
+                                        openMusicPlayerRequest = openMusicPlayerRequest,
                                         onDeeplinkConsumed = links::consumeVideo,
-                                        startSettings = startSettings,
+                                        pendingRoute = pendingRoute,
+                                        onPendingRouteConsumed = links::consumeRoute,
+                                        downloadVideoId = downloadVideoId,
+                                        onDownloadConsumed = links::consumeDownload,
+                                        onStartDestinationKnown = { splashController.contentReady = true },
                                     )
                                 }
-                            } else {
-                                FlowApp(
-                                    currentTheme = theme.themeMode,
-                                    themeVariant = theme.themeVariant,
-                                    systemLightThemeMode = theme.systemLightThemeMode,
-                                    systemDarkThemeMode = theme.systemDarkThemeMode,
-                                    deeplinkVideoId = deeplinkVideoId,
-                                    isShort = isDeeplinkShort,
-                                    isSharedLink = isDeeplinkShared,
-                                    openMusicPlayerRequest = openMusicPlayerRequest,
-                                    onDeeplinkConsumed = links::consumeVideo,
-                                    pendingRoute = pendingRoute,
-                                    onPendingRouteConsumed = links::consumeRoute,
-                                    downloadVideoId = downloadVideoId,
-                                    onDownloadConsumed = links::consumeDownload,
-                                    onStartDestinationKnown = { splashController.contentReady = true },
-                                )
                             }
                         }
                         ProfileSwitchingOverlay(

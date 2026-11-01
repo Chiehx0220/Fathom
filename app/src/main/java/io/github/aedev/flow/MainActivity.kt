@@ -80,6 +80,9 @@ class MainActivity : ComponentActivity() {
     lateinit var videoPlayerManager: dagger.Lazy<EnhancedPlayerManager>
 
     @Inject
+    lateinit var localPlayback: dagger.Lazy<io.github.aedev.flow.sync2.live.LocalPlayback>
+
+    @Inject
     lateinit var widgetContentSync: dagger.Lazy<io.github.aedev.flow.widget.core.refresh.WidgetContentSync>
 
     @Inject
@@ -158,6 +161,8 @@ class MainActivity : ComponentActivity() {
         // Player setup reads DataStore and opens the media cache index, so it runs off the main
         // thread and settles after the first frame instead of blocking onCreate.
         lifecycleScope.launch { GlobalPlayerState.initializeAsync(applicationContext) }
+        // A video another linked device handed over opens as a tapped link would.
+        lifecycleScope.launch { localPlayback.get().openVideo.collect { links.openVideo(it) } }
 
         // Snapshot lives in the process, not the activity: onUserLeaveHint/onStop read it
         // synchronously and must still see it after a recreation they run inside of (#817).

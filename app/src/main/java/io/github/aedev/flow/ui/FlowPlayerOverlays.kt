@@ -56,6 +56,7 @@ import io.github.aedev.flow.ui.screens.player.VideoPlayerHost
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
 import io.github.aedev.flow.ui.screens.player.dialogs.PlayerQueueSheetHost
 import io.github.aedev.flow.ui.screens.player.state.VideoPlayerUiState
+import io.github.aedev.flow.ui.screens.playon.RemoteMiniBar
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -189,6 +190,7 @@ internal fun FlowPlayerOverlays(
     miniPlayerShowNextPrevControls: Boolean,
     showMusicSheet: Boolean,
     showVideoBar: Boolean,
+    showRemoteBar: Boolean,
     musicPlayerSheetState: MusicPlayerSheetState,
     containerWidth: Dp,
     containerHeight: Dp,
@@ -292,6 +294,13 @@ internal fun FlowPlayerOverlays(
                 swipeLeftAction = swipeLeftAction,
                 swipeRightAction = swipeRightAction,
                 swipeActions = videoBarActions,
+            )
+        }
+        if (showRemoteBar) {
+            RemoteMiniBar(
+                bounds = miniBarBounds,
+                containerHeightPx = with(density) { containerHeight.toPx() },
+                restingBottomPx = { bottomInsets.miniPlayerBaselinePx(density) },
             )
         }
         if (showVideoBar && showBarQueue) {

@@ -23,11 +23,11 @@ import io.github.aedev.flow.sync2.data.LinkedDatabase
 import io.github.aedev.flow.sync2.data.StreamRow
 import io.github.aedev.flow.sync2.data.addEntries
 import io.github.aedev.flow.sync2.data.replaceRoster
+import io.github.aedev.flow.sync2.data.toEntries
 import io.github.aedev.flow.sync2.roster.Entry
 import io.github.aedev.flow.sync2.roster.RosterState
 import io.github.aedev.flow.sync2.roster.applyEntry
 import io.github.aedev.flow.sync2.roster.entryHash
-import io.github.aedev.flow.sync2.roster.parseEntry
 import io.github.aedev.flow.sync2.roster.replayRoster
 import io.github.aedev.flow.sync2.store.ChangeList
 import io.github.aedev.flow.sync2.store.Header
@@ -38,7 +38,6 @@ import io.github.aedev.flow.sync2.store.StreamPosition
 import io.github.aedev.flow.sync2.store.nextInStream
 import io.github.aedev.flow.sync2.store.parseObject
 import io.github.aedev.flow.sync2.store.sealObject
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.TreeMap
@@ -116,7 +115,7 @@ class Session private constructor(
         ): Session {
             val groups = db.groups()
             val record = groups.group() ?: throw LinkedException.NotLinked()
-            val entries = groups.roster().map { parseEntry(Json.parseToJsonElement(it.entry)) }.toMutableList()
+            val entries = groups.roster().toEntries().toMutableList()
             var state = replayRoster(entries)
             val chain = store.rosterAfter(-1)
             // A store that resolved a fork the other way holds a chain this device's copy isn't a prefix of: take the winner.

@@ -32,6 +32,7 @@ import io.github.aedev.flow.ui.screens.home.HomeViewModel
 import io.github.aedev.flow.ui.screens.music.MusicPlayerViewModel
 import io.github.aedev.flow.ui.screens.music.MusicViewModel
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
+import io.github.aedev.flow.ui.screens.playon.PlayOnHost
 import io.github.aedev.flow.ui.screens.search.SearchViewModel
 import io.github.aedev.flow.ui.screens.subscriptions.SubscriptionsViewModel
 import io.github.aedev.flow.ui.tv.components.TvSheetPresenter
@@ -70,6 +71,8 @@ fun FlowTvApp(
     LaunchedEffect(musicPlayerState.isPlaying) {
         if (musicPlayerState.isPlaying) musicSessionActive = true
     }
+    // Handoffs from other devices: the consent question, who took over, and the devices list.
+    PlayOnHost()
 
     fun play(video: Video) {
         EnhancedMusicPlayerManager.pause()

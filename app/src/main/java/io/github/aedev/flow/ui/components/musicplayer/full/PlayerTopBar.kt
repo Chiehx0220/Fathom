@@ -18,9 +18,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.R
 import io.github.aedev.flow.ui.components.shared.FlowConnectedToggleGroup
 import io.github.aedev.flow.ui.components.shared.FlowToggleOption
+import io.github.aedev.flow.ui.screens.playon.LocalPlayOn
+import io.github.aedev.flow.ui.screens.playon.PlayOnButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,6 +33,11 @@ fun PlayerTopBar(
     contentColor: Color = Color.White,
     modeSwitch: (@Composable () -> Unit)? = null,
 ) {
+    val elsewhere =
+        LocalPlayOn.current
+            ?.elsewhere
+            ?.collectAsStateWithLifecycle()
+            ?.value
     CenterAlignedTopAppBar(
         title = {
             if (modeSwitch != null) {
@@ -47,7 +55,7 @@ fun PlayerTopBar(
                         color = contentColor.copy(alpha = 0.9f),
                     )
                     Text(
-                        text = playingFrom,
+                        text = elsewhere?.let { stringResource(R.string.play_on_playing_on, it.name) } ?: playingFrom,
                         style = MaterialTheme.typography.bodyMedium,
                         color = contentColor.copy(alpha = 0.7f),
                         maxLines = 1,
@@ -57,6 +65,7 @@ fun PlayerTopBar(
                 }
             }
         },
+        actions = { PlayOnButton(tint = contentColor) },
         colors =
             TopAppBarDefaults.centerAlignedTopAppBarColors(
                 containerColor = Color.Transparent,

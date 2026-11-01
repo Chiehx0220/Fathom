@@ -60,6 +60,8 @@ import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.player.EnhancedMusicPlayerManager
 import io.github.aedev.flow.ui.components.PlayingWaveform
 import io.github.aedev.flow.ui.components.shared.MediaPlayPauseButton
+import io.github.aedev.flow.ui.screens.playon.LocalPlayOn
+import io.github.aedev.flow.ui.screens.playon.PlayOnButton
 import io.github.aedev.flow.ui.theme.ArtworkScrimContent
 import io.github.aedev.flow.ui.theme.ArtworkScrimNowPlaying
 
@@ -84,6 +86,12 @@ internal fun MiniPlayerContent(
 ) {
     val playerState by EnhancedMusicPlayerManager.playerState.collectAsStateWithLifecycle()
     val haptics = LocalHapticFeedback.current
+    // While the user drives another device from here, the player follows it and its controls go there.
+    val elsewhere =
+        LocalPlayOn.current
+            ?.elsewhere
+            ?.collectAsStateWithLifecycle()
+            ?.value
 
     val animatedProgress by animateFloatAsState(
         targetValue =
@@ -210,9 +218,9 @@ internal fun MiniPlayerContent(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = track.artist,
+                    text = elsewhere?.let { stringResource(R.string.play_on_playing_on, it.name) } ?: track.artist,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (elsewhere != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -223,6 +231,7 @@ internal fun MiniPlayerContent(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (elsewhere != null) PlayOnButton()
             if (showPrevious) {
                 IconButton(onClick = { EnhancedMusicPlayerManager.playPrevious() }) {
                     Icon(

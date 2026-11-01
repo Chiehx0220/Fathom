@@ -7,6 +7,7 @@ import io.github.aedev.flow.sync.protocol.CollectionWire
 import io.github.aedev.flow.sync.protocol.SyncCollection
 import io.github.aedev.flow.sync.transport.SyncConnection
 import io.github.aedev.flow.sync.transport.WsServer
+import io.github.aedev.flow.sync2.data.LanAddressRow
 import io.github.aedev.flow.sync2.engine.LinkedException
 import io.github.aedev.flow.sync2.engine.Session
 import io.github.aedev.flow.sync2.linking.Code
@@ -71,7 +72,8 @@ class LanPairingTest {
     fun a_new_device_reaches_a_member_code_over_the_lan_first() =
         runTest {
             val g = LinkedGroup(this).apply { create() }
-            val session = Session.open(g.deviceDb(), g.store, g.a)
+            val memberDb = g.deviceDb()
+            val session = Session.open(memberDb, g.store, g.a)
             val phone = newMember()
             val db = emptyDb()
             val offer = newOffer(StoreLocation("server", "memory"), "Desktop A", loopback())
@@ -80,13 +82,19 @@ class LanPairingTest {
             val added =
                 withContext(Dispatchers.Default) {
                     coroutineScope {
-                        val added = async { addDevice(session, g.store, offer, g.a) { true } }
-                        join(db, heldStore(db), { g.store }, g.store, code, phone, meta) { true }
+                        val added = async { addDevice(session, g.store, offer, g.a, port = 4001) { true } }
+                        join(db, heldStore(db), { g.store }, g.store, code, phone, meta, port = 4002) { true }
                         added.await()
                     }
                 }
             assertEquals(SyncBytes.toHex(phone.did), added)
             assertTrue(added in g.store.head().members)
+            assertEquals(
+                "each remembers the other where its LAN service listens",
+                listOf(LanAddressRow(SyncBytes.toHex(g.a.did), "127.0.0.1", 4001)),
+                db.lan().addresses(),
+            )
+            assertEquals(listOf(LanAddressRow(added, "127.0.0.1", 4002)), memberDb.lan().addresses())
         }
 
     @Test
@@ -100,7 +108,7 @@ class LanPairingTest {
 
                     override fun close() = Unit
                 }
-            val error = runCatching { LanPipe(closed).receive() }.exceptionOrNull()
+            val error = runCatching { LanPipe(closed, null).receive() }.exceptionOrNull()
             assertTrue("$error", error is LinkedException.Stopped)
         }
 }

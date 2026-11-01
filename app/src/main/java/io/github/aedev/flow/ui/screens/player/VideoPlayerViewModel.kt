@@ -29,6 +29,7 @@ import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.player.LifecyclePlaybackPreferences
 import io.github.aedev.flow.player.MiniPlayerExpansionState
+import io.github.aedev.flow.player.PlaybackTarget
 import io.github.aedev.flow.player.state.EnhancedPlayerState
 import io.github.aedev.flow.player.stream.PlaybackLoadResolver
 import io.github.aedev.flow.player.stream.ResetYouTubeSession
@@ -317,6 +318,8 @@ class VideoPlayerViewModel
             userOpened: Boolean = true,
             startPositionMs: Long? = null,
         ) {
+            // While this device drives another one, the video plays there.
+            if (userOpened) PlaybackTarget.current?.let { return it.play(listOf(video.id), 0, music = false) }
             val isMiniPlayerCollapsed =
                 GlobalPlayerState.miniPlayerExpansionState.value == MiniPlayerExpansionState.COLLAPSED
             if (_uiState.value.shouldReopenInsteadOfPlaying(video.id, playerManager.playerState.value, isMiniPlayerCollapsed)) {
@@ -346,6 +349,8 @@ class VideoPlayerViewModel
             video: Video,
             contentUri: String,
         ) {
+            // A file on this device plays here, which ends driving another device.
+            PlaybackTarget.current?.release()
             takeOverPlayback()
             armStartPaused(video.id, userOpened = true)
             loads.prepareDeviceFile(video, contentUri)
@@ -429,6 +434,16 @@ class VideoPlayerViewModel
         ) {
             if (videos.isEmpty()) return
             val startVideo = videos.getOrNull(startIndex) ?: videos.first()
+            PlaybackTarget.current?.let { remote ->
+                if (LocalMediaIds.isLocal(
+                        startVideo.id,
+                    )
+                ) {
+                    remote.release()
+                } else {
+                    return remote.play(videos.map(Video::id), videos.indexOf(startVideo), music = false)
+                }
+            }
 
             EnhancedMusicPlayerManager.stop()
             EnhancedMusicPlayerManager.clearCurrentTrack()

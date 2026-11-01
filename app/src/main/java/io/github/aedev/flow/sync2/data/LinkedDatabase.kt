@@ -17,10 +17,19 @@ data class SentRecord(
     val sentAt: Long,
 )
 
+/** A collection's latest upload in the ledger. */
+data class LastSent(
+    val collection: String,
+    val sentAt: Long,
+)
+
 @Dao
 interface SentDao {
     @Query("SELECT * FROM sent WHERE collection = :collection")
     suspend fun forCollection(collection: String): List<SentRecord>
+
+    @Query("SELECT collection, MAX(sentAt) AS sentAt FROM sent GROUP BY collection")
+    suspend fun lastSent(): List<LastSent>
 
     @Upsert
     suspend fun upsert(records: List<SentRecord>)
@@ -41,13 +50,15 @@ interface SentDao {
         HeldRow::class,
         LiveCounterRow::class,
         ConsentRow::class,
+        LanAddressRow::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3, spec = HoldObjects::class),
         AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5),
     ],
 )
 abstract class LinkedDatabase : RoomDatabase() {
@@ -62,4 +73,6 @@ abstract class LinkedDatabase : RoomDatabase() {
     abstract fun held(): HeldDao
 
     abstract fun live(): LiveDao
+
+    abstract fun lan(): LanDao
 }

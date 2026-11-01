@@ -10,6 +10,7 @@ import io.github.aedev.flow.sync2.data.LinkedDatabase
 import io.github.aedev.flow.sync2.data.serverUrl
 import io.github.aedev.flow.sync2.device.DeviceKeys
 import io.github.aedev.flow.sync2.live.LiveChannel
+import io.github.aedev.flow.sync2.live.LiveDevices
 import io.github.aedev.flow.sync2.live.LiveTransport
 import io.github.aedev.flow.sync2.store.ServerStore
 import kotlinx.coroutines.CancellationException
@@ -22,11 +23,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
@@ -57,6 +56,7 @@ class LinkedLive
         private val keys: DeviceKeys,
         private val sync: LinkedSync,
         private val live: LiveChannel,
+        private val devices: LiveDevices,
         @ApplicationScope private val scope: CoroutineScope,
     ) {
         private var running: Job? = null
@@ -133,7 +133,11 @@ class LinkedLive
                                 webSocket: WebSocket,
                                 text: String,
                             ) {
-                                if (isChanged(text)) changed.trySend(true)
+                                val frame = serverFrame(text)
+                                when (frame?.type) {
+                                    "changed" -> changed.trySend(true)
+                                    "peers" -> devices.serverPeers(frame.online.toSet())
+                                }
                             }
 
                             override fun onClosing(
@@ -198,18 +202,29 @@ class LinkedLive
                 } finally {
                     syncing.cancel()
                     relaying.cancel()
+                    devices.serverPeers(emptySet())
                     socket.close(NORMAL_CLOSURE, null)
                 }
             }
 
-        private fun isChanged(text: String): Boolean =
+        /** A text frame from the server: `changed`, or `peers` with who is connected; null for anything else. */
+        private fun serverFrame(text: String): ServerFrame? =
             try {
-                ((Json.parseToJsonElement(text) as? JsonObject)?.get("type") as? JsonPrimitive)?.contentOrNull == "changed"
+                frames.decodeFromString(ServerFrame.serializer(), text)
             } catch (_: SerializationException) {
-                false
+                null
+            } catch (_: IllegalArgumentException) {
+                null
             }
 
+        @Serializable
+        private class ServerFrame(
+            val type: String,
+            val online: List<String> = emptyList(),
+        )
+
         private companion object {
+            val frames = Json { ignoreUnknownKeys = true }
             const val TAG = "LinkedLive"
             const val NORMAL_CLOSURE = 1000
         }

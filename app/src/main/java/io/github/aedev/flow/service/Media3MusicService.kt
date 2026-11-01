@@ -15,7 +15,6 @@ import androidx.annotation.OptIn
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
-import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
@@ -1327,7 +1326,7 @@ class Media3MusicService : MediaLibraryService() {
 
         mediaLibrarySession =
             MediaLibrarySession
-                .Builder(this, offloadResumingPlayer(), LibrarySessionCallback())
+                .Builder(this, sessionPlayer(), LibrarySessionCallback())
                 .setSessionActivity(pendingIntent)
                 .setBitmapLoader(sessionArtworkBitmapLoader(this))
                 .build()
@@ -1338,18 +1337,10 @@ class Media3MusicService : MediaLibraryService() {
     }
 
     /** The session's player: a resume from a controller turns offload back on before playback starts. */
-    private fun offloadResumingPlayer(): Player =
-        object : ForwardingPlayer(player) {
-            override fun play() {
-                updateOffload { it.copy(pausedLong = false) }
-                super.play()
-            }
-
-            override fun setPlayWhenReady(playWhenReady: Boolean) {
-                if (playWhenReady) updateOffload { it.copy(pausedLong = false) }
-                super.setPlayWhenReady(playWhenReady)
-            }
-        }
+    private fun sessionPlayer(): Player =
+        SessionPlayer(player, { mediaLibrarySession.controllerForCurrentRequest }) {
+            updateOffload { it.copy(pausedLong = false) }
+        }.also { it.follow(lifecycleScope) }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? =
         mediaLibrarySession.takeUnless {

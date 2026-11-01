@@ -18,6 +18,7 @@ import io.github.aedev.flow.sync2.lan.LanPeer
 import io.github.aedev.flow.sync2.lan.SESSION_PATH
 import io.github.aedev.flow.sync2.lan.acceptLink
 import io.github.aedev.flow.sync2.lan.connectLink
+import io.github.aedev.flow.sync2.lan.portFree
 import io.github.aedev.flow.sync2.linking.DeviceMeta
 import io.github.aedev.flow.sync2.linking.renameDevice
 import io.github.aedev.flow.sync2.roster.entryHash
@@ -33,6 +34,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -177,5 +179,42 @@ class LanSyncTest {
             val heard = ArrayList<ByteArray>()
             meet(client = a, server = b, envelope = byteArrayOf(7, 7), heard = heard)
             assertEquals(listOf(listOf<Byte>(7, 7)), heard.map { it.toList() })
+        }
+
+    @Test
+    fun the_accepting_member_learns_where_the_dialing_one_listens() =
+        runTest {
+            val g = LinkedGroup(this).apply { create() }
+            val a = member(g, g.a)
+            val b = member(g, g.b)
+            withContext(Dispatchers.Default) {
+                val accepted = CompletableDeferred<SyncConnection>()
+                val listener = WsServer(SESSION_PATH) { accepted.complete(it) }
+                val port = listener.start()
+                val connection = WsClient(OkHttpClient()).connect("ws://127.0.0.1:$port$SESSION_PATH")
+                val serverSide = async { acceptLink(accepted.await(), b.session()) }
+                val client = connectLink(connection, a.session(), port = 41151)
+                val server = serverSide.await()
+                assertEquals(41151, server.peerPort)
+                assertEquals("127.0.0.1", accepted.await().remoteHost)
+                assertEquals("the side that dialed needs no port", null, client.peerPort)
+                client.close()
+                server.close()
+                listener.stop()
+            }
+        }
+
+    @Test
+    fun a_listener_takes_its_last_port_only_while_it_is_free() =
+        runTest {
+            withContext(Dispatchers.Default) {
+                val first = WsServer(SESSION_PATH)
+                val port = first.start()
+                assertFalse(portFree(port))
+                first.stop()
+                val second = WsServer(SESSION_PATH)
+                assertEquals(port, second.start(port))
+                second.stop()
+            }
         }
 }

@@ -109,7 +109,6 @@ internal fun NavGraphBuilder.linkPlaybackRoutes(
                     playerUiState.cachedVideo?.takeIf { it.id == effectiveVideoId }
                         ?: linkedVideo(effectiveVideoId)
                 playerViewModel.playVideo(video)
-                GlobalPlayerState.setCurrentVideo(video)
             } else {
                 playerViewModel.showVideoPlayer()
                 playerVisibleState.value = true

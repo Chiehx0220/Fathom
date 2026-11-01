@@ -30,6 +30,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.nio.ByteBuffer
@@ -44,6 +45,8 @@ class LanLink internal constructor(
     private val connection: SyncConnection,
     /** The other member's device id, hex. */
     val peer: String,
+    /** The port the connecting member listens on, as its hello says. */
+    val peerPort: Int?,
     private val sendKey: ByteArray,
     private val receiveKey: ByteArray,
 ) {
@@ -93,10 +96,11 @@ private fun JsonObject.field(name: String): String = this[name]?.jsonPrimitive?.
 private fun Session.memberKey(did: String): ByteArray =
     state.members[did]?.takeIf { it.role == Role.DEVICE && did != me }?.sig ?: reject(ProtocolError.SENDER)
 
-/** The connecting side: hello sealed under this device's current epoch. */
+/** The connecting side: hello sealed under this device's current epoch, naming the [port] this device listens on. */
 suspend fun connectLink(
     connection: SyncConnection,
     session: Session,
+    port: Int? = null,
 ): LanLink {
     val epoch = session.state.epoch
     val lanKey = purposeKey(session.currentKey(), session.group, epoch, Purpose.LAN)
@@ -108,10 +112,11 @@ suspend fun connectLink(
             lanKey,
             1,
             JsonObject(
-                mapOf(
+                listOfNotNull(
                     "did" to JsonPrimitive(session.me),
                     "n" to JsonPrimitive(SyncBytes.b64urlEncode(clientNonce)),
-                ),
+                    port?.let { "p" to JsonPrimitive(it) },
+                ).toMap(),
             ),
         ),
     )
@@ -126,7 +131,7 @@ suspend fun connectLink(
     val proof = sign(session.device.sigSeed, lanTranscript(LanRole.CLIENT, clientNonce, serverNonce, client, server))
     connection.send(hello(epoch, lanKey, 3, JsonObject(mapOf("sig" to JsonPrimitive(SyncBytes.b64urlEncode(proof))))))
     val keys = lanSessionKeys(lanKey, clientNonce, serverNonce, client, server)
-    return LanLink(connection, serverDid, keys.clientToServer, keys.serverToClient)
+    return LanLink(connection, serverDid, null, keys.clientToServer, keys.serverToClient)
 }
 
 /** The accepting side: answers under the epoch the client named, if this device holds its key. */
@@ -160,5 +165,5 @@ suspend fun acceptLink(
     val transcript = lanTranscript(LanRole.CLIENT, clientNonce, serverNonce, client, server)
     if (!verify(clientKey, transcript, SyncBytes.b64urlDecode(third.field("sig")))) reject(ProtocolError.SIGNATURE)
     val keys = lanSessionKeys(lanKey, clientNonce, serverNonce, client, server)
-    return LanLink(connection, clientDid, keys.serverToClient, keys.clientToServer)
+    return LanLink(connection, clientDid, hello["p"]?.jsonPrimitive?.intOrNull, keys.serverToClient, keys.clientToServer)
 }

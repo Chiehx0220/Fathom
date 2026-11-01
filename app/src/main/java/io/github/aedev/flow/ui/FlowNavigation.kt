@@ -18,7 +18,6 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.music.model.toMusicTrack
 import io.github.aedev.flow.data.music.model.toVideo
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
-import io.github.aedev.flow.player.GlobalPlayerState
 import io.github.aedev.flow.ui.components.layout.LocalFlowBottomInsets
 import io.github.aedev.flow.ui.components.layout.navigation.MediaNavigator
 import io.github.aedev.flow.ui.components.musicplayer.sheet.MusicPlayerSheetState
@@ -86,7 +85,6 @@ fun NavGraphBuilder.flowAppGraph(
             onVideoClick = { video ->
                 navController.openVideoOrShorts(video, disableShortsPlayer) {
                     playerViewModel.playVideo(it)
-                    GlobalPlayerState.setCurrentVideo(it)
                 }
             },
             onShortClick = { source ->
@@ -163,7 +161,6 @@ fun NavGraphBuilder.flowAppGraph(
             onVideoClick = { video ->
                 navController.openVideoOrShorts(video, disableShortsPlayer) {
                     playerViewModel.playVideo(it)
-                    GlobalPlayerState.setCurrentVideo(it)
                 }
             },
             onShortClick = { source ->
@@ -232,7 +229,6 @@ fun NavGraphBuilder.flowAppGraph(
             onDownloadedVideoClick = { videos, index ->
                 val videoList = videos.map { it.video }
                 playerViewModel.playPlaylist(videoList, index, downloadsSourceName)
-                GlobalPlayerState.setCurrentVideo(videoList[index])
             },
             onDownloadedMusicClick = { tracks, index ->
                 val musicTracks = tracks.map { it.track }

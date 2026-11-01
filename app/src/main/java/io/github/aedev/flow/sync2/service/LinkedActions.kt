@@ -17,6 +17,7 @@ import io.github.aedev.flow.sync2.device.WebDavLogin
 import io.github.aedev.flow.sync2.engine.LinkedException
 import io.github.aedev.flow.sync2.engine.Session
 import io.github.aedev.flow.sync2.lan.LanSync
+import io.github.aedev.flow.sync2.lan.lanPort
 import io.github.aedev.flow.sync2.linking.Code
 import io.github.aedev.flow.sync2.linking.DeviceMeta
 import io.github.aedev.flow.sync2.linking.StoreLocation
@@ -262,7 +263,15 @@ class LinkedActions
                 val device = keys.load()
                 val offer = newOffer(location(record), meta().name, listen())
                 phase.value = LinkPhase.Waiting(offer.qr)
-                addDevice(sync.open(record, device), sync.remote(record, device), offer, device, credentials.webDav(), ::confirm)
+                addDevice(
+                    sync.open(record, device),
+                    sync.remote(record, device),
+                    offer,
+                    device,
+                    credentials.webDav(),
+                    lanPort(context),
+                    ::confirm,
+                )
             }
 
         /** Where this device's group lives, as its codes name it: never with credentials. */
@@ -289,7 +298,7 @@ class LinkedActions
 
                 is Code.New -> {
                     if (db.groups().group() == null) throw LinkedException.NeedsMember()
-                    addScanned(session(), code, keys.load(), credentials.webDav(), ::confirm)
+                    addScanned(session(), code, keys.load(), credentials.webDav(), lanPort(context), ::confirm)
                 }
             }
         }
@@ -319,7 +328,7 @@ class LinkedActions
                         ServerStore.connect(url, device, null, null)
                     }
                 }
-            val welcomed = join(db, local, { it.remote(device) }, mailbox, code, device, meta(), ::confirm)
+            val welcomed = join(db, local, { it.remote(device) }, mailbox, code, device, meta(), lanPort(context), ::confirm)
             welcomed.login?.let { credentials.save(it) }
             linkedNow()
         }
@@ -350,7 +359,7 @@ class LinkedActions
                 val server = sync.server(record, device) ?: throw LinkedException.Unexpected()
                 val offer = newOffer(StoreLocation("server", record.storeUrl), meta().name, null)
                 server.answerJoin(id, offer.qr)
-                addDevice(sync.open(record, device), server, offer, device, confirm = ::confirm)
+                addDevice(sync.open(record, device), server, offer, device, port = lanPort(context), confirm = ::confirm)
             }
 
         suspend fun decline(id: String) {
@@ -364,7 +373,7 @@ class LinkedActions
                 val device = newMembership()
                 val offer = newOffer(null, meta().name, listen() ?: throw LinkedException.LanUnreachable())
                 phase.value = LinkPhase.Waiting(offer.qr)
-                val welcomed = answerShown(offer, device, meta(), ::confirm)
+                val welcomed = answerShown(offer, device, meta(), lanPort(context), ::confirm)
                 welcomed.finish(db, local, welcomed.remote(device))
                 welcomed.login?.let { credentials.save(it) }
                 linkedNow()

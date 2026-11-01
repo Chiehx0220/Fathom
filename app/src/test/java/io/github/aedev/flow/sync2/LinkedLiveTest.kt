@@ -9,6 +9,7 @@ import io.github.aedev.flow.sync2.data.GroupRecord
 import io.github.aedev.flow.sync2.data.LinkedDatabase
 import io.github.aedev.flow.sync2.device.DeviceKeys
 import io.github.aedev.flow.sync2.live.LiveChannel
+import io.github.aedev.flow.sync2.live.LiveDevices
 import io.github.aedev.flow.sync2.live.LiveTransport
 import io.github.aedev.flow.sync2.service.LastSync
 import io.github.aedev.flow.sync2.service.LinkedLive
@@ -72,7 +73,7 @@ class LinkedLiveTest {
                 }
                 webSocket("/v1/live", protocol = "flow-sync.v1") {
                     bearers.value += call.request.headers["Sec-WebSocket-Protocol"].orEmpty()
-                    send(Frame.Text("""{"type":"peers","online":[]}"""))
+                    send(Frame.Text("""{"type":"peers","online":["${"bb".repeat(16)}"]}"""))
                     send(Frame.Text("""{"type":"later"}"""))
                     send(Frame.Text("not json"))
                     repeat(3) { send(Frame.Text("""{"type":"changed"}""")) }
@@ -116,11 +117,13 @@ class LinkedLiveTest {
                     }
                     coEvery { receive(any()) } coAnswers { received.value += listOf(firstArg<ByteArray>().toList()) }
                 }
-            val live = LinkedLive(context, db, keys, sync, channel, scope)
+            val devices = LiveDevices()
+            val live = LinkedLive(context, db, keys, sync, channel, devices, scope)
             live.start()
             withTimeout(10_000) { bearers.first { it.isNotEmpty() } }
             assertEquals(listOf("flow-sync.v1, bearer.t"), bearers.value)
             withTimeout(10_000) { received.first { it.isNotEmpty() } }
+            assertEquals("the server says who is connected", setOf("bb".repeat(16)), devices.online.value)
             assertEquals("a binary frame is a live envelope for the channel", listOf(listOf<Byte>(1, 2, 3)), received.value)
             withTimeout(10_000) { relayed.first { it.isNotEmpty() } }
             assertEquals("what the channel sends goes out as a binary frame", listOf(listOf<Byte>(9)), relayed.value)

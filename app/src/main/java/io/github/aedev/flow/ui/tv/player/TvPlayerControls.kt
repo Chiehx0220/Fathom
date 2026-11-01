@@ -60,6 +60,7 @@ import io.github.aedev.flow.ui.components.shared.videoMetadataLine
 import io.github.aedev.flow.ui.components.videoplayer.controls.PlayerControlActions
 import io.github.aedev.flow.ui.components.videoplayer.controls.ScrimEdge
 import io.github.aedev.flow.ui.components.videoplayer.controls.playerEdgeScrim
+import io.github.aedev.flow.ui.screens.playon.PlayOnButton
 import io.github.aedev.flow.ui.theme.PlayerScrimContent
 import io.github.aedev.flow.ui.theme.PlayerScrimContentSecondary
 import io.github.aedev.flow.ui.theme.PlayerScrimEdgeGradient
@@ -248,6 +249,7 @@ private fun TvPlayerTitle(
                 overflow = TextOverflow.Ellipsis,
             )
         }
+        PlayOnButton(tint = PlayerScrimContent)
     }
 }
 

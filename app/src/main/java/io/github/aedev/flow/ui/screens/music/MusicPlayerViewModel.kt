@@ -25,6 +25,7 @@ import io.github.aedev.flow.data.recommendation.music.MusicBrainEngine
 import io.github.aedev.flow.data.recommendation.music.onRepeatShelf
 import io.github.aedev.flow.data.scrobble.Scrobbler
 import io.github.aedev.flow.player.EnhancedMusicPlayerManager
+import io.github.aedev.flow.player.PlaybackTarget
 import io.github.aedev.flow.ui.components.musicplayer.queue.QueueSwipes
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import kotlinx.coroutines.Job
@@ -294,9 +295,15 @@ class MusicPlayerViewModel
                 return
             }
             if (isLocalMediaId(track.videoId)) {
+                // A file on this device plays here, which ends driving another device.
+                PlaybackTarget.current?.release()
                 val localUris = (queue + track).mapNotNull { t -> LocalMediaIds.audioUri(t.videoId)?.let { t.videoId to it } }.toMap()
                 playLocalMusic(track, queue.filter { isLocalMediaId(it.videoId) }, localUris)
                 return
+            }
+            PlaybackTarget.current?.let { remote ->
+                val ids = queue.ifEmpty { listOf(track) }.map { it.videoId }
+                return remote.play(ids, ids.indexOf(track.videoId).coerceAtLeast(0), music = true)
             }
             loadTrackJob?.cancel()
             // Genre-scoped surfaces tag their source; the genre becomes listen

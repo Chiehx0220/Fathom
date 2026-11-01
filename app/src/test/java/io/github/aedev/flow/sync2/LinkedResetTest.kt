@@ -17,6 +17,7 @@ import io.github.aedev.flow.sync2.data.SentRecord
 import io.github.aedev.flow.sync2.device.DeviceKeys
 import io.github.aedev.flow.sync2.device.StoreCredentials
 import io.github.aedev.flow.sync2.engine.Session
+import io.github.aedev.flow.sync2.lan.LanSync
 import io.github.aedev.flow.sync2.roster.Op
 import io.github.aedev.flow.sync2.service.LinkedError
 import io.github.aedev.flow.sync2.service.LinkedReset
@@ -59,6 +60,9 @@ class LinkedResetTest {
             }
         }
 
+    /** These groups live on a store; a LAN farewell is never asked for. */
+    private val noLan = dagger.Lazy<LanSync> { error("not a LAN group") }
+
     @Before
     fun workManager() {
         if (!WorkManager.isInitialized()) WorkManager.initialize(context, Configuration.Builder().build())
@@ -80,6 +84,7 @@ class LinkedResetTest {
                     DeviceKeys(context),
                     StoreCredentials(context),
                     unreachable,
+                    noLan,
                 ).dataReplaced()
             } finally {
                 unmockkObject(ActiveProfile)
@@ -105,7 +110,7 @@ class LinkedResetTest {
                     coEvery { load() } returns g.a
                     coJustRun { delete() }
                 }
-            val reset = LinkedReset(context, db, local, ledger, keys, StoreCredentials(context), unreachable)
+            val reset = LinkedReset(context, db, local, ledger, keys, StoreCredentials(context), unreachable, noLan)
             reset.dataReplaced()
 
             assertEquals(CollectionLedger(), ledger.load(SyncCollection.WATCH_HISTORY))
@@ -133,7 +138,16 @@ class LinkedResetTest {
                 }
             val sync = dagger.Lazy { mockk<LinkedSync> { coEvery { open(any(), any()) } coAnswers { Session.open(db, g.store, g.a) } } }
 
-            LinkedReset(context, db, heldStore(db), SyncChangeLedgerStore(context), keys, StoreCredentials(context), sync).dataReplaced()
+            LinkedReset(
+                context,
+                db,
+                heldStore(db),
+                SyncChangeLedgerStore(context),
+                keys,
+                StoreCredentials(context),
+                sync,
+                noLan,
+            ).dataReplaced()
 
             assertEquals(
                 "a leave carries no data, so nothing is sent as a deletion",

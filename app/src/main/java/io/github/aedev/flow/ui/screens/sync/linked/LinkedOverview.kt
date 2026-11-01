@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Cloud
-import androidx.compose.material.icons.outlined.Computer
 import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +28,10 @@ import io.github.aedev.flow.sync2.data.LAN_STORE
 import io.github.aedev.flow.sync2.data.WEBDAV_STORE
 import io.github.aedev.flow.sync2.service.LinkedDevice
 import io.github.aedev.flow.sync2.service.LinkedError
+import io.github.aedev.flow.ui.components.shared.FlowConnectedToggleGroup
 import io.github.aedev.flow.ui.components.shared.FlowNavRow
+import io.github.aedev.flow.ui.components.shared.FlowToggleOption
+import io.github.aedev.flow.ui.components.shared.deviceKindIcon
 import io.github.aedev.flow.ui.screens.sync.SyncActionRow
 import io.github.aedev.flow.ui.screens.sync.SyncCard
 import io.github.aedev.flow.ui.screens.sync.SyncInfoRow
@@ -52,6 +53,9 @@ internal fun LinkedOverview(
     onLeave: () -> Unit,
     onForget: () -> Unit,
     onUpdateLogin: (user: String, password: String) -> Unit,
+    /** Each device's remembered playback answer: true allowed, false not, absent asks. */
+    consent: Map<String, Boolean>,
+    onConsent: (id: String, allowed: Boolean?) -> Unit,
     onAccept: (id: String) -> Unit,
     onDecline: (id: String) -> Unit,
 ) {
@@ -122,7 +126,7 @@ internal fun LinkedOverview(
             onDismiss = { onDecline(request.id) },
         )
     }
-    DeviceList(state.devices.orEmpty(), state.nearby, state.busy, onRename, onRemove)
+    DeviceList(state.devices.orEmpty(), state.nearby, state.kinds, state.busy, consent, onRename, onRemove, onConsent)
     onScanNewDevice?.let {
         SyncActionRow(confirmLabel = stringResource(R.string.linked_scan_new_device), onConfirm = it, confirmEnabled = !state.busy)
     }
@@ -153,9 +157,12 @@ internal fun LinkedOverview(
 private fun DeviceList(
     devices: List<LinkedDevice>,
     nearby: Map<String, Long>,
+    kinds: Map<String, String>,
     busy: Boolean,
+    consent: Map<String, Boolean>,
     onRename: (id: String, name: String) -> Unit,
     onRemove: (id: String) -> Unit,
+    onConsent: (id: String, allowed: Boolean?) -> Unit,
 ) {
     var open by rememberSaveable { mutableStateOf<String?>(null) }
     Text(stringResource(R.string.linked_devices), Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium)
@@ -186,7 +193,7 @@ private fun DeviceList(
                         device.platform
                     }
                 },
-            leadingIcon = if (device.platform == "android") Icons.Outlined.PhoneAndroid else Icons.Outlined.Computer,
+            leadingIcon = deviceKindIcon(kinds[device.id], device.platform),
             enabled = !busy,
             shape = shape,
         )
@@ -203,6 +210,8 @@ private fun DeviceList(
                 onRemove(device.id)
             },
             onDismiss = { open = null },
+            consent = consent[device.id],
+            onConsent = { onConsent(device.id, it) },
         )
     }
 }
@@ -216,6 +225,8 @@ private fun DeviceDialog(
     onRename: (String) -> Unit,
     onRemove: () -> Unit,
     onDismiss: () -> Unit,
+    consent: Boolean?,
+    onConsent: (Boolean?) -> Unit,
 ) {
     var name by rememberSaveable { mutableStateOf(device.name) }
     var removing by rememberSaveable { mutableStateOf(false) }
@@ -238,6 +249,17 @@ private fun DeviceDialog(
                         singleLine = true,
                     )
                     if (!device.thisDevice) {
+                        Text(stringResource(R.string.linked_consent_title), style = MaterialTheme.typography.titleSmall)
+                        FlowConnectedToggleGroup(
+                            options =
+                                listOf(
+                                    FlowToggleOption(null, stringResource(R.string.linked_consent_ask)),
+                                    FlowToggleOption(true, stringResource(R.string.linked_consent_allowed)),
+                                    FlowToggleOption(false, stringResource(R.string.linked_consent_declined)),
+                                ),
+                            selected = consent,
+                            onSelected = onConsent,
+                        )
                         TextButton(onClick = { removing = true }) { Text(stringResource(R.string.linked_remove)) }
                     }
                 }

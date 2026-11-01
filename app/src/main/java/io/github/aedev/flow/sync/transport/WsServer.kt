@@ -28,10 +28,10 @@ class WsServer(
     private var server: EmbeddedServer<*, *>? = null
     private val connectionDeferred = CompletableDeferred<SyncConnection>()
 
-    /** Bind to an ephemeral port and start listening; returns the actual bound port for the QR. */
-    suspend fun start(): Int {
+    /** Bind to [port], or an ephemeral port by default, and start listening; returns the bound port. */
+    suspend fun start(port: Int = 0): Int {
         val e =
-            embeddedServer(CIO, host = "0.0.0.0", port = 0) {
+            embeddedServer(CIO, host = "0.0.0.0", port = port) {
                 install(WebSockets) {
                     // The OkHttp client pings on its own; the desktop client does too, but a peer that
                     // vanished without closing is only noticed when our pings go unanswered.
@@ -40,7 +40,7 @@ class WsServer(
                 }
                 routing {
                     webSocket(path) {
-                        val conn = KtorServerConnection(this)
+                        val conn = KtorServerConnection(this, call.request.local.remoteAddress)
                         val handler = onConnection
                         if (handler != null) {
                             launch { handler(conn) }
@@ -87,6 +87,7 @@ class WsServer(
 /** Wraps a Ktor server [DefaultWebSocketSession] as a [SyncConnection]. */
 private class KtorServerConnection(
     private val session: DefaultWebSocketSession,
+    override val remoteHost: String,
 ) : SyncConnection {
     private val inbound = Channel<ByteArray>(Channel.UNLIMITED)
 

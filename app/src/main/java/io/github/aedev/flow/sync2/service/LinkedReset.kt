@@ -4,9 +4,11 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.profile.ActiveProfile
 import io.github.aedev.flow.sync.apply.SyncChangeLedgerStore
+import io.github.aedev.flow.sync2.data.LAN_STORE
 import io.github.aedev.flow.sync2.data.LinkedDatabase
 import io.github.aedev.flow.sync2.device.DeviceKeys
 import io.github.aedev.flow.sync2.device.StoreCredentials
+import io.github.aedev.flow.sync2.lan.LanSync
 import io.github.aedev.flow.sync2.linking.leaveGroup
 import io.github.aedev.flow.sync2.roster.Role
 import io.github.aedev.flow.sync2.store.LocalStore
@@ -32,6 +34,7 @@ class LinkedReset
         private val credentials: StoreCredentials,
         // Lazy: syncing needs this class to stop when this device is removed.
         private val sync: dagger.Lazy<LinkedSync>,
+        private val lan: dagger.Lazy<LanSync>,
     ) {
         private val unannounced = MutableStateFlow<LinkedError?>(null)
 
@@ -56,6 +59,7 @@ class LinkedReset
                             .count { it.role == Role.DEVICE } > 1
                     ) {
                         leaveGroup(session, device)
+                        if (record.storeUrl == LAN_STORE) lan.get().farewell(session)
                     }
                 }
             } catch (e: CancellationException) {

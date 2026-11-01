@@ -9,6 +9,7 @@ import io.github.aedev.flow.sync2.data.LinkedDatabase
 import io.github.aedev.flow.sync2.data.LiveCounterRow
 import io.github.aedev.flow.sync2.device.DeviceKeys
 import io.github.aedev.flow.sync2.engine.Session
+import io.github.aedev.flow.sync2.linking.deviceNames
 import io.github.aedev.flow.sync2.store.GroupStore
 import io.github.aedev.flow.sync2.store.LocalStore
 import kotlinx.coroutines.CancellationException
@@ -86,6 +87,13 @@ class LiveChannel
                 arrivals.emit(received)
             }
         }
+
+        /** The names the group's devices go by, from what this device holds, without asking the store. */
+        suspend fun names(): Map<String, String> =
+            lock.withLock { session()?.let { deviceNames(it) } }?.mapValues { it.value.name }.orEmpty()
+
+        /** This device's id in the group, or null when it isn't linked. */
+        suspend fun me(): String? = lock.withLock { session()?.me }
 
         private fun presence(): LiveMessage.Presence = LiveMessage.Presence(listOf("play", "remote"), deviceKind(context))
 

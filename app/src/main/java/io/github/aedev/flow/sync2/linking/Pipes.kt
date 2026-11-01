@@ -5,6 +5,8 @@ import io.github.aedev.flow.sync.transport.LanAddress
 import io.github.aedev.flow.sync.transport.SyncConnection
 import io.github.aedev.flow.sync.transport.WsClient
 import io.github.aedev.flow.sync.transport.WsServer
+import io.github.aedev.flow.sync2.data.LanAddressRow
+import io.github.aedev.flow.sync2.data.LinkedDatabase
 import io.github.aedev.flow.sync2.engine.LinkedException
 import io.github.aedev.flow.sync2.store.Mailbox
 import kotlinx.coroutines.TimeoutCancellationException
@@ -102,9 +104,10 @@ internal class MailboxPipe(
     }
 }
 
-/** A WebSocket to the other device on the same network. The scanner's key is its own first frame. */
+/** A WebSocket to the other device on the same network, at [host]. The scanner's key is its own first frame. */
 internal class LanPipe(
     private val connection: SyncConnection,
+    val host: String?,
 ) : Pipe {
     override suspend fun send(bytes: ByteArray) = connection.send(bytes)
 
@@ -141,7 +144,7 @@ class Listening internal constructor(
             } catch (_: TimeoutCancellationException) {
                 throw LinkedException.TimedOut()
             }
-        val pipe = LanPipe(connection)
+        val pipe = LanPipe(connection, connection.remoteHost?.let(LocalNetworkAddress::urlHost))
         return pipe to pipe.receiveKey()
     }
 
@@ -166,8 +169,18 @@ suspend fun listen(): Listening? {
 internal suspend fun dial(addresses: List<LanEndpoint>): LanPipe? {
     val client = WsClient(OkHttpClient())
     for (address in addresses.filter { LocalNetworkAddress.isLocal(it.a) }) {
-        val url = "ws://${LocalNetworkAddress.urlHost(address.a)}:${address.p}$PAIR_PATH"
-        withTimeoutOrNull(CONNECT_TIMEOUT_MS) { runCatching { client.connect(url) }.getOrNull() }?.let { return LanPipe(it) }
+        val host = LocalNetworkAddress.urlHost(address.a)
+        withTimeoutOrNull(CONNECT_TIMEOUT_MS) { runCatching { client.connect("ws://$host:${address.p}$PAIR_PATH") }.getOrNull() }
+            ?.let { return LanPipe(it, host) }
     }
     return null
+}
+
+/** Remembers [did] at this pipe's host and the LAN port [p] it named, so the two meet without mDNS (spec/protocol.md, Messages). */
+internal suspend fun LanPipe.remember(
+    db: LinkedDatabase,
+    did: String,
+    p: Int?,
+) {
+    if (host != null && p != null) db.lan().save(LanAddressRow(did, host, p))
 }

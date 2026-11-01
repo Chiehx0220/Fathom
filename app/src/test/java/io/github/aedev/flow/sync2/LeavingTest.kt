@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.aedev.flow.sync.crypto.SyncBytes
 import io.github.aedev.flow.sync2.crypto.MemberSecrets
 import io.github.aedev.flow.sync2.crypto.ProtocolException
+import io.github.aedev.flow.sync2.data.observeEpoch
 import io.github.aedev.flow.sync2.engine.LinkedException
 import io.github.aedev.flow.sync2.engine.Session
 import io.github.aedev.flow.sync2.linking.leaveGroup
@@ -14,6 +15,7 @@ import io.github.aedev.flow.sync2.roster.Op
 import io.github.aedev.flow.sync2.roster.Role
 import io.github.aedev.flow.sync2.roster.buildEntry
 import io.github.aedev.flow.sync2.roster.memberSubject
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -63,6 +65,7 @@ class LeavingTest {
 
             val after = Session.open(dbA, g.store, g.a).state
             assertEquals(1, after.epoch)
+            assertEquals("LAN sync follows the epoch it advertises under", 1, dbA.groups().observeEpoch().first())
             assertFalse(after.rotate)
             assertEquals(setOf(g.hex(g.a), g.hex(g.recovery)), after.members.keys)
             assertTrue("the recovery member gets the new key", (1 to g.hex(g.recovery)) in g.store.keys)

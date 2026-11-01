@@ -112,6 +112,7 @@ suspend fun addDevice(
     offer: Offer,
     device: MemberSecrets,
     login: WebDavLogin? = null,
+    port: Int? = null,
     confirm: suspend (String) -> Boolean,
 ): String {
     val slot = SyncBytes.toHex(pairingSlot(offer.token))
@@ -131,7 +132,7 @@ suspend fun addDevice(
                 }
             }
         val (channel, sas) = Channel.shower(pipe, offer, key)
-        return memberSide(session, channel, sas, device, login, confirm)
+        return memberSide(session, channel, sas, device, login, port, confirm)
     } finally {
         offer.listening?.stop()
         // The slot expires on its own if this fails.
@@ -145,24 +146,29 @@ suspend fun addScanned(
     code: Code.New,
     device: MemberSecrets,
     login: WebDavLogin? = null,
+    port: Int? = null,
     confirm: suspend (String) -> Boolean,
 ): String {
     val pipe = dial(code.lan) ?: throw LinkedException.LanUnreachable()
     try {
         val (channel, sas) = Channel.scanner(pipe, code)
-        return memberSide(session, channel, sas, device, login, confirm)
+        return memberSide(session, channel, sas, device, login, port, confirm)
     } finally {
         pipe.close()
     }
 }
 
-/** [login]: the group's WebDAV login, which the welcome hands the new device. */
+/**
+ * [login]: the group's WebDAV login, which the welcome hands the new device. [port]: where this
+ * device's LAN service listens, which a welcome over the LAN names.
+ */
 private suspend fun memberSide(
     session: Session,
     channel: Channel,
     sas: String,
     device: MemberSecrets,
     login: WebDavLogin?,
+    port: Int?,
     confirm: suspend (String) -> Boolean,
 ): String {
     val join = channel.receive() as? Message.Join ?: throw LinkedException.Unexpected()
@@ -190,6 +196,8 @@ private suspend fun memberSide(
 
     val record = session.record
     val folder = record.webDavUrl
+    val lan = channel.pipe as? LanPipe
+    val p = port.takeIf { lan != null }
     val welcome =
         when {
             record.storeUrl == LAN_STORE -> {
@@ -201,12 +209,20 @@ private suspend fun memberSide(
                     WelcomeStore("lan"),
                     session.store.rosterAfter(-1),
                     SyncBytes.b64urlEncode(wrap),
+                    p,
                 )
             }
 
             folder != null -> {
                 val (user, password) = login ?: throw StoreException.LoginRefused()
-                Message.Welcome(record.groupId, after.head, after.seq, record.link, WelcomeStore("webdav", folder, n = user, w = password))
+                Message.Welcome(
+                    record.groupId,
+                    after.head,
+                    after.seq,
+                    record.link,
+                    WelcomeStore("webdav", folder, n = user, w = password),
+                    p = p,
+                )
             }
 
             else -> {
@@ -216,11 +232,13 @@ private suspend fun memberSide(
                     after.seq,
                     record.link,
                     WelcomeStore("server", record.storeUrl, record.instance.orEmpty()),
+                    p = p,
                 )
             }
         }
     channel.send(welcome)
     if (channel.receive() != Message.Done) throw LinkedException.Unexpected()
+    lan?.remember(session.db, didHex, join.p)
     return didHex
 }
 
@@ -236,6 +254,8 @@ private fun recordUrl(store: WelcomeStore): String =
 class Welcomed internal constructor(
     private val channel: Channel,
     private val me: Subject,
+    /** The member that welcomed this device. */
+    private val member: String,
     internal val welcome: Message.Welcome,
     /** Closes the LAN connection or server the welcome came through. */
     private val close: suspend () -> Unit,
@@ -283,6 +303,7 @@ class Welcomed internal constructor(
             db.groups().saveGroup(
                 GroupRecord(welcome.group, recordUrl(welcome.store), welcome.store.i, welcome.link, recoverySaved = true),
             )
+            (channel.pipe as? LanPipe)?.remember(db, member, welcome.p)
             channel.send(Message.Done)
         } finally {
             close()
@@ -295,10 +316,12 @@ private suspend fun newSide(
     sas: String,
     device: MemberSecrets,
     meta: DeviceMeta,
+    port: Int?,
     confirm: suspend (String) -> Boolean,
     close: suspend () -> Unit,
 ): Welcomed {
-    channel.send(Message.Join(SyncBytes.b64urlEncode(device.sigPublic), SyncBytes.b64urlEncode(device.kemPublic), meta))
+    val p = port.takeIf { channel.pipe is LanPipe }
+    channel.send(Message.Join(SyncBytes.b64urlEncode(device.sigPublic), SyncBytes.b64urlEncode(device.kemPublic), meta, p))
     if (!confirm(sas)) throw LinkedException.Declined()
 
     val entry = (channel.receive() as? Message.EntryMessage)?.entry ?: throw LinkedException.Unexpected()
@@ -308,7 +331,7 @@ private suspend fun newSide(
 
     val welcome = channel.receive() as? Message.Welcome ?: throw LinkedException.Unexpected()
     if (welcome.group != entry.group || welcome.store.k !in setOf("server", "webdav", "lan")) throw LinkedException.Unexpected()
-    return Welcomed(channel, me, welcome, close)
+    return Welcomed(channel, me, entry.signer, welcome, close)
 }
 
 /**
@@ -324,6 +347,7 @@ suspend fun join(
     code: Code.Member,
     device: MemberSecrets,
     meta: DeviceMeta,
+    port: Int? = null,
     confirm: suspend (String) -> Boolean,
 ): Welcomed {
     val pipe =
@@ -333,7 +357,7 @@ suspend fun join(
     val welcomed =
         try {
             val (channel, sas) = Channel.scanner(pipe, code)
-            newSide(channel, sas, device, meta, confirm, close).takeIf { it.storeUrl == code.storeUrl }
+            newSide(channel, sas, device, meta, port, confirm, close).takeIf { it.storeUrl == code.storeUrl }
                 ?: throw LinkedException.Unexpected()
         } catch (e: Exception) {
             close()
@@ -348,13 +372,14 @@ suspend fun answerShown(
     offer: Offer,
     device: MemberSecrets,
     meta: DeviceMeta,
+    port: Int? = null,
     confirm: suspend (String) -> Boolean,
 ): Welcomed {
     val listening = offer.listening ?: throw LinkedException.LanUnreachable()
     try {
         val (pipe, key) = listening.accept()
         val (channel, sas) = Channel.shower(pipe, offer, key)
-        return newSide(channel, sas, device, meta, confirm) {
+        return newSide(channel, sas, device, meta, port, confirm) {
             pipe.awaitClosed()
             listening.stop()
         }
