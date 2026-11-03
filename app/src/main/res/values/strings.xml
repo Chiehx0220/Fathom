@@ -133,7 +133,8 @@
     <string name="music_player_lyrics_full_screen">Full screen lyrics</string>
     <string name="lyrics_play_from_line">Play from this line</string>
     <string name="lyrics_show_translation">Translation</string>
-    <string name="lyrics_show_translation_summary">Show the translated line under each lyric</string>
+    <string name="lyrics_show_translation_summary">Show a translation when the lyrics include one</string>
+    <string name="lyrics_no_translation">These lyrics have no translation</string>
     <string name="lyrics_show_romanization">Romanization</string>
     <string name="lyrics_show_romanization_summary">Show lyrics in other scripts in Latin letters too</string>
     <string name="lyrics_auto_romanize">Romanize on this device</string>
@@ -354,7 +355,6 @@
     <string name="select_text">Select Text</string>
     <string name="pinned_comment">Pinned comment</string>
     <string name="pinned_by_creator">Pinned by creator</string>
-    <string name="tap_to_close">Tap to close</string>
     <!-- Update Dialog -->
     <string name="new_update_available">New Update Available</string>
     <string name="update_available_template">%1$s is now available</string>
@@ -979,6 +979,11 @@
     <string name="player_fullscreen_seekbar_width_default">Default</string>
     <string name="player_fullscreen_seekbar_width_custom">Custom</string>
     <string name="player_fullscreen_seekbar_width_value">%1$d dp</string>
+    <string name="player_appearance_idle_progress_title">Progress Bar With Hidden Controls</string>
+    <string name="player_appearance_idle_progress_subtitle">Where the thin bar sits in portrait</string>
+    <string name="player_appearance_idle_progress_on_video">On video</string>
+    <string name="player_appearance_idle_progress_below">Below</string>
+    <string name="player_appearance_idle_progress_off">Off</string>
     <string name="player_appearance_scrub_preview_title">Scrub Preview</string>
     <string name="player_appearance_scrub_preview_subtitle">What the seekbar shows while you drag it</string>
     <string name="player_appearance_scrub_preview_strip">Filmstrip</string>
@@ -1277,6 +1282,7 @@
     <string name="proxy_settings_invalid_port">Enter a valid proxy port between 1 and 65535.</string>
     <string name="proxy_settings_saved">Proxy settings saved</string>
     <string name="player_settings_background_play">Background Play</string>
+    <string name="pip_listen_in_background">Listen in background</string>
     <string name="player_settings_background_play_subtitle">Continue playing when app is in background</string>
     <string name="player_settings_keep_playing_after_swipe">Keep playing after closing Flow</string>
     <string name="player_settings_keep_playing_after_swipe_subtitle">Playback continues when you swipe Flow away from recent apps</string>
@@ -2783,8 +2789,26 @@
     <string name="linked_error_unexpected">The other device sent something unexpected. Try again.</string>
     <string name="linked_error_stopped">The other device stopped pairing. Check it for a message, then try again.</string>
     <string name="linked_error_busy">The server is busy. Wait a minute, then try again.</string>
+    <string name="linked_profiles">Profiles</string>
+    <string name="linked_profiles_none">Choose a profile to sync on this device</string>
+    <string name="linked_profile_local">Stays on this device</string>
+    <string name="linked_profile_other">On your other devices</string>
+    <string name="linked_profile_unnamed">Unnamed profile</string>
+    <string name="linked_profile_start_title">Sync %1$s</string>
+    <string name="linked_profile_merge_note">Joining a synced profile merges its history, likes and playlists with this one.</string>
+    <string name="linked_profile_new_link">As a new synced profile</string>
+    <string name="linked_profile_join">With %1$s</string>
+    <string name="linked_profile_stop_title">Stop syncing %1$s?</string>
+    <string name="linked_profile_stop_body">Its data stays on every device.</string>
+    <string name="linked_profile_stop_here">On this device</string>
+    <string name="linked_profile_stop_everywhere">On every device</string>
+    <string name="linked_profile_add_title">Add %1$s here?</string>
+    <string name="linked_profile_add_body">A new profile on this device syncs with it.</string>
+    <string name="linked_profile_add">Add</string>
+    <string name="linked_profile_limit">This device already has %1$d profiles.</string>
+    <string name="linked_profile_switch_body">Only the profile in use can start syncing, so Flow restarts in it first. Then turn on syncing there.</string>
+    <string name="linked_profile_switch">Switch to sync</string>
     <string name="sync_default_only_title">Switch to %1$s to sync</string>
-    <string name="sync_default_only_body">Other profiles stay on this device only</string>
     <string name="sync_devices_subtitle">Sync library, history &amp; profile over local Wi-Fi</string>
     <string name="sync_notification_title">Syncing devices</string>
     <string name="sync_notification_text">Transferring your library over local Wi-Fi…</string>

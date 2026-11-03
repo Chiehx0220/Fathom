@@ -15,6 +15,7 @@
     <string name="settings_item_support_subtitle">Ayuda a apoyar el desarrollo de Fathom</string>
     <string name="appearance_subtitle">Personaliza tu experiencia en Fathom</string>
     <string name="app_icon_picker_warning">Cambiar el icono puede eliminar temporalmente Fathom de la pantalla de inicio. Agrégalo de nuevo desde el lanzador de aplicaciones si es necesario.</string>
+    <string name="content_settings_open_links_title">Abrir los enlaces de YouTube en Fathom</string>
     <string name="content_settings_show_app_logo_subtitle">Mostrar el icono de Fathom en la barra superior de Inicio</string>
     <string name="content_settings_nav_order_subtitle">Arrastra para reordenar. Elige la pestaña que se abrirá al iniciar Fathom.</string>
     <string name="player_settings_subtitle_language_dialog_body">Los subtítulos se abren en este idioma cuando están disponibles. De lo contrario, Fathom traduce una pista existente.</string>
@@ -54,14 +55,17 @@
     <string name="update_permission_notice">Permite que Fathom instale actualizaciones. Android lo pregunta una vez.</string>
     <string name="update_failed_package">El archivo no era una actualización de Fathom, así que se ha eliminado.</string>
     <string name="local_partial_access_title">Fathom solo puede ver los vídeos que hayas elegido</string>
+    <string name="downloads_storage_used">%1$s en Fathom</string>
     <string name="import_migrate_description">Migra tus suscripciones e historial desde otras plataformas a Fathom sin complicaciones.</string>
     <string name="import_manage_backups">Gestiona tus copias de seguridad de Fathom</string>
     <string name="taste_reset_video_body">Fathom olvida lo que ha aprendido de tus vídeos y búsquedas. El historial, «Me gusta», listas y los elementos ocultos se mantienen, y Inicio sigue usándolos.</string>
+    <string name="content_settings_shared_links_subtitle">Qué hace un vídeo compartido con Fathom</string>
     <string name="subtitle_add_file_failed">Fathom no puede leer ese archivo como subtítulos</string>
     <string name="discord_presence_playing_fallback">Reproduciendo en Fathom</string>
     <string name="export_watch_history_desc">Exportar como JSON del historial de YouTube (importaciones a LibreTube y Fathom)</string>
     <string name="whats_new_in_flow">Novedades en Fathom</string>
     <string name="cache_size_applies_on_restart">Se aplica la próxima vez que se inicie Fathom.</string>
+    <string name="settings_font_summary">La tipografía que se usa en Fathom</string>
     <string name="sync_error_qr_not_local">Este código apunta fuera de tu red local, así que Fathom no se conectará a él. Usa solo los códigos que muestren tus propios dispositivos.</string>
     <string name="sync_error_timeout">El otro dispositivo dejó de responder. Mantén Fathom abierto en ambos dispositivos y vuelve a intentarlo.</string>
     <string name="sync_error_protocol">Los dos dispositivos no lograron ponerse de acuerdo en los pasos de sincronización. Actualiza Fathom en ambos dispositivos y vuelve a intentarlo.</string>
@@ -75,4 +79,6 @@
     <string name="player_settings_keep_playing_after_swipe">Seguir reproduciendo al cerrar Fathom</string>
     <string name="player_settings_keep_playing_after_swipe_subtitle">La reproducción continúa cuando cierras Fathom desde las aplicaciones recientes</string>
     <string name="profiles_copy_recommendations_summary">Lo que Fathom ha aprendido sobre tus gustos</string>
+    <string name="linked_webdav_body">Usa una carpeta vacía solo para Fathom. Los datos de acceso se guardan solo en el almacenamiento seguro de este dispositivo y se pasan a los dispositivos que vincules.</string>
+    <string name="linked_profile_switch_body">Únicamente el perfil en uso puede iniciar la sincronización, así que Fathom se reiniciará antes en él. Después, activa la sincronización en ese perfil.</string>
 </resources>

@@ -95,4 +95,6 @@
     <string name="player_settings_keep_playing_after_swipe">مواصلة التشغيل بعد إغلاق Fathom</string>
     <string name="player_settings_keep_playing_after_swipe_subtitle">يستمر التشغيل عند سحب Fathom بعيدًا عن التطبيقات الحديثة</string>
     <string name="profiles_copy_recommendations_summary">ما تعلّمه Fathom عن ذوقك</string>
+    <string name="linked_webdav_body">استخدم مجلدًا فارغًا مخصصًا لـ Fathom فقط. تُحفَظ بيانات تسجيل الدخول في وحدة التخزين الآمنة على هذا الجهاز فقط، وتُنقَل إلى الأجهزة التي تربطها.</string>
+    <string name="linked_profile_switch_body">يمكن لملف التعريف المستخدم حاليًا فقط بدء المزامنة، لذا سيُعاد تشغيل Fathom باستخدامه أولًا. بعد ذلك، فعّل المزامنة من داخله.</string>
 </resources>

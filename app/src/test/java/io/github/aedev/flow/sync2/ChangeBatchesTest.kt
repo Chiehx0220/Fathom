@@ -8,6 +8,8 @@ import io.github.aedev.flow.sync2.changes.applyBatches
 import io.github.aedev.flow.sync2.changes.markSent
 import io.github.aedev.flow.sync2.changes.outgoingBatches
 import io.github.aedev.flow.sync2.changes.parseBatch
+import io.github.aedev.flow.sync2.crypto.ProtocolError
+import io.github.aedev.flow.sync2.crypto.ProtocolException
 import io.github.aedev.flow.sync2.data.LastSent
 import io.github.aedev.flow.sync2.data.SentDao
 import io.github.aedev.flow.sync2.data.SentRecord
@@ -20,15 +22,21 @@ import org.junit.Test
 
 class ChangeBatchesTest {
     private class MemorySent : SentDao {
-        val records = HashMap<Pair<String, String>, SentRecord>()
+        val records = HashMap<Triple<String, String, String>, SentRecord>()
 
-        override suspend fun forCollection(collection: String) = records.values.filter { it.collection == collection }
+        override suspend fun forCollection(
+            link: String,
+            collection: String,
+        ) = records.values.filter { it.link == link && it.collection == collection }
 
-        override suspend fun lastSent() =
-            records.values.groupBy { it.collection }.map { (collection, sent) -> LastSent(collection, sent.maxOf { it.sentAt }) }
+        override suspend fun lastSent(link: String) =
+            records.values
+                .filter { it.link == link }
+                .groupBy { it.collection }
+                .map { (collection, sent) -> LastSent(collection, sent.maxOf { it.sentAt }) }
 
         override suspend fun upsert(records: List<SentRecord>) {
-            records.forEach { this.records[it.collection to it.recordKey] = it }
+            records.forEach { this.records[Triple(it.link, it.collection, it.recordKey)] = it }
         }
     }
 
@@ -70,6 +78,20 @@ class ChangeBatchesTest {
         }
 
     @Test
+    fun a_batch_without_a_header_is_refused_as_a_payload() {
+        for (content in listOf(
+            "",
+            "not json",
+            """{"collection":"likes","head":""}""",
+            """{"collection":"likes","head":"","link":null,"v":3}""",
+            "[]",
+        )) {
+            val error = runCatching { parseBatch(content.toByteArray()) }.exceptionOrNull()
+            assertEquals(content, ProtocolError.PAYLOAD, (error as? ProtocolException)?.error)
+        }
+    }
+
+    @Test
     fun large_collections_are_split_into_batches_of_a_thousand() =
         runTest {
             val exported = history(*(1..2500).map { "v$it" to "t" }.toTypedArray())
@@ -96,7 +118,13 @@ class ChangeBatchesTest {
             val remote = outgoingBatches(MemorySent(), history(*(1..1200).map { "v$it" to "t" }.toTypedArray()), head, "link-a", 0)
             var applied: Map<String, ReceivedCollection> = emptyMap()
             val ids = (1..1200).map { "v$it" to "t" }.toTypedArray()
-            applyBatches(sent, remote.batches.map { parseBatch(it.content) }, 0, { if (applied.isEmpty()) emptyMap() else history(*ids) }) {
+            applyBatches(
+                sent,
+                "link-a",
+                remote.batches.map { parseBatch(it.content) },
+                0,
+                { if (applied.isEmpty()) emptyMap() else history(*ids) },
+            ) {
                 applied =
                     it
             }
@@ -128,7 +156,7 @@ class ChangeBatchesTest {
         suspend fun receive(
             batches: List<Batch>,
             keep: Set<String> = emptySet(),
-        ) = applyBatches(sent, batches.map { parseBatch(it.content) }, 0, { export() }) { received ->
+        ) = applyBatches(sent, "link", batches.map { parseBatch(it.content) }, 0, { export() }) { received ->
             for (line in received[SyncCollection.WATCH_HISTORY]?.lines.orEmpty()) {
                 val record = Json.parseToJsonElement(line).jsonObject
                 val id = record.getValue("videoId").jsonPrimitive.content

@@ -7,4 +7,8 @@
     <string name="deep_flow_long_press_hint">在首頁長按 Fathom 標誌或名稱即可切換 Deep Flow</string>
     <string name="playback_background_restricted_subtitle">將 Fathom 滑掉後，手機可能會將它停止。點一下即可允許。</string>
     <string name="share_download_with_flow">使用 Fathom 下載</string>
+    <string name="player_settings_keep_playing_after_swipe">關閉 Fathom 後繼續播放</string>
+    <string name="player_settings_keep_playing_after_swipe_subtitle">從最近使用的應用程式滑掉 Fathom 後，仍會繼續播放</string>
+    <string name="profiles_copy_recommendations_summary">Fathom 對你喜好的學習結果</string>
+    <string name="linked_webdav_body">請使用專供 Fathom 使用的空資料夾。登入資訊僅會儲存在這部裝置的安全儲存空間，並會提供給你所連結的裝置。</string>
 </resources>

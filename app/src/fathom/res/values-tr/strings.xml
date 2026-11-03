@@ -93,4 +93,6 @@
     <string name="player_settings_keep_playing_after_swipe">Fathom kapatıldıktan sonra oynatmaya devam et</string>
     <string name="player_settings_keep_playing_after_swipe_subtitle">Son uygulamalardan Fathom\'u kaydırarak kapattığında oynatma devam eder</string>
     <string name="profiles_copy_recommendations_summary">Fathom\'un zevkin hakkında öğrendikleri</string>
+    <string name="linked_webdav_body">Yalnızca Fathom için boş bir klasör kullanın. Giriş bilgileri yalnızca bu cihazın güvenli deposunda tutulur ve bağladığın cihazlara aktarılır.</string>
+    <string name="linked_profile_switch_body">Yalnızca kullanımda olan profil eşitlemeyi başlatabilir, bu nedenle Fathom önce bu profilde yeniden başlar. Ardından eşitlemeyi oradan açın.</string>
 </resources>

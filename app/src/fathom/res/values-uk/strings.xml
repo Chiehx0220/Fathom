@@ -86,4 +86,10 @@
     <string name="location_downloads_label">Downloads/Fathom</string>
     <string name="location_movies_label">Movies/Fathom</string>
     <string name="settings_music_folder_label">Музика / Fathom</string>
+    <string name="music_service_disabled">Музика не відтворюється. На цьому пристрої музичний сервіс Fathom вимкнено.</string>
+    <string name="deep_flow_long_press_hint">Затисніть логотип або назву Fathom на екрані «Головна», щоб увімкнути режим Deep Flow</string>
+    <string name="playback_background_restricted_subtitle">Ваш телефон може зупиняти Fathom, коли ви згортаєте його. Торкніться, щоб дозволити це.</string>
+    <string name="share_download_with_flow">Завантажити за допомогою Fathom</string>
+    <string name="player_settings_keep_playing_after_swipe">Продовжувати грати після закриття Fathom</string>
+    <string name="player_settings_keep_playing_after_swipe_subtitle">Відтворення продовжується, коли ви прибираєте застосунок Fathom з «Нещодавніх»</string>
 </resources>

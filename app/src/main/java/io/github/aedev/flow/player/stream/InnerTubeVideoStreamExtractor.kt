@@ -403,6 +403,7 @@ object InnerTubeVideoStreamExtractor {
         cpn: String = SabrCpn.generate(),
         reloadToken: String? = null,
         client: YouTubeClient = YouTubeClient.WEB,
+        audioTrackId: String? = null,
     ): SabrStreamInfo? =
         withContext(Dispatchers.IO) {
             val failureReasons = mutableListOf<String>()
@@ -414,6 +415,7 @@ object InnerTubeVideoStreamExtractor {
                 cpn = cpn,
                 reloadToken = reloadToken,
                 client = client,
+                audioTrackId = audioTrackId,
             )?.sabrInfo.also { sabrInfo ->
                 if (sabrInfo == null) {
                     Log.w(TAG, "SABR download resolve failed for $videoId: ${failureReasons.joinToString(" | ")}")
@@ -681,6 +683,7 @@ object InnerTubeVideoStreamExtractor {
         cpn: String = SabrCpn.generate(),
         reloadToken: String? = null,
         client: YouTubeClient = YouTubeClient.WEB,
+        audioTrackId: String? = null,
     ): VideoExtractionResult? {
         val label = client.clientName
         try {
@@ -744,6 +747,7 @@ object InnerTubeVideoStreamExtractor {
                         preferredCodec = preferredCodec,
                         injectedPoToken = poToken.playerRequestPoToken,
                         injectedVisitorData = visitorData,
+                        audioTrackId = audioTrackId,
                     )
                 } else {
                     SabrUrlResolver.resolve(
@@ -751,6 +755,7 @@ object InnerTubeVideoStreamExtractor {
                         preferredCodec = preferredCodec,
                         injectedPoToken = poToken.playerRequestPoToken,
                         injectedVisitorData = visitorData,
+                        audioTrackId = audioTrackId,
                     )
                 }
             if (resolved == null) {

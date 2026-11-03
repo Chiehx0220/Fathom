@@ -3,7 +3,6 @@ package io.github.aedev.flow.sync2.lan
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.aedev.flow.data.profile.SyncProfile
 import io.github.aedev.flow.di.ApplicationScope
 import io.github.aedev.flow.sync.crypto.SyncBytes
 import io.github.aedev.flow.sync.crypto.SyncCrypto
@@ -108,7 +107,7 @@ class LanSync
         @Synchronized
         fun start() {
             users++
-            if (running?.isActive == true || !SyncProfile.syncsHere(context)) return
+            if (running?.isActive == true) return
             Log.i(TAG, "LAN sync started")
             running =
                 scope.launch {
@@ -212,7 +211,7 @@ class LanSync
             coroutineScope {
                 val session = open()
                 val lanKey = purposeKey(session.currentKey(), session.group, session.state.epoch, Purpose.LAN)
-                val server = WsServer(SESSION_PATH) { connection -> accept(connection) }
+                val server = WsServer(SESSION_PATH, MAX_LAN_FRAME) { connection -> accept(connection) }
                 val discovery = LanDiscovery(context)
                 val name = "Flow-" + SyncBytes.toHex(SyncCrypto.randomBytes(2))
                 names += name
@@ -297,7 +296,7 @@ class LanSync
 
         private suspend fun connect(address: String): SyncConnection? =
             withTimeoutOrNull(CONNECT_TIMEOUT_MS) {
-                runCatching { WsClient(OkHttpClient()).connect("ws://$address$SESSION_PATH") }.getOrNull()
+                runCatching { WsClient(OkHttpClient(), MAX_LAN_FRAME).connect("ws://$address$SESSION_PATH") }.getOrNull()
             }
 
         /** A member that dialed this one is remembered where its hello says it listens. */

@@ -89,4 +89,7 @@
     <string name="location_downloads_label">Загрузки / Fathom</string>
     <string name="location_movies_label">Фильмы / Fathom</string>
     <string name="settings_music_folder_label">Музыка/ Fathom</string>
+    <string name="music_service_disabled">Музыка не может воспроизводиться. Музыкальный сервис Fathom отключён на этом устройстве.</string>
+    <string name="player_settings_keep_playing_after_swipe">Продолжать воспроизведение после закрытия Fathom</string>
+    <string name="player_settings_keep_playing_after_swipe_subtitle">Воспроизведение продолжается, когда вы смахиваете Fathom из списка недавних приложений</string>
 </resources>

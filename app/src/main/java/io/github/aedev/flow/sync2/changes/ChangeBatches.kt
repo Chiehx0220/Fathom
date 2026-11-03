@@ -4,6 +4,8 @@ import io.github.aedev.flow.sync.apply.ReceivedCollection
 import io.github.aedev.flow.sync.protocol.CollectionWire
 import io.github.aedev.flow.sync.protocol.SyncCollection
 import io.github.aedev.flow.sync.protocol.SyncSerialization
+import io.github.aedev.flow.sync2.crypto.ProtocolError
+import io.github.aedev.flow.sync2.crypto.reject
 import io.github.aedev.flow.sync2.data.SentDao
 import io.github.aedev.flow.sync2.data.SentRecord
 import kotlinx.serialization.Serializable
@@ -17,6 +19,9 @@ private const val RECORDS_PER_BATCH = 1000
 
 /** The brains change with every video watched; spec/protocol.md asks for at most one upload in 6 hours. */
 private const val BRAIN_INTERVAL_MS = 6 * 60 * 60 * 1000L
+
+/** The collection of profile names (spec/protocol.md, Profiles); its batches name no link. */
+const val PROFILES = "profiles"
 
 internal val BRAINS = setOf(SyncCollection.FLOW_NEURO_BRAIN, SyncCollection.MUSIC_BRAIN)
 
@@ -67,6 +72,7 @@ private fun recordKey(
         SyncCollection.SUBSCRIPTIONS -> field("name")
         SyncCollection.SUBSCRIBED_CHANNELS -> field("channelId")
         SyncCollection.NOTES -> field("id")
+        PROFILES -> field("link")
         in BRAINS -> ""
         else -> null
     }
@@ -97,19 +103,19 @@ fun batchContent(
 
 /**
  * Keeps the exported records whose canonical form changed since the last upload. [head] is this
- * device's roster head, [link] the profile link id.
+ * device's roster head, [link] the profile link id, or null for [PROFILES].
  */
 suspend fun outgoingBatches(
     sentDao: SentDao,
     exported: Map<String, CollectionWire>,
     head: String,
-    link: String,
+    link: String?,
     nowMs: Long,
 ): Outgoing {
     val batches = ArrayList<Batch>()
     val sent = ArrayList<SentRecord>()
     for ((collection, wire) in exported) {
-        val previous = sentDao.forCollection(collection).associateBy { it.recordKey }
+        val previous = sentDao.forCollection(link.orEmpty(), collection).associateBy { it.recordKey }
         val changed =
             wire.lines.filter { line ->
                 val record = Json.parseToJsonElement(line).jsonObject
@@ -117,7 +123,7 @@ suspend fun outgoingBatches(
                 val hash = recordHash(collection, record, line)
                 val last = previous[key]
                 val tooSoon = collection in BRAINS && !brainUploadDue(last?.sentAt, nowMs)
-                (last?.hash != hash && !tooSoon).also { if (it) sent += SentRecord(collection, key, hash, nowMs) }
+                (last?.hash != hash && !tooSoon).also { if (it) sent += SentRecord(link.orEmpty(), collection, key, hash, nowMs) }
             }
         changed.chunked(RECORDS_PER_BATCH).mapTo(batches) { Batch(collection, batchContent(collection, head, link, it)) }
     }
@@ -130,14 +136,21 @@ suspend fun markSent(
     outgoing: Outgoing,
 ) = sentDao.upsert(outgoing.sent)
 
-fun parseBatch(content: ByteArray): IncomingBatch {
-    val lines = content.toString(Charsets.UTF_8).split('\n')
-    val header = Json.decodeFromString(BatchHeader.serializer(), lines.first())
-    return IncomingBatch(header.collection, header.link, header.head, content.size, lines.drop(1).filter { it.isNotEmpty() })
-}
+/** A batch whose header or a record the merges can't read is a payload error, which discards its object. */
+fun parseBatch(content: ByteArray): IncomingBatch =
+    try {
+        val lines = content.toString(Charsets.UTF_8).split('\n')
+        val header = Json.decodeFromString(BatchHeader.serializer(), lines.first())
+        val records = lines.drop(1).filter { it.isNotEmpty() }
+        records.forEach { recordKey(header.collection, Json.parseToJsonElement(it).jsonObject) }
+        SyncSerialization.checkRecords(header.collection, records)
+        IncomingBatch(header.collection, header.link, header.head, content.size, records)
+    } catch (_: IllegalArgumentException) {
+        reject(ProtocolError.PAYLOAD)
+    }
 
 /**
- * Applies batches from one sender through the FLOW-SYNC/1 merges, which run in one transaction
+ * Applies batches of [link] from one sender through the FLOW-SYNC/1 merges, which run in one transaction
  * behind a pre-merge backup. What an applied record looks like in this device's own [export] counts
  * as known to the group, so it isn't sent back: another app's canonical form of the same record
  * differs, and sending that back would bounce between the two forever. A record of this device's
@@ -145,6 +158,7 @@ fun parseBatch(content: ByteArray): IncomingBatch {
  */
 suspend fun applyBatches(
     sentDao: SentDao,
+    link: String,
     batches: List<IncomingBatch>,
     nowMs: Long,
     export: suspend (collections: List<String>) -> Map<String, CollectionWire>,
@@ -165,11 +179,11 @@ suspend fun applyBatches(
     val after = ownHashes(export(collections), keys)
     val known = ArrayList<SentRecord>()
     for ((collection, hashes) in after) {
-        val previous = sentDao.forCollection(collection).associateBy { it.recordKey }
+        val previous = sentDao.forCollection(link, collection).associateBy { it.recordKey }
         for ((key, hash) in hashes) {
             val last = previous[key]?.hash
             val pending = before[collection]?.get(key).let { it != null && it != last }
-            if (!pending && hash != last) known += SentRecord(collection, key, hash, nowMs)
+            if (!pending && hash != last) known += SentRecord(link, collection, key, hash, nowMs)
         }
     }
     sentDao.upsert(known)

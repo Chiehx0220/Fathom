@@ -728,6 +728,7 @@ class HomeViewModel
                                 watched = watched,
                                 exclusions = exclusions,
                                 isRecentlyShown = { id -> NeuroScoring.isRecentlySeen(brain.feedHistory[id], now) },
+                                timesShown = { id -> brain.feedHistory[id]?.showCount ?: 0 },
                                 taste = taste,
                                 now = now,
                                 freshSlotTarget = dynamicFreshSubSlots(userSubs.size),
@@ -1337,7 +1338,10 @@ class HomeViewModel
 
                 if (page.size < MIN_PAGE_SIZE && subsBacklog.isNotEmpty()) {
                     val exclusions = feedExclusions()
-                    subsBacklog = subsBacklog.filterNot(exclusions::hidesFromRecommendations)
+                    subsBacklog =
+                        subsBacklog.filterNot {
+                            exclusions.hidesFromRecommendations(it) || NeuroScoring.isRecentlySeen(brain.feedHistory[it.id], now)
+                        }
                     addUniquePageVideos(
                         candidates = subsBacklog,
                         targetList = page,

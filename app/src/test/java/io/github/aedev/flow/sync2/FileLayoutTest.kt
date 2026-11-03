@@ -73,16 +73,51 @@ class FileLayoutTest {
             val g = LinkedGroup(this).apply { create() }
             publish(g, server.store())
             val (dbA, storeA) = device(g, server.store(), g.a)
-            Session.open(dbA, storeA, g.a).push(watched)
+            Session.open(dbA, storeA, g.a).push(watched, LINK)
             storeA.upload(SyncBytes.toHex(g.a.did), 0)
 
             val (dbB, storeB) = device(g, server.store(), g.b)
-            val pulled = Session.open(dbB, storeB, g.b).pull()
+            val pulled = Session.open(dbB, storeB, g.b).pull(setOf(LINK))
             assertEquals(listOf(SyncBytes.toHex(g.a.did)), pulled.batches.keys.toList())
 
             server.requests.clear()
             storeB.download(SyncBytes.toHex(g.b.did), 0, objects = true)
             assertTrue("an unchanged Nextcloud folder isn't read again", server.requests.none { it.startsWith("GET flow/dev/") })
+        }
+
+    @Test
+    fun a_store_that_answers_every_path_ends_a_log_at_the_first_file_that_isn_t_its_object() =
+        runTest {
+            val did = SyncBytes.toHex(newMember().did)
+            val answersEverything =
+                object : FileStore {
+                    private var gets = 0
+                    override val location = "memory"
+
+                    override suspend fun get(path: String): ByteArray {
+                        check(++gets < 100) { "the same file was read forever" }
+                        return "<html>Sign in</html>".toByteArray()
+                    }
+
+                    override suspend fun put(
+                        path: String,
+                        bytes: ByteArray,
+                    ) = Unit
+
+                    override suspend fun delete(path: String) = Unit
+
+                    override suspend fun list(folder: String) =
+                        when (folder) {
+                            "dev" -> listOf(did)
+                            "dev/$did/log" -> listOf("0000000000000000")
+                            else -> listOf("0000000000000001.o")
+                        }
+
+                    override suspend fun tag(folder: String): String? = null
+                }
+            val local = heldStore(LinkedGroup(this).deviceDb())
+            FileLayout(answersEverything, SyncBytes.toHex(newMember().did)).pullLogs(local)
+            assertTrue(local.logTips().isEmpty())
         }
 
     @Test
@@ -136,9 +171,10 @@ class FileLayoutTest {
                                 readCode(offer.qr) as Code.Member,
                                 newcomer,
                                 DeviceMeta("app-n", "Phone", "android"),
+                                JOINER,
                             ) { true }
                         }
-                    val added = addDevice(session, FileLayout(server.store(), SyncBytes.toHex(g.a.did)), offer, g.a) { true }
+                    val added = addDevice(session, FileLayout(server.store(), SyncBytes.toHex(g.a.did)), offer, g.a, LINK) { true }
                     joined.await()
                     added
                 }

@@ -16,6 +16,9 @@ import io.github.aedev.flow.innertube.pages.renderer.videoOrNull
 import io.github.aedev.flow.innertube.pages.search.SearchHeader
 import io.github.aedev.flow.innertube.pages.search.SearchResultsPage
 import io.github.aedev.flow.innertube.pages.search.SearchSection
+import io.github.aedev.flow.utils.PerformanceDispatcher
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 /**
  * One InnerTube request per page, and nothing after it.
@@ -35,6 +38,7 @@ class SearchPagingSource(
     private val onHeader: (SearchHeader) -> Unit = {},
     private val loadPage: SearchPageLoader = DefaultSearchPageLoader,
     private val watchedVideos: WatchedVideoLookup = WatchedVideoLookup { emptySet() },
+    private val loadContext: CoroutineContext = PerformanceDispatcher.networkIO,
     private val exclusions: suspend () -> FeedExclusions = { FeedExclusions.NONE },
     private val bilibiliApi: BilibiliApi? = null,
 ) : PagingSource<String, SearchResultItem>() {
@@ -48,6 +52,9 @@ class SearchPagingSource(
         filter.watchState.takeIf { filter.contentType.supportsVideoFilters() } ?: WatchState.ANY
 
     override suspend fun load(params: LoadParams<String>): LoadResult<String, SearchResultItem> =
+        withContext(loadContext) { loadPages(params) }
+
+    private suspend fun loadPages(params: LoadParams<String>): LoadResult<String, SearchResultItem> =
         try {
             val hidden = exclusions()
             val results = mutableListOf<SearchResultItem>()

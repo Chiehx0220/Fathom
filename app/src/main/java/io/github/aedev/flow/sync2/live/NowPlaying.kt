@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.AudioManager
 import androidx.annotation.MainThread
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.profile.ActiveProfile
 import io.github.aedev.flow.player.EnhancedMusicPlayerManager
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
@@ -98,7 +99,7 @@ class NowPlaying
 
         /** What plays here now, read on the main thread where the players live; the only way to read them. */
         suspend fun snapshot(): LiveMessage.Now =
-            withContext(Dispatchers.Main.immediate) { readOnMain() }.copy(link = db.groups().group()?.link)
+            withContext(Dispatchers.Main.immediate) { readOnMain() }.copy(link = db.profiles().linkOf(ActiveProfile.get(context).id))
 
         /** Reads both players; ExoPlayer and the Media3 controller throw anywhere but the main thread. */
         @MainThread
@@ -110,6 +111,7 @@ class NowPlaying
             val vol = volume()
             if (track != null && musicInUse()) {
                 val queue = EnhancedMusicPlayerManager.queue.value
+                val (ids, index) = window(queue.map { it.videoId }, queue.indexOfFirst { it.videoId == track.videoId })
                 return LiveMessage.Now(
                     video = track.videoId,
                     title = track.title,
@@ -119,12 +121,12 @@ class NowPlaying
                     dur = music.duration,
                     state = if (music.isPlaying) LiveMessage.PLAYING else LiveMessage.PAUSED,
                     vol = vol,
-                    queue = queue.take(LiveMessage.QUEUE_LIMIT).map { it.videoId },
-                    index = queue.indexOfFirst { it.videoId == track.videoId }.coerceAtLeast(0),
+                    queue = ids,
+                    index = index,
                 )
             }
             val current = GlobalPlayerState.currentVideo.value ?: return LiveMessage.Now(video = null)
-            val queue = video.queueVideos.value
+            val (ids, index) = window(video.queueVideos.value.map { it.id }, video.currentQueueIndexState.value)
             return LiveMessage.Now(
                 video = current.id,
                 title = current.title,
@@ -133,8 +135,8 @@ class NowPlaying
                 dur = video.getDuration().coerceAtLeast(0),
                 state = if (GlobalPlayerState.playerState.value.isPlaying) LiveMessage.PLAYING else LiveMessage.PAUSED,
                 vol = vol,
-                queue = queue.take(LiveMessage.QUEUE_LIMIT).map { it.id },
-                index = video.currentQueueIndexState.value.coerceAtLeast(0),
+                queue = ids,
+                index = index,
             )
         }
 
@@ -145,3 +147,9 @@ class NowPlaying
             return audio.getStreamVolume(AudioManager.STREAM_MUSIC) * 100 / max
         }
     }
+
+/** The part of [queue] a `now` names, around [index], or none when [index] is outside it. */
+private fun window(
+    queue: List<String>,
+    index: Int,
+) = queueWindow(queue, index) ?: (emptyList<String>() to 0)

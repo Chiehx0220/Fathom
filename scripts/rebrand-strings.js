@@ -56,6 +56,7 @@ const KEEP_KEYS = new Set([
   // the sync server product
   'linked_create_body',
   'linked_intro',
+  'linked_where_server',
   // importing Flow backups, the original theme
   'import_flow_backup_desc',
   'import_flow_backup_failed_template',

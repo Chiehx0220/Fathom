@@ -225,4 +225,6 @@
     <string name="player_settings_keep_playing_after_swipe">Keep playing after closing Fathom</string>
     <string name="player_settings_keep_playing_after_swipe_subtitle">Playback continues when you swipe Fathom away from recent apps</string>
     <string name="profiles_copy_recommendations_summary">What Fathom has learned about your taste</string>
+    <string name="linked_webdav_body">Use an empty folder just for Fathom. The login is kept only in this device\'s secure storage, and is handed to devices you link.</string>
+    <string name="linked_profile_switch_body">Only the profile in use can start syncing, so Fathom restarts in it first. Then turn on syncing there.</string>
 </resources>
