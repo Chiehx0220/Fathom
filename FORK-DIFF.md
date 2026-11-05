@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **112** (1201 changed lines). New files: **269**.
+- Modified upstream files: **113** (1205 changed lines). New files: **269**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -90,11 +90,11 @@ in it). **New files** never conflict; they are ours alone.
 | sync/canonical/Canonical.kt | 6 | 0 |
 | sync/mapping/SimpleMappers.kt | 6 | 0 |
 | ui/AppHooks.kt | 2 | 4 |
-| ... 52 more, each small | | |
+| ... 53 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
-- Modified upstream files: **1** (4 changed lines). New files: **2**.
+- Modified upstream files: **1** (4 changed lines). New files: **5**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -102,7 +102,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **141**.
+- Modified upstream files: **0** (0 changed lines). New files: **143**.
 
 ## Local server (fork-only feature)
 
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **18** (133 changed lines). New files: **88**.
+- Modified upstream files: **18** (133 changed lines). New files: **90**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
