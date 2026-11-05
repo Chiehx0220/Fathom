@@ -1,5 +1,6 @@
 package io.github.aedev.flow.sync2.live
 
+import io.github.aedev.flow.bilibili.BilibiliVideoLookup
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.data.newmusic.InnertubeMusicService
@@ -17,6 +18,7 @@ class TrackDetails
     @Inject
     constructor(
         private val youtube: YouTubeRepository,
+        private val bilibili: BilibiliVideoLookup,
     ) {
         private val songs = ConcurrentHashMap<String, MusicTrack>()
         private val videos = ConcurrentHashMap<String, Video>()
@@ -32,5 +34,5 @@ class TrackDetails
             return ids.mapNotNull { id -> songs[id]?.let { id to it } }.toMap()
         }
 
-        suspend fun video(id: String): Video? = videos[id] ?: youtube.getVideo(id)?.also { videos[id] = it }
+        suspend fun video(id: String): Video? = videos[id] ?: (bilibili.video(id) ?: youtube.getVideo(id))?.also { videos[id] = it }
     }
