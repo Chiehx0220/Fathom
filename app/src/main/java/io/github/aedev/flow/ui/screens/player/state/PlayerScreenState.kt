@@ -10,6 +10,7 @@ import io.github.aedev.flow.ui.components.videoplayer.subtitle.SubtitleStyle
 class PlayerScreenState {
     // UI Visibility States
     var showControls by mutableStateOf(true)
+    var showStatsForNerds by mutableStateOf(false)
     var isTouchLocked by mutableStateOf(false)
     var lockOverlayRevealSignal by mutableIntStateOf(0)
     var isFullscreen by mutableStateOf(false)
@@ -36,7 +37,9 @@ class PlayerScreenState {
 
     // Comment Sorting
     var commentSortFilter by mutableStateOf(CommentSortFilter.TOP)
-    var commentsTimedOnly by mutableStateOf(false)
+
+    // Written by the host from the player sheet's settled anchor; the comments sheet outlives a collapse.
+    var isPlayerExpanded by mutableStateOf(true)
 
     // Gesture States
     var brightnessLevel by mutableFloatStateOf(0.5f)
@@ -57,7 +60,7 @@ class PlayerScreenState {
     // Subtitle States
     var subtitleStyle by mutableStateOf(SubtitleStyle())
 
-    // Danmaku (Bilibili bullet comments) toggle: general viewing preference (like showControls), not per video: not reset in resetForNewVideo() (unlike subtitlesEnabled).
+    // Danmaku (Bilibili bullet comments): viewing preference, kept across videos.
     var danmakuEnabled by mutableStateOf(true)
 
     // The caption track the transcript is read from. Separate from the subtitle choice: reading
@@ -95,6 +98,7 @@ class PlayerScreenState {
         lockOverlayRevealSignal = 0
         currentPosition = 0L
         duration = 0L
+        commentSortFilter = CommentSortFilter.TOP
         selectedTranscriptUrl = null
         showBrightnessOverlay = false
         showVolumeOverlay = false

@@ -77,11 +77,15 @@ import io.github.aedev.flow.player.audio.AudioSessionRegistry
 import io.github.aedev.flow.player.audio.LoudnessGain
 import io.github.aedev.flow.player.audio.eq.EqualizerAudioProcessor
 import io.github.aedev.flow.player.audio.shouldHandleAudioFocus
+import io.github.aedev.flow.player.crossfade.CrossfadePolicy
+import io.github.aedev.flow.player.crossfade.MusicCrossfader
 import io.github.aedev.flow.player.datasource.YouTubeHttpDataSource
+import io.github.aedev.flow.player.error.PlaybackErrorLog
 import io.github.aedev.flow.player.error.PlayerDiagnostics
 import io.github.aedev.flow.player.error.StreamDenialClassifier
 import io.github.aedev.flow.player.error.StreamDenialKind
 import io.github.aedev.flow.player.factory.LoadControlFactory
+import io.github.aedev.flow.player.isVideoListItem
 import io.github.aedev.flow.player.musicvideo.MusicMediaSourceFactory
 import io.github.aedev.flow.player.musicvideo.MusicVideoFormats
 import io.github.aedev.flow.player.musicvideo.MusicVideoSwitch
@@ -100,6 +104,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -157,6 +162,8 @@ class Media3MusicService : MediaLibraryService() {
 
     private lateinit var mediaLibrarySession: MediaLibrarySession
     private lateinit var player: ExoPlayer
+    private lateinit var musicSourceFactory: MusicMediaSourceFactory
+    private var crossfader: MusicCrossfader? = null
     private val equalizer = EqualizerAudioProcessor()
     private val carTreeRefreshed = AtomicBoolean(false)
     private val musicAudioAttributes =
@@ -218,6 +225,9 @@ class Media3MusicService : MediaLibraryService() {
     private var pendingRetryJob: Job? = null
 
     private var waitingForNetwork = false
+
+    @Inject
+    lateinit var playbackErrorLog: PlaybackErrorLog
 
     @Inject
     lateinit var downloadUtil: DownloadUtil
@@ -357,7 +367,53 @@ class Media3MusicService : MediaLibraryService() {
             mediaId
                 ?.takeIf { loudnessNormalizationEnabled && !LocalMediaIds.isLocal(it) }
                 ?.let(MusicPlayerUtils::cachedLoudnessGainDb)
-        player.volume = LoudnessGain.volume(gainDb)
+        player.volume = LoudnessGain.volume(gainDb) * (crossfader?.sessionScale ?: 1f)
+    }
+
+    /** The player that plays the outgoing song's last seconds during a crossfade; see [MusicCrossfader]. */
+    private fun buildCrossfadeTail(): ExoPlayer {
+        val tailEqualizer = EqualizerAudioProcessor().apply { setSpec(equalizerRepository.processingSpec.value) }
+        return ExoPlayer
+            .Builder(this)
+            .setMediaSourceFactory(musicSourceFactory)
+            .setRenderersFactory(musicRenderers(tailEqualizer))
+            .setAudioAttributes(musicAudioAttributes, false)
+            .setLoadControl(LoadControlFactory.forMusic())
+            .build()
+            .also { tail ->
+                tail.trackSelectionParameters =
+                    tail.trackSelectionParameters
+                        .buildUpon()
+                        .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, true)
+                        .build()
+                if (player.audioSessionId != C.AUDIO_SESSION_ID_UNSET) tail.setAudioSessionId(player.audioSessionId)
+            }
+    }
+
+    private fun crossfadeMoment(settings: CrossfadePolicy.Settings): CrossfadePolicy.Moment {
+        val next = player.nextMediaItemIndex.takeIf { it != C.INDEX_UNSET }?.let(player::getMediaItemAt)
+        return CrossfadePolicy.Moment(
+            fadeSeconds = settings.seconds,
+            playing = player.playWhenReady,
+            hasNext = next != null,
+            repeatsOne = player.repeatMode == Player.REPEAT_MODE_ONE,
+            durationMs = player.duration.takeIf { it != C.TIME_UNSET } ?: 0L,
+            speed = player.playbackParameters.speed,
+            showsVideo = C.TRACK_TYPE_VIDEO !in player.trackSelectionParameters.disabledTrackTypes,
+            pausesAtEndOfSong = io.github.aedev.flow.player.SleepTimerManager.pauseAtEndOfMedia,
+            nextIsSameAlbum = next != null && sameAlbum(player.currentMediaItem?.mediaId, next.mediaId),
+            keepAlbumsGapless = settings.keepAlbumsGapless,
+        )
+    }
+
+    private fun sameAlbum(
+        currentId: String?,
+        nextId: String,
+    ): Boolean {
+        val queue = io.github.aedev.flow.player.EnhancedMusicPlayerManager.queue.value
+        val current = queue.firstOrNull { it.videoId == currentId } ?: return false
+        val next = queue.firstOrNull { it.videoId == nextId } ?: return false
+        return (current.albumId != null && current.albumId == next.albumId) || (current.album.isNotBlank() && current.album == next.album)
     }
 
     private fun applyPlayDuringCallsPreference(playDuringCalls: Boolean) {
@@ -432,8 +488,21 @@ class Media3MusicService : MediaLibraryService() {
         )
     }
 
+    private fun musicRenderers(processor: EqualizerAudioProcessor) =
+        object : androidx.media3.exoplayer.DefaultRenderersFactory(this) {
+            override fun buildAudioSink(
+                context: android.content.Context,
+                enableFloatOutput: Boolean,
+                enableAudioTrackPlaybackParams: Boolean,
+            ): androidx.media3.exoplayer.audio.AudioSink? =
+                androidx.media3.exoplayer.audio.DefaultAudioSink
+                    .Builder(context)
+                    .setAudioProcessors(arrayOf(processor))
+                    .build()
+        }.setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+
     private fun initializePlayer() {
-        val mediaSourceFactory =
+        musicSourceFactory =
             MusicMediaSourceFactory(
                 audio =
                     DefaultMediaSourceFactory(downloadUtil.getPlayerDataSourceFactory())
@@ -442,25 +511,14 @@ class Media3MusicService : MediaLibraryService() {
                 maxVideoHeight = { MusicVideoFormats.maxHeight(NetworkState.isOnWifi(this)) },
             )
 
-        val renderersFactory =
-            object : androidx.media3.exoplayer.DefaultRenderersFactory(this) {
-                override fun buildAudioSink(
-                    context: android.content.Context,
-                    enableFloatOutput: Boolean,
-                    enableAudioTrackPlaybackParams: Boolean,
-                ): androidx.media3.exoplayer.audio.AudioSink? =
-                    androidx.media3.exoplayer.audio.DefaultAudioSink
-                        .Builder(context)
-                        .setAudioProcessors(arrayOf(equalizer))
-                        .build()
-            }.setExtensionRendererMode(androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+        val renderersFactory = musicRenderers(equalizer)
 
         val loadControl = LoadControlFactory.forMusic()
 
         player =
             ExoPlayer
                 .Builder(this)
-                .setMediaSourceFactory(mediaSourceFactory)
+                .setMediaSourceFactory(musicSourceFactory)
                 .setRenderersFactory(renderersFactory)
                 .setAudioAttributes(musicAudioAttributes, handlesAudioFocus)
                 .setHandleAudioBecomingNoisy(true)
@@ -486,6 +544,20 @@ class Media3MusicService : MediaLibraryService() {
         // order, the player's shuffle flag reorders nothing on its own, whichever controller sets it.
         player.setShuffleOrder(ShuffleOrder.UnshuffledShuffleOrder(0))
         musicResume.attach(player)
+        crossfader = MusicCrossfader(player, ::buildCrossfadeTail, ::crossfadeMoment, ::applyLoudnessGain).also { it.attach() }
+        lifecycleScope.launch {
+            combine(
+                prefs.musicCrossfadeSeconds,
+                prefs.musicCrossfadeKeepAlbums,
+                prefs.musicCrossfadeCurve,
+                prefs.musicCrossfadeOnAutoAdvance,
+                prefs.musicCrossfadeOnManualSkip,
+                CrossfadePolicy::Settings,
+            ).collect { settings ->
+                crossfader?.setSettings(settings)
+                updateOffload { it.copy(crossfade = settings.seconds > 0) }
+            }
+        }
 
         player.addListener(
             object : Player.Listener {
@@ -700,6 +772,7 @@ class Media3MusicService : MediaLibraryService() {
     private var learnMediaId: String? = null
     private var learnTrack: MusicTrack? = null
     private var learnGenre: String? = null
+    private var learnFromVideoList = false
     private var learnDurationMs = 0L
     private var learnPlayedMs = 0L
     private var learnPlayingSinceMs = -1L
@@ -711,7 +784,7 @@ class Media3MusicService : MediaLibraryService() {
     /** Queues the scrobble the moment the listen counts, so a process killed later in the song cannot lose it. */
     private fun scheduleScrobbleCheck() {
         scrobbleCheck?.cancel()
-        if (learnScrobbled || learnPlayingSinceMs < 0) return
+        if (learnScrobbled || learnPlayingSinceMs < 0 || learnFromVideoList) return
         val track = learnTrack?.takeIf { it.videoId == learnMediaId } ?: return
         val durationMs = if (track.duration > 0) track.duration.toLong() * 1000 else learnDurationMs
         val thresholdMs = ScrobbleRules.thresholdMs(durationMs) ?: return
@@ -728,7 +801,7 @@ class Media3MusicService : MediaLibraryService() {
     /** Once per listen, when it really starts playing rather than when the item merely loads. */
     private fun announceNowPlaying() {
         val track = learnTrack?.takeIf { it.videoId == learnMediaId } ?: return
-        if (learnAnnounced) return
+        if (learnAnnounced || learnFromVideoList) return
         learnAnnounced = true
         val durationMs = if (track.duration > 0) track.duration.toLong() * 1000 else learnDurationMs
         scrobbler.onNowPlaying(track, durationMs)
@@ -782,6 +855,8 @@ class Media3MusicService : MediaLibraryService() {
         learnGenre =
             io.github.aedev.flow.player.EnhancedMusicPlayerManager
                 .playContextGenre
+        learnFromVideoList =
+            ::player.isInitialized && player.currentMediaItem?.takeIf { it.mediaId == mediaId }?.isVideoListItem == true
         learnDurationMs = 0L
         learnPlayedMs = 0L
         learnStartedAtMs = System.currentTimeMillis()
@@ -803,14 +878,20 @@ class Media3MusicService : MediaLibraryService() {
         val pinnedDurationMs = learnDurationMs
         val playedMs = learnPlayedMs
         val pinnedGenre = learnGenre
+        val fromVideoList = learnFromVideoList
         val startedAtMs = learnStartedAtMs
         val alreadyScrobbled = learnScrobbled
         learnScrobbled = false
         learnMediaId = null
         learnTrack = null
         learnGenre = null
+        learnFromVideoList = false
         learnDurationMs = 0L
         learnPlayedMs = 0L
+        if (fromVideoList) {
+            Log.d(TAG, "listen finalize skipped: $mediaId is a video from a video list (#1657)")
+            return
+        }
         if (mediaId.isNullOrBlank() || playedMs <= 0) {
             Log.d(TAG, "listen finalize skipped: id=$mediaId playedMs=$playedMs")
             return
@@ -854,12 +935,16 @@ class Media3MusicService : MediaLibraryService() {
             )
         if (failed == null) {
             Log.e(TAG, "Player error with no resolvable media item", error)
+            notifyMusicWarning(getString(R.string.music_playback_warning_generic))
             return
         }
         val mediaId = failed.mediaId
 
         Log.e(TAG, "Playback error for $mediaId: ${error.errorCodeName} (code=${error.errorCode})", error)
         lastPlaybackErrorAtMap[mediaId] = System.currentTimeMillis()
+        lifecycleScope.launch {
+            playbackErrorLog.add(mediaId, error.errorCodeName, retryCountMap.getOrDefault(mediaId, 0))
+        }
 
         if (MusicLoadErrorPolicy.isUnavailable(error)) {
             Log.w(TAG, "$mediaId is unavailable on every client, skipping without retries")
@@ -878,6 +963,7 @@ class Media3MusicService : MediaLibraryService() {
 
         if (recentlyFailedSongs.contains(mediaId)) {
             Log.w(TAG, "$mediaId is in recently failed list, skipping to next")
+            notifyMusicWarning(getString(R.string.music_playback_warning_generic))
             skipOrStop(failed, gone = false)
             return
         }
@@ -1404,6 +1490,8 @@ class Media3MusicService : MediaLibraryService() {
         if (::mediaLibrarySession.isInitialized) {
             mediaLibrarySession.release()
         }
+        crossfader?.release()
+        crossfader = null
         if (::player.isInitialized) {
             musicResume.saveCurrent(player)
             player.release()

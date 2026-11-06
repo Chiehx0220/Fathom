@@ -4,8 +4,7 @@ import io.github.aedev.flow.bilibili.serviceIdOfChannel
 
 /**
  * The stored form of a subscription:
- * `id|name|thumbnail|subscribedAt|lastVideoId|lastCheckTime|notify|isMusic|lastFeedFetchAt`, plus `|serviceId`
- * for a channel that is not YouTube's.
+ * `id|name|thumbnail|subscribedAt|lastVideoId|lastCheckTime|notify|isMusic|lastFeedFetchAt`, plus `|serviceId` for a non-YouTube channel.
  *
  * Text fields escape `|` as `%7C`, and `%` as `%25` only where it would otherwise read as an escape,
  * so a record without either is byte-identical to what older versions wrote. An older version

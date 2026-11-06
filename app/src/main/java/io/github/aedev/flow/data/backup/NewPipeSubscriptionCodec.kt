@@ -44,8 +44,7 @@ data class NewPipeSubscriptionExport(
 /**
  * NewPipe's subscription export: `{app_version, app_version_int, subscriptions: [{service_id, url, name}]}`.
  * NewPipe decodes it strictly, so [encode] writes exactly those keys, and only channels it can open:
- * a `/channel/UC…` id or an `@handle` (`service_id: 0`), or a Bilibili uploader (`service_id: 5`,
- * PipePipe's own numbering) as `https://space.bilibili.com/{mid}`.
+ * a `/channel/UC…` id or `@handle` (`service_id: 0`), or `space.bilibili.com/{mid}` (`service_id: 5`, PipePipe numbering).
  */
 object NewPipeSubscriptionCodec {
     private const val YOUTUBE_SERVICE_ID = 0

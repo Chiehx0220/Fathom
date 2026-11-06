@@ -80,16 +80,32 @@ class DownloadTransfer
         ): FetchOutcome {
             var avoid = emptySet<Int>()
             var noAudioRetries = 0
+            var acceptOtherTrack = false
             val refusals = mutableMapOf<Int, Int>()
             repeat(MAX_RESOLVES) {
-                val outcome = resolver.resolve(request, avoid)
-                // TV_TIZEN answer can lack AAC track (remote decoder missed it); new extraction has it
-                if (outcome == ResolveOutcome.NoCompatibleAudio && noAudioRetries++ < NO_AUDIO_RETRIES) return@repeat
                 val streams =
-                    when (val resolved = outcome) {
-                        is ResolveOutcome.Resolved -> resolved.streams
-                        ResolveOutcome.Unavailable -> return FetchOutcome.Failed(FetchFailure.UNAVAILABLE)
-                        ResolveOutcome.NoCompatibleAudio -> return FetchOutcome.Failed(FetchFailure.NO_COMPATIBLE_AUDIO)
+                    when (val resolved = resolver.resolve(request, avoid, acceptOtherTrack)) {
+                        is ResolveOutcome.Resolved -> {
+                            resolved.streams
+                        }
+
+                        ResolveOutcome.Unavailable -> {
+                            return FetchOutcome.Failed(FetchFailure.UNAVAILABLE)
+                        }
+
+                        ResolveOutcome.NoCompatibleAudio -> {
+                            // TV_TIZEN answer can lack an AAC track: re-extract
+                            if (noAudioRetries++ < NO_AUDIO_RETRIES) return@repeat
+                            return FetchOutcome.Failed(FetchFailure.NO_COMPATIBLE_AUDIO)
+                        }
+
+                        ResolveOutcome.AudioTrackMissing -> {
+                            val sabr = viaSabr(request, staging, itemId, requireChosenTrack = true)
+                            if (sabr is FetchOutcome.Fetched) return sabr
+                            currentCoroutineContext().ensureActive()
+                            acceptOtherTrack = true
+                            return@repeat
+                        }
                     }
                 val video = streams.video
                 val parts =
@@ -161,7 +177,7 @@ class DownloadTransfer
                     }
                 }
             }
-            // SABR = YouTube streaming protocol; refused Bilibili URL has no fallback.
+            // SABR is YouTube-only: no fallback for a refused Bilibili URL.
             if (BilibiliRef.isVideoId(request.videoId)) return FetchOutcome.Failed(FetchFailure.REFUSED)
             return viaSabr(request, staging, itemId)
         }
@@ -175,6 +191,7 @@ class DownloadTransfer
             request: DownloadRequest,
             staging: DownloadStaging,
             itemId: Int,
+            requireChosenTrack: Boolean = false,
         ): FetchOutcome {
             staging.clearParts()
             val info =
@@ -191,6 +208,7 @@ class DownloadTransfer
                     Log.w(TAG, "${request.videoId}: SABR resolve failed", e)
                     null
                 } ?: return FetchOutcome.Failed(FetchFailure.REFUSED)
+            if (requireChosenTrack && info.audioTrackId != request.audioTrackId) return FetchOutcome.Failed(FetchFailure.REFUSED)
             val engine = SabrDownloadEngine()
             var estimated = 0L
             val done =
@@ -215,6 +233,7 @@ class DownloadTransfer
                             videoLmt = info.videoLmt,
                             audioXtags = info.audioXtags,
                             videoXtags = info.videoXtags,
+                            audioTrackId = info.audioTrackId,
                             poToken = info.poToken,
                             visitorId = info.visitorId,
                             ustreamerConfig = info.ustreamerConfig,

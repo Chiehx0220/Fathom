@@ -337,9 +337,7 @@ class SubscriptionFeedRepository
             Log.d(TAG, "Seeded ${rows.size} row(s) for $channelId from the notification check")
         }
 
-        /**
-         * As [seedFromNotificationCheck], for services without RSS (e.g. Bilibili): background check already resolved [Video] rows via channel-tabs.
-         */
+        /** [seedFromNotificationCheck] for services without RSS (Bilibili): rows already resolved via channel tabs. */
         suspend fun seedFromNotificationCheck(videos: List<Video>) {
             if (videos.isEmpty()) return
             val now = System.currentTimeMillis()

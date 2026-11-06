@@ -121,10 +121,7 @@ object InnerTubeVideoStreamExtractor {
         val liveDashUrl: String? = null,
     )
 
-    /**
-     * InnerTube = YouTube-only API: no other NewPipeExtractor service; fails (after full client-ladder timeout) for non-YouTube ids (Bilibili "BVxxxxxxxxxx").
-     * Callers racing it against the generic extractor path check this first, skip to null off-YouTube.
-     */
+    /** InnerTube is YouTube-only; callers racing it against the generic extractor skip non-YouTube ids (client-ladder timeout). */
     fun supportsService(serviceId: Int): Boolean = serviceId.isYouTubeServiceId
 
     fun supportsVideo(videoId: String): Boolean = supportsService(serviceIdOfVideo(videoId))

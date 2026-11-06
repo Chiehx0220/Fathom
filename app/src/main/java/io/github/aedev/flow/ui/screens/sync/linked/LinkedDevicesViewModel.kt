@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.sync2.device.WebDavLogin
+import io.github.aedev.flow.sync2.engine.ContestSide
 import io.github.aedev.flow.sync2.live.LiveConsent
 import io.github.aedev.flow.sync2.live.LiveDevices
 import io.github.aedev.flow.sync2.live.deviceKind
@@ -47,6 +48,12 @@ internal data class LinkedUiState(
     val busy: Boolean = false,
     val syncing: Boolean = false,
     val error: LinkedError? = null,
+    /** The sides to choose between while two devices have removed each other. */
+    val contest: List<ContestSide> = emptyList(),
+    /** A removed device can still reach the WebDAV folder until its login changes. */
+    val loginDue: Boolean = false,
+    /** The devices yet to read the login this device sent, while that change is under way. */
+    val loginWaiting: List<String>? = null,
 ) {
     val linked: Boolean get() = storeUrl != null
 }
@@ -60,6 +67,8 @@ private data class Local(
     val words: String? = null,
     val busy: Boolean = false,
     val error: LinkedError? = null,
+    val contest: List<ContestSide> = emptyList(),
+    val loginWaiting: List<String>? = null,
 )
 
 @HiltViewModel
@@ -109,6 +118,9 @@ internal class LinkedDevicesViewModel
                     l.busy,
                     syncing,
                     l.error ?: lastSync?.error,
+                    l.contest,
+                    group?.loginDue != null,
+                    if (group?.loginSent != null) l.loginWaiting.orEmpty() else null,
                 )
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LinkedUiState())
 
@@ -155,7 +167,11 @@ internal class LinkedDevicesViewModel
             }
         }
 
-        fun refreshDevices() = run { local.update { it.copy(devices = actions.devices()) } }
+        fun refreshDevices() =
+            run {
+                local.update { it.copy(devices = actions.devices()) }
+                refreshLoginWaiting()
+            }
 
         fun create(
             url: String,
@@ -180,6 +196,23 @@ internal class LinkedDevicesViewModel
             password: String,
         ) = run { actions.updateLogin(user, password) }
 
+        fun startLoginChange(
+            user: String,
+            password: String,
+        ) = run {
+            actions.startLoginChange(user, password)
+            refreshLoginWaiting()
+        }
+
+        fun finishLoginChange() = run { actions.finishLoginChange() }
+
+        fun cancelLoginChange() = run { actions.cancelLoginChange() }
+
+        private suspend fun refreshLoginWaiting() {
+            val waiting = actions.loginWaiting()
+            local.update { it.copy(loginWaiting = waiting) }
+        }
+
         fun resetAndCreate(
             url: String,
             adminToken: String,
@@ -197,6 +230,8 @@ internal class LinkedDevicesViewModel
                 actions.confirmRecoverySaved()
                 local.update { it.copy(words = null) }
             }
+
+        fun replaceWords() = run { local.update { it.copy(words = actions.replaceRecoveryWords()) } }
 
         fun rename(
             id: String,
@@ -229,6 +264,14 @@ internal class LinkedDevicesViewModel
             }
 
         fun syncNow() = actions.syncNow()
+
+        fun loadContest() = run { local.update { it.copy(contest = actions.contest()) } }
+
+        fun keepSide(entry: String) =
+            run {
+                actions.keepSide(entry)
+                local.update { it.copy(contest = emptyList()) }
+            }
 
         fun enterCode(
             code: String,

@@ -10,12 +10,16 @@ import io.github.aedev.flow.sync2.crypto.MemberSecrets
 import io.github.aedev.flow.sync2.data.GroupRecord
 import io.github.aedev.flow.sync2.data.LAN_STORE
 import io.github.aedev.flow.sync2.data.LinkedDatabase
+import io.github.aedev.flow.sync2.data.RosterPinRow
 import io.github.aedev.flow.sync2.data.webDavUrl
 import io.github.aedev.flow.sync2.device.DeviceKeys
 import io.github.aedev.flow.sync2.device.StoreCredentials
 import io.github.aedev.flow.sync2.device.WebDavLogin
+import io.github.aedev.flow.sync2.engine.ContestSide
 import io.github.aedev.flow.sync2.engine.LinkedException
 import io.github.aedev.flow.sync2.engine.Session
+import io.github.aedev.flow.sync2.engine.contestSides
+import io.github.aedev.flow.sync2.engine.loginWaiting
 import io.github.aedev.flow.sync2.lan.LanSync
 import io.github.aedev.flow.sync2.lan.lanPort
 import io.github.aedev.flow.sync2.linking.Code
@@ -35,6 +39,7 @@ import io.github.aedev.flow.sync2.linking.newOffer
 import io.github.aedev.flow.sync2.linking.readCode
 import io.github.aedev.flow.sync2.linking.removeDevice
 import io.github.aedev.flow.sync2.linking.renameDevice
+import io.github.aedev.flow.sync2.linking.replaceRecovery
 import io.github.aedev.flow.sync2.linking.restoreGroup
 import io.github.aedev.flow.sync2.linking.restoreWebDavGroup
 import io.github.aedev.flow.sync2.roster.Role
@@ -43,6 +48,7 @@ import io.github.aedev.flow.sync2.store.JoinRequest
 import io.github.aedev.flow.sync2.store.LocalStore
 import io.github.aedev.flow.sync2.store.ServerStore
 import io.github.aedev.flow.sync2.store.StoreException
+import io.github.aedev.flow.sync2.store.StoreLogin
 import io.github.aedev.flow.sync2.store.WebDavStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -217,14 +223,41 @@ class LinkedActions
             return restored.also { linkedNow() }
         }
 
-        /** Replaces a WebDAV login the server refused, then syncs with it. */
+        /** Replaces a WebDAV login the server refused, once the folder takes the new one and still holds the group, then syncs with it. */
         suspend fun updateLogin(
             user: String,
             password: String,
         ) {
-            credentials.save(WebDavLogin(user, password))
+            if (!sync.adoptLogin(StoreLogin(user, password))) throw LinkedException.Unexpected()
             syncNow()
         }
+
+        /** Sends the other devices a new login for the folder, before the user sets it there. Opening the session re-reads the roster, and fails while it is contested. */
+        suspend fun startLoginChange(
+            user: String,
+            password: String,
+        ) {
+            val login = StoreLogin(user.trim(), password)
+            session().writeLogin(login)
+            credentials.savePending(login)
+            syncNow()
+        }
+
+        /** The user set the new login at the provider: checks it, and uses it from now on. */
+        suspend fun finishLoginChange() {
+            val login = credentials.pending() ?: throw LinkedException.Unexpected()
+            if (!sync.adoptLogin(login)) throw LinkedException.Unexpected()
+            syncNow()
+        }
+
+        /** Stops a change this device started. A device that read the login still holds it, and only tries it if the folder refuses the current one. */
+        suspend fun cancelLoginChange() {
+            credentials.forgetPending()
+            db.groups().setLoginSent(null)
+        }
+
+        /** The devices yet to read the login this device sent, or null with no change under way. */
+        suspend fun loginWaiting(): List<String>? = loginWaiting(db, SyncBytes.toHex(keys.load().did))
 
         suspend fun confirmRecoverySaved() = db.groups().setRecoverySaved(true)
 
@@ -235,6 +268,13 @@ class LinkedActions
             val session = session()
             val current = deviceNames(session)[id] ?: DeviceMeta("", "", "")
             renameDevice(session, keys.load(), id, current.copy(name = name.trim().take(NAME_LIMIT)))
+        }
+
+        /** Replaces the recovery words, so the old ones stop working, and returns the new words to show once. */
+        suspend fun replaceRecoveryWords(): String {
+            val words = replaceRecovery(session(), keys.load())
+            db.groups().setRecoverySaved(false)
+            return words
         }
 
         suspend fun remove(id: String) {
@@ -249,6 +289,20 @@ class LinkedActions
         val leaveFailed: StateFlow<LinkedError?> = reset.leaveFailed
 
         fun keepGroup() = reset.keepGroup()
+
+        /** The sides to choose between while two devices have removed each other. */
+        suspend fun contest(): List<ContestSide> {
+            val record = db.groups().group() ?: return emptyList()
+            val device = keys.load()
+            return contestSides(db, sync.groupStore(record, device), device)
+        }
+
+        /** Keeps one side on this device, and syncs from it. */
+        suspend fun keepSide(entry: String) {
+            if (contest().none { it.entry == entry }) throw LinkedException.Unexpected()
+            db.groups().addRosterPin(RosterPinRow(entry))
+            LinkedSyncWorker.syncSoon(context, announce = true)
+        }
 
         /** Forgets the group and this device's keys without telling the others, as after being removed. */
         suspend fun forget() = reset.forget()

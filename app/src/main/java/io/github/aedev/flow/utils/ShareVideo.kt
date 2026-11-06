@@ -13,8 +13,7 @@ import io.github.aedev.flow.data.repository.isYouTubeVideoId
 import io.github.aedev.flow.localserver.videoIdToUrl
 
 /**
- * The canonical watch link for a video, optionally seeked to [positionSeconds]. The timestamp
- * query param is a YouTube-only convention, so it is only appended for a YouTube id.
+ * Canonical watch link; `&t=` seek to [positionSeconds] only for a YouTube id.
  */
 fun youtubeWatchUrl(
     videoId: String,

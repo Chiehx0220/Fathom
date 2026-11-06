@@ -131,7 +131,7 @@ internal class PlaybackSessionApplier(
 
             is ResolvedPlayback.Upcoming -> {
                 enterUpcoming(load.videoId, step.releaseTimeMs, step.relatedVideos, load.token, step.details)
-                armCountdownMetadata(load, step.relatedVideos, step.details?.channelId)
+                armCountdownMetadata(load, step.relatedVideos)
             }
 
             is ResolvedPlayback.Failed -> {
@@ -143,6 +143,7 @@ internal class PlaybackSessionApplier(
     fun applySecondary(result: SecondaryMetadata) {
         when (result) {
             is SecondaryMetadata.Channel -> applyChannelMetadata(result)
+            is SecondaryMetadata.PaidPromotion -> applyPaidPromotion(result)
             is SecondaryMetadata.Related -> publishRelatedVideos(result.videoId, result.videos, result.loadToken)
             is SecondaryMetadata.LiveWatch -> applyLiveWatchMetadata(result)
             is SecondaryMetadata.Category -> applyCategory(result)
@@ -244,7 +245,7 @@ internal class PlaybackSessionApplier(
         } catch (e: Exception) {
             Log.e(TAG, "InnerTube VOD fallback failed for ${load.videoId}", e)
             if (tryEnterUpcoming(load.videoId, step.relatedVideos, load.token)) {
-                armCountdownMetadata(load, step.relatedVideos, channelId = null)
+                armCountdownMetadata(load, step.relatedVideos)
             } else {
                 val videoError = VideoErrorMapper.from(context, e, load.videoId)
                 if (isLoadCurrent(load.token)) {
@@ -351,8 +352,6 @@ internal class PlaybackSessionApplier(
 
         secondaryMetadata.loadChannelMetadata(
             videoId = videoId,
-            uploaderUrl = null,
-            channelId = identity.channelId,
             embeddedAvatarUrls = identity.embeddedAvatarUrls,
             loadToken = load.token,
         )
@@ -393,32 +392,33 @@ internal class PlaybackSessionApplier(
         )
 
         uiState.update {
-            it.applyVodStreams(
-                cachedVideo = identity.enrichedVideo,
-                // A stream that was live but is not now. The extractor reported this as a
-                // POST_LIVE_STREAM type; the player response splits it across two flags.
-                isArchivedLivestream =
-                    result.playerResponse.videoDetails?.isLiveContent == true &&
-                        result.playerResponse.videoDetails?.isLive != true,
-                relatedVideos = relatedVideos,
-                videoStream = streams.videoStream,
-                audioStream = streams.audioStream,
-                availableQualities = streams.availableQualities,
-                savedPositionMs = savedPositionMs,
-                isAdaptiveMode = streams.isAdaptiveMode,
-                autoplayEnabled = autoplay,
-                innerTubeVideoFormats = result.videoFormats,
-                innerTubeAudioFormats = result.audioFormats,
-                streamSizes = streams.streamSizes,
-                storyboard =
-                    StoryboardSpec.parse(
-                        spec =
-                            result.playerResponse.storyboards
-                                ?.playerStoryboardSpecRenderer
-                                ?.spec,
-                        durationMs = streams.durationSeconds * 1000L,
-                    ),
-            )
+            it
+                .applyVodStreams(
+                    cachedVideo = identity.enrichedVideo,
+                    // A stream that was live but is not now. The extractor reported this as a
+                    // POST_LIVE_STREAM type; the player response splits it across two flags.
+                    isArchivedLivestream =
+                        result.playerResponse.videoDetails?.isLiveContent == true &&
+                            result.playerResponse.videoDetails?.isLive != true,
+                    relatedVideos = relatedVideos,
+                    videoStream = streams.videoStream,
+                    audioStream = streams.audioStream,
+                    availableQualities = streams.availableQualities,
+                    savedPositionMs = savedPositionMs,
+                    isAdaptiveMode = streams.isAdaptiveMode,
+                    autoplayEnabled = autoplay,
+                    innerTubeVideoFormats = result.videoFormats,
+                    innerTubeAudioFormats = result.audioFormats,
+                    streamSizes = streams.streamSizes,
+                    storyboard =
+                        StoryboardSpec.parse(
+                            spec =
+                                result.playerResponse.storyboards
+                                    ?.playerStoryboardSpecRenderer
+                                    ?.spec,
+                            durationMs = streams.durationSeconds * 1000L,
+                        ),
+                ).copy(streamClient = result.usedClient.clientName)
         }
 
         // Queue and preloaded playback may already own this media item. Arm secondary metadata
@@ -432,11 +432,10 @@ internal class PlaybackSessionApplier(
         secondaryMetadata.loadCategory(videoId, load.token)
         secondaryMetadata.loadHeatmap(videoId, load.token)
         secondaryMetadata.loadChapters(videoId, load.token)
+        secondaryMetadata.loadPaidPromotion(videoId, load.token)
         secondaryMetadata.loadWatchInfo(videoId, identity.enrichedVideo, load.token)
         secondaryMetadata.loadChannelMetadata(
             videoId = videoId,
-            uploaderUrl = null,
-            channelId = identity.channelId,
             embeddedAvatarUrls = identity.embeddedAvatarUrls,
             loadToken = load.token,
         )
@@ -467,18 +466,20 @@ internal class PlaybackSessionApplier(
     fun armCountdownMetadata(
         load: LoadContext,
         relatedVideos: List<Video>,
-        channelId: String?,
     ) {
         if (!isLoadCurrent(load.token)) return
         secondaryMetadata.loadChannelMetadata(
             videoId = load.videoId,
-            uploaderUrl = null,
-            channelId = channelId?.takeIf { it.isNotBlank() } ?: uiState.value.cachedVideo?.channelId,
             embeddedAvatarUrls = emptyList(),
             loadToken = load.token,
             awaitPlayback = false,
         )
         secondaryMetadata.loadRelatedVideos(load.videoId, relatedVideos, load.token, awaitPlayback = false)
+    }
+
+    private fun applyPaidPromotion(result: SecondaryMetadata.PaidPromotion) {
+        if (!isLoadCurrent(result.loadToken)) return
+        uiState.update { it.copy(paidPromotion = result.label) }
     }
 
     private fun applyHeatmap(result: SecondaryMetadata.Heatmap) {
@@ -499,8 +500,6 @@ internal class PlaybackSessionApplier(
         if (uiState.value.localFileVideoId == result.videoId) {
             secondaryMetadata.loadChannelMetadata(
                 videoId = result.videoId,
-                uploaderUrl = null,
-                channelId = result.video.channelId,
                 embeddedAvatarUrls = listOf(result.video.channelThumbnailUrl).filter { it.isNotBlank() },
                 loadToken = result.loadToken,
                 awaitPlayback = false,

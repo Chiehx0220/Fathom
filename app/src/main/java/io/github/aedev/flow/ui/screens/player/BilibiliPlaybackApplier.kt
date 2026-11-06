@@ -114,8 +114,6 @@ internal class BilibiliPlaybackApplier(
 
         secondaryMetadata.loadChannelMetadata(
             videoId = videoId,
-            uploaderUrl = null,
-            channelId = identity.channelId,
             embeddedAvatarUrls = identity.embeddedAvatarUrls,
             loadToken = load.token,
         )
@@ -175,8 +173,6 @@ internal class BilibiliPlaybackApplier(
         secondaryMetadata.loadRelatedVideos(videoId, step.relatedVideos, load.token)
         secondaryMetadata.loadChannelMetadata(
             videoId = videoId,
-            uploaderUrl = null,
-            channelId = identity.channelId,
             embeddedAvatarUrls = identity.embeddedAvatarUrls,
             loadToken = load.token,
         )

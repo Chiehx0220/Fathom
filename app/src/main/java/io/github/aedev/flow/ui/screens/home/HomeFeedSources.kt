@@ -45,10 +45,7 @@ internal data class RelatedGraphFetchResult(
 /**
  * Seed discovery and related-graph retrieval for the home feed.
  *
- * `@Singleton` (app-wide, one instance) rather than scoped to the ViewModel that injects it - its
- * relatedCache/savedSeedCooldown are meant to be shared by anything reading the home feed, which
- * now includes Local Server's embedded HTTP server (reached via LocalServerEntryPoint, since that
- * code runs outside Hilt's graph) as well as HomeViewModel's Compose screen.
+ * `@Singleton`: relatedCache and savedSeedCooldown are shared with Local Server (LocalServerEntryPoint, outside Hilt's graph).
  */
 @Singleton
 class HomeFeedSources

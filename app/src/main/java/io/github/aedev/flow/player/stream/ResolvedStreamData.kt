@@ -12,9 +12,7 @@ import org.schabi.newpipe.extractor.stream.VideoStream
  * Everything resolving one video's streams produced: enough to start playback, build a preloaded
  * media source, or fill in the player state, without going back to the network.
  *
- * [hlsUrl] and [sabrInfo] are only ever populated for a caller that plays the result directly
- * (queue/autoplay advance); the gapless preload path never needs either, since it always skips live
- * streams and never triggers a SABR escalation for a video that isn't playing yet.
+ * [hlsUrl] and [sabrInfo]: direct playback only (queue/autoplay advance); gapless preload skips live and SABR.
  */
 internal data class ResolvedStreamData(
     val enrichedVideo: Video,

@@ -38,6 +38,8 @@ import io.github.aedev.flow.innertube.models.response.GetSearchSuggestionsRespon
 import io.github.aedev.flow.innertube.models.response.GetTranscriptResponse
 import io.github.aedev.flow.innertube.models.response.ImageUploadResponse
 import io.github.aedev.flow.innertube.models.response.NextResponse
+import io.github.aedev.flow.innertube.models.response.PaidPromotionLabel
+import io.github.aedev.flow.innertube.models.response.PaidPromotionResponse
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
 import io.github.aedev.flow.innertube.models.response.ResolveUrlResponse
 import io.github.aedev.flow.innertube.models.response.SearchResponse
@@ -65,6 +67,7 @@ import io.github.aedev.flow.innertube.pages.SearchResult
 import io.github.aedev.flow.innertube.pages.SearchSuggestionPage
 import io.github.aedev.flow.innertube.pages.SearchSummaryPage
 import io.github.aedev.flow.innertube.pages.VideoCommentsPage
+import io.github.aedev.flow.innertube.pages.VideoCommentsPanelHeader
 import io.github.aedev.flow.innertube.pages.VideoDescriptionPage
 import io.github.aedev.flow.innertube.pages.VideoPlaylistPage
 import io.github.aedev.flow.innertube.pages.channel.ChannelAbout
@@ -87,6 +90,7 @@ import io.github.aedev.flow.innertube.pages.explore.exploreShelves
 import io.github.aedev.flow.innertube.pages.explore.ranked
 import io.github.aedev.flow.innertube.pages.explore.toExploreDestinationShell
 import io.github.aedev.flow.innertube.pages.explore.trendingVideoChart
+import io.github.aedev.flow.innertube.pages.mixSeedVideoId
 import io.github.aedev.flow.innertube.pages.parseYouTubeViewCount
 import io.github.aedev.flow.innertube.pages.reel.ReelLockup
 import io.github.aedev.flow.innertube.pages.reel.ReelOverlay
@@ -108,10 +112,12 @@ import io.github.aedev.flow.innertube.pages.search.SearchSuggestion
 import io.github.aedev.flow.innertube.pages.search.parseSearchSuggestions
 import io.github.aedev.flow.innertube.pages.search.toSearchResultsPage
 import io.github.aedev.flow.innertube.pages.toCommentRepliesPage
+import io.github.aedev.flow.innertube.pages.toMixPlaylistPage
 import io.github.aedev.flow.innertube.pages.toVideoCommentsPage
 import io.github.aedev.flow.innertube.pages.toVideoDescriptionPage
 import io.github.aedev.flow.innertube.pages.toVideoPlaylistPage
 import io.github.aedev.flow.innertube.pages.videoCommentsContinuation
+import io.github.aedev.flow.innertube.pages.videoCommentsPanelHeader
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import io.github.aedev.flow.utils.avatarImageIdentityKey
 import io.github.aedev.flow.utils.relativedate.RelativeUploadDateParser
@@ -852,6 +858,13 @@ object YouTube {
                     continuation = continuation,
                 )
             Json.parseToJsonElement(response.bodyAsText()).toVideoPlaylistPage()
+        }
+
+    /** A mix's queue, which is the only list of it: the playlist browse refuses mixes. */
+    suspend fun mixPlaylistPage(playlistId: String): Result<VideoPlaylistPage> =
+        runCatching {
+            val response = innerTube.nextMix(mixSeedVideoId(playlistId), playlistId)
+            Json.parseToJsonElement(response.bodyAsText()).toMixPlaylistPage()
         }
 
     private suspend fun communityPostsPage(
@@ -2420,6 +2433,9 @@ object YouTube {
                 ?.takeIf { it.isNotBlank() }
         }
 
+    suspend fun paidPromotion(videoId: String): Result<PaidPromotionLabel?> =
+        runCatching { innerTube.paidPromotion(videoId).body<PaidPromotionResponse>().label() }
+
     /**
      * The raw web watch response for [videoId].
      *
@@ -2439,6 +2455,9 @@ object YouTube {
 
     /** The continuation that opens [videoId]'s comment section, from an already-fetched watch response. */
     fun commentsContinuation(watchNext: JsonElement): String? = watchNext.videoCommentsContinuation()
+
+    /** The sort menu and count in [watchNext]'s comments panel, from an already-fetched watch response. */
+    fun commentsPanelHeader(watchNext: JsonElement): VideoCommentsPanelHeader? = watchNext.videoCommentsPanelHeader()
 
     suspend fun comments(
         continuation: String,

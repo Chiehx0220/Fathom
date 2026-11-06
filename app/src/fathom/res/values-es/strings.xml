@@ -57,10 +57,22 @@
     <string name="local_partial_access_title">Fathom solo puede ver los vídeos que hayas elegido</string>
     <string name="downloads_storage_used">%1$s en Fathom</string>
     <string name="import_migrate_description">Migra tus suscripciones e historial desde otras plataformas a Fathom sin complicaciones.</string>
-    <string name="import_manage_backups">Gestiona tus copias de seguridad de Fathom</string>
+    <string name="import_manage_backups">Gestiona tus respaldos de Fathom</string>
+    <string name="taste_summary">Cómo te ve Fathom y qué determina tu feed</string>
+    <string name="taste_card_hint">Descubre cómo te ve Fathom</string>
     <string name="taste_reset_video_body">Fathom olvida lo que ha aprendido de tus vídeos y búsquedas. El historial, «Me gusta», listas y los elementos ocultos se mantienen, y Inicio sigue usándolos.</string>
+    <string name="taste_reset_music_body">Esto borra lo que Fathom ha aprendido de tu música y vuelve a empezar desde cero. Tu resumen se mantiene.</string>
     <string name="content_settings_shared_links_subtitle">Qué hace un vídeo compartido con Fathom</string>
+    <string name="taste_starter_searches_detail">%1$s. Se usan hasta que Fathom aprenda lo que ves.</string>
+    <string name="recap_title">Resumen de Fathom</string>
+    <string name="recap_total_time">Tiempo en Fathom</string>
+    <string name="recap_empty_body">Fathom guarda estas estadísticas solo en este dispositivo. Ve y escucha contenido un rato y se irán completando.</string>
+    <string name="recap_story_intro">Tu %1$s en Fathom</string>
+    <string name="recap_story_share_text">Mi %1$s en Fathom: %2$s</string>
+    <string name="recap_story_made_with">Hecho con Fathom</string>
+    <string name="playlist_import_too_new">Esta lista necesita una versión más reciente de Fathom</string>
     <string name="subtitle_add_file_failed">Fathom no puede leer ese archivo como subtítulos</string>
+    <string name="playlist_import_not_a_playlist">Este archivo no es una lista de Fathom</string>
     <string name="discord_presence_playing_fallback">Reproduciendo en Fathom</string>
     <string name="export_watch_history_desc">Exportar como JSON del historial de YouTube (importaciones a LibreTube y Fathom)</string>
     <string name="whats_new_in_flow">Novedades en Fathom</string>
@@ -72,6 +84,7 @@
     <string name="downloads_recover_body">Fathom guarda las descargas en Download/Fathom y Music/Fathom. Para ver los archivos que guardó una instalación anterior ahí, permite el acceso a vídeos y audio.</string>
     <string name="location_downloads_label">Descargas / Fathom</string>
     <string name="location_movies_label">Películas / Fathom</string>
+    <string name="settings_music_folder_label">Música / Fathom</string>
     <string name="music_service_disabled">La música no se puede reproducir. El servicio de música de Fathom está desactivado en este dispositivo.</string>
     <string name="deep_flow_long_press_hint">Mantén pulsado el logotipo o el nombre de Fathom en Inicio para cambiar Deep Flow</string>
     <string name="playback_background_restricted_subtitle">Tu teléfono puede detener Fathom cuando lo cierres deslizándolo. Toca para permitirlo.</string>
@@ -81,4 +94,6 @@
     <string name="profiles_copy_recommendations_summary">Lo que Fathom ha aprendido sobre tus gustos</string>
     <string name="linked_webdav_body">Usa una carpeta vacía solo para Fathom. Los datos de acceso se guardan solo en el almacenamiento seguro de este dispositivo y se pasan a los dispositivos que vincules.</string>
     <string name="linked_profile_switch_body">Únicamente el perfil en uso puede iniciar la sincronización, así que Fathom se reiniciará antes en él. Después, activa la sincronización en ese perfil.</string>
+    <string name="buffer_cache_size_link_summary">Cuánto vídeo y música guarda Fathom en el disco</string>
+    <string name="linked_replace_words_body">Fathom genera nuevas palabras de recuperación y nuevas claves de cifrado para tus dispositivos. Las palabras antiguas dejan de funcionar: no pueden restaurar este grupo ni leer nada de lo que se sincronice a partir de ahora. Anota las palabras nuevas cuando aparezcan.</string>
 </resources>

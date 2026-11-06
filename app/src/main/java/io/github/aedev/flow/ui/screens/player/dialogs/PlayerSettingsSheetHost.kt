@@ -141,6 +141,7 @@ internal fun PlayerSettingsSheetHost(
         showDanmakuOption = video.supportsBulletComments,
         danmakuEnabled = screenState.danmakuEnabled,
         onDanmakuToggle = { screenState.danmakuEnabled = it },
+        onStatsForNerds = { screenState.showStatsForNerds = true },
         onCastClick = {
             DlnaCastManager.startDiscovery(context)
             screenState.open(PlayerSheet.Dlna)

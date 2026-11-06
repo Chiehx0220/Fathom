@@ -35,6 +35,7 @@ import io.github.aedev.flow.ui.screens.player.state.*
 import io.github.aedev.flow.ui.screens.player.state.supportingPaneReserve
 import io.github.aedev.flow.ui.utils.LocalWindowIsLandscape
 import io.github.aedev.flow.ui.utils.LocalWindowSizeClass
+import io.github.aedev.flow.ui.utils.rememberIsInPipMode
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.coroutines.launch
 
@@ -84,6 +85,9 @@ fun VideoPlayerHost(
     val sponsorSegments by EnhancedPlayerManager.getInstance().sponsorSegments.collectAsStateWithLifecycle()
 
     val screenState = rememberPlayerScreenState()
+    LaunchedEffect(playerSheetState.currentValue) {
+        screenState.isPlayerExpanded = playerSheetState.currentValue == PlayerSheetValue.Expanded
+    }
     val audioSystemInfo = rememberAudioSystemInfo(context)
     val pipPreferences = rememberPipPreferences(context)
     val canGoPrevious by playerViewModel.canGoPrevious.collectAsStateWithLifecycle()
@@ -205,7 +209,6 @@ fun VideoPlayerHost(
     PlayerSheetSessionEffects(
         playerSheetState = playerSheetState,
         uiState = playerUiState,
-        queueTitle = { playerState.queueTitle },
         viewModel = playerViewModel,
         onMinimize = onMinimize,
     )
@@ -284,13 +287,15 @@ fun VideoPlayerHost(
         },
     )
 
+    // A PiP window shows only the video from its first frame and never turns (#1671).
+    val isInPipWindow = rememberIsInPipMode()
     val fullscreenShown =
         rememberShownFullscreen(
-            isFullscreen = screenState.isFullscreen,
+            isFullscreen = screenState.isFullscreen || isInPipWindow,
             isFullscreenPortrait = screenState.isFullscreenPortrait,
             videoAspectRatio = effectiveVideoAspectRatio,
             windowIsLandscape = isLandscape,
-            rotationHonoured = !isLargeWindow && !context.orientationRequestIgnored(config),
+            rotationHonoured = !isInPipWindow && !isLargeWindow && !context.orientationRequestIgnored(config),
         )
     FullscreenEffect(
         isFullscreen = screenState.isFullscreen,

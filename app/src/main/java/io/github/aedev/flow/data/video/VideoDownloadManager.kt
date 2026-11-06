@@ -121,12 +121,11 @@ class VideoDownloadManager
         /** Files a delete left on disk because another install owns them; the screen asks the system instead. */
         val undeletable: SharedFlow<List<String>> = _undeletable.asSharedFlow()
 
-        // Progress updates from DownloadRunner
+        // Progress updates emitted by FlowDownloadService
         private val _progressUpdates = MutableSharedFlow<DownloadProgressUpdate>(extraBufferCapacity = 64)
         val progressUpdates: SharedFlow<DownloadProgressUpdate> = _progressUpdates.asSharedFlow()
 
-        // Room byte counts persisted at pause/finish only; in-app UI reads progressUpdates, a DB-only poller (local server) sees 0/0 for the whole run.
-        // Mirrors latest tick per video; cleared on terminal (Room authoritative then).
+        // Latest tick per video: Room persists byte counts at pause/finish only. Cleared on terminal state.
         private val latestProgressByVideo = ConcurrentHashMap<String, DownloadProgressUpdate>()
 
         fun emitProgress(update: DownloadProgressUpdate) {
@@ -144,7 +143,7 @@ class VideoDownloadManager
             _progressUpdates.tryEmit(update)
         }
 
-        /** Latest tick of a running download; null once finished/failed/cancelled. */
+        /** Latest tick; null once terminal. */
         fun latestProgress(videoId: String): DownloadProgressUpdate? = latestProgressByVideo[videoId]
 
         // ===== Directory Management =====

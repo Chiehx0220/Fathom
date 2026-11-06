@@ -41,6 +41,7 @@ fun SponsorBlockSkipButton(
     playbackEnded: Boolean,
     onSkipClick: (endPositionMs: Long) -> Unit,
     modifier: Modifier = Modifier,
+    skippedOnceUuids: Set<String> = emptySet(),
 ) {
     var skippedUuids by remember(sponsorSegments) { mutableStateOf(emptySet<String>()) }
 
@@ -51,6 +52,7 @@ fun SponsorBlockSkipButton(
             skippedUuids,
             categoryActions,
             playbackEnded,
+            skippedOnceUuids,
         ) {
             findActiveManualSponsorSegment(
                 sponsorSegments = sponsorSegments,
@@ -58,6 +60,7 @@ fun SponsorBlockSkipButton(
                 skippedUuids = skippedUuids,
                 categoryActions = categoryActions,
                 playbackEnded = playbackEnded,
+                skippedOnceUuids = skippedOnceUuids,
             )
         }
 
@@ -97,10 +100,10 @@ fun SponsorBlockSkipButton(
         val seg = displaySegment ?: return@AnimatedVisibility
         val categoryRes = sponsorCategoryLabelRes(seg.category)
         val skipLabel =
-            if (categoryRes != null) {
-                stringResource(R.string.sb_skip_segment, stringResource(categoryRes))
-            } else {
-                stringResource(R.string.sb_manual_skip)
+            when {
+                seg.isPoint -> stringResource(R.string.sb_jump_to_highlight)
+                categoryRes != null -> stringResource(R.string.sb_skip_segment, stringResource(categoryRes))
+                else -> stringResource(R.string.sb_manual_skip)
             }
         Surface(
             onClick = {

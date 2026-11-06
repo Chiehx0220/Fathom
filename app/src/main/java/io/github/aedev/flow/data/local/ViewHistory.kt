@@ -177,9 +177,7 @@ class ViewHistory private constructor(
         savePlaybackPosition(videoId, position, duration, title, thumbnailUrl, channelName, isMusic = true)
     }
 
-    /**
-     * Progress columns of an existing entry only (e.g. periodic watch-progress ping without title/thumbnail/channel). No-op without a history row: [touchHistoryEntry] first.
-     */
+    /** Progress columns only; no-op without a history row ([touchHistoryEntry] first). */
     suspend fun updatePlaybackProgress(
         videoId: String,
         position: Long,

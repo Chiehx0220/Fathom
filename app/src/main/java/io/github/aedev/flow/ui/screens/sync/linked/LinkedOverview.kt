@@ -15,6 +15,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,9 +51,15 @@ internal fun LinkedOverview(
     onScanNewDevice: (() -> Unit)?,
     onRename: (id: String, name: String) -> Unit,
     onRemove: (id: String) -> Unit,
+    onReplaceWords: () -> Unit,
     onLeave: () -> Unit,
     onForget: () -> Unit,
+    onLoadContest: () -> Unit,
+    onKeepSide: (String) -> Unit,
     onUpdateLogin: (user: String, password: String) -> Unit,
+    onStartLoginChange: (user: String, password: String) -> Unit,
+    onFinishLoginChange: () -> Unit,
+    onCancelLoginChange: () -> Unit,
     /** Each device's remembered playback answer: true allowed, false not, absent asks. */
     consent: Map<String, Boolean>,
     onConsent: (id: String, allowed: Boolean?) -> Unit,
@@ -71,6 +78,36 @@ internal fun LinkedOverview(
             contentColor = MaterialTheme.colorScheme.onErrorContainer,
         )
         SyncActionRow(confirmLabel = stringResource(R.string.linked_forget), onConfirm = onForget, confirmEnabled = !state.busy)
+        return
+    }
+    if (state.error == LinkedError.REMOVAL_UNCONFIRMED) {
+        SyncStepHeader(
+            icon = Icons.Outlined.ErrorOutline,
+            title = stringResource(R.string.linked_unconfirmed_title),
+            body = stringResource(R.string.linked_unconfirmed_body),
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        )
+        SyncActionRow(confirmLabel = stringResource(R.string.linked_forget), onConfirm = onForget, confirmEnabled = !state.busy)
+        return
+    }
+    if (state.error == LinkedError.CONTESTED || state.contest.isNotEmpty()) {
+        LaunchedEffect(Unit) { onLoadContest() }
+        SyncStepHeader(
+            icon = Icons.Outlined.ErrorOutline,
+            title = stringResource(R.string.linked_contest_title),
+            body = stringResource(R.string.linked_contest_body),
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        )
+        for (side in state.contest) {
+            Text(stringResource(R.string.linked_contest_removes, side.removes.joinToString()))
+            SyncActionRow(
+                confirmLabel = stringResource(R.string.linked_contest_keep, side.device),
+                onConfirm = { onKeepSide(side.entry) },
+                confirmEnabled = !state.busy,
+            )
+        }
         return
     }
 
@@ -109,7 +146,11 @@ internal fun LinkedOverview(
             Text(error.message(), Modifier.padding(16.dp), color = MaterialTheme.colorScheme.onErrorContainer)
         }
     }
-    if (state.error == LinkedError.LOGIN_REFUSED) LoginAgain(state.busy, onUpdateLogin)
+    if (state.error == LinkedError.LOGIN_REFUSED) {
+        LoginAgain(state.busy, onUpdateLogin)
+    } else if (state.storeUrl?.startsWith(WEBDAV_STORE) == true) {
+        LoginChange(state, onStartLoginChange, onFinishLoginChange, onCancelLoginChange)
+    }
     if (!state.recoverySaved) SyncInfoRow(icon = Icons.Outlined.Warning, text = stringResource(R.string.linked_recovery_unsaved))
 
     state.requests.forEach { request ->
@@ -130,6 +171,7 @@ internal fun LinkedOverview(
     }
     profiles()
     DeviceList(state.devices.orEmpty(), state.nearby, state.kinds, state.busy, consent, onRename, onRemove, onConsent)
+    ReplaceRecoveryWords(state.busy, onReplaceWords)
     onScanNewDevice?.let {
         SyncActionRow(confirmLabel = stringResource(R.string.linked_scan_new_device), onConfirm = it, confirmEnabled = !state.busy)
     }
@@ -293,6 +335,57 @@ private fun LoginAgain(
         confirmLabel = stringResource(R.string.linked_save),
         onConfirm = { onSave(user.trim(), password) },
         confirmEnabled = !busy && user.isNotBlank() && password.isNotEmpty(),
+    )
+}
+
+/** Replacing the folder's login (spec/protocol.md, Replacing a store's login). */
+@Composable
+private fun LoginChange(
+    state: LinkedUiState,
+    onStart: (user: String, password: String) -> Unit,
+    onFinish: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val waiting = state.loginWaiting
+    if (waiting != null) {
+        val names = waiting.map { id -> state.devices?.firstOrNull { it.id == id }?.name ?: id.take(8) }
+        Text(stringResource(R.string.linked_login_change_title), Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium)
+        Text(
+            if (names.isEmpty()) {
+                stringResource(R.string.linked_login_change_everyone)
+            } else {
+                stringResource(R.string.linked_login_change_waiting, names.joinToString())
+            },
+        )
+        Text(stringResource(R.string.linked_login_change_now))
+        SyncActionRow(
+            confirmLabel = stringResource(R.string.linked_login_change_done),
+            onConfirm = onFinish,
+            confirmEnabled = !state.busy,
+            dismissLabel = stringResource(R.string.linked_cancel),
+            onDismiss = onCancel,
+        )
+        return
+    }
+    var open by rememberSaveable { mutableStateOf(false) }
+    if (!state.loginDue && !open) {
+        SyncActionRow(
+            confirmLabel = stringResource(R.string.linked_login_change_title),
+            onConfirm = { open = true },
+            confirmEnabled = !state.busy,
+        )
+        return
+    }
+    var user by rememberSaveable { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    Text(stringResource(R.string.linked_login_change_title), Modifier.fillMaxWidth(), style = MaterialTheme.typography.titleMedium)
+    if (state.loginDue) Text(stringResource(R.string.linked_login_change_due))
+    Text(stringResource(R.string.linked_login_change_first))
+    WebDavLoginFields(user, { user = it }, password, { password = it })
+    SyncActionRow(
+        confirmLabel = stringResource(R.string.linked_login_change_send),
+        onConfirm = { onStart(user.trim(), password) },
+        confirmEnabled = !state.busy && user.isNotBlank() && password.isNotEmpty(),
     )
 }
 

@@ -5,6 +5,8 @@ import io.github.aedev.flow.data.local.AppFontPreferences
 import io.github.aedev.flow.data.local.AppFontSelection
 import io.github.aedev.flow.data.local.AppUiModePreferences
 import io.github.aedev.flow.data.local.DEFAULT_NAV_TAB_ORDER
+import io.github.aedev.flow.data.local.DEFAULT_NEW_SETTINGS_HIGHLIGHT
+import io.github.aedev.flow.data.local.DEFAULT_NEW_SETTINGS_HIGHLIGHT_DAYS
 import io.github.aedev.flow.data.local.HomeFeedColumns
 import io.github.aedev.flow.data.local.HomeViewMode
 import io.github.aedev.flow.data.local.LocalDataManager
@@ -68,6 +70,7 @@ class AppearanceViewModel
             }.combine(preferences.downloadsNavigationEnabled) { visibility, downloads -> visibility.copy(downloads = downloads) }
                 .asState(NavigationVisibility())
         val hideNavOnScroll = preferences.bottomNavHideOnScroll.asState(true)
+        val searchShowsNavBar = preferences.searchShowsNavBar.asState(false)
         val navTabOrder = preferences.navTabOrder.asState(DEFAULT_NAV_TAB_ORDER)
         val defaultNavTabIndex = preferences.defaultNavTabIndex.asState(0)
 
@@ -85,6 +88,13 @@ class AppearanceViewModel
                 appIconController.apply(suffix)
                 _appIcon.value = suffix
             }
+
+        val newSettingsHighlight = preferences.newSettingsHighlight.asState(DEFAULT_NEW_SETTINGS_HIGHLIGHT)
+        val newSettingsDays = preferences.newSettingsHighlightDays.asState(DEFAULT_NEW_SETTINGS_HIGHLIGHT_DAYS)
+
+        fun setNewSettingsHighlight(enabled: Boolean) = write { preferences.setNewSettingsHighlight(enabled) }
+
+        fun setNewSettingsDays(days: Int) = write { preferences.setNewSettingsHighlightDays(days) }
 
         fun setHomeViewMode(mode: HomeViewMode) = write { preferences.setHomeViewMode(mode) }
 
@@ -119,6 +129,8 @@ class AppearanceViewModel
         fun setDownloadsTab(enabled: Boolean) = write { preferences.setDownloadsNavigationEnabled(enabled) }
 
         fun setHideNavOnScroll(enabled: Boolean) = write { preferences.setBottomNavHideOnScroll(enabled) }
+
+        fun setSearchShowsNavBar(enabled: Boolean) = write { preferences.setSearchShowsNavBar(enabled) }
 
         fun setNavTabOrder(order: List<Int>) = write { preferences.setNavTabOrder(order) }
 

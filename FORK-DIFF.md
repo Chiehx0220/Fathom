@@ -26,36 +26,36 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **113** (1205 changed lines). New files: **269**.
+- Modified upstream files: **111** (1170 changed lines). New files: **269**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | ui/screens/home/chips/HomeChipFeeds.kt | 32 | 34 |
 | ui/screens/home/HomeViewModel.kt | 40 | 9 |
 | ui/screens/categories/CategoriesScreen.kt | 36 | 6 |
-| data/local/SubscriptionRecordCodec.kt | 23 | 15 |
 | data/local/BackupRepository.kt | 20 | 17 |
+| data/local/SubscriptionRecordCodec.kt | 22 | 15 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
 | ui/screens/channel/ChannelViewModel.kt | 22 | 8 |
-| data/backup/NewPipeSubscriptionCodec.kt | 24 | 5 |
 | data/paging/SearchPagingSource.kt | 17 | 12 |
-| data/video/VideoDownloadManager.kt | 23 | 3 |
+| data/backup/NewPipeSubscriptionCodec.kt | 23 | 5 |
 | data/video/VideoDownloadOptionsLoader.kt | 25 | 1 |
 | player/resolver/VideoPlaybackResolver.kt | 22 | 3 |
-| data/innertube/RssSubscriptionService.kt | 21 | 3 |
-| data/local/ViewHistory.kt | 24 | 0 |
 | data/repository/YouTubeRepository.kt | 18 | 6 |
 | ui/screens/search/SearchViewModel.kt | 20 | 4 |
 | data/update/UpdateRepository.kt | 14 | 9 |
-| ui/screens/home/HomeFeedSources.kt | 20 | 3 |
+| data/video/VideoDownloadManager.kt | 21 | 2 |
+| data/innertube/RssSubscriptionService.kt | 19 | 3 |
+| data/local/ViewHistory.kt | 22 | 0 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 18 | 3 |
 | ui/screens/player/PlaybackSessionApplier.kt | 21 | 0 |
-| utils/ShareVideo.kt | 14 | 7 |
-| data/local/dao/WatchHistoryDao.kt | 20 | 0 |
+| data/video/downloader/resolve/DownloadStreamResolver.kt | 16 | 4 |
+| ui/screens/home/HomeFeedSources.kt | 17 | 3 |
 | ui/screens/home/HomeScreen.kt | 16 | 4 |
-| data/subscriptions/SubscriptionFeedRepository.kt | 19 | 0 |
-| data/video/downloader/resolve/DownloadStreamResolver.kt | 14 | 4 |
+| utils/ShareVideo.kt | 13 | 7 |
+| data/local/dao/WatchHistoryDao.kt | 18 | 0 |
 | player/EnhancedPlayerManager.kt | 16 | 2 |
+| data/subscriptions/SubscriptionFeedRepository.kt | 17 | 0 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 13 | 2 |
@@ -70,27 +70,27 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/content/PlayerErrorPanel.kt | 8 | 3 |
 | utils/ThumbnailUrlResolver.kt | 6 | 5 |
 | data/local/entity/VideoEntity.kt | 7 | 3 |
-| data/video/downloader/work/DownloadTransfer.kt | 9 | 1 |
-| player/stream/InnerTubeVideoStreamExtractor.kt | 10 | 0 |
-| player/stream/ResolvedStreamData.kt | 10 | 0 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
 | ui/screens/channel/ChannelCommunityController.kt | 8 | 1 |
 | ui/screens/player/content/RelatedVideosList.kt | 6 | 3 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 7 | 2 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 8 | 1 |
+| player/stream/ResolvedStreamData.kt | 8 | 0 |
 | sync/merge/CollectionMergers.kt | 4 | 4 |
 | ui/PlayerNavigation.kt | 5 | 3 |
-| ui/components/shared/quickactions/VideoQuickActionsSheet.kt | 6 | 2 |
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
 | utils/YouTubeLink.kt | 8 | 0 |
+| data/video/downloader/work/DownloadTransfer.kt | 7 | 0 |
+| player/stream/InnerTubeVideoStreamExtractor.kt | 7 | 0 |
 | ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
 | data/model/Models.kt | 6 | 0 |
 | data/repository/LiveChatRepository.kt | 5 | 1 |
-| player/stream/PlaybackPrefetcher.kt | 6 | 0 |
 | sync/canonical/Canonical.kt | 6 | 0 |
 | sync/mapping/SimpleMappers.kt | 6 | 0 |
 | ui/AppHooks.kt | 2 | 4 |
-| ... 53 more, each small | | |
+| ui/components/videoplayer/settings/PlayerSettingsSheet.kt | 6 | 0 |
+| ui/screens/player/dialogs/PlayerSettingsSheetHost.kt | 6 | 0 |
+| ... 51 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 
@@ -123,11 +123,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **18** (133 changed lines). New files: **90**.
+- Modified upstream files: **18** (137 changed lines). New files: **90**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/test/java/io/github/aedev/flow/data/update/GitHubReleaseTest.kt | 13 | 13 |
+| app/src/test/java/io/github/aedev/flow/data/update/GitHubReleaseTest.kt | 15 | 15 |
 | app/src/test/java/io/github/aedev/flow/platform/LauncherAliasManifestTest.kt | 14 | 3 |
 | app/src/test/java/io/github/aedev/flow/utils/ShareVideoTest.kt | 12 | 3 |
 | app/src/test/java/io/github/aedev/flow/data/subscriptions/SubscriptionRefreshPlannerTest.kt | 12 | 0 |

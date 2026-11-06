@@ -12,7 +12,28 @@ internal data class ArtworkAnswer(
     val name: String? = null,
     val artist: String? = null,
     val animated: String? = null,
+    val animatedVertical: String? = null,
 )
+
+/** An album's loops: the square one, and the 3:4 one cut for a tall screen. Either can be missing. */
+internal data class AnimatedLoop(
+    val square: String?,
+    val tall: String?,
+) {
+    /** The loop for the space it plays in. A tall space takes the square loop when it is all there is. */
+    fun urlFor(tallSpace: Boolean): String? = if (tallSpace) tall ?: square else square
+}
+
+/** A loop and the song it was looked up for, so it can never show on another song. */
+internal class LoadedLoop(
+    private val videoId: String,
+    private val loop: AnimatedLoop,
+) {
+    fun urlFor(
+        currentVideoId: String?,
+        tallSpace: Boolean,
+    ): String? = loop.urlFor(tallSpace).takeIf { videoId == currentVideoId }
+}
 
 /**
  * How a song is asked for and how an answer is trusted. A loop belongs to an album, so the songs

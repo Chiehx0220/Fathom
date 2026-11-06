@@ -165,6 +165,7 @@ internal fun BoxScope.TvPlayerSheets(
                             onNavigateToChannel = onNavigateToChannel,
                             onClose = onClose,
                             modifier = Modifier.fillMaxSize(),
+                            canFollowVideo = false,
                         )
                     }
 

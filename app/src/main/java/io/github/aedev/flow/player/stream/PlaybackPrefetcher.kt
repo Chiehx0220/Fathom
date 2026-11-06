@@ -34,9 +34,7 @@ object PlaybackPrefetcher {
      * Local media plays from a `content://` URI and never touches extraction, so those ids are
      * ignored rather than sent through a client ladder that would certainly fail.
      *
-     * [InnerTubeVideoStreamExtractor] only talks to YouTube's private API - for any other
-     * service's id (e.g. Bilibili) warming it would just fail after a full client-ladder timeout, so
-     * it's skipped; that service's actual player load goes through the generic extractor instead.
+     * Non-YouTube ids are skipped: [InnerTubeVideoStreamExtractor] is YouTube-only (client-ladder timeout).
      */
     fun prefetch(videoId: String) {
         if (videoId.isBlank() || LocalMediaIds.isLocal(videoId)) return

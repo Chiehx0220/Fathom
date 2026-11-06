@@ -29,6 +29,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -130,6 +132,7 @@ class PlayerPreferences(
         val SHORTS_PLAYER_UI_MODE = stringPreferencesKey("shorts_player_ui_mode")
         val GESTURE_OVERLAY_STYLE = stringPreferencesKey("gesture_overlay_style")
         val GROUPED_QUALITY_SELECTOR_ENABLED = booleanPreferencesKey("grouped_quality_selector_enabled")
+        val PAID_PROMOTION_LABEL = booleanPreferencesKey("paid_promotion_label")
         val SHORTS_CONTENT_ENABLED = booleanPreferencesKey("shorts_content_enabled")
         val CHANNEL_SHORTS_TAB_WHEN_HIDDEN = booleanPreferencesKey("channel_shorts_tab_when_hidden")
         val NOTES_ENABLED = booleanPreferencesKey("notes_enabled")
@@ -152,6 +155,7 @@ class PlayerPreferences(
         val HOME_NAVIGATION_ENABLED = booleanPreferencesKey("home_navigation_enabled")
         val SHORTS_NAVIGATION_ENABLED = booleanPreferencesKey("shorts_navigation_enabled")
         val BOTTOM_NAV_HIDE_ON_SCROLL = booleanPreferencesKey("bottom_nav_hide_on_scroll")
+        val SEARCH_SHOWS_NAV_BAR = booleanPreferencesKey("search_shows_nav_bar")
         val MUSIC_NAVIGATION_ENABLED = booleanPreferencesKey("music_navigation_enabled")
         val SEARCH_NAV_TAB_ENABLED = booleanPreferencesKey("search_nav_tab_enabled")
         val CATEGORIES_NAV_TAB_ENABLED = booleanPreferencesKey("categories_nav_tab_enabled")
@@ -163,6 +167,7 @@ class PlayerPreferences(
         val LYRICS_SHOW_ROMANIZATION = booleanPreferencesKey("lyrics_show_romanization")
         val LYRICS_AUTO_ROMANIZE = booleanPreferencesKey("lyrics_auto_romanize")
         val LYRICS_KEEP_SCREEN_ON = booleanPreferencesKey("lyrics_keep_screen_on")
+        val LYRICS_BLUR_OTHER_LINES = booleanPreferencesKey("lyrics_blur_other_lines")
         val LYRICS_PROVIDER_ENABLED_BETTERLYRICS = booleanPreferencesKey("lyrics_provider_enabled_betterlyrics")
         val LYRICS_PROVIDER_ENABLED_SIMPMUSIC = booleanPreferencesKey("lyrics_provider_enabled_simpmusic")
         val LYRICS_PROVIDER_ENABLED_LYRICSPLUS = booleanPreferencesKey("lyrics_provider_enabled_lyricsplus")
@@ -191,6 +196,8 @@ class PlayerPreferences(
         val SB_ACTION_FILLER = stringPreferencesKey("sb_action_filler")
         val SB_ACTION_PREVIEW = stringPreferencesKey("sb_action_preview")
         val SB_ACTION_EXCLUSIVE_ACCESS = stringPreferencesKey("sb_action_exclusive_access")
+        val SB_ACTION_HOOK = stringPreferencesKey("sb_action_hook")
+        val SB_ACTION_HIGHLIGHT = stringPreferencesKey("sb_action_poi_highlight")
 
         // SponsorBlock per-category color keys
         val SB_COLOR_SPONSOR = intPreferencesKey("sb_color_sponsor")
@@ -202,6 +209,8 @@ class PlayerPreferences(
         val SB_COLOR_FILLER = intPreferencesKey("sb_color_filler")
         val SB_COLOR_PREVIEW = intPreferencesKey("sb_color_preview")
         val SB_COLOR_EXCLUSIVE_ACCESS = intPreferencesKey("sb_color_exclusive_access")
+        val SB_COLOR_HOOK = intPreferencesKey("sb_color_hook")
+        val SB_COLOR_HIGHLIGHT = intPreferencesKey("sb_color_poi_highlight")
 
         // SponsorBlock submit
         val SB_SUBMIT_ENABLED = booleanPreferencesKey("sb_submit_enabled")
@@ -252,6 +261,11 @@ class PlayerPreferences(
         val ANIMATED_ARTWORK = booleanPreferencesKey("animated_artwork")
         val MUSIC_REPEAT_MODE = intPreferencesKey("music_repeat_mode")
         val MUSIC_RESUME_LONG_TRACKS = booleanPreferencesKey("music_resume_long_tracks")
+        val MUSIC_CROSSFADE_SECONDS = intPreferencesKey("music_crossfade_seconds")
+        val MUSIC_CROSSFADE_KEEP_ALBUMS = booleanPreferencesKey("music_crossfade_keep_albums")
+        val MUSIC_CROSSFADE_CURVE = stringPreferencesKey("music_crossfade_curve")
+        val MUSIC_CROSSFADE_AUTO_ADVANCE = booleanPreferencesKey("music_crossfade_auto_advance")
+        val MUSIC_CROSSFADE_MANUAL_SKIP = booleanPreferencesKey("music_crossfade_manual_skip")
         val RECAP_SOURCE = stringPreferencesKey("recap_source")
         val HIDDEN_MUSIC_HOME_SHELVES = stringSetPreferencesKey("hidden_music_home_shelves")
         val HIDDEN_LIBRARY_SECTIONS = stringSetPreferencesKey("hidden_library_sections")
@@ -313,6 +327,7 @@ class PlayerPreferences(
         val COMMENTS_ENABLED = booleanPreferencesKey("comments_enabled")
         val LIVE_CHAT_ENABLED = booleanPreferencesKey("live_chat_enabled")
         val COMMENTS_PREVIEW_ENABLED = booleanPreferencesKey("comments_preview_enabled")
+        val TIMED_COMMENTS_FOLLOW = booleanPreferencesKey("timed_comments_follow")
 
         val SUBSCRIPTION_SHOW_VIDEOS = booleanPreferencesKey("subscription_show_videos")
         val SUBSCRIPTION_SHOW_SHORTS = booleanPreferencesKey("subscription_show_shorts")
@@ -498,6 +513,11 @@ class PlayerPreferences(
         // Volume boost: opt-in, default off
         val ALLOW_VOLUME_BOOST = device(booleanPreferencesKey("allow_volume_boost"))
 
+        // New settings (#1676): when each settings key was first seen, and how long it stays marked
+        val SETTINGS_FIRST_SEEN = device(stringPreferencesKey("settings_first_seen"))
+        val NEW_SETTINGS_HIGHLIGHT = device(booleanPreferencesKey("new_settings_highlight"))
+        val NEW_SETTINGS_HIGHLIGHT_DAYS = device(intPreferencesKey("new_settings_highlight_days"))
+
         val NAMES: Set<String> = names
     }
 
@@ -531,6 +551,48 @@ class PlayerPreferences(
             preferences[DeviceKeys.ALLOW_VOLUME_BOOST] = enabled
         }
     }
+
+    /** Settings key to the epoch day it was first seen on this device; null before Settings first opened. */
+    val settingsFirstSeen: Flow<Map<String, Long>?> =
+        context.devicePreferencesDataStore.data
+            .map { preferences -> preferences[DeviceKeys.SETTINGS_FIRST_SEEN]?.let(::decodeFirstSeen) }
+            .distinctUntilChanged()
+
+    /** Rewrites the first-seen map with [update], which gets null the first time. */
+    suspend fun updateSettingsFirstSeen(update: (Map<String, Long>?) -> Map<String, Long>) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            val current = preferences[DeviceKeys.SETTINGS_FIRST_SEEN]?.let(::decodeFirstSeen)
+            val next = update(current)
+            if (next != current) preferences[DeviceKeys.SETTINGS_FIRST_SEEN] = Json.encodeToString(FirstSeenSerializer, next)
+        }
+    }
+
+    /** Whether settings added in an update get a dot; off unless the user turns it on. */
+    val newSettingsHighlight: Flow<Boolean> =
+        context.devicePreferencesDataStore.data
+            .map { preferences -> preferences[DeviceKeys.NEW_SETTINGS_HIGHLIGHT] ?: DEFAULT_NEW_SETTINGS_HIGHLIGHT }
+            .distinctUntilChanged()
+
+    suspend fun setNewSettingsHighlight(enabled: Boolean) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.NEW_SETTINGS_HIGHLIGHT] = enabled
+        }
+    }
+
+    /** How many days a new setting keeps its dot while [newSettingsHighlight] is on. */
+    val newSettingsHighlightDays: Flow<Int> =
+        context.devicePreferencesDataStore.data
+            .map { preferences -> preferences[DeviceKeys.NEW_SETTINGS_HIGHLIGHT_DAYS] ?: DEFAULT_NEW_SETTINGS_HIGHLIGHT_DAYS }
+            .distinctUntilChanged()
+
+    suspend fun setNewSettingsHighlightDays(days: Int) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.NEW_SETTINGS_HIGHLIGHT_DAYS] = days
+        }
+    }
+
+    private fun decodeFirstSeen(raw: String): Map<String, Long>? =
+        runCatching { Json.decodeFromString(FirstSeenSerializer, raw) }.getOrNull()
 
     // ── Shorts playback speed (#496): remembered across sessions ──
     val shortsPlaybackSpeed: Flow<Float> =
@@ -680,6 +742,8 @@ class PlayerPreferences(
                 "filler" -> Keys.SB_ACTION_FILLER
                 "preview" -> Keys.SB_ACTION_PREVIEW
                 "exclusive_access" -> Keys.SB_ACTION_EXCLUSIVE_ACCESS
+                "hook" -> Keys.SB_ACTION_HOOK
+                "poi_highlight" -> Keys.SB_ACTION_HIGHLIGHT
                 else -> Keys.SB_ACTION_SPONSOR
             }
         return context.playerPreferencesDataStore.data.map { preferences ->
@@ -702,6 +766,8 @@ class PlayerPreferences(
                 "filler" -> Keys.SB_ACTION_FILLER
                 "preview" -> Keys.SB_ACTION_PREVIEW
                 "exclusive_access" -> Keys.SB_ACTION_EXCLUSIVE_ACCESS
+                "hook" -> Keys.SB_ACTION_HOOK
+                "poi_highlight" -> Keys.SB_ACTION_HIGHLIGHT
                 else -> Keys.SB_ACTION_SPONSOR
             }
         context.playerPreferencesDataStore.edit { preferences ->
@@ -721,6 +787,8 @@ class PlayerPreferences(
             "filler" to Keys.SB_COLOR_FILLER,
             "preview" to Keys.SB_COLOR_PREVIEW,
             "exclusive_access" to Keys.SB_COLOR_EXCLUSIVE_ACCESS,
+            "hook" to Keys.SB_COLOR_HOOK,
+            "poi_highlight" to Keys.SB_COLOR_HIGHLIGHT,
         )
 
     private fun sbColorKey(category: String): Preferences.Key<Int> = sbColorKeys[category] ?: Keys.SB_COLOR_SPONSOR
@@ -983,6 +1051,16 @@ class PlayerPreferences(
     suspend fun setGroupedQualitySelectorEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.GROUPED_QUALITY_SELECTOR_ENABLED] = enabled
+        }
+    }
+
+    val paidPromotionLabel: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.PAID_PROMOTION_LABEL] ?: false }
+
+    suspend fun setPaidPromotionLabel(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.PAID_PROMOTION_LABEL] = enabled
         }
     }
 
@@ -1259,6 +1337,19 @@ class PlayerPreferences(
     suspend fun setBottomNavHideOnScroll(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.BOTTOM_NAV_HIDE_ON_SCROLL] = enabled
+        }
+    }
+
+    // Search keeps its full-screen layout unless this is on.
+    val searchShowsNavBar: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.SEARCH_SHOWS_NAV_BAR] ?: false
+            }
+
+    suspend fun setSearchShowsNavBar(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SEARCH_SHOWS_NAV_BAR] = enabled
         }
     }
 
@@ -1817,10 +1908,10 @@ class PlayerPreferences(
         }
     }
 
-    /** Videos and Shorts are turned down to YouTube's loudness level, as on youtube.com. */
+    /** Videos and Shorts are turned down to YouTube's loudness level, as on youtube.com, once chosen (#1641). */
     val videoVolumeNormalizationEnabled: Flow<Boolean> =
         context.playerPreferencesDataStore.data
-            .map { preferences -> preferences[Keys.VIDEO_VOLUME_NORMALIZATION] ?: true }
+            .map { preferences -> preferences[Keys.VIDEO_VOLUME_NORMALIZATION] ?: DEFAULT_VIDEO_VOLUME_NORMALIZATION }
             .distinctUntilChanged()
 
     suspend fun setVideoVolumeNormalizationEnabled(enabled: Boolean) {
@@ -2346,6 +2437,66 @@ class PlayerPreferences(
         }
     }
 
+    /** How many seconds a song blends into the next (#1675); 0 is off. */
+    val musicCrossfadeSeconds: Flow<Int> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.MUSIC_CROSSFADE_SECONDS] ?: 0 }
+            .distinctUntilChanged()
+
+    suspend fun setMusicCrossfadeSeconds(seconds: Int) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_CROSSFADE_SECONDS] = seconds
+        }
+    }
+
+    /** Tracks of one album play gapless even with crossfade on. */
+    val musicCrossfadeKeepAlbums: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.MUSIC_CROSSFADE_KEEP_ALBUMS] ?: true }
+            .distinctUntilChanged()
+
+    suspend fun setMusicCrossfadeKeepAlbums(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_CROSSFADE_KEEP_ALBUMS] = enabled
+        }
+    }
+
+    /** Whether a song blends into the next when it ends by itself. */
+    val musicCrossfadeOnAutoAdvance: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.MUSIC_CROSSFADE_AUTO_ADVANCE] ?: true }
+            .distinctUntilChanged()
+
+    suspend fun setMusicCrossfadeOnAutoAdvance(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_CROSSFADE_AUTO_ADVANCE] = enabled
+        }
+    }
+
+    /** Whether a song blends into the one the user skips to; off keeps Next immediate. */
+    val musicCrossfadeOnManualSkip: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.MUSIC_CROSSFADE_MANUAL_SKIP] ?: false }
+            .distinctUntilChanged()
+
+    suspend fun setMusicCrossfadeOnManualSkip(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_CROSSFADE_MANUAL_SKIP] = enabled
+        }
+    }
+
+    /** How the two songs' volumes move during a crossfade. */
+    val musicCrossfadeCurve: Flow<CrossfadeCurve> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> CrossfadeCurve.fromString(preferences[Keys.MUSIC_CROSSFADE_CURVE]) }
+            .distinctUntilChanged()
+
+    suspend fun setMusicCrossfadeCurve(curve: CrossfadeCurve) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_CROSSFADE_CURVE] = curve.name
+        }
+    }
+
     /** Podcasts and other long tracks pick up where they stopped when played again. */
     val musicResumeLongTracks: Flow<Boolean> =
         context.playerPreferencesDataStore.data
@@ -2678,6 +2829,16 @@ class PlayerPreferences(
     suspend fun setCommentsPreviewEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.COMMENTS_PREVIEW_ENABLED] = enabled
+        }
+    }
+
+    val timedCommentsFollow: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.TIMED_COMMENTS_FOLLOW] ?: true }
+
+    suspend fun setTimedCommentsFollow(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.TIMED_COMMENTS_FOLLOW] = enabled
         }
     }
 
@@ -3738,6 +3899,13 @@ class PlayerPreferences(
         context.playerPreferencesDataStore.edit { it[Keys.LYRICS_KEEP_SCREEN_ON] = enabled }
     }
 
+    val lyricsBlurOtherLines: Flow<Boolean> =
+        context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_BLUR_OTHER_LINES] ?: true }
+
+    suspend fun setLyricsBlurOtherLines(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { it[Keys.LYRICS_BLUR_OTHER_LINES] = enabled }
+    }
+
     // ========== MINI PLAYER PREFERENCES ==========
 
     val miniPlayerScale: Flow<Float> =
@@ -4092,18 +4260,43 @@ private fun MutablePreferences.restore(backup: SettingsBackup) {
     backup.stringSets.forEach { (k, v) -> this[stringSetPreferencesKey(k)] = v }
 }
 
-/** Action to take when a SponsorBlock segment is encountered. */
-enum class SponsorBlockAction(
-    val displayName: String,
-) {
-    SKIP("Skip"),
-    MUTE("Mute"),
-    SHOW_TOAST("Notify only"),
-    IGNORE("Ignore"),
+const val DEFAULT_NEW_SETTINGS_HIGHLIGHT = false
+const val DEFAULT_NEW_SETTINGS_HIGHLIGHT_DAYS = 7
+
+private val FirstSeenSerializer = MapSerializer(String.serializer(), Long.serializer())
+
+/** Loud videos play at their own level unless the user turns levelling on. */
+const val DEFAULT_VIDEO_VOLUME_NORMALIZATION = false
+
+/**
+ * What the player does with a SponsorBlock segment, in the order settings list them. The names are
+ * stored and synced, so they never change: [IGNORE] is "show in seek bar" and [SHOW_TOAST] is "notify".
+ */
+enum class SponsorBlockAction {
+    SKIP,
+    SKIP_ONCE,
+    SKIP_BUTTON,
+    SHOW_TOAST,
+    MUTE,
+    IGNORE,
+    DISABLED,
     ;
 
     companion object {
-        fun fromString(name: String): SponsorBlockAction = values().find { it.name == name } ?: SKIP
+        fun fromString(name: String): SponsorBlockAction = entries.find { it.name == name } ?: SKIP
+    }
+}
+
+/** How the two songs' volumes move during a crossfade, in the order settings list them. */
+enum class CrossfadeCurve {
+    EQUAL_POWER,
+    S_CURVE,
+    HOLD,
+    GENTLE,
+    ;
+
+    companion object {
+        fun fromString(name: String?): CrossfadeCurve = entries.find { it.name == name } ?: EQUAL_POWER
     }
 }
 

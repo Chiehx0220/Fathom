@@ -25,6 +25,7 @@ import io.github.aedev.flow.sync2.engine.LinkedException
 import io.github.aedev.flow.sync2.engine.Session
 import io.github.aedev.flow.sync2.roster.Role
 import io.github.aedev.flow.sync2.roster.b64
+import io.github.aedev.flow.sync2.store.MAX_OBJECT_SIZE
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
@@ -38,11 +39,14 @@ import java.nio.ByteBuffer
 private const val NONCE_SIZE = 32
 private const val SIGNATURE_SIZE = 64
 
-/** The most a LAN frame's payload may hold (spec/live.md, Session). */
-const val MAX_LAN_PAYLOAD = 4 * 1024 * 1024
+/** How many epochs to try a member under. */
+internal const val DIAL_ATTEMPTS = 4
 
-/** Room for a payload's gzip, padding (at most 1/32 at this size), box and `seq`. */
-const val MAX_LAN_FRAME = MAX_LAN_PAYLOAD + MAX_LAN_PAYLOAD / 16L
+/** The most a LAN frame's content may hold: a full object and its header line (spec/live.md, Requests). */
+const val MAX_LAN_CONTENT = MAX_OBJECT_SIZE + 64 * 1024
+
+/** The largest frame a device accepts: that content after gzip, padding, box and `seq`. */
+const val MAX_LAN_FRAME = MAX_OBJECT_SIZE + 256 * 1024L
 
 /**
  * A LAN session between two members (spec/live.md, Session), once the hello has checked both: each
@@ -63,6 +67,7 @@ class LanLink internal constructor(
 
     suspend fun send(content: ByteArray) =
         sending.withLock {
+            if (content.size > MAX_LAN_CONTENT) reject(ProtocolError.LENGTH)
             connection.send(u64(sent) + seal(sendKey, lanFrameAad(sent), encodePayload(content)))
             sent++
         }
@@ -72,7 +77,7 @@ class LanLink internal constructor(
         val frame = connection.receive() ?: return null
         if (frame.size < 8 || ByteBuffer.wrap(frame, 0, 8).long != received) reject(ProtocolError.REPLAY)
         val content = decodePayload(open(receiveKey, lanFrameAad(received), frame.copyOfRange(8, frame.size)))
-        if (content.size > MAX_LAN_PAYLOAD) reject(ProtocolError.LENGTH)
+        if (content.size > MAX_LAN_CONTENT) reject(ProtocolError.LENGTH)
         received++
         return content
     }
@@ -109,14 +114,17 @@ private fun JsonObject.signature(): ByteArray = b64(field("sig"), SIGNATURE_SIZE
 private fun Session.memberKey(did: String): ByteArray =
     state.members[did]?.takeIf { it.role == Role.DEVICE && did != me }?.sig ?: reject(ProtocolError.SENDER)
 
-/** The connecting side: hello sealed under this device's current epoch, naming the [port] this device listens on. */
+/**
+ * The connecting side: hello sealed under [epoch], naming the [port] this device listens on.
+ * [LinkedException.LanUnreachable] when the member closes without answering.
+ */
 suspend fun connectLink(
     connection: SyncConnection,
     session: Session,
     port: Int? = null,
+    epoch: Int = session.state.epoch,
 ): LanLink {
-    val epoch = session.state.epoch
-    val lanKey = purposeKey(session.currentKey(), session.group, epoch, Purpose.LAN)
+    val lanKey = purposeKey(session.epochKey(epoch), session.group, epoch, Purpose.LAN)
     val clientNonce = SyncCrypto.randomBytes(NONCE_SIZE)
     val client = session.device.did
     connection.send(
@@ -134,7 +142,7 @@ suspend fun connectLink(
         ),
     )
 
-    val second = opened(connection.receive(), lanKey, 2)
+    val second = opened(connection.receive() ?: throw LinkedException.LanUnreachable(), lanKey, 2)
     val serverDid = second.field("did")
     val serverKey = session.memberKey(serverDid)
     val server = SyncBytes.fromHex(serverDid)
@@ -146,6 +154,32 @@ suspend fun connectLink(
     connection.send(hello(epoch, lanKey, 3, JsonObject(mapOf("sig" to JsonPrimitive(SyncBytes.b64urlEncode(proof))))))
     val keys = lanSessionKeys(lanKey, clientNonce, serverNonce, client, server)
     return LanLink(connection, serverDid, null, keys.clientToServer, keys.serverToClient)
+}
+
+/**
+ * Dials a member through [connect], one epoch lower each time it closes without answering, for at most
+ * [DIAL_ATTEMPTS] attempts (spec/live.md, Session). Null once it can't be reached.
+ */
+suspend fun dialLink(
+    session: Session,
+    port: Int?,
+    connect: suspend () -> SyncConnection?,
+): LanLink? {
+    var epoch = session.state.epoch
+    repeat(DIAL_ATTEMPTS) {
+        val connection = connect() ?: return null
+        try {
+            return connectLink(connection, session, port, epoch)
+        } catch (_: LinkedException.LanUnreachable) {
+            connection.close()
+            if (epoch == 0) return null
+            epoch--
+        } catch (e: Exception) {
+            connection.close()
+            throw e
+        }
+    }
+    return null
 }
 
 /** The accepting side: answers under the epoch the client named, if this device holds its key. */

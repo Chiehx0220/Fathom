@@ -83,8 +83,8 @@ import io.github.aedev.flow.data.profile.ProfileFiles
         AutoMigration(from = 31, to = 32),
         AutoMigration(from = 32, to = 33),
     ],
-    // FORK VERSIONING POLICY: ≤ 33 = upstream (AutoMigration chain). Fork-only migrations must not continue it (upstream's next version would collide):
-    // reserved 10001+ block (next: Migration(10005, 10006)). Migrations touching columns/tables upstream may add stay idempotent (MigrationColumns.kt): device may hold the schema from an earlier numbering.
+    // FORK VERSIONING POLICY: ≤ 33 = upstream AutoMigration chain; fork migrations use the reserved 10001+ block (next Migration(10005, 10006)).
+    // Migrations on columns/tables upstream may add stay idempotent (MigrationColumns.kt).
     version = 10005,
     exportSchema = true,
 )

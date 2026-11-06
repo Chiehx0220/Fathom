@@ -3,9 +3,11 @@ package io.github.aedev.flow.ui.screens.settings.playback
 import android.content.Context
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.aedev.flow.data.local.CrossfadeCurve
 import io.github.aedev.flow.data.local.DEFAULT_BACKGROUND_PLAY_ENABLED
 import io.github.aedev.flow.data.local.DEFAULT_KEEP_PLAYING_AFTER_SWIPE
 import io.github.aedev.flow.data.local.DEFAULT_SPEED_SWIPE_STEP
+import io.github.aedev.flow.data.local.DEFAULT_VIDEO_VOLUME_NORMALIZATION
 import io.github.aedev.flow.data.local.DoubleTapSeekZone
 import io.github.aedev.flow.data.local.PlayerOverlayPreferences
 import io.github.aedev.flow.data.local.PlayerPreferences
@@ -110,9 +112,26 @@ class PlaybackSettingsViewModel
         val musicVideoSwitch = preferences.musicVideoSwitch.asState(false)
         val pauseMusicWhenMuted = preferences.pauseMusicWhenMuted.asState(false)
         val musicResume = preferences.musicResumeLongTracks.asState(false)
+        val crossfadeSeconds = preferences.musicCrossfadeSeconds.asState(0)
+        val crossfadeKeepAlbums = preferences.musicCrossfadeKeepAlbums.asState(true)
+        val crossfadeCurve = preferences.musicCrossfadeCurve.asState(CrossfadeCurve.EQUAL_POWER)
+
+        val crossfadeOnAutoAdvance = preferences.musicCrossfadeOnAutoAdvance.asState(true)
+        val crossfadeOnManualSkip = preferences.musicCrossfadeOnManualSkip.asState(false)
+
+        fun setCrossfadeCurve(curve: CrossfadeCurve) = write { preferences.setMusicCrossfadeCurve(curve) }
+
+        fun setCrossfadeOnAutoAdvance(enabled: Boolean) = write { preferences.setMusicCrossfadeOnAutoAdvance(enabled) }
+
+        fun setCrossfadeOnManualSkip(enabled: Boolean) = write { preferences.setMusicCrossfadeOnManualSkip(enabled) }
+
+        fun setCrossfadeSeconds(seconds: Int) = write { preferences.setMusicCrossfadeSeconds(seconds) }
+
+        fun setCrossfadeKeepAlbums(enabled: Boolean) = write { preferences.setMusicCrossfadeKeepAlbums(enabled) }
+
         val resumeFromHeadphones = preferences.resumeFromHeadphones.asState(true)
         val musicSideSwipes = preferences.musicSideSwipes.asState(false)
-        val normalizeVolume = preferences.videoVolumeNormalizationEnabled.asState(true)
+        val normalizeVolume = preferences.videoVolumeNormalizationEnabled.asState(DEFAULT_VIDEO_VOLUME_NORMALIZATION)
         val lyricsProviders =
             combine(preferences.lyricsProviderOrder, preferences.allLyricsProviderEnabledStates()) { order, enabled ->
                 LyricsProviderOrder.resolve(order).map { LyricsProviderState(it, enabled[it] ?: true) }

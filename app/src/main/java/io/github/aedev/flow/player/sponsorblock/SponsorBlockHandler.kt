@@ -11,16 +11,25 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+/** A skip that happened. [firstInVideo] is false when this segment was already skipped in this video. */
+class SponsorBlockSkip(
+    val segment: SponsorBlockSegment,
+    val firstInVideo: Boolean,
+)
 
 /**
  * Handles SponsorBlock segment loading and skip logic.
  *
- * Per-category actions are controlled by [categoryActions] map.
- * Supported actions: SKIP (seek to end), MUTE (emit mute/unmute events), SHOW_TOAST (notify only), IGNORE.
+ * Per-category actions are controlled by [categoryActions] map; [SponsorBlockActionPolicy] says what
+ * each one does.
  */
 class SponsorBlockHandler(
     private val scope: CoroutineScope,
@@ -31,6 +40,7 @@ class SponsorBlockHandler(
         /** A skip only re-arms for a rewind this far before the segment, so a seek that lands slightly
          * short of the requested end (SABR rebuilds at a segment boundary) cannot loop the skip. */
         private const val SEEK_BACK_REARM_MARGIN_SEC = 1f
+        private const val VISIBLE_SEGMENTS_STOP_MS = 5_000L
     }
 
     private val sponsorBlockRepository = SponsorBlockRepository()
@@ -39,8 +49,8 @@ class SponsorBlockHandler(
     val sponsorSegments: StateFlow<List<SponsorBlockSegment>> = _sponsorSegments.asStateFlow()
 
     /** Emitted when a segment should be skipped (seeked past). */
-    private val _skipEvent = MutableSharedFlow<SponsorBlockSegment>(extraBufferCapacity = 1)
-    val skipEvent: SharedFlow<SponsorBlockSegment> = _skipEvent.asSharedFlow()
+    private val _skipEvent = MutableSharedFlow<SponsorBlockSkip>(extraBufferCapacity = 1)
+    val skipEvent: SharedFlow<SponsorBlockSkip> = _skipEvent.asSharedFlow()
 
     /** Emitted when entering a MUTE segment (true) or leaving one (false). */
     private val _muteEvent = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
@@ -68,8 +78,29 @@ class SponsorBlockHandler(
     var isEnabled: Boolean = false
         private set
 
+    private val _categoryActions = MutableStateFlow<Map<String, SponsorBlockAction>>(emptyMap())
+
     /** Category id to action; a category missing here takes [SponsorBlockCategories.defaultAction]. */
-    var categoryActions: Map<String, SponsorBlockAction> = emptyMap()
+    var categoryActions: Map<String, SponsorBlockAction>
+        get() = _categoryActions.value
+        set(value) {
+            _categoryActions.value = value
+        }
+
+    /** The segments the seek bar and the skip button show: every category but the disabled ones. */
+    val visibleSegments: StateFlow<List<SponsorBlockSegment>> =
+        combine(_sponsorSegments, _categoryActions, SponsorBlockActionPolicy::visibleSegments)
+            .stateIn(scope, SharingStarted.WhileSubscribed(VISIBLE_SEGMENTS_STOP_MS), emptyList())
+
+    private val _skippedOnce = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Kept by id like [disabledVideoId], so preparing the same video again does not skip a second time. */
+    private var skippedOnceVideoId: String? = null
+
+    /** Segments of the current video a "skip once" category has already skipped. */
+    val skippedOnce: StateFlow<Set<String>> = _skippedOnce.asStateFlow()
+
+    private val skippedInVideo = mutableSetOf<String>()
 
     /**
      * Set whether SponsorBlock is enabled.
@@ -198,6 +229,11 @@ class SponsorBlockHandler(
 
     private fun startVideo(videoId: String) {
         releaseMute()
+        if (videoId != skippedOnceVideoId) {
+            skippedOnceVideoId = videoId
+            _skippedOnce.value = emptySet()
+            skippedInVideo.clear()
+        }
         currentVideoId = videoId
         if (videoId != disabledVideoId) disabledVideoId = null
         _disabledForCurrentVideo.value = videoId == disabledVideoId
@@ -245,37 +281,63 @@ class SponsorBlockHandler(
         }
 
         if (segment != null && segment.uuid != lastSkippedSegmentUuid) {
-            val action = categoryActions[segment.category] ?: SponsorBlockCategories.defaultAction(segment.category)
+            val action = SponsorBlockActionPolicy.actionFor(segment, categoryActions)
             Log.d(TAG, "Segment hit: ${segment.category} action=$action")
 
-            return when (action) {
-                SponsorBlockAction.SKIP -> {
-                    lastSkippedSegmentUuid = segment.uuid
-                    _skipEvent.tryEmit(segment)
-                    (segment.endTime * 1000).toLong()
-                }
-
+            if (SponsorBlockActionPolicy.skipsAutomatically(action, segment.uuid in _skippedOnce.value)) {
+                return skip(segment, action)
+            }
+            when (action) {
                 SponsorBlockAction.MUTE -> {
                     if (currentMutedSegmentUuid != segment.uuid) {
                         currentMutedSegmentUuid = segment.uuid
                         _muteEvent.tryEmit(true)
                     }
-                    null
                 }
 
                 SponsorBlockAction.SHOW_TOAST -> {
                     lastSkippedSegmentUuid = segment.uuid
                     _toastEvent.tryEmit(segment)
-                    null
                 }
 
-                SponsorBlockAction.IGNORE -> {
-                    null
+                else -> {
+                    Unit
                 }
             }
         }
 
         return null
+    }
+
+    /**
+     * Where a seek to [targetMs] lands instead when the target is inside a segment that skips
+     * automatically, or null to seek as asked. The tick's re-arm can't cover this: a segment at the very
+     * start of a video has no position before it, and the tick would show a second of the segment first.
+     */
+    fun skipTargetForSeek(targetMs: Long): Long? {
+        val segment = autoSkipSegmentAt(targetMs) ?: return null
+        return skip(segment, SponsorBlockActionPolicy.actionFor(segment, categoryActions))
+    }
+
+    /** Where [skipTargetForSeek] would land, without skipping anything. */
+    fun seekLandingFor(targetMs: Long): Long? = autoSkipSegmentAt(targetMs)?.let { (it.endTime * 1000).toLong() }
+
+    private fun autoSkipSegmentAt(targetMs: Long): SponsorBlockSegment? {
+        if (!isEnabled || _disabledForCurrentVideo.value) return null
+        val posSec = targetMs / 1000f
+        val segment = _sponsorSegments.value.find { posSec >= it.startTime && posSec < it.endTime } ?: return null
+        val action = SponsorBlockActionPolicy.actionFor(segment, categoryActions)
+        return segment.takeIf { SponsorBlockActionPolicy.skipsAutomatically(action, segment.uuid in _skippedOnce.value) }
+    }
+
+    private fun skip(
+        segment: SponsorBlockSegment,
+        action: SponsorBlockAction,
+    ): Long {
+        lastSkippedSegmentUuid = segment.uuid
+        if (action == SponsorBlockAction.SKIP_ONCE) _skippedOnce.value += segment.uuid
+        _skipEvent.tryEmit(SponsorBlockSkip(segment, firstInVideo = skippedInVideo.add(segment.uuid)))
+        return (segment.endTime * 1000).toLong()
     }
 
     /**

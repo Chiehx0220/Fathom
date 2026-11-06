@@ -65,11 +65,13 @@ import io.github.aedev.flow.player.sabr.integration.SabrStreamInfo
 import io.github.aedev.flow.player.sabr.integration.SabrUrlResolver
 import io.github.aedev.flow.player.service.BackgroundServiceManager
 import io.github.aedev.flow.player.sponsorblock.SponsorBlockHandler
+import io.github.aedev.flow.player.sponsorblock.SponsorBlockSkip
 import io.github.aedev.flow.player.state.EnhancedPlayerState
 import io.github.aedev.flow.player.state.PlaybackCompletion
 import io.github.aedev.flow.player.state.QualityOption
 import io.github.aedev.flow.player.state.SubtitleLoadFailure
 import io.github.aedev.flow.player.state.queuePresence
+import io.github.aedev.flow.player.stats.PlayerStatsReadings
 import io.github.aedev.flow.player.stream.BilibiliPreloadResolver
 import io.github.aedev.flow.player.stream.CaptionTrackResolver
 import io.github.aedev.flow.player.stream.InnerTubeVideoMapper
@@ -141,6 +143,7 @@ class EnhancedPlayerManager private constructor() {
     private var player: ExoPlayer? = null
     private var trackSelector: DefaultTrackSelector? = null
     private var bandwidthMeter: DefaultBandwidthMeter? = null
+    private var analyticsLogger: PlaybackAnalyticsLogger? = null
     private var videoEqualizer: EqualizerAudioProcessor? = null
     private var eqObserver: Job? = null
     private var audioEffects: AudioEffectsEntryPoint? = null
@@ -172,6 +175,7 @@ class EnhancedPlayerManager private constructor() {
     private var currentDashManifestUrl: String? = null
     private var currentHlsUrl: String? = null
     private var currentIsLiveStream = false
+    private var scrubPreviewing = false
     private var liveQualityHeights: List<Int> = emptyList()
     private var liveIsPortrait = false
     private var liveQualityPick: LiveQualityPick? = null
@@ -423,6 +427,11 @@ class EnhancedPlayerManager private constructor() {
 
                     override fun isCommandAvailable(command: Int): Boolean = availableCommands.contains(command)
 
+                    // The notification's seek bar lands here, not in the manager's own seekTo.
+                    override fun seekTo(positionMs: Long) {
+                        if (currentIsLiveStream || !skipSegmentAt(positionMs)) super.seekTo(positionMs)
+                    }
+
                     override fun seekToNext() {
                         autoNextLog("MediaSession seekToNext")
                         this@EnhancedPlayerManager.skipToNextFromSession()
@@ -537,8 +546,9 @@ class EnhancedPlayerManager private constructor() {
     private val _seekEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val seekEvent: SharedFlow<Unit> = _seekEvent.asSharedFlow()
 
-    private val _queueAutoAdvanceEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    val queueAutoAdvanceEvent: SharedFlow<Unit> = _queueAutoAdvanceEvent.asSharedFlow()
+    /** Emitted when the next video starts by itself, from a queue or from related autoplay, never on a tap. */
+    private val _autoAdvanceEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val autoAdvanceEvent: SharedFlow<Unit> = _autoAdvanceEvent.asSharedFlow()
 
     /** Emitted when a video plays to its end, before looping or autoplay replaces it. */
     private val _playbackCompletedEvent = MutableSharedFlow<PlaybackCompletion>(extraBufferCapacity = 4)
@@ -764,7 +774,7 @@ class EnhancedPlayerManager private constructor() {
                 bandwidthMeter = bandwidthMeter!!,
                 dataSourceFactory = cacheManager?.getDataSourceFactory(),
             )
-        player?.addAnalyticsListener(PlaybackAnalyticsLogger(TAG) { currentVideoId })
+        analyticsLogger = PlaybackAnalyticsLogger(TAG) { currentVideoId }.also { player?.addAnalyticsListener(it) }
         player?.addAnalyticsListener(
             RenderedFirstFrameListener(currentVideoId = { currentVideoId }) { videoId -> _firstFrameVideoId.value = videoId },
         )
@@ -1927,11 +1937,11 @@ class EnhancedPlayerManager private constructor() {
                 return
             }
             autoNextLog("auto-advance queue playNext")
-            _queueAutoAdvanceEvent.tryEmit(Unit)
+            _autoAdvanceEvent.tryEmit(Unit)
             playNext(loadStreamsInPlayer = true)
         } else {
             autoNextLog("auto-advance related-autoplay")
-            playNextAutoplayCandidate()
+            if (playNextAutoplayCandidate()) _autoAdvanceEvent.tryEmit(Unit)
         }
     }
 
@@ -2405,7 +2415,7 @@ class EnhancedPlayerManager private constructor() {
                 liveDurationMs = 0L,
             )
         updateQueueState()
-        _queueAutoAdvanceEvent.tryEmit(Unit)
+        _autoAdvanceEvent.tryEmit(Unit)
 
         player?.let { p ->
             val idx = p.currentMediaItemIndex
@@ -2498,6 +2508,7 @@ class EnhancedPlayerManager private constructor() {
     fun seekTo(position: Long) {
         val p = player ?: return
         val isLive = currentIsLiveStream || p.isCurrentMediaItemLive
+        if (!isLive && !scrubPreviewing && skipSegmentAt(position)) return
         val target = resolveSeekTarget(p, position)
         val isEndBoundary = !isLive && isEndBoundarySeek(position, p.duration)
         if (!isLive && !isEndBoundary && mediaLoader?.getActiveSabrOrchestrator() != null) {
@@ -2516,6 +2527,12 @@ class EnhancedPlayerManager private constructor() {
         } else if (isEndBoundary) {
             p.setSeekParameters(SeekParameters.CLOSEST_SYNC)
         }
+    }
+
+    private fun skipSegmentAt(position: Long): Boolean {
+        val segmentEnd = sponsorBlockHandler?.skipTargetForSeek(position) ?: return false
+        skipToSegmentEnd(segmentEnd)
+        return true
     }
 
     fun skipToSegmentEnd(endPositionMs: Long) {
@@ -2613,6 +2630,7 @@ class EnhancedPlayerManager private constructor() {
     }
 
     fun setScrubbingModeEnabled(enabled: Boolean) {
+        scrubPreviewing = enabled
         player?.let { p ->
             val isLive = currentIsLiveStream || p.isCurrentMediaItemLive
             p.setSeekParameters(
@@ -2621,7 +2639,20 @@ class EnhancedPlayerManager private constructor() {
         }
     }
 
+    /** A drag previews every frame it crosses, so only the seek on release may skip a segment. */
+    fun finishScrubPreview() {
+        scrubPreviewing = false
+    }
+
+    /** Where a seek to [position] ends up, for a seek bar that holds its value until the player arrives. */
+    fun seekLandingFor(position: Long): Long {
+        if (currentIsLiveStream || player?.isCurrentMediaItemLive == true) return position
+        return sponsorBlockHandler?.seekLandingFor(position) ?: position
+    }
+
     fun replay() {
+        // The countdown keeps running behind a replay otherwise and switches video mid-way through it.
+        if (autoplayCountdownController.stop()) releaseAdvanceWakeLock()
         player?.let { exoPlayer ->
             if (exoPlayer.currentMediaItem != null) {
                 exoPlayer.seekToDefaultPosition(exoPlayer.currentMediaItemIndex)
@@ -2670,6 +2701,13 @@ class EnhancedPlayerManager private constructor() {
     }
 
     fun getPlayer(): ExoPlayer? = player
+
+    internal fun statsReadings(): PlayerStatsReadings =
+        PlayerStatsReadings(
+            bandwidthBitsPerSecond = bandwidthMeter?.bitrateEstimate ?: 0L,
+            decoderName = analyticsLogger?.activeDecoderName,
+            gainDb = audioFeaturesManager?.appliedLoudnessDb,
+        )
 
     fun getCastVideoStreams(): List<VideoStream> = availableVideoStreams
 
@@ -2735,10 +2773,13 @@ class EnhancedPlayerManager private constructor() {
                         if (VideoCodecUtils.streamSizeKey(height, codecKey) in existingKeys) return@mapNotNull null
                         QualityOption(
                             height = height,
-                            label = "${qualityLabelFromFormat(best)} ${VideoCodecUtils.codecLabelFromKey(codecKey)}",
+                            label =
+                                "${VideoCodecUtils.qualityLabelWithFrameRate(height, best.fps ?: 0)} " +
+                                    VideoCodecUtils.codecLabelFromKey(codecKey),
                             bitrate = (best.averageBitrate ?: best.bitrate).toLong(),
                             codecKey = codecKey,
                             streamKey = "$SABR_QUALITY_KEY_PREFIX${best.itag}",
+                            isHdr = best.colorInfo?.isHdr == true,
                         )
                     }
             } else {
@@ -2798,11 +2839,6 @@ class EnhancedPlayerManager private constructor() {
 
     private fun qualityHeightFromFormat(format: PlayerResponse.StreamingData.Format): Int =
         VideoCodecUtils.qualityHeightFromFormat(format.qualityLabel, format.height ?: format.width ?: 0)
-
-    private fun qualityLabelFromFormat(format: PlayerResponse.StreamingData.Format): String =
-        format.qualityLabel
-            ?.takeIf { it.isNotBlank() }
-            ?: VideoCodecUtils.qualityLabelWithFrameRate(qualityHeightFromFormat(format), format.fps ?: 0)
 
     // ===== Quality & Audio Management =====
 
@@ -2975,8 +3011,13 @@ class EnhancedPlayerManager private constructor() {
         }
     }
 
+    /** The segments the seek bar and the skip button show; disabled categories are left out. */
     val sponsorSegments: StateFlow<List<SponsorBlockSegment>>
-        get() = sponsorBlockHandler?.sponsorSegments ?: MutableStateFlow(emptyList())
+        get() = sponsorBlockHandler?.visibleSegments ?: MutableStateFlow(emptyList())
+
+    /** Segments a "skip once" category already skipped in this video; they show the skip button now. */
+    val sbSkippedOnce: StateFlow<Set<String>>
+        get() = sponsorBlockHandler?.skippedOnce ?: MutableStateFlow(emptySet())
 
     val sponsorBlockOffForVideo: StateFlow<Boolean>
         get() = sponsorBlockHandler?.disabledForCurrentVideo ?: MutableStateFlow(false)
@@ -2991,7 +3032,7 @@ class EnhancedPlayerManager private constructor() {
     val subtitleLoadFailedEvent: SharedFlow<SubtitleLoadFailure>
         get() = _subtitleLoadFailedEvent
 
-    val skipEvent: SharedFlow<SponsorBlockSegment>
+    val skipEvent: SharedFlow<SponsorBlockSkip>
         get() = sponsorBlockHandler?.skipEvent ?: MutableSharedFlow()
 
     val sbToastEvent: SharedFlow<SponsorBlockSegment>

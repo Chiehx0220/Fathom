@@ -213,7 +213,7 @@ private val LikeJson =
 internal fun deserializeVideo(data: String): LikedVideoInfo? {
     if (data.startsWith("{")) return runCatching { LikeJson.decodeFromString(LikedVideoInfo.serializer(), data) }.getOrNull()
     val fields = data.split("|")
-    // Fork briefly wrote `...|isMusic|serviceId`: trailing number = service.
+    // Legacy `...|isMusic|serviceId` suffix.
     val hasServiceSuffix =
         fields.size > LEGACY_MIN_PARTS + 1 &&
             fields.last().toIntOrNull() != null &&
