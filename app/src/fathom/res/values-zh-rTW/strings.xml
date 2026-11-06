@@ -11,4 +11,7 @@
     <string name="player_settings_keep_playing_after_swipe_subtitle">從最近使用的應用程式滑掉 Fathom 後，仍會繼續播放</string>
     <string name="profiles_copy_recommendations_summary">Fathom 對你喜好的學習結果</string>
     <string name="linked_webdav_body">請使用專供 Fathom 使用的空資料夾。登入資訊僅會儲存在這部裝置的安全儲存空間，並會提供給你所連結的裝置。</string>
+    <string name="linked_profile_switch_body">只有使用中的個人檔案能開始同步，因此 Fathom 會先切換到該個人檔案並重新啟動。接著請在其中開啟同步。</string>
+    <string name="buffer_cache_size_link_summary">Fathom 在磁碟上保留多少影片和音樂</string>
+    <string name="linked_replace_words_body">Fathom 會為你的裝置產生新的復原字詞與加密金鑰。舊字詞將失效：無法用來還原此群組，也無法讀取之後同步的任何內容。新字詞出現時請抄下。</string>
 </resources>
