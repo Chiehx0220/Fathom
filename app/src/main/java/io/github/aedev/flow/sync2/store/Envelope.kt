@@ -121,16 +121,6 @@ fun parseObject(
     return ParsedObject(header, bytes)
 }
 
-/** Whether [bytes] start as [sender]'s log object [seq]; anything else, such as an error page, is no object at all. */
-fun namesLogObject(
-    bytes: ByteArray,
-    sender: ByteArray,
-    seq: Long,
-): Boolean =
-    bytes.size >= HEADER_SIZE &&
-        bytes.copyOfRange(SENDER_AT, SEQ_AT).contentEquals(sender) &&
-        ByteBuffer.wrap(bytes).getLong(SEQ_AT) == seq
-
 class StreamPosition(
     val seq: Long,
     val hash: ByteArray,
@@ -150,6 +140,33 @@ fun nextInStream(
     if (seq > lastSeq + 1u) reject(ProtocolError.GAP)
     if (!MessageDigest.isEqual(objectRead.header.prev, last?.hash ?: ZERO_HASH)) reject(ProtocolError.PREV)
     return StreamPosition(objectRead.header.seq, objectRead.hash)
+}
+
+/**
+ * Walks a removed sender's log down from its cut to [stopSeq] (spec/store.md, A removed sender's chain), so nothing is
+ * applied from a chain that doesn't reach the hash the removal names. With [stopHash], the walk must arrive at it.
+ * Returns the hash each object must have when it is then read forward.
+ */
+suspend fun cutChain(
+    cutSeq: Long,
+    cutHash: ByteArray,
+    stopSeq: Long,
+    stopHash: ByteArray?,
+    group: ByteArray,
+    read: suspend (Long) -> ByteArray?,
+): Map<Long, ByteArray> {
+    val hashes = HashMap<Long, ByteArray>()
+    var wanted = cutHash
+    var seq = cutSeq
+    while (seq > stopSeq) {
+        val bytes = read(seq) ?: reject(ProtocolError.GAP)
+        if (!MessageDigest.isEqual(sha256(bytes), wanted)) reject(ProtocolError.PREV)
+        hashes[seq] = wanted
+        wanted = parseObject(bytes, group).header.prev
+        seq--
+    }
+    if (cutSeq > stopSeq && stopHash != null && !MessageDigest.isEqual(wanted, stopHash)) reject(ProtocolError.PREV)
+    return hashes
 }
 
 /** Live messages carry a counter instead of a chain. */

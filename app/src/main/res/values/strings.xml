@@ -142,8 +142,24 @@
     <string name="lyrics_auto_romanize">Romanize on this device</string>
     <string name="lyrics_auto_romanize_summary">When the lyrics source has no romanization</string>
     <string name="lyrics_auto_romanize_japanese">Not available for Japanese yet</string>
+    <string name="lyrics_background">Background</string>
+    <string name="lyrics_background_solid">Solid</string>
+    <string name="lyrics_background_solid_detail">One color from the cover</string>
+    <string name="lyrics_background_colorful">Colorful</string>
+    <string name="lyrics_background_colorful_detail">Soft colors from the cover</string>
+    <string name="lyrics_background_moving">Moving</string>
+    <string name="lyrics_background_moving_detail">Soft colors that drift while the song plays</string>
     <string name="lyrics_blur_other_lines">Blur other lines</string>
     <string name="lyrics_blur_other_lines_summary">Turn off to read every line clearly</string>
+    <string name="lyrics_on_lock_screen">Lyrics on lock screen</string>
+    <string name="lyrics_on_lock_screen_summary">Shows the current line as the song title, also to other apps</string>
+    <string name="lyrics_on_lock_screen_timing">Lock screen lyrics timing</string>
+    <string name="lyrics_on_lock_screen_timing_summary">Move lines earlier if they feel late</string>
+    <string name="lyrics_sponsorblock_timing">Fit lyrics to music videos</string>
+    <string name="lyrics_sponsorblock_timing_summary">Uses SponsorBlock to skip parts with no music</string>
+    <string name="lyrics_timing_on_time">No change</string>
+    <string name="lyrics_timing_earlier">%1$s s earlier</string>
+    <string name="lyrics_timing_later">%1$s s later</string>
     <string name="lyrics_keep_screen_on">Keep screen on</string>
     <string name="lyrics_keep_screen_on_summary">While lyrics are showing and music plays</string>
     <string name="player_appearance_artwork_control_colors_title">Artwork colors on controls</string>
@@ -1041,7 +1057,7 @@
     <string name="lyrics_provider_lrclib_desc">Line sync · open database</string>
     <string name="lyrics_provider_unison_desc">Community lyrics · small catalogue</string>
     <string name="lyrics_provider_youtube_captions_desc">Line sync · the video\'s captions</string>
-    <string name="lyrics_provider_youtube_music_desc">Plain text · the Lyrics tab</string>
+    <string name="lyrics_provider_youtube_music_desc">Line sync · the Lyrics tab</string>
     <!-- Theme Names & Descriptions -->
     <string name="theme_name_system_default">System Default</string>
     <string name="theme_desc_system_default">Follows your device between light and dark.</string>
@@ -1434,6 +1450,16 @@
     <string name="sb_action_jump_button">Show a jump button</string>
     <string name="sb_action_jump_button_detail">Offers the jump for 10 seconds as the video starts</string>
     <string name="sb_jump_to_highlight">Jump to highlight</string>
+    <string name="sb_jump">Jump</string>
+    <string name="sb_skip_notice_title">Show skip message</string>
+    <string name="sb_skip_notice_summary">Shows a message when a segment is skipped</string>
+    <string name="sb_skip_style_title">Skip button style</string>
+    <string name="sb_skip_style_full">Full</string>
+    <string name="sb_skip_style_full_detail">Names the segment</string>
+    <string name="sb_skip_style_compact">Compact</string>
+    <string name="sb_skip_style_compact_detail">Just Skip and an icon</string>
+    <string name="sb_skip_style_icon">Icon only</string>
+    <string name="sb_skip_style_icon_detail">Takes the least space</string>
     <string name="sb_color_custom">Custom color</string>
     <string name="sb_color_custom_value">Custom color: %1$s</string>
     <!-- SponsorBlock submit dialog -->
@@ -1665,7 +1691,6 @@
         <item quantity="one">Every %1$d min</item>
         <item quantity="other">Every %1$d min</item>
     </plurals>
-    <string name="daily_average_label">Daily Average</string>
     <string name="stats_today">Today</string>
     <string name="stats_last_7_days">Last 7 days</string>
     <string name="frequency_dialog_title">Frequency</string>
@@ -2411,6 +2436,12 @@
     <string name="eq_remove_band">Remove band</string>
     <string name="eq_band_removed">Band removed</string>
     <string name="eq_bass_boost">Bass boost</string>
+    <string name="eq_spatial_sound">Spatial sound</string>
+    <string name="eq_spatial_sound_summary">Widens stereo on any headphones</string>
+    <string name="eq_spatial_sound_keywords">spatial audio, surround, 3D audio, stereo</string>
+    <string name="eq_spatial_low">Low</string>
+    <string name="eq_spatial_medium">Medium</string>
+    <string name="eq_spatial_high">High</string>
     <string name="eq_edit">Edit equalizer</string>
     <string name="eq_system">System equalizer</string>
     <string name="eq_system_desc">Adds to Flow\'s own equalizer</string>
@@ -2440,7 +2471,7 @@
     </plurals>
     <string name="eq_settings_section">Sound</string>
     <string name="eq_settings_summary">Presets, bands and AutoEQ import</string>
-    <string name="eq_settings_keywords">equaliser, eq, bass, treble, autoeq, preamp, sound</string>
+    <string name="eq_settings_keywords">equaliser, eq, bass boost, treble, autoeq, preamp, sound</string>
     <string name="eq_reset_done">Curve reset</string>
     <!-- Player -->
     <string name="now_playing">NOW PLAYING</string>
@@ -2745,11 +2776,11 @@
     <string name="linked_join_admin_body">No camera? Type the server address and admin token, then accept on a linked device</string>
     <string name="linked_join_admin_ask">Ask to join</string>
     <string name="linked_asked">Waiting for a linked device to accept…</string>
-    <string name="linked_join_request">%1$s wants to join</string>
+    <string name="linked_join_request">A device calling itself %1$s wants to join</string>
     <string name="linked_accept">Accept</string>
     <string name="linked_decline">Decline</string>
     <string name="linked_join_notification_title">A device wants to join</string>
-    <string name="linked_join_notification_text">%1$s asked to join your linked devices. Open Linked devices to accept or decline.</string>
+    <string name="linked_join_notification_text">A device calling itself %1$s asked to join your linked devices. Accept only if you started this on that device.</string>
     <string name="linked_join_title">Join a group</string>
     <string name="linked_join_body">Scan or paste the code another linked device shows</string>
     <string name="linked_restore_title">Restore with recovery words</string>
@@ -2782,8 +2813,18 @@
     <string name="linked_save">Save</string>
     <string name="linked_cancel">Cancel</string>
     <string name="linked_remove">Remove</string>
+    <string name="linked_recovery_notice_title">Your recovery key was replaced</string>
+    <string name="linked_recovery_notice_body">%1$s replaced it. This device noticed %2$s. The words you have may have stopped working.</string>
+    <string name="linked_recovery_notice_unknown">A device that is no longer in the group</string>
+    <string name="linked_recovery_notice_mine">That was me</string>
+    <string name="linked_recovery_notice_not_mine">It wasn\'t me</string>
+    <string name="linked_recovery_due_title">Make new recovery words</string>
+    <string name="linked_recovery_due_body">The device that set your recovery key has left the group. Until you make new words on one of your devices, this one receives changes but doesn\'t send any.</string>
+    <string name="linked_error_recovery_due">Make new recovery words first. The device that set them has left the group.</string>
+    <string name="linked_leave_stops_others">This device set your current recovery words, so your other devices will stop sending changes until you make new words on one of them.</string>
+    <string name="linked_remove_also">%1$s added these devices. Tick any you don\'t recognise to remove them too.</string>
     <string name="linked_remove_title">Remove %1$s?</string>
-    <string name="linked_remove_body">It stops receiving anything new right away. What it already has stays on it.</string>
+    <string name="linked_remove_body">It stops receiving anything new right away. What it already has stays on it. Changes it made that this device hasn\'t received yet may not arrive.</string>
     <string name="linked_add_device">Add a device</string>
     <string name="linked_scan_this_code">Scan this code</string>
     <string name="linked_scan_this_code_body">On the other device, open Linked devices and scan this code. Keep both devices on the same network if the other one can\'t reach the server.</string>
@@ -2839,7 +2880,7 @@
     <string name="linked_contest_body">Two devices in this group removed each other, and this device can\'t tell which one you still trust. Syncing is paused and nothing was deleted. Keep the device you still have. Your other devices will ask too.</string>
     <string name="linked_contest_keep">Keep %1$s</string>
     <string name="linked_contest_removes">Removes %1$s</string>
-    <string name="linked_error_declined">The verification codes weren\'t confirmed.</string>
+    <string name="linked_error_declined">The codes were different, so nothing was shared. Start again with a new code. If this happens again, someone may be interfering, so stop and check your server or network.</string>
     <string name="linked_error_join_declined">A linked device declined the request to join.</string>
     <string name="linked_error_timed_out">The other device didn\'t answer in time.</string>
     <string name="linked_error_wrong_words">These aren\'t 24 valid recovery words.</string>
@@ -4236,7 +4277,7 @@
     <string name="settings_keywords_wellbeing">screen time, digital wellbeing, sleep, bedtime, break, watch time, usage</string>
     <string name="settings_sleep_window_summary">Sleep window: %1$s</string>
     <string name="settings_notification_permission_needed">Allow notifications to get reminders</string>
-    <string name="settings_watch_time_week_total">%1$s this week</string>
+    <string name="settings_watch_time_average_and_week">Daily average %1$s · %2$s this week</string>
     <string name="settings_section_this_device">This device</string>
     <string name="settings_section_report">Report</string>
     <string name="settings_diagnostics_model">Model</string>
@@ -4787,4 +4828,5 @@
     <string name="keyboard_shortcut_exit_fullscreen">Exit fullscreen</string>
     <string name="keyboard_shortcut_faster">Faster</string>
     <string name="keyboard_shortcut_slower">Slower</string>
+    <string name="session_lyric_repeated">%1$s (x%2$d)</string>
 </resources>

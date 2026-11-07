@@ -49,8 +49,10 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.data.audio.eq.EqualizerRepository
 import io.github.aedev.flow.data.download.DownloadUtil
 import io.github.aedev.flow.data.download.LegacySongDownloads
+import io.github.aedev.flow.data.local.BufferProfile
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.QueuePersistence
+import io.github.aedev.flow.data.localmedia.LocalLyricsReader
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.music.YouTubeMusicService
 import io.github.aedev.flow.data.music.model.MusicTrack
@@ -278,6 +280,14 @@ class Media3MusicService : MediaLibraryService() {
 
     @Inject
     lateinit var lyricsHelper: io.github.aedev.flow.data.lyrics.LyricsHelper
+
+    @Inject
+    lateinit var localLyrics: LocalLyricsReader
+
+    @Inject
+    lateinit var videoLyricsTiming: io.github.aedev.flow.data.lyrics.MusicVideoLyricsTiming
+
+    private var sessionLyrics: SessionLyrics? = null
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
@@ -591,9 +601,6 @@ class Media3MusicService : MediaLibraryService() {
 
                     mediaItem?.let { item ->
                         val videoId = item.mediaId
-                        val title = item.mediaMetadata.title?.toString()
-                        val artist = item.mediaMetadata.artist?.toString()
-
                         if (!videoId.isNullOrBlank() && !LocalMediaIds.isLocal(videoId)) {
                             // Desktop radio semantics: only a genuinely NEW queue seeds a
                             // fresh radio. In-app skips also arrive as PLAYLIST_CHANGED
@@ -606,18 +613,7 @@ class Media3MusicService : MediaLibraryService() {
                             }
                         }
 
-                        val wantsLyrics = !versionSwap && !videoId.isNullOrBlank() && !LocalMediaIds.isLocal(videoId)
-                        if (wantsLyrics && !title.isNullOrBlank() && !artist.isNullOrBlank()) {
-                            lifecycleScope.launch(Dispatchers.IO) {
-                                try {
-                                    Log.d(TAG, "Pre-warming lyrics cache in background for: $videoId - \"$title\"")
-                                    val durationSeconds = ((item.mediaMetadata.durationMs ?: 0L) / 1000L).toInt()
-                                    lyricsHelper.getLyrics(videoId, title, artist, durationSeconds, null)
-                                } catch (e: Exception) {
-                                    Log.w(TAG, "Lyrics pre-warm background task encountered error: ${e.message}")
-                                }
-                            }
-                        }
+                        if (!versionSwap) sessionLyrics?.load(item)
                     }
 
                     widgetPublisher.publish(player)
@@ -1426,7 +1422,22 @@ class Media3MusicService : MediaLibraryService() {
     private fun sessionPlayer(): Player =
         SessionPlayer(player, { mediaLibrarySession.controllerForCurrentRequest }) {
             updateOffload { it.copy(pausedLong = false) }
-        }.also { it.follow(lifecycleScope) }
+        }.also {
+            it.follow(lifecycleScope)
+            sessionLyrics =
+                SessionLyrics(
+                    this,
+                    player,
+                    it,
+                    lifecycleScope,
+                    lyricsHelper,
+                    localLyrics,
+                    prefs.lyricsOnLockScreen,
+                    prefs.lyricsOnLockScreenDelayMs,
+                    videoLyricsTiming,
+                    isSavingData = { NetworkState.isDataSaverOn(this) || prefs.bufferProfile.first() == BufferProfile.DATASAVER },
+                )
+        }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? =
         mediaLibrarySession.takeUnless {
@@ -1467,6 +1478,7 @@ class Media3MusicService : MediaLibraryService() {
 
     override fun onDestroy() {
         MusicServiceState.isRunning = false
+        sessionLyrics?.release()
         // Flush the in-flight listen session before the player goes away.
         finalizeListenSession()
 
@@ -1948,6 +1960,7 @@ class Media3MusicService : MediaLibraryService() {
             // even when the app was never opened (#1221).
             if (session.isCar(controller)) {
                 MusicServiceState.carConnected()
+                sessionLyrics?.carChanged()
                 io.github.aedev.flow.player.EnhancedMusicPlayerManager
                     .initialize(applicationContext, musicDownloads::isDownloaded)
             }
@@ -1981,7 +1994,10 @@ class Media3MusicService : MediaLibraryService() {
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
         ) {
-            if (session.isCar(controller)) MusicServiceState.carDisconnected()
+            if (session.isCar(controller)) {
+                MusicServiceState.carDisconnected()
+                sessionLyrics?.carChanged()
+            }
         }
 
         private fun MediaSession.isCar(controller: MediaSession.ControllerInfo) =

@@ -9,12 +9,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.LikedVideosRepository
+import io.github.aedev.flow.data.local.LyricsBackgroundStyle
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.localmedia.LocalLyricsReader
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.lyrics.LyricsCandidate
 import io.github.aedev.flow.data.lyrics.LyricsHelper
+import io.github.aedev.flow.data.lyrics.MusicVideoLyricsTiming
 import io.github.aedev.flow.data.music.DownloadManager
 import io.github.aedev.flow.data.music.PlaylistRepository
 import io.github.aedev.flow.data.music.YouTubeMusicService
@@ -59,6 +61,7 @@ class MusicPlayerViewModel
         private val lyricsHelper: LyricsHelper,
         private val artistLookup: MusicArtistLookup,
         localLyrics: LocalLyricsReader,
+        videoLyricsTiming: MusicVideoLyricsTiming,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MusicPlayerUiState())
         val uiState: StateFlow<MusicPlayerUiState> = _uiState.asStateFlow()
@@ -91,7 +94,13 @@ class MusicPlayerViewModel
                 playerPreferences,
                 localLyrics,
                 downloadManager::getDownloadedTrackPath,
+                videoLyricsTiming,
             )
+
+        init {
+            lyrics.publishShownLyrics()
+        }
+
         private val trackActions =
             MusicPlayerTrackActions(
                 context,
@@ -587,6 +596,8 @@ class MusicPlayerViewModel
         fun setLyricsKeepScreenOn(enabled: Boolean) = lyrics.setKeepScreenOn(enabled)
 
         fun setLyricsBlurOtherLines(enabled: Boolean) = lyrics.setBlurOtherLines(enabled)
+
+        fun setLyricsBackground(style: LyricsBackgroundStyle) = lyrics.setBackground(style)
 
         override fun onCleared() {
             super.onCleared()

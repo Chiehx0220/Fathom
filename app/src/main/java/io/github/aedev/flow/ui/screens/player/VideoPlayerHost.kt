@@ -364,7 +364,7 @@ fun VideoPlayerHost(
         showShortsPlayerPrompt = prefs.showShortsPlayerPrompt,
     )
 
-    SponsorSkipEffect(context, onSkipped = playerViewModel::onSponsorSegmentSkipped)
+    SponsorSkipEffect(context, showSkipNotice = prefs.sbSkipNoticeEnabled, onSkipped = playerViewModel::onSponsorSegmentSkipped)
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { playerViewModel.checkpointWatchSession() }
 
     SubtitleLoadErrorEffect(
@@ -441,6 +441,7 @@ fun VideoPlayerHost(
             screenState = screenState,
             playerState = playerState,
             uiState = playerUiState,
+            commentsUiState = commentsUiState,
             viewModel = playerViewModel,
             sheetState = playerSheetState,
             prefs = prefs,
@@ -569,6 +570,7 @@ fun VideoPlayerHost(
                     expandedPlayerBottom = expandedPlayerBottom,
                     playerWidth = sidePanelState.playerWidth,
                     expandedSurfacesPlaced = expandedSurfacesPlaced,
+                    style = prefs.sbSkipButtonStyle,
                     endPadding = sponsorSkipEndPadding,
                     bottomPadding = floatingSponsorSkipBottomPadding,
                 )

@@ -165,9 +165,13 @@ class PlayerPreferences(
         val LYRICS_TEXT_ALIGN = stringPreferencesKey("lyrics_text_align")
         val LYRICS_SHOW_TRANSLATION = booleanPreferencesKey("lyrics_show_translation")
         val LYRICS_SHOW_ROMANIZATION = booleanPreferencesKey("lyrics_show_romanization")
+        val LYRICS_ON_LOCK_SCREEN = booleanPreferencesKey("lyrics_on_lock_screen")
+        val LYRICS_ON_LOCK_SCREEN_DELAY_MS = intPreferencesKey("lyrics_on_lock_screen_delay_ms")
+        val LYRICS_SPONSORBLOCK_TIMING = booleanPreferencesKey("lyrics_sponsorblock_timing")
         val LYRICS_AUTO_ROMANIZE = booleanPreferencesKey("lyrics_auto_romanize")
         val LYRICS_KEEP_SCREEN_ON = booleanPreferencesKey("lyrics_keep_screen_on")
         val LYRICS_BLUR_OTHER_LINES = booleanPreferencesKey("lyrics_blur_other_lines")
+        val LYRICS_BACKGROUND = stringPreferencesKey("lyrics_background")
         val LYRICS_PROVIDER_ENABLED_BETTERLYRICS = booleanPreferencesKey("lyrics_provider_enabled_betterlyrics")
         val LYRICS_PROVIDER_ENABLED_SIMPMUSIC = booleanPreferencesKey("lyrics_provider_enabled_simpmusic")
         val LYRICS_PROVIDER_ENABLED_LYRICSPLUS = booleanPreferencesKey("lyrics_provider_enabled_lyricsplus")
@@ -215,6 +219,8 @@ class PlayerPreferences(
         // SponsorBlock submit
         val SB_SUBMIT_ENABLED = booleanPreferencesKey("sb_submit_enabled")
         val SB_USER_ID = stringPreferencesKey("sb_user_id")
+        val SB_SKIP_NOTICE_ENABLED = booleanPreferencesKey("sb_skip_notice_enabled")
+        val SB_SKIP_BUTTON_STYLE = stringPreferencesKey("sb_skip_button_style")
 
         // DeArrow
         val DEARROW_ENABLED = booleanPreferencesKey("dearrow_enabled")
@@ -890,6 +896,27 @@ class PlayerPreferences(
     suspend fun setSbSubmitEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.SB_SUBMIT_ENABLED] = enabled
+        }
+    }
+
+    /** Whether an automatic skip shows a message. The Notify action has its own message and ignores this. */
+    val sbSkipNoticeEnabled: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.SB_SKIP_NOTICE_ENABLED] ?: true }
+
+    suspend fun setSbSkipNoticeEnabled(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SB_SKIP_NOTICE_ENABLED] = enabled
+        }
+    }
+
+    val sbSkipButtonStyle: Flow<SponsorBlockSkipButtonStyle> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> SponsorBlockSkipButtonStyle.fromStored(preferences[Keys.SB_SKIP_BUTTON_STYLE]) }
+
+    suspend fun setSbSkipButtonStyle(style: SponsorBlockSkipButtonStyle) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SB_SKIP_BUTTON_STYLE] = style.name
         }
     }
 
@@ -3884,6 +3911,29 @@ class PlayerPreferences(
         context.playerPreferencesDataStore.edit { it[Keys.LYRICS_SHOW_ROMANIZATION] = show }
     }
 
+    val lyricsOnLockScreen: Flow<Boolean> =
+        context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_ON_LOCK_SCREEN] ?: false }
+
+    suspend fun setLyricsOnLockScreen(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { it[Keys.LYRICS_ON_LOCK_SCREEN] = enabled }
+    }
+
+    /** How late lock screen lines appear, in milliseconds. Below zero they appear early. */
+    val lyricsOnLockScreenDelayMs: Flow<Int> =
+        context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_ON_LOCK_SCREEN_DELAY_MS] ?: 0 }
+
+    suspend fun setLyricsOnLockScreenDelayMs(delayMs: Int) {
+        context.playerPreferencesDataStore.edit { it[Keys.LYRICS_ON_LOCK_SCREEN_DELAY_MS] = delayMs }
+    }
+
+    /** Whether lyrics skip a music video's non-music parts. Each song played is looked up on SponsorBlock while on. */
+    val lyricsSponsorBlockTiming: Flow<Boolean> =
+        context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_SPONSORBLOCK_TIMING] ?: false }
+
+    suspend fun setLyricsSponsorBlockTiming(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { it[Keys.LYRICS_SPONSORBLOCK_TIMING] = enabled }
+    }
+
     /** Whether lyrics in other scripts get a Latin-script line made on the device when the source has none. */
     val lyricsAutoRomanize: Flow<Boolean> =
         context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_AUTO_ROMANIZE] ?: false }
@@ -3897,6 +3947,13 @@ class PlayerPreferences(
 
     suspend fun setLyricsKeepScreenOn(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { it[Keys.LYRICS_KEEP_SCREEN_ON] = enabled }
+    }
+
+    val lyricsBackground: Flow<LyricsBackgroundStyle> =
+        context.playerPreferencesDataStore.data.map { LyricsBackgroundStyle.fromStored(it[Keys.LYRICS_BACKGROUND]) }
+
+    suspend fun setLyricsBackground(style: LyricsBackgroundStyle) {
+        context.playerPreferencesDataStore.edit { it[Keys.LYRICS_BACKGROUND] = style.name }
     }
 
     val lyricsBlurOtherLines: Flow<Boolean> =
@@ -4268,6 +4325,18 @@ private val FirstSeenSerializer = MapSerializer(String.serializer(), Long.serial
 /** Loud videos play at their own level unless the user turns levelling on. */
 const val DEFAULT_VIDEO_VOLUME_NORMALIZATION = false
 
+/** How the skip button looks over the video. Stored and synced by name. */
+enum class SponsorBlockSkipButtonStyle {
+    FULL,
+    COMPACT,
+    ICON_ONLY,
+    ;
+
+    companion object {
+        fun fromStored(stored: String?): SponsorBlockSkipButtonStyle = entries.firstOrNull { it.name == stored } ?: FULL
+    }
+}
+
 /**
  * What the player does with a SponsorBlock segment, in the order settings list them. The names are
  * stored and synced, so they never change: [IGNORE] is "show in seek bar" and [SHOW_TOAST] is "notify".
@@ -4412,6 +4481,18 @@ enum class AutoDownloadMode {
 enum class MusicPlainControlColors {
     MONOCHROME,
     APP_THEME,
+}
+
+/** What the full-screen lyrics draw on. Stored by name. */
+enum class LyricsBackgroundStyle {
+    SOLID,
+    COLORFUL,
+    MOVING,
+    ;
+
+    companion object {
+        fun fromStored(stored: String?): LyricsBackgroundStyle = entries.firstOrNull { it.name == stored } ?: SOLID
+    }
 }
 
 enum class MusicPlayerBackgroundStyle {
