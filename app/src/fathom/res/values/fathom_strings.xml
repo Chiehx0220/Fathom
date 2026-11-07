@@ -32,6 +32,7 @@
     <string name="remote_server_off">The local server is off. Turn it on in Settings first.</string>
     <string name="settings_local_server_off">Off</string>
     <string name="settings_local_server_on">On</string>
+    <string name="settings_local_server_ports_busy">Ports 8080 to 8089 are in use by other apps</string>
     <string name="settings_local_server_pairing_reset">Generate new code</string>
     <string name="settings_local_server_pairing_code">Pairing code</string>
     <string name="settings_local_server_pairing_reset_body">TVs and computers that are paired now are signed out and need the new code to connect again.</string>

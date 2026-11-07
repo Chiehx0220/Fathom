@@ -58,11 +58,12 @@ internal fun LocalServerSettingsSection() {
     val scope = rememberCoroutineScope()
     val preferences = remember { PlayerPreferences(context) }
     val running by ServerService.runningState.collectAsState()
+    val portsBusy by ServerService.portsBusy.collectAsState()
     val pairing = remember { Pairing.of(context) }
     val pairingCode by pairing.code.collectAsState()
     val address =
         remember(running) {
-            if (running) ServerService.getLocalIpAddress()?.let { "$it:${ServerService.PORT}" } else null
+            if (running) ServerService.getLocalIpAddress()?.let { "$it:${ServerService.port}" } else null
         }
     val openRemote = { context.startActivity(Intent(context, RemoteActivity::class.java)) }
 
@@ -111,6 +112,13 @@ internal fun LocalServerSettingsSection() {
                             text = it,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (portsBusy && !running) {
+                        Text(
+                            text = stringResource(R.string.settings_local_server_ports_busy),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
                         )
                     }
                 }

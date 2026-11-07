@@ -52,7 +52,7 @@ internal fun NotConnected() {
     val serverRunning by ServerService.runningState.collectAsState()
     val address =
         remember(serverRunning) {
-            if (serverRunning) ServerService.getLocalIpAddress()?.let { "http://$it:${ServerService.PORT}" } else null
+            if (serverRunning) ServerService.getLocalIpAddress()?.let { "http://$it:${ServerService.port}" } else null
         }
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current

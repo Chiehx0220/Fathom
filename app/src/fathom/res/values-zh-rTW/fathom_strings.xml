@@ -31,6 +31,7 @@
     <string name="remote_server_off">本機伺服器目前是關閉的，請先到設定中開啟。</string>
     <string name="settings_local_server_off">關閉</string>
     <string name="settings_local_server_on">開啟</string>
+    <string name="settings_local_server_ports_busy">8080 至 8089 號埠都被其他應用程式占用</string>
     <string name="settings_local_server_pairing_reset">重新產生</string>
     <string name="settings_local_server_pairing_code">配對碼</string>
     <string name="settings_local_server_pairing_reset_body">目前已配對的電視和電腦都會登出，需要輸入新的配對碼才能再連線。</string>

@@ -49,37 +49,32 @@ class ServerService : Service() {
         WebTheme.darkColors = DynamicColorHelper.getThemeColors(this, true)
 
         ensureChannel()
-        // Settings lists the server switch first.
-        val pendingIntent =
-            PendingIntent.getActivity(
-                this,
-                0,
-                WidgetDeepLink.openRoute(this, SETTINGS_ROUTE),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-
-        val notification =
-            NotificationCompat
-                .Builder(this, CHANNEL_ID)
-                .setContentTitle(NOTIFICATION_TITLE)
-                .setContentText("Listening on: $localAddress")
-                .setSmallIcon(android.R.drawable.stat_sys_upload)
-                .setContentIntent(pendingIntent)
-                .setOnlyAlertOnce(true)
-                .setSilent(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .build()
-
+        mutablePortsBusy.value = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            startForeground(NOTIFICATION_ID, notification(null), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
         } else {
-            startForeground(NOTIFICATION_ID, notification)
+            startForeground(NOTIFICATION_ID, notification(null))
         }
 
         try {
-            val newServer = LocalHttpServer(this, PORT)
-            server = newServer
-            newServer.startServer()
+            val bound =
+                startOnFreePort {
+                    LocalHttpServer(this, it).also { candidate ->
+                        runCatching { candidate.startServer() }.onFailure {
+                            candidate.stopServer()
+                            throw it
+                        }
+                    }
+                }
+            if (bound == null) {
+                mutablePortsBusy.value = true
+                serverLog("Ports $FIRST_PORT-${FIRST_PORT + PORT_SPAN - 1} are all in use")
+                stopSelf()
+                return
+            }
+            server = bound.value
+            mutablePort.value = bound.port
+            getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification(localAddress))
             mutableRunning.value = true
             val delivery = HandoffDelivery(this)
             handoffJob = serviceScope.launch { RemoteSession.handoffs.collect { runCatching { delivery.deliver(it) } } }
@@ -130,6 +125,25 @@ class ServerService : Service() {
         super.onDestroy()
     }
 
+    // Settings lists the server switch first.
+    private fun notification(address: String?) =
+        NotificationCompat
+            .Builder(this, CHANNEL_ID)
+            .setContentTitle(NOTIFICATION_TITLE)
+            .apply { if (address != null) setContentText("Listening on: $address") }
+            .setSmallIcon(android.R.drawable.stat_sys_upload)
+            .setContentIntent(
+                PendingIntent.getActivity(
+                    this,
+                    0,
+                    WidgetDeepLink.openRoute(this, SETTINGS_ROUTE),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                ),
+            ).setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
     private fun ensureChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(NotificationManager::class.java)
@@ -146,14 +160,23 @@ class ServerService : Service() {
     val localAddress: String
         get() {
             val localIp = getLocalIpAddress()
-            return if (localIp != null) "http://$localIp:$PORT" else "http://127.0.0.1:$PORT"
+            return if (localIp != null) "http://$localIp:$port" else "http://127.0.0.1:$port"
         }
 
     companion object {
         private const val CHANNEL_ID = "flow_local_server"
         private const val NOTIFICATION_ID = 4097
         private const val NOTIFICATION_TITLE = "Local server running"
-        const val PORT = 8080
+        private val mutablePort = MutableStateFlow(FIRST_PORT)
+
+        /** Port the running server bound (the first free one from [FIRST_PORT]). */
+        val port: Int
+            get() = mutablePort.value
+
+        private val mutablePortsBusy = MutableStateFlow(false)
+
+        /** True after a start found every port taken. */
+        val portsBusy: StateFlow<Boolean> = mutablePortsBusy.asStateFlow()
 
         private val mutableRunning = MutableStateFlow(false)
 

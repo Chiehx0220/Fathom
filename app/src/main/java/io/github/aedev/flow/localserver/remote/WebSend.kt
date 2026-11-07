@@ -28,4 +28,4 @@ internal suspend fun enableLocalServer(context: Context) {
     ServerService.start(context)
 }
 
-internal fun webAddress() = "http://${ServerService.getLocalIpAddress() ?: "127.0.0.1"}:${ServerService.PORT}"
+internal fun webAddress() = "http://${ServerService.getLocalIpAddress() ?: "127.0.0.1"}:${ServerService.port}"
