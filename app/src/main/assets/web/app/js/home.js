@@ -6,6 +6,8 @@ let activeObservers = [];
 // Resume-row history unsubscribe.
 let stopHistory = null;
 
+// Picks compared to tell whether the recommendations changed.
+const NEW_CHECK = 10;
 // Cards per chunk on scroll-in.
 const SHELF_CHUNK = 14;
 
@@ -93,6 +95,7 @@ const render = async (root, params, isCurrent) => {
     if (!lead) { root.replaceChildren(FT.empty('video_library', FT.t('nothing_yet'), FT.t('nothing_yet_hint'))); return; }
 
     // Slots for late shelves (keep order).
+    const slotNew = h('div', { class: 'newbar', hidden: true });
     const slotHero = h('div', { style: 'display:contents' });
     const slotSeen = h('div', { style: 'display:contents' });
     const slotSubs = h('div', { hidden: true });
@@ -116,6 +119,7 @@ const render = async (root, params, isCurrent) => {
     paintResume(seen);
 
     const page = [
+        slotNew,
         slotHero,
         slotSeen,
         picks.length ? shelfOf(FT.t('recommended'), FT.t('for_you'), picks, { ...(loadMoreRecs ? { loadMore: loadMoreRecs } : {}), expand: '#/recommended', rows: 3 }) : null,
@@ -124,14 +128,18 @@ const render = async (root, params, isCurrent) => {
     ];
     root.replaceChildren(...page.filter(Boolean));
 
-    if (stopHistory) stopHistory();
-    stopHistory = FT.api.onHistoryChange(() => FT.api.history().then((fresh) => {
+    const syncResume = () => FT.api.history().then((fresh) => {
         if (!isCurrent()) return;
         const selected = FT.focus.el;
         const key = selected && (slotHero.contains(selected) || slotSeen.contains(selected)) ? selected.dataset.key : null;
         paintResume(resumable(fresh));
         if (key) FT.focus.select(FT.focus.stops().find((el) => el.dataset.key === key) || FT.focus.stops()[0]);
-    }).catch(() => {}));
+    }).catch(() => {});
+    const listen = () => {
+        if (stopHistory) stopHistory();
+        stopHistory = FT.api.onHistoryChange(syncResume);
+    };
+    listen();
 
     FT.api.feed(service).then((body) => {
         if (!isCurrent()) return;
@@ -148,9 +156,31 @@ const render = async (root, params, isCurrent) => {
         slotLater.replaceChildren(shelfOf(FT.t('watch_later'), FT.t('saved_by_you'), items, { later: true, expand: '#/library?tab=later', rows: 1 }));
         slotLater.hidden = false;
     }).catch(() => {});
+
+    // Kept screen: history listener pauses while away; stale ones offer new picks instead of swapping them in.
+    return {
+        suspend() {
+            if (stopHistory) stopHistory();
+            stopHistory = null;
+        },
+        resume(stale) {
+            listen();
+            syncResume();
+            if (!stale) return;
+            FT.api.forget();
+            FT.api.recommendations(service).then((body) => {
+                if (!isCurrent()) return;
+                const urls = (list) => list.filter((v) => !v.isShort).slice(0, NEW_CHECK).map((v) => v.url).join();
+                if (urls(body.videos || []) === urls(picks)) return;
+                slotNew.replaceChildren(FT.button(FT.t('new_content'), 'refresh', () => FT.refresh(), 'primary', 'new-content'));
+                slotNew.hidden = false;
+            }).catch(() => {});
+        },
+    };
 };
 
 FT.register('home', {
+    keep: true,
     render,
     leave() {
         activeObservers.forEach((o) => o.disconnect());

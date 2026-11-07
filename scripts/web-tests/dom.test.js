@@ -192,3 +192,59 @@ test('cards load the smaller YouTube picture while the featured video keeps the 
   assert.deepStrictEqual([...document.querySelectorAll('#screen .card img')].map((img) => img.getAttribute('src')),
     ['https://i.ytimg.com/vi/id1/hqdefault.jpg', 'https://i.ytimg.com/vi/id2/hqdefault.jpg']);
 });
+
+const leave = async (page, hash) => { page.window.location.hash = hash; await page.settle(); };
+const asked = (page, path) => page.requests.filter((r) => r.path === path).length;
+const away = { ...home, '/api/v1/settings': {} };
+
+test('going back restores the home page as it was, without asking the phone again', async () => {
+  const page = await open({ routes: away });
+  const { document } = page.window;
+  const card = document.querySelector('#screen .card');
+  const before = asked(page, '/api/v1/recommendations');
+  await leave(page, '#/settings');
+  assert.strictEqual(document.querySelector('#screen .card'), null);
+  await leave(page, '#/home');
+  assert.strictEqual(document.querySelector('#screen .card'), card);
+  assert.strictEqual(asked(page, '/api/v1/recommendations'), before);
+  assert.strictEqual(document.querySelector('#screen .loading'), null);
+  assert.strictEqual(document.querySelector('.newbar').hidden, true);
+});
+
+test('a home page kept for a long time offers new picks and swaps them in only when asked', async () => {
+  let list = picks;
+  const page = await open({ routes: { ...away, '/api/v1/recommendations': () => ({ videos: list, hasMore: false }) } });
+  const { window } = page;
+  const { document } = window;
+  await leave(page, '#/settings');
+  const now = window.Date.now();
+  window.Date.now = () => now + 6 * 60 * 1000;
+  list = [video(9), ...picks];
+  await leave(page, '#/home');
+  assert.deepStrictEqual(text(document.querySelectorAll('#screen .card .card-title')), ['Video 1', 'Video 2', 'Video 4']);
+  const bar = document.querySelector('.newbar');
+  assert.strictEqual(bar.hidden, false);
+  bar.querySelector('button').click();
+  await page.settle();
+  assert.deepStrictEqual(text(document.querySelectorAll('#screen .card .card-title')), ['Video 9', 'Video 1', 'Video 2', 'Video 4']);
+});
+
+test('a long-kept home with the same picks stays quiet', async () => {
+  const page = await open({ routes: away });
+  const { window } = page;
+  await leave(page, '#/settings');
+  const now = window.Date.now();
+  window.Date.now = () => now + 6 * 60 * 1000;
+  await leave(page, '#/home');
+  assert.strictEqual(window.document.querySelector('.newbar').hidden, true);
+});
+
+test('switching source forgets the kept home', async () => {
+  const page = await open({ routes: away });
+  const { document } = page.window;
+  await leave(page, '#/settings');
+  page.FT.setService(5);
+  await leave(page, '#/home');
+  assert.ok(page.requests.some((r) => r.path === '/api/v1/recommendations' && r.params.serviceId === '5'));
+  assert.strictEqual(document.querySelectorAll('#screen .card').length, 3);
+});

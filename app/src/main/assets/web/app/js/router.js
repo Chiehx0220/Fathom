@@ -2,9 +2,14 @@
 (() => {
 const h = FT.h;
 const screens = {};
-let active = null;
-let token = 0;
 const scrolls = new Map();
+// Finished screens that opt in (keep + a render handle) stay detached here; back restores them as left.
+const kept = new Map();
+const KEPT_MAX = 4;
+// Kept screens older than this get a "new content" check on return.
+const STALE_MS = 5 * 60 * 1000;
+let current = null;
+let fresh = false;
 
 FT.register = (name, screen) => { screens[name] = screen; };
 FT.route = { name: '', params: {}, key: '' };
@@ -53,39 +58,77 @@ FT.renderTop = renderTop;
 
 // ---- Showing a screen ----
 
+const dropKept = (key) => {
+    const entry = kept.get(key);
+    if (!entry) return;
+    kept.delete(key);
+    entry.life.alive = false;
+    if (entry.screen.leave) entry.screen.leave();
+};
+
+const leaveCurrent = () => {
+    const { screen, key, life, handle, done } = current;
+    if (!fresh && done && screen.keep && handle) {
+        kept.set(key, { screen, life, handle, nodes: [...FT.$('#screen').childNodes], at: Date.now() });
+        if (handle.suspend) handle.suspend();
+        if (kept.size > KEPT_MAX) dropKept(kept.keys().next().value);
+        return;
+    }
+    life.alive = false;
+    if (screen.leave) screen.leave();
+};
+
 const show = async () => {
+    const reload = fresh;
     const { name, params } = parse();
     const screen = screens[name] || screens.home;
-    if (active) {
+    const key = name + '?' + Object.keys(params).sort().map((k) => k + '=' + params[k]).join('&');
+    if (current) {
         FT.focus.remember();
         scrolls.set(FT.route.key, scrollY);
-        if (active.leave) active.leave();
+        leaveCurrent();
     }
+    fresh = false;
     if (FT.menu.isOpen()) FT.menu.close();
     FT.screenSelect = null;
-    const mine = ++token;
-    const key = name + '?' + Object.keys(params).sort().map((k) => k + '=' + params[k]).join('&');
     FT.route = { name, params, key };
     if (name !== 'watch') origin = name;
     document.body.dataset.route = name;
     if (FT.player) FT.player.dock(name === 'watch' ? 'full' : 'mini');
-    active = screen;
     renderTop();
     const root = FT.$('#screen');
-    root.replaceChildren(FT.loading());
     FT.focus.clear();
-    const isCurrent = () => mine === token;
+    const back = reload ? null : kept.get(key);
+    if (back) {
+        kept.delete(key);
+        current = { screen, key, life: back.life, handle: back.handle, done: true };
+        root.replaceChildren(...back.nodes);
+        FT.focus.restore(key);
+        scrollTo({ top: scrolls.get(key) || 0, behavior: 'instant' });
+        if (back.handle.resume) back.handle.resume(Date.now() - back.at > STALE_MS);
+        return;
+    }
+    dropKept(key);
+    const life = { alive: true };
+    current = { screen, key, life, handle: null, done: false };
+    root.replaceChildren(FT.loading());
+    const isCurrent = () => life.alive;
     try {
-        await screen.render(root, params, isCurrent);
+        current.handle = await screen.render(root, params, isCurrent);
     } catch (error) {
-        if (isCurrent()) root.replaceChildren(FT.failure(error.message, show));
+        if (isCurrent()) root.replaceChildren(FT.failure(error.message, FT.reload));
     }
     if (!isCurrent()) return;
+    current.done = true;
     FT.focus.restore(key);
     scrollTo({ top: scrolls.get(key) || 0, behavior: 'instant' });
     if (screen.ready) screen.ready(root, params);
 };
-FT.reload = show;
+// Redraw the current screen from scratch (scroll and selection kept); refresh also returns to the top.
+FT.reload = () => { fresh = true; return show(); };
+FT.refresh = () => { scrolls.delete(FT.route.key); return FT.reload(); };
+// Data behind kept screens changed (source switch): none may be restored.
+FT.forgetScreens = () => [...kept.keys()].forEach(dropKept);
 
 // All selections pass here: watch screen leaves player mode; screens may listen.
 FT.onSelect = (el) => {
@@ -99,11 +142,12 @@ FT.onSelect = (el) => {
 FT.setService = (id) => {
     if (id === FT.store.service) return;
     FT.store.setService(id);
+    FT.forgetScreens();
     FT.toast(FT.t('source_changed', { name: FT.store.serviceName(id) }));
     const name = FT.route.name;
     // Channel/playlist is per source: switching leaves it; source-following screens restart; rest redraw top bar.
     if (name === 'channel' || name === 'playlist') location.hash = '#/home';
-    else if (['home', 'subscriptions', 'library', 'search'].includes(name)) show();
+    else if (['home', 'subscriptions', 'library', 'search'].includes(name)) FT.reload();
     else renderTop();
 };
 

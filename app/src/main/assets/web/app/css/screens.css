@@ -72,3 +72,8 @@ body[data-input="keys"] .switch.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px
 .swatch b { font-weight: 500; }
 .swatch span { color: var(--mute); font-size: 13px; }
 .seg { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Home: offer to swap in new recommendations without moving the page. */
+.newbar { position: sticky; top: calc(var(--bar-h) + 8px); z-index: 20; display: flex; justify-content: center; margin: 8px var(--pad-x) 0; pointer-events: none; }
+.newbar[hidden] { display: none; }
+.newbar .btn { pointer-events: auto; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4); }
