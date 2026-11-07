@@ -248,3 +248,28 @@ test('switching source forgets the kept home', async () => {
   assert.ok(page.requests.some((r) => r.path === '/api/v1/recommendations' && r.params.serviceId === '5'));
   assert.strictEqual(document.querySelectorAll('#screen .card').length, 3);
 });
+
+test('search results are restored after going back, and a list that depends on personal data is not', async () => {
+  const search = { '/api/v1/search': { videos: picks, nextPage: null }, '/search-history': [], '/api/v1/library': { watchLater: [], playlists: [] } };
+  const page = await open({ routes: { ...away, ...search }, hash: '#/search?q=cats' });
+  const { document } = page.window;
+  const first = document.querySelector('#screen .row-item, #screen .card');
+  const before = asked(page, '/api/v1/search');
+  await leave(page, '#/settings');
+  await leave(page, '#/search?q=cats');
+  assert.strictEqual(document.querySelector('#screen .row-item, #screen .card'), first);
+  assert.strictEqual(asked(page, '/api/v1/search'), before);
+  await leave(page, '#/library?tab=later');
+  const calls = asked(page, '/api/v1/library');
+  await leave(page, '#/settings');
+  await leave(page, '#/library?tab=later');
+  assert.ok(asked(page, '/api/v1/library') > calls);
+});
+
+test('a kept home refreshes its continue row on return', async () => {
+  const page = await open({ routes: away });
+  await leave(page, '#/settings');
+  const before = asked(page, '/api/v1/history');
+  await leave(page, '#/home');
+  assert.ok(asked(page, '/api/v1/history') > before);
+});

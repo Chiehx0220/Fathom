@@ -33,13 +33,13 @@ const comment = (c, service, url) => {
     return box;
 };
 
-const loadComments = async (holder, service, url, isCurrent) => {
+const loadComments = async (holder, service, url, scope) => {
     let cursor = null;
     const list = h('div', {});
     const more = h('div', { class: 'more', hidden: true });
     const page = async () => {
         const body = await FT.api.comments(service, url, cursor);
-        if (!isCurrent()) return;
+        if (!scope.live()) return;
         if (body.commentsDisabled) { holder.replaceChildren(h('h2', {}, FT.t('comments')), h('p', { class: 'card-meta' }, FT.t('comments_off'))); return; }
         list.append(...(body.comments || []).map((c) => comment(c, service, url)));
         cursor = body.nextPage || null;
@@ -48,9 +48,9 @@ const loadComments = async (holder, service, url, isCurrent) => {
     more.append(FT.button(FT.t('load_more_comments'), 'expand_more', () => page().catch(() => FT.toast(FT.t('could_not_load_more'))), '', 'more-comments'));
     try {
         await page();
-        if (isCurrent() && !holder.querySelector('p')) holder.replaceChildren(h('h2', {}, FT.t('comments')), list, more);
+        if (scope.live() && !holder.querySelector('p')) holder.replaceChildren(h('h2', {}, FT.t('comments')), list, more);
     } catch (e) {
-        if (isCurrent()) holder.replaceChildren(h('h2', {}, FT.t('comments')), h('p', { class: 'card-meta' }, FT.t('could_not_load_comments')));
+        if (scope.live()) holder.replaceChildren(h('h2', {}, FT.t('comments')), h('p', { class: 'card-meta' }, FT.t('could_not_load_comments')));
     }
 };
 
@@ -170,7 +170,12 @@ const chapterCards = (info) => info.chapters.map((c, i) => {
     return card;
 });
 
-const render = async (root, params, isCurrent) => {
+const render = async (root, params, scope) => {
+    scope.dispose(() => {
+        if (observer) { observer.disconnect(); observer = null; }
+        if (downloadTimer) { clearInterval(downloadTimer); downloadTimer = 0; }
+        document.body.classList.remove('player-mode');
+    });
     const service = parseInt(params.s, 10) || 0;
     const url = params.u;
     mode.onPlayer = true;
@@ -179,9 +184,9 @@ const render = async (root, params, isCurrent) => {
     FT.player.dock('full');
 
     const info = await FT.api.video(service, url);
-    if (!isCurrent()) return;
+    if (!scope.live()) return;
     await FT.player.open(service, info);
-    if (!isCurrent()) return;
+    if (!scope.live()) return;
     FT.player.dock('full');
 
     // Long description folded; whole block is the control (remote focus, OK/click opens); hint line only when more.
@@ -207,7 +212,7 @@ const render = async (root, params, isCurrent) => {
         related.length ? FT.shelf(FT.t('related'), FT.t('related_hint'), related.slice(0, 16).map((v) => FT.videoCard(v))) : null,
         commentsHolder);
     root.replaceChildren(slot, page);
-    loadComments(commentsHolder, service, info.url, isCurrent);
+    loadComments(commentsHolder, service, info.url, scope);
     // Measured once sized (layout may lag) and on change (e.g. resize).
     new ResizeObserver(() => { const more = about.classList.contains('open') || aboutText.scrollHeight > aboutText.clientHeight + 1; aboutHint.hidden = !more; about.classList.toggle('foldable', more); }).observe(aboutText);
 
@@ -224,11 +229,6 @@ FT.register('watch', {
     render,
     // Keys start on player.
     ready() { mode.onPlayer = true; FT.focus.clear(); document.body.classList.add('player-mode'); },
-    leave() {
-        if (observer) { observer.disconnect(); observer = null; }
-        if (downloadTimer) { clearInterval(downloadTimer); downloadTimer = 0; }
-        document.body.classList.remove('player-mode');
-    },
 });
 
 // Player has keys: left/right seek, OK pause (or skip segment), Menu fullscreen.

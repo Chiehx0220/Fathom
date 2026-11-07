@@ -60,18 +60,11 @@ const toggle = (title, hint, on, save, key) => {
     return h('div', { class: 'setting' }, h('div', {}, h('b', {}, title), h('span', { class: 'hint' }, hint)), sw);
 };
 
-// Keeps Deep Flow switch in sync with phone.
-let stopDeepFlow = null;
-
 FT.register('settings', {
-    leave() {
-        if (stopDeepFlow) stopDeepFlow();
-        stopDeepFlow = null;
-    },
-    async render(root, params, isCurrent) {
+    async render(root, params, scope) {
         let status = null;
         const values = await FT.api.settings().catch(() => null);
-        if (!isCurrent()) return;
+        if (!scope.live()) return;
 
         const sections = [
             h('section', {}, h('h2', {}, FT.t('settings_theme')), h('p', { class: 'hint' }, FT.t('settings_theme_hint')),
@@ -101,12 +94,11 @@ FT.register('settings', {
 
         const sw = FT.$('[data-key="deep-flow"]', root);
         if (sw && status) {
-            if (stopDeepFlow) stopDeepFlow();
-            stopDeepFlow = FT.deepFlow.onChange(() => {
+            scope.subscribe(() => FT.deepFlow.onChange(() => {
                 sw.classList.toggle('on', FT.deepFlow.active);
                 sw.setAttribute('aria-checked', String(FT.deepFlow.active));
                 status.textContent = FT.deepFlow.status();
-            });
+            }));
         }
     },
 });

@@ -18,7 +18,7 @@ const paneFor = (el) => {
 
 // options: { fetch(cursor) -> { items, next }, decorate(el), empty: { icon, title, text }, before: [elements] }
 // Grid layout: card grid without the detail pane; the next page loads when `more` nears the viewport.
-FT.listView = async (root, options, isCurrent) => {
+FT.listView = async (root, options, scope) => {
     const wide = FT.layout.current() === 'grid';
     const itemSelector = wide ? '.card' : '.row-item';
     const list = h('div', { class: wide ? 'grid' : 'list' });
@@ -29,12 +29,12 @@ FT.listView = async (root, options, isCurrent) => {
     let done = false;
 
     const showPane = (el) => { if (el && el.item && el.kind === 'video') pane.replaceChildren(...paneFor(el)); };
-    FT.screenSelect = (el) => {
+    scope.onSelect((el) => {
         if (!list.contains(el)) return;
         showPane(el);
         const rows = FT.$$(itemSelector, list);
         if (!done && rows.length - rows.indexOf(el) <= 3) loadMore();
-    };
+    });
 
     const remove = (el) => {
         const rows = FT.$$(itemSelector, list);
@@ -59,13 +59,13 @@ FT.listView = async (root, options, isCurrent) => {
         loading = true;
         try {
             const page = await options.fetch(cursor);
-            if (!isCurrent()) return;
+            if (!scope.live()) return;
             append(page.items);
             cursor = page.next || null;
             done = !cursor;
             more.hidden = done;
         } catch (error) {
-            if (isCurrent()) FT.toast(FT.t('could_not_load_more'));
+            if (scope.live()) FT.toast(FT.t('could_not_load_more'));
         } finally {
             loading = false;
         }
@@ -75,10 +75,10 @@ FT.listView = async (root, options, isCurrent) => {
     if (wide) {
         const nearEnd = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) loadMore(); }, { rootMargin: '600px' });
         nearEnd.observe(more);
-        activeEnds.push(nearEnd);
+        scope.dispose(() => nearEnd.disconnect());
     }
     const first = await options.fetch(null);
-    if (!isCurrent()) return;
+    if (!scope.live()) return;
     if (!first.items.length && !(first.extra && first.extra.length)) {
         root.replaceChildren(...(options.before || []), FT.empty(options.empty.icon, options.empty.title, options.empty.text));
         return;
@@ -91,17 +91,6 @@ FT.listView = async (root, options, isCurrent) => {
     root.replaceChildren(...[...(options.before || []), ...(first.extra || []), first.items.length ? body : null].filter(Boolean));
     const firstRow = FT.$(itemSelector, list);
     if (firstRow && !wide) showPane(firstRow);
-};
-
-// History list redraws on history change (FT.reload keeps scroll/selection).
-let stopHistory = null;
-// Grid layout end observers; disconnected on leave.
-const activeEnds = [];
-const cleanup = () => {
-    activeEnds.splice(0).forEach((o) => o.disconnect());
-    FT.screenSelect = null;
-    if (stopHistory) stopHistory();
-    stopHistory = null;
 };
 
 // ---- Search ----
@@ -125,20 +114,20 @@ const suggestions = (history, onChange) => {
 };
 
 FT.register('search', {
-    leave: cleanup,
-    async render(root, params, isCurrent) {
+    keepFor: () => FT.KEEP_MS,
+    async render(root, params, scope) {
         const q = (params.q || '').trim();
         const service = FT.store.service;
         const field = searchField(q);
         if (!q) {
             const history = await FT.api.searchHistory().catch(() => []);
-            if (!isCurrent()) return;
+            if (!scope.live()) return;
             root.replaceChildren(...[field, suggestions(history, () => {}), history.length ? null : FT.empty('search', FT.t('search_service', { name: FT.store.serviceName(service) }), FT.t('search_empty_hint'))].filter(Boolean));
             return;
         }
         // First page decides result kinds; videos first, channels/playlists one press away.
         const first = await FT.api.search(service, q, null);
-        if (!isCurrent()) return;
+        if (!scope.live()) return;
         const kinds = [['videos', FT.t('videos'), 'play_circle', first.videos], ['channels', FT.t('channels'), 'group', first.channels], ['playlists', FT.t('playlists'), 'playlist_play', first.playlists]]
             .filter(([id, , , list]) => id === 'videos' || (list && list.length));
         const firstKind = kinds.find((k) => k[3] && k[3].length);
@@ -160,17 +149,16 @@ FT.register('search', {
                 const body = await FT.api.search(service, q, cursor);
                 return { items: body.videos || [], next: body.nextPage };
             },
-        }, isCurrent);
+        }, scope);
     },
 });
 
 // ---- History ----
 
 // history list; `continuing`: unfinished only (Home shelf)
-const historyList = (root, { before, continuing }, isCurrent) => {
+const historyList = (root, { before, continuing }, scope) => {
     const service = FT.store.service;
-    if (stopHistory) stopHistory();
-    stopHistory = FT.api.onHistoryChange(() => { if (isCurrent()) FT.reload(); });
+    scope.subscribe(() => FT.api.onHistoryChange(() => { if (scope.live()) FT.reload(); }));
     return FT.listView(root, {
         before,
         empty: continuing
@@ -181,23 +169,22 @@ const historyList = (root, { before, continuing }, isCurrent) => {
             const items = (await FT.api.history()).videos || [];
             return { items: continuing ? items.filter((v) => v.serviceId === service && v.progress > 2 && v.progress < 95) : items, next: null };
         },
-    }, isCurrent);
+    }, scope);
 };
 
 FT.register('history', {
-    leave: cleanup,
-    async render(root, params, isCurrent) {
+    async render(root, params, scope) {
         // full history is in Library; route kept for ?filter=continuing and old links
         if (params.filter !== 'continuing') { location.replace('#/library?tab=history'); return; }
-        await historyList(root, { before: [h('div', { class: 'head' }, h('h1', {}, FT.t('continue_watching')))], continuing: true }, isCurrent);
+        await historyList(root, { before: [h('div', { class: 'head' }, h('h1', {}, FT.t('continue_watching')))], continuing: true }, scope);
     },
 });
 
 // ---- Recommended (Home's "Recommended" shelf, opened out into a full list) ----
 
 FT.register('recommended', {
-    leave: cleanup,
-    async render(root, params, isCurrent) {
+    keepFor: () => FT.KEEP_MS,
+    async render(root, params, scope) {
         const service = FT.store.service;
         const known = new Set();
         const head = h('div', { class: 'head' }, h('h1', {}, FT.t('recommended')));
@@ -212,7 +199,7 @@ FT.register('recommended', {
                 items.forEach((v) => known.add(v.url));
                 return { items, next: body.hasMore !== false ? '1' : null };
             },
-        }, isCurrent);
+        }, scope);
     },
 });
 
@@ -246,11 +233,12 @@ const subsPills = (tab, src, used) => {
 };
 
 FT.register('subscriptions', {
-    leave: cleanup,
-    async render(root, params, isCurrent) {
+    // Feed memo lifetime (api.js); the channel list can change from the watch page.
+    keepFor: (params) => (params.tab === 'channels' ? 0 : 5 * 60 * 1000),
+    async render(root, params, scope) {
         const tab = SUBSCRIPTIONS_TABS.some((t) => t[0] === params.tab) ? params.tab : 'feed';
         const lib = await FT.api.library(FT.store.service);
-        if (!isCurrent()) return;
+        if (!scope.live()) return;
         const serviceOf = (item) => item.serviceId ?? FT.services[0].id;
         const used = FT.services.filter((s) => (lib.channels || []).some((c) => serviceOf(c) === s.id));
         const src = subsSource(params, used);
@@ -263,7 +251,7 @@ FT.register('subscriptions', {
                 before: [head, pills],
                 empty: { icon: 'dynamic_feed', title: FT.t('no_recent_uploads'), text: FT.t('no_recent_uploads_hint') },
                 fetch: async () => ({ items: ((await FT.api.feed(FT.store.service)).videos || []).filter(wanted), next: null }),
-            }, isCurrent);
+            }, scope);
             return;
         }
 
@@ -311,8 +299,7 @@ const LIBRARY_LISTS = {
 };
 
 FT.register('library', {
-    leave: cleanup,
-    async render(root, params, isCurrent) {
+    async render(root, params, scope) {
         // legacy ?tab=feed|channels redirect
         if (params.tab === 'feed' || params.tab === 'channels') { location.replace('#/subscriptions?tab=' + params.tab); return; }
         const tab = LIBRARY_TABS.some((t) => t[0] === params.tab) ? params.tab : 'history';
@@ -323,7 +310,7 @@ FT.register('library', {
         const before = [head, pills];
 
         if (tab === 'history') {
-            await historyList(root, { before, continuing: false }, isCurrent);
+            await historyList(root, { before, continuing: false }, scope);
             return;
         }
 
@@ -334,12 +321,12 @@ FT.register('library', {
                 empty: source.empty,
                 decorate: source.decorate,
                 fetch: async () => ({ items: (await source.load(service)).filter(sameService), next: null }),
-            }, isCurrent);
+            }, scope);
             return;
         }
 
         const lib = await FT.api.library(service);
-        if (!isCurrent()) return;
+        if (!scope.live()) return;
         const cards = [...(lib.mine || []), ...(lib.playlists || []).filter(sameService)].map((item) => {
             const card = FT.playlistCard(item);
             card.onRemoved = () => { card.remove(); FT.focus.first(); };
@@ -372,8 +359,7 @@ const ownPlaylistHead = (id, meta) => {
 };
 
 FT.register('mylist', {
-    leave: cleanup,
-    async render(root, params, isCurrent) {
+    async render(root, params, scope) {
         const id = params.u;
         await FT.listView(root, {
             before: [],
@@ -383,15 +369,15 @@ FT.register('mylist', {
                 const body = await FT.api.myList(id);
                 return { items: body.videos, next: null, extra: [ownPlaylistHead(id, body.playlist)] };
             },
-        }, isCurrent);
+        }, scope);
     },
 });
 
 // ---- A playlist ----
 
 FT.register('playlist', {
-    leave: cleanup,
-    async render(root, params, isCurrent) {
+    keepFor: () => FT.KEEP_MS,
+    async render(root, params, scope) {
         const service = parseInt(params.s, 10);
         const id = params.u;
         let meta = null;
@@ -414,7 +400,7 @@ FT.register('playlist', {
                 }
                 return { items: body.videos, next: body.nextPage };
             },
-        }, isCurrent);
+        }, scope);
     },
 });
 })();

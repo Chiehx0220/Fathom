@@ -3,8 +3,8 @@
 const h = FT.h;
 
 FT.register('channel', {
-    leave() { FT.screenSelect = null; },
-    async render(root, params, isCurrent) {
+    keepFor: () => FT.KEEP_MS,
+    async render(root, params, scope) {
         const service = parseInt(params.s, 10) || 0;
         const id = params.u;
         let header = null;
@@ -33,7 +33,7 @@ FT.register('channel', {
                     button);
                 return { items: body.videos || [], next: body.nextPage, extra: [top] };
             },
-        }, isCurrent);
+        }, scope);
     },
 });
 })();

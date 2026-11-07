@@ -1,13 +1,10 @@
 // Home: featured video + shelves; fast shelves at once, slow (subscriptions) fill in later.
 (() => {
 const h = FT.h;
-// Per-shelf IntersectionObservers (shelfOf); disconnected on leave().
-let activeObservers = [];
-// Resume-row history unsubscribe.
-let stopHistory = null;
-
 // Picks compared to tell whether the recommendations changed.
 const NEW_CHECK = 10;
+// Away longer than this → look for new recommendations on return.
+const STALE_MS = 5 * 60 * 1000;
 // Cards per chunk on scroll-in.
 const SHELF_CHUNK = 14;
 
@@ -15,7 +12,7 @@ const SHELF_CHUNK = 14;
 // options.expand: hash link to the full list.js view (row overflow is drag-only otherwise).
 // options.rows: preview rows in grid layout for a shelf without loadMore.
 // Grid layout: shelf is a grid; sentinel watches the viewport.
-const shelfOf = (title, sub, items, options = {}) => {
+const shelfOf = (scope, title, sub, items, options = {}) => {
     const wide = FT.layout.current() === 'grid';
     const preview = wide && !options.loadMore;
     const row = h('div', { class: wide ? 'grid' : 'row' });
@@ -34,7 +31,7 @@ const shelfOf = (title, sub, items, options = {}) => {
         if (preview || (shown >= items.length && !hasMore)) { if (io) io.disconnect(); return; }
         const sentinel = h('div', { style: wide ? 'height:1px' : 'flex:none;width:1px' });
         tail.append(sentinel);
-        if (!io) { io = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) reach(sentinel); }, { root: wide ? null : row, rootMargin: '600px' }); activeObservers.push(io); }
+        if (!io) { io = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) reach(sentinel); }, { root: wide ? null : row, rootMargin: '600px' }); scope.dispose(() => io.disconnect()); }
         io.observe(sentinel);
     };
     // Sentinel hit: next local chunk, else loadMore.
@@ -60,7 +57,7 @@ const shelfOf = (title, sub, items, options = {}) => {
         };
         const resize = new ResizeObserver(fit);
         resize.observe(row);
-        activeObservers.push(resize);
+        scope.dispose(() => resize.disconnect());
     }
     const head = options.expand
         ? h('a', { class: 'shelf-head expand', href: options.expand, 'aria-label': FT.t('see_all_named', { title }), data: { f: '', key: 'shelf:' + title } },
@@ -79,14 +76,14 @@ const hero = (v, resuming) => h('div', { class: 'hero' },
             FT.button(FT.t(resuming ? 'resume' : 'play'), 'play_arrow', () => { location.hash = FT.link.watch(v); }, 'primary', 'hero-play'),
             FT.button(FT.t('watch_later'), 'schedule', () => FT.api.watchLater(v, true).then(() => FT.toast(FT.t('saved_to_later'))).catch(() => FT.toast(FT.t('could_not_save'))), '', 'hero-later'))));
 
-const render = async (root, params, isCurrent) => {
+const render = async (root, params, scope) => {
     const service = FT.store.service;
     const wide = FT.layout.current() === 'grid';
     const [recs, hist] = await Promise.all([
         FT.api.recommendations(service).catch(() => FT.api.home(service)),
         FT.api.history().catch(() => ({ videos: [] })),
     ]);
-    if (!isCurrent()) return;
+    if (!scope.live()) return;
 
     const resumable = (history) => (history.videos || []).filter((v) => v.serviceId === service && v.progress > 2 && v.progress < 95);
     const seen = resumable(hist);
@@ -104,7 +101,7 @@ const render = async (root, params, isCurrent) => {
     // Deeper rounds (more=1) feed Recommended shelf.
     const known = new Set(picks.map((v) => v.url));
     const loadMoreRecs = recs.hasMore === false ? null : () => FT.api.recommendations(service, true).then((body) => {
-        if (!isCurrent()) throw new Error('left the home screen');
+        if (!scope.live()) throw new Error('left the home screen');
         const fresh = (body.videos || []).filter((v) => !v.isShort && !known.has(v.url));
         fresh.forEach((v) => known.add(v.url));
         return { items: fresh, hasMore: body.hasMore !== false };
@@ -114,7 +111,7 @@ const render = async (root, params, isCurrent) => {
         const first = resuming[0] || picks[0];
         slotHero.replaceChildren(...(first && !wide ? [hero(first, resuming[0] === first)] : []));
         slotSeen.replaceChildren(...(resuming.length
-            ? [shelfOf(FT.t('continue_watching'), FT.t('from_history'), resuming, { expand: '#/history?filter=continuing', rows: 1 })] : []));
+            ? [shelfOf(scope, FT.t('continue_watching'), FT.t('from_history'), resuming, { expand: '#/history?filter=continuing', rows: 1 })] : []));
     };
     paintResume(seen);
 
@@ -122,71 +119,51 @@ const render = async (root, params, isCurrent) => {
         slotNew,
         slotHero,
         slotSeen,
-        picks.length ? shelfOf(FT.t('recommended'), FT.t('for_you'), picks, { ...(loadMoreRecs ? { loadMore: loadMoreRecs } : {}), expand: '#/recommended', rows: 3 }) : null,
+        picks.length ? shelfOf(scope, FT.t('recommended'), FT.t('for_you'), picks, { ...(loadMoreRecs ? { loadMore: loadMoreRecs } : {}), expand: '#/recommended', rows: 3 }) : null,
         slotSubs,
         slotLater,
     ];
     root.replaceChildren(...page.filter(Boolean));
 
     const syncResume = () => FT.api.history().then((fresh) => {
-        if (!isCurrent()) return;
+        if (!scope.live()) return;
         const selected = FT.focus.el;
         const key = selected && (slotHero.contains(selected) || slotSeen.contains(selected)) ? selected.dataset.key : null;
         paintResume(resumable(fresh));
         if (key) FT.focus.select(FT.focus.stops().find((el) => el.dataset.key === key) || FT.focus.stops()[0]);
     }).catch(() => {});
-    const listen = () => {
-        if (stopHistory) stopHistory();
-        stopHistory = FT.api.onHistoryChange(syncResume);
-    };
-    listen();
+    scope.subscribe(() => FT.api.onHistoryChange(syncResume));
 
     FT.api.feed(service).then((body) => {
-        if (!isCurrent()) return;
+        if (!scope.live()) return;
         const items = (body.videos || []).filter((v) => v.serviceId === service);
         if (!items.length) return;
-        slotSubs.replaceChildren(shelfOf(FT.t('from_subscriptions'), FT.t('newest_first'), items, { expand: '#/subscriptions?tab=feed', rows: 2 }));
+        slotSubs.replaceChildren(shelfOf(scope, FT.t('from_subscriptions'), FT.t('newest_first'), items, { expand: '#/subscriptions?tab=feed', rows: 2 }));
         slotSubs.hidden = false;
     }).catch(() => {});
 
     FT.api.library(service).then((lib) => {
-        if (!isCurrent()) return;
+        if (!scope.live()) return;
         const items = (lib.watchLater || []).filter((v) => v.serviceId === service);
         if (!items.length) return;
-        slotLater.replaceChildren(shelfOf(FT.t('watch_later'), FT.t('saved_by_you'), items, { later: true, expand: '#/library?tab=later', rows: 1 }));
+        slotLater.replaceChildren(shelfOf(scope, FT.t('watch_later'), FT.t('saved_by_you'), items, { later: true, expand: '#/library?tab=later', rows: 1 }));
         slotLater.hidden = false;
     }).catch(() => {});
 
-    // Kept screen: history listener pauses while away; stale ones offer new picks instead of swapping them in.
-    return {
-        suspend() {
-            if (stopHistory) stopHistory();
-            stopHistory = null;
-        },
-        resume(stale) {
-            listen();
-            syncResume();
-            if (!stale) return;
-            FT.api.forget();
-            FT.api.recommendations(service).then((body) => {
-                if (!isCurrent()) return;
-                const urls = (list) => list.filter((v) => !v.isShort).slice(0, NEW_CHECK).map((v) => v.url).join();
-                if (urls(body.videos || []) === urls(picks)) return;
-                slotNew.replaceChildren(FT.button(FT.t('new_content'), 'refresh', () => FT.refresh(), 'primary', 'new-content'));
-                slotNew.hidden = false;
-            }).catch(() => {});
-        },
-    };
+    // New picks are offered, not swapped in, so the page never moves under the viewer.
+    scope.onResume((away) => {
+        syncResume();
+        if (away < STALE_MS) return;
+        FT.api.forget();
+        FT.api.recommendations(service).then((body) => {
+            if (!scope.live()) return;
+            const urls = (list) => list.filter((v) => !v.isShort).slice(0, NEW_CHECK).map((v) => v.url).join();
+            if (urls(body.videos || []) === urls(picks)) return;
+            slotNew.replaceChildren(FT.button(FT.t('new_content'), 'refresh', () => FT.refresh(), 'primary', 'new-content'));
+            slotNew.hidden = false;
+        }).catch(() => {});
+    });
 };
 
-FT.register('home', {
-    keep: true,
-    render,
-    leave() {
-        activeObservers.forEach((o) => o.disconnect());
-        activeObservers = [];
-        if (stopHistory) stopHistory();
-        stopHistory = null;
-    },
-});
+FT.register('home', { keepFor: () => Infinity, render });
 })();

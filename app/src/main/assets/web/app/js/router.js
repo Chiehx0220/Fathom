@@ -1,13 +1,13 @@
-// Screen router (no reload): screen = { render(root, params, isCurrent) }.
+// Screen router (no reload): screen = { render(root, params, scope), keepFor?(params) → ms, ready? }.
 (() => {
 const h = FT.h;
 const screens = {};
 const scrolls = new Map();
-// Finished screens that opt in (keep + a render handle) stay detached here; back restores them as left.
+// Finished screens that opt in (keepFor) stay detached here; back restores them as left.
 const kept = new Map();
 const KEPT_MAX = 4;
-// Kept screens older than this get a "new content" check on return.
-const STALE_MS = 5 * 60 * 1000;
+// How long a kept page may be restored after leaving it.
+FT.KEEP_MS = 30 * 60 * 1000;
 let current = null;
 let fresh = false;
 
@@ -58,24 +58,46 @@ FT.renderTop = renderTop;
 
 // ---- Showing a screen ----
 
+// Per drawn screen: teardown (dispose), external feeds (subscribe: stopped while kept), selection and resume hooks.
+const lifeOf = () => {
+    const life = { alive: true, disposers: [], subs: [], resumes: [], select: null };
+    life.scope = {
+        live: () => life.alive,
+        dispose: (fn) => { life.disposers.push(fn); },
+        subscribe: (start) => { if (life.alive) life.subs.push({ start, stop: start() }); },
+        onSelect: (fn) => { life.select = fn; FT.screenSelect = fn; },
+        onResume: (fn) => { life.resumes.push(fn); },
+    };
+    return life;
+};
+const pause = (life) => life.subs.forEach((sub) => { if (sub.stop) sub.stop(); sub.stop = null; });
+const unpause = (life, age) => {
+    life.subs.forEach((sub) => { sub.stop = sub.start(); });
+    life.resumes.forEach((fn) => fn(age));
+};
+const end = (life) => {
+    life.alive = false;
+    pause(life);
+    life.disposers.splice(0).forEach((fn) => fn());
+};
+
 const dropKept = (key) => {
     const entry = kept.get(key);
     if (!entry) return;
     kept.delete(key);
-    entry.life.alive = false;
-    if (entry.screen.leave) entry.screen.leave();
+    end(entry.life);
 };
 
 const leaveCurrent = () => {
-    const { screen, key, life, handle, done } = current;
-    if (!fresh && done && screen.keep && handle) {
-        kept.set(key, { screen, life, handle, nodes: [...FT.$('#screen').childNodes], at: Date.now() });
-        if (handle.suspend) handle.suspend();
+    const { screen, params, key, life, done } = current;
+    const ttl = screen.keepFor ? screen.keepFor(params) : 0;
+    if (!fresh && done && ttl > 0) {
+        kept.set(key, { life, ttl, nodes: [...FT.$('#screen').childNodes], at: Date.now() });
+        pause(life);
         if (kept.size > KEPT_MAX) dropKept(kept.keys().next().value);
         return;
     }
-    life.alive = false;
-    if (screen.leave) screen.leave();
+    end(life);
 };
 
 const show = async () => {
@@ -99,26 +121,26 @@ const show = async () => {
     const root = FT.$('#screen');
     FT.focus.clear();
     const back = reload ? null : kept.get(key);
-    if (back) {
+    if (back && Date.now() - back.at <= back.ttl) {
         kept.delete(key);
-        current = { screen, key, life: back.life, handle: back.handle, done: true };
+        current = { screen, params, key, life: back.life, done: true };
         root.replaceChildren(...back.nodes);
+        FT.screenSelect = back.life.select;
         FT.focus.restore(key);
         scrollTo({ top: scrolls.get(key) || 0, behavior: 'instant' });
-        if (back.handle.resume) back.handle.resume(Date.now() - back.at > STALE_MS);
+        unpause(back.life, Date.now() - back.at);
         return;
     }
     dropKept(key);
-    const life = { alive: true };
-    current = { screen, key, life, handle: null, done: false };
+    const life = lifeOf();
+    current = { screen, params, key, life, done: false };
     root.replaceChildren(FT.loading());
-    const isCurrent = () => life.alive;
     try {
-        current.handle = await screen.render(root, params, isCurrent);
+        await screen.render(root, params, life.scope);
     } catch (error) {
-        if (isCurrent()) root.replaceChildren(FT.failure(error.message, FT.reload));
+        if (life.alive) root.replaceChildren(FT.failure(error.message, FT.reload));
     }
-    if (!isCurrent()) return;
+    if (!life.alive) return;
     current.done = true;
     FT.focus.restore(key);
     scrollTo({ top: scrolls.get(key) || 0, behavior: 'instant' });
