@@ -11,6 +11,7 @@
     <string name="update_flow">更新Fathom</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">控制 Fathom 可傳送哪些通知</string>
+    <string name="notification_channel_new_version_description">有新版本的 Fathom 時通知你</string>
     <string name="notif_type_updates_subtitle">Fathom 有新版本可用時通知我</string>
     <string name="notif_master_toggle_subtitle">允許 Fathom 在背景檢查新影片</string>
     <string name="notif_background_restricted_subtitle">Android 會在 Fathom 關閉時阻止檢查。點選以允許背景活動。</string>

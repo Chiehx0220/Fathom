@@ -12,6 +12,7 @@
     <string name="update_flow">Update Fathom</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Control which notifications Fathom can send</string>
+    <string name="notification_channel_new_version_description">Tells you when a new version of Fathom is out</string>
     <string name="notif_type_updates_subtitle">Get notified when a new version of Fathom is available</string>
     <string name="notif_master_toggle_subtitle">Let Fathom check for new videos in the background</string>
     <string name="notif_background_restricted_subtitle">Android blocks checks while Fathom is closed. Tap to allow background activity.</string>

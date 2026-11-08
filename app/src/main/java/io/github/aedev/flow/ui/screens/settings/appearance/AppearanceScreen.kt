@@ -4,9 +4,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.outlined.AppShortcut
 import androidx.compose.material.icons.outlined.FiberNew
+import androidx.compose.material.icons.outlined.Gradient
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.TextFields
+import androidx.compose.material.icons.outlined.TextRotationNone
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.outlined.Tv
 import androidx.compose.material3.SnackbarHostState
@@ -144,6 +146,18 @@ internal fun AppearanceScreen(
                 icon = Icons.Outlined.Tv,
                 showChevron = false,
                 onClick = { showInterfaceDialog = true },
+            )
+            switch(
+                AppearanceIndex.skeletonGradient,
+                viewModel.skeletonGradient,
+                viewModel::setSkeletonGradient,
+                icon = Icons.Outlined.Gradient,
+            )
+            switch(
+                AppearanceIndex.marquee,
+                viewModel.marqueeEnabled,
+                viewModel::setMarqueeEnabled,
+                icon = Icons.Outlined.TextRotationNone,
             )
             switch(
                 AppearanceIndex.highlightNewSettings,

@@ -2707,6 +2707,7 @@ class EnhancedPlayerManager private constructor() {
             bandwidthBitsPerSecond = bandwidthMeter?.bitrateEstimate ?: 0L,
             decoderName = analyticsLogger?.activeDecoderName,
             gainDb = audioFeaturesManager?.appliedLoudnessDb,
+            surfaceFrame = surfaceManager?.getSurfaceHolder()?.surfaceFrame,
         )
 
     fun getCastVideoStreams(): List<VideoStream> = availableVideoStreams

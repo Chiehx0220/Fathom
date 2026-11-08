@@ -12,6 +12,7 @@ import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.data.local.PrivacyGate
 import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.local.SearchHistoryRepository
 import io.github.aedev.flow.data.local.dao.WatchHistoryDao
@@ -64,6 +65,7 @@ class SearchViewModel
         private val neuroEngine: FlowNeuroEngine,
         private val watchHistoryDao: WatchHistoryDao,
         private val preferences: PlayerPreferences,
+        private val privacyGate: PrivacyGate,
     ) : ViewModel() {
         // Signal each distinct submitted query once — typing and filter churn stay silent.
         private var lastSignaledQuery: String? = null
@@ -177,7 +179,9 @@ class SearchViewModel
             filters: SearchFilter,
         ) {
             if (query.isBlank()) return
-            viewModelScope.launch { searchHistory.saveSearchQuery(query, filters = filters) }
+            viewModelScope.launch {
+                if (privacyGate.allowsSearchHistory()) searchHistory.saveSearchQuery(query, filters = filters)
+            }
         }
 
         fun clearSearch() {
