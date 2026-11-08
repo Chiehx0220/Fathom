@@ -1,0 +1,2 @@
+const e=Object.freeze({length:0,start:()=>0,end:()=>0}),t=Object.freeze({length:0,start:()=>0,end:()=>0}),n=Object.assign(new EventTarget,{length:0,*[Symbol.iterator](){},getTrackById:()=>null}),r=new EventTarget;export{t as i,n,e as r,r as t};
+//# sourceMappingURL=constants-B_JquiJQ.js.map
