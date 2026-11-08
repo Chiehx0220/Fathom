@@ -11,8 +11,7 @@ import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
-// Home-feed candidates/ranking use native `YouTubeRepository`/`FlowNeuroEngine`; `toFlowVideo()`/`toStreamInfoItem()` convert [InfoItem] ↔
-// [FlowVideo].
+// Native `YouTubeRepository`/`FlowNeuroEngine` access; [InfoItem] ↔ [FlowVideo].
 
 // Singleton shared with native (Hilt provider instance).
 internal fun HistoryDbHelper.youTubeRepository(): YouTubeRepository = YouTubeRepository.getInstance(PlayerPreferences(appContext))
@@ -33,12 +32,8 @@ internal suspend fun HistoryDbHelper.ensureFlowNeuroInitialized() {
     flowNeuroInitialized = true
 }
 
-// serviceId unused: this.serviceId authoritative; parameter keeps converters symmetric.
-
 /** Listing candidates (StreamInfoItem): no tags/description (only the watch-page StreamInfo overload). */
-fun StreamInfoItem.toFlowVideo(
-    @Suppress("UNUSED_PARAMETER") serviceId: Int,
-): FlowVideo {
+fun StreamInfoItem.toFlowVideo(): FlowVideo {
     val durationSeconds = this.duration.coerceAtLeast(0).toInt()
     return FlowVideo(
         id = LocalServerMedia.getVideoId(this.url),
@@ -60,9 +55,7 @@ fun StreamInfoItem.toFlowVideo(
 }
 
 /** Watch-page detail (StreamInfo): description/tags, unlike StreamInfoItem. */
-fun StreamInfo.toFlowVideo(
-    @Suppress("UNUSED_PARAMETER") serviceId: Int,
-): FlowVideo {
+fun StreamInfo.toFlowVideo(): FlowVideo {
     val durationSeconds = this.duration.coerceAtLeast(0).toInt()
     return FlowVideo(
         id = LocalServerMedia.getVideoId(this.url),

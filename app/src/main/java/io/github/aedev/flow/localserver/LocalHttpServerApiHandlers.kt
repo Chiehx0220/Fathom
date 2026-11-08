@@ -60,7 +60,7 @@ internal fun RequestContext.handleApiRecommendations(params: Query): SearchResul
         hasMore = more
     }
     val filtered = dbHelper.withoutHidden(items)
-    val ranked = if (alreadyRanked) filtered else dbHelper.rankWithFlowNeuro(filtered, serviceId)
+    val ranked = if (alreadyRanked) filtered else dbHelper.rankWithFlowNeuro(filtered)
     return ranked.toSearchResult(null, hasMore)
 }
 
@@ -87,7 +87,7 @@ internal fun RequestContext.handleApiVideo(params: Query): VideoDetail {
     val uploaderAvatarUrl = info.uploaderAvatars?.takeIf { it.isNotEmpty() }?.let { WebFormat.getThumbnailUrl(it) }
     dbHelper.saveToHistory(info.name, info.url, info.uploaderName, thumbUrl, serviceId, info.uploaderUrl, uploaderAvatarUrl)
     // FlowNeuro click, best-effort.
-    dbHelper.reportFlowNeuroInteraction(info, serviceId, InteractionType.CLICK)
+    dbHelper.reportFlowNeuroInteraction(info, InteractionType.CLICK)
     return info.toDetail(serviceId)
 }
 
@@ -113,7 +113,7 @@ internal fun RequestContext.handleApiWatchProgress(params: Query): Status {
     if (serviceId != null) {
         try {
             val info = source.streamInfo(serviceId, videoUrl)
-            dbHelper.reportFlowNeuroInteraction(info, serviceId, InteractionType.WATCHED, percent / 100f)
+            dbHelper.reportFlowNeuroInteraction(info, InteractionType.WATCHED, percent / 100f)
         } catch (e: Exception) {
             serverLog("FlowNeuro watch-signal error: " + e.message)
         }

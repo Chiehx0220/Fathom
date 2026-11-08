@@ -10,7 +10,7 @@ class LocalServerCachesTest {
 
     @Test
     fun `a stream url is found until it expires`() {
-        val cache = StreamUrlCache()
+        val cache = TtlCache<String>(maxItems = 60)
         cache.put("live", "https://cdn/a", hour)
         cache.put("gone", "https://cdn/b", -1L)
 
@@ -21,7 +21,7 @@ class LocalServerCachesTest {
 
     @Test
     fun `removing and clearing forget entries`() {
-        val cache = StreamUrlCache()
+        val cache = TtlCache<String>(maxItems = 60)
         cache.put("a", "1", hour)
         cache.put("b", "2", hour)
 
@@ -34,8 +34,8 @@ class LocalServerCachesTest {
     }
 
     @Test
-    fun `the url cache keeps the 60 most recently used entries`() {
-        val cache = StreamUrlCache()
+    fun `it keeps only the most recently used entries`() {
+        val cache = TtlCache<String>(maxItems = 60)
         repeat(60) { cache.put("k$it", "v$it", hour) }
         cache.get("k0")
 
@@ -47,8 +47,8 @@ class LocalServerCachesTest {
     }
 
     @Test
-    fun `the extractor cache keeps the 15 most recently used and drops the expired`() {
-        val cache = ExtractorCache()
+    fun `it holds any value type and drops the expired`() {
+        val cache = TtlCache<StreamExtractor>(maxItems = 15)
         val extractors = List(16) { mockk<StreamExtractor>() }
         extractors.take(15).forEachIndexed { i, e -> cache.put("k$i", e, hour) }
 

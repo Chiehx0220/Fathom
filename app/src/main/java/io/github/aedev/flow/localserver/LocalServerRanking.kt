@@ -16,10 +16,7 @@ import java.util.IdentityHashMap
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
 /** Reorders via FlowNeuroEngine; order only, original on failure. */
-fun HistoryDbHelper.rankWithFlowNeuro(
-    items: List<InfoItem>,
-    serviceId: Int,
-): List<InfoItem> {
+fun HistoryDbHelper.rankWithFlowNeuro(items: List<InfoItem>): List<InfoItem> {
     val streamItems = items.filterIsInstance<StreamInfoItem>()
     if (streamItems.isEmpty()) return items
     return try {
@@ -30,7 +27,7 @@ fun HistoryDbHelper.rankWithFlowNeuro(
             val videoById = LinkedHashMap<String, StreamInfoItem>()
             val videos = ArrayList<FlowVideo>(streamItems.size)
             for (item in streamItems) {
-                val video = item.toFlowVideo(serviceId)
+                val video = item.toFlowVideo()
                 if (video.id.isNotBlank() && !videoById.containsKey(video.id)) {
                     videoById[video.id] = item
                     videos.add(video)
@@ -56,14 +53,13 @@ fun HistoryDbHelper.rankWithFlowNeuro(
 /** Click/watch signal → FlowNeuroEngine. Best-effort. */
 fun HistoryDbHelper.reportFlowNeuroInteraction(
     info: StreamInfo,
-    serviceId: Int,
     type: InteractionType,
     percentWatched: Float = 0f,
 ) {
     try {
         runBlocking {
             ensureFlowNeuroInitialized()
-            FlowNeuroEngine.onVideoInteraction(info.toFlowVideo(serviceId), type, percentWatched)
+            FlowNeuroEngine.onVideoInteraction(info.toFlowVideo(), type, percentWatched)
         }
     } catch (e: Exception) {
         serverLog("FlowNeuro interaction-signal error: " + e.message)

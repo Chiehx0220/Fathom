@@ -5,13 +5,13 @@ import java.util.concurrent.TimeUnit
 
 /** Process-wide proxy-handler caches + fetch HTTP client. */
 internal object LocalServerCaches {
-    internal val streamUrlCache = StreamUrlCache()
+    internal val streamUrlCache = TtlCache<String>(maxItems = 60)
 
     // InnerTube client that minted each cached URL: googlevideo 403s on UA/client mismatch.
-    internal val streamUaCache = StreamUrlCache()
+    internal val streamUaCache = TtlCache<String>(maxItems = 60)
 
     // One extraction per video for watch + manifest handlers; smaller than streamUrlCache.
-    internal val extractorCache = ExtractorCache()
+    internal val extractorCache = TtlCache<StreamExtractor>(maxItems = 15)
     internal val httpClient: okhttp3.OkHttpClient =
         okhttp3.OkHttpClient
             .Builder()
@@ -20,46 +20,42 @@ internal object LocalServerCaches {
             .build()
 }
 
-private class CacheData(
-    val value: String?,
-    timeoutMillis: Long,
+/** LRU with per-entry expiry; synchronized. */
+internal class TtlCache<V : Any>(
+    private val maxItems: Int,
 ) {
-    val expireTimestamp: Long = System.currentTimeMillis() + timeoutMillis
+    private class Entry<V>(
+        val value: V,
+        ttlMillis: Long,
+    ) {
+        private val expiresAt = System.currentTimeMillis() + ttlMillis
 
-    fun isExpired(): Boolean = System.currentTimeMillis() > expireTimestamp
-}
-
-internal class StreamUrlCache {
-    companion object {
-        private const val MAX_ITEMS = 60
+        fun isExpired() = System.currentTimeMillis() > expiresAt
     }
 
     private val map =
-        object : LinkedHashMap<String, CacheData>(16, 0.75f, true) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, CacheData>?): Boolean = size > MAX_ITEMS
+        object : LinkedHashMap<String, Entry<V>>(16, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Entry<V>>?) = size > maxItems
         }
 
     @Synchronized
-    fun get(key: String): String? {
-        val data = map[key]
-        if (data == null) {
-            return null
-        }
-        if (data.isExpired()) {
+    fun get(key: String): V? {
+        val entry = map[key] ?: return null
+        if (entry.isExpired()) {
             map.remove(key)
             return null
         }
-        return data.value
+        return entry.value
     }
 
     @Synchronized
     fun put(
         key: String,
-        value: String?,
-        timeoutMillis: Long,
+        value: V,
+        ttlMillis: Long,
     ) {
-        removeStale()
-        map[key] = CacheData(value, timeoutMillis)
+        map.entries.removeIf { it.value.isExpired() }
+        map[key] = Entry(value, ttlMillis)
     }
 
     @Synchronized
@@ -67,55 +63,8 @@ internal class StreamUrlCache {
         map.remove(key)
     }
 
-    private fun removeStale() {
-        map.entries.removeIf { it.value.isExpired() }
-    }
-
     @Synchronized
     fun clear() {
         map.clear()
-    }
-}
-
-internal class ExtractorCacheData(
-    val value: StreamExtractor,
-    timeoutMillis: Long,
-) {
-    val expireTimestamp: Long = System.currentTimeMillis() + timeoutMillis
-
-    fun isExpired(): Boolean = System.currentTimeMillis() > expireTimestamp
-}
-
-internal class ExtractorCache {
-    companion object {
-        private const val MAX_ITEMS = 15
-    }
-
-    private val map =
-        object : LinkedHashMap<String, ExtractorCacheData>(16, 0.75f, true) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ExtractorCacheData>?): Boolean = size > MAX_ITEMS
-        }
-
-    @Synchronized
-    fun get(key: String): StreamExtractor? {
-        val data = map[key]
-        if (data == null) {
-            return null
-        }
-        if (data.isExpired()) {
-            map.remove(key)
-            return null
-        }
-        return data.value
-    }
-
-    @Synchronized
-    fun put(
-        key: String,
-        value: StreamExtractor,
-        timeoutMillis: Long,
-    ) {
-        map.entries.removeIf { it.value.isExpired() }
-        map[key] = ExtractorCacheData(value, timeoutMillis)
     }
 }
