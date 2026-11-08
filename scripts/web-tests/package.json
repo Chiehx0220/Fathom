@@ -3,6 +3,6 @@
   "private": true,
   "description": "DOM-level tests for the Fathom web page (jsdom); dev only, not shipped in the APK",
   "devDependencies": {
-    "jsdom": "27.0.1"
+    "jsdom": "31.0.0"
   }
 }
