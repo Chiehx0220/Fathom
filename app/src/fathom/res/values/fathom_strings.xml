@@ -231,4 +231,5 @@
     <string name="linked_profile_switch_body">Only the profile in use can start syncing, so Fathom restarts in it first. Then turn on syncing there.</string>
     <string name="buffer_cache_size_link_summary">How much video and music Fathom keeps on disk</string>
     <string name="linked_replace_words_body">Fathom makes new recovery words and new encryption keys for your devices. The old words stop working: they can\'t restore this group or read anything synced from now on. Write the new words down when they appear.</string>
+    <string name="linked_error_restore_unfinished">The restore isn\'t finished yet. Fathom will finish it on the next sync.</string>
 </resources>

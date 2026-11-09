@@ -8,6 +8,7 @@
     <string name="update_flow">حدث Fathom</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">تحكم في الإشعارات التي يرسلها Fathom</string>
+    <string name="notification_channel_new_version_description">يُعلمك عند صدور إصدار جديد من Fathom</string>
     <string name="notif_type_updates_subtitle">نبهني عندما يتوفر تحديث جديد لFathom</string>
     <string name="notif_master_toggle_subtitle">السماح لـ Fathom بالبحث عن فيديوهات جديدة في الخلفية</string>
     <string name="notif_background_restricted_subtitle">يمنع أندرويد التحقق عند إغلاق Fathom. اضغط للسماح للتطبيق بالعمل في الخلفية.</string>

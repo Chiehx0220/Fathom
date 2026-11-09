@@ -11,6 +11,7 @@
     <string name="update_flow">Mettre à jour Fathom</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Gérer les notifications que Fathom peut envoyer</string>
+    <string name="notification_channel_new_version_description">Vous informe de la sortie d\'une nouvelle version de Fathom</string>
     <string name="notif_type_updates_subtitle">Recevez une notification lorsqu\'une nouvelle version de Fathom est disponible</string>
     <string name="notif_master_toggle_subtitle">Autoriser Fathom à s\'activer en arrière-plan pour vérifier les notifications et les alertes</string>
     <string name="notif_background_restricted_subtitle">Android empêche Fathom de vérifier la présence de nouvelles vidéos lorsque l\'application est fermée ; les notifications ne s\'affichent donc que lorsque vous ouvrez l\'application. Appuyez ici pour autoriser l\'activité en arrière-plan sans restriction.</string>

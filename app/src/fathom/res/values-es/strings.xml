@@ -8,6 +8,7 @@
     <string name="update_flow">Actualizar Fathom</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Controla qué notificaciones puede enviar Fathom</string>
+    <string name="notification_channel_new_version_description">Te avisa cuando hay una nueva versión de Fathom</string>
     <string name="notif_type_updates_subtitle">Recibe una notificación cuando esté disponible una nueva versión de Fathom</string>
     <string name="notif_master_toggle_subtitle">Permitir que Fathom busque nuevos videos en segundo plano</string>
     <string name="notif_check_interval_dialog_body">Frecuencia con la que Fathom comprueba tus suscripciones en busca de nuevos videos.</string>
@@ -73,6 +74,7 @@
     <string name="playlist_import_too_new">Esta lista necesita una versión más reciente de Fathom</string>
     <string name="subtitle_add_file_failed">Fathom no puede leer ese archivo como subtítulos</string>
     <string name="playlist_import_not_a_playlist">Este archivo no es una lista de Fathom</string>
+    <string name="scrobbling_import_offer_body">Fathom añade tus 20 artistas más escuchados del último año a tus artistas favoritos. Puedes quitar cualquiera de ellos más adelante.</string>
     <string name="discord_presence_playing_fallback">Reproduciendo en Fathom</string>
     <string name="export_watch_history_desc">Exportar como JSON del historial de YouTube (importaciones a LibreTube y Fathom)</string>
     <string name="whats_new_in_flow">Novedades en Fathom</string>
