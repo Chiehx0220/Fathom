@@ -3,7 +3,7 @@
 This package ports the Bilibili service of PipePipeExtractor (PPE, GPL-3.0). Flow no longer depends
 on PPE (it uses NewPipeExtractor, like upstream); the port is kept in step by hand. The copy it was
 ported from is Chiehx0220/PipePipeExtractor at commit `aef9726d5b1172213066f60bc338eb4278651d61`.
-Upstream (InfinityLoop1308/PipePipeExtractor) has been ported up to `c68e10e2` (v5.4.0), live rooms included.
+Upstream (InfinityLoop1308/PipePipeExtractor) has been ported up to `28a1a5ee` (after v5.5.0), live rooms included.
 
 When Bilibili changes its risk control, diff the PPE files on the right against the files on the
 left, re-port only what changed, and update the commit above. PPE paths are under
@@ -26,6 +26,8 @@ left, re-port only what changed, and update the commit above. PPE paths are unde
 ## Not ported
 - Rebroadcast rooms (`live_status` 2, PPE's "round play"), bangumi and other paid content, partition playlists.
 - Subtitles, login.
+- A video's collection in its details (PPE c0096e91), and super chat author, avatar and pinned time (PPE 9fcdaa6a, c1b68a3b); no screen shows them.
+- PPE-only fixes with no counterpart here: `68a7a6bc` (shared audio array mutated on a repeat extraction).
 - Chapters (`BilibiliApi.chapters`) read the web player's own endpoint, and the popular list
   (`BilibiliApi.popular`) is Bilibili's public `web-interface/popular`; neither is in PPE.
 
@@ -39,7 +41,5 @@ left, re-port only what changed, and update the commit above. PPE paths are unde
   fallback), and that request is WBI-signed.
 - Backups are filtered by the same M-CDN rule as the primary (PPE does so for audio only), so a stream's mirror
   group never contains an M-CDN node unless every candidate is one.
-- Requests go through Flow's OkHttp client, not PPE's downloader, so the default user agent of the one
-  request sent with an empty Cookie header (`wbi/view`) is OkHttp's. Compare this first if that request fails.
 - A blocked video list moves to the next API in the same call. PPE moves on for the next call.
 - `AudioStream.averageBitrate` is bps (`bandwidth`), as `AudioStreamSelector` and the bitrate labels expect; PPE's `bandwidth / 1000` (kbps) is not ported.

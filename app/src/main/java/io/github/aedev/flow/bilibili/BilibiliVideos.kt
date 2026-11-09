@@ -19,8 +19,8 @@ internal class BilibiliVideos(
         bvid: String,
         page: Int = 1,
     ): BilibiliVideoInfo {
-        // PipePipe: empty Cookie header.
-        val body = session.get("$VIEW_URL?bvid=$bvid", mapOf("Cookie" to ""))
+        // Visitor cookies: overseas IPs get a 412 risk-control page without buvid3. Account cookies stay out (PPE ce289b45).
+        val body = session.get("$VIEW_URL?bvid=$bvid", session.headers("https://www.bilibili.com/video/$bvid"))
         val response = json.decodeFromString<ViewResponse>(body)
         val data = response.data
         if (response.code != 0 || data == null) {
