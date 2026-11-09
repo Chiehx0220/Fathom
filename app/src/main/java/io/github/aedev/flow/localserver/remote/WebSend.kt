@@ -1,8 +1,6 @@
 package io.github.aedev.flow.localserver.remote
 
 import android.content.Context
-import io.github.aedev.flow.data.local.PlayerPreferences
-import io.github.aedev.flow.data.local.setLocalServerEnabled
 import io.github.aedev.flow.localserver.RemoteSession
 import io.github.aedev.flow.localserver.ServerService
 import io.github.aedev.flow.localserver.videoIdToUrl
@@ -23,9 +21,6 @@ internal fun sharedVideoUrl(text: String?): String? =
 internal fun queueVideoForPage(url: String) = RemoteSession.sendOrHold("play_video:$url")
 
 /** Equivalent to the Settings switch. */
-internal suspend fun enableLocalServer(context: Context) {
-    PlayerPreferences(context).setLocalServerEnabled(true)
-    ServerService.start(context)
-}
+internal fun enableLocalServer(context: Context) = ServerService.start(context)
 
 internal fun webAddress() = "http://${ServerService.getLocalIpAddress() ?: "127.0.0.1"}:${ServerService.port}"

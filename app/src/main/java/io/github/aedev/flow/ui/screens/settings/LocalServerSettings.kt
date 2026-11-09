@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,14 +32,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
-import io.github.aedev.flow.data.local.PlayerPreferences
-import io.github.aedev.flow.data.local.setLocalServerEnabled
 import io.github.aedev.flow.localserver.Pairing
 import io.github.aedev.flow.localserver.RemoteActivity
 import io.github.aedev.flow.localserver.ServerService
 import io.github.aedev.flow.localserver.remote.PairingCodeSection
 import io.github.aedev.flow.ui.components.shared.flowArtistShape
-import kotlinx.coroutines.launch
 
 private val CardPadding = 16.dp
 private val CardSpacing = 16.dp
@@ -48,15 +44,12 @@ private val EmblemSize = 56.dp
 private val OnlineColor = Color(0xFF2E9E5B)
 
 /**
- * Settings-list server card beside taste card (M3 Expressive); outside upstream settings files; follows actual service state, not saved
- * preference.
+ * Settings-list server card beside taste card (M3 Expressive); outside upstream settings files; follows actual service state.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun LocalServerSettingsSection() {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val preferences = remember { PlayerPreferences(context) }
     val running by ServerService.runningState.collectAsState()
     val portsBusy by ServerService.portsBusy.collectAsState()
     val pairing = remember { Pairing.of(context) }
@@ -125,7 +118,6 @@ internal fun LocalServerSettingsSection() {
                 Switch(
                     checked = running,
                     onCheckedChange = { enabled ->
-                        scope.launch { preferences.setLocalServerEnabled(enabled) }
                         if (enabled) ServerService.start(context) else ServerService.stop(context)
                     },
                 )
