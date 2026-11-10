@@ -8,6 +8,7 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import dagger.hilt.android.HiltAndroidApp
+import io.github.aedev.flow.applock.AppLock
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.profile.ActiveProfile
@@ -26,6 +27,7 @@ import io.github.aedev.flow.network.VpnStateMonitor
 import io.github.aedev.flow.notification.AutoBackupWorker
 import io.github.aedev.flow.notification.BackgroundCheckScheduler
 import io.github.aedev.flow.notification.BreakReminderTimer
+import io.github.aedev.flow.notification.DailyLimitGuard
 import io.github.aedev.flow.notification.NotificationHelper
 import io.github.aedev.flow.player.PlaybackShutdown
 import io.github.aedev.flow.player.SleepTimerManager
@@ -102,6 +104,12 @@ class FlowApplication :
     lateinit var breakReminderTimer: BreakReminderTimer
 
     @Inject
+    lateinit var dailyLimitGuard: DailyLimitGuard
+
+    @Inject
+    lateinit var appLock: AppLock
+
+    @Inject
     lateinit var linkedProfiles: dagger.Lazy<LinkedProfiles>
 
     @Inject
@@ -127,6 +135,8 @@ class FlowApplication :
         appContext = applicationContext
         linkedForeground.install()
         breakReminderTimer.install()
+        dailyLimitGuard.install()
+        appLock.install()
         YouTube.cacheDirectory = cacheDir.resolve("innertube_http_cache")
 
         DiscordPresenceRuntime.initialize(this, okHttpClient)

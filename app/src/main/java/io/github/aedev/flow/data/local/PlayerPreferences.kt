@@ -5,6 +5,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
+import io.github.aedev.flow.applock.AppLockSettings
+import io.github.aedev.flow.applock.DEFAULT_APP_LOCK_DELAY_MINUTES
 import io.github.aedev.flow.data.model.SponsorBlockCategories
 import io.github.aedev.flow.data.playlist.PlaylistListOrder
 import io.github.aedev.flow.data.profile.StoreScope
@@ -67,10 +69,18 @@ val DEFAULT_NAV_TAB_ORDER = listOf(0, 1, 2, 3, 4, 5, 6, 7)
 private const val MAX_UNPLAYABLE_VIDEO_IDS = 1_000
 
 /**
- * Preferences that never leave the device in a backup: the proxy password, and SponsorBlock's
- * submission id, which is a private identity for the user's votes and segments.
+ * Preferences that never leave the device in a backup: the proxy password, SponsorBlock's
+ * submission id, which is a private identity for the user's votes and segments, and the app lock,
+ * which a restored backup must not be able to turn on or off.
  */
-private val BackupExcludedKeys = setOf("proxy_password", "sb_user_id")
+private val BackupExcludedKeys =
+    setOf(
+        "proxy_password",
+        "sb_user_id",
+        "app_lock_enabled",
+        "app_lock_delay_minutes",
+        "app_lock_hide_in_recents",
+    )
 
 private val ReminderJson = Json { ignoreUnknownKeys = true }
 
@@ -94,6 +104,7 @@ class PlayerPreferences(
         val VIDEO_LOOP_ENABLED = booleanPreferencesKey("video_loop_enabled")
         val VIDEO_AMBIENT_MODE_ENABLED = booleanPreferencesKey("video_ambient_mode_enabled")
         val PREFERRED_SUBTITLE_LANGUAGE = stringPreferencesKey("preferred_subtitle_language")
+        val TRANSCRIPT_LANGUAGE = stringPreferencesKey("transcript_language")
         val SUBTITLE_FONT_SIZE = floatPreferencesKey("subtitle_font_size")
         val SUBTITLE_TEXT_COLOR = intPreferencesKey("subtitle_text_color")
         val SUBTITLE_BACKGROUND_COLOR = intPreferencesKey("subtitle_background_color")
@@ -126,6 +137,7 @@ class PlayerPreferences(
         val MUSIC_PLAYER_BACKGROUND_STYLE = stringPreferencesKey("music_player_background_style")
         val HIDE_MUSIC_PLAYER_ARTWORK = booleanPreferencesKey("hide_music_player_artwork")
         val MUSIC_ARTWORK_CONTROL_COLORS = booleanPreferencesKey("music_artwork_control_colors")
+        val VIDEO_ARTWORK_COLORS = booleanPreferencesKey("video_artwork_colors")
         val MUSIC_PLAIN_CONTROL_COLORS = stringPreferencesKey("music_plain_control_colors")
         val MUSIC_SLEEP_TIMER_BUTTON = booleanPreferencesKey("music_sleep_timer_button")
         val MUSIC_PLAYER_FOLLOW_LIGHT_THEME = booleanPreferencesKey("music_player_follow_light_theme")
@@ -156,6 +168,7 @@ class PlayerPreferences(
         val SHORTS_NAVIGATION_ENABLED = booleanPreferencesKey("shorts_navigation_enabled")
         val BOTTOM_NAV_HIDE_ON_SCROLL = booleanPreferencesKey("bottom_nav_hide_on_scroll")
         val SEARCH_SHOWS_NAV_BAR = booleanPreferencesKey("search_shows_nav_bar")
+        val INNER_PAGES_SHOW_NAV_BAR = booleanPreferencesKey("inner_pages_show_nav_bar")
         val MUSIC_NAVIGATION_ENABLED = booleanPreferencesKey("music_navigation_enabled")
         val SEARCH_NAV_TAB_ENABLED = booleanPreferencesKey("search_nav_tab_enabled")
         val CATEGORIES_NAV_TAB_ENABLED = booleanPreferencesKey("categories_nav_tab_enabled")
@@ -166,6 +179,7 @@ class PlayerPreferences(
         val LYRICS_SHOW_TRANSLATION = booleanPreferencesKey("lyrics_show_translation")
         val LYRICS_SHOW_ROMANIZATION = booleanPreferencesKey("lyrics_show_romanization")
         val LYRICS_ON_LOCK_SCREEN = booleanPreferencesKey("lyrics_on_lock_screen")
+        val LYRICS_ON_DEMAND = booleanPreferencesKey("lyrics_on_demand")
         val LYRICS_ON_LOCK_SCREEN_DELAY_MS = intPreferencesKey("lyrics_on_lock_screen_delay_ms")
         val LYRICS_SPONSORBLOCK_TIMING = booleanPreferencesKey("lyrics_sponsorblock_timing")
         val LYRICS_AUTO_ROMANIZE = booleanPreferencesKey("lyrics_auto_romanize")
@@ -246,6 +260,7 @@ class PlayerPreferences(
         val MINI_PLAYER_SHOW_SKIP_CONTROLS = booleanPreferencesKey("mini_player_show_skip_controls")
         val MINI_PLAYER_SHOW_NEXT_PREV_CONTROLS = booleanPreferencesKey("mini_player_show_next_prev_controls")
         val MINI_PLAYER_CONTINUE_WATCHING_ENABLED = booleanPreferencesKey("mini_player_continue_watching_enabled")
+        val MINIMIZE_TO_AUDIO_BAR = booleanPreferencesKey("minimize_to_audio_bar")
         val SHOW_RESTORED_MUSIC_MINI_PLAYER = booleanPreferencesKey("show_restored_music_mini_player")
         val OPEN_MUSIC_PLAYER_ON_PLAY = booleanPreferencesKey("open_music_player_on_play")
 
@@ -271,6 +286,8 @@ class PlayerPreferences(
         val MUSIC_REPEAT_MODE = intPreferencesKey("music_repeat_mode")
         val MUSIC_RESUME_LONG_TRACKS = booleanPreferencesKey("music_resume_long_tracks")
         val MUSIC_CROSSFADE_SECONDS = intPreferencesKey("music_crossfade_seconds")
+        val MUSIC_CROSSFADE_ENABLED = booleanPreferencesKey("music_crossfade_enabled")
+        val MUSIC_CROSSFADE_MS = intPreferencesKey("music_crossfade_ms")
         val MUSIC_CROSSFADE_KEEP_ALBUMS = booleanPreferencesKey("music_crossfade_keep_albums")
         val MUSIC_CROSSFADE_CURVE = stringPreferencesKey("music_crossfade_curve")
         val MUSIC_CROSSFADE_AUTO_ADVANCE = booleanPreferencesKey("music_crossfade_auto_advance")
@@ -451,6 +468,7 @@ class PlayerPreferences(
         val REMEMBERED_BRIGHTNESS_LEVEL = device(floatPreferencesKey("remembered_brightness_level"))
         val VOLUME_SWIPE_GESTURES_ENABLED = device(booleanPreferencesKey("volume_swipe_gestures_enabled"))
         val SEEK_SWIPE_GESTURES_ENABLED = device(booleanPreferencesKey("seek_swipe_gestures_enabled"))
+        val MORE_VIDEOS_SWIPE_ENABLED = device(booleanPreferencesKey("more_videos_swipe_enabled"))
         val DOUBLE_TAP_SEEK_SECONDS = device(intPreferencesKey("double_tap_seek_seconds"))
         val DOUBLE_TAP_SEEK_ZONE = device(stringPreferencesKey("double_tap_seek_zone"))
 
@@ -476,6 +494,7 @@ class PlayerPreferences(
         val PORTRAIT_IDLE_PROGRESS_BAR = device(stringPreferencesKey("portrait_idle_progress_bar"))
         val FULLSCREEN_SEEKBAR_PADDING_MODE = device(stringPreferencesKey("fullscreen_seekbar_padding_mode"))
         val FULLSCREEN_SEEKBAR_CUSTOM_PADDING_DP = device(intPreferencesKey("fullscreen_seekbar_custom_padding_dp"))
+        val FULLSCREEN_SIDE_PANEL_WIDTH = device(stringPreferencesKey("fullscreen_side_panel_width"))
         val FRAME_STEP_BUTTONS_ENABLED = device(booleanPreferencesKey("frame_step_buttons_enabled"))
 
         // Mini Player Customizations
@@ -495,6 +514,10 @@ class PlayerPreferences(
         // Remember playback speed
         val PAUSE_MUSIC_WHEN_MUTED = device(booleanPreferencesKey("pause_music_when_muted"))
         val MUSIC_SIDE_SWIPES = device(booleanPreferencesKey("music_side_swipes"))
+        val LOCK_SCREEN_PLAYER = device(booleanPreferencesKey("lock_screen_player"))
+        val APP_LOCK_ENABLED = device(booleanPreferencesKey("app_lock_enabled"))
+        val APP_LOCK_DELAY_MINUTES = device(intPreferencesKey("app_lock_delay_minutes"))
+        val APP_LOCK_HIDE_IN_RECENTS = device(booleanPreferencesKey("app_lock_hide_in_recents"))
         val ANIMATED_ARTWORK_WIFI_ONLY = device(booleanPreferencesKey("animated_artwork_wifi_only"))
         val AUTO_DOWNLOAD_LIKED_MUSIC = device(booleanPreferencesKey("auto_download_liked_music"))
 
@@ -735,6 +758,16 @@ class PlayerPreferences(
     suspend fun setSeekSwipeGesturesEnabled(enabled: Boolean) {
         context.devicePreferencesDataStore.edit { preferences ->
             preferences[DeviceKeys.SEEK_SWIPE_GESTURES_ENABLED] = enabled
+        }
+    }
+
+    val moreVideosSwipeEnabled: Flow<Boolean> =
+        context.devicePreferencesDataStore.data
+            .map { preferences -> preferences[DeviceKeys.MORE_VIDEOS_SWIPE_ENABLED] ?: true }
+
+    suspend fun setMoreVideosSwipeEnabled(enabled: Boolean) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.MORE_VIDEOS_SWIPE_ENABLED] = enabled
         }
     }
 
@@ -983,6 +1016,17 @@ class PlayerPreferences(
         }
     }
 
+    /** Whether the video description, comments, chapters and transcript sheets take the thumbnail's colors. */
+    val videoArtworkColors: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.VIDEO_ARTWORK_COLORS] ?: true }
+
+    suspend fun setVideoArtworkColors(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.VIDEO_ARTWORK_COLORS] = enabled
+        }
+    }
+
     /** Whether the artwork backgrounds turn light while the app theme is light. */
     val musicPlayerFollowLightTheme: Flow<Boolean> =
         context.playerPreferencesDataStore.data
@@ -1056,11 +1100,11 @@ class PlayerPreferences(
                     ?: GestureOverlayStyle.CIRCULAR
             }
 
-    val playerHapticsEnabled: Flow<Boolean> =
+    val hapticsEnabled: Flow<Boolean> =
         context.devicePreferencesDataStore.data
             .map { preferences -> preferences[DeviceKeys.PLAYER_HAPTICS_ENABLED] ?: true }
 
-    suspend fun setPlayerHapticsEnabled(enabled: Boolean) {
+    suspend fun setHapticsEnabled(enabled: Boolean) {
         context.devicePreferencesDataStore.edit { preferences ->
             preferences[DeviceKeys.PLAYER_HAPTICS_ENABLED] = enabled
         }
@@ -1376,6 +1420,18 @@ class PlayerPreferences(
             .map { preferences ->
                 preferences[Keys.SEARCH_SHOWS_NAV_BAR] ?: false
             }
+
+    // Channels, playlists and the other pages inside a tab keep the bar only when this is on (#1489).
+    val innerPagesShowNavBar: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.INNER_PAGES_SHOW_NAV_BAR] ?: false }
+            .distinctUntilChanged()
+
+    suspend fun setInnerPagesShowNavBar(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.INNER_PAGES_SHOW_NAV_BAR] = enabled
+        }
+    }
 
     suspend fun setSearchShowsNavBar(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
@@ -2236,6 +2292,20 @@ class PlayerPreferences(
         }
     }
 
+    val fullscreenSidePanelWidth: Flow<FullscreenSidePanelWidth> =
+        context.devicePreferencesDataStore.data
+            .map { preferences ->
+                preferences[DeviceKeys.FULLSCREEN_SIDE_PANEL_WIDTH]
+                    ?.let { stored -> runCatching { FullscreenSidePanelWidth.valueOf(stored) }.getOrNull() }
+                    ?: FullscreenSidePanelWidth.DEFAULT
+            }
+
+    suspend fun setFullscreenSidePanelWidth(width: FullscreenSidePanelWidth) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.FULLSCREEN_SIDE_PANEL_WIDTH] = width.name
+        }
+    }
+
     val scrubPreviewStyle: Flow<ScrubPreviewStyle> =
         context.playerPreferencesDataStore.data
             .map { preferences -> resolveScrubPreviewStyle(preferences[Keys.SCRUB_PREVIEW_STYLE]) }
@@ -2327,6 +2397,23 @@ class PlayerPreferences(
     suspend fun setPreferredSubtitleLanguage(language: String) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.PREFERRED_SUBTITLE_LANGUAGE] = language
+        }
+    }
+
+    /**
+     * Base language of the transcript track picked last, or
+     * [CaptionTrackResolver.NO_PREFERRED_LANGUAGE]. Kept apart from the subtitle language, which
+     * also decides which caption tracks load and when captions turn on.
+     */
+    val transcriptLanguage: Flow<String> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.TRANSCRIPT_LANGUAGE] ?: CaptionTrackResolver.NO_PREFERRED_LANGUAGE
+            }.distinctUntilChanged()
+
+    suspend fun setTranscriptLanguage(language: String) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.TRANSCRIPT_LANGUAGE] = language
         }
     }
 
@@ -2467,15 +2554,31 @@ class PlayerPreferences(
         }
     }
 
-    /** How many seconds a song blends into the next (#1675); 0 is off. */
-    val musicCrossfadeSeconds: Flow<Int> =
+    /** Whether a song blends into the next (#1675). Before the switch, a length above 0 seconds meant on. */
+    val musicCrossfadeEnabled: Flow<Boolean> =
         context.playerPreferencesDataStore.data
-            .map { preferences -> preferences[Keys.MUSIC_CROSSFADE_SECONDS] ?: 0 }
-            .distinctUntilChanged()
+            .map { preferences ->
+                preferences[Keys.MUSIC_CROSSFADE_ENABLED] ?: ((preferences[Keys.MUSIC_CROSSFADE_SECONDS] ?: 0) > 0)
+            }.distinctUntilChanged()
 
-    suspend fun setMusicCrossfadeSeconds(seconds: Int) {
+    suspend fun setMusicCrossfadeEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
-            preferences[Keys.MUSIC_CROSSFADE_SECONDS] = seconds
+            preferences[Keys.MUSIC_CROSSFADE_ENABLED] = enabled
+        }
+    }
+
+    /** How long a crossfade lasts, carried over from the length in seconds that settings saved before. */
+    val musicCrossfadeMs: Flow<Int> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.MUSIC_CROSSFADE_MS]
+                    ?: preferences[Keys.MUSIC_CROSSFADE_SECONDS]?.takeIf { it > 0 }?.times(MS_PER_CROSSFADE_SECOND)
+                    ?: DEFAULT_CROSSFADE_MS
+            }.distinctUntilChanged()
+
+    suspend fun setMusicCrossfadeMs(ms: Int) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MUSIC_CROSSFADE_MS] = ms
         }
     }
 
@@ -2506,7 +2609,7 @@ class PlayerPreferences(
     /** Whether a song blends into the one the user skips to; off keeps Next immediate. */
     val musicCrossfadeOnManualSkip: Flow<Boolean> =
         context.playerPreferencesDataStore.data
-            .map { preferences -> preferences[Keys.MUSIC_CROSSFADE_MANUAL_SKIP] ?: false }
+            .map { preferences -> preferences[Keys.MUSIC_CROSSFADE_MANUAL_SKIP] ?: true }
             .distinctUntilChanged()
 
     suspend fun setMusicCrossfadeOnManualSkip(enabled: Boolean) {
@@ -2548,6 +2651,47 @@ class PlayerPreferences(
     suspend fun setMusicSideSwipes(enabled: Boolean) {
         context.devicePreferencesDataStore.edit { preferences ->
             preferences[DeviceKeys.MUSIC_SIDE_SWIPES] = enabled
+        }
+    }
+
+    /** Whether a player with the cover and controls opens over the lock screen when the screen turns off during music. */
+    val lockScreenPlayer: Flow<Boolean> =
+        context.devicePreferencesDataStore.data
+            .map { preferences -> preferences[DeviceKeys.LOCK_SCREEN_PLAYER] ?: false }
+            .distinctUntilChanged()
+
+    suspend fun setLockScreenPlayer(enabled: Boolean) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.LOCK_SCREEN_PLAYER] = enabled
+        }
+    }
+
+    /** The app lock, for the whole device: a profile switch must not be a way past it. */
+    val appLockSettings: Flow<AppLockSettings> =
+        context.devicePreferencesDataStore.data
+            .map { preferences ->
+                AppLockSettings(
+                    enabled = preferences[DeviceKeys.APP_LOCK_ENABLED] ?: false,
+                    delayMinutes = preferences[DeviceKeys.APP_LOCK_DELAY_MINUTES] ?: DEFAULT_APP_LOCK_DELAY_MINUTES,
+                    hideInRecents = preferences[DeviceKeys.APP_LOCK_HIDE_IN_RECENTS] ?: false,
+                )
+            }.distinctUntilChanged()
+
+    suspend fun setAppLockEnabled(enabled: Boolean) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.APP_LOCK_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setAppLockDelayMinutes(minutes: Int) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.APP_LOCK_DELAY_MINUTES] = minutes
+        }
+    }
+
+    suspend fun setAppLockHideInRecents(hide: Boolean) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.APP_LOCK_HIDE_IN_RECENTS] = hide
         }
     }
 
@@ -3923,6 +4067,14 @@ class PlayerPreferences(
         context.playerPreferencesDataStore.edit { it[Keys.LYRICS_ON_LOCK_SCREEN] = enabled }
     }
 
+    /** Whether lyrics are looked up only when the player or its lyrics open, or for lock screen lyrics. */
+    val lyricsOnDemand: Flow<Boolean> =
+        context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_ON_DEMAND] ?: false }
+
+    suspend fun setLyricsOnDemand(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { it[Keys.LYRICS_ON_DEMAND] = enabled }
+    }
+
     /** How late lock screen lines appear, in milliseconds. Below zero they appear early. */
     val lyricsOnLockScreenDelayMs: Flow<Int> =
         context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_ON_LOCK_SCREEN_DELAY_MS] ?: 0 }
@@ -3999,6 +4151,18 @@ class PlayerPreferences(
     suspend fun setMiniPlayerContinueWatchingEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.MINI_PLAYER_CONTINUE_WATCHING_ENABLED] = enabled
+        }
+    }
+
+    val minimizeToAudioBar: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.MINIMIZE_TO_AUDIO_BAR] ?: false
+            }
+
+    suspend fun setMinimizeToAudioBar(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.MINIMIZE_TO_AUDIO_BAR] = enabled
         }
     }
 
@@ -4318,16 +4482,13 @@ private fun SettingsBackup.splitBy(predicate: (String) -> Boolean): Pair<Setting
         )
 
 private fun MutablePreferences.restore(backup: SettingsBackup) {
-    backup.strings.forEach { (k, v) ->
-        if (k !in BackupExcludedKeys) {
-            this[stringPreferencesKey(k)] = v
-        }
-    }
-    backup.booleans.forEach { (k, v) -> this[booleanPreferencesKey(k)] = v }
-    backup.ints.forEach { (k, v) -> this[intPreferencesKey(k)] = v }
-    backup.floats.forEach { (k, v) -> this[floatPreferencesKey(k)] = v }
-    backup.longs.forEach { (k, v) -> this[longPreferencesKey(k)] = v }
-    backup.stringSets.forEach { (k, v) -> this[stringSetPreferencesKey(k)] = v }
+    fun <T> Map<String, T>.restorable() = filterKeys { it !in BackupExcludedKeys }
+    backup.strings.restorable().forEach { (k, v) -> this[stringPreferencesKey(k)] = v }
+    backup.booleans.restorable().forEach { (k, v) -> this[booleanPreferencesKey(k)] = v }
+    backup.ints.restorable().forEach { (k, v) -> this[intPreferencesKey(k)] = v }
+    backup.floats.restorable().forEach { (k, v) -> this[floatPreferencesKey(k)] = v }
+    backup.longs.restorable().forEach { (k, v) -> this[longPreferencesKey(k)] = v }
+    backup.stringSets.restorable().forEach { (k, v) -> this[stringSetPreferencesKey(k)] = v }
 }
 
 const val DEFAULT_NEW_SETTINGS_HIGHLIGHT = false
@@ -4368,6 +4529,9 @@ enum class SponsorBlockAction {
         fun fromString(name: String): SponsorBlockAction = entries.find { it.name == name } ?: SKIP
     }
 }
+
+const val DEFAULT_CROSSFADE_MS = 3_000
+private const val MS_PER_CROSSFADE_SECOND = 1_000
 
 /** How the two songs' volumes move during a crossfade, in the order settings list them. */
 enum class CrossfadeCurve {
@@ -4526,6 +4690,16 @@ enum class SpeedSwipeSide {
 /** How much one step of a speed swipe changes the speed by. */
 val SPEED_SWIPE_STEPS = listOf(0.05f, 0.1f, 0.25f)
 const val DEFAULT_SPEED_SWIPE_STEP = 0.1f
+
+/** How much of a landscape fullscreen player the side panel takes, as a share of the window width. */
+enum class FullscreenSidePanelWidth(
+    val fraction: Float,
+) {
+    NARROW(0.25f),
+    SMALL(0.33f),
+    DEFAULT(0.42f),
+    WIDE(0.5f),
+}
 
 /**
  * How much of the player's width each double-tap seek side takes. [reachesEdges] lets taps count right

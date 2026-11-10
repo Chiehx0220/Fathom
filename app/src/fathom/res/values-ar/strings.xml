@@ -100,4 +100,11 @@
     <string name="linked_profile_switch_body">يمكن لملف التعريف المستخدم حاليًا فقط بدء المزامنة، لذا سيُعاد تشغيل Fathom باستخدامه أولًا. بعد ذلك، فعّل المزامنة من داخله.</string>
     <string name="buffer_cache_size_link_summary">حجم مساحة التخزين التي يشغلها الفيديو والموسيقى المحفوظان في Fathom</string>
     <string name="linked_replace_words_body">ينشئ Fathom كلمات استرداد جديدة ومفاتيح تشفير جديدة لأجهزتك. تتوقف الكلمات القديمة عن العمل: فلا يمكنها استعادة هذه المجموعة أو قراءة أي شيء تتم مزامنته من الآن فصاعدًا. اكتب الكلمات الجديدة عندما تظهر.</string>
+    <string name="linked_error_restore_unfinished">لم تكتمل الاستعادة بعد. سيُكمل Fathom العملية عند المزامنة التالية.</string>
+    <string name="crossfade_pause_desc">حتى إعادة تشغيل Fathom</string>
+    <string name="app_lock_summary">اطلب فتح قفل هاتفك لفتح Fathom</string>
+    <string name="app_lock_footer">تستمر الموسيقى وعناصر التحكم بالوسائط ووضع الصورة داخل الصورة في العمل أثناء قفل Fathom.</string>
+    <string name="app_lock_after_description">المدة التي يمكن أن يظل فيها Fathom خارج الشاشة قبل طلب إلغاء القفل مجددًا</string>
+    <string name="app_lock_prompt_title">إلغاء قفل Fathom</string>
+    <string name="app_lock_screen_title">تم قفل Fathom</string>
 </resources>

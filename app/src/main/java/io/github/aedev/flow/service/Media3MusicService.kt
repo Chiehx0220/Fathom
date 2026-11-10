@@ -270,7 +270,11 @@ class Media3MusicService : MediaLibraryService() {
     @Inject
     lateinit var videoSwitch: MusicVideoSwitch
 
+    @Inject
+    lateinit var crossfadePause: io.github.aedev.flow.player.crossfade.CrossfadeSessionPause
+
     private val prefs by lazy { PlayerPreferences(this) }
+    private val lockScreenPlayer by lazy { LockScreenPlayerLauncher(this) }
 
     @Inject
     lateinit var widgetContentSync: dagger.Lazy<io.github.aedev.flow.widget.core.refresh.WidgetContentSync>
@@ -380,6 +384,7 @@ class Media3MusicService : MediaLibraryService() {
         // the moment it changes, so a restart or a new song keeps it.
         lifecycleScope.launch { player.repeatMode = prefs.musicRepeatMode.first() }
         videoSwitch.attach(lifecycleScope, prefs.musicVideoSwitch)
+        lockScreenPlayer.attach(lifecycleScope, prefs.lockScreenPlayer)
 
         lifecycleScope.launch {
             prefs.playDuringCalls
@@ -421,7 +426,7 @@ class Media3MusicService : MediaLibraryService() {
     private fun crossfadeMoment(settings: CrossfadePolicy.Settings): CrossfadePolicy.Moment {
         val next = player.nextMediaItemIndex.takeIf { it != C.INDEX_UNSET }?.let(player::getMediaItemAt)
         return CrossfadePolicy.Moment(
-            fadeSeconds = settings.seconds,
+            fadeMs = settings.fadeMs,
             playing = player.playWhenReady,
             hasNext = next != null,
             repeatsOne = player.repeatMode == Player.REPEAT_MODE_ONE,
@@ -575,7 +580,9 @@ class Media3MusicService : MediaLibraryService() {
         crossfader = MusicCrossfader(player, ::buildCrossfadeTail, ::crossfadeMoment, ::applyLoudnessGain).also { it.attach() }
         lifecycleScope.launch {
             combine(
-                prefs.musicCrossfadeSeconds,
+                combine(prefs.musicCrossfadeEnabled, prefs.musicCrossfadeMs, crossfadePause.paused) { enabled, ms, paused ->
+                    CrossfadePolicy.chosenFadeMs(enabled && !paused, ms)
+                },
                 prefs.musicCrossfadeKeepAlbums,
                 prefs.musicCrossfadeCurve,
                 prefs.musicCrossfadeOnAutoAdvance,
@@ -583,7 +590,7 @@ class Media3MusicService : MediaLibraryService() {
                 CrossfadePolicy::Settings,
             ).collect { settings ->
                 crossfader?.setSettings(settings)
-                updateOffload { it.copy(crossfade = settings.seconds > 0) }
+                updateOffload { it.copy(crossfade = settings.fadeMs > 0) }
             }
         }
 
@@ -1453,6 +1460,7 @@ class Media3MusicService : MediaLibraryService() {
                     localLyrics,
                     prefs.lyricsOnLockScreen,
                     prefs.lyricsOnLockScreenDelayMs,
+                    prefs.lyricsOnDemand,
                     videoLyricsTiming,
                     isSavingData = { NetworkState.isDataSaverOn(this) || prefs.bufferProfile.first() == BufferProfile.DATASAVER },
                 )
@@ -1497,6 +1505,7 @@ class Media3MusicService : MediaLibraryService() {
 
     override fun onDestroy() {
         MusicServiceState.isRunning = false
+        lockScreenPlayer.release()
         sessionLyrics?.release()
         // Flush the in-flight listen session before the player goes away.
         finalizeListenSession()
@@ -1552,6 +1561,7 @@ class Media3MusicService : MediaLibraryService() {
     }
 
     private fun updateLocks(isPlaybackActive: Boolean) {
+        lockScreenPlayer.setPlaying(isPlaybackActive)
         lockReleaseJob?.cancel()
         lockReleaseJob = null
 

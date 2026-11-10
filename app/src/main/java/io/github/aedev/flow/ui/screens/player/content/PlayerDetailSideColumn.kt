@@ -34,8 +34,8 @@ import io.github.aedev.flow.ui.screens.player.state.PlayerScreenState
 import io.github.aedev.flow.ui.screens.player.state.PlayerSheet
 import io.github.aedev.flow.ui.screens.player.state.VideoPlayerPreferencesState
 import io.github.aedev.flow.ui.screens.player.state.VideoPlayerUiState
+import io.github.aedev.flow.ui.screens.player.state.hasTranscriptTrack
 import io.github.aedev.flow.ui.screens.player.state.rememberPlayerCommentsUiState
-import io.github.aedev.flow.ui.screens.player.state.transcriptTrackUrl
 import kotlinx.coroutines.launch
 
 private val QueueCardHorizontalPadding = 12.dp
@@ -118,7 +118,7 @@ internal fun PlayerDetailSideColumn(
                     asSidePanel = true,
                     expandedHeight = paneHeight,
                     onDismiss = closeSheet,
-                    hasTranscriptTrack = transcriptTrackUrl(playerState, screenState) != null,
+                    hasTranscriptTrack = hasTranscriptTrack(playerState),
                     onChaptersClick = { screenState.open(PlayerSheet.Chapters) },
                     onTranscriptClick = { screenState.open(PlayerSheet.Transcript) },
                     onChannelClick = onChannelClick,
@@ -130,8 +130,8 @@ internal fun PlayerDetailSideColumn(
                 PlayerTranscriptSheetHost(
                     viewModel = viewModel,
                     screenState = screenState,
-                    trackUrl = transcriptTrackUrl(playerState, screenState),
-                    tracks = playerState.availableSubtitles,
+                    playerState = playerState,
+                    prefs = prefs,
                     chapters = uiState.chapters,
                     artworkUrl = video.thumbnailUrl,
                     asSidePanel = true,
@@ -229,7 +229,7 @@ internal fun PlayerDetailSideColumn(
                                     asSidePanel = true,
                                     expandedHeight = restingHeight,
                                     onDismiss = closeSheet,
-                                    hasTranscriptTrack = transcriptTrackUrl(playerState, screenState) != null,
+                                    hasTranscriptTrack = hasTranscriptTrack(playerState),
                                     onChaptersClick = { screenState.open(PlayerSheet.Chapters) },
                                     onTranscriptClick = { screenState.open(PlayerSheet.Transcript) },
                                     onChannelClick = onChannelClick,

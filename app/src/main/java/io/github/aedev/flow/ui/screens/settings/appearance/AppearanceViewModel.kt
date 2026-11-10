@@ -71,6 +71,7 @@ class AppearanceViewModel
                 .asState(NavigationVisibility())
         val hideNavOnScroll = preferences.bottomNavHideOnScroll.asState(true)
         val searchShowsNavBar = preferences.searchShowsNavBar.asState(false)
+        val innerPagesShowNavBar = preferences.innerPagesShowNavBar.asState(false)
         val navTabOrder = preferences.navTabOrder.asState(DEFAULT_NAV_TAB_ORDER)
         val defaultNavTabIndex = preferences.defaultNavTabIndex.asState(0)
 
@@ -91,12 +92,15 @@ class AppearanceViewModel
 
         val skeletonGradient = localDataManager.skeletonGradient.asState(false)
         val marqueeEnabled = localDataManager.marqueeEnabled.asState(true)
+        val haptics = preferences.hapticsEnabled.asState(true)
         val newSettingsHighlight = preferences.newSettingsHighlight.asState(DEFAULT_NEW_SETTINGS_HIGHLIGHT)
         val newSettingsDays = preferences.newSettingsHighlightDays.asState(DEFAULT_NEW_SETTINGS_HIGHLIGHT_DAYS)
 
         fun setSkeletonGradient(enabled: Boolean) = write { localDataManager.setSkeletonGradient(enabled) }
 
         fun setMarqueeEnabled(enabled: Boolean) = write { localDataManager.setMarqueeEnabled(enabled) }
+
+        fun setHaptics(enabled: Boolean) = write { preferences.setHapticsEnabled(enabled) }
 
         fun setNewSettingsHighlight(enabled: Boolean) = write { preferences.setNewSettingsHighlight(enabled) }
 
@@ -137,6 +141,8 @@ class AppearanceViewModel
         fun setHideNavOnScroll(enabled: Boolean) = write { preferences.setBottomNavHideOnScroll(enabled) }
 
         fun setSearchShowsNavBar(enabled: Boolean) = write { preferences.setSearchShowsNavBar(enabled) }
+
+        fun setInnerPagesShowNavBar(enabled: Boolean) = write { preferences.setInnerPagesShowNavBar(enabled) }
 
         fun setNavTabOrder(order: List<Int>) = write { preferences.setNavTabOrder(order) }
 

@@ -47,7 +47,7 @@ internal const val VOLUME_STEP = 0.1f
 @Composable
 internal fun rememberKeyTick(): () -> Unit {
     val haptic = LocalHapticFeedback.current
-    return remember(haptic) { { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) } }
+    return remember(haptic) { { haptic.performHapticFeedback(HapticFeedbackType.VirtualKey) } }
 }
 
 /** Key icon; meaning change (play → pause): old icon shrinks, new grows. */

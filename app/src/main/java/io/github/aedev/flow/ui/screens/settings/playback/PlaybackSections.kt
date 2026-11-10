@@ -10,7 +10,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.PlayerRelatedCardStyle
 import io.github.aedev.flow.data.local.SpeedSwipeSide
-import io.github.aedev.flow.player.crossfade.CrossfadePolicy
 import io.github.aedev.flow.service.SessionLyricDelay
 import io.github.aedev.flow.ui.components.equalizer.equalizerSummary
 import io.github.aedev.flow.ui.components.settings.SettingsDestination
@@ -26,11 +25,13 @@ import io.github.aedev.flow.ui.components.shared.FlowNavRow
 import io.github.aedev.flow.ui.components.shared.FlowSwitchRow
 import io.github.aedev.flow.ui.components.shared.FlowToggleOption
 import io.github.aedev.flow.ui.screens.settings.index.DestinationIndex
+import io.github.aedev.flow.ui.screens.settings.index.PlaybackCrossfadeIndex
 import io.github.aedev.flow.ui.screens.settings.index.PlaybackGesturesIndex
 import io.github.aedev.flow.ui.screens.settings.index.PlaybackIndex
+import io.github.aedev.flow.ui.screens.settings.index.PlaybackLyricsIndex
+import io.github.aedev.flow.ui.screens.settings.index.PlaybackShortsIndex
 import java.util.Locale
 import kotlin.math.abs
-import kotlin.math.roundToInt
 
 private const val UNLIMITED_TITLE_LINES = 0
 private const val MS_PER_SECOND = 1000f
@@ -131,7 +132,7 @@ internal fun SettingsListScope.playbackSections(
             }
         }
         switch(PlaybackGesturesIndex.seekGesture, viewModel.seekGesture, viewModel::setSeekGesture)
-        switch(PlaybackGesturesIndex.haptics, viewModel.haptics, viewModel::setHaptics)
+        switch(PlaybackGesturesIndex.moreVideosGesture, viewModel.moreVideosGesture, viewModel::setMoreVideosGesture)
         switch(PlaybackGesturesIndex.controlsWhileLoading, viewModel.controlsWhileLoading, viewModel::setControlsWhileLoading)
     }
     group(key = "playback.buttons", header = R.string.settings_section_player_buttons) {
@@ -149,6 +150,7 @@ internal fun SettingsListScope.playbackSections(
     group(key = "playback.pip", header = R.string.settings_section_pip) {
         switch(PlaybackIndex.autoPip, viewModel.autoPip, viewModel::setAutoPip)
         switch(PlaybackIndex.continueWatchingMiniPlayer, viewModel.continueWatchingMiniPlayer, viewModel::setContinueWatchingMiniPlayer)
+        switch(PlaybackIndex.minimizeToAudioBar, viewModel.minimizeToAudioBar, viewModel::setMinimizeToAudioBar)
         switch(PlaybackIndex.restoreMusicMiniPlayer, viewModel.restoreMusicMiniPlayer, viewModel::setRestoreMusicMiniPlayer)
         switch(PlaybackIndex.openMusicPlayerOnPlay, viewModel.openMusicPlayerOnPlay, viewModel::setOpenMusicPlayerOnPlay)
     }
@@ -168,19 +170,16 @@ internal fun SettingsListScope.playbackSections(
     group(key = "playback.music", header = R.string.settings_section_music) {
         switch(PlaybackIndex.endlessRadio, viewModel.endlessRadio, viewModel::setEndlessRadio)
         switch(PlaybackIndex.pauseMusicWhenMuted, viewModel.pauseMusicWhenMuted, viewModel::setPauseMusicWhenMuted)
-        slider(
-            entry = PlaybackIndex.crossfade,
-            value = state.crossfadeSeconds.toFloat(),
-            onValueCommitted = { viewModel.setCrossfadeSeconds(it.roundToInt()) },
-            valueRange = 0f..CrossfadePolicy.MAX_SECONDS.toFloat(),
-            steps = CrossfadePolicy.MAX_SECONDS - 1,
-            valueLabel = { crossfadeLabel(it.roundToInt()) },
-        )
-        if (state.crossfadeSeconds > 0) {
-            switch(PlaybackIndex.crossfadeOnAutoAdvance, viewModel.crossfadeOnAutoAdvance, viewModel::setCrossfadeOnAutoAdvance)
-            switch(PlaybackIndex.crossfadeOnManualSkip, viewModel.crossfadeOnManualSkip, viewModel::setCrossfadeOnManualSkip)
-            switch(PlaybackIndex.crossfadeKeepAlbums, viewModel.crossfadeKeepAlbums, viewModel::setCrossfadeKeepAlbums)
-            choice(PlaybackIndex.crossfadeCurve, onClick = { openDialog(PlaybackDialog.CROSSFADE_CURVE) }) {
+        switch(PlaybackCrossfadeIndex.crossfade, viewModel.crossfadeEnabled, viewModel::setCrossfadeEnabled)
+        if (state.crossfadeEnabled) {
+            choice(PlaybackCrossfadeIndex.crossfadeDuration, onClick = { openDialog(PlaybackDialog.CROSSFADE_DURATION) }) {
+                val ms by viewModel.crossfadeMs.collectAsStateWithLifecycle()
+                crossfadeDurationLabel(ms.toLong())
+            }
+            switch(PlaybackCrossfadeIndex.crossfadeOnAutoAdvance, viewModel.crossfadeOnAutoAdvance, viewModel::setCrossfadeOnAutoAdvance)
+            switch(PlaybackCrossfadeIndex.crossfadeOnManualSkip, viewModel.crossfadeOnManualSkip, viewModel::setCrossfadeOnManualSkip)
+            switch(PlaybackCrossfadeIndex.crossfadeKeepAlbums, viewModel.crossfadeKeepAlbums, viewModel::setCrossfadeKeepAlbums)
+            choice(PlaybackCrossfadeIndex.crossfadeCurve, onClick = { openDialog(PlaybackDialog.CROSSFADE_CURVE) }) {
                 val curve by viewModel.crossfadeCurve.collectAsStateWithLifecycle()
                 crossfadeCurveLabel(curve)
             }
@@ -189,10 +188,13 @@ internal fun SettingsListScope.playbackSections(
         switch(PlaybackIndex.resumeFromHeadphones, viewModel.resumeFromHeadphones, viewModel::setResumeFromHeadphones)
         switch(PlaybackIndex.musicSideSwipes, viewModel.musicSideSwipes, viewModel::setMusicSideSwipes)
         switch(PlaybackIndex.musicVideoSwitch, viewModel.musicVideoSwitch, viewModel::setMusicVideoSwitch)
-        switch(PlaybackIndex.lyricsOnLockScreen, viewModel.lyricsOnLockScreen, viewModel::setLyricsOnLockScreen)
+        entryRow(PlaybackIndex.lockScreenPlayer) { shape ->
+            LockScreenPlayerSwitch(viewModel.lockScreenPlayer, viewModel::setLockScreenPlayer, shape)
+        }
+        switch(PlaybackLyricsIndex.lyricsOnLockScreen, viewModel.lyricsOnLockScreen, viewModel::setLyricsOnLockScreen)
         if (state.lyricsOnLockScreen) {
             slider(
-                entry = PlaybackIndex.lyricsOnLockScreenTiming,
+                entry = PlaybackLyricsIndex.lyricsOnLockScreenTiming,
                 value = state.lyricsOnLockScreenDelayMs.toFloat(),
                 onValueCommitted = { viewModel.setLyricsOnLockScreenDelayMs(SessionLyricDelay.snap(it)) },
                 valueRange = -SessionLyricDelay.MAX_MS.toFloat()..SessionLyricDelay.MAX_MS.toFloat(),
@@ -201,8 +203,9 @@ internal fun SettingsListScope.playbackSections(
                 centered = true,
             )
         }
-        switch(PlaybackIndex.lyricsSponsorBlockTiming, viewModel.lyricsSponsorBlockTiming, viewModel::setLyricsSponsorBlockTiming)
-        choice(PlaybackIndex.lyricsProviders, onClick = { openDialog(PlaybackDialog.LYRICS) }) {
+        switch(PlaybackLyricsIndex.lyricsSponsorBlockTiming, viewModel.lyricsSponsorBlockTiming, viewModel::setLyricsSponsorBlockTiming)
+        switch(PlaybackLyricsIndex.lyricsOnDemand, viewModel.lyricsOnDemand, viewModel::setLyricsOnDemand)
+        choice(PlaybackLyricsIndex.lyricsProviders, onClick = { openDialog(PlaybackDialog.LYRICS) }) {
             val providers by viewModel.lyricsProviders.collectAsStateWithLifecycle()
             pluralStringResource(
                 R.plurals.lyrics_providers_enabled,
@@ -264,9 +267,9 @@ private fun SettingsListScope.shortsPlayerSection(
     state: PlaybackStructure,
     openDialog: (PlaybackDialog) -> Unit,
 ) = group(key = "playback.shorts", header = R.string.settings_section_shorts_player) {
-    row(PlaybackIndex.disableShortsPlayer.key) { shape ->
+    row(PlaybackShortsIndex.disableShortsPlayer.key) { shape ->
         FlowSwitchRow(
-            title = stringResource(PlaybackIndex.disableShortsPlayer.title),
+            title = stringResource(PlaybackShortsIndex.disableShortsPlayer.title),
             supportingText = stringResource(R.string.content_settings_disable_shorts_player_subtitle),
             checked = state.disableShortsPlayer || !state.shortsContent,
             onCheckedChange = viewModel::setDisableShortsPlayer,
@@ -275,19 +278,19 @@ private fun SettingsListScope.shortsPlayerSection(
         )
     }
     switch(
-        PlaybackIndex.shortsPlayerPrompt,
+        PlaybackShortsIndex.shortsPlayerPrompt,
         viewModel.shortsPlayerPrompt,
         viewModel::setShortsPlayerPrompt,
         enabled = state.shortsContent && !state.disableShortsPlayer,
     )
-    choice(PlaybackIndex.shortsPlaybackMode, onClick = { openDialog(PlaybackDialog.SHORTS_MODE) }) {
+    choice(PlaybackShortsIndex.shortsPlaybackMode, onClick = { openDialog(PlaybackDialog.SHORTS_MODE) }) {
         val mode by viewModel.shortsPlaybackMode.collectAsStateWithLifecycle()
         val seconds by viewModel.shortsAutoScrollSeconds.collectAsStateWithLifecycle()
         shortsModeLabel(mode, seconds)
     }
-    switch(PlaybackIndex.shortsBackgroundPlay, viewModel.shortsBackgroundPlay, viewModel::setShortsBackgroundPlay)
-    switch(PlaybackIndex.shortsPip, viewModel.shortsPip, viewModel::setShortsPip)
-    switch(PlaybackIndex.shortsContinueIntoFeed, viewModel.shortsContinueIntoFeed, viewModel::setShortsContinueIntoFeed)
+    switch(PlaybackShortsIndex.shortsBackgroundPlay, viewModel.shortsBackgroundPlay, viewModel::setShortsBackgroundPlay)
+    switch(PlaybackShortsIndex.shortsPip, viewModel.shortsPip, viewModel::setShortsPip)
+    switch(PlaybackShortsIndex.shortsContinueIntoFeed, viewModel.shortsContinueIntoFeed, viewModel::setShortsContinueIntoFeed)
 }
 
 @Composable
@@ -299,7 +302,3 @@ private fun lyricsTimingLabel(delayMs: Int): String {
         else -> stringResource(R.string.lyrics_timing_on_time)
     }
 }
-
-@Composable
-private fun crossfadeLabel(seconds: Int): String =
-    if (seconds <= 0) stringResource(R.string.off) else stringResource(R.string.settings_seconds_value, seconds.toString())

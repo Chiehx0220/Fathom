@@ -2,6 +2,7 @@ package io.github.aedev.flow.ui.screens.search
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import io.github.aedev.flow.data.local.SearchFilter
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Playlist
 import io.github.aedev.flow.data.model.Video
@@ -17,6 +18,7 @@ fun SingleServiceSearchScreen(
     onShortsQueue: (ShortsQueueSource) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onNewSearch: ((String, SearchFilter) -> Unit)? = null,
 ) = ProvidePlatformBadge(show = false) {
-    SearchScreen(onVideoClick, onChannelClick, onPlaylistClick, onShortsQueue, onBack, modifier)
+    SearchScreen(onVideoClick, onChannelClick, onPlaylistClick, onShortsQueue, onBack, modifier, onNewSearch)
 }

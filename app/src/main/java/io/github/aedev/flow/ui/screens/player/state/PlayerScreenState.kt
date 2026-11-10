@@ -1,7 +1,9 @@
 package io.github.aedev.flow.ui.screens.player.state
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.*
 import io.github.aedev.flow.ui.components.shared.CommentSortFilter
+import io.github.aedev.flow.ui.components.shared.CommentThreadState
 import io.github.aedev.flow.ui.components.videoplayer.settings.PlayerSettingsPage
 import io.github.aedev.flow.ui.components.videoplayer.subtitle.SubtitleStyle
 
@@ -37,6 +39,11 @@ class PlayerScreenState {
 
     // Comment Sorting
     var commentSortFilter by mutableStateOf(CommentSortFilter.TOP)
+
+    // Outlives the comments sheet and panel, which leave composition on every close, collapse and rotation.
+    var commentsListState by mutableStateOf(LazyListState())
+        private set
+    val commentThreads = CommentThreadState()
 
     // Written by the host from the player sheet's settled anchor; the comments sheet outlives a collapse.
     var isPlayerExpanded by mutableStateOf(true)
@@ -78,6 +85,9 @@ class PlayerScreenState {
     var zoomIndicatorSequence by mutableIntStateOf(0)
     var exitDragOffsetY by mutableFloatStateOf(0f)
 
+    // How far a swipe up has pulled the more videos row in before it commits to opening.
+    var moreVideosDragY by mutableFloatStateOf(0f)
+
     // Speed Control
     var isSpeedBoostActive by mutableStateOf(false)
     var normalSpeed by mutableFloatStateOf(1.0f)
@@ -99,6 +109,7 @@ class PlayerScreenState {
         currentPosition = 0L
         duration = 0L
         commentSortFilter = CommentSortFilter.TOP
+        resetCommentsPlace()
         selectedTranscriptUrl = null
         showBrightnessOverlay = false
         showVolumeOverlay = false
@@ -115,6 +126,18 @@ class PlayerScreenState {
         showZoomIndicator = false
         zoomIndicatorSequence = 0
         exitDragOffsetY = 0f
+        moreVideosDragY = 0f
+    }
+
+    fun changeCommentSort(filter: CommentSortFilter) {
+        if (filter == commentSortFilter) return
+        commentSortFilter = filter
+        resetCommentsPlace()
+    }
+
+    private fun resetCommentsPlace() {
+        commentsListState = LazyListState()
+        commentThreads.clear()
     }
 
     internal fun open(sheet: PlayerSheet) {
@@ -164,22 +187,21 @@ class PlayerScreenState {
 @Composable
 fun rememberPlayerScreenState(): PlayerScreenState = remember { PlayerScreenState() }
 
-/**
- * The caption track a transcript should read.
- *
- * The transcript's own language choice wins, then whatever the video is subtitled with, then the
- * first authored track, since an auto-translation is a machine pass over a track already in the
- * list and reads worse than the original. A choice the current video has no track for is dropped
- * rather than fetched, so a queue advance cannot leave the panel reading an empty URL.
- */
 internal fun transcriptTrackUrl(
     playerState: io.github.aedev.flow.player.EnhancedPlayerState,
     screenState: PlayerScreenState,
-): String? {
-    // Only tracks fetched over the network can be read; files and tracks inside a video have no URL.
-    val readable = playerState.availableSubtitles.filter { it.url.startsWith("http") }
-    return screenState.selectedTranscriptUrl?.takeIf { url -> readable.any { it.url == url } }
-        ?: playerState.selectedSubtitleUrl?.takeIf { url -> readable.any { it.url == url } }
-        ?: readable.firstOrNull { !it.isTranslated }?.url
-        ?: readable.firstOrNull()?.url
-}
+    prefs: VideoPlayerPreferencesState,
+    appLanguage: String?,
+): String? =
+    TranscriptTrackChoice
+        .pick(
+            tracks = playerState.availableSubtitles,
+            pickedUrl = screenState.selectedTranscriptUrl,
+            showingUrl = playerState.selectedSubtitleUrl,
+            rememberedLanguage = prefs.transcriptLanguage,
+            subtitleLanguage = prefs.preferredSubtitleLanguage,
+            appLanguage = appLanguage,
+        )?.url
+
+internal fun hasTranscriptTrack(playerState: io.github.aedev.flow.player.EnhancedPlayerState): Boolean =
+    playerState.availableSubtitles.any(TranscriptTrackChoice::isReadable)

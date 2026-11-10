@@ -51,7 +51,6 @@ import io.github.aedev.flow.ui.components.layout.topbar.ProvideFlowGlobalActions
 import io.github.aedev.flow.ui.components.music.common.ProvideMusicPlaybackState
 import io.github.aedev.flow.ui.components.music.sheet.LocalMusicMenus
 import io.github.aedev.flow.ui.components.music.sheet.rememberMusicMenus
-import io.github.aedev.flow.ui.components.musicplayer.common.canTurnLight
 import io.github.aedev.flow.ui.components.musicplayer.sheet.rememberMusicPlayerSheetState
 import io.github.aedev.flow.ui.components.settings.SettingsDestination
 import io.github.aedev.flow.ui.components.settings.SettingsTarget
@@ -69,6 +68,8 @@ import io.github.aedev.flow.ui.screens.notifications.NotificationViewModel
 import io.github.aedev.flow.ui.screens.player.VideoPlayerViewModel
 import io.github.aedev.flow.ui.screens.playon.LocalPlayOn
 import io.github.aedev.flow.ui.screens.playon.PlayOnHost
+import io.github.aedev.flow.ui.screens.settings.wellbeing.TIMES_UP_ROUTE
+import io.github.aedev.flow.ui.screens.settings.wellbeing.TimesUpLaunchEffect
 import io.github.aedev.flow.ui.screens.sync.linked.LinkedSyncAlerts
 import io.github.aedev.flow.ui.screens.update.UPDATE_ROUTE
 import io.github.aedev.flow.ui.screens.update.UpdateLaunchEffect
@@ -117,15 +118,12 @@ fun FlowApp(
     val isCategoriesNavigationEnabled by preferences.categoriesNavigationEnabled.collectAsState(initial = false)
     val isDownloadsNavigationEnabled by preferences.downloadsNavigationEnabled.collectAsState(initial = false)
     val disableShortsPlayer by preferences.effectiveDisableShortsPlayer.collectAsState(initial = false)
-    val musicPlayerBackgroundStyle by preferences.musicPlayerBackgroundStyle.collectAsState(
-        initial = io.github.aedev.flow.data.local.MusicPlayerBackgroundStyle.BLUR_GRADIENT,
-    )
-    val musicPlayerFollowLightTheme by preferences.musicPlayerFollowLightTheme.collectAsState(initial = false)
     val navTabOrder by preferences.navTabOrder.collectAsState(initial = io.github.aedev.flow.data.local.DEFAULT_NAV_TAB_ORDER)
     val defaultNavTabIndex by preferences.defaultNavTabIndex.collectAsState(initial = 0)
     val subscriptionRefreshOnStartup by preferences.subscriptionRefreshOnStartup.collectAsState(initial = false)
     val bottomNavHideOnScroll by preferences.bottomNavHideOnScroll.collectAsState(initial = true)
     val searchShowsNavBar by preferences.searchShowsNavBar.collectAsState(initial = false)
+    val innerPagesShowNavBar by preferences.innerPagesShowNavBar.collectAsState(initial = false)
     val sleepTimerCloseAppOnExpiry by preferences.sleepTimerCloseAppOnExpiry.collectAsState(
         initial = SleepTimerManager.preferredCloseAppOnExpiry,
     )
@@ -207,8 +205,8 @@ fun FlowApp(
 
     val navScrollState =
         rememberFlowNavigationScrollState(
-            hideOnScroll = bottomNavHideOnScroll,
-            routeKey = currentRoute.value,
+            hideOnScroll = bottomNavHideOnScroll && !usesNavigationRail,
+            routeKey = currentEntry?.id ?: currentRoute.value,
             locked = currentRoute.value == SHORTS_ROUTE_KEY,
         )
 
@@ -294,56 +292,17 @@ fun FlowApp(
             }
         val playOn = LocalPlayOn.current
         LaunchedEffect(playOn, onMusicStarted) { playOn?.musicStarted?.collect { onMusicStarted() } }
-        var handledMusicPlayerRequest by remember { mutableIntStateOf(0) }
-
-        LaunchedEffect(activeVideo?.id) {
-            if (activeVideo != null) {
-                suppressMusicMiniAfterVideo = true
-            }
-        }
-
-        LaunchedEffect(currentMusicTrack?.videoId) {
-            if (currentMusicTrack == null) {
-                suppressMusicMiniAfterVideo = false
-            }
-        }
-
-        LaunchedEffect(currentRoute.value) {
-            if (currentRoute.value == "musicPlayer") {
-                suppressMusicMiniAfterVideo = false
-            }
-        }
-
-        val isRestoredMusicQueue by EnhancedMusicPlayerManager.isRestoredQueue.collectAsStateWithLifecycle()
-        val hidesRestoredMusic = hidesRestoredMusicMiniPlayer(showRestoredMusicMiniPlayer, isRestoredMusicQueue)
-        LaunchedEffect(currentMusicTrack, showRestoredMusicMiniPlayer, hidesRestoredMusic) {
-            if (currentMusicTrack != null &&
-                showRestoredMusicMiniPlayer != null &&
-                !hidesRestoredMusic &&
-                musicPlayerSheetState.isDismissed
-            ) {
-                musicPlayerSheetState.collapse()
-            } else if (currentMusicTrack == null) {
-                musicPlayerSheetState.dismiss()
-            }
-        }
-
-        LaunchedEffect(hidesRestoredMusic) {
-            if (hidesRestoredMusic && !musicPlayerSheetState.isExpanded) {
-                musicPlayerSheetState.dismiss()
-            }
-        }
-
-        LaunchedEffect(openMusicPlayerRequest, currentMusicTrack?.videoId) {
-            if (openMusicPlayerRequest > handledMusicPlayerRequest && currentMusicTrack != null) {
-                handledMusicPlayerRequest = openMusicPlayerRequest
-                suppressMusicMiniAfterVideo = false
-                if (playerVisible) {
-                    playerSheetState.collapse()
-                }
-                musicPlayerSheetState.expand()
-            }
-        }
+        FlowMusicSheetEffects(
+            musicPlayerSheetState = musicPlayerSheetState,
+            currentMusicTrack = currentMusicTrack,
+            activeVideoId = activeVideo?.id,
+            currentRoute = currentRoute.value,
+            showRestoredMusicMiniPlayer = showRestoredMusicMiniPlayer,
+            openMusicPlayerRequest = openMusicPlayerRequest,
+            suppressMusicMiniAfterVideo = { suppressMusicMiniAfterVideo = it },
+            playerVisible = { playerVisible },
+            collapseVideoPlayer = { playerSheetState.collapse() },
+        )
 
         ApplyStatusBarStyle(
             themeMode = currentTheme,
@@ -351,10 +310,8 @@ fun FlowApp(
             systemLightThemeMode = systemLightThemeMode,
             systemDarkThemeMode = systemDarkThemeMode,
             isFullscreen = false,
-            isMusicPlayerImmersive = currentMusicTrack != null && musicPlayerSheetState.isImmersive,
-            musicPlayerFollowsTheme =
-                musicPlayerBackgroundStyle == io.github.aedev.flow.data.local.MusicPlayerBackgroundStyle.DEFAULT ||
-                    (musicPlayerFollowLightTheme && musicPlayerBackgroundStyle.canTurnLight),
+            preferences = preferences,
+            musicPlayer = musicPlayerSheetState.takeIf { currentMusicTrack != null },
             isShortsPlayer = isShortsPlayerRoute,
             videoPlayerExpanded = playerVisible && playerSheetState.currentValue == PlayerSheetValue.Expanded,
             heroUnderStatusBar =
@@ -393,8 +350,10 @@ fun FlowApp(
         val isPlayerCoveringContent =
             (playerVisible && playerSheetState.currentValue == PlayerSheetValue.Expanded) ||
                 (isMusicSheetShown && musicPlayerSheetState.isExpanded)
-        val showBottomNav = !isInPipMode && currentTab.showsNavigationBar(searchShowsNavBar) && !isPlayerCoveringContent
-        val isBottomNavShown = !usesNavigationRail && showBottomNav && navScrollState.isBarVisible
+        val barOnScreen = navigationBarShown(currentTab, currentEntry?.destination?.route, searchShowsNavBar, innerPagesShowNavBar)
+        val showBottomNav = !isInPipMode && barOnScreen && !isPlayerCoveringContent
+        val isBottomNavPresent = !usesNavigationRail && showBottomNav
+        val isBottomNavShown = isBottomNavPresent && navScrollState.isBarVisible
         // The rail is hidden only where content goes truly full screen; the expanded players cover
         // it instead, so opening them never re-lays out the page beneath.
         val currentDestinationRoute = currentEntry?.destination?.route
@@ -408,12 +367,12 @@ fun FlowApp(
         val isMiniBarObscuringContent =
             (isMusicSheetShown && !musicPlayerSheetState.isDismissed && !musicPlayerSheetState.isExpanded) || showVideoBar || showRemoteBar
         val motionScheme = MaterialTheme.motionScheme
-        val barFraction = remember { Animatable(if (isBottomNavShown) 1f else 0f) }
-        LaunchedEffect(isBottomNavShown) {
+        val barFraction = remember { Animatable(if (isBottomNavPresent) 1f else 0f) }
+        LaunchedEffect(isBottomNavPresent) {
             // The same springs as the bar's own slide, so whatever rides on it stays glued to it.
             barFraction.animateTo(
-                targetValue = if (isBottomNavShown) 1f else 0f,
-                animationSpec = if (isBottomNavShown) motionScheme.defaultSpatialSpec() else motionScheme.fastSpatialSpec(),
+                targetValue = if (isBottomNavPresent) 1f else 0f,
+                animationSpec = if (isBottomNavPresent) motionScheme.defaultSpatialSpec() else motionScheme.fastSpatialSpec(),
             )
         }
         val systemBottomState = rememberUpdatedState(with(density) { navBarBottomInset.toDp() })
@@ -455,7 +414,7 @@ fun FlowApp(
                     barShown = barShownState,
                     miniPlayerHeight = miniPlayerHeightState,
                     miniPlayerShown = miniPlayerShownState,
-                    barFraction = { barFraction.value },
+                    barFraction = { barFraction.value * (1f - navScrollState.hiddenFraction) },
                     miniPlayerFraction = { miniPlayerFraction.value },
                     miniPlayerSpanPx = miniPlayerSpanState,
                 )
@@ -464,14 +423,23 @@ fun FlowApp(
             tabs = navigationTabs,
             selectedTab = selectedTab,
             onTabSelected = { tab ->
-                if (currentTab == tab) {
+                val action =
+                    tabTapAction(
+                        tab,
+                        currentTab,
+                        selectedTab,
+                        searchIsTab = FlowTab.Search in currentNavigationTabs,
+                        startTab = defaultTab,
+                    )
+                if (action == TabTap.SCROLL_TO_TOP) {
                     TabScrollEventBus.emitScrollToTop(tab.route)
                 } else {
                     currentRoute.value = tab.route
-                    navController.navigateToTab(tab, defaultStartRoute)
+                    navController.tapTab(action, tab, selectedTab, defaultStartRoute)
                 }
             },
-            barVisible = showBottomNav && navScrollState.isBarVisible,
+            barVisible = showBottomNav,
+            barScrollState = navScrollState,
             railVisible = isNavigationRailVisible,
             onBarHeightChanged = { navigationBarHeight = it },
             onRailWidthChanged = { navigationRailWidth = it },
@@ -558,6 +526,7 @@ fun FlowApp(
                                             onMusicStarted = onMusicStarted,
                                             openDownloads = openDownloads,
                                             searchExitTab = { exitTab(currentNavigationTabs, FlowTab.Search) },
+                                            searchIsTab = { FlowTab.Search in currentNavigationTabs },
                                         )
                                     }
                                 }
@@ -617,5 +586,9 @@ fun FlowApp(
         )
 
         UpdateLaunchEffect(needsOnboarding = needsOnboarding, onOpenUpdate = { navController.navigate(UPDATE_ROUTE) })
+        TimesUpLaunchEffect(enabled = needsOnboarding == false && !isInPipMode) {
+            collapseExpandedPlayers()
+            navController.navigate(TIMES_UP_ROUTE) { launchSingleTop = true }
+        }
     }
 }

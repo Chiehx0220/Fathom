@@ -218,4 +218,10 @@
     <string name="share_web_queued_title">等待網頁連線</string>
     <string name="share_web_queued_body">%1$s\n開啟後將立即播放</string>
     <string name="linked_error_restore_unfinished">還原尚未完成，Fathom 會在下次同步時完成。</string>
+    <string name="crossfade_pause_desc">直到 Fathom 重新啟動</string>
+    <string name="app_lock_summary">開啟 Fathom 時需先解鎖手機</string>
+    <string name="app_lock_footer">Fathom 鎖定時，音樂、媒體控制與子母畫面仍可使用。</string>
+    <string name="app_lock_after_description">Fathom 離開畫面多久後會再次要求解鎖</string>
+    <string name="app_lock_prompt_title">解鎖 Fathom</string>
+    <string name="app_lock_screen_title">Fathom 已鎖定</string>
 </resources>

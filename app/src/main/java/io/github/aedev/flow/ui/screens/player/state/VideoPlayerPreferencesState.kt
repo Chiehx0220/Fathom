@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import io.github.aedev.flow.data.local.DEFAULT_SPEED_SWIPE_STEP
 import io.github.aedev.flow.data.local.DoubleTapSeekZone
+import io.github.aedev.flow.data.local.FullscreenSidePanelWidth
 import io.github.aedev.flow.data.local.GestureOverlayStyle
 import io.github.aedev.flow.data.local.HomeFeedColumns
 import io.github.aedev.flow.data.local.PlayerPreferences
@@ -30,9 +31,9 @@ internal class VideoPlayerPreferencesState(
     val rememberedBrightnessLevel: Float,
     val volumeSwipeGesturesEnabled: Boolean,
     val seekSwipeGesturesEnabled: Boolean,
+    val moreVideosSwipeEnabled: Boolean,
     val allowVolumeBoost: Boolean,
     val gestureOverlayStyle: GestureOverlayStyle,
-    val hapticsEnabled: Boolean,
     val sbSubmitEnabled: Boolean,
     val sbSkipNoticeEnabled: Boolean,
     val sbSkipButtonStyle: SponsorBlockSkipButtonStyle,
@@ -52,12 +53,14 @@ internal class VideoPlayerPreferencesState(
     val lockModeEnabled: Boolean,
     val commentsEnabled: Boolean,
     val preferredSubtitleLanguage: String,
+    val transcriptLanguage: String,
     val commentsPreviewEnabled: Boolean,
     val showRelatedVideos: Boolean,
     val relatedCardStyle: PlayerRelatedCardStyle,
     val feedColumns: HomeFeedColumns,
     val deArrowEnabled: Boolean,
     val tiltFullscreenRotationLocked: Boolean,
+    val fullscreenSidePanelWidth: FullscreenSidePanelWidth,
 )
 
 @Composable
@@ -68,10 +71,10 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
     val rememberedBrightnessLevel by playerPreferences.rememberedBrightnessLevel.collectAsState(initial = -1f)
     val volumeSwipeGesturesEnabled by playerPreferences.volumeSwipeGesturesEnabled.collectAsState(initial = true)
     val seekSwipeGesturesEnabled by playerPreferences.seekSwipeGesturesEnabled.collectAsState(initial = true)
+    val moreVideosSwipeEnabled by playerPreferences.moreVideosSwipeEnabled.collectAsState(initial = true)
     val allowVolumeBoost by playerPreferences.allowVolumeBoost.collectAsState(initial = false)
     val gestureOverlayStyle by
         playerPreferences.gestureOverlayStyle.collectAsState(initial = GestureOverlayStyle.CIRCULAR)
-    val hapticsEnabled by playerPreferences.playerHapticsEnabled.collectAsState(initial = true)
     val sbSubmitEnabled by playerPreferences.sbSubmitEnabled.collectAsState(initial = false)
     val sbSkipNoticeEnabled by playerPreferences.sbSkipNoticeEnabled.collectAsState(initial = true)
     val sbSkipButtonStyle by playerPreferences.sbSkipButtonStyle.collectAsState(initial = SponsorBlockSkipButtonStyle.FULL)
@@ -92,12 +95,16 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
     val commentsEnabled by playerPreferences.commentsEnabled.collectAsState(initial = true)
     val preferredSubtitleLanguage by playerPreferences.preferredSubtitleLanguage
         .collectAsState(initial = CaptionTrackResolver.NO_PREFERRED_LANGUAGE)
+    val transcriptLanguage by playerPreferences.transcriptLanguage
+        .collectAsState(initial = CaptionTrackResolver.NO_PREFERRED_LANGUAGE)
     val commentsPreviewEnabled by playerPreferences.commentsPreviewEnabled.collectAsState(initial = true)
     val showRelatedVideos by playerPreferences.showRelatedVideos.collectAsState(initial = true)
     val relatedCardStyle by playerPreferences.playerRelatedCardStyle.collectAsState(initial = PlayerRelatedCardStyle.FULL_WIDTH)
     val feedColumns by playerPreferences.homeFeedColumns.collectAsState(initial = HomeFeedColumns.AUTO)
     val deArrowEnabled by playerPreferences.deArrowEnabled.collectAsState(initial = false)
     val tiltFullscreenRotationLocked by playerPreferences.tiltFullscreenRotationLocked.collectAsState(initial = false)
+    val fullscreenSidePanelWidth by playerPreferences.fullscreenSidePanelWidth
+        .collectAsState(initial = FullscreenSidePanelWidth.DEFAULT)
 
     return VideoPlayerPreferencesState(
         preferences = playerPreferences,
@@ -106,9 +113,9 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
         rememberedBrightnessLevel = rememberedBrightnessLevel,
         volumeSwipeGesturesEnabled = volumeSwipeGesturesEnabled,
         seekSwipeGesturesEnabled = seekSwipeGesturesEnabled,
+        moreVideosSwipeEnabled = moreVideosSwipeEnabled,
         allowVolumeBoost = allowVolumeBoost,
         gestureOverlayStyle = gestureOverlayStyle,
-        hapticsEnabled = hapticsEnabled,
         sbSubmitEnabled = sbSubmitEnabled,
         sbSkipNoticeEnabled = sbSkipNoticeEnabled,
         sbSkipButtonStyle = sbSkipButtonStyle,
@@ -128,11 +135,13 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
         lockModeEnabled = lockModeEnabled,
         commentsEnabled = commentsEnabled,
         preferredSubtitleLanguage = preferredSubtitleLanguage,
+        transcriptLanguage = transcriptLanguage,
         commentsPreviewEnabled = commentsPreviewEnabled,
         showRelatedVideos = showRelatedVideos,
         relatedCardStyle = relatedCardStyle,
         feedColumns = feedColumns,
         deArrowEnabled = deArrowEnabled,
         tiltFullscreenRotationLocked = tiltFullscreenRotationLocked,
+        fullscreenSidePanelWidth = fullscreenSidePanelWidth,
     )
 }

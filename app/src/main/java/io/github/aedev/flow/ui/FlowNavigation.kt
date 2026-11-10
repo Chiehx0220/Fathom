@@ -42,9 +42,17 @@ import io.github.aedev.flow.ui.screens.playlists.PlaylistsScreen
 import io.github.aedev.flow.ui.screens.recap.RecapRoutes
 import io.github.aedev.flow.ui.screens.recap.RecapScreen
 import io.github.aedev.flow.ui.screens.recap.story.RecapStoryScreen
+import io.github.aedev.flow.ui.screens.search.MAX_SEARCH_DEPTH
+import io.github.aedev.flow.ui.screens.search.SEARCH_DEPTH_ARG
+import io.github.aedev.flow.ui.screens.search.SEARCH_FILTERS_ARG
+import io.github.aedev.flow.ui.screens.search.SEARCH_QUERY_ARG
+import io.github.aedev.flow.ui.screens.search.SEARCH_ROUTE_PATTERN
 import io.github.aedev.flow.ui.screens.search.SingleServiceSearchScreen
+import io.github.aedev.flow.ui.screens.search.searchRoute
 import io.github.aedev.flow.ui.screens.settings.SettingsHost
 import io.github.aedev.flow.ui.screens.settings.rememberNewSettings
+import io.github.aedev.flow.ui.screens.settings.wellbeing.TIMES_UP_ROUTE
+import io.github.aedev.flow.ui.screens.settings.wellbeing.TimesUpScreen
 import io.github.aedev.flow.ui.screens.shorts.ShortsScreen
 import io.github.aedev.flow.ui.screens.subscriptions.SubscriptionsScreen
 import io.github.aedev.flow.ui.screens.update.UPDATE_ROUTE
@@ -67,6 +75,7 @@ fun NavGraphBuilder.flowAppGraph(
     onMusicStarted: () -> Unit = {},
     openDownloads: () -> Unit = {},
     searchExitTab: () -> FlowTab = { FlowTab.Home },
+    searchIsTab: () -> Boolean = { false },
 ) {
     // =============================================
     // ONBOARDING (First-time user experience)
@@ -95,7 +104,8 @@ fun NavGraphBuilder.flowAppGraph(
                 navController.openShortsOrPlayer(source, disableShortsPlayer)
             },
             onSearchClick = {
-                navController.navigate("search")
+                // With a Search tab in the bar, the icon opens that tab, so Search keeps its state like any other tab.
+                if (searchIsTab()) navController.navigateToTab(FlowTab.Search, defaultStartRoute) else navController.navigate("search")
             },
             onOpenSettings = { target -> navController.navigate("settings?target=${target.encode()}") },
             onNavigateToHistory = {
@@ -112,6 +122,11 @@ fun NavGraphBuilder.flowAppGraph(
     composable(UPDATE_ROUTE) {
         currentRoute.value = UPDATE_ROUTE
         UpdateScreen(onClose = { navController.popBackStack() })
+    }
+
+    composable(TIMES_UP_ROUTE) {
+        currentRoute.value = TIMES_UP_ROUTE
+        TimesUpScreen(onClose = { navController.popBackStack() })
     }
 
     // Notifications Screen
@@ -246,10 +261,35 @@ fun NavGraphBuilder.flowAppGraph(
         )
     }
 
-    composable("search") {
+    composable(
+        route = SEARCH_ROUTE_PATTERN,
+        arguments =
+            listOf(
+                navArgument(SEARCH_QUERY_ARG) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument(SEARCH_FILTERS_ARG) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument(SEARCH_DEPTH_ARG) {
+                    type = NavType.IntType
+                    defaultValue = 1
+                },
+            ),
+    ) { entry ->
         currentRoute.value = "search"
+        val depth = entry.arguments?.getInt(SEARCH_DEPTH_ARG) ?: 1
         // Search owns the whole screen, the way YouTube's does.
         SingleServiceSearchScreen(
+            onNewSearch = { query, filters ->
+                navController.navigate(searchRoute(query, filters, minOf(depth + 1, MAX_SEARCH_DEPTH))) {
+                    if (depth >= MAX_SEARCH_DEPTH) popUpTo(entry.destination.id) { inclusive = true }
+                }
+            },
             onVideoClick = { video ->
                 navController.openVideoOrShorts(video, disableShortsPlayer) { playerViewModel.playVideo(it) }
             },

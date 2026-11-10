@@ -263,6 +263,14 @@ internal object PlaybackIndex {
             section = R.string.settings_section_pip,
             destination = page,
         )
+    val minimizeToAudioBar =
+        SettingEntry(
+            key = "playback.minimize_to_audio_bar",
+            title = R.string.player_settings_minimize_to_audio_bar_title,
+            summary = R.string.player_settings_minimize_to_audio_bar_subtitle,
+            section = R.string.settings_section_pip,
+            destination = page,
+        )
     val restoreMusicMiniPlayer =
         SettingEntry(
             key = "playback.restore_music_mini_player",
@@ -351,53 +359,6 @@ internal object PlaybackIndex {
             section = R.string.settings_section_watch_page,
             destination = page,
         )
-    val disableShortsPlayer =
-        SettingEntry(
-            key = "playback.disable_shorts_player",
-            title = R.string.content_settings_disable_shorts_player_title,
-            summary = R.string.content_settings_disable_shorts_player_subtitle,
-            section = R.string.settings_section_shorts_player,
-            destination = page,
-        )
-    val shortsPlayerPrompt =
-        SettingEntry(
-            key = "playback.shorts_player_prompt",
-            title = R.string.content_settings_shorts_player_prompt_title,
-            summary = R.string.content_settings_shorts_player_prompt_subtitle,
-            section = R.string.settings_section_shorts_player,
-            destination = page,
-        )
-    val shortsPlaybackMode =
-        SettingEntry(
-            key = "playback.shorts_playback_mode",
-            title = R.string.player_settings_shorts_playback_mode_title,
-            section = R.string.settings_section_shorts_player,
-            destination = page,
-        )
-    val shortsBackgroundPlay =
-        SettingEntry(
-            key = "playback.shorts_background_play",
-            title = R.string.player_settings_shorts_background_play,
-            summary = R.string.player_settings_shorts_background_play_subtitle,
-            section = R.string.settings_section_shorts_player,
-            destination = page,
-        )
-    val shortsPip =
-        SettingEntry(
-            key = "playback.shorts_pip",
-            title = R.string.player_settings_shorts_pip,
-            summary = R.string.player_settings_shorts_pip_subtitle,
-            section = R.string.settings_section_shorts_player,
-            destination = page,
-        )
-    val shortsContinueIntoFeed =
-        SettingEntry(
-            key = "playback.shorts_continue_into_feed",
-            title = R.string.player_settings_shorts_continue_into_feed,
-            summary = R.string.player_settings_shorts_continue_into_feed_subtitle,
-            section = R.string.settings_section_shorts_player,
-            destination = page,
-        )
     val endlessRadio =
         SettingEntry(
             key = "playback.endless_radio",
@@ -413,50 +374,6 @@ internal object PlaybackIndex {
             summary = R.string.settings_pause_music_muted_summary,
             section = R.string.settings_section_music,
             destination = page,
-        )
-    val crossfade =
-        SettingEntry(
-            key = "playback.crossfade",
-            title = R.string.settings_crossfade_title,
-            summary = R.string.settings_crossfade_summary,
-            keywords = R.string.settings_keywords_crossfade,
-            section = R.string.settings_section_music,
-            destination = page,
-        )
-    val crossfadeOnAutoAdvance =
-        SettingEntry(
-            key = "playback.crossfade_auto_advance",
-            title = R.string.settings_crossfade_auto_title,
-            summary = R.string.settings_crossfade_auto_summary,
-            section = R.string.settings_section_music,
-            destination = page,
-            revealVia = "playback.crossfade",
-        )
-    val crossfadeOnManualSkip =
-        SettingEntry(
-            key = "playback.crossfade_manual_skip",
-            title = R.string.settings_crossfade_skip_title,
-            summary = R.string.settings_crossfade_skip_summary,
-            section = R.string.settings_section_music,
-            destination = page,
-            revealVia = "playback.crossfade",
-        )
-    val crossfadeKeepAlbums =
-        SettingEntry(
-            key = "playback.crossfade_keep_albums",
-            title = R.string.settings_crossfade_albums_title,
-            summary = R.string.settings_crossfade_albums_summary,
-            section = R.string.settings_section_music,
-            destination = page,
-            revealVia = "playback.crossfade",
-        )
-    val crossfadeCurve =
-        SettingEntry(
-            key = "playback.crossfade_curve",
-            title = R.string.settings_crossfade_curve_title,
-            section = R.string.settings_section_music,
-            destination = page,
-            revealVia = "playback.crossfade",
         )
     val musicResume =
         SettingEntry(
@@ -490,37 +407,14 @@ internal object PlaybackIndex {
             section = R.string.settings_section_music,
             destination = page,
         )
-    val lyricsOnLockScreen =
+    val lockScreenPlayer =
         SettingEntry(
-            key = "playback.lyrics_on_lock_screen",
-            title = R.string.lyrics_on_lock_screen,
-            summary = R.string.lyrics_on_lock_screen_summary,
+            key = "playback.lock_screen_player",
+            title = R.string.settings_lock_screen_player_title,
+            summary = R.string.settings_lock_screen_player_summary,
             section = R.string.settings_section_music,
             destination = page,
-        )
-    val lyricsOnLockScreenTiming =
-        SettingEntry(
-            key = "playback.lyrics_on_lock_screen_timing",
-            title = R.string.lyrics_on_lock_screen_timing,
-            summary = R.string.lyrics_on_lock_screen_timing_summary,
-            section = R.string.settings_section_music,
-            destination = page,
-        )
-    val lyricsSponsorBlockTiming =
-        SettingEntry(
-            key = "playback.lyrics_sponsorblock_timing",
-            title = R.string.lyrics_sponsorblock_timing,
-            summary = R.string.lyrics_sponsorblock_timing_summary,
-            section = R.string.settings_section_music,
-            destination = page,
-        )
-    val lyricsProviders =
-        SettingEntry(
-            key = "playback.lyrics_providers",
-            title = R.string.lyrics_provider_title,
-            summary = R.string.lyrics_provider_subtitle,
-            section = R.string.settings_section_music,
-            destination = page,
+            keywords = R.string.settings_keywords_lock_screen_player,
         )
 
     val all =
@@ -559,6 +453,7 @@ internal object PlaybackIndex {
                 nextPrevButtons,
                 autoPip,
                 continueWatchingMiniPlayer,
+                minimizeToAudioBar,
                 restoreMusicMiniPlayer,
                 openMusicPlayerOnPlay,
                 audioLanguage,
@@ -570,26 +465,19 @@ internal object PlaybackIndex {
                 comments,
                 commentsPreview,
                 liveChat,
-                disableShortsPlayer,
-                shortsPlayerPrompt,
-                shortsPlaybackMode,
-                shortsBackgroundPlay,
-                shortsPip,
-                shortsContinueIntoFeed,
+            ) +
+            PlaybackShortsIndex.all +
+            listOf(
                 endlessRadio,
                 pauseMusicWhenMuted,
-                crossfade,
-                crossfadeOnAutoAdvance,
-                crossfadeOnManualSkip,
-                crossfadeKeepAlbums,
-                crossfadeCurve,
+            ) +
+            PlaybackCrossfadeIndex.all +
+            listOf(
                 musicResume,
                 resumeFromHeadphones,
                 musicSideSwipes,
                 musicVideoSwitch,
-                lyricsOnLockScreen,
-                lyricsOnLockScreenTiming,
-                lyricsSponsorBlockTiming,
-                lyricsProviders,
-            )
+                lockScreenPlayer,
+            ) +
+            PlaybackLyricsIndex.all
 }

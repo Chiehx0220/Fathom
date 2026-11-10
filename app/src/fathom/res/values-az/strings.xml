@@ -3,7 +3,7 @@
 <resources>
     <string name="app_name">Fathom</string>
     <string name="channel_error_log_clip_label">Fathom kanal xəta qeydi</string>
-    <string name="local_media_permission_body">Fathom-un yerli videoları və musiqiləri tapıb oynatması üçün medianıza daxil olmağa icazə verin.</string>
+    <string name="local_media_permission_body">Fathom-un yerli videoları və musiqiləri tapıb oynatması üçün medianıza daxil olmağına icazə verin.</string>
     <string name="link_not_supported">Fathom bu cür keçidləri aça bilmir</string>
     <string name="update_flow">Fathom-u yenilə</string>
     <string name="app_name_uppercase">FATHOM</string>
@@ -100,4 +100,11 @@
     <string name="linked_profile_switch_body">Yalnız istifadədə olan profil sinxronizasiyaya başlaya bilər, ona görə də Fathom əvvəlcə onda yenidən işə düşür. Sonra orada sinxronizasiyanı yandırın.</string>
     <string name="buffer_cache_size_link_summary">Fathom-un diskdə nə qədər video və musiqi saxladığı</string>
     <string name="linked_replace_words_body">Fathom cihazlarınız üçün yeni bərpa sözləri və yeni şifrələmə açarları yaradır. Köhnə sözlər işləməyi dayandırır: onlar bu qrupu bərpa edə və ya bundan sonra sinxronlaşdırılan heç nəyi oxuya bilməzlər. Göründükləri zaman yeni sözləri qeyd edin.</string>
+    <string name="linked_error_restore_unfinished">Bərpa hələ bitməyib. Fathom onu növbəti sinxronizasiyada qurtaracaq.</string>
+    <string name="crossfade_pause_desc">Fathom yenidən başlayana qədər</string>
+    <string name="app_lock_summary">Fathom-u açmaq üçün telefonunuzun kilidinin açılmasını soruş</string>
+    <string name="app_lock_footer">Fathom kilidlənsə belə, musiqi, media idarəetmələri və pəncərədə pəncərə işləməyə davam edir.</string>
+    <string name="app_lock_after_description">Fathom təkrar soruşana qədər ekrandan nə qədər kənar ola bilər</string>
+    <string name="app_lock_prompt_title">Fathom-un Kilidini Aç</string>
+    <string name="app_lock_screen_title">Fathom kilidlənib</string>
 </resources>
