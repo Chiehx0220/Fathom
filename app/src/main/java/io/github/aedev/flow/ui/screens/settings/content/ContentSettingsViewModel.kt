@@ -16,6 +16,8 @@ class ContentSettingsViewModel
     ) : SettingsViewModel() {
         val homeFeed = preferences.homeFeedEnabled.asState(true)
         val refreshOnReselect = preferences.refreshHomeOnReselect.asState(true)
+        val homeChips = preferences.homeChipsEnabled.asState(true)
+        val homeNewVideosButton = preferences.homeNewVideosButtonEnabled.asState(true)
         val continueWatching = preferences.continueWatchingEnabled.asState(true)
         val homeShortsShelf = preferences.homeShortsShelfEnabled.asState(true)
         val homeSubscriptions = preferences.homeSubscriptionsEnabled.asState(true)
@@ -25,6 +27,9 @@ class ContentSettingsViewModel
         val subsShorts = preferences.subscriptionShowShorts.asState(true)
         val subsShortsShelf = preferences.shortsShelfEnabled.asState(true)
         val subsLive = preferences.subscriptionShowLive.asState(true)
+        val subsUpcoming = preferences.subscriptionShowUpcoming.asState(true)
+        val subsPostsChip = preferences.subscriptionPostsChip.asState(true)
+        val subsUngrouped = preferences.subscriptionUngroupedEnabled.asState(false)
         val subsCollaborations = preferences.subscriptionCollaborationsEnabled.asState(true)
         val hideWatchedSubs = preferences.hideWatchedVideosFromSubscriptions.asState(false)
         val hideUnplayableSubs = preferences.hideUnplayableVideosFromSubscriptions.asState(false)
@@ -47,6 +52,10 @@ class ContentSettingsViewModel
 
         fun setRefreshOnReselect(value: Boolean) = write { preferences.setRefreshHomeOnReselect(value) }
 
+        fun setHomeChips(value: Boolean) = write { preferences.setHomeChipsEnabled(value) }
+
+        fun setHomeNewVideosButton(value: Boolean) = write { preferences.setHomeNewVideosButtonEnabled(value) }
+
         fun setContinueWatching(value: Boolean) = write { preferences.setContinueWatchingEnabled(value) }
 
         fun setHomeShortsShelf(value: Boolean) = write { preferences.setHomeShortsShelfEnabled(value) }
@@ -62,6 +71,12 @@ class ContentSettingsViewModel
         fun setSubsShortsShelf(value: Boolean) = write { preferences.setShortsShelfEnabled(value) }
 
         fun setSubsLive(value: Boolean) = write { preferences.setSubscriptionShowLive(value) }
+
+        fun setSubsUpcoming(value: Boolean) = write { preferences.setSubscriptionShowUpcoming(value) }
+
+        fun setSubsPostsChip(value: Boolean) = write { preferences.setSubscriptionPostsChip(value) }
+
+        fun setSubsUngrouped(value: Boolean) = write { preferences.setSubscriptionUngroupedEnabled(value) }
 
         fun setSubsCollaborations(value: Boolean) = write { preferences.setSubscriptionCollaborationsEnabled(value) }
 

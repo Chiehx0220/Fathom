@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,7 +30,6 @@ import androidx.compose.material.icons.outlined.Explicit
 import androidx.compose.material.icons.rounded.Sensors
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -62,6 +62,9 @@ import io.github.aedev.flow.data.music.model.MusicTrack
 import io.github.aedev.flow.ui.components.PlayingWaveform
 import io.github.aedev.flow.ui.components.musicplayer.common.formatTime
 import io.github.aedev.flow.ui.components.musicplayer.motion.QueueRowSwipeGestureHandler
+import io.github.aedev.flow.ui.components.shared.FlowSpinner
+import io.github.aedev.flow.ui.components.shared.LocalDpadNavigation
+import io.github.aedev.flow.ui.components.shared.onMenuKey
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -73,7 +76,7 @@ internal fun RadioLoadingRow() {
                 .padding(vertical = 14.dp),
         horizontalArrangement = Arrangement.Center,
     ) {
-        LoadingIndicator(
+        FlowSpinner(
             modifier = Modifier.size(30.dp),
             color = MaterialTheme.colorScheme.primary,
         )
@@ -95,8 +98,10 @@ internal fun QueueTrackRow(
     onClick: () -> Unit,
     onSwipe: (QueueRowSwipe) -> Unit,
     modifier: Modifier = Modifier,
+    onMenu: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
+    val dpad = LocalDpadNavigation.current
     val haptics = LocalHapticFeedback.current
     val density = LocalDensity.current
 
@@ -153,8 +158,15 @@ internal fun QueueTrackRow(
                     .fillMaxWidth()
                     .graphicsLayer { translationX = offsetX.value }
                     .clip(RoundedCornerShape(rowCorner))
-                    .clickable(enabled = offsetX.value == 0f, onClick = onClick)
                     .then(
+                        if (dpad && onMenu != null) {
+                            Modifier
+                                .onMenuKey(onMenu)
+                                .combinedClickable(onClick = onClick, onLongClick = onMenu)
+                        } else {
+                            Modifier.clickable(enabled = offsetX.value == 0f, onClick = onClick)
+                        },
+                    ).then(
                         if (swipeEnabled) {
                             Modifier.pointerInput(rowKey, swipeHandler) {
                                 detectHorizontalDragGestures(

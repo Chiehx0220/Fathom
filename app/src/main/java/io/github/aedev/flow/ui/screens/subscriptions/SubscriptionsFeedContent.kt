@@ -62,6 +62,8 @@ internal fun SubscriptionsFeedContent(
     minCellWidth: Dp = FeedCardMinWidth,
     showShorts: Boolean = true,
     onPostsClick: (() -> Unit)? = null,
+    pinnedCount: Int = 0,
+    onTogglePin: ((Channel) -> Unit)? = null,
 ) {
     val pullRefreshState = rememberPullToRefreshState()
 
@@ -108,6 +110,8 @@ internal fun SubscriptionsFeedContent(
                             onGroupSelected = onGroupSelected,
                             onManageGroups = onManageGroups,
                             onPostsClick = onPostsClick,
+                            pinnedCount = pinnedCount,
+                            onTogglePin = onTogglePin,
                         )
 
                         SubscriptionFeedErrorCard(

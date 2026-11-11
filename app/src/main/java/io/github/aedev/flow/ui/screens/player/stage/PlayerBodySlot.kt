@@ -36,6 +36,8 @@ internal fun PlayerBodySlot(
             screenState = screenState,
             isFullscreenShown = session.isFullscreenShown,
             prefs = session.prefs,
+            ambientGlowFrames = session.ambient.frames.takeIf { session.ambient.glow },
+            ambientImmersive = session.ambient.immersive,
             onVideoClick = { clickedVideo ->
                 if (clickedVideo.isShort) {
                     onClose()

@@ -5,7 +5,7 @@
     <string name="channel_error_log_clip_label">Fathom kanal xəta qeydi</string>
     <string name="local_media_permission_body">Fathom-un yerli videoları və musiqiləri tapıb oynatması üçün medianıza daxil olmağına icazə verin.</string>
     <string name="link_not_supported">Fathom bu cür keçidləri aça bilmir</string>
-    <string name="update_flow">Fathom-u yenilə</string>
+    <string name="update_flow">Fathom-u Yenilə</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Fathom-un hansı bildirişləri göndərə biləcəyini idarə edin</string>
     <string name="notification_channel_new_version_description">Fathom-un yeni versiyası çıxdıqda sizə xəbər verir</string>

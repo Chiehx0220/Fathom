@@ -45,6 +45,9 @@ class PlayerAppearanceViewModel
         val sleepTimerButton = preferences.musicSleepTimerButton.asState(false)
         val adaptivePlayerSize = preferences.adaptivePlayerSizeEnabled.asState(true)
         val ambientMode = preferences.videoAmbientModeEnabled.asState(false)
+        val ambientGlow = preferences.videoAmbientGlowEnabled.asState(false)
+        val immersiveGlow = preferences.videoAmbientImmersiveEnabled.asState(false)
+        val glowInBatterySaver = preferences.videoAmbientGlowInBatterySaver.asState(false)
         val videoArtworkColors = preferences.videoArtworkColors.asState(true)
         val groupedQualitySelector = preferences.groupedQualitySelectorEnabled.asState(false)
         val paidPromotionLabel = preferences.paidPromotionLabel.asState(false)
@@ -94,6 +97,12 @@ class PlayerAppearanceViewModel
         fun setAdaptivePlayerSize(value: Boolean) = write { preferences.setAdaptivePlayerSizeEnabled(value) }
 
         fun setAmbientMode(value: Boolean) = write { preferences.setVideoAmbientModeEnabled(value) }
+
+        fun setAmbientGlow(value: Boolean) = write { preferences.setVideoAmbientGlowEnabled(value) }
+
+        fun setImmersiveGlow(value: Boolean) = write { preferences.setVideoAmbientImmersiveEnabled(value) }
+
+        fun setGlowInBatterySaver(value: Boolean) = write { preferences.setVideoAmbientGlowInBatterySaver(value) }
 
         fun setVideoArtworkColors(value: Boolean) = write { preferences.setVideoArtworkColors(value) }
 

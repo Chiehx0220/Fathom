@@ -3,6 +3,8 @@ package io.github.aedev.flow.ui.screens.settings.appearance
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.outlined.AppShortcut
+import androidx.compose.material.icons.outlined.Autorenew
+import androidx.compose.material.icons.outlined.EdgesensorHigh
 import androidx.compose.material.icons.outlined.FiberNew
 import androidx.compose.material.icons.outlined.Gradient
 import androidx.compose.material.icons.outlined.GridView
@@ -57,6 +59,7 @@ internal fun AppearanceScreen(
     viewModel: AppearanceViewModel = hiltViewModel(),
 ) {
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val haptics by viewModel.haptics.collectAsStateWithLifecycle()
     val themeVariant by viewModel.themeVariant.collectAsStateWithLifecycle()
     val customThemeName by viewModel.customThemeName.collectAsStateWithLifecycle()
     val interfaceMode by viewModel.interfaceMode.collectAsStateWithLifecycle()
@@ -160,7 +163,20 @@ internal fun AppearanceScreen(
                 viewModel::setMarqueeEnabled,
                 icon = Icons.Outlined.TextRotationNone,
             )
-            switch(AppearanceIndex.haptics, viewModel.haptics, viewModel::setHaptics, icon = Icons.Outlined.Vibration)
+            switch(
+                AppearanceIndex.classicLoadingIndicator,
+                viewModel.classicLoadingIndicator,
+                viewModel::setClassicLoadingIndicator,
+                icon = Icons.Outlined.Autorenew,
+            )
+            switch(AppearanceIndex.haptics, haptics, viewModel::setHaptics, icon = Icons.Outlined.Vibration)
+            switch(
+                AppearanceIndex.hapticsIgnoreSystem,
+                viewModel.hapticsIgnoreSystem,
+                viewModel::setHapticsIgnoreSystem,
+                enabled = haptics,
+                icon = Icons.Outlined.EdgesensorHigh,
+            )
             switch(
                 AppearanceIndex.highlightNewSettings,
                 viewModel.newSettingsHighlight,

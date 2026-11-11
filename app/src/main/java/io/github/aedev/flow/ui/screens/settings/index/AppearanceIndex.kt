@@ -125,11 +125,29 @@ internal object AppearanceIndex {
             section = R.string.settings_section_style,
             destination = page,
         )
+    val classicLoadingIndicator =
+        SettingEntry(
+            key = "appearance.classic_loading_indicator",
+            title = R.string.settings_classic_loader_title,
+            summary = R.string.settings_classic_loader_summary,
+            keywords = R.string.settings_classic_loader_keywords,
+            section = R.string.settings_section_style,
+            destination = page,
+        )
     val haptics =
         SettingEntry(
             key = "appearance.haptics",
             title = R.string.player_appearance_haptics_title,
             summary = R.string.player_appearance_haptics_subtitle,
+            keywords = R.string.settings_keywords_haptics,
+            section = R.string.settings_section_style,
+            destination = page,
+        )
+    val hapticsIgnoreSystem =
+        SettingEntry(
+            key = "appearance.haptics_ignore_system",
+            title = R.string.settings_haptics_ignore_system_title,
+            summary = R.string.settings_haptics_ignore_system_summary,
             keywords = R.string.settings_keywords_haptics,
             section = R.string.settings_section_style,
             destination = page,
@@ -157,7 +175,9 @@ internal object AppearanceIndex {
             interfaceMode,
             skeletonGradient,
             marquee,
+            classicLoadingIndicator,
             haptics,
+            hapticsIgnoreSystem,
             highlightNewSettings,
             highlightNewSettingsDays,
             homeViewMode,

@@ -35,6 +35,7 @@ import io.github.aedev.flow.data.shorts.ShortsFeedRepository
 import io.github.aedev.flow.data.subscriptions.HomeSubscriptionUploads
 import io.github.aedev.flow.innertube.pages.renderer.FeedItemOwner
 import io.github.aedev.flow.ui.screens.home.chips.ChipFeedContext
+import io.github.aedev.flow.ui.screens.home.chips.HomeChip
 import io.github.aedev.flow.ui.screens.home.chips.HomeChipFeeds
 import io.github.aedev.flow.ui.screens.home.chips.HomeChipsState
 import io.github.aedev.flow.utils.PerformanceDispatcher
@@ -225,8 +226,15 @@ class HomeViewModel
         private val watchedVideoIds = MutableStateFlow<Set<String>>(emptySet())
         private val watchedShortIds = MutableStateFlow<Set<String>>(emptySet())
 
-        /** The chips above the feed and what the selected one shows. */
-        internal val chips: StateFlow<HomeChipsState> = chipFeeds.state
+        /** The chips above the feed and what the selected one shows; All alone hides the row while chips are off. */
+        internal val chips: StateFlow<HomeChipsState> =
+            combine(chipFeeds.state, playerPreferences.homeChipsEnabled) { state, enabled ->
+                if (enabled) state else HomeChipsState(chips = listOf(HomeChip.All))
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(UI_STATE_SUBSCRIPTION_TIMEOUT_MS), chipFeeds.state.value)
+
+        internal val newVideosButtonEnabled: StateFlow<Boolean> =
+            playerPreferences.homeNewVideosButtonEnabled
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(UI_STATE_SUBSCRIPTION_TIMEOUT_MS), true)
 
         fun selectChip(key: String) = chipFeeds.select(key)
 
@@ -246,6 +254,12 @@ class HomeViewModel
                         source = { playerPreferences.homeContentSourceFilter.first() },
                     ),
             )
+            viewModelScope.launch {
+                // Turning chips off drops the selection too, so a chip's feed stops loading behind the main one.
+                playerPreferences.homeChipsEnabled.distinctUntilChanged().collect { enabled ->
+                    if (!enabled && !chipFeeds.state.value.isAll) chipFeeds.select(HomeChip.All.key)
+                }
+            }
             if (HomeFeedCache.isFresh()) {
                 _uiState.update {
                     it.copy(

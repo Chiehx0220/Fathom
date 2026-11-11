@@ -443,6 +443,7 @@ fun VideoPlayerHost(
             audioSystemInfo = audioSystemInfo,
             pipPreferences = pipPreferences,
             isFullscreenShown = fullscreenShown,
+            ambient = rememberPlayerAmbient(prefs, fullscreenShown, expandedSurfacesMounted, localIsInPipMode, playerLayoutMode),
         )
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -486,6 +487,7 @@ fun VideoPlayerHost(
             detailPaneWidth = detailPaneWidth,
             startInset = startInset,
             tapToExpand = true,
+            statusBarGlow = { PlayerAmbientStatusBar(stageSession, it) },
             onDismiss = onClose,
             onCollapseGesture = {
                 screenState.isFullscreen = false

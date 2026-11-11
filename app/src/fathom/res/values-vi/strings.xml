@@ -8,6 +8,7 @@
     <string name="update_flow">Cập nhật Fathom</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Chọn loại thông báo Fathom gửi</string>
+    <string name="notification_channel_new_version_description">Thông báo khi có phiên bản Fathom mới</string>
     <string name="notif_type_updates_subtitle">Nhận thông báo khi có bản mới của Fathom</string>
     <string name="notif_master_toggle_subtitle">Cho phép Fathom kiểm tra video mới trong nền</string>
     <string name="notif_background_restricted_subtitle">Android chặn kiểm tra khi Fathom đang đóng. Nhấn để cho phép hoạt động nền.</string>
@@ -97,4 +98,13 @@
     <string name="profiles_copy_recommendations_summary">Những gì Fathom đã tìm hiểu về sở thích của bạn</string>
     <string name="linked_webdav_body">Dùng một thư mục trống chỉ dành cho Fathom. Thông tin đăng nhập chỉ được lưu trong kho bảo mật của thiết bị này và được chuyển cho các thiết bị bạn liên kết.</string>
     <string name="linked_profile_switch_body">Chỉ hồ sơ đang dùng mới có thể bắt đầu đồng bộ, nên Fathom sẽ khởi động lại trong hồ sơ đó trước. Sau đó bật đồng bộ tại đó.</string>
+    <string name="buffer_cache_size_link_summary">Lượng video và nhạc Fathom lưu trên máy</string>
+    <string name="linked_replace_words_body">Fathom sẽ tạo cụm từ khôi phục và khóa mã hóa mới cho các thiết bị. Cụm từ cũ sẽ không còn tác dụng: không khôi phục được nhóm này hay đọc dữ liệu đồng bộ từ giờ. Hãy ghi lại cụm từ mới khi hiện ra.</string>
+    <string name="linked_error_restore_unfinished">Khôi phục chưa xong. Fathom sẽ hoàn tất ở lần đồng bộ tới.</string>
+    <string name="crossfade_pause_desc">Cho đến khi Fathom khởi động lại</string>
+    <string name="app_lock_summary">Yêu cầu mở khóa điện thoại để mở Fathom</string>
+    <string name="app_lock_footer">Nhạc, các nút điều khiển media và ảnh trong ảnh vẫn hoạt động khi Fathom bị khóa.</string>
+    <string name="app_lock_after_description">Thời gian Fathom rời màn hình trước khi hỏi lại</string>
+    <string name="app_lock_prompt_title">Mở khóa Fathom</string>
+    <string name="app_lock_screen_title">Fathom đang bị khóa</string>
 </resources>
