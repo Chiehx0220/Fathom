@@ -57,9 +57,6 @@ FT.playlistCard = (p) => {
     return el;
 };
 
-// Card for any API list item.
-FT.itemCard = (item) => (item.subscriberCount !== undefined && item.name ? FT.channelCard(item) : item.videoCount !== undefined && item.name ? FT.playlistCard(item) : FT.videoCard(item));
-
 // Sideways row: edge fade; arrow buttons for pointer only (CSS; swipe/remote scroll natively), not data-f.
 FT.scroller = (row) => {
     const wrap = h('div', { class: 'row-wrap' });
