@@ -6,6 +6,7 @@
     <string name="local_media_permission_body">Ɛni-d abrid ad d-tessuffuḍ i yisallen-ik akken Fathom ad d-yaf d ad d-yesseɣẓel tifirin d ccna n tmurt.</string>
     <string name="link_not_supported">Fathom ur yezmir ara ad yeldi ṣṣenf-a n wassaɣ</string>
     <string name="update_flow">Asnulfu Fathom</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Ḥekmen anwa i d-yezmer ad d-iceyyeɛ Fathom</string>
     <string name="notif_type_updates_subtitle">Ad tt-id-yessinen mi ara yili yiwen n uḍris amaynut n Fathom</string>
     <string name="notif_master_toggle_subtitle">Eǧǧ Fathom ad sfeqdeg tividyutin timaynutin deg deffir</string>

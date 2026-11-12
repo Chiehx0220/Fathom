@@ -40,10 +40,12 @@ import io.github.aedev.flow.innertube.models.YouTubeClient
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
 import io.github.aedev.flow.player.analytics.PlaybackAnalyticsLogger
 import io.github.aedev.flow.player.analytics.RenderedFirstFrameListener
+import io.github.aedev.flow.player.analytics.SphericalVideoListener
 import io.github.aedev.flow.player.audio.AudioEffectsEntryPoint
 import io.github.aedev.flow.player.audio.AudioFeaturesManager
 import io.github.aedev.flow.player.audio.AudioSessionAnnouncer
 import io.github.aedev.flow.player.audio.eq.EqualizerAudioProcessor
+import io.github.aedev.flow.player.cache.DiskReadAhead
 import io.github.aedev.flow.player.cache.PlayerCacheManager
 import io.github.aedev.flow.player.config.PlayerConfig
 import io.github.aedev.flow.player.config.VideoSizeCap
@@ -530,6 +532,7 @@ class EnhancedPlayerManager private constructor() {
     private val playerFactory = PlayerFactory()
     private val backgroundServiceManager = BackgroundServiceManager()
     private var cacheManager: PlayerCacheManager? = null
+    private var diskReadAhead: DiskReadAhead? = null
     private var qualityManager: QualityManager? = null
     private var surfaceManager: SurfaceManager? = null
     private var sponsorBlockHandler: SponsorBlockHandler? = null
@@ -784,8 +787,22 @@ class EnhancedPlayerManager private constructor() {
                 dataSourceFactory = cacheManager?.getDataSourceFactory(),
             )
         analyticsLogger = PlaybackAnalyticsLogger(TAG) { currentVideoId }.also { player?.addAnalyticsListener(it) }
+        diskReadAhead =
+            player?.let { built ->
+                cacheManager?.let { cache ->
+                    DiskReadAhead(context.applicationContext, built, cache, PlayerPreferences(context), scope)
+                        .also(built::addAnalyticsListener)
+                }
+            }
         player?.addAnalyticsListener(
             RenderedFirstFrameListener(currentVideoId = { currentVideoId }) { videoId -> _firstFrameVideoId.value = videoId },
+        )
+        player?.addAnalyticsListener(
+            SphericalVideoListener { spherical ->
+                if (_playerState.value.isSphericalVideo != spherical) {
+                    _playerState.value = _playerState.value.copy(isSphericalVideo = spherical)
+                }
+            },
         )
         player?.let { built ->
             audioSessionAnnouncer =
@@ -3293,7 +3310,8 @@ class EnhancedPlayerManager private constructor() {
     fun restoreVideoOutput() {
         val p = player ?: return
         val displayInteractive = isDisplayInteractive()
-        val surfaceValid = surfaceManager?.isSurfaceValid() == true
+        // A 360 video's spherical view hands Media3 its own surface, so no managed holder ever exists.
+        val surfaceValid = surfaceManager?.isSurfaceValid() == true || _playerState.value.isSphericalVideo
         val canRestore =
             VideoSurfacePolicy.canRestoreVideoOutput(
                 sdkInt = Build.VERSION.SDK_INT,
@@ -3486,6 +3504,8 @@ class EnhancedPlayerManager private constructor() {
         surfaceManager?.release(player)
         audioSessionAnnouncer?.detach()
         audioSessionAnnouncer = null
+        diskReadAhead?.release()
+        diskReadAhead = null
         player?.release()
         player = null
         playerFactory.clearPreferences()

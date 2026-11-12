@@ -6,6 +6,7 @@
     <string name="local_media_permission_body">ອະນຸຍາດໃຫ້ເຂົ້າເຖິງສື່ຂອງທ່ານເພື່ອໃຫ້ Fathom ສາມາດຊອກຫາ ແລະຫຼິ້ນວິດີໂອ ແລະເພງທ້ອງຖິ່ນໄດ້.</string>
     <string name="link_not_supported">Fathom ບໍ່ສາມາດເປີດລິ້ງປະເພດນີ້ໄດ້</string>
     <string name="update_flow">ອັບເດດ Fathom</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">ຄວບຄຸມວ່າການແຈ້ງເຕືອນໃດ Fathom ສາມາດສົ່ງໄດ້</string>
     <string name="notif_type_updates_subtitle">ຮັບການແຈ້ງເຕືອນເມື່ອມີ Fathom ລຸ້ນໃໝ່</string>
     <string name="notif_master_toggle_subtitle">ໃຫ້ Fathom ກວດເບິ່ງວິດີໂອໃໝ່ໃນພື້ນຫຼັງ</string>

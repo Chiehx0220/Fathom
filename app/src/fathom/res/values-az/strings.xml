@@ -23,7 +23,7 @@
     <string name="player_settings_subtitle_language_dialog_body">Mövcud olduqda subtitrlər bu dildə açılır. Əks halda Fathom mövcud treki tərcümə edir.</string>
     <string name="player_settings_video_codec_dialog_body">Fathom-un ilk seçdiyi kodek. Keyfiyyət menyusundan hələ də istənilən kodeki seçə bilərsiniz. H.264 əksər cihazlarda ən rəvan işləyir. AV1 və VP9 daha az məlumat istifadə edir, lakin daha çox güc tələb edir.</string>
     <string name="stats_disclaimer">Fathom-dakı izləmə tarixçənizə əsaslanır. Faktiki istifadə fərqli ola bilər.</string>
-    <string name="location_internal_app_desc">Fathom üçün özəl. Silinərsə, ləğv edilir.</string>
+    <string name="location_internal_app_desc">Fathom üçün şəxsi. Silinərsə, ləğv edilir.</string>
     <string name="donation_prompt_title">Fathom xoşunuza gəlirmi?</string>
     <string name="donation_prompt_message">Fathom pulsuzdur, açıq mənbəlidir və reklamsızdır. Əgər telefonunuzda yer tutubsa, kiçik bir dəstək onun işləməyə davam etməsini təmin edir.</string>
     <string name="welcome_to_flow">Fathom-a xoş gəlmisiniz</string>
@@ -60,7 +60,7 @@
     <string name="local_partial_access_title">Fathom yalnız seçdiyiniz videoları görə bilər</string>
     <string name="downloads_storage_used">Fathom-da %1$s</string>
     <string name="import_migrate_description">Digər platformalardakı abunəliklərinizi və tarixçənizi qüsursuz şəkildə Fathom-a köçürün.</string>
-    <string name="import_manage_backups">Fathom ehtiyat nüsxələrinizi idarə edin</string>
+    <string name="import_manage_backups">Fathom nüsxələrinizi idarə edin</string>
     <string name="taste_summary">Fathom-un sizi necə gördüyü və lentinizi nəyin formalaşdırdığı</string>
     <string name="taste_card_hint">Fathom-un sizi necə gördüyünə baxın</string>
     <string name="taste_reset_video_body">Fathom videolarınızdan və axtarışlarınızdan öyrəndiklərini unudur. Tarixçə, bəyənilənlər, oxutma siyahıları və gizlədilmiş elementlər qalır və Əsas səhifə hələ də onlardan istifadə edir.</string>
@@ -68,7 +68,7 @@
     <string name="content_settings_shared_links_subtitle">Fathom-da paylaşılan videonun nə edəcəyi</string>
     <string name="taste_starter_searches_detail">%1$s. Fathom nə izlədiyinizi öyrənənə qədər istifadə olunur.</string>
     <string name="recap_title">Fathom Xülasəsi</string>
-    <string name="recap_total_time">Fathom-da vaxt</string>
+    <string name="recap_total_time">Fathom-da Vaxt</string>
     <string name="recap_empty_body">Fathom bu statistikaları yalnız bu cihazda saxlayır. Bir müddət izləyin və dinləyin və onlar dolacaq.</string>
     <string name="recap_story_intro">Fathom-dakı %1$s</string>
     <string name="recap_story_share_text">Fathom-da %1$s: %2$s</string>
@@ -76,10 +76,10 @@
     <string name="playlist_import_too_new">Bu oxutma siyahısı Fathom-un daha yeni versiyasını tələb edir</string>
     <string name="subtitle_add_file_failed">Fathom həmin faylı subtitr kimi oxuya bilmir</string>
     <string name="playlist_import_not_a_playlist">Bu fayl Fathom oxutma siyahısı deyil</string>
-    <string name="scrobbling_import_offer_body">Fathom son ilin ən çox dinlədiyiniz 20 sənətçisini sevimli sənətçilərinizə əlavə edir. Onlardan istənilənini daha sonra silə bilərsiniz.</string>
+    <string name="scrobbling_import_offer_body">Fathom son ilin ən çox dinlədiyiniz 20 sənətçisini sevimli sənətçilərinizə əlavə edir. Onlardan istənilən birini daha sonra silə bilərsiniz.</string>
     <string name="discord_presence_playing_fallback">Fathom-da oynadılır</string>
     <string name="export_watch_history_desc">YouTube tarixçəsi JSON-u kimi ixrac et (LibreTube və Fathom-a idxal olunur)</string>
-    <string name="whats_new_in_flow">Fathom-da yeniliklər</string>
+    <string name="whats_new_in_flow">Fathom-da Nə Yenidir</string>
     <string name="cache_size_applies_on_restart">Fathom növbəti dəfə başladıqda tətbiq olunur.</string>
     <string name="settings_font_summary">Fathom daxilində istifadə olunan şrift növü</string>
     <string name="sync_error_qr_not_local">Bu kod yerli şəbəkənizdən kənara işarə edir, ona görə də Fathom ona qoşulmayacaq. Yalnız öz cihazlarınızın göstərdiyi kodlardan istifadə edin.</string>

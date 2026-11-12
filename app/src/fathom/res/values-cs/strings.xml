@@ -6,6 +6,7 @@
     <string name="local_media_permission_body">Povolte přístup k médiím, aby Fathom mohl vyhledávat a přehrávat místní videa a hudbu.</string>
     <string name="link_not_supported">Fathom nemůže otevřít tento druh odkazu</string>
     <string name="update_flow">Aktualizujte Fathom</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Určete, která oznámení může Fathom odesílat</string>
     <string name="notif_type_updates_subtitle">Získejte upozornění, až bude k dispozici nová verze Fathom</string>
     <string name="notif_master_toggle_subtitle">Nechte Fathom zkontrolovat nová videa na pozadí</string>

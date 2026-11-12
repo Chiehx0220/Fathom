@@ -6,6 +6,7 @@
     <string name="local_media_permission_body">ඔබේ මාධ්‍ය වෙත ප්‍රවේශ වීමට ඉඩ දෙන්න එවිට Fathom හට දේශීය වීඩියෝ සහ සංගීතය සොයා ගැනීමට සහ වාදනය කිරීමට හැකිය.</string>
     <string name="link_not_supported">Fathom හට මෙවැනි සබැඳියක් විවෘත කළ නොහැක</string>
     <string name="update_flow">Fathom යාවත්කාලීන කරන්න</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Fathom වෙත යැවිය හැකි දැනුම්දීම් පාලනය කරන්න</string>
     <string name="notif_type_updates_subtitle">Fathom හි නව අනුවාදයක් ඇති විට දැනුම් දෙන්න</string>
     <string name="notif_master_toggle_subtitle">Fathom හට පසුබිමේ නව වීඩියෝ සඳහා පරීක්ෂා කිරීමට ඉඩ දෙන්න</string>

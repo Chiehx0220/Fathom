@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.PictureInPicture
 import androidx.compose.material.icons.filled.QueryStats
+import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Subtitles
@@ -66,6 +67,8 @@ internal fun PlayerSettingsMainPage(
     notePositionMs: Long? = null,
     onAddNote: () -> Unit = {},
     onStatsForNerds: () -> Unit = {},
+    sphericalMotionEnabled: Boolean? = null,
+    onSphericalMotionToggle: (Boolean) -> Unit = {},
 ) {
     val captionRows = if (showDanmakuOption) CAPTION_ROWS_BASE + 1 else CAPTION_ROWS_BASE
     val playbackRows = if (sponsorBlockSegmentCount > 0) PLAYBACK_ROWS + 1 else PLAYBACK_ROWS
@@ -224,19 +227,30 @@ internal fun PlayerSettingsMainPage(
         )
     }
 
+    val displayRows = if (sphericalMotionEnabled != null) DISPLAY_ROWS + 1 else DISPLAY_ROWS
     FlowSectionHeader(stringResource(R.string.player_settings_display))
     FlowRowGroup {
         FlowSwitchRow(
             leadingIcon = ImageVector.vectorResource(R.drawable.ic_ambient_mode),
             title = stringResource(R.string.player_settings_ambient_mode),
             checked = ambientModeEnabled,
-            shape = flowRowGroupShape(0, DISPLAY_ROWS),
+            shape = flowRowGroupShape(0, displayRows),
             onCheckedChange = onAmbientModeToggle,
         )
+        if (sphericalMotionEnabled != null) {
+            FlowSwitchRow(
+                leadingIcon = Icons.Filled.ScreenRotation,
+                title = stringResource(R.string.player_settings_spherical_motion),
+                supportingText = stringResource(R.string.player_settings_spherical_motion_summary),
+                checked = sphericalMotionEnabled,
+                shape = flowRowGroupShape(1, displayRows),
+                onCheckedChange = onSphericalMotionToggle,
+            )
+        }
         FlowNavRow(
             leadingIcon = Icons.Filled.QueryStats,
             title = stringResource(R.string.stats_for_nerds),
-            shape = flowRowGroupShape(1, DISPLAY_ROWS),
+            shape = flowRowGroupShape(displayRows - 1, displayRows),
             onClick = onStatsForNerds,
         )
     }

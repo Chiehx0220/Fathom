@@ -99,4 +99,10 @@
     <string name="buffer_cache_size_link_summary">Cuánto vídeo y música guarda Fathom en el disco</string>
     <string name="linked_replace_words_body">Fathom genera nuevas palabras de recuperación y nuevas claves de cifrado para tus dispositivos. Las palabras antiguas dejan de funcionar: no pueden restaurar este grupo ni leer nada de lo que se sincronice a partir de ahora. Anota las palabras nuevas cuando aparezcan.</string>
     <string name="linked_error_restore_unfinished">La restauración aún no ha terminado. Fathom la completará en la próxima sincronización.</string>
+    <string name="crossfade_pause_desc">Hasta que se reinicie Fathom</string>
+    <string name="app_lock_summary">Pide el desbloqueo de tu teléfono para abrir Fathom</string>
+    <string name="app_lock_footer">La música, los controles multimedia y picture-in-picture siguen funcionando mientras Fathom está bloqueado.</string>
+    <string name="app_lock_after_description">Cuánto tiempo puede estar Fathom fuera de pantalla antes de volver a pedirlo</string>
+    <string name="app_lock_prompt_title">Desbloquear Fathom</string>
+    <string name="app_lock_screen_title">Fathom está bloqueado</string>
 </resources>

@@ -1291,6 +1291,12 @@
     <string name="content_settings_comments_enabled_subtitle">Show comments under videos</string>
     <string name="content_settings_comments_preview_title">Comments preview</string>
     <string name="content_settings_comments_preview_subtitle">Show the latest comment inside the comments card</string>
+    <string name="content_settings_comment_gifs_title">GIFs in comments</string>
+    <string name="content_settings_comment_gifs_subtitle">Show GIFs people attach to comments</string>
+    <string name="content_settings_comment_gifs_wifi_title">GIFs on Wi-Fi only</string>
+    <string name="content_settings_comment_gifs_wifi_subtitle">Tap to load them on mobile data</string>
+    <string name="comment_gif_description">GIF in comment</string>
+    <string name="comment_gif_show">Show GIF</string>
     <string name="content_settings_live_chat_enabled_title">Live chat</string>
     <string name="content_settings_live_chat_enabled_subtitle">Show chat on live streams</string>
     <string name="content_settings_subs_startup_refresh_title">Refresh subscriptions at startup</string>
@@ -1451,6 +1457,8 @@
     <string name="player_settings_normalize_volume_summary">Turn loud videos down to the same level, like youtube.com</string>
     <string name="player_settings_display">Display</string>
     <string name="player_settings_ambient_mode">Ambient mode</string>
+    <string name="player_settings_spherical_motion">Move phone to look around</string>
+    <string name="player_settings_spherical_motion_summary">Dragging the video always works</string>
     <string name="player_settings_ambient_mode_subtitle">Fills black bars with the video\'s colors</string>
     <string name="player_settings_ambient_glow">Ambient glow</string>
     <string name="player_settings_ambient_glow_subtitle">The video\'s colors glow around the player</string>
@@ -1630,6 +1638,16 @@
     <string name="buffer_profile_custom_desc">Manually configure buffer sizes</string>
     <string name="buffer_custom_mode_desc">Larger buffers stall less but take longer to start.</string>
     <string name="buffer_long_memory_note">Long buffers stop early when memory runs low.</string>
+    <string name="disk_read_ahead_title">Buffer ahead on disk</string>
+    <string name="disk_read_ahead_summary">Saves what comes next to the video cache</string>
+    <string name="disk_read_ahead_footer">Keeps a video playing when the connection drops. Not used for live streams.</string>
+    <plurals name="disk_read_ahead_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <string name="disk_read_ahead_whole_video">Whole video</string>
+    <string name="disk_read_ahead_unmetered_only">Only on Wi-Fi</string>
+    <string name="disk_read_ahead_unmetered_only_summary">Not on mobile data or metered networks</string>
     <string name="buffer_switch_to_custom">Switch to \'Custom\' to enable sliders.</string>
     <string name="buffer_label_min">Min Buffer: %1$ds</string>
     <string name="buffer_label_max">Max Buffer: %1$ds</string>
@@ -1931,6 +1949,10 @@
     <plurals name="import_takeout_part_searches">
         <item quantity="one">%d search</item>
         <item quantity="other">%d searches</item>
+    </plurals>
+    <plurals name="import_takeout_part_ads_removed">
+        <item quantity="one">%d ad removed from history</item>
+        <item quantity="other">%d ads removed from history</item>
     </plurals>
     <string name="import_yt_playlist">Import YouTube Playlist</string>
     <string name="import_yt_playlist_desc">Import a playlist from YouTube Takeout CSV (Playlist-&lt;name&gt;.csv).</string>

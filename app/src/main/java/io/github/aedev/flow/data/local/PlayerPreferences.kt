@@ -362,6 +362,7 @@ class PlayerPreferences(
         val COMMENTS_ENABLED = booleanPreferencesKey("comments_enabled")
         val LIVE_CHAT_ENABLED = booleanPreferencesKey("live_chat_enabled")
         val COMMENTS_PREVIEW_ENABLED = booleanPreferencesKey("comments_preview_enabled")
+        val COMMENT_GIFS_ENABLED = booleanPreferencesKey("comment_gifs_enabled")
         val TIMED_COMMENTS_FOLLOW = booleanPreferencesKey("timed_comments_follow")
 
         val SUBSCRIPTION_SHOW_VIDEOS = booleanPreferencesKey("subscription_show_videos")
@@ -411,6 +412,7 @@ class PlayerPreferences(
         val DEFAULT_VIDEO_CODEC = device(stringPreferencesKey("default_video_codec"))
         val FALLBACK_VIDEO_CODEC = device(stringPreferencesKey("fallback_video_codec"))
         val TILT_FULLSCREEN_ROTATION_LOCKED = device(booleanPreferencesKey("tilt_fullscreen_rotation_locked"))
+        val SPHERICAL_MOTION_ENABLED = device(booleanPreferencesKey("spherical_motion_enabled"))
         val RESUME_FROM_HEADPHONES = device(booleanPreferencesKey("resume_from_headphones"))
         val SHOW_CONTROLS_WHILE_LOADING = device(booleanPreferencesKey("show_controls_while_loading"))
         val TRENDING_REGION = device(stringPreferencesKey("trending_region"))
@@ -426,6 +428,8 @@ class PlayerPreferences(
 
         // Buffer profiles
         val BUFFER_PROFILE = device(stringPreferencesKey("buffer_profile"))
+        val DISK_READ_AHEAD_MINUTES = device(intPreferencesKey("disk_read_ahead_minutes"))
+        val DISK_READ_AHEAD_UNMETERED_ONLY = device(booleanPreferencesKey("disk_read_ahead_unmetered_only"))
 
         // Download settings
         val DOWNLOAD_THREADS = device(intPreferencesKey("download_threads"))
@@ -530,6 +534,7 @@ class PlayerPreferences(
         val APP_LOCK_DELAY_MINUTES = device(intPreferencesKey("app_lock_delay_minutes"))
         val APP_LOCK_HIDE_IN_RECENTS = device(booleanPreferencesKey("app_lock_hide_in_recents"))
         val ANIMATED_ARTWORK_WIFI_ONLY = device(booleanPreferencesKey("animated_artwork_wifi_only"))
+        val COMMENT_GIFS_WIFI_ONLY = device(booleanPreferencesKey("comment_gifs_wifi_only"))
         val AUTO_DOWNLOAD_LIKED_MUSIC = device(booleanPreferencesKey("auto_download_liked_music"))
 
         // Custom playback speeds
@@ -1935,6 +1940,14 @@ class PlayerPreferences(
         }
     }
 
+    /** Turning the phone looks around a 360 video (#1295). Dragging always does. */
+    val sphericalMotionEnabled: Flow<Boolean> =
+        context.devicePreferencesDataStore.data.map { it[DeviceKeys.SPHERICAL_MOTION_ENABLED] ?: true }
+
+    suspend fun setSphericalMotionEnabled(enabled: Boolean) {
+        context.devicePreferencesDataStore.edit { it[DeviceKeys.SPHERICAL_MOTION_ENABLED] = enabled }
+    }
+
     /** A Play button on headphones may start the last songs after Flow was closed. */
     val resumeFromHeadphones: Flow<Boolean> =
         context.devicePreferencesDataStore.data
@@ -3117,6 +3130,28 @@ class PlayerPreferences(
         }
     }
 
+    val commentGifsEnabled: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.COMMENT_GIFS_ENABLED] ?: true }
+            .distinctUntilChanged()
+
+    suspend fun setCommentGifsEnabled(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.COMMENT_GIFS_ENABLED] = enabled
+        }
+    }
+
+    val commentGifsWifiOnly: Flow<Boolean> =
+        context.devicePreferencesDataStore.data
+            .map { preferences -> preferences[DeviceKeys.COMMENT_GIFS_WIFI_ONLY] ?: false }
+            .distinctUntilChanged()
+
+    suspend fun setCommentGifsWifiOnly(enabled: Boolean) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.COMMENT_GIFS_WIFI_ONLY] = enabled
+        }
+    }
+
     val timedCommentsFollow: Flow<Boolean> =
         context.playerPreferencesDataStore.data
             .map { preferences -> preferences[Keys.TIMED_COMMENTS_FOLLOW] ?: true }
@@ -3741,6 +3776,21 @@ class PlayerPreferences(
                 preferences[DeviceKeys.BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS] = profile.rebufferBuffer
             }
         }
+    }
+
+    /** Minutes of video written to the cache ahead of playback; 0 is off, -1 the whole video (#1696). */
+    val diskReadAheadMinutes: Flow<Int> =
+        context.devicePreferencesDataStore.data.map { it[DeviceKeys.DISK_READ_AHEAD_MINUTES] ?: 0 }
+
+    suspend fun setDiskReadAheadMinutes(minutes: Int) {
+        context.devicePreferencesDataStore.edit { it[DeviceKeys.DISK_READ_AHEAD_MINUTES] = minutes }
+    }
+
+    val diskReadAheadUnmeteredOnly: Flow<Boolean> =
+        context.devicePreferencesDataStore.data.map { it[DeviceKeys.DISK_READ_AHEAD_UNMETERED_ONLY] ?: true }
+
+    suspend fun setDiskReadAheadUnmeteredOnly(enabled: Boolean) {
+        context.devicePreferencesDataStore.edit { it[DeviceKeys.DISK_READ_AHEAD_UNMETERED_ONLY] = enabled }
     }
 
     // Download Preferences

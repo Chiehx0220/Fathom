@@ -6,6 +6,7 @@
     <string name="local_media_permission_body">اجازه دسترسی به رسانه خود را بدهید تا Fathom بتواند ویدیوها و موسیقی محلی را پیدا و پخش کند.</string>
     <string name="link_not_supported">Fathom نمی تواند این نوع پیوند را باز کند</string>
     <string name="update_flow">Fathom را به روز کنید</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">کنترل کنید که Fathom کدام اعلانها را میتواند ارسال کند</string>
     <string name="notif_type_updates_subtitle">هنگامی که نسخه جدیدی از Fathom در دسترس است مطلع شوید</string>
     <string name="notif_master_toggle_subtitle">به Fathom اجازه دهید ویدیوهای جدید را در پسزمینه بررسی کند</string>

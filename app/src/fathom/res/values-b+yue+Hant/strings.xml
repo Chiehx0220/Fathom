@@ -6,6 +6,7 @@
     <string name="local_media_permission_body">允許存取你嘅媒體，等 Fathom 可以搵到同埋播放本地影片同音樂。</string>
     <string name="link_not_supported">Fathom 開唔到呢類連結</string>
     <string name="update_flow">更新 Fathom</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">控制 Fathom 可以發送邊啲通知</string>
     <string name="notif_type_updates_subtitle">當有新版本嘅 Fathom 可用嗰陣收到通知</string>
     <string name="notif_master_toggle_subtitle">等 Fathom 喺後台檢查有冇新嘅影片</string>

@@ -6,6 +6,7 @@
     <string name="local_media_permission_body">ਆਪਣੇ ਮੀਡੀਆ ਤੱਕ ਪਹੁੰਚ ਦੀ ਆਗਿਆ ਦਿਓ ਤਾਂ ਕਿ Fathom ਸਥਾਨਕ ਵੀਡੀਓ ਅਤੇ ਸੰਗੀਤ ਨੂੰ ਲੱਭ ਅਤੇ ਚਲਾ ਸਕੇ।</string>
     <string name="link_not_supported">Fathom ਇਸ ਕਿਸਮ ਦਾ ਲਿੰਕ ਨਹੀਂ ਖੋਲ੍ਹ ਸਕਦਾ</string>
     <string name="update_flow">Fathom ਨੂੰ ਅੱਪਡੇਟ ਕਰੋ</string>
+    <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">ਕੰਟਰੋਲ ਕਰੋ ਕਿ ਕਿਹੜੀਆਂ ਸੂਚਨਾਵਾਂ Fathom ਭੇਜ ਸਕਦੀਆਂ ਹਨ</string>
     <string name="notif_type_updates_subtitle">Fathom ਦਾ ਨਵਾਂ ਸੰਸਕਰਣ ਉਪਲਬਧ ਹੋਣ \'ਤੇ ਸੂਚਨਾ ਪ੍ਰਾਪਤ ਕਰੋ</string>
     <string name="notif_master_toggle_subtitle">Fathom ਨੂੰ ਬੈਕਗ੍ਰਾਊਂਡ ਵਿੱਚ ਨਵੇਂ ਵੀਡੀਓ ਦੀ ਜਾਂਚ ਕਰਨ ਦਿਓ</string>
