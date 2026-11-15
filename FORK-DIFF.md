@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **111** (1168 changed lines). New files: **271**.
+- Modified upstream files: **111** (1165 changed lines). New files: **271**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -71,7 +71,6 @@ in it). **New files** never conflict; they are ours alone.
 | utils/ThumbnailUrlResolver.kt | 6 | 5 |
 | data/local/entity/VideoEntity.kt | 7 | 3 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
-| ui/screens/channel/ChannelCommunityController.kt | 8 | 1 |
 | ui/screens/player/content/RelatedVideosList.kt | 6 | 3 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 7 | 2 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 8 | 1 |
@@ -89,6 +88,7 @@ in it). **New files** never conflict; they are ours alone.
 | sync/mapping/SimpleMappers.kt | 6 | 0 |
 | ui/AppHooks.kt | 2 | 4 |
 | ui/components/videoplayer/settings/PlayerSettingsSheet.kt | 6 | 0 |
+| ui/screens/channel/ChannelCommunityController.kt | 5 | 1 |
 | ui/screens/player/dialogs/PlayerSettingsSheetHost.kt | 6 | 0 |
 | ... 51 more, each small | | |
 

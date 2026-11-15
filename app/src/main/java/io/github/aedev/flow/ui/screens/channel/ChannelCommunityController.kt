@@ -46,9 +46,6 @@ internal class ChannelCommunityController(
         _state.value = ChannelCommunityUiState()
     }
 
-    /** Community Posts: YouTube-only. */
-    fun isSupportedForCurrentChannel(): Boolean = channel?.serviceId?.isYouTubeServiceId == true
-
     fun ensurePostsLoaded() {
         val channelSnapshot = channel ?: return
         if (!channelSnapshot.serviceId.isYouTubeServiceId) return
