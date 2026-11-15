@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import io.github.aedev.flow.applock.AppLock
+import io.github.aedev.flow.data.contentfilter.aislist.AiListRepository
 import io.github.aedev.flow.data.local.AppUiModePreferences
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
@@ -42,6 +43,7 @@ import io.github.aedev.flow.ui.components.applock.AppLockScreen
 import io.github.aedev.flow.ui.components.profiles.ProfileSwitchingOverlay
 import io.github.aedev.flow.ui.components.shared.AppHaptics
 import io.github.aedev.flow.ui.components.shared.ProvideChannelGroupLabels
+import io.github.aedev.flow.ui.components.shared.ProvideChannelOrganizer
 import io.github.aedev.flow.ui.components.shared.ProvideDateDisplaySettings
 import io.github.aedev.flow.ui.components.shared.card.ProvideVideoCardState
 import io.github.aedev.flow.ui.screens.crash.CrashReportScreen
@@ -65,6 +67,7 @@ internal fun FlowRoot(
     splashController: SplashController,
     originalTitles: OriginalTitleRepository,
     deArrow: DeArrowRepository,
+    aiList: AiListRepository,
     appIconController: AppIconController,
     appLock: AppLock,
     onUiRoot: (AppUiRoot) -> Unit,
@@ -134,7 +137,7 @@ internal fun FlowRoot(
                     // Card preferences and watch progress are collected once here. Cards used to
                     // collect them individually, so a feed of ten opened ten Room observers and
                     // fifty DataStore collectors.
-                    ProvideVideoCardState(originalTitles, deArrow) {
+                    ProvideVideoCardState(originalTitles, deArrow, aiList) {
                         Box(
                             modifier =
                                 Modifier
@@ -169,22 +172,24 @@ internal fun FlowRoot(
                                                 )
                                             }
                                         } else {
-                                            FlowApp(
-                                                currentTheme = theme.themeMode,
-                                                themeVariant = theme.themeVariant,
-                                                systemLightThemeMode = theme.systemLightThemeMode,
-                                                systemDarkThemeMode = theme.systemDarkThemeMode,
-                                                deeplinkVideoId = deeplinkVideoId,
-                                                isShort = isDeeplinkShort,
-                                                isSharedLink = isDeeplinkShared,
-                                                openMusicPlayerRequest = openMusicPlayerRequest,
-                                                onDeeplinkConsumed = links::consumeVideo,
-                                                pendingRoute = pendingRoute,
-                                                onPendingRouteConsumed = links::consumeRoute,
-                                                downloadVideoId = downloadVideoId,
-                                                onDownloadConsumed = links::consumeDownload,
-                                                onStartDestinationKnown = { splashController.contentReady = true },
-                                            )
+                                            ProvideChannelOrganizer {
+                                                FlowApp(
+                                                    currentTheme = theme.themeMode,
+                                                    themeVariant = theme.themeVariant,
+                                                    systemLightThemeMode = theme.systemLightThemeMode,
+                                                    systemDarkThemeMode = theme.systemDarkThemeMode,
+                                                    deeplinkVideoId = deeplinkVideoId,
+                                                    isShort = isDeeplinkShort,
+                                                    isSharedLink = isDeeplinkShared,
+                                                    openMusicPlayerRequest = openMusicPlayerRequest,
+                                                    onDeeplinkConsumed = links::consumeVideo,
+                                                    pendingRoute = pendingRoute,
+                                                    onPendingRouteConsumed = links::consumeRoute,
+                                                    downloadVideoId = downloadVideoId,
+                                                    onDownloadConsumed = links::consumeDownload,
+                                                    onStartDestinationKnown = { splashController.contentReady = true },
+                                                )
+                                            }
                                         }
                                     }
                                 }

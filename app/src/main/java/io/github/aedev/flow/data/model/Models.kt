@@ -52,6 +52,9 @@ data class Video(
     val addedAtInPlaylist: Long? = null,
     // Service of the id (serviceIdOfVideo): YouTube unless Bilibili id shape.
     val serviceId: Int = serviceIdOfVideo(id),
+    // "@Name" or "/@Name" as YouTube sends it, in memory only. Nullable because LocalDataManager still
+    // reads videos through Gson, which skips Kotlin defaults and would leave a non-null field null.
+    val channelHandle: String? = null,
 )
 
 data class Channel(
@@ -103,6 +106,8 @@ data class Comment(
     val isCreator: Boolean = false,
     val isArtist: Boolean = false,
     val image: CommentImage? = null,
+    /** Where YouTube's Timed list shows this comment, when it came from that list. */
+    val timedAtMs: Long? = null,
 )
 
 /** A GIF or picture attached to a comment, with the size YouTube gives for it. */

@@ -40,7 +40,8 @@
         
       ],
       addedAtInPlaylist=null,
-      serviceId=5
+      serviceId=5,
+      channelHandle=null
     ),
     Video(
       id=BV17x411w7KC?p=1,
@@ -82,7 +83,8 @@
         
       ],
       addedAtInPlaylist=null,
-      serviceId=5
+      serviceId=5,
+      channelHandle=null
     )
   ],
   [
@@ -126,7 +128,8 @@
         
       ],
       addedAtInPlaylist=null,
-      serviceId=5
+      serviceId=5,
+      channelHandle=null
     )
   ],
   [
@@ -173,7 +176,8 @@
         
       ],
       addedAtInPlaylist=null,
-      serviceId=5
+      serviceId=5,
+      channelHandle=null
     )
   ],
   [
@@ -217,7 +221,8 @@
         
       ],
       addedAtInPlaylist=null,
-      serviceId=5
+      serviceId=5,
+      channelHandle=null
     ),
     Video(
       id=BV1xx411c7mD?p=1,
@@ -259,7 +264,8 @@
         
       ],
       addedAtInPlaylist=null,
-      serviceId=5
+      serviceId=5,
+      channelHandle=null
     )
   ],
   Video(
@@ -302,7 +308,8 @@
       
     ],
     addedAtInPlaylist=null,
-    serviceId=5
+    serviceId=5,
+    channelHandle=null
   ),
   Video(
     id=BV1GJ411x7h7?p=2,
@@ -344,7 +351,8 @@
       
     ],
     addedAtInPlaylist=null,
-    serviceId=5
+    serviceId=5,
+    channelHandle=null
   ),
   Video(
     id=live:545068,
@@ -388,7 +396,8 @@
       
     ],
     addedAtInPlaylist=null,
-    serviceId=5
+    serviceId=5,
+    channelHandle=null
   ),
   [
     Video(
@@ -431,7 +440,8 @@
         
       ],
       addedAtInPlaylist=null,
-      serviceId=5
+      serviceId=5,
+      channelHandle=null
     ),
     Video(
       id=live:1002,
@@ -473,7 +483,8 @@
         
       ],
       addedAtInPlaylist=null,
-      serviceId=5
+      serviceId=5,
+      channelHandle=null
     )
   ]
 ]

@@ -475,6 +475,7 @@ class YouTubeRepository
                         title = info.name ?: "Unknown Title",
                         channelName = info.uploaderName ?: "Unknown Channel",
                         channelId = extractChannelId(info.uploaderUrl),
+                        channelHandle = extractChannelHandle(info.uploaderUrl),
                         thumbnailUrl = bestThumbnail,
                         duration = info.duration.toInt(),
                         viewCount = info.viewCount,
@@ -709,6 +710,20 @@ class YouTubeRepository
                 CommentsPageResult(comments = page.comments, continuation = page.continuation)
             }
 
+        /** YouTube's Timed list for [videoId], read through any token of its comment section. Empty when there is none. */
+        suspend fun getTimedComments(
+            videoId: String,
+            sectionToken: String,
+        ): CommentsPageResult =
+            withContext(Dispatchers.IO) {
+                YouTube
+                    .timedComments(sectionToken, videoId)
+                    .onFailure { Log.w(TAG, "Timed comments for $videoId failed: ${it.message}") }
+                    .getOrNull()
+                    ?.let { CommentsPageResult(comments = it) }
+                    ?: CommentsPageResult.EMPTY
+            }
+
         suspend fun getVideoCommentReplies(
             videoId: String,
             continuation: String,
@@ -923,6 +938,7 @@ class YouTubeRepository
                 title = name ?: "Unknown Title",
                 channelName = uploaderName ?: "Unknown Channel",
                 channelId = extractChannelId(uploaderUrl),
+                channelHandle = extractChannelHandle(uploaderUrl),
                 thumbnailUrl = bestThumbnail,
                 duration = durationSecs,
                 viewCount = viewCount,
@@ -962,6 +978,8 @@ class YouTubeRepository
                 isMusic = looksLikeMusicVideo(name.orEmpty(), uploaderName.orEmpty()),
             )
         }
+
+        private fun extractChannelHandle(uploaderUrl: String?): String? = uploaderUrl?.takeIf { "/@" in it }
 
         private fun extractChannelId(uploaderUrl: String?): String {
             if (uploaderUrl.isNullOrBlank()) return ""
@@ -1184,6 +1202,7 @@ internal object WatchMetadataVideoMapper {
                 // Parse the real age; 0 means unknown (callers fall back to text).
                 timestamp = RelativeUploadDateParser.parse(uploadDateText, YouTube.locale.hl) ?: 0L,
                 isLive = isLive,
+                channelHandle = cv.channelHandle,
             )
         }
 }

@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import io.github.aedev.flow.data.local.DEFAULT_SPEED_SWIPE_STEP
+import io.github.aedev.flow.data.local.DEFAULT_SPHERICAL_DRAG_SPEED
 import io.github.aedev.flow.data.local.DoubleTapSeekZone
 import io.github.aedev.flow.data.local.FullscreenSidePanelWidth
 import io.github.aedev.flow.data.local.GestureOverlayStyle
@@ -50,11 +51,13 @@ internal class VideoPlayerPreferencesState(
     val rememberPlaybackSpeed: Boolean,
     val ambientModeEnabled: Boolean,
     val sphericalMotionEnabled: Boolean,
+    val sphericalDragSpeed: Float,
     val ambientGlowEnabled: Boolean,
     val ambientImmersiveEnabled: Boolean,
     val ambientImmersiveScrollDim: Boolean,
     val ambientGlowInBatterySaver: Boolean,
     val adaptivePlayerSizeEnabled: Boolean,
+    val playerScrollAwayEnabled: Boolean,
     val groupedQualitySelectorEnabled: Boolean,
     val lockModeEnabled: Boolean,
     val commentsEnabled: Boolean,
@@ -67,6 +70,7 @@ internal class VideoPlayerPreferencesState(
     val deArrowEnabled: Boolean,
     val tiltFullscreenRotationLocked: Boolean,
     val fullscreenSidePanelWidth: FullscreenSidePanelWidth,
+    val fullscreenZoomToFill: Boolean,
 )
 
 @Composable
@@ -97,11 +101,13 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
     val rememberPlaybackSpeed by playerPreferences.rememberPlaybackSpeed.collectAsState(initial = false)
     val ambientModeEnabled by playerPreferences.videoAmbientModeEnabled.collectAsState(initial = false)
     val sphericalMotionEnabled by playerPreferences.sphericalMotionEnabled.collectAsState(initial = true)
+    val sphericalDragSpeed by playerPreferences.sphericalDragSpeed.collectAsState(initial = DEFAULT_SPHERICAL_DRAG_SPEED)
     val ambientGlowEnabled by playerPreferences.videoAmbientGlowEnabled.collectAsState(initial = false)
     val ambientImmersiveEnabled by playerPreferences.videoAmbientImmersiveEnabled.collectAsState(initial = false)
     val ambientImmersiveScrollDim by playerPreferences.videoAmbientImmersiveScrollDim.collectAsState(initial = true)
     val ambientGlowInBatterySaver by playerPreferences.videoAmbientGlowInBatterySaver.collectAsState(initial = false)
     val adaptivePlayerSizeEnabled by playerPreferences.adaptivePlayerSizeEnabled.collectAsState(initial = true)
+    val playerScrollAwayEnabled by playerPreferences.playerScrollAwayEnabled.collectAsState(initial = false)
     val groupedQualitySelectorEnabled by playerPreferences.groupedQualitySelectorEnabled.collectAsState(initial = false)
     val lockModeEnabled by playerPreferences.overlayLockModeEnabled.collectAsState(initial = false)
     val commentsEnabled by playerPreferences.commentsEnabled.collectAsState(initial = true)
@@ -117,6 +123,7 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
     val tiltFullscreenRotationLocked by playerPreferences.tiltFullscreenRotationLocked.collectAsState(initial = false)
     val fullscreenSidePanelWidth by playerPreferences.fullscreenSidePanelWidth
         .collectAsState(initial = FullscreenSidePanelWidth.DEFAULT)
+    val fullscreenZoomToFill by playerPreferences.fullscreenZoomToFill.collectAsState(initial = false)
 
     return VideoPlayerPreferencesState(
         preferences = playerPreferences,
@@ -144,11 +151,13 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
         rememberPlaybackSpeed = rememberPlaybackSpeed,
         ambientModeEnabled = ambientModeEnabled,
         sphericalMotionEnabled = sphericalMotionEnabled,
+        sphericalDragSpeed = sphericalDragSpeed,
         ambientGlowEnabled = ambientGlowEnabled,
         ambientImmersiveEnabled = ambientImmersiveEnabled,
         ambientImmersiveScrollDim = ambientImmersiveScrollDim,
         ambientGlowInBatterySaver = ambientGlowInBatterySaver,
         adaptivePlayerSizeEnabled = adaptivePlayerSizeEnabled,
+        playerScrollAwayEnabled = playerScrollAwayEnabled,
         groupedQualitySelectorEnabled = groupedQualitySelectorEnabled,
         lockModeEnabled = lockModeEnabled,
         commentsEnabled = commentsEnabled,
@@ -161,5 +170,6 @@ internal fun rememberVideoPlayerPreferences(context: Context): VideoPlayerPrefer
         deArrowEnabled = deArrowEnabled,
         tiltFullscreenRotationLocked = tiltFullscreenRotationLocked,
         fullscreenSidePanelWidth = fullscreenSidePanelWidth,
+        fullscreenZoomToFill = fullscreenZoomToFill,
     )
 }

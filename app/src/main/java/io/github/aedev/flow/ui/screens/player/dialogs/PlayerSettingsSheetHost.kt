@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
+import io.github.aedev.flow.data.local.DEFAULT_SPHERICAL_DRAG_SPEED
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.supportsBulletComments
@@ -69,6 +70,7 @@ internal fun PlayerSettingsSheetHost(
     val sponsorBlockOffForVideo by playerManager.sponsorBlockOffForVideo.collectAsState()
     val sponsorBlockEnabled by playerPreferences.sponsorBlockEnabled.collectAsState(initial = false)
     val sphericalMotion by playerPreferences.sphericalMotionEnabled.collectAsState(initial = true)
+    val sphericalDragSpeed by playerPreferences.sphericalDragSpeed.collectAsState(initial = DEFAULT_SPHERICAL_DRAG_SPEED)
     val videoNotesEnabled by viewModel.videoNotesEnabled.collectAsState()
     val subtitleFilePicker =
         rememberLauncherForActivityResult(OpenSubtitleFile()) { uri ->
@@ -146,6 +148,8 @@ internal fun PlayerSettingsSheetHost(
         onSphericalViewToggle = playerManager::setSphericalView,
         sphericalMotionEnabled = sphericalMotion.takeIf { playerState.showsSpherical },
         onSphericalMotionToggle = { scope.launch { playerPreferences.setSphericalMotionEnabled(it) } },
+        sphericalDragSpeed = sphericalDragSpeed.takeIf { playerState.showsSpherical },
+        onSphericalDragSpeedSelected = { scope.launch { playerPreferences.setSphericalDragSpeed(it) } },
         onStatsForNerds = { screenState.showStatsForNerds = true },
         onCastClick = {
             DlnaCastManager.startDiscovery(context)

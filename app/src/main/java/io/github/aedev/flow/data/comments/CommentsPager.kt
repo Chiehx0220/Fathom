@@ -106,6 +106,7 @@ internal class CommentsPager(
     private var loadingVideoId: String? = null
     private var activeSortToken: String? = null
     private var timedCursors: MutableList<CommentsPageResult> = mutableListOf()
+    private var timedFromYouTube = false
     private var timedGeneration = 0
     private val repliesInFlight = mutableSetOf<String>()
 
@@ -121,6 +122,7 @@ internal class CommentsPager(
         activeSortToken = null
         next = CommentsPageResult.EMPTY
         timedCursors = mutableListOf()
+        timedFromYouTube = false
         timedGeneration++
         _comments.value = emptyList()
         _isLoading.value = false
@@ -147,8 +149,9 @@ internal class CommentsPager(
     }
 
     /**
-     * Reads [orders] in turn into one list, for Timed: no order has the timestamped comments on every
-     * video. One page at a time, and any other sort or video cancels what is left.
+     * Timed: YouTube's own Timed list, complete in one request. When YouTube gives none, [orders] are
+     * read in turn into one list instead, since no order has the timestamped comments on every video.
+     * One page at a time, and any other sort or video cancels what is left.
      */
     fun selectTimed(
         videoId: String,
@@ -156,21 +159,23 @@ internal class CommentsPager(
     ) {
         if (orders.isEmpty()) return
         val key = orders.joinToString(separator = "|") { it.token }
-        if (activeSortToken == key && loadingVideoId == videoId && timedCursors.isNotEmpty()) return
+        if (activeSortToken == key && loadingVideoId == videoId && (timedCursors.isNotEmpty() || timedFromYouTube)) return
         resetForLoad(videoId, key)
         timedCursors = orders.mapTo(mutableListOf()) { CommentsPageResult(continuation = it.token) }
-        walkTimed(videoId, TIMED_PAGES_PER_ORDER)
+        walkTimed(videoId, TIMED_PAGES_PER_ORDER, youTubeListToken = orders.first().token)
     }
 
     private fun walkTimed(
         videoId: String,
         pagesPerOrder: Int,
+        youTubeListToken: String? = null,
     ) {
         val generation = ++timedGeneration
         loadJob =
             scope.launch {
                 try {
                     awaitPlaybackGate(videoId)
+                    if (youTubeListToken != null && readYouTubeTimedList(videoId, youTubeListToken)) return@launch
                     repeat(pagesPerOrder) {
                         timedCursors.indices.forEach { index ->
                             val cursor = timedCursors[index]
@@ -195,6 +200,21 @@ internal class CommentsPager(
                     }
                 }
             }
+    }
+
+    /** True when YouTube's Timed list came back and is now the whole list. */
+    private suspend fun readYouTubeTimedList(
+        videoId: String,
+        sectionToken: String,
+    ): Boolean {
+        if (!isCurrentVideo(videoId)) return false
+        val timed = fetch { repository.getTimedComments(videoId, sectionToken) }?.comments.orEmpty()
+        if (timed.isEmpty() || !isCurrentVideo(videoId)) return false
+        timedCursors = mutableListOf()
+        timedFromYouTube = true
+        _comments.value = timed.distinctByNonBlankKey(Comment::id)
+        _hasMore.value = false
+        return true
     }
 
     private fun startLoad(
@@ -245,6 +265,7 @@ internal class CommentsPager(
         _comments.value = emptyList()
         next = CommentsPageResult.EMPTY
         timedCursors = mutableListOf()
+        timedFromYouTube = false
         timedGeneration++
         _hasMore.value = false
         _isLoadingMore.value = false

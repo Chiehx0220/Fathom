@@ -173,7 +173,8 @@ internal fun SearchResultsPage.toShortsResults(shortsEnabled: Boolean): List<Sea
  * interested goes too. A strip left with nothing goes, rather than staying as a heading over a gap.
  *
  * Only what the viewer hid outright applies: a search is an explicit ask, so the engine's inferred
- * suppressions and blocked topics do not filter it.
+ * suppressions and blocked topics do not filter it. The AI channel list does, when its hide switch is
+ * on; a channel result stays, and only teaches the list which handle its id has.
  *
  * Community posts carry no channel id in the response, so a blocked creator's post survives here.
  */
@@ -183,10 +184,11 @@ internal fun List<SearchResultItem>.withoutHidden(exclusions: FeedExclusions): L
     return mapNotNull { item ->
         when (item) {
             is SearchResultItem.VideoResult -> {
-                item.takeUnless { exclusions.hides(it.video) }
+                item.takeUnless { exclusions.hides(it.video) || exclusions.hidesAsAi(it.video) }
             }
 
             is SearchResultItem.ChannelResult -> {
+                exclusions.ai.learn(item.channel.id, item.channel.handle)
                 item.takeUnless { exclusions.hidesChannel(it.channel.id) }
             }
 
@@ -195,7 +197,7 @@ internal fun List<SearchResultItem>.withoutHidden(exclusions: FeedExclusions): L
             }
 
             is SearchResultItem.ShelfResult -> {
-                val videos = item.videos.filterNot { exclusions.hides(it) }
+                val videos = item.videos.filterNot { exclusions.hides(it) || exclusions.hidesAsAi(it) }
                 when {
                     videos.isNotEmpty() -> item.copy(videos = videos)
                     item.posts.isNotEmpty() -> item

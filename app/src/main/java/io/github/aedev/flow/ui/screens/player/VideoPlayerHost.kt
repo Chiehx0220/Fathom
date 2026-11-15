@@ -9,8 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -134,6 +132,7 @@ fun VideoPlayerHost(
             adaptivePlayerSizeEnabled = prefs.adaptivePlayerSizeEnabled,
             videoAspectRatio = videoAspectRatio,
             sheetsHostedBesideVideo = playerLayoutMode == PlayerLayoutMode.WIDE,
+            coversPlayer = playerSheetState.isScrolledAway,
         )
     val effectiveVideoAspectRatio = mediaSheetGeometry.effectiveVideoAspectRatio
     var expandedPlayerBottom by remember { mutableStateOf(0.dp) }
@@ -168,15 +167,6 @@ fun VideoPlayerHost(
         screenState = screenState,
     )
 
-    val windowInsetDensity = LocalDensity.current
-    val layoutDirection = LocalLayoutDirection.current
-    val sponsorSkipEndPadding =
-        with(windowInsetDensity) {
-            maxOf(
-                WindowInsets.displayCutout.getRight(this, layoutDirection),
-                WindowInsets.systemBars.getRight(this, layoutDirection),
-            ).toDp() + 16.dp
-        }
     val sponsorSkipBottomInset = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
 
     val updateBrightnessLevel =
@@ -477,10 +467,16 @@ fun VideoPlayerHost(
             progress = progressProvider,
             isFullscreen = fullscreenShown,
             thumbnailUrl =
-                video.thumbnailUrl.takeIf { it.isNotEmpty() }
-                    ?: ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(video.id),
+                if (prefs.ambientModeEnabled && screenState.fitChosen && !playerState.showsSpherical) {
+                    video.thumbnailUrl.takeIf { it.isNotEmpty() }
+                        ?: ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail(video.id)
+                } else {
+                    null
+                },
             videoAspectRatio = effectiveVideoAspectRatio,
             expandedPlayerHeightFractionOverride = mediaSheetGeometry.playerHeightFractionOverride,
+            scrollAwayEnabled = prefs.playerScrollAwayEnabled,
+            contentKey = video.id,
             bottomPadding = bottomPadding,
             miniPlayerScale = miniPlayerScale,
             isLargeWindow = isLargeWindow,
@@ -539,11 +535,12 @@ fun VideoPlayerHost(
                     },
                 )
             },
-            bodyContent = { alpha, videoHeightPx ->
+            bodyContent = { alpha, videoHeightPx, offscreenBottomPx ->
                 PlayerBodySlot(
                     session = stageSession,
                     alpha = alpha,
                     videoHeightPx = videoHeightPx,
+                    offscreenBottomPx = offscreenBottomPx,
                     isLandscape = isLandscape,
                     localIsInPipMode = localIsInPipMode,
                     onClose = onClose,
@@ -561,7 +558,8 @@ fun VideoPlayerHost(
             },
         )
 
-        if (!playerUiState.isUpcoming && expandedSurfacesMounted && !localIsInPipMode && sponsorSegments.isNotEmpty()) {
+        val sponsorSkipShown = expandedSurfacesMounted && !localIsInPipMode && !playerSheetState.isScrolledAway
+        if (!playerUiState.isUpcoming && sponsorSkipShown && sponsorSegments.isNotEmpty()) {
             SponsorSkipLayer(
                 session = stageSession,
                 sponsorSegments = sponsorSegments,
@@ -569,7 +567,6 @@ fun VideoPlayerHost(
                 playerWidth = sidePanelState.playerWidth,
                 expandedSurfacesPlaced = expandedSurfacesPlaced,
                 style = prefs.sbSkipButtonStyle,
-                endPadding = sponsorSkipEndPadding,
                 bottomPadding = floatingSponsorSkipBottomPadding,
             )
         }

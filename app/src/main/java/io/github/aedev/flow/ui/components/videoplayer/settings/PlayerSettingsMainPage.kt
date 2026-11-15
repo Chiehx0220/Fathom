@@ -75,19 +75,27 @@ internal fun PlayerSettingsMainPage(
     onSphericalViewToggle: (Boolean) -> Unit = {},
     sphericalMotionEnabled: Boolean? = null,
     onSphericalMotionToggle: (Boolean) -> Unit = {},
+    sphericalDragSpeed: Float? = null,
 ) {
     val captionRows = if (showDanmakuOption) CAPTION_ROWS_BASE + 1 else CAPTION_ROWS_BASE
     val playbackRows = if (sponsorBlockSegmentCount > 0) PLAYBACK_ROWS + 1 else PLAYBACK_ROWS
+    val qualityResolution =
+        qualitySummaryResolution(
+            currentQuality = playerState.currentQuality,
+            currentQualityKey = playerState.currentQualityKey,
+            effectiveQuality = playerState.effectiveQuality,
+            options = playerState.availableQualities,
+        )
     FlowSectionHeader(stringResource(R.string.video))
     FlowRowGroup {
         FlowNavRow(
             leadingIcon = Icons.Filled.HighQuality,
             title = stringResource(R.string.quality),
             trailingText =
-                if (playerState.currentQuality == 0) {
-                    stringResource(R.string.quality_auto)
-                } else {
-                    "${playerState.currentQuality}p"
+                when {
+                    qualityResolution == null -> stringResource(R.string.quality_auto)
+                    playerState.currentQuality == 0 -> stringResource(R.string.quality_auto_with_resolution, qualityResolution)
+                    else -> qualityResolution
                 },
             shape = flowRowGroupShape(0, VIDEO_ROWS),
             onClick = { onNavigateToPage(PlayerSettingsPage.Quality) },
@@ -234,7 +242,7 @@ internal fun PlayerSettingsMainPage(
     }
 
     val glowRows = if (ambientGlowEnabled != null) 1 else 0
-    val sphericalRows = listOfNotNull(sphericalViewEnabled, sphericalMotionEnabled).size
+    val sphericalRows = listOfNotNull(sphericalViewEnabled, sphericalMotionEnabled, sphericalDragSpeed).size
     val displayRows = DISPLAY_ROWS + glowRows + sphericalRows
     FlowSectionHeader(stringResource(R.string.player_settings_display))
     FlowRowGroup {
@@ -272,8 +280,17 @@ internal fun PlayerSettingsMainPage(
                 title = stringResource(R.string.player_settings_spherical_motion),
                 supportingText = stringResource(R.string.player_settings_spherical_motion_summary),
                 checked = sphericalMotionEnabled,
-                shape = flowRowGroupShape(glowRows + sphericalRows, displayRows),
+                shape = flowRowGroupShape(glowRows + 2, displayRows),
                 onCheckedChange = onSphericalMotionToggle,
+            )
+        }
+        if (sphericalDragSpeed != null) {
+            FlowNavRow(
+                leadingIcon = Icons.Filled.Speed,
+                title = stringResource(R.string.player_settings_spherical_drag_speed),
+                trailingText = playbackSpeedLabel(sphericalDragSpeed),
+                shape = flowRowGroupShape(glowRows + sphericalRows, displayRows),
+                onClick = { onNavigateToPage(PlayerSettingsPage.SphericalDragSpeed) },
             )
         }
         FlowNavRow(

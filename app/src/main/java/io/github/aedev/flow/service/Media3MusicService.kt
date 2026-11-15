@@ -11,7 +11,9 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.os.Process
 import android.util.Log
+import android.view.KeyEvent
 import androidx.annotation.OptIn
+import androidx.core.content.IntentCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -68,6 +70,7 @@ import io.github.aedev.flow.player.LifecyclePlaybackPreferences
 import io.github.aedev.flow.player.MusicFailureStreak
 import io.github.aedev.flow.player.MusicLoadErrorPolicy
 import io.github.aedev.flow.player.MusicMutePause
+import io.github.aedev.flow.player.MusicPauseLog
 import io.github.aedev.flow.player.MusicPlaybackDiagnostics
 import io.github.aedev.flow.player.MusicPlaybackRecoveryPlanner
 import io.github.aedev.flow.player.MusicQueuePlanner
@@ -222,6 +225,7 @@ class Media3MusicService : MediaLibraryService() {
     private var radioTopUpJob: Job? = null
     private var radioAutoplayEnabled = true
     private var pauseWhenMuted = false
+    private lateinit var pauseLog: MusicPauseLog
     private var pausedForMute = false
     private var loudnessNormalizationEnabled = true
     private var lastQueueIds: List<String>? = null
@@ -504,6 +508,7 @@ class Media3MusicService : MediaLibraryService() {
         val allowed = offloadState.allowed
         if (allowed == appliedOffload) return
         appliedOffload = allowed
+        Log.w(TAG, "audio offload ${if (allowed) "allowed" else "off"}: $offloadState")
         player.setOffloadEnabled(allowed)
     }
 
@@ -516,6 +521,12 @@ class Media3MusicService : MediaLibraryService() {
             object : ExoPlayer.AudioOffloadListener {
                 override fun onOffloadedPlayback(isOffloadedPlayback: Boolean) {
                     isOffloaded = isOffloadedPlayback
+                    // Warning level so Diagnostics, which keeps only warnings, shows which tracks went to offload (#1686).
+                    Log.w(
+                        TAG,
+                        "offloaded playback $isOffloadedPlayback: ${player.currentMediaItem?.mediaId} " +
+                            "${player.audioFormat?.sampleMimeType} ${player.audioFormat?.sampleRate} Hz",
+                    )
                 }
             },
         )
@@ -724,6 +735,7 @@ class Media3MusicService : MediaLibraryService() {
                     val action = MusicMutePause.onVolume(muted || volume == 0, pauseWhenMuted, player.isPlaying, pausedForMute)
                     when (action) {
                         MusicMutePause.Action.PAUSE -> {
+                            pauseLog.noteCause("pause music when muted")
                             player.pause()
                             pausedForMute = true
                         }
@@ -772,6 +784,8 @@ class Media3MusicService : MediaLibraryService() {
         // the previous track still plays. Only EventTime names the window that actually broke.
         player.addAnalyticsListener(EventLogger("MusicPlayerEvents"))
         player.addAnalyticsListener(MusicPlaybackDiagnostics(player, lifecycleScope))
+        pauseLog = MusicPauseLog(player)
+        player.addAnalyticsListener(pauseLog)
         player.addAnalyticsListener(
             object : AnalyticsListener {
                 override fun onPlayerError(
@@ -1489,12 +1503,22 @@ class Media3MusicService : MediaLibraryService() {
      */
     @OptIn(UnstableApi::class)
     override fun onTaskRemoved(rootIntent: Intent?) {
+        val root = rootIntent?.component?.className
+        if (isSideTaskRemoval(root)) {
+            taskRemovalLog("onTaskRemoved ignored, side task $root")
+            return
+        }
         val keepsPlaying =
             ::player.isInitialized &&
                 player.keepsPlayingOnTaskRemoved(lifecyclePlaybackPreferences.settings.keepPlayingAfterSwipe, isPlaybackOngoing())
-        PlayerDiagnostics.logInfo(TAG, "onTaskRemoved keepsPlaying=$keepsPlaying ${taskRemovalSnapshot()}")
+        taskRemovalLog("onTaskRemoved root=$root keepsPlaying=$keepsPlaying ${taskRemovalSnapshot()}")
         if (keepsPlaying) return
         pauseAllPlayersAndStopSelf()
+    }
+
+    private fun taskRemovalLog(message: String) {
+        Log.w(TAG, message)
+        PlayerDiagnostics.logWarning(TAG, message)
     }
 
     private fun taskRemovalSnapshot(): String {
@@ -1881,6 +1905,27 @@ class Media3MusicService : MediaLibraryService() {
 
     @OptIn(UnstableApi::class)
     private inner class LibrarySessionCallback : MediaLibrarySession.Callback {
+        override fun onPlayerCommandRequest(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            playerCommand: Int,
+        ): Int {
+            val pauses = playerCommand == Player.COMMAND_STOP || (playerCommand == Player.COMMAND_PLAY_PAUSE && player.playWhenReady)
+            if (pauses) pauseLog.noteCause(controller.packageName, replace = false)
+            return super.onPlayerCommandRequest(session, controller, playerCommand)
+        }
+
+        override fun onMediaButtonEvent(
+            session: MediaSession,
+            controllerInfo: MediaSession.ControllerInfo,
+            intent: Intent,
+        ): Boolean {
+            IntentCompat.getParcelableExtra(intent, Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)?.let { key ->
+                pauseLog.noteCause("media button ${KeyEvent.keyCodeToString(key.keyCode)} from ${controllerInfo.packageName}")
+            }
+            return super.onMediaButtonEvent(session, controllerInfo, intent)
+        }
+
         @OptIn(UnstableApi::class)
         override fun onPlaybackResumption(
             mediaSession: MediaSession,

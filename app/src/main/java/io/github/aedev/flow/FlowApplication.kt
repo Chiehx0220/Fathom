@@ -4,11 +4,14 @@ import android.app.Application
 import android.content.ComponentCallbacks2
 import android.content.Context
 import android.util.Log
+import androidx.compose.material3.ComposeMaterial3Flags
+import androidx.compose.material3.ExperimentalMaterial3Api
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import dagger.hilt.android.HiltAndroidApp
 import io.github.aedev.flow.applock.AppLock
+import io.github.aedev.flow.data.contentfilter.aislist.AiListRepository
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.profile.ActiveProfile
@@ -18,6 +21,7 @@ import io.github.aedev.flow.data.profile.ProfileFiles
 import io.github.aedev.flow.data.profile.ProfileSlices
 import io.github.aedev.flow.data.profile.ProfileWebView
 import io.github.aedev.flow.data.profile.ProfileWorkReconciler
+import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.repository.NewPipeDownloader
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.discord.DiscordPresenceRuntime
@@ -115,6 +119,9 @@ class FlowApplication :
     @Inject
     lateinit var linkedSync: dagger.Lazy<LinkedSync>
 
+    @Inject
+    lateinit var aiList: AiListRepository
+
     override fun newImageLoader(context: PlatformContext): ImageLoader = imageLoader
 
     companion object {
@@ -128,10 +135,13 @@ class FlowApplication :
         super.attachBaseContext(AppLanguageManager.wrapContext(base, AppLanguageManager.resolveLanguageTag(base)))
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class, ExperimentalMaterial3Api::class)
     override fun onCreate() {
         ProfileWebView.applySuffix(this)
         super.onCreate()
+        // A sheet re-anchored mid-animation (a menu that became shorter than half the window) throws
+        // AnchoredDraggableUninitializedException with this on; off, M3 places it a frame later (#2065).
+        ComposeMaterial3Flags.isAnchoredDraggableComponentsStrictOffsetCheckEnabled = false
         appContext = applicationContext
         linkedForeground.install()
         breakReminderTimer.install()
@@ -199,6 +209,7 @@ class FlowApplication :
             if (linkedProfiles.get().catchingUp()) linkedSync.get().syncNow()
         }
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            FlowNeuroEngine.getInstance(this@FlowApplication).aiListMatcher = aiList::currentMatcher
             launch { profileWorkReconciler.reconcile() }
             launch { AutoBackupWorker.keepScheduled(this@FlowApplication) }
             launch { postSwitchWork.runIfSwitched() }

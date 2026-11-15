@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.ui.components.shared.FlowBadgedTitle
 import io.github.aedev.flow.ui.components.shared.FlowConnectedToggleGroup
 import io.github.aedev.flow.ui.components.shared.FlowToggleOption
+import io.github.aedev.flow.ui.components.shared.dpadVerticalFocusExit
 
 private val ControlRowHorizontalPadding = 16.dp
 private val ControlRowVerticalPadding = 14.dp
@@ -90,13 +92,14 @@ fun SettingsSliderRow(
             )
         }
         if (centered) {
+            val sliderState = remember(steps, valueRange) { SliderState(draft, steps, valueRange) }
+            sliderState.value = draft
             Slider(
-                value = draft,
+                state = sliderState,
                 onValueChange = { draft = it },
                 onValueChangeFinished = { onValueCommitted(draft) },
-                valueRange = valueRange,
-                steps = steps,
                 enabled = enabled,
+                modifier = Modifier.dpadVerticalFocusExit(),
                 track = { SliderDefaults.CenteredTrack(it, enabled = enabled) },
             )
         } else {
@@ -107,6 +110,7 @@ fun SettingsSliderRow(
                 valueRange = valueRange,
                 steps = steps,
                 enabled = enabled,
+                modifier = Modifier.dpadVerticalFocusExit(),
             )
         }
     }

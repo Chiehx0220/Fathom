@@ -11,12 +11,22 @@ import io.github.aedev.flow.ui.components.videoplayer.subtitle.SubtitleStyle
 // Every property is snapshot state, so composables taking this instance can skip on identity.
 @Stable
 class PlayerScreenState {
+    internal val relatedFocus = PlayerRelatedFocus()
+
     // UI Visibility States
     var showControls by mutableStateOf(true)
     var showStatsForNerds by mutableStateOf(false)
     var isTouchLocked by mutableStateOf(false)
     var lockOverlayRevealSignal by mutableIntStateOf(0)
-    var isFullscreen by mutableStateOf(false)
+    private var fullscreenShown by mutableStateOf(false)
+
+    // Every way in or out of fullscreen goes through here, so the button's choice lasts one session.
+    var isFullscreen: Boolean
+        get() = fullscreenShown
+        set(value) {
+            if (value != fullscreenShown) resizeModeOverride = null
+            fullscreenShown = value
+        }
     var isFullscreenPortrait by mutableStateOf(false)
     var lastInteractionTimestamp by mutableLongStateOf(System.currentTimeMillis())
 
@@ -77,8 +87,11 @@ class PlayerScreenState {
     // a transcript in another language should not put that language on top of the video.
     var selectedTranscriptUrl by mutableStateOf<String?>(null)
 
-    // Video Display
-    var resizeMode by mutableIntStateOf(0) // 0=Fit, 1=Fill, 2=Zoom
+    /** The fullscreen button's pick for this fullscreen session; null follows the settings. */
+    var resizeModeOverride by mutableStateOf<Int?>(null)
+
+    /** False once the fullscreen button has picked Fill or Zoom. */
+    val fitChosen: Boolean get() = resizeModeOverride.let { it == null || it == PlayerResizeMode.FIT }
 
     // Pinch-to-Zoom State
     var zoomScale by mutableFloatStateOf(1f)
@@ -169,8 +182,8 @@ class PlayerScreenState {
         closeSheet()
     }
 
-    fun cycleResizeMode() {
-        resizeMode = (resizeMode + 1) % 3
+    fun cycleResizeMode(current: Int) {
+        resizeModeOverride = PlayerResizeMode.next(current)
     }
 
     fun toggleFullscreen() {

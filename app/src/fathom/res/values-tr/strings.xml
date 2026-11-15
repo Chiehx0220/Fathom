@@ -11,6 +11,7 @@
     <string name="update_flow">Fathom\'u Güncelle</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Fathom\'un hangi bildirimleri göndereceğini yönet</string>
+    <string name="notification_channel_new_version_description">Fathom\'un yeni bir sürümü çıktığında bildirir</string>
     <string name="notif_type_updates_subtitle">Fathom\'un yeni sürümü geldiğinde bildirim al</string>
     <string name="notif_master_toggle_subtitle">Bildirim denetimleri ve uyarılar için Fathom\'un arka planda çalışmasına izin ver</string>
     <string name="notif_background_restricted_subtitle">Android, Fathom kapalıyken denetimleri engeller. Arka plan etkinliğine izin vermek için dokun.</string>
@@ -95,4 +96,13 @@
     <string name="profiles_copy_recommendations_summary">Fathom\'un zevkin hakkında öğrendikleri</string>
     <string name="linked_webdav_body">Yalnızca Fathom için boş bir klasör kullanın. Giriş bilgileri yalnızca bu cihazın güvenli deposunda tutulur ve bağladığın cihazlara aktarılır.</string>
     <string name="linked_profile_switch_body">Yalnızca kullanımda olan profil eşitlemeyi başlatabilir, bu nedenle Fathom önce bu profilde yeniden başlar. Ardından eşitlemeyi oradan açın.</string>
+    <string name="buffer_cache_size_link_summary">Fathom\'un diskte ne kadar video ve müzik tutacağı</string>
+    <string name="linked_replace_words_body">Fathom cihazların için yeni kurtarma kelimeleri ve yeni şifreleme anahtarları oluşturur. Eski kelimeler çalışmayı durdurur: artık bu grubu geri yükleyemez veya bundan sonra eşitlenen hiçbir şeyi okuyamaz. Göründüklerinde yeni kelimeleri bir yere not et.</string>
+    <string name="linked_error_restore_unfinished">Geri yükleme henüz tamamlanmadı. Fathom bir sonraki eşitlemede bunu tamamlayacak.</string>
+    <string name="crossfade_pause_desc">Fathom yeniden başlayana kadar</string>
+    <string name="app_lock_summary">Fathom\'u açmak için telefonunun kilidini iste</string>
+    <string name="app_lock_footer">Fathom kilitliyken müzik, medya denetimleri ve resim içinde resim çalışmaya devam eder.</string>
+    <string name="app_lock_after_description">Tekrar sormadan önce Fathom\'un ne kadar süre ekrandan uzakta kalabileceği</string>
+    <string name="app_lock_prompt_title">Fathom kilidini aç</string>
+    <string name="app_lock_screen_title">Fathom kilitli</string>
 </resources>
