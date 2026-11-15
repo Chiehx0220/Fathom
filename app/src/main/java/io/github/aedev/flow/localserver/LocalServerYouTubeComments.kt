@@ -62,8 +62,7 @@ internal object LocalServerYouTubeComments {
 
                     else -> {
                         val page = repo.getVideoComments(videoId)
-                        // legacyPage = repository fallback to the extractor: no avatars either.
-                        if (page.legacyPage != null || page.comments.isEmpty()) {
+                        if (page.comments.isEmpty()) {
                             null
                         } else {
                             CommentsResult(

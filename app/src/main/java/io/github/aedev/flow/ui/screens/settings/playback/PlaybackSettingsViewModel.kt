@@ -71,6 +71,7 @@ class PlaybackSettingsViewModel
         val speedSwipeStep = preferences.speedSwipeStep.asState(DEFAULT_SPEED_SWIPE_STEP)
         val seekGesture = preferences.seekSwipeGesturesEnabled.asState(true)
         val moreVideosGesture = preferences.moreVideosSwipeEnabled.asState(true)
+        val chapterSkipGesture = preferences.chapterSkipGestureEnabled.asState(true)
         val controlsWhileLoading = preferences.showControlsWhileLoading.asState(overlay.showControlsWhileLoading)
 
         val castButton = preferences.overlayCastEnabled.asState(overlay.castEnabled)
@@ -140,6 +141,7 @@ class PlaybackSettingsViewModel
         val musicSideSwipes = preferences.musicSideSwipes.asState(false)
         val lockScreenPlayer = preferences.lockScreenPlayer.asState(false)
         val lyricsOnLockScreen = preferences.lyricsOnLockScreen.asState(false)
+        val lyricsInMiniPlayer = preferences.lyricsInMiniPlayer.asState(false)
         val lyricsOnLockScreenDelayMs = preferences.lyricsOnLockScreenDelayMs.asState(0)
         val lyricsSponsorBlockTiming = preferences.lyricsSponsorBlockTiming.asState(false)
         val lyricsOnDemand = preferences.lyricsOnDemand.asState(false)
@@ -217,6 +219,8 @@ class PlaybackSettingsViewModel
         fun setSeekGesture(value: Boolean) = write { preferences.setSeekSwipeGesturesEnabled(value) }
 
         fun setMoreVideosGesture(value: Boolean) = write { preferences.setMoreVideosSwipeEnabled(value) }
+
+        fun setChapterSkipGesture(value: Boolean) = write { preferences.setChapterSkipGestureEnabled(value) }
 
         fun setControlsWhileLoading(value: Boolean) = write { preferences.setShowControlsWhileLoading(value) }
 
@@ -303,6 +307,8 @@ class PlaybackSettingsViewModel
         fun setLockScreenPlayer(value: Boolean) = write { preferences.setLockScreenPlayer(value) }
 
         fun setLyricsOnLockScreen(value: Boolean) = write { preferences.setLyricsOnLockScreen(value) }
+
+        fun setLyricsInMiniPlayer(value: Boolean) = write { preferences.setLyricsInMiniPlayer(value) }
 
         fun setLyricsOnLockScreenDelayMs(delayMs: Int) = write { preferences.setLyricsOnLockScreenDelayMs(delayMs) }
 

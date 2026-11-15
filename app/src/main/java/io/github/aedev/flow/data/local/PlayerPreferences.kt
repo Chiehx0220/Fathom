@@ -106,6 +106,7 @@ class PlayerPreferences(
         val VIDEO_AMBIENT_GLOW_ENABLED = booleanPreferencesKey("video_ambient_glow_enabled")
         val VIDEO_AMBIENT_IMMERSIVE_ENABLED = booleanPreferencesKey("video_ambient_immersive_enabled")
         val VIDEO_AMBIENT_GLOW_BATTERY_SAVER = booleanPreferencesKey("video_ambient_glow_battery_saver")
+        val VIDEO_AMBIENT_IMMERSIVE_SCROLL_DIM = booleanPreferencesKey("video_ambient_immersive_scroll_dim")
         val PREFERRED_SUBTITLE_LANGUAGE = stringPreferencesKey("preferred_subtitle_language")
         val TRANSCRIPT_LANGUAGE = stringPreferencesKey("transcript_language")
         val SUBTITLE_FONT_SIZE = floatPreferencesKey("subtitle_font_size")
@@ -182,6 +183,7 @@ class PlayerPreferences(
         val LYRICS_SHOW_TRANSLATION = booleanPreferencesKey("lyrics_show_translation")
         val LYRICS_SHOW_ROMANIZATION = booleanPreferencesKey("lyrics_show_romanization")
         val LYRICS_ON_LOCK_SCREEN = booleanPreferencesKey("lyrics_on_lock_screen")
+        val LYRICS_IN_MINI_PLAYER = booleanPreferencesKey("lyrics_in_mini_player")
         val LYRICS_ON_DEMAND = booleanPreferencesKey("lyrics_on_demand")
         val LYRICS_ON_LOCK_SCREEN_DELAY_MS = intPreferencesKey("lyrics_on_lock_screen_delay_ms")
         val LYRICS_SPONSORBLOCK_TIMING = booleanPreferencesKey("lyrics_sponsorblock_timing")
@@ -277,6 +279,8 @@ class PlayerPreferences(
         val SUBS_UNGROUPED_POSITION = intPreferencesKey("subs_ungrouped_position")
         val SUBS_POSTS_CHIP = booleanPreferencesKey("subs_posts_chip")
         val SUBS_PINNED_CHANNELS = stringPreferencesKey("subs_pinned_channels")
+        val SUBS_CHANNEL_SEEN_AT = stringPreferencesKey("subs_channel_seen_at")
+        val SUBS_NEW_VIDEOS_SINCE = longPreferencesKey("subs_new_videos_since")
         val SUBS_REFRESH_ON_STARTUP = booleanPreferencesKey("subs_refresh_on_startup")
         val SUBS_LAST_REFRESH_TIME = longPreferencesKey("subs_last_refresh_time")
         val SUBS_LAST_REFRESHED_COUNT = intPreferencesKey("subs_last_refreshed_count")
@@ -484,6 +488,7 @@ class PlayerPreferences(
         val VOLUME_SWIPE_GESTURES_ENABLED = device(booleanPreferencesKey("volume_swipe_gestures_enabled"))
         val SEEK_SWIPE_GESTURES_ENABLED = device(booleanPreferencesKey("seek_swipe_gestures_enabled"))
         val MORE_VIDEOS_SWIPE_ENABLED = device(booleanPreferencesKey("more_videos_swipe_enabled"))
+        val CHAPTER_SKIP_GESTURE_ENABLED = device(booleanPreferencesKey("chapter_skip_gesture_enabled"))
         val DOUBLE_TAP_SEEK_SECONDS = device(intPreferencesKey("double_tap_seek_seconds"))
         val DOUBLE_TAP_SEEK_ZONE = device(stringPreferencesKey("double_tap_seek_zone"))
 
@@ -784,6 +789,16 @@ class PlayerPreferences(
     suspend fun setMoreVideosSwipeEnabled(enabled: Boolean) {
         context.devicePreferencesDataStore.edit { preferences ->
             preferences[DeviceKeys.MORE_VIDEOS_SWIPE_ENABLED] = enabled
+        }
+    }
+
+    val chapterSkipGestureEnabled: Flow<Boolean> =
+        context.devicePreferencesDataStore.data
+            .map { preferences -> preferences[DeviceKeys.CHAPTER_SKIP_GESTURE_ENABLED] ?: true }
+
+    suspend fun setChapterSkipGestureEnabled(enabled: Boolean) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.CHAPTER_SKIP_GESTURE_ENABLED] = enabled
         }
     }
 
@@ -2043,6 +2058,18 @@ class PlayerPreferences(
         }
     }
 
+    val videoAmbientImmersiveScrollDim: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.VIDEO_AMBIENT_IMMERSIVE_SCROLL_DIM] ?: true
+            }
+
+    suspend fun setVideoAmbientImmersiveScrollDim(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.VIDEO_AMBIENT_IMMERSIVE_SCROLL_DIM] = enabled
+        }
+    }
+
     val videoAmbientGlowInBatterySaver: Flow<Boolean> =
         context.playerPreferencesDataStore.data
             .map { preferences ->
@@ -3013,6 +3040,29 @@ class PlayerPreferences(
 
     suspend fun setSubscriptionPinnedChannels(stored: String) {
         context.playerPreferencesDataStore.edit { preferences -> preferences[Keys.SUBS_PINNED_CHANNELS] = stored }
+    }
+
+    /** When each subscribed channel's page was last opened, for the Quick access dots (#1755). */
+    val subscriptionChannelSeenAt: Flow<String> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.SUBS_CHANNEL_SEEN_AT].orEmpty() }
+
+    suspend fun updateSubscriptionChannelSeenAt(transform: (String) -> String) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SUBS_CHANNEL_SEEN_AT] = transform(preferences[Keys.SUBS_CHANNEL_SEEN_AT].orEmpty())
+        }
+    }
+
+    /** Uploads before this time never get a Quick access dot; 0 until the dots first run. */
+    val subscriptionNewVideosSince: Flow<Long> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.SUBS_NEW_VIDEOS_SINCE] ?: 0L }
+
+    /** Starts the dots at [now] on their first run, so channels don't all light up at once after the update. */
+    suspend fun startSubscriptionNewVideosSince(now: Long) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            if (preferences[Keys.SUBS_NEW_VIDEOS_SINCE] == null) preferences[Keys.SUBS_NEW_VIDEOS_SINCE] = now
+        }
     }
 
     val subscriptionRefreshOnStartup: Flow<Boolean> =
@@ -4236,6 +4286,13 @@ class PlayerPreferences(
 
     suspend fun setLyricsOnLockScreen(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { it[Keys.LYRICS_ON_LOCK_SCREEN] = enabled }
+    }
+
+    val lyricsInMiniPlayer: Flow<Boolean> =
+        context.playerPreferencesDataStore.data.map { it[Keys.LYRICS_IN_MINI_PLAYER] ?: false }
+
+    suspend fun setLyricsInMiniPlayer(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { it[Keys.LYRICS_IN_MINI_PLAYER] = enabled }
     }
 
     /** Whether lyrics are looked up only when the player or its lyrics open, or for lock screen lyrics. */

@@ -100,6 +100,7 @@ internal fun PlayerBottomSheetsContainer(
             onDismiss = { screenState.closeSheet() },
             listState = screenState.commentsListState,
             threadState = screenState.commentThreads,
+            isDisabled = commentsUiState.isDisabled,
         )
     }
 
@@ -143,6 +144,7 @@ internal fun PlayerBottomSheetsContainer(
             prefs = prefs,
             chapters = uiState.chapters,
             artworkUrl = video.thumbnailUrl,
+            exportTitle = video.title,
             asSidePanel = false,
             expandedHeight = mediaSheetExpandedHeight,
             onDismiss = { screenState.closeSheet() },

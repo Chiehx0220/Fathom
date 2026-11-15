@@ -133,6 +133,7 @@ internal fun SettingsListScope.playbackSections(
         }
         switch(PlaybackGesturesIndex.seekGesture, viewModel.seekGesture, viewModel::setSeekGesture)
         switch(PlaybackGesturesIndex.moreVideosGesture, viewModel.moreVideosGesture, viewModel::setMoreVideosGesture)
+        switch(PlaybackGesturesIndex.chapterSkipGesture, viewModel.chapterSkipGesture, viewModel::setChapterSkipGesture)
         switch(PlaybackGesturesIndex.controlsWhileLoading, viewModel.controlsWhileLoading, viewModel::setControlsWhileLoading)
     }
     group(key = "playback.buttons", header = R.string.settings_section_player_buttons) {
@@ -203,6 +204,7 @@ internal fun SettingsListScope.playbackSections(
                 centered = true,
             )
         }
+        switch(PlaybackLyricsIndex.lyricsInMiniPlayer, viewModel.lyricsInMiniPlayer, viewModel::setLyricsInMiniPlayer)
         switch(PlaybackLyricsIndex.lyricsSponsorBlockTiming, viewModel.lyricsSponsorBlockTiming, viewModel::setLyricsSponsorBlockTiming)
         switch(PlaybackLyricsIndex.lyricsOnDemand, viewModel.lyricsOnDemand, viewModel::setLyricsOnDemand)
         choice(PlaybackLyricsIndex.lyricsProviders, onClick = { openDialog(PlaybackDialog.LYRICS) }) {
