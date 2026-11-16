@@ -11,7 +11,9 @@ import io.github.aedev.flow.sync2.linking.RestoreDevice
 import io.github.aedev.flow.sync2.live.LiveConsent
 import io.github.aedev.flow.sync2.live.LiveDevices
 import io.github.aedev.flow.sync2.live.deviceKind
+import io.github.aedev.flow.sync2.service.AutoSync
 import io.github.aedev.flow.sync2.service.LastSync
+import io.github.aedev.flow.sync2.service.LeftOut
 import io.github.aedev.flow.sync2.service.LinkPhase
 import io.github.aedev.flow.sync2.service.LinkedActions
 import io.github.aedev.flow.sync2.service.LinkedDevice
@@ -43,6 +45,8 @@ internal data class LinkedUiState(
     val requests: List<JoinRequest> = emptyList(),
     /** Devices met on this network while the app runs. */
     val nearby: Map<String, Long> = emptyMap(),
+    /** The other devices the live channel reaches now, with what each plays. */
+    val presence: Map<String, DevicePresence> = emptyMap(),
     /** What each device told it is ("phone", "tv"…), this one included, for its icon. */
     val kinds: Map<String, String> = emptyMap(),
     /** Recovery words to show once, until the user proves they wrote them down. */
@@ -95,6 +99,8 @@ internal class LinkedDevicesViewModel
         private val actions: LinkedActions,
         private val linkedProfiles: LinkedProfiles,
         private val liveConsent: LiveConsent,
+        private val autoSync: AutoSync,
+        private val leftOut: LeftOut,
         live: LiveDevices,
     ) : ViewModel() {
         private val ownKind = deviceKind(context)
@@ -124,8 +130,10 @@ internal class LinkedDevicesViewModel
                 actions.lastSync,
                 actions.nearby,
                 actions.syncing,
-                combine(local, live.devices) { l, peers -> l to peers },
-            ) { group, lastSync, nearby, syncing, (l, peers) ->
+                combine(local, live.devices, live.online) { l, peers, reachable ->
+                    Triple(l, peers, devicePresence(peers, reachable, System.currentTimeMillis(), live::isOnline))
+                },
+            ) { group, lastSync, nearby, syncing, (l, peers, presence) ->
                 val kinds = peers.mapNotNull { (did, peer) -> peer.kind?.let { did to it } }.toMap()
                 val own = l.devices?.firstOrNull { it.thisDevice }?.id
                 LinkedUiState(
@@ -135,6 +143,7 @@ internal class LinkedDevicesViewModel
                     l.devices,
                     l.requests,
                     nearby,
+                    presence,
                     if (own != null) kinds + (own to ownKind) else kinds,
                     l.words,
                     l.restore?.devices,
@@ -151,6 +160,21 @@ internal class LinkedDevicesViewModel
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LinkedUiState())
 
         val link: StateFlow<LinkPhase> = actions.link
+
+        /** Whether this device syncs on its own. */
+        val autoSyncOn: StateFlow<Boolean> = autoSync.enabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
+        fun setAutoSync(on: Boolean) {
+            viewModelScope.launch { autoSync.set(on) }
+        }
+
+        /** The collections this device leaves out of its links. */
+        val leftOutCollections: StateFlow<Set<String>> =
+            leftOut.collections.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
+        fun setLeftOut(collections: Set<String>) {
+            viewModelScope.launch { leftOut.set(collections) }
+        }
 
         val profiles: StateFlow<ProfileChoices> =
             linkedProfiles.choices.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileChoices())

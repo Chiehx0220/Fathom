@@ -24,7 +24,9 @@ import io.github.aedev.flow.sync2.live.LiveChannel
 import io.github.aedev.flow.sync2.live.LiveDevices
 import io.github.aedev.flow.sync2.live.LiveTransport
 import io.github.aedev.flow.sync2.roster.replayRoster
+import io.github.aedev.flow.sync2.service.AutoSync
 import io.github.aedev.flow.sync2.service.LinkedSync
+import io.github.aedev.flow.sync2.service.SyncTrigger
 import io.github.aedev.flow.sync2.service.linkedError
 import io.github.aedev.flow.sync2.store.GroupStore
 import io.github.aedev.flow.sync2.store.LocalStore
@@ -85,6 +87,8 @@ class LanSync
         private val sync: LinkedSync,
         private val live: LiveChannel,
         private val devices: LiveDevices,
+        private val autoSync: AutoSync,
+        private val met: LanMet,
         @ApplicationScope private val scope: CoroutineScope,
     ) {
         private val open = ConcurrentHashMap.newKeySet<String>()
@@ -369,9 +373,13 @@ class LanSync
             envelope: ByteArray? = null,
         ): LanLink {
             converse(link, session, envelope = envelope)
-            seen.update { it + (link.peer to System.currentTimeMillis()) }
+            val at = System.currentTimeMillis()
+            seen.update { it + (link.peer to at) }
             Log.i(TAG, said)
-            sync.syncNow()
+            if (autoSync.allows(SyncTrigger.LAN_MEETING)) {
+                sync.syncNow()
+                group?.let { met.met(it, link.peer, at) }
+            }
             return link
         }
 

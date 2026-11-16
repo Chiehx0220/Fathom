@@ -182,6 +182,8 @@ class PlayerPreferences(
         val HOME_NAVIGATION_ENABLED = booleanPreferencesKey("home_navigation_enabled")
         val SHORTS_NAVIGATION_ENABLED = booleanPreferencesKey("shorts_navigation_enabled")
         val BOTTOM_NAV_HIDE_ON_SCROLL = booleanPreferencesKey("bottom_nav_hide_on_scroll")
+        val BOTTOM_NAV_LABELS = stringPreferencesKey("bottom_nav_labels")
+        val BOTTOM_NAV_STYLE = stringPreferencesKey("bottom_nav_style")
         val SEARCH_SHOWS_NAV_BAR = booleanPreferencesKey("search_shows_nav_bar")
         val INNER_PAGES_SHOW_NAV_BAR = booleanPreferencesKey("inner_pages_show_nav_bar")
         val MUSIC_NAVIGATION_ENABLED = booleanPreferencesKey("music_navigation_enabled")
@@ -270,6 +272,7 @@ class PlayerPreferences(
         val AI_LIST_ALLOWED = stringPreferencesKey("ai_list_allowed")
         val AI_LIST_REPORT_ENABLED = booleanPreferencesKey("ai_list_report_enabled")
         val AI_LIST_REPORT_NAME = stringPreferencesKey("ai_list_report_name")
+        val AI_MUSIC_BLOCK_ENABLED = booleanPreferencesKey("ai_music_block_enabled")
 
         // Notification preferences
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
@@ -433,6 +436,9 @@ class PlayerPreferences(
         private fun <T> device(key: Preferences.Key<T>): Preferences.Key<T> = key.also { names += it.name }
 
         val DEFAULT_QUALITY_WIFI = device(stringPreferencesKey("default_quality_wifi"))
+        val LINKED_AUTO_SYNC = device(booleanPreferencesKey("linked_auto_sync"))
+        val LINKED_LEFT_OUT = device(stringSetPreferencesKey("linked_left_out"))
+        val LINKED_TAKEN_BACK = device(stringSetPreferencesKey("linked_taken_back"))
         val DEFAULT_QUALITY_CELLULAR = device(stringPreferencesKey("default_quality_cellular"))
         val DEFAULT_VIDEO_CODEC = device(stringPreferencesKey("default_video_codec"))
         val FALLBACK_VIDEO_CODEC = device(stringPreferencesKey("fallback_video_codec"))
@@ -1300,6 +1306,44 @@ class PlayerPreferences(
                     ?: GestureOverlayStyle.CIRCULAR
             }
 
+    /** Whether this device syncs linked devices on its own, or only on Sync now. */
+    val linkedAutoSync: Flow<Boolean> =
+        context.devicePreferencesDataStore.data
+            .map { preferences -> preferences[DeviceKeys.LINKED_AUTO_SYNC] ?: true }
+
+    suspend fun setLinkedAutoSync(enabled: Boolean) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.LINKED_AUTO_SYNC] = enabled
+        }
+    }
+
+    /** The linked-devices collections this device leaves out (spec/protocol.md, Leaving collections out). */
+    val linkedLeftOut: Flow<Set<String>> =
+        context.devicePreferencesDataStore.data
+            .map { preferences -> preferences[DeviceKeys.LINKED_LEFT_OUT].orEmpty() }
+
+    /** Saves what is left out and what was taken back and still has to catch up, together. */
+    suspend fun setLinkedLeftOut(
+        collections: Set<String>,
+        takenBack: Set<String>,
+    ) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.LINKED_LEFT_OUT] = collections
+            preferences[DeviceKeys.LINKED_TAKEN_BACK] = takenBack
+        }
+    }
+
+    /** Collections taken back that are still catching up from the links' snapshots. */
+    val linkedTakenBack: Flow<Set<String>> =
+        context.devicePreferencesDataStore.data
+            .map { preferences -> preferences[DeviceKeys.LINKED_TAKEN_BACK].orEmpty() }
+
+    suspend fun clearLinkedTakenBack(caughtUp: Set<String>) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.LINKED_TAKEN_BACK] = preferences[DeviceKeys.LINKED_TAKEN_BACK].orEmpty() - caughtUp
+        }
+    }
+
     val hapticsEnabled: Flow<Boolean> =
         context.devicePreferencesDataStore.data
             .map { preferences -> preferences[DeviceKeys.PLAYER_HAPTICS_ENABLED] ?: true }
@@ -1623,6 +1667,37 @@ class PlayerPreferences(
             preferences[Keys.BOTTOM_NAV_HIDE_ON_SCROLL] = enabled
         }
     }
+
+    val bottomNavLabels: Flow<NavBarLabels> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.BOTTOM_NAV_LABELS]
+                    ?.let { stored -> runCatching { NavBarLabels.valueOf(stored) }.getOrNull() }
+                    ?: NavBarLabels.ALWAYS
+            }.distinctUntilChanged()
+
+    suspend fun setBottomNavLabels(labels: NavBarLabels) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.BOTTOM_NAV_LABELS] = labels.name
+        }
+    }
+
+    val bottomNavStyle: Flow<NavBarStyle> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.BOTTOM_NAV_STYLE]
+                    ?.let { stored -> runCatching { NavBarStyle.valueOf(stored) }.getOrNull() }
+                    ?: NavBarStyle.STANDARD
+            }.distinctUntilChanged()
+
+    suspend fun setBottomNavStyle(style: NavBarStyle) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.BOTTOM_NAV_STYLE] = style.name
+        }
+    }
+
+    val bottomNavLook: Flow<NavBarLook> =
+        combine(bottomNavStyle, bottomNavLabels) { style, labels -> NavBarLook(style, labels) }.distinctUntilChanged()
 
     // Search keeps its full-screen layout unless this is on.
     val searchShowsNavBar: Flow<Boolean> =
@@ -2355,6 +2430,16 @@ class PlayerPreferences(
     suspend fun setAiListBlockEnabled(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.AI_LIST_BLOCK_ENABLED] = enabled
+        }
+    }
+
+    val aiMusicBlockEnabled: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.AI_MUSIC_BLOCK_ENABLED] ?: false }
+
+    suspend fun setAiMusicBlockEnabled(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.AI_MUSIC_BLOCK_ENABLED] = enabled
         }
     }
 
@@ -5560,6 +5645,24 @@ enum class PlayerRelatedCardStyle {
     COMPACT,
     FULL_WIDTH,
 }
+
+/** When the bottom bar names its tabs under their icons. */
+enum class NavBarLabels {
+    ALWAYS,
+    SELECTED,
+    NEVER,
+}
+
+/** A full-width bottom bar, or one floating above the content. */
+enum class NavBarStyle {
+    STANDARD,
+    FLOATING,
+}
+
+data class NavBarLook(
+    val style: NavBarStyle = NavBarStyle.STANDARD,
+    val labels: NavBarLabels = NavBarLabels.ALWAYS,
+)
 
 enum class SharedLinkAction {
     /** Play the video straight away, replacing what plays. */

@@ -123,11 +123,11 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **18** (137 changed lines). New files: **90**.
+- Modified upstream files: **18** (139 changed lines). New files: **90**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
-| app/src/test/java/io/github/aedev/flow/data/update/GitHubReleaseTest.kt | 15 | 15 |
+| app/src/test/java/io/github/aedev/flow/data/update/GitHubReleaseTest.kt | 16 | 16 |
 | app/src/test/java/io/github/aedev/flow/platform/LauncherAliasManifestTest.kt | 14 | 3 |
 | app/src/test/java/io/github/aedev/flow/utils/ShareVideoTest.kt | 12 | 3 |
 | app/src/test/java/io/github/aedev/flow/data/subscriptions/SubscriptionRefreshPlannerTest.kt | 12 | 0 |

@@ -34,7 +34,7 @@ internal object NonYouTubeChannelCheck {
         context: Context,
         subscription: ChannelSubscription,
         repository: SubscriptionRepository,
-    ): List<NotificationHelper.NewVideoEntry>? {
+    ): List<SubscriptionNotifications.NewVideoEntry>? {
         if (subscription.serviceId.isYouTubeServiceId) return null
         return check(EntryPointAccessors.fromApplication(context, Dependencies::class.java), subscription, repository)
     }
@@ -43,7 +43,7 @@ internal object NonYouTubeChannelCheck {
         dependencies: Dependencies,
         subscription: ChannelSubscription,
         repository: SubscriptionRepository,
-    ): List<NotificationHelper.NewVideoEntry> {
+    ): List<SubscriptionNotifications.NewVideoEntry> {
         val now = System.currentTimeMillis()
         if (now - subscription.lastCheckTime < MIN_CHECK_INTERVAL_MS) {
             return emptyList()
@@ -69,7 +69,7 @@ internal object NonYouTubeChannelCheck {
         }
 
         return newVideos.map { video ->
-            NotificationHelper.NewVideoEntry(
+            SubscriptionNotifications.NewVideoEntry(
                 channelName = subscription.channelName,
                 videoTitle = video.title,
                 videoId = video.id,

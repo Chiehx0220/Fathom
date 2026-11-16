@@ -59,10 +59,13 @@ const KEEP_KEYS = new Set([
   'linked_intro',
   'linked_where_server',
   'linked_always_intro',
+  'linked_store_server',
   // the upstream-hosted AI list server (default source)
   'ai_list_source_default',
   'ai_list_source_dialog_body',
   'ai_list_source_reset',
+  // the model was changed by upstream
+  'ai_music_attribution_soul_summary',
   // importing Flow backups, the original theme
   'import_flow_backup_desc',
   'import_flow_backup_failed_template',
