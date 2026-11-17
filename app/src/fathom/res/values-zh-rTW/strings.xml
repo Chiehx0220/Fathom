@@ -14,4 +14,7 @@
     <string name="linked_profile_switch_body">只有使用中的個人檔案能開始同步，因此 Fathom 會先切換到該個人檔案並重新啟動。接著請在其中開啟同步。</string>
     <string name="buffer_cache_size_link_summary">Fathom 在磁碟上保留多少影片和音樂</string>
     <string name="linked_replace_words_body">Fathom 會為你的裝置產生新的復原字詞與加密金鑰。舊字詞將失效：無法用來還原此群組，也無法讀取之後同步的任何內容。新字詞出現時請抄下。</string>
+    <string name="downloads_folder_lost_body">Fathom 已無法存取你為下載內容選擇的資料夾，重新安裝後常會發生這種情況。請重新選擇，即可找回先前的下載內容，並繼續儲存到該資料夾。</string>
+    <string name="export_playlists_desc">你的播放清單、稍後觀看、喜歡的影片和收藏的 Shorts，整合在 Fathom 可匯入的單一檔案中</string>
+    <string name="translation_server_dialog_body">Fathom 會將你要翻譯的文字傳送到這個伺服器。Fathom 沒有自己的伺服器。</string>
 </resources>
