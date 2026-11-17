@@ -1,2 +1,0 @@
-import{s as e}from"./ui-element-tYNJ8-5H.js";function t(t,n){let r=n;for(;r;){if(r===t||t.contains(r))return!0;let n=r.getRootNode();r=r.assignedSlot??r.parentElement??(e(n)?n.host:null)}return!1}export{t};
-//# sourceMappingURL=tree-DWhDt8U_.js.map

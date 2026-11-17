@@ -1,0 +1,2 @@
+import{t as e}from"./safe-define-DXxmf7BV.js";import{o as t,t as n}from"./create-player-ClXNRH3H.js";const{PlayerElement:r,PlayerController:i}=n({features:t});var a=class extends r{static{this.tagName=`video-player`}};e(a);
+//# sourceMappingURL=player-BEwCZpEL.js.map
