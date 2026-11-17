@@ -52,6 +52,7 @@ const renderTop = () => {
                 h('span', {}, FT.store.serviceName(FT.store.service)), FT.icon('expand_more')),
             FT.deepFlow.active ? h('a', { class: 'dfbadge', href: '#/settings', title: FT.deepFlow.status(), 'aria-label': FT.t('deep_flow_badge_label'), data: { f: '', key: 'deepflow' } },
                 FT.deepFlow.icon(), h('span', {}, FT.t('deep_flow_badge'))) : null,
+            FT.profiles.button(),
             h('a', { class: 'rbtn' + (searching ? ' on' : ''), href: '#/search', 'aria-label': FT.t('search'), data: { f: '', key: 'search' } }, FT.icon('search'))));
 };
 FT.renderTop = renderTop;

@@ -246,5 +246,16 @@
   "shortcut_speed": "放慢／加速",
   "shortcut_help": "顯示這份清單",
   "key_space": "空白鍵",
-  "close": "關閉"
+  "close": "關閉",
+  "profile_menu_title": "設定檔",
+  "profile_switch": "切換設定檔",
+  "profile_switching": "正在切換到 {name}",
+  "profile_switching_hint": "Fathom 正在重新啟動，頁面會自動重新連線。",
+  "profile_lost": "無法重新連線",
+  "profile_lost_hint": "請在手機上開啟 Fathom，並確認網頁伺服器已開啟。",
+  "profile_reload": "重新載入",
+  "profile_switch_failed": "無法切換設定檔，請再試一次。",
+  "profile_refused_car": "請先中斷車機連線再切換設定檔",
+  "profile_refused_sync": "請等同步完成再切換設定檔",
+  "profile_refused_backup": "請等備份完成再切換設定檔"
 }

@@ -35,9 +35,9 @@ FT.menu = {
     open(items, options = {}) {
         if (!items.length) return;
         const list = items.map((item, i) => h('button', {
-            type: 'button', class: 'menu-item' + (item.danger ? ' danger' : ''), data: { f: '', key: 'menu-' + i },
+            type: 'button', class: 'menu-item' + (item.danger ? ' danger' : '') + (item.on ? ' on' : ''), data: { f: '', key: 'menu-' + i },
             onclick: () => { FT.menu.close(); item.run(); },
-        }, FT.icon(item.icon), item.label));
+        }, item.lead || FT.icon(item.icon), item.label));
         const panel = h('div', { class: 'menu-panel', role: 'menu' }, options.title ? h('div', { class: 'menu-title' }, options.title) : null, list);
         present(panel, FT.$('[data-f]', panel), () => place(panel, options.anchor));
     },

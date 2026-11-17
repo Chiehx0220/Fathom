@@ -38,10 +38,15 @@ class ServerService : Service() {
         flags: Int,
         startId: Int,
     ): Int {
+        // Null intent: sticky restart after a switch.
+        if (intent == null && !ServerResume.consume(this)) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
         if (!isRunning) {
             startServer()
         }
-        return START_NOT_STICKY
+        return if (intent?.action == ACTION_KEEP) START_STICKY else START_NOT_STICKY
     }
 
     private fun startServer() {
@@ -193,6 +198,14 @@ class ServerService : Service() {
             } else {
                 context.startService(intent)
             }
+        }
+
+        private const val ACTION_KEEP = "io.github.aedev.flow.localserver.KEEP_ACROSS_RESTART"
+
+        /** Sticky restart after the process ends (background Activity start blocked). */
+        fun keepAcrossRestart(context: Context) {
+            ServerResume.arm(context)
+            context.startService(Intent(context, ServerService::class.java).setAction(ACTION_KEEP))
         }
 
         fun stop(context: Context) {

@@ -42,3 +42,11 @@ kbd { min-width: 26px; padding: 3px 7px; border-radius: 7px; background: var(--s
   .keyhints { display: none; }
   .toast { bottom: 90px; }
 }
+
+/* Profile avatar, switch cover. */
+.pavatar { --pa: var(--acc); --pc: var(--on-acc); width: 32px; height: 32px; display: grid; flex: none; place-items: center; border-radius: 50%; background: var(--pa); color: var(--pc); font-size: 15px; font-weight: 500; line-height: 1; }
+.pbtn { padding: 0; background: none; }
+.pbtn .pavatar { width: 40px; height: 40px; }
+.switching { position: fixed; inset: 0; z-index: 3300; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; background: var(--bg); text-align: center; }
+.switching strong { font-size: 20px; font-weight: 500; }
+.switching .hint { max-width: 420px; }

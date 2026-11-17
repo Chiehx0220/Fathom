@@ -248,5 +248,16 @@
   "shortcut_speed": "Slower / faster",
   "shortcut_help": "This list",
   "key_space": "Space",
-  "close": "Close"
+  "close": "Close",
+  "profile_menu_title": "Profile",
+  "profile_switch": "Switch profile",
+  "profile_switching": "Switching to {name}",
+  "profile_switching_hint": "Fathom is restarting. This page reconnects by itself.",
+  "profile_lost": "Couldn't reconnect",
+  "profile_lost_hint": "Open Fathom on the phone and make sure the web server is on.",
+  "profile_reload": "Reload",
+  "profile_switch_failed": "Couldn't switch profiles. Try again.",
+  "profile_refused_car": "Disconnect from your car to switch profiles",
+  "profile_refused_sync": "Wait for sync to finish to switch profiles",
+  "profile_refused_backup": "Wait for the backup to finish to switch profiles"
 }

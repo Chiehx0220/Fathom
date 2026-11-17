@@ -26,6 +26,7 @@ object WebAssets {
             "app/js/deepflow.js",
             "app/js/focus.js",
             "app/js/menu.js",
+            "app/js/profiles.js",
             "app/js/cast.js",
             "app/js/playlists.js",
             "app/js/router.js",
