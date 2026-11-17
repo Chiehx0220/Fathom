@@ -89,6 +89,9 @@ FT.count = (n) => (n === undefined || n === null || n < 0 ? '' : compact.format(
 // 0 means the source gave no count.
 FT.views = (n) => (n > 0 ? FT.t('count_views', { count: FT.count(n) }) : '');
 
+// Related list; first entry is up-next (no Shorts).
+FT.related = (info) => (info.relatedVideos || []).filter((v) => !v.isShort);
+
 // Service of a video/channel address (list from server).
 FT.serviceOfUrl = (url) => (/bilibili\.com|^BV/i.test(url || '') ? 5 : 0);
 

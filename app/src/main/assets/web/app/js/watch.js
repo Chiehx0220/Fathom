@@ -200,7 +200,7 @@ const render = async (root, params, scope) => {
         aboutHint.querySelector('span:not(.i)').textContent = FT.t(open ? 'show_less' : 'show_more');
     });
     const commentsHolder = h('section', { class: 'comments' }, h('h2', {}, FT.t('comments')), FT.loading());
-    const related = (info.relatedVideos || []).filter((v) => !v.isShort);
+    const related = FT.related(info);
     const page = h('div', {},
         h('div', { class: 'watch-info' },
             h('h1', {}, info.title),
