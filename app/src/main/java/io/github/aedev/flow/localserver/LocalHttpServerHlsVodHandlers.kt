@@ -75,7 +75,7 @@ private fun fetchIndex(
         val result =
             fetchFromCdn(url, key, range).use { r ->
                 code = r.code
-                if (r.code == 206 || r.code == 200) r.body?.bytes() ?: ByteArray(0) else null
+                if (r.code == 206 || r.code == 200) r.body.bytes() else null
             }
         if (result != null) return IndexFetch(code, result)
         if (code != 403) break

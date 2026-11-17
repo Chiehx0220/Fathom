@@ -26,9 +26,7 @@ internal object BilibiliLinks {
                 }
 
                 // no link form
-                is BilibiliRef.Series -> {
-                    Unit
-                }
+                is BilibiliRef.Series -> {}
             }
         }
         BilibiliDeepLink.parse(text)?.let {

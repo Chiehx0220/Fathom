@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
@@ -137,8 +137,12 @@ internal fun DirectionWheel(
     ) {
         Arrow(Icons.Default.KeyboardArrowUp, R.string.remote_up, Modifier.align(Alignment.TopCenter).padding(top = 12.dp))
         Arrow(Icons.Default.KeyboardArrowDown, R.string.remote_down, Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
-        Arrow(Icons.Default.KeyboardArrowLeft, R.string.remote_left, Modifier.align(Alignment.CenterStart).padding(start = 12.dp))
-        Arrow(Icons.Default.KeyboardArrowRight, R.string.remote_right, Modifier.align(Alignment.CenterEnd).padding(end = 12.dp))
+        Arrow(
+            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+            R.string.remote_left,
+            Modifier.align(Alignment.CenterStart).padding(start = 12.dp),
+        )
+        Arrow(Icons.AutoMirrored.Filled.KeyboardArrowRight, R.string.remote_right, Modifier.align(Alignment.CenterEnd).padding(end = 12.dp))
         OkKey(send, okSize, Modifier.align(Alignment.Center))
     }
 }

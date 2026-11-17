@@ -1,10 +1,7 @@
-@file:OptIn(UnstableApi::class)
-
 package io.github.aedev.flow.localserver
 
 import android.net.Uri
 import android.util.Log
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSpec
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
 import io.github.aedev.flow.player.datasource.RefusedStreamSwapper

@@ -32,7 +32,11 @@ internal fun RequestContext.handleSubtitlesProxy(
             .header("User-Agent", "Mozilla/5.0")
             .build()
     LocalServerCaches.httpClient.newCall(request).execute().use { response ->
-        val body = (response.body?.string() ?: "").withoutCueSettings().toByteArray(Charsets.UTF_8)
+        val body =
+            response.body
+                .string()
+                .withoutCueSettings()
+                .toByteArray(Charsets.UTF_8)
         reply.sendBytes(200, body, "text/vtt; charset=UTF-8", mapOf("Access-Control-Allow-Origin" to "*"))
     }
 }

@@ -99,7 +99,7 @@ internal object HedgedOpen {
                             launch(urls[launched++])
                         } else if (failures >= launched) {
                             cancelAll()
-                            throw firstError!!
+                            throw firstError
                         }
                     }
                 }

@@ -7,9 +7,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.VolumeDown
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeDown
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -93,9 +93,9 @@ internal fun VolumeHud(
                 val level = if (state.muted) 0f else state.volume
                 Icon(
                     when {
-                        level == 0f -> Icons.Default.VolumeOff
-                        level < 0.5f -> Icons.Default.VolumeDown
-                        else -> Icons.Default.VolumeUp
+                        level == 0f -> Icons.AutoMirrored.Filled.VolumeOff
+                        level < 0.5f -> Icons.AutoMirrored.Filled.VolumeDown
+                        else -> Icons.AutoMirrored.Filled.VolumeUp
                     },
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.inverseOnSurface,

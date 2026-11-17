@@ -96,7 +96,7 @@ internal fun RequestContext.handleImageProxy(
             .header("User-Agent", "Mozilla/5.0")
     extraHeaders.forEach { (name, value) -> reqBuilder.header(name, value) }
     LocalServerCaches.httpClient.newCall(reqBuilder.build()).execute().use { response ->
-        val body = response.body?.bytes() ?: ByteArray(0)
+        val body = response.body.bytes()
         if (!response.isSuccessful) {
             reply.send(502, "Image unavailable.", "text/plain; charset=UTF-8")
             return

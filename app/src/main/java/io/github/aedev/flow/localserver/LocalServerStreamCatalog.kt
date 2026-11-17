@@ -118,9 +118,9 @@ internal class StreamCatalog(
                         url,
                         bandwidth,
                         vs.codec.orEmpty(),
-                        vs.width.toInt(),
-                        vs.height.toInt(),
-                        vs.fps.toInt(),
+                        vs.width,
+                        vs.height,
+                        vs.fps,
                         ByteRange(vs.initStart.toLong(), vs.initEnd.toLong()),
                         ByteRange(vs.indexStart.toLong(), vs.indexEnd.toLong()),
                     )

@@ -126,7 +126,7 @@ private fun relay(
 
     reply.stream(code, type, cdn.header("Content-Length")?.toLongOrNull(), headers) { out ->
         try {
-            cdn.body?.byteStream()?.copyTo(out, COPY_BUFFER_BYTES)
+            cdn.body.byteStream().copyTo(out, COPY_BUFFER_BYTES)
         } catch (e: IOException) {
             // Client disconnected (pause/seek).
             serverLog("Stream proxy: Client connection closed.")

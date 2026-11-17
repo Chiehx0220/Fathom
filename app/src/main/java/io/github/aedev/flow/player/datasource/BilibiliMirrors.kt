@@ -57,7 +57,7 @@ object BilibiliMirrors {
         synchronized(speeds) {
             val previous = speeds[host]
             val fresh = previous != null && nowMs - previous.updatedMs <= SPEED_TTL_MS
-            val smoothed = if (fresh) previous!!.bytesPerSecond * (1 - SMOOTHING) + sample * SMOOTHING else sample
+            val smoothed = if (fresh) previous.bytesPerSecond * (1 - SMOOTHING) + sample * SMOOTHING else sample
             speeds[host] = Speed(smoothed, nowMs)
         }
     }

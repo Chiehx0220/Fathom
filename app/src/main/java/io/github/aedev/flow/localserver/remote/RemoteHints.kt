@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -52,7 +52,7 @@ internal fun VolumeKeysHint(modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxWidth(),
     ) {
         Row(Modifier.padding(start = 16.dp, top = 14.dp, end = 8.dp, bottom = 6.dp), verticalAlignment = Alignment.Top) {
-            Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.padding(top = 2.dp).size(24.dp))
+            Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = null, modifier = Modifier.padding(top = 2.dp).size(24.dp))
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(R.string.remote_volume_hint_title), style = MaterialTheme.typography.titleSmall)

@@ -204,7 +204,7 @@ class BilibiliSession(
         withContext(Dispatchers.IO) {
             http.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IOException("HTTP ${response.code} for ${request.url.host}")
-                Result(response.body?.string().orEmpty(), response.header("date"))
+                Result(response.body.string(), response.header("date"))
             }
         }
 
@@ -222,7 +222,7 @@ class BilibiliSession(
             val request = request(url, headers)
             http.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IOException("HTTP ${response.code} for ${request.url.host}")
-                response.body?.bytes() ?: ByteArray(0)
+                response.body.bytes()
             }
         }
 
@@ -232,7 +232,7 @@ class BilibiliSession(
         headers: Map<String, String>,
     ): String =
         withContext(Dispatchers.IO) {
-            http.newCall(request(url, headers)).execute().use { it.body?.string().orEmpty() }
+            http.newCall(request(url, headers)).execute().use { it.body.string() }
         }
 
     internal fun openWebSocket(
