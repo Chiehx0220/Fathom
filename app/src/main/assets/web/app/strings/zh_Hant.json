@@ -171,6 +171,7 @@
   "load_more_comments": "載入更多留言",
   "could_not_load_comments": "無法載入留言。",
   "download": "下載",
+  "more": "更多",
   "downloading": "下載中 {percent}%",
   "paused_at": "已暫停 {percent}%",
   "downloaded": "已下載",

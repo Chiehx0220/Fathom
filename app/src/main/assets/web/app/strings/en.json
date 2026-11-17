@@ -173,6 +173,7 @@
   "load_more_comments": "Load more comments",
   "could_not_load_comments": "Could not load comments.",
   "download": "Download",
+  "more": "More",
   "downloading": "Downloading {percent}%",
   "paused_at": "Paused {percent}%",
   "downloaded": "Downloaded",

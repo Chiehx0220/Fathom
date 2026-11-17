@@ -57,9 +57,11 @@ const loadComments = async (holder, service, url, scope) => {
 // Download button: phone is source of truth; polls while downloading.
 const downloadButton = (service, info) => {
     let state = 'none';
-    const label = h('span', {}, FT.t('download'));
+    const label = h('span', { class: 'lbl' }, FT.t('download'));
     const icon = h('span', {});
-    const btn = h('button', { type: 'button', class: 'btn', data: { f: '', key: 'download', first: '1' } }, icon, label);
+    const btn = h('button', { type: 'button', class: 'btn tool wide-only', data: { f: '', key: 'download' } }, icon, label);
+    // Hidden when narrow: menus anchor to More.
+    const anchorEl = () => (btn.getClientRects().length ? btn : btn.moreAnchor || btn);
     const paint = (s) => {
         state = s.state;
         btn.classList.toggle('primary', state === 'completed');
@@ -70,6 +72,8 @@ const downloadButton = (service, info) => {
         const [ic, text] = map[state] || ['download', FT.t('download')];
         icon.replaceChildren(FT.icon(ic));
         label.textContent = text;
+        btn.describe = () => ({ icon: ic, label: text });
+        if (btn.onState) btn.onState(state);
         const active = state === 'pending' || state === 'downloading' || state === 'paused';
         if (active && !downloadTimer) downloadTimer = setInterval(refresh, 2000);
         if (!active && downloadTimer) { clearInterval(downloadTimer); downloadTimer = 0; }
@@ -82,7 +86,7 @@ const downloadButton = (service, info) => {
     const CODEC_LABEL = { h264: FT.t('codec_h264'), vp9: FT.t('codec_vp9'), av1: FT.t('codec_av1'), hevc: 'HEVC', vp8: 'VP8' };
     const pickCodec = (height, codecs) => FT.menu.open(
         codecs.map((codec) => ({ icon: 'download', label: CODEC_LABEL[codec] || codec.toUpperCase(), run: () => run('start', { height, codec }) })),
-        { title: FT.t('download_format', { height }), anchor: btn });
+        { title: FT.t('download_format', { height }), anchor: anchorEl() });
     const choose = () => FT.menu.open([
         { icon: 'download', label: FT.t('download_best'), run: () => run('start', { height: 0 }) },
         ...qualities.map(({ height, codecs }) => ({
@@ -90,7 +94,7 @@ const downloadButton = (service, info) => {
             run: () => (codecs.length > 1 ? pickCodec(height, codecs) : run('start', { height })),
         })),
         { icon: 'music_note', label: FT.t('audio_only'), run: () => run('start', { audio: 1 }) },
-    ], { title: FT.t('download_quality'), anchor: btn });
+    ], { title: FT.t('download_quality'), anchor: anchorEl() });
     btn.addEventListener('click', () => {
         if (state === 'none' || state === 'failed') { if (qualities.length) choose(); else run('start'); return; }
         if (state === 'completed') { if (confirm(FT.t('confirm_delete_download'))) run('delete'); return; }
@@ -105,27 +109,34 @@ const actionRow = (service, info) => {
     const video = { url: info.url, title: info.title, channelName: info.channelName, thumbnailUrl: info.thumbnailUrl, channelId: info.channelId, serviceId: service };
     const channel = { id: info.channelId, name: info.channelName, thumbnailUrl: info.channelThumbnailUrl };
     const st = { subscribed: false, later: false, like: null };
+    const liked = () => st.like === 'LIKED' || st.like === 'like';
+    const disliked = () => st.like === 'DISLIKED' || st.like === 'dislike';
 
+    // Icon button; label shown when wide (watch.css).
+    const tool = (label, icon, onclick, key, extra = '') => h('button', { type: 'button', class: ('btn tool ' + extra).trim(), data: { f: '', key }, onclick, 'aria-label': label, title: label },
+        FT.icon(icon), h('span', { class: 'lbl' }, label));
     const subscribe = FT.button(FT.t('subscribe'), 'notifications', null, 'primary', 'subscribe');
     const like = FT.button(info.likeCount > 0 ? FT.count(info.likeCount) : FT.t('like'), 'thumb_up', null, '', 'like');
+    like.setAttribute('aria-label', FT.t('like'));
     const dislike = FT.button(FT.t('dislike'), 'thumb_down', null, 'round', 'dislike');
-    const later = FT.button(FT.t('watch_later'), 'schedule', null, '', 'later');
+    const later = tool(FT.t('watch_later'), 'schedule', null, 'later');
     const paint = () => {
         subscribe.replaceChildren(FT.icon(st.subscribed ? 'notifications_active' : 'notifications'), FT.t(st.subscribed ? 'subscribed' : 'subscribe'));
         subscribe.classList.toggle('primary', !st.subscribed);
-        like.classList.toggle('on', st.like === 'LIKED' || st.like === 'like');
-        dislike.classList.toggle('on', st.like === 'DISLIKED' || st.like === 'dislike');
-        later.replaceChildren(FT.icon(st.later ? 'bookmark_added' : 'schedule'), FT.t(st.later ? 'saved' : 'watch_later'));
+        like.classList.toggle('on', liked());
+        dislike.classList.toggle('on', disliked());
+        const laterLabel = FT.t(st.later ? 'saved' : 'watch_later');
+        later.replaceChildren(FT.icon(st.later ? 'bookmark_added' : 'schedule'), h('span', { class: 'lbl' }, laterLabel));
+        later.setAttribute('aria-label', laterLabel);
+        later.title = laterLabel;
         later.classList.toggle('on', st.later);
     };
     const flip = (key, request) => { const was = st[key]; st[key] = !was; paint(); request(!was).catch(() => { st[key] = was; paint(); FT.toast(FT.t('action_failed')); }); };
     subscribe.onclick = () => { if (channel.id) flip('subscribed', (on) => FT.api.subscribe(channel, on)); };
     later.onclick = () => flip('later', (on) => FT.api.watchLater(video, on));
     const rate = (kind) => {
-        const wasLiked = st.like === 'LIKED' || st.like === 'like';
-        const wasDisliked = st.like === 'DISLIKED' || st.like === 'dislike';
         const was = st.like;
-        const active = kind === 'like' ? wasLiked : wasDisliked;
+        const active = kind === 'like' ? liked() : disliked();
         st.like = active ? null : kind;
         paint();
         FT.api.rate(video, active ? 'remove' : kind).catch(() => { st.like = was; paint(); FT.toast(FT.t('action_failed')); });
@@ -134,24 +145,39 @@ const actionRow = (service, info) => {
     dislike.onclick = () => rate('dislike');
     // Used by remote.js.
     FT.rating = {
-        state: () => (st.like === 'LIKED' || st.like === 'like' ? 'like' : st.like === 'DISLIKED' || st.like === 'dislike' ? 'dislike' : 'none'),
+        state: () => (liked() ? 'like' : disliked() ? 'dislike' : 'none'),
         toggle: rate,
     };
 
     // navigator.share() needs trusted gesture (remote press = WebSocket message); falls back to FT.copyText.
-    const share = FT.button(FT.t('share'), 'share', async () => {
+    const share = tool(FT.t('share'), 'share', async () => {
         const link = info.url;
         if (navigator.share) {
             try { await navigator.share({ title: info.title, url: link }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
         }
         FT.toast(await FT.copyText(link) ? FT.t('link_copied') : link);
-    }, '', 'share');
-    const cast = FT.button(FT.t('cast'), 'cast', () => FT.cast.open(info), '', 'cast');
-    const audio = FT.button(FT.t('audio_only'), 'music_note', () => audio.classList.toggle('on', FT.player.toggleAudioOnly()), '', 'audio');
-    const buttons = [subscribe, like, dislike, later, share, audio, cast];
-    buttons.splice(4, 0, FT.button(FT.t('playlist'), 'playlist_play', () => FT.playlistPicker(video), '', 'playlist'));
-    if (service === 0) buttons.push(downloadButton(service, info));
-    buttons.forEach((b, i) => { if (i < 4) b.dataset.first = '1'; });
+    }, 'share', 'tier-mid');
+    const playlist = tool(FT.t('playlist'), 'playlist_play', () => FT.playlistPicker(video), 'playlist', 'tier-mid');
+
+    // Narrow: audio, cast, download (<480px also playlist, share) behind More; More lit while one is active.
+    let downloadActive = false;
+    const syncMore = () => more.classList.toggle('on', downloadActive || audio.classList.contains('on'));
+    const audio = tool(FT.t('audio_only'), 'music_note', () => { audio.classList.toggle('on', FT.player.toggleAudioOnly()); syncMore(); }, 'audio', 'wide-only');
+    const cast = tool(FT.t('cast'), 'cast', () => FT.cast.open(info), 'cast', 'wide-only');
+    const download = service === 0 ? downloadButton(service, info) : null;
+    const hidden = (el) => !el.getClientRects().length;
+    const more = tool(FT.t('more'), 'more_vert', () => FT.menu.open([
+        ...(hidden(playlist) ? [{ icon: 'playlist_play', label: FT.t('playlist'), run: () => playlist.click() }] : []),
+        ...(hidden(share) ? [{ icon: 'share', label: FT.t('share'), run: () => share.click() }] : []),
+        { icon: 'music_note', label: FT.t('audio_only'), run: () => audio.click() },
+        { icon: 'cast', label: FT.t('cast'), run: () => cast.click() },
+        ...(download ? [{ ...download.describe(), run: () => download.click() }] : []),
+    ], { anchor: more }), 'more', 'narrow-only');
+    if (download) {
+        download.moreAnchor = more;
+        download.onState = (state) => { downloadActive = state !== 'none' && state !== 'failed'; syncMore(); };
+    }
+    [subscribe, like, dislike, later].forEach((b) => { b.dataset.first = '1'; });
     paint();
 
     FT.api.state(info.url, info.channelId).then((s) => {
@@ -160,7 +186,8 @@ const actionRow = (service, info) => {
         st.like = s.like || null;
         paint();
     }).catch(() => {});
-    return h('div', { class: 'btns' }, buttons);
+    const row = h('div', { class: 'watch-actions' }, h('div', { class: 'seg', role: 'group' }, like, dislike), later, playlist, share, audio, cast, download, more);
+    return { subscribe, row };
 };
 
 const chapterCards = (info) => info.chapters.map((c, i) => {
@@ -201,12 +228,15 @@ const render = async (root, params, scope) => {
     });
     const commentsHolder = h('section', { class: 'comments' }, h('h2', {}, FT.t('comments')), FT.loading());
     const related = FT.related(info);
+    const actions = actionRow(service, info);
     const page = h('div', {},
         h('div', { class: 'watch-info' },
             h('h1', {}, info.title),
-            h('a', { class: 'who-link', href: info.channelId ? FT.link.channel(info.channelId, service) : '#', tabindex: '-1', data: { f: '', key: 'channel', first: '1' } },
-                FT.avatar(info.channelName, info.channelThumbnailUrl), h('div', { class: 'grow' }, h('div', { class: 'who' }, info.channelName))),
-            actionRow(service, info)),
+            h('div', { class: 'who-row' },
+                h('a', { class: 'who-link', href: info.channelId ? FT.link.channel(info.channelId, service) : '#', tabindex: '-1', data: { f: '', key: 'channel', first: '1' } },
+                    FT.avatar(info.channelName, info.channelThumbnailUrl), h('div', { class: 'grow' }, h('div', { class: 'who' }, info.channelName))),
+                actions.subscribe),
+            actions.row),
         info.chapters.length ? FT.shelf(FT.t('chapters'), FT.t('chapters_hint'), chapterCards(info), 'chapters') : null,
         about,
         related.length ? FT.shelf(FT.t('related'), FT.t('related_hint'), related.slice(0, 16).map((v) => FT.videoCard(v))) : null,
