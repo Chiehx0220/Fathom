@@ -14,6 +14,7 @@ internal object LocalServerBilibiliComments {
         videoUrl: String,
         nextPage: Page?,
     ): CommentsResult {
+        if (BilibiliRef.Live.ofUrl(videoUrl) != null) return CommentsResult(emptyList(), null, disabled = true)
         val bvid = BilibiliRef.Video.parse(LocalServerBilibili.videoIdOf(videoUrl)).bvid
         val api = bilibiliApi(context)
         val token = nextPage?.url.orEmpty()

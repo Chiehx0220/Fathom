@@ -6,6 +6,7 @@ import io.github.aedev.flow.bilibili.fake.FakeBilibili
 import io.github.aedev.flow.bilibili.fake.verifyGolden
 import io.github.aedev.flow.di.bilibiliApiProvider
 import org.junit.After
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -168,6 +169,13 @@ class LocalServerBilibiliGoldenTest {
             "server-comments",
             "first next=${first.next.token()} disabled=${first.disabled}\n${first.items.lines()}\nreplies next=${replies.next.token()}\n${replies.items.lines()}",
         )
+    }
+
+    @Test
+    fun liveRoomHasNoComments() {
+        val page = backend.comments(context, "https://live.bilibili.com/31069099", null)
+        assertTrue(page.disabled)
+        assertTrue(page.items.isEmpty())
     }
 
     @Test
