@@ -69,13 +69,13 @@ import io.github.aedev.flow.innertube.models.WatchEndpoint
 import io.github.aedev.flow.player.LifecyclePlaybackPreferences
 import io.github.aedev.flow.player.MusicFailureStreak
 import io.github.aedev.flow.player.MusicLoadErrorPolicy
-import io.github.aedev.flow.player.MusicMutePause
 import io.github.aedev.flow.player.MusicPauseLog
 import io.github.aedev.flow.player.MusicPlaybackDiagnostics
 import io.github.aedev.flow.player.MusicPlaybackRecoveryPlanner
 import io.github.aedev.flow.player.MusicQueuePlanner
 import io.github.aedev.flow.player.MusicRadioPlanner
 import io.github.aedev.flow.player.MusicResumeTracker
+import io.github.aedev.flow.player.MutePausePolicy
 import io.github.aedev.flow.player.PlaylistQueueOrder
 import io.github.aedev.flow.player.audio.AudioSessionAnnouncer
 import io.github.aedev.flow.player.audio.AudioSessionRegistry
@@ -129,6 +129,8 @@ class Media3MusicService : MediaLibraryService() {
         private const val ACTION_SKIP_TO = "ACTION_SKIP_TO"
         private const val EXTRA_SKIP_INDEX = "index"
         private const val EXTRA_SKIP_MEDIA_ID = "mediaId"
+        private const val ACTION_HOLD_FOR_NEW_QUEUE = "ACTION_HOLD_FOR_NEW_QUEUE"
+        private const val EXTRA_QUEUE_HELD = "held"
 
         private const val MAX_RETRY_PER_SONG = 5
         private const val BASE_RETRY_DELAY_MS = 3000L
@@ -148,6 +150,7 @@ class Media3MusicService : MediaLibraryService() {
         private val CommandToggleRepeat = SessionCommand(ACTION_TOGGLE_REPEAT, Bundle.EMPTY)
         private val CommandStop = SessionCommand(ACTION_STOP, Bundle.EMPTY)
         private val CommandSkipTo = SessionCommand(ACTION_SKIP_TO, Bundle.EMPTY)
+        private val CommandHoldForNewQueue = SessionCommand(ACTION_HOLD_FOR_NEW_QUEUE, Bundle.EMPTY)
 
         const val ACTION_TOGGLE_LIKE = "ACTION_TOGGLE_LIKE"
         private val CommandToggleLike = SessionCommand(ACTION_TOGGLE_LIKE, Bundle.EMPTY)
@@ -181,6 +184,15 @@ class Media3MusicService : MediaLibraryService() {
                     putString(EXTRA_SKIP_MEDIA_ID, mediaId)
                 },
             )
+
+        /**
+         * Asked before the app replaces the queue with a song picked from a list: the service moves the
+         * playing song to a fade tail first. [queueHeld] on the result says whether it did.
+         */
+        fun holdForNewQueue(controller: MediaController): ListenableFuture<SessionResult> =
+            controller.sendCustomCommand(CommandHoldForNewQueue, Bundle.EMPTY)
+
+        fun queueHeld(result: SessionResult): Boolean = result.extras.getBoolean(EXTRA_QUEUE_HELD)
     }
 
     private lateinit var mediaLibrarySession: MediaLibrarySession
@@ -557,7 +569,8 @@ class Media3MusicService : MediaLibraryService() {
 
         val renderersFactory = musicRenderers(equalizer)
 
-        val loadControl = LoadControlFactory.forMusic()
+        val isLowRamDevice = (getSystemService(ACTIVITY_SERVICE) as? ActivityManager)?.isLowRamDevice == true
+        val loadControl = MusicLoadControl(LoadControlFactory.forMusic(wholeSong = !isLowRamDevice), NetworkState.isDataSaverOn(this))
 
         player =
             ExoPlayer
@@ -588,6 +601,7 @@ class Media3MusicService : MediaLibraryService() {
         // order, the player's shuffle flag reorders nothing on its own, whichever controller sets it.
         player.setShuffleOrder(ShuffleOrder.UnshuffledShuffleOrder(0))
         musicResume.attach(player)
+        MusicPreload(this, player) { loadControl.savesData = it }.attach(lifecycleScope, prefs.bufferProfile)
         crossfader = MusicCrossfader(player, ::buildCrossfadeTail, ::crossfadeMoment, ::applyLoudnessGain).also { it.attach() }
         lifecycleScope.launch {
             combine(
@@ -732,20 +746,20 @@ class Media3MusicService : MediaLibraryService() {
                     volume: Int,
                     muted: Boolean,
                 ) {
-                    val action = MusicMutePause.onVolume(muted || volume == 0, pauseWhenMuted, player.isPlaying, pausedForMute)
+                    val action = MutePausePolicy.onVolume(muted || volume == 0, pauseWhenMuted, player.isPlaying, pausedForMute)
                     when (action) {
-                        MusicMutePause.Action.PAUSE -> {
+                        MutePausePolicy.Action.PAUSE -> {
                             pauseLog.noteCause("pause music when muted")
                             player.pause()
                             pausedForMute = true
                         }
 
-                        MusicMutePause.Action.RESUME -> {
+                        MutePausePolicy.Action.RESUME -> {
                             pausedForMute = false
                             player.play()
                         }
 
-                        MusicMutePause.Action.NONE -> {}
+                        MutePausePolicy.Action.NONE -> {}
                     }
                 }
 
@@ -1460,7 +1474,11 @@ class Media3MusicService : MediaLibraryService() {
 
     /** The session's player: a resume from a controller turns offload back on before playback starts. */
     private fun sessionPlayer(): Player =
-        SessionPlayer(player, { mediaLibrarySession.controllerForCurrentRequest }) {
+        SessionPlayer(
+            player,
+            { mediaLibrarySession.controllerForCurrentRequest },
+            onSkip = { index, mediaId -> crossfader?.skipTo(index, mediaId) != null },
+        ) {
             updateOffload { it.copy(pausedLong = false) }
         }.also {
             it.follow(lifecycleScope)
@@ -2046,6 +2064,7 @@ class Media3MusicService : MediaLibraryService() {
                     .add(CommandToggleLike)
                     .add(CommandStop)
                     .add(CommandSkipTo)
+                    .add(CommandHoldForNewQueue)
                     .build()
             return MediaSession.ConnectionResult
                 .AcceptedResultBuilder(session)
@@ -2118,6 +2137,15 @@ class Media3MusicService : MediaLibraryService() {
             if (customCommand.customAction == ACTION_SKIP_TO) {
                 crossfader?.skipTo(args.getInt(EXTRA_SKIP_INDEX), args.getString(EXTRA_SKIP_MEDIA_ID).orEmpty())
                 return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+            }
+
+            if (customCommand.customAction == ACTION_HOLD_FOR_NEW_QUEUE) {
+                val answer = SettableFuture.create<SessionResult>()
+                val reply = { held: Boolean ->
+                    answer.set(SessionResult(SessionResult.RESULT_SUCCESS, Bundle().apply { putBoolean(EXTRA_QUEUE_HELD, held) }))
+                }
+                crossfader?.holdForNewQueue { reply(it) } ?: reply(false)
+                return answer
             }
 
             if (customCommand.customAction == ACTION_STOP) {

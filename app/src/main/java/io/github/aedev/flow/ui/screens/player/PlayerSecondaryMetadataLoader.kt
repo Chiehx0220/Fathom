@@ -17,6 +17,7 @@ import io.github.aedev.flow.utils.OriginalTextPolicy
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
@@ -471,13 +472,14 @@ internal class PlayerSecondaryMetadataLoader(
                         }.orEmpty()
                     }
 
+                val unwatched = PlayerRelatedVideosPolicy.withoutWatched(related, playerManager.watchedSuggestionsSource)
                 withContext(Dispatchers.Main) {
                     onResult(
                         SecondaryMetadata.LiveWatch(
                             videoId = videoId,
                             loadToken = loadToken,
                             video = enriched,
-                            relatedVideos = related,
+                            relatedVideos = unwatched,
                             channelAvatarUrl = meta.channelAvatarUrl,
                             subscriberCount = meta.subscriberCount ?: innerTubeMeta?.subscriberCount,
                         ),
@@ -490,7 +492,12 @@ internal class PlayerSecondaryMetadataLoader(
         videoId: String,
         videos: List<Video>,
         loadToken: Long,
-    ) = onResult(SecondaryMetadata.Related(videoId = videoId, loadToken = loadToken, videos = videos))
+    ) {
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            val unwatched = PlayerRelatedVideosPolicy.withoutWatched(videos, playerManager.watchedSuggestionsSource)
+            onResult(SecondaryMetadata.Related(videoId = videoId, loadToken = loadToken, videos = unwatched))
+        }
+    }
 
     private suspend fun awaitPlaybackStarted(videoId: String) {
         withTimeoutOrNull(PLAYBACK_STARTED_TIMEOUT_MS) {

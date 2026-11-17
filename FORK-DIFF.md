@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **111** (1165 changed lines). New files: **271**.
+- Modified upstream files: **111** (1168 changed lines). New files: **271**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -61,6 +61,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/effects/PlayerLoadEffects.kt | 13 | 2 |
 | data/update/GitHubRelease.kt | 7 | 7 |
 | ui/FlowNavigation.kt | 7 | 7 |
+| utils/ThumbnailUrlResolver.kt | 7 | 6 |
 | data/comments/CommentsPager.kt | 9 | 3 |
 | player/stream/PlaybackLoadResolver.kt | 11 | 1 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
@@ -68,11 +69,10 @@ in it). **New files** never conflict; they are ours alone.
 | ui/FlowApp.kt | 2 | 9 |
 | ui/screens/player/WatchSessionTracker.kt | 8 | 3 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 8 | 3 |
-| utils/ThumbnailUrlResolver.kt | 6 | 5 |
 | data/local/entity/VideoEntity.kt | 7 | 3 |
+| ui/screens/player/dialogs/PlayerDialogsContainer.kt | 7 | 3 |
 | player/stream/VideoCodecUtils.kt | 4 | 5 |
 | ui/screens/player/content/RelatedVideosList.kt | 6 | 3 |
-| ui/screens/player/dialogs/PlayerDialogsContainer.kt | 7 | 2 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 8 | 1 |
 | player/stream/ResolvedStreamData.kt | 8 | 0 |
 | sync/merge/CollectionMergers.kt | 4 | 4 |
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **18** (139 changed lines). New files: **90**.
+- Modified upstream files: **19** (143 changed lines). New files: **91**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -137,6 +137,7 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/player/stream/VideoCodecUtilsTest.kt | 6 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/shorts/ShortsStreamSelectionTest.kt | 5 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/video/DownloadStreamPolicyTest.kt | 5 | 0 |
+| app/src/test/java/io/github/aedev/flow/data/repository/ChatReplayPageTest.kt | 2 | 2 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/crash/CrashSummaryTest.kt | 3 | 1 |
 | app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 2 | 1 |
 | app/src/test/java/io/github/aedev/flow/player/stream/PlaybackLoadResolverTest.kt | 3 | 0 |

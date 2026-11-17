@@ -52,6 +52,9 @@ internal object CrossfadePolicy {
     /** With no old song to blend with, the next one still comes in over this long instead of at full volume. */
     const val QUICK_FADE_IN_MS = 400L
 
+    /** A skipped-to song not playing this long after the old one moved to its tail is late, and the old one fades out anyway. */
+    const val LATE_NEXT_SONG_MS = 1_000L
+
     /** A lined-up tail takes over no sooner than this before the fade, so a short fade still ends with the song. */
     private const val HAND_OFF_EARLY_MS = 500L
 
@@ -234,6 +237,15 @@ internal object CrossfadePolicy {
         return minOf(fadeMs.coerceIn(0L, MAX_MS), leftOnClock).coerceAtLeast(1L)
     }
 
+    /** How long a skipped-to song that came late fades in: quickly, since the old song is already fading or gone. */
+    fun lateFadeInClockMs(skipClockMs: Long): Long = minOf(QUICK_FADE_IN_MS, skipClockMs).coerceAtLeast(1L)
+
+    /** A song's length from its metadata, or the player's own when the metadata has none; null while neither knows it. */
+    fun knownDurationMs(
+        metadataMs: Long?,
+        playerMs: Long,
+    ): Long? = metadataMs ?: playerMs.takeIf { it > 0L }
+
     /** How long a skip overlaps the two songs on the clock: the chosen fade, or just [SKIP_BLEND_MS] without one. */
     fun skipClockMs(
         settings: Settings,
@@ -246,6 +258,18 @@ internal object CrossfadePolicy {
         val leftOnClock = ((durationMs - positionMs) / speed.coerceAtLeast(0.1f)).toLong()
         return minOf(SKIP_BLEND_MS, leftOnClock).coerceAtLeast(1L)
     }
+
+    /**
+     * Whether a song picked from a list fades in over the one playing (#2163): while fades on skip are on,
+     * something plays, and no tail is heard yet.
+     */
+    fun newQueueFades(
+        settings: Settings,
+        stage: CrossfadeStage,
+        playing: Boolean,
+    ): Boolean = settings.fadesOnSkip && playing && stage in quietStages
+
+    private val quietStages = setOf(CrossfadeStage.IDLE, CrossfadeStage.PREPARED, CrossfadeStage.WAITING_FOR_TAIL)
 
     /**
      * A tail heard for moments, or after the song has already gone quiet, starts sooner from a sync point
@@ -312,6 +336,36 @@ internal object CrossfadePolicy {
         headStartMs: Long,
         deltaMs: Long,
     ): Long = (headStartMs - deltaMs / 2).coerceIn(MIN_HEAD_START_MS, MAX_HEAD_START_MS)
+
+    const val DEFAULT_SKIP_LEAD_MS = 500L
+    const val DEFAULT_SKIP_RESEEK_LEAD_MS = 200L
+    private const val MAX_SKIP_LEAD_MS = 1_500L
+
+    /** Positions this close at a skip's hand-off are one moment of the song to the ear. */
+    private const val SKIP_LEVEL_WITHIN_MS = 50L
+
+    /**
+     * How far past the session a skip's tail starts next time, corrected by how far [apartMs] this one
+     * landed from it. A tail behind repeats the old song (#2170), so a lead that was short grows by all
+     * of it, and one that was long shrinks by half, since starts vary a little on one phone.
+     */
+    fun learnedSkipLeadMs(
+        leadMs: Long,
+        apartMs: Long,
+    ): Long {
+        val learned = if (apartMs < 0) leadMs - apartMs else leadMs - apartMs / 2
+        return learned.coerceIn(0L, MAX_SKIP_LEAD_MS)
+    }
+
+    /**
+     * Whether a held skip's tail, [apartMs] ahead of the session, takes the song over now. Both play at
+     * the same speed, so the gap never closes by itself: a tail behind would repeat the old song and one
+     * ahead would jump it, so the muted tail seeks again while [canSeek] allows.
+     */
+    fun skipTailLevel(
+        apartMs: Long,
+        canSeek: Boolean,
+    ): Boolean = abs(apartMs) <= SKIP_LEVEL_WITHIN_MS || !canSeek
 }
 
 /**

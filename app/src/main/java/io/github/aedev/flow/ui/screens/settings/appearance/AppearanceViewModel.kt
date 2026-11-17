@@ -11,6 +11,7 @@ import io.github.aedev.flow.data.local.HomeFeedColumns
 import io.github.aedev.flow.data.local.HomeViewMode
 import io.github.aedev.flow.data.local.LocalDataManager
 import io.github.aedev.flow.data.local.NavBarLabels
+import io.github.aedev.flow.data.local.NavBarScroll
 import io.github.aedev.flow.data.local.NavBarStyle
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.platform.AppIconController
@@ -54,6 +55,8 @@ class AppearanceViewModel
         val libraryPreviews = preferences.libraryShelfPreviewsEnabled.asState(true)
         val separatePlaylists = preferences.separatePlaylistKinds.asState(false)
         val appLogo = preferences.showAppLogoIcon.asState(true)
+        val topBarProfile = preferences.showProfileInTopBar.asState(true)
+        val settingsInProfileMenu = preferences.settingsInProfileMenu.asState(false)
         val groupBadges = preferences.showChannelGroupBadges.asState(false)
         val cardLikeButtons = preferences.videoCardActionsEnabled.asState(false)
         val cardMarkWatched = preferences.videoCardMarkWatchedEnabled.asState(false)
@@ -74,6 +77,10 @@ class AppearanceViewModel
         val hideNavOnScroll = preferences.bottomNavHideOnScroll.asState(true)
         val navLabels = preferences.bottomNavLabels.asState(NavBarLabels.ALWAYS)
         val navStyle = preferences.bottomNavStyle.asState(NavBarStyle.STANDARD)
+        val navScrub = preferences.bottomNavScrub.asState(true)
+        val navIconPop = preferences.bottomNavIconPop.asState(false)
+        val navScroll = preferences.bottomNavScroll.asState(NavBarScroll.SHRINK)
+        val navMiniBeside = preferences.bottomNavMiniBeside.asState(false)
         val searchShowsNavBar = preferences.searchShowsNavBar.asState(false)
         val innerPagesShowNavBar = preferences.innerPagesShowNavBar.asState(false)
         val navTabOrder = preferences.navTabOrder.asState(DEFAULT_NAV_TAB_ORDER)
@@ -128,6 +135,10 @@ class AppearanceViewModel
 
         fun setAppLogo(enabled: Boolean) = write { preferences.setShowAppLogoIcon(enabled) }
 
+        fun setTopBarProfile(enabled: Boolean) = write { preferences.setShowProfileInTopBar(enabled) }
+
+        fun setSettingsInProfileMenu(enabled: Boolean) = write { preferences.setSettingsInProfileMenu(enabled) }
+
         fun setGroupBadges(enabled: Boolean) = write { preferences.setShowChannelGroupBadges(enabled) }
 
         fun setCardLikeButtons(enabled: Boolean) = write { preferences.setVideoCardActionsEnabled(enabled) }
@@ -153,6 +164,14 @@ class AppearanceViewModel
         fun setNavLabels(labels: NavBarLabels) = write { preferences.setBottomNavLabels(labels) }
 
         fun setNavStyle(style: NavBarStyle) = write { preferences.setBottomNavStyle(style) }
+
+        fun setNavScrub(enabled: Boolean) = write { preferences.setBottomNavScrub(enabled) }
+
+        fun setNavIconPop(enabled: Boolean) = write { preferences.setBottomNavIconPop(enabled) }
+
+        fun setNavScroll(scroll: NavBarScroll) = write { preferences.setBottomNavScroll(scroll) }
+
+        fun setNavMiniBeside(enabled: Boolean) = write { preferences.setBottomNavMiniBeside(enabled) }
 
         fun setSearchShowsNavBar(enabled: Boolean) = write { preferences.setSearchShowsNavBar(enabled) }
 

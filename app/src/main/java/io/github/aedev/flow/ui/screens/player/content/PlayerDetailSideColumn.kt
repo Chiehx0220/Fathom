@@ -207,6 +207,7 @@ internal fun PlayerDetailSideColumn(
                                     isLoading = uiState.isLiveChatLoading,
                                     onClose = { screenState.showLiveChatPanel = false },
                                     modifier = paneModifier,
+                                    isReplay = !uiState.isLive,
                                 )
                             }
 
@@ -256,7 +257,7 @@ internal fun PlayerDetailSideColumn(
                                 ) {
                                     if (uiState.isLiveChatAvailable) {
                                         item {
-                                            LiveChatPreview(onClick = { screenState.showLiveChatPanel = true })
+                                            LiveChatPreview(onClick = { screenState.showLiveChatPanel = true }, isReplay = !uiState.isLive)
                                         }
                                     }
                                     if (showsRelatedSkeleton) {

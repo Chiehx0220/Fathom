@@ -200,4 +200,28 @@ class SubscriptionRefreshPlannerTest {
         assertEquals("https://i0.hdslb.com/a.jpg", plan.labelByChannel.getValue("455557356").avatarUrl)
         assertEquals("Channel 455557356", plan.labelByChannel.getValue("455557356").name)
     }
+
+    @Test
+    fun `an All refresh plans only the channels All shows (1387)`() {
+        val subscriptions = listOf(subscription("a", lastFeedFetchAt = 0L), subscription("b", lastFeedFetchAt = 0L), subscription("c"))
+
+        val stale = SubscriptionRefreshPlanner.planForAll(subscriptions, shown = setOf("a", "c"), now = now)
+        val forced = SubscriptionRefreshPlanner.planForAll(subscriptions, shown = setOf("a", "c"), now = now, force = true)
+
+        assertEquals(listOf("a"), stale.channelIds)
+        assertFalse(stale.isFullRefresh)
+        assertEquals(listOf("a", "c"), forced.channelIds)
+        assertFalse(forced.readAllTabs)
+        assertEquals(null, forced.scope)
+    }
+
+    @Test
+    fun `an All refresh with nothing left out is the plain plan`() {
+        val subscriptions = listOf(subscription("a", lastFeedFetchAt = 0L), subscription("b"))
+
+        assertEquals(
+            SubscriptionRefreshPlanner.plan(subscriptions, now, force = true),
+            SubscriptionRefreshPlanner.planForAll(subscriptions, shown = null, now = now, force = true),
+        )
+    }
 }

@@ -74,6 +74,26 @@ internal object AppearanceIndex {
             section = R.string.settings_section_layout,
             destination = page,
         )
+    val topBarProfile =
+        SettingEntry(
+            key = "appearance.top_bar_profile",
+            title = R.string.settings_top_bar_profile_title,
+            summary = R.string.settings_top_bar_profile_summary,
+            keywords = R.string.settings_top_bar_profile_keywords,
+            section = R.string.settings_section_layout,
+            destination = page,
+            availability = SettingAvailability.NotOnTv,
+        )
+    val settingsInProfileMenu =
+        SettingEntry(
+            key = "appearance.settings_in_profile_menu",
+            title = R.string.settings_profile_menu_settings_title,
+            summary = R.string.settings_profile_menu_settings_summary,
+            keywords = R.string.settings_top_bar_profile_keywords,
+            section = R.string.settings_section_layout,
+            destination = page,
+            availability = SettingAvailability.NotOnTv,
+        )
     val groupBadges =
         SettingEntry(
             key = "appearance.group_badges",
@@ -186,6 +206,8 @@ internal object AppearanceIndex {
             libraryPreviews,
             separatePlaylists,
             appLogo,
+            topBarProfile,
+            settingsInProfileMenu,
             groupBadges,
             cardLikeButtons,
             cardWatchProgress,
@@ -251,6 +273,46 @@ internal object NavigationBarIndex {
             section = R.string.settings_section_style,
             destination = page,
         )
+    val scroll =
+        SettingEntry(
+            key = "navigation_bar.scroll",
+            title = R.string.settings_nav_scroll_title,
+            summary = R.string.settings_nav_scroll_summary,
+            keywords = R.string.settings_keywords_nav_style,
+            section = R.string.settings_section_style,
+            destination = page,
+            revealVia = style.key,
+        )
+    val miniBeside =
+        SettingEntry(
+            key = "navigation_bar.mini_beside",
+            title = R.string.settings_nav_mini_beside_title,
+            summary = R.string.settings_nav_mini_beside_summary,
+            keywords = R.string.settings_keywords_nav_style,
+            section = R.string.settings_section_style,
+            destination = page,
+            revealVia = style.key,
+        )
+    val scrub =
+        SettingEntry(
+            key = "navigation_bar.scrub",
+            title = R.string.settings_nav_scrub_title,
+            summary = R.string.settings_nav_scrub_summary,
+            keywords = R.string.settings_keywords_nav_style,
+            section = R.string.settings_section_style,
+            destination = page,
+            revealVia = style.key,
+        )
+    val iconPop =
+        SettingEntry(
+            key = "navigation_bar.icon_pop",
+            title = R.string.settings_nav_icon_pop_title,
+            summary = R.string.settings_nav_icon_pop_summary,
+            keywords = R.string.settings_keywords_nav_style,
+            section = R.string.settings_section_style,
+            destination = page,
+            revealVia = style.key,
+        )
     val showOnOtherPages =
         SettingEntry(
             key = "navigation_bar.show_on_other_pages",
@@ -269,7 +331,25 @@ internal object NavigationBarIndex {
             destination = page,
         )
 
-    val all = listOf(style, labels, home, shorts, music, search, explore, downloads, hideOnScroll, showOnSearch, showOnOtherPages, order)
+    val all =
+        listOf(
+            style,
+            labels,
+            scroll,
+            miniBeside,
+            scrub,
+            iconPop,
+            home,
+            shorts,
+            music,
+            search,
+            explore,
+            downloads,
+            hideOnScroll,
+            showOnSearch,
+            showOnOtherPages,
+            order,
+        )
 }
 
 internal object ThemeIndex {

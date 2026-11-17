@@ -94,4 +94,5 @@
     <string name="player_settings_keep_playing_after_swipe">Continuar reproduzindo após fechar o Fathom</string>
     <string name="player_settings_keep_playing_after_swipe_subtitle">A reprodução continua quando você desliza o Fathom para fora dos aplicativos recentes</string>
     <string name="profiles_copy_recommendations_summary">O que o Fathom aprendeu sobre o seu gosto</string>
+    <string name="downloads_folder_lost_body">O Fathom perdeu acesso à pasta dos downloads, como acontece após uma reinstalação. Escolha novamente para encontrar seus downloads antigos e continuar salvando nela.</string>
 </resources>

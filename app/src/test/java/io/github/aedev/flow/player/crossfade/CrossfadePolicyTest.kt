@@ -1,5 +1,6 @@
 package io.github.aedev.flow.player.crossfade
 
+import androidx.media3.common.C
 import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.data.local.CrossfadeCurve
 import org.junit.Test
@@ -133,6 +134,23 @@ class CrossfadePolicyTest {
         assertThat(CrossfadePolicy.learnedHeadStartMs(headStartMs = 300L, deltaMs = 40L)).isEqualTo(280L)
         assertThat(CrossfadePolicy.learnedHeadStartMs(headStartMs = 300L, deltaMs = -2_000L)).isEqualTo(800L)
         assertThat(CrossfadePolicy.learnedHeadStartMs(headStartMs = 50L, deltaMs = 500L)).isEqualTo(0L)
+    }
+
+    @Test
+    fun `a skip's lead grows by all of a short landing and shrinks by half a long one, within limits`() {
+        assertThat(CrossfadePolicy.learnedSkipLeadMs(leadMs = 500L, apartMs = -250L)).isEqualTo(750L)
+        assertThat(CrossfadePolicy.learnedSkipLeadMs(leadMs = 500L, apartMs = 200L)).isEqualTo(400L)
+        assertThat(CrossfadePolicy.learnedSkipLeadMs(leadMs = 1_400L, apartMs = -900L)).isEqualTo(1_500L)
+        assertThat(CrossfadePolicy.learnedSkipLeadMs(leadMs = 100L, apartMs = 600L)).isEqualTo(0L)
+    }
+
+    @Test
+    fun `a skip's tail takes over only level with the session, while it may still seek (#2170)`() {
+        assertThat(CrossfadePolicy.skipTailLevel(apartMs = 30L, canSeek = true)).isTrue()
+        assertThat(CrossfadePolicy.skipTailLevel(apartMs = -45L, canSeek = true)).isTrue()
+        assertThat(CrossfadePolicy.skipTailLevel(apartMs = 600L, canSeek = true)).isFalse()
+        assertThat(CrossfadePolicy.skipTailLevel(apartMs = -600L, canSeek = true)).isFalse()
+        assertThat(CrossfadePolicy.skipTailLevel(apartMs = -600L, canSeek = false)).isTrue()
     }
 
     @Test
@@ -373,6 +391,25 @@ class CrossfadePolicyTest {
     }
 
     @Test
+    fun `a picked song fades in only with fades on skip, while playing, before a tail is heard`() {
+        val fading = CrossfadePolicy.Settings(fadeMs = 6_000L, onManualSkip = true)
+        assertThat(CrossfadePolicy.newQueueFades(fading, CrossfadeStage.IDLE, playing = true)).isTrue()
+        assertThat(CrossfadePolicy.newQueueFades(fading, CrossfadeStage.PREPARED, playing = true)).isTrue()
+        assertThat(CrossfadePolicy.newQueueFades(fading, CrossfadeStage.WAITING_FOR_TAIL, playing = true)).isTrue()
+        assertThat(CrossfadePolicy.newQueueFades(fading, CrossfadeStage.IDLE, playing = false)).isFalse()
+        assertThat(CrossfadePolicy.newQueueFades(fading.copy(onManualSkip = false), CrossfadeStage.IDLE, playing = true)).isFalse()
+        assertThat(CrossfadePolicy.newQueueFades(CrossfadePolicy.Settings(), CrossfadeStage.IDLE, playing = true)).isFalse()
+        listOf(
+            CrossfadeStage.ALIGNING,
+            CrossfadeStage.SKIP_STARTING,
+            CrossfadeStage.WAITING_FOR_NEXT_SONG,
+            CrossfadeStage.FADING,
+            CrossfadeStage.THROUGH,
+            CrossfadeStage.THROUGH_IN,
+        ).forEach { assertThat(CrossfadePolicy.newQueueFades(fading, it, playing = true)).isFalse() }
+    }
+
+    @Test
     fun `a fade kept waiting by the next song goes on from where it was`() {
         assertThat(CrossfadePolicy.fadeBeganAtMs(nowMs = 10_000L, progress = 0f, fadeClockMs = 6_000L)).isEqualTo(10_000L)
         assertThat(CrossfadePolicy.fadeBeganAtMs(nowMs = 10_000L, progress = 0.5f, fadeClockMs = 6_000L)).isEqualTo(7_000L)
@@ -382,5 +419,24 @@ class CrossfadePolicyTest {
     fun `the lead moves half way to how long the tail took to be heard`() {
         val waited = 700L
         assertThat(CrossfadePolicy.learnedHeadStartMs(headStartMs = 400L, deltaMs = 400L - waited)).isEqualTo(550L)
+    }
+
+    @Test
+    fun `a skipped-to song that comes late fades in quickly, never slower than the skip's own overlap`() {
+        assertThat(CrossfadePolicy.lateFadeInClockMs(6_000L)).isEqualTo(CrossfadePolicy.QUICK_FADE_IN_MS)
+        assertThat(CrossfadePolicy.lateFadeInClockMs(CrossfadePolicy.SKIP_BLEND_MS)).isEqualTo(CrossfadePolicy.SKIP_BLEND_MS)
+        assertThat(CrossfadePolicy.lateFadeInClockMs(0L)).isEqualTo(1L)
+    }
+
+    @Test
+    fun `a song with no length in its metadata takes the player's, so a skip still fades it`() {
+        assertThat(CrossfadePolicy.knownDurationMs(metadataMs = 200_000L, playerMs = 180_000L)).isEqualTo(200_000L)
+        assertThat(CrossfadePolicy.knownDurationMs(metadataMs = null, playerMs = 180_000L)).isEqualTo(180_000L)
+        assertThat(CrossfadePolicy.knownDurationMs(metadataMs = null, playerMs = C.TIME_UNSET)).isNull()
+        assertThat(CrossfadePolicy.knownDurationMs(metadataMs = null, playerMs = 0L)).isNull()
+
+        val fromPlayer = CrossfadePolicy.knownDurationMs(metadataMs = null, playerMs = 180_000L)
+        assertThat(CrossfadePolicy.skipResumeMs(30_000L, 400L, fromPlayer, failed = false)).isEqualTo(30_400L)
+        assertThat(CrossfadePolicy.skipResumeMs(30_000L, 400L, null, failed = false)).isNull()
     }
 }

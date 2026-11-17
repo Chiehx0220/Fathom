@@ -105,4 +105,7 @@
     <string name="app_lock_after_description">Cuánto tiempo puede estar Fathom fuera de pantalla antes de volver a pedirlo</string>
     <string name="app_lock_prompt_title">Desbloquear Fathom</string>
     <string name="app_lock_screen_title">Fathom está bloqueado</string>
+    <string name="downloads_folder_lost_body">Fathom ha perdido el acceso a la carpeta que elegiste para las descargas, algo que suele pasar tras una reinstalación. Vuelve a elegirla para encontrar tus descargas anteriores y seguir guardando ahí.</string>
+    <string name="export_playlists_desc">Tus listas, «Ver más tarde», «Me gusta» y Shorts guardados en un único archivo que Fathom puede importar</string>
+    <string name="translation_server_dialog_body">Fathom envía a este servidor el texto que traduces. Fathom no tiene un servidor propio.</string>
 </resources>

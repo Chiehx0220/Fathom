@@ -10,6 +10,8 @@ import io.github.aedev.flow.applock.DEFAULT_APP_LOCK_DELAY_MINUTES
 import io.github.aedev.flow.data.model.SponsorBlockCategories
 import io.github.aedev.flow.data.playlist.PlaylistListOrder
 import io.github.aedev.flow.data.profile.StoreScope
+import io.github.aedev.flow.data.translation.TranslationServerType
+import io.github.aedev.flow.data.translation.TranslationSettings
 import io.github.aedev.flow.data.video.downloader.work.RetagResult
 import io.github.aedev.flow.data.video.storage.DownloadLocation
 import io.github.aedev.flow.network.AppProxyConfig
@@ -69,13 +71,14 @@ val DEFAULT_NAV_TAB_ORDER = listOf(0, 1, 2, 3, 4, 5, 6, 7)
 private const val MAX_UNPLAYABLE_VIDEO_IDS = 1_000
 
 /**
- * Preferences that never leave the device in a backup: the proxy password, SponsorBlock's
- * submission id, which is a private identity for the user's votes and segments, and the app lock,
- * which a restored backup must not be able to turn on or off.
+ * Preferences that never leave the device in a backup: the proxy password and the translation
+ * server's API key, SponsorBlock's submission id, which is a private identity for the user's votes
+ * and segments, and the app lock, which a restored backup must not be able to turn on or off.
  */
 private val BackupExcludedKeys =
     setOf(
         "proxy_password",
+        "translation_api_key",
         "sb_user_id",
         "app_lock_enabled",
         "app_lock_delay_minutes",
@@ -184,6 +187,10 @@ class PlayerPreferences(
         val BOTTOM_NAV_HIDE_ON_SCROLL = booleanPreferencesKey("bottom_nav_hide_on_scroll")
         val BOTTOM_NAV_LABELS = stringPreferencesKey("bottom_nav_labels")
         val BOTTOM_NAV_STYLE = stringPreferencesKey("bottom_nav_style")
+        val BOTTOM_NAV_SCRUB = booleanPreferencesKey("bottom_nav_scrub")
+        val BOTTOM_NAV_ICON_POP = booleanPreferencesKey("bottom_nav_icon_pop")
+        val BOTTOM_NAV_SCROLL = stringPreferencesKey("bottom_nav_scroll")
+        val BOTTOM_NAV_MINI_BESIDE = booleanPreferencesKey("bottom_nav_mini_beside")
         val SEARCH_SHOWS_NAV_BAR = booleanPreferencesKey("search_shows_nav_bar")
         val INNER_PAGES_SHOW_NAV_BAR = booleanPreferencesKey("inner_pages_show_nav_bar")
         val MUSIC_NAVIGATION_ENABLED = booleanPreferencesKey("music_navigation_enabled")
@@ -197,6 +204,7 @@ class PlayerPreferences(
         val LYRICS_SHOW_ROMANIZATION = booleanPreferencesKey("lyrics_show_romanization")
         val LYRICS_ON_LOCK_SCREEN = booleanPreferencesKey("lyrics_on_lock_screen")
         val LYRICS_IN_MINI_PLAYER = booleanPreferencesKey("lyrics_in_mini_player")
+        val IMMERSIVE_LYRICS_ON_COVER = booleanPreferencesKey("immersive_lyrics_on_cover")
         val LYRICS_ON_DEMAND = booleanPreferencesKey("lyrics_on_demand")
         val LYRICS_ON_LOCK_SCREEN_DELAY_MS = intPreferencesKey("lyrics_on_lock_screen_delay_ms")
         val LYRICS_SPONSORBLOCK_TIMING = booleanPreferencesKey("lyrics_sponsorblock_timing")
@@ -265,6 +273,7 @@ class PlayerPreferences(
         val DEARROW_ENABLED = booleanPreferencesKey("dearrow_enabled")
         val DEARROW_BADGE_ENABLED = booleanPreferencesKey("dearrow_badge_enabled")
         val DEARROW_RANDOM_FRAME = booleanPreferencesKey("dearrow_random_frame")
+        val DEARROW_THUMBNAILS_ONLY = booleanPreferencesKey("dearrow_thumbnails_only")
 
         // AI channel list
         val AI_LIST_BLOCK_ENABLED = booleanPreferencesKey("ai_list_block_enabled")
@@ -301,6 +310,9 @@ class PlayerPreferences(
         val SUBS_UNGROUPED_ENABLED = booleanPreferencesKey("subs_ungrouped_enabled")
         val SUBS_UNGROUPED_POSITION = intPreferencesKey("subs_ungrouped_position")
         val SUBS_POSTS_CHIP = booleanPreferencesKey("subs_posts_chip")
+        val SUBS_HIDDEN_GROUPS = stringSetPreferencesKey("subs_hidden_groups")
+        val SUBS_GROUPS_OUT_OF_ALL = stringSetPreferencesKey("subs_groups_out_of_all")
+        val SUBS_ALL_CHIP = booleanPreferencesKey("subs_all_chip")
         val SUBS_PINNED_CHANNELS = stringPreferencesKey("subs_pinned_channels")
         val SUBS_CHANNEL_SEEN_AT = stringPreferencesKey("subs_channel_seen_at")
         val SUBS_NEW_VIDEOS_SINCE = longPreferencesKey("subs_new_videos_since")
@@ -347,6 +359,7 @@ class PlayerPreferences(
         val HIDE_WATCHED_HOME_FEED = booleanPreferencesKey("hide_watched_home_feed")
         val HIDE_WATCHED_SUBSCRIPTIONS = booleanPreferencesKey("hide_watched_subscriptions")
         val HIDE_WATCHED_SHORTS = booleanPreferencesKey("hide_watched_shorts")
+        val HIDE_WATCHED_SUGGESTIONS = booleanPreferencesKey("hide_watched_suggestions")
         val WATCHED_THRESHOLD = stringPreferencesKey("watched_threshold")
         val COUNT_IMPORTED_AS_WATCHED = booleanPreferencesKey("count_imported_as_watched")
         val SHARED_LINK_ACTION = stringPreferencesKey("shared_link_action")
@@ -385,6 +398,8 @@ class PlayerPreferences(
 
         // Show app logo icon in home screen top bar
         val SHOW_APP_LOGO_ICON = booleanPreferencesKey("show_app_logo_icon")
+        val SHOW_PROFILE_IN_TOP_BAR = booleanPreferencesKey("show_profile_in_top_bar")
+        val SETTINGS_IN_PROFILE_MENU = booleanPreferencesKey("settings_in_profile_menu")
 
         // Player comments preview
         val COMMENTS_ENABLED = booleanPreferencesKey("comments_enabled")
@@ -565,6 +580,7 @@ class PlayerPreferences(
 
         // Remember playback speed
         val PAUSE_MUSIC_WHEN_MUTED = device(booleanPreferencesKey("pause_music_when_muted"))
+        val PAUSE_VIDEO_WHEN_MUTED = device(booleanPreferencesKey("pause_video_when_muted"))
         val MUSIC_SIDE_SWIPES = device(booleanPreferencesKey("music_side_swipes"))
         val LOCK_SCREEN_PLAYER = device(booleanPreferencesKey("lock_screen_player"))
         val APP_LOCK_ENABLED = device(booleanPreferencesKey("app_lock_enabled"))
@@ -606,6 +622,13 @@ class PlayerPreferences(
         // AI channel list source: device-wide, like the list file it decides
         val AI_LIST_SOURCE_URL = device(stringPreferencesKey("ai_list_source_url"))
         val AI_LIST_SOURCE_KEY = device(stringPreferencesKey("ai_list_source_key"))
+
+        // Translate (#892): the viewer's own server, device-wide like the AiSList source
+        val TRANSLATION_USE_SERVER = device(booleanPreferencesKey("translation_use_server"))
+        val TRANSLATION_SERVER_TYPE = device(stringPreferencesKey("translation_server_type"))
+        val TRANSLATION_SERVER_URL = device(stringPreferencesKey("translation_server_url"))
+        val TRANSLATION_API_KEY = device(stringPreferencesKey("translation_api_key"))
+        val TRANSLATION_TARGET = device(stringPreferencesKey("translation_target"))
 
         val NAMES: Set<String> = names
     }
@@ -1696,8 +1719,66 @@ class PlayerPreferences(
         }
     }
 
+    // Dragging along the floating bar moves between tabs.
+    val bottomNavScrub: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.BOTTOM_NAV_SCRUB] ?: true }
+            .distinctUntilChanged()
+
+    suspend fun setBottomNavScrub(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.BOTTOM_NAV_SCRUB] = enabled
+        }
+    }
+
+    val bottomNavIconPop: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.BOTTOM_NAV_ICON_POP] ?: false }
+            .distinctUntilChanged()
+
+    suspend fun setBottomNavIconPop(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.BOTTOM_NAV_ICON_POP] = enabled
+        }
+    }
+
+    val bottomNavScroll: Flow<NavBarScroll> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.BOTTOM_NAV_SCROLL]
+                    ?.let { stored -> runCatching { NavBarScroll.valueOf(stored) }.getOrNull() }
+                    ?: NavBarScroll.SHRINK
+            }.distinctUntilChanged()
+
+    suspend fun setBottomNavScroll(scroll: NavBarScroll) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.BOTTOM_NAV_SCROLL] = scroll.name
+        }
+    }
+
+    // Beside the shrunk floating bar, the mini player drops into the bar's row.
+    val bottomNavMiniBeside: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.BOTTOM_NAV_MINI_BESIDE] ?: false }
+            .distinctUntilChanged()
+
+    suspend fun setBottomNavMiniBeside(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.BOTTOM_NAV_MINI_BESIDE] = enabled
+        }
+    }
+
     val bottomNavLook: Flow<NavBarLook> =
-        combine(bottomNavStyle, bottomNavLabels) { style, labels -> NavBarLook(style, labels) }.distinctUntilChanged()
+        combine(
+            bottomNavStyle,
+            bottomNavLabels,
+            bottomNavScrub,
+            bottomNavIconPop,
+            bottomNavScroll,
+        ) { style, labels, scrub, iconPop, scroll ->
+            NavBarLook(style, labels, scrub, iconPop, scroll)
+        }.combine(bottomNavMiniBeside) { look, miniBeside -> look.copy(miniBeside = miniBeside) }
+            .distinctUntilChanged()
 
     // Search keeps its full-screen layout unless this is on.
     val searchShowsNavBar: Flow<Boolean> =
@@ -2422,6 +2503,17 @@ class PlayerPreferences(
         }
     }
 
+    /** Never load the uploader's thumbnail: DeArrow's, or else a frame YouTube takes from the video (#1633). */
+    val deArrowThumbnailsOnly: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.DEARROW_THUMBNAILS_ONLY] ?: false }
+
+    suspend fun setDeArrowThumbnailsOnly(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.DEARROW_THUMBNAILS_ONLY] = enabled
+        }
+    }
+
     // AI channel list
     val aiListBlockEnabled: Flow<Boolean> =
         context.playerPreferencesDataStore.data
@@ -2477,6 +2569,54 @@ class PlayerPreferences(
         context.devicePreferencesDataStore.edit { preferences ->
             if (url.isNullOrBlank()) preferences.remove(DeviceKeys.AI_LIST_SOURCE_URL) else preferences[DeviceKeys.AI_LIST_SOURCE_URL] = url
             if (key.isNullOrBlank()) preferences.remove(DeviceKeys.AI_LIST_SOURCE_KEY) else preferences[DeviceKeys.AI_LIST_SOURCE_KEY] = key
+        }
+    }
+
+    val translationSettings: Flow<TranslationSettings> =
+        context.devicePreferencesDataStore.data
+            .map { preferences ->
+                TranslationSettings(
+                    useServer = preferences[DeviceKeys.TRANSLATION_USE_SERVER] ?: false,
+                    serverType = TranslationServerType.fromKey(preferences[DeviceKeys.TRANSLATION_SERVER_TYPE]),
+                    serverUrl = preferences[DeviceKeys.TRANSLATION_SERVER_URL],
+                    apiKey = preferences[DeviceKeys.TRANSLATION_API_KEY],
+                    target = preferences[DeviceKeys.TRANSLATION_TARGET].orEmpty(),
+                )
+            }.distinctUntilChanged()
+
+    suspend fun setTranslationUseServer(useServer: Boolean) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.TRANSLATION_USE_SERVER] = useServer
+        }
+    }
+
+    /** Saving a server also switches Translate to it. */
+    suspend fun setTranslationServer(
+        type: TranslationServerType,
+        url: String,
+        apiKey: String?,
+    ) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.TRANSLATION_SERVER_TYPE] = type.key
+            preferences[DeviceKeys.TRANSLATION_SERVER_URL] = url
+            if (apiKey.isNullOrBlank()) {
+                preferences.remove(DeviceKeys.TRANSLATION_API_KEY)
+            } else {
+                preferences[DeviceKeys.TRANSLATION_API_KEY] =
+                    apiKey.trim()
+            }
+            preferences[DeviceKeys.TRANSLATION_USE_SERVER] = true
+        }
+    }
+
+    suspend fun setTranslationTarget(languageTag: String) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            if (languageTag.isBlank()) {
+                preferences.remove(DeviceKeys.TRANSLATION_TARGET)
+            } else {
+                preferences[DeviceKeys.TRANSLATION_TARGET] =
+                    languageTag
+            }
         }
     }
 
@@ -3023,6 +3163,17 @@ class PlayerPreferences(
         }
     }
 
+    val pauseVideoWhenMuted: Flow<Boolean> =
+        context.devicePreferencesDataStore.data
+            .map { preferences -> preferences[DeviceKeys.PAUSE_VIDEO_WHEN_MUTED] ?: false }
+            .distinctUntilChanged()
+
+    suspend fun setPauseVideoWhenMuted(enabled: Boolean) {
+        context.devicePreferencesDataStore.edit { preferences ->
+            preferences[DeviceKeys.PAUSE_VIDEO_WHEN_MUTED] = enabled
+        }
+    }
+
     /** Whether a song blends into the next (#1675). Before the switch, a length above 0 seconds meant on. */
     val musicCrossfadeEnabled: Flow<Boolean> =
         context.playerPreferencesDataStore.data
@@ -3385,6 +3536,54 @@ class PlayerPreferences(
         context.playerPreferencesDataStore.edit { preferences -> preferences[Keys.SUBS_POSTS_CHIP] = enabled }
     }
 
+    val subscriptionAllChip: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.SUBS_ALL_CHIP] ?: true }
+
+    suspend fun setSubscriptionAllChip(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences -> preferences[Keys.SUBS_ALL_CHIP] = enabled }
+    }
+
+    /** Group names whose chip is hidden; their channels are left out of All and its refreshes (#1387). */
+    val subscriptionHiddenGroups: Flow<Set<String>> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.SUBS_HIDDEN_GROUPS].orEmpty() }
+
+    /** Group names that keep their chip but whose channels All leaves out (#1387). */
+    val subscriptionGroupsOutOfAll: Flow<Set<String>> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.SUBS_GROUPS_OUT_OF_ALL].orEmpty() }
+
+    suspend fun setSubscriptionGroupHidden(
+        name: String,
+        hidden: Boolean,
+    ) = editGroupNames(Keys.SUBS_HIDDEN_GROUPS) { if (hidden) it + name else it - name }
+
+    suspend fun setSubscriptionGroupInAll(
+        name: String,
+        inAll: Boolean,
+    ) = editGroupNames(Keys.SUBS_GROUPS_OUT_OF_ALL) { if (inAll) it - name else it + name }
+
+    /** Carries a group's hidden and out-of-All flags over to [newName], or drops them when [newName] is null. */
+    suspend fun moveSubscriptionGroupFlags(
+        oldName: String,
+        newName: String?,
+    ) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            listOf(Keys.SUBS_HIDDEN_GROUPS, Keys.SUBS_GROUPS_OUT_OF_ALL).forEach { key ->
+                val names = preferences[key].orEmpty()
+                if (oldName in names) preferences[key] = names - oldName + listOfNotNull(newName)
+            }
+        }
+    }
+
+    private suspend fun editGroupNames(
+        key: Preferences.Key<Set<String>>,
+        change: (Set<String>) -> Set<String>,
+    ) {
+        context.playerPreferencesDataStore.edit { preferences -> preferences[key] = change(preferences[key].orEmpty()) }
+    }
+
     /** Pinned channel ids in pin order, comma separated. */
     val subscriptionPinnedChannels: Flow<String> =
         context.playerPreferencesDataStore.data
@@ -3692,6 +3891,17 @@ class PlayerPreferences(
     suspend fun setHideWatchedShorts(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.HIDE_WATCHED_SHORTS] = enabled
+        }
+    }
+
+    /** Watched videos leave the suggestions under the player, and with them autoplay and the queue. */
+    val hideWatchedSuggestions: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.HIDE_WATCHED_SUGGESTIONS] ?: false }
+
+    suspend fun setHideWatchedSuggestions(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.HIDE_WATCHED_SUGGESTIONS] = enabled
         }
     }
 
@@ -4087,6 +4297,26 @@ class PlayerPreferences(
     suspend fun setShowAppLogoIcon(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.SHOW_APP_LOGO_ICON] = enabled
+        }
+    }
+
+    val showProfileInTopBar: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.SHOW_PROFILE_IN_TOP_BAR] ?: true }
+
+    suspend fun setShowProfileInTopBar(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SHOW_PROFILE_IN_TOP_BAR] = enabled
+        }
+    }
+
+    val settingsInProfileMenu: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.SETTINGS_IN_PROFILE_MENU] ?: false }
+
+    suspend fun setSettingsInProfileMenu(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SETTINGS_IN_PROFILE_MENU] = enabled
         }
     }
 
@@ -4656,6 +4886,14 @@ class PlayerPreferences(
 
     suspend fun setLyricsInMiniPlayer(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { it[Keys.LYRICS_IN_MINI_PLAYER] = enabled }
+    }
+
+    /** Whether the immersive player's lyrics button shows lyrics over the cover instead of opening the sheet. */
+    val immersiveLyricsOnCover: Flow<Boolean> =
+        context.playerPreferencesDataStore.data.map { it[Keys.IMMERSIVE_LYRICS_ON_COVER] ?: false }
+
+    suspend fun setImmersiveLyricsOnCover(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { it[Keys.IMMERSIVE_LYRICS_ON_COVER] = enabled }
     }
 
     /** Whether lyrics are looked up only when the player or its lyrics open, or for lock screen lyrics. */
@@ -5662,7 +5900,17 @@ enum class NavBarStyle {
 data class NavBarLook(
     val style: NavBarStyle = NavBarStyle.STANDARD,
     val labels: NavBarLabels = NavBarLabels.ALWAYS,
+    val scrub: Boolean = true,
+    val iconPop: Boolean = false,
+    val scroll: NavBarScroll = NavBarScroll.SHRINK,
+    val miniBeside: Boolean = false,
 )
+
+/** What scrolling does to the floating bar, when the bar reacts to scrolling at all. */
+enum class NavBarScroll {
+    HIDE,
+    SHRINK,
+}
 
 enum class SharedLinkAction {
     /** Play the video straight away, replacing what plays. */

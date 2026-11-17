@@ -120,6 +120,14 @@ internal object ContentIndex {
             section = R.string.settings_section_subscriptions,
             destination = page,
         )
+    val subsAllChip =
+        SettingEntry(
+            key = "content.subs.all_chip",
+            title = R.string.content_settings_subs_all_chip_title,
+            summary = R.string.content_settings_subs_all_chip_subtitle,
+            section = R.string.settings_section_subscriptions,
+            destination = page,
+        )
     val subsUngrouped =
         SettingEntry(
             key = "content.subs.ungrouped",
@@ -201,6 +209,15 @@ internal object ContentIndex {
             summary = R.string.content_settings_remove_watched_watch_later_subtitle,
             keywords = R.string.settings_keywords_hide_watched,
             section = R.string.watch_later,
+            destination = page,
+        )
+    val hideWatchedSuggestions =
+        SettingEntry(
+            key = "content.watched.hide_suggestions",
+            title = R.string.content_settings_hide_watched_suggestions_title,
+            summary = R.string.content_settings_hide_watched_suggestions_subtitle,
+            keywords = R.string.settings_keywords_hide_watched,
+            section = R.string.settings_section_watched,
             destination = page,
         )
     val watchedThreshold =
@@ -286,6 +303,7 @@ internal object ContentIndex {
             subsUpcoming,
             subsCollaborations,
             subsPostsChip,
+            subsAllChip,
             subsUngrouped,
             hideWatchedSubs,
             hideUnplayableSubs,
@@ -295,6 +313,7 @@ internal object ContentIndex {
             channelShortsTab,
             hideWatchedShorts,
             removeWatchedWatchLater,
+            hideWatchedSuggestions,
             watchedThreshold,
             countImportedAsWatched,
             notes,

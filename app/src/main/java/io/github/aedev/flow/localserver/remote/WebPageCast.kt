@@ -16,7 +16,7 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.localserver.RemoteSession
 import io.github.aedev.flow.localserver.ServerService
 import io.github.aedev.flow.player.dlna.DlnaDevice
-import io.github.aedev.flow.ui.components.videoplayer.DlnaDevicePickerDialog
+import io.github.aedev.flow.ui.components.shared.DlnaDevicePickerDialog
 
 private const val WEB_PAGE_USN = "fathom:web-page"
 private const val WEB_ADDRESS_USN = "fathom:web-address"
@@ -28,7 +28,7 @@ internal fun CastPickerWithWebPage(
     devices: List<DlnaDevice>,
     isDiscovering: Boolean,
     isCasting: Boolean,
-    videoTitle: String,
+    title: String,
     onDeviceSelected: (DlnaDevice) -> Unit,
     onStopCasting: () -> Unit,
     onDismiss: () -> Unit,
@@ -56,7 +56,7 @@ internal fun CastPickerWithWebPage(
         devices = devices + page,
         isDiscovering = isDiscovering,
         isCasting = isCasting,
-        videoTitle = videoTitle,
+        title = title,
         onDeviceSelected = { device ->
             when (device.usn) {
                 WEB_PAGE_USN -> {
