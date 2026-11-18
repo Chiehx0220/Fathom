@@ -35,6 +35,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Use CI Gradle properties
+        run: mkdir -p ~/.gradle && cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
@@ -44,7 +47,7 @@ jobs:
           ./gradlew spotlessCheck --build-cache --stacktrace
 
       - name: Run unit tests
-        run: ./gradlew :app:testGithubDebugUnitTest :app:testFossDebugUnitTest --max-workers=1 --build-cache --stacktrace
+        run: ./gradlew :app:testGithubDebugUnitTest :app:testFossDebugUnitTest --build-cache --stacktrace
 
       - name: Upload unit test results
         if: failure()
