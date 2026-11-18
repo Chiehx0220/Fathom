@@ -77,6 +77,7 @@ FT.api = {
     onHistoryChange: (handler) => FT.on('ft:history', handler),
 
     subscribe: (channel, on) => act('/subscribe', { action: on ? 'subscribe' : 'unsubscribe', id: channel.id, name: channel.name || '', avatar: channel.thumbnailUrl || '' }),
+    notify: (channel, on) => act('/subscribe', { action: on ? 'notify_on' : 'notify_off', id: channel.id }),
     block: (channelUrl, on) => act('/block_channel', { action: on ? 'block' : 'unblock', id: channelUrl }),
     handoff: (url, t, d, title) => act('/handoff', { id: url, t, d, title }),
     castDevices: (scan) => getJson('/api/v1/cast/devices', scan ? { scan: 1 } : {}),

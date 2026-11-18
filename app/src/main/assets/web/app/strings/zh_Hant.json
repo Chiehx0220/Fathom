@@ -48,6 +48,8 @@
   "remove_from_history": "從觀看記錄中移除",
   "removed_from_history": "已從觀看記錄中移除",
   "could_not_remove": "無法移除",
+  "notify_on": "開啟通知",
+  "notify_off": "關閉通知",
   "unsubscribe": "取消訂閱",
   "unsubscribed": "已取消訂閱",
   "could_not_unsubscribe": "無法取消訂閱",

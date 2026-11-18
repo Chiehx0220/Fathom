@@ -48,6 +48,20 @@ fun HistoryDbHelper.addSubscription(
     }
 }
 
+fun HistoryDbHelper.isNotifying(channelUrl: String?): Boolean {
+    val channelId = channelUrlToId(channelUrl) ?: return false
+    return channelId in runBlocking { subscriptionRepository().notifyingChannelIds().first() }
+}
+
+/** Channel bell; same switch as native. */
+fun HistoryDbHelper.setNotifying(
+    channelUrl: String,
+    enabled: Boolean,
+) {
+    val channelId = channelUrlToId(channelUrl) ?: return
+    runBlocking { subscriptionRepository().updateNotificationState(channelId, enabled) }
+}
+
 fun HistoryDbHelper.removeSubscription(channelUrl: String) {
     val channelId = channelUrlToId(channelUrl) ?: return
     runBlocking { subscriptionRepository().unsubscribe(channelId) }

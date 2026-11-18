@@ -49,6 +49,8 @@
   "remove_from_history": "Remove from history",
   "removed_from_history": "Removed from history",
   "could_not_remove": "Could not remove that",
+  "notify_on": "Turn on notifications",
+  "notify_off": "Turn off notifications",
   "unsubscribe": "Unsubscribe",
   "unsubscribed": "Unsubscribed",
   "could_not_unsubscribe": "Could not unsubscribe",

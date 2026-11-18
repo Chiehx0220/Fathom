@@ -35,6 +35,8 @@ internal fun RequestContext.handleSubscribeAction(params: Query): Status {
     when (params["action"]) {
         "subscribe" -> dbHelper.addSubscription(channelUrl, params["name"], params["avatar"])
         "unsubscribe" -> dbHelper.removeSubscription(channelUrl)
+        "notify_on" -> dbHelper.setNotifying(channelUrl, true)
+        "notify_off" -> dbHelper.setNotifying(channelUrl, false)
         else -> unknownAction()
     }
     return SUCCESS

@@ -39,6 +39,7 @@ GET /api/v1/state?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&channel=https:/
 {
   "blocked": false,
   "like": "LIKED",
+  "notify": false,
   "subscribed": true,
   "watchLater": true
 }
@@ -48,6 +49,7 @@ GET /api/v1/state?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&channel=https:/
 {
   "blocked": true,
   "like": "LIKED",
+  "notify": false,
   "subscribed": false,
   "watchLater": true
 }
@@ -128,6 +130,7 @@ GET /api/v1/state?id=https://www.youtube.com/watch?v=jNQXAC9IVRw
 {
   "blocked": false,
   "like": "DISLIKED",
+  "notify": false,
   "subscribed": false,
   "watchLater": true
 }
@@ -143,6 +146,7 @@ GET /api/v1/state?id=https://www.youtube.com/watch?v=jNQXAC9IVRw
 {
   "blocked": false,
   "like": null,
+  "notify": false,
   "subscribed": false,
   "watchLater": true
 }

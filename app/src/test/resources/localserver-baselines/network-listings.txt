@@ -196,6 +196,7 @@ GET /api/v1/channel?id=https://www.youtube.com/channel/UCchan&tab=playlists&sort
   "channel": {
     "description": "About",
     "id": "https:\/\/www.youtube.com\/channel\/UCchan",
+    "isNotifying": false,
     "isSubscribed": false,
     "name": "Channel",
     "subscriberCount": 4200,
@@ -228,6 +229,7 @@ GET /api/v1/channel?id=https://www.youtube.com/channel/UCchan&nextPage=eyJ1cmwiO
   "channel": {
     "description": "About",
     "id": "https:\/\/www.youtube.com\/channel\/UCchan",
+    "isNotifying": false,
     "isSubscribed": false,
     "name": "Channel",
     "subscriberCount": 4200,

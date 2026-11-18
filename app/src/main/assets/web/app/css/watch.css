@@ -57,15 +57,32 @@ body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
 .watch-info .who { font-weight: 500; }
 .who-row { display: flex; flex: 1 1 100%; align-items: center; gap: 12px; }
 .who-row .who-link { flex: 1; min-width: 0; }
-.who-row .btn { flex: none; height: 44px; }
+.who-row .btn.quiet { background: transparent; color: var(--mute); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 20%, transparent); }
+.who-row .btn.quiet:hover { background: var(--s1); color: var(--fg); }
+/* Subscribed: bell + label in one pill. */
+.subscribe { display: inline-flex; flex: none; }
+.who-row .btn { flex: none; }
+.subscribe .btn:not(.round) { padding: 0 22px; }
+.subscribe.joined { overflow: hidden; border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 23px; }
+.subscribe.joined .btn { height: 44px; border-radius: 0; background: transparent; box-shadow: none; }
+.subscribe.joined .btn:hover { background: var(--s1); }
+.subscribe.joined .notify-bell { width: auto; padding: 0 12px 0 18px; }
+.subscribe.joined .notify-bell + .btn { padding: 0 20px 0 14px; border-left: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); }
+.subscribe.joined .notify-bell.on { background: color-mix(in srgb, var(--acc) 20%, var(--bg)); color: var(--acc); }
+.subscribe.joined .notify-bell.on:hover { background: color-mix(in srgb, var(--acc) 28%, var(--bg)); }
 /* Actions: like pair, tools; wide = labels, narrow = icons + More. */
 .watch-actions { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 8px; }
-.seg { display: inline-flex; flex: none; overflow: hidden; border-radius: 23px; background: var(--s3); }
-.seg .btn { border-radius: 0; background: transparent; }
-.seg .btn:hover { background: color-mix(in srgb, var(--s3) 82%, var(--fg)); }
-.seg .btn + .btn { border-left: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); }
-.seg .btn.round { width: auto; padding: 0 16px; }
-.watch-actions .btn.on { background: color-mix(in srgb, var(--acc) 16%, var(--s3)); color: var(--acc); box-shadow: inset 0 0 0 1.5px var(--acc); }
+.rate { display: inline-flex; flex: none; overflow: hidden; border-radius: 23px; background: var(--s3); }
+.rate .btn { border-radius: 0; background: transparent; }
+.rate .btn:hover { background: color-mix(in srgb, var(--s3) 82%, var(--fg)); }
+.rate .btn + .btn { border-left: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); }
+.rate .btn.round { width: auto; padding: 0 16px; }
+.watch-actions .btn.on { background: color-mix(in srgb, var(--acc) 20%, var(--bg)); color: var(--acc); }
+.watch-actions .btn.on:hover { background: color-mix(in srgb, var(--acc) 28%, var(--bg)); }
+/* Frequent actions labelled; others icon-only until busy. */
+.watch-actions .tool.compact:not(.busy) { width: 46px; padding: 0; justify-content: center; }
+.watch-actions .tool.compact:not(.busy) .lbl { display: none; }
+.watch-actions .rule { align-self: center; width: 1px; height: 24px; margin: 0 2px; background: color-mix(in srgb, var(--fg) 20%, transparent); }
 .watch-actions .narrow-only { display: none; }
 @container info (min-width: 900px) {
     .who-row .who-link { flex: 0 1 auto; }
@@ -73,6 +90,7 @@ body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
 @container info (max-width: 899px) {
     .watch-actions .tool { width: 46px; padding: 0; justify-content: center; }
     .watch-actions .tool .lbl, .watch-actions .wide-only { display: none; }
+    .watch-actions .rule { display: none; }
     .watch-actions .narrow-only { display: inline-flex; }
     .watch-actions .narrow-only .i { transform: rotate(90deg); }
 }
@@ -119,8 +137,9 @@ body[data-input="keys"] .comment.sel { background: var(--s2); box-shadow: 0 0 0 
 @keyframes danmaku-scroll { from { transform: translateX(var(--from)); } to { transform: translateX(var(--to)); } }
 @keyframes danmaku-fade { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
 
-.who-link { display: flex; align-items: center; gap: 12px; padding: 4px 16px 4px 4px; border-radius: 28px; color: inherit; }
-.who-link:hover { background: var(--s1); }
+.who-link { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 18px 0 3px; box-sizing: border-box; border-radius: 28px; background: var(--s1); color: inherit; transition: background 0.15s; }
+.who-link:hover { background: var(--s3); }
+.who-link .avatar { width: 40px; height: 40px; }
 body[data-input="keys"] .who-link.sel, body[data-input="keys"] .card.sel .thumb { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc2); }
 body[data-input="keys"].player-mode .stage:not(.mini) { box-shadow: inset 0 0 0 5px var(--acc2); }
 

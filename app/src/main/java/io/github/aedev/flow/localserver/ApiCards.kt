@@ -96,16 +96,19 @@ internal fun List<InfoItem>.toSearchResult(
         hasMore = hasMore,
     )
 
-internal fun ChannelHeader.toDto(isSubscribed: Boolean) =
-    ChannelHeaderDto(
-        id = url,
-        name = name,
-        thumbnailUrl = sameOriginImageUrl(WebFormat.getThumbnailUrl(avatarUrl)),
-        subscriberCount = subscriberCount.coerceAtLeast(-1),
-        description = description,
-        isSubscribed = isSubscribed,
-        url = url,
-    )
+internal fun ChannelHeader.toDto(
+    isSubscribed: Boolean,
+    isNotifying: Boolean,
+) = ChannelHeaderDto(
+    id = url,
+    name = name,
+    thumbnailUrl = sameOriginImageUrl(WebFormat.getThumbnailUrl(avatarUrl)),
+    subscriberCount = subscriberCount.coerceAtLeast(-1),
+    description = description,
+    isSubscribed = isSubscribed,
+    isNotifying = isNotifying,
+    url = url,
+)
 
 internal fun CommentsInfoItem.toDto() =
     CommentDto(

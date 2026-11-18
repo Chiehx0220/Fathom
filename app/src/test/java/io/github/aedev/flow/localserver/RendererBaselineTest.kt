@@ -42,8 +42,8 @@ class RendererBaselineTest {
         val noAvatar = ChannelHeader("Bare", "https://www.youtube.com/channel/UCbare", null, null, -5, "")
         val text =
             buildString {
-                append("channel\n").append(canonicalJson(ApiJson.encodeToString(header.toDto(true))))
-                append("\n\nchannel without avatar\n").append(canonicalJson(ApiJson.encodeToString(noAvatar.toDto(false))))
+                append("channel\n").append(canonicalJson(ApiJson.encodeToString(header.toDto(true, true))))
+                append("\n\nchannel without avatar\n").append(canonicalJson(ApiJson.encodeToString(noAvatar.toDto(false, false))))
                 append("\n\ncomments\n")
                 append(canonicalJson(ApiJson.encodeToString(listOf(comment("c1", false), comment("c2", true)).map { it.toDto() })))
                 append("\n")

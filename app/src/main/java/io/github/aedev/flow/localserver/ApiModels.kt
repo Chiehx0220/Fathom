@@ -108,6 +108,7 @@ internal class ChannelHeaderDto(
     val subscriberCount: Long,
     val description: String,
     val isSubscribed: Boolean,
+    val isNotifying: Boolean,
     val url: String,
 )
 
@@ -259,6 +260,7 @@ internal val SUCCESS = Status("success")
 @Serializable
 internal class ButtonState(
     val subscribed: Boolean,
+    val notify: Boolean,
     val blocked: Boolean,
     val watchLater: Boolean,
     val like: JsonElement,

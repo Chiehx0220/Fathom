@@ -2,6 +2,7 @@ channel
 {
   "description": "About",
   "id": "https:\/\/www.youtube.com\/channel\/UCchan",
+  "isNotifying": true,
   "isSubscribed": true,
   "name": "Channel",
   "subscriberCount": 4200,
@@ -13,6 +14,7 @@ channel without avatar
 {
   "description": "",
   "id": "https:\/\/www.youtube.com\/channel\/UCbare",
+  "isNotifying": false,
   "isSubscribed": false,
   "name": "Bare",
   "subscriberCount": -1,

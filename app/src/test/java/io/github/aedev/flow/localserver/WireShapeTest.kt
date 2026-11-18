@@ -30,6 +30,6 @@ class WireShapeTest {
 
     @Test
     fun `an unrated video reports like as null`() {
-        assertThat(json(ButtonState(false, false, false, null.orJsonNull()))).endsWith(""""like":null}""")
+        assertThat(json(ButtonState(false, false, false, false, null.orJsonNull()))).endsWith(""""like":null}""")
     }
 }

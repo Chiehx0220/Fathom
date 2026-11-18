@@ -73,7 +73,8 @@ internal fun RequestContext.handleApiChannel(params: Query): ChannelPageDto {
     val nextPage = params.page("nextPage")
     val channel = source.channel(serviceId, channelUrl, tab, sort, nextPage)
     val isSubscribed = dbHelper.isSubscribed(channel.header.url)
-    return ChannelPageDto(channel.header.toDto(isSubscribed), dbHelper.withoutHidden(channel.items).toCards(), channel.next.token())
+    val header = channel.header.toDto(isSubscribed, isSubscribed && dbHelper.isNotifying(channel.header.url))
+    return ChannelPageDto(header, dbHelper.withoutHidden(channel.items).toCards(), channel.next.token())
 }
 
 internal fun RequestContext.handleApiVideo(params: Query): VideoDetail {
@@ -163,6 +164,7 @@ internal fun RequestContext.handleApiState(params: Query): ButtonState {
     val like = if (videoUrl.isEmpty()) null else dbHelper.likeState(videoUrl)
     return ButtonState(
         subscribed = channelUrl.isNotEmpty() && dbHelper.isSubscribed(channelUrl),
+        notify = channelUrl.isNotEmpty() && dbHelper.isNotifying(channelUrl),
         blocked = channelUrl.isNotEmpty() && dbHelper.isChannelBlocked(channelUrl),
         watchLater = videoUrl.isNotEmpty() && dbHelper.isWatchLater(videoUrl),
         like = like.orJsonNull(),

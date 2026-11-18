@@ -109,6 +109,7 @@ GET /api/v1/state
 {
   "blocked": false,
   "like": null,
+  "notify": false,
   "subscribed": false,
   "watchLater": false
 }

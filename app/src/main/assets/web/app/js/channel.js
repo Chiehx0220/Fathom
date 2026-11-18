@@ -16,21 +16,16 @@ FT.register('channel', {
                 if (header) return { items: body.videos || [], next: body.nextPage };
                 const c = body.channel;
                 header = c;
-                let subscribed = !!c.isSubscribed;
-                const button = FT.button(FT.t(subscribed ? 'subscribed' : 'subscribe'), subscribed ? 'notifications_active' : 'notifications', () => {
-                    const on = !subscribed;
-                    subscribed = on;
-                    paint();
-                    FT.api.subscribe({ id: c.id, name: c.name, thumbnailUrl: c.thumbnailUrl }, on).catch(() => { subscribed = !on; paint(); FT.toast(FT.t('action_failed')); });
-                }, subscribed ? '' : 'primary', 'subscribe');
-                const paint = () => {
-                    button.replaceChildren(FT.icon(subscribed ? 'notifications_active' : 'notifications'), FT.t(subscribed ? 'subscribed' : 'subscribe'));
-                    button.classList.toggle('primary', !subscribed);
-                };
+                const subscribe = FT.subscribeButton({ id: c.id, name: c.name, thumbnailUrl: c.thumbnailUrl });
+                subscribe.set({ subscribed: c.isSubscribed, notify: c.isNotifying });
+                FT.followState(scope, () => {
+                    const since = performance.now();
+                    return FT.api.state('', c.id).then((s) => subscribe.set(s, since));
+                }, { topics: ['subscriptions'], covered: true });
                 const top = h('div', { class: 'channel-head' },
                     FT.avatar(c.name, c.thumbnailUrl, 'lg'),
                     h('div', { style: 'flex:1;min-width:200px' }, h('h1', {}, c.name), h('p', {}, c.subscriberCount >= 0 ? FT.t('count_subscribers', { count: FT.count(c.subscriberCount) }) : '')),
-                    button);
+                    subscribe.el);
                 return { items: body.videos || [], next: body.nextPage, extra: [top] };
             },
         }, scope);
