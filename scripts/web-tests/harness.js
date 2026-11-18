@@ -18,7 +18,7 @@ const bundleFiles = () => {
 
 const serverRoutes = () => {
   const source = fs.readFileSync(ROUTES, 'utf8');
-  return new Set([...source.matchAll(/\b(?:page|api)\("(\/[^"]*)"\)/g)].map((m) => m[1]));
+  return new Set([...source.matchAll(/\b(?:page|api)\("(\/[^"]*)"[,)]/g)].map((m) => m[1]));
 };
 
 const element = (tag) => ({

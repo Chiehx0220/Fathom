@@ -38,7 +38,7 @@ private val PREFLIGHT_HEADERS =
 
 private val CONTEXT = AttributeKey<RequestContext>("RequestContext")
 
-/** Per request: network gate → header guard → pairing gate → [localRoutes]; blocking handlers on [executor]. */
+/** Per request: network gate → header guard → pairing gate → [LOCAL_ROUTES]; blocking handlers on [executor]. */
 internal fun Application.installLocalServer(
     dbHelper: HistoryDbHelper,
     executor: ExecutorService,
@@ -75,7 +75,7 @@ internal fun Application.installLocalServer(
     routing {
         webSocket(REMOTE_PATH) { sockets.serve(this) }
         webSocket(EVENTS_PATH) { serveEvents(this, appChangeTopics(dbHelper)) }
-        localRoutes(blocking)
+        mount(LOCAL_ROUTES, blocking)
     }
 }
 
@@ -120,33 +120,49 @@ private fun admit(
     return true
 }
 
-/** Routes of one server; handlers run on [blocking]. */
-internal class RouteTable(
-    private val root: Route,
-    private val blocking: CoroutineDispatcher,
-) {
+/** Caller of a route: any local page, the server's own page, or also other origins (media fetched by players). */
+internal enum class Access { ANY, OWN_PAGE, CROSS_ORIGIN }
+
+internal class RouteSpec(
+    val path: String,
+    val json: Boolean,
+    val access: Access,
+    val handler: Handler,
+)
+
+/** Route declarations; the guard's path sets derive from [specs]. */
+internal class RouteTable {
+    val specs = mutableListOf<RouteSpec>()
+
     /** Own reply (text, bytes, stream); failures as text. */
     fun page(
         path: String,
+        access: Access = Access.ANY,
         handler: Handler,
-    ) = serve(path, json = false, handler)
+    ) {
+        specs += RouteSpec(path, json = false, access, handler)
+    }
 
     /** [handler] result as JSON; failures as JSON. */
     inline fun <reified T> api(
         path: String,
+        access: Access = Access.ANY,
         crossinline handler: RequestContext.(Query) -> T,
-    ) = serve(path, json = true) { reply, params -> reply.sendJson(handler(params)) }
-
-    @PublishedApi
-    internal fun serve(
-        path: String,
-        json: Boolean,
-        handler: Handler,
     ) {
-        root.route(path) {
+        specs += RouteSpec(path, json = true, access) { reply, params -> reply.sendJson(handler(params)) }
+    }
+}
+
+/** Mounts [specs]; handlers run on [blocking]. */
+internal fun Route.mount(
+    specs: List<RouteSpec>,
+    blocking: CoroutineDispatcher,
+) {
+    for (spec in specs) {
+        route(spec.path) {
             handle {
                 val context = call.attributes[CONTEXT]
-                withContext(blocking) { run(call, context, json, handler) }
+                withContext(blocking) { run(call, context, spec.json, spec.handler) }
             }
         }
     }

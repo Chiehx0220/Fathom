@@ -44,40 +44,13 @@ internal class Query(
     fun bool(name: String): Boolean? = values[name]?.let { it == "true" }
 }
 
-/** Routes changing device state. */
-internal val MUTATING_PATHS: Set<String> =
-    setOf(
-        PAIR_PATH,
-        "/send-link",
-        "/handoff",
-        "/api/v1/cast/start",
-        "/api/v1/cast/stop",
-        "/play",
-        "/remote-state",
-        "/release-lock",
-        "/history_action",
-        "/search-history",
-        "/subscribe",
-        "/block_channel",
-        "/video_feedback",
-        "/bookmark_playlist",
-        "/watch_later_action",
-        "/playlist_action",
-        "/rate_video",
-        "/api/v1/download",
-        "/api/v1/watch_progress",
-        "/api/v1/settings",
-        "/api/v1/dearrow",
-        "/api/v1/dislikes",
-        "/api/v1/ailist",
-    )
+private fun pathsWith(access: Access): Set<String> = LOCAL_ROUTES.filter { it.access == access }.mapTo(HashSet()) { it.path }
 
-/** Saved downloads: same-origin pages only. */
-internal val OWN_PAGE_ONLY_PATHS: Set<String> = setOf("/downloadfile")
+/** Routes changing device state or serving saved files: the server's own page only. */
+internal val OWN_PAGE_PATHS: Set<String> = pathsWith(Access.OWN_PAGE)
 
-/** Read-only media routes fetched by other devices/players: cross-origin allowed. */
-internal val CROSS_ORIGIN_PATHS: Set<String> =
-    setOf("/stream", "/hlsvod", "/hls", "/subtitles", "/thumbnails", "/image-proxy", "/danmaku", "/live_chat")
+/** Read-only media routes fetched by other devices/players. */
+internal val CROSS_ORIGIN_PATHS: Set<String> = pathsWith(Access.CROSS_ORIGIN)
 
 private val IPV4 = Regex("""\d{1,3}(\.\d{1,3}){3}""")
 private val LOCAL_SUFFIXES = listOf(".local", ".lan", ".home.arpa", ".internal")
@@ -121,9 +94,7 @@ internal fun refusalFor(
             ignoreCase = true,
         ) && path !in CROSS_ORIGIN_PATHS -> "Forbidden: cross-origin requests are not accepted here"
 
-        path in MUTATING_PATHS && !isSameOriginRequest(headers) -> "Forbidden: this request did not come from the server's own page"
-
-        path in OWN_PAGE_ONLY_PATHS && !isSameOriginRequest(headers) -> "Forbidden: this file is only served to the server's own page"
+        path in OWN_PAGE_PATHS && !isSameOriginRequest(headers) -> "Forbidden: this request did not come from the server's own page"
 
         else -> null
     }

@@ -63,6 +63,9 @@ class RequestGuardTest {
         assertThat(refusalFor("GET", "/history_action", crossSite)).isNotNull()
         assertThat(refusalFor("GET", "/subscribe", crossSite)).isNotNull()
         assertThat(refusalFor("GET", "/api/v1/download", crossSite)).isNotNull()
+        listOf("sponsorblock", "wellbeing", "profiles", "notifications", "settings").forEach {
+            assertThat(refusalFor("GET", "/api/v1/$it", crossSite)).isNotNull()
+        }
         assertThat(refusalFor("GET", "/api/v1/home", crossSite)).isNull()
         assertThat(refusalFor("GET", "/", crossSite)).isNull()
         assertThat(refusalFor("GET", "/history_action", headers("sec-fetch-site" to "same-origin"))).isNull()

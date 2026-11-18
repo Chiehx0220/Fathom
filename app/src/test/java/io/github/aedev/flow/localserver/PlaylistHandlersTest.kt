@@ -30,6 +30,6 @@ class PlaylistHandlersTest {
 
     @Test
     fun `playlist changes are same-origin only`() {
-        assertThat(MUTATING_PATHS).contains("/playlist_action")
+        assertThat(OWN_PAGE_PATHS).contains("/playlist_action")
     }
 }
