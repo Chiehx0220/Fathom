@@ -46,6 +46,9 @@ body[data-input="keys"] .suggest-item.sel { background: var(--s2); box-shadow: 0
 .channel-head { display: flex; align-items: center; gap: 24px; padding: 24px var(--pad-x) 8px; flex-wrap: wrap; }
 .channel-head h1 { font-size: clamp(24px, 2.4vw, 34px); font-weight: 500; }
 .channel-head p { margin-top: 4px; color: var(--mute); }
+.ai-note { display: flex; align-items: center; gap: 12px; margin: 8px var(--pad-x) 0; padding: 10px 10px 10px 18px; border-radius: 22px; background: var(--s1); }
+.ai-note[hidden] { display: none; }
+.ai-note span:not(.i) { flex: 1; }
 
 /* Settings: side nav (scrolling row when narrow) + panel; group = rows with a thin gap, outer corners large, inner small. */
 .settings { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1080px; padding: 8px var(--pad-x) 32px; }

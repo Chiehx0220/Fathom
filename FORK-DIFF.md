@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **111** (1168 changed lines). New files: **279**.
+- Modified upstream files: **111** (1168 changed lines). New files: **282**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -106,7 +106,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **142**.
+- Modified upstream files: **0** (0 changed lines). New files: **148**.
 
 ## Build
 
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **19** (143 changed lines). New files: **91**.
+- Modified upstream files: **19** (145 changed lines). New files: **91**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -139,10 +139,10 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/data/video/DownloadStreamPolicyTest.kt | 5 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/repository/ChatReplayPageTest.kt | 2 | 2 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/crash/CrashSummaryTest.kt | 3 | 1 |
+| app/src/test/resources/profiles/store_inventory.tsv | 4 | 0 |
+| app/src/test/java/io/github/aedev/flow/data/backup/BackupRulesTest.kt | 3 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 2 | 1 |
 | app/src/test/java/io/github/aedev/flow/player/stream/PlaybackLoadResolverTest.kt | 3 | 0 |
-| app/src/test/resources/profiles/store_inventory.tsv | 3 | 0 |
-| app/src/test/java/io/github/aedev/flow/data/backup/BackupRulesTest.kt | 2 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/home/HomeFeedSourcesSeedTest.kt | 1 | 1 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/player/VideoPlayerViewModelHarness.kt | 2 | 0 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/home/chips/HomeChipFeedsTest.kt | 1 | 0 |

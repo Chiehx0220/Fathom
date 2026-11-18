@@ -50,7 +50,7 @@ private fun vttTime(millis: Long): String =
 
 private const val MAX_PREVIEW_WIDTH = 320
 
-// Proxy for hosts the browser cannot fetch: YouTube rejects CORS mode, Bilibili checks Referer (403).
+// Proxy for hosts the browser cannot fetch: YouTube rejects CORS mode, Bilibili checks Referer (403); DeArrow thumbnails go through the phone, not the browser.
 private const val IMAGE_ROUTE = "/image-proxy?u="
 
 /** Extra request headers [url]'s host needs; null if no proxying needed. */
@@ -59,7 +59,7 @@ private fun proxiedImageHeaders(url: String): Map<String, String>? {
     val host = uri.host?.lowercase() ?: return null
     if (uri.scheme != "https") return null
     return when {
-        host == "ytimg.com" || host.endsWith(".ytimg.com") -> emptyMap()
+        host == "ytimg.com" || host.endsWith(".ytimg.com") || host == "dearrow-thumb.ajay.app" -> emptyMap()
         host.endsWith("hdslb.com") -> mapOf("Referer" to "https://www.bilibili.com/", "Origin" to "https://www.bilibili.com")
         else -> null
     }

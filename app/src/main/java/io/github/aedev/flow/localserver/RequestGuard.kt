@@ -67,6 +67,9 @@ internal val MUTATING_PATHS: Set<String> =
         "/api/v1/download",
         "/api/v1/watch_progress",
         "/api/v1/settings",
+        "/api/v1/dearrow",
+        "/api/v1/dislikes",
+        "/api/v1/ailist",
     )
 
 /** Saved downloads: same-origin pages only. */

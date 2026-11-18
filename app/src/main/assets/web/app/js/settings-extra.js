@@ -1,4 +1,4 @@
-// Phone-backed settings sections: SponsorBlock, wellbeing, blocked channels; dropped on endpoint failure.
+// Phone-backed settings sections (SponsorBlock, wellbeing, blocked channels, DeArrow, dislike counts, AiSList); dropped on endpoint failure.
 (() => {
 const h = FT.h;
 
@@ -101,11 +101,64 @@ const blocked = async () => {
     return el;
 };
 
+// One phone-side switch under `heading`; `call({ enabled })` saves, `call()` reads `{ enabled }`.
+const phoneSwitch = (heading, title, key, enabled, call, after) => {
+    const row = FT.toggleRow(title, null, enabled, (on) => call({ enabled: on }).then(() => after && after(on)), key);
+    const el = FT.settingsGroup(heading, null, row);
+    el.refresh = async () => {
+        const since = performance.now();
+        row.sync((await call()).enabled, since);
+    };
+    el.pushed = true;
+    return el;
+};
+
+const deArrow = async () => phoneSwitch('DeArrow', FT.t('settings_dearrow_title'), 'dearrow', (await FT.api.dearrow()).enabled, FT.api.dearrow, (on) => FT.dearrow.reset(on));
+
+const dislikes = async () => phoneSwitch('Return YouTube Dislike', FT.t('settings_rytd_title'), 'rytd', (await FT.api.dislikes()).enabled, FT.api.dislikes);
+
+// AiSList: hide and label switches, list size, allowed channels (with the way back).
+const aiList = async () => {
+    const state = await FT.api.aiList();
+    const guard = FT.editGuard();
+    const switchFor = (title, hint, on, key, field) => FT.toggleRow(title, hint, on, (value) => FT.api.aiList({ [field]: value }).then(() => FT.aiList.reset()), key);
+    const block = switchFor(FT.t('ai_block_title'), FT.t('ai_block_hint'), state.block, 'ai-block', 'block');
+    const warn = switchFor(FT.t('ai_warn_title'), FT.t('ai_warn_hint'), state.warn, 'ai-warn', 'warn');
+    const status = h('span', {});
+    const note = h('span', {}, status, h('br'), FT.t('ai_footer'));
+    const el = FT.settingsGroup('AiSList', note, block, warn);
+    let shown = null;
+    const nameOf = (channel) => channel.name || decodeURIComponent(channel.id.replace(/\/+$/, '').split('/').pop() || channel.id);
+    const show = (next) => {
+        status.textContent = next.channelCount != null ? FT.t('ai_status', { count: next.channelCount.toLocaleString(), date: new Date(next.updatedAt).toLocaleDateString() }) : FT.t('ai_status_none');
+        const key = next.allowed.map((channel) => channel.id).join('|');
+        if (key === shown) return;
+        shown = key;
+        el.card.replaceChildren(block, warn, ...next.allowed.map((channel) => h('div', { class: 'setting', data: { id: channel.id } },
+            h('div', {}, h('b', {}, nameOf(channel)), h('span', { class: 'hint' }, FT.t('ai_allowed_hint'))),
+            FT.button(FT.t('ai_flag_again'), 'undo', () => guard.run(FT.api.aiList({ disallow: channel.id }).then((fresh) => { FT.aiList.reset(); show(fresh); })).catch(() => FT.toast(FT.t('could_not_save'))), '', 'ai-flag:' + channel.id))));
+    };
+    show(state);
+    el.refresh = async () => {
+        const since = performance.now();
+        const next = await FT.api.aiList();
+        if (guard.stale(since)) return;
+        block.sync(next.block, since);
+        warn.sync(next.warn, since);
+        show(next);
+    };
+    el.pushed = true;
+    return el;
+};
+
+const builders = { sponsorBlock, wellbeing, blocked, deArrow, dislikes, aiList };
+
 FT.settingsExtra = {
-    // { sponsorBlock, wellbeing, blocked }; failed section → null.
+    // name → section; failed → null.
     async sections() {
-        const [sb, well, block] = await Promise.all([sponsorBlock(), wellbeing(), blocked()].map((p) => p.catch(() => null)));
-        return { sponsorBlock: sb, wellbeing: well, blocked: block };
+        const names = Object.keys(builders);
+        const built = await Promise.all(names.map((name) => builders[name]().catch(() => null)));
+        return Object.fromEntries(names.map((name, i) => [name, built[i]]));
     },
 };
 })();

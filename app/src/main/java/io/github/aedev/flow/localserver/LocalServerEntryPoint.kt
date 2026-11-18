@@ -5,8 +5,11 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import io.github.aedev.flow.data.contentfilter.aislist.AiListRepository
 import io.github.aedev.flow.data.engagement.VideoFeedbackUseCase
+import io.github.aedev.flow.data.repository.DeArrowRepository
 import io.github.aedev.flow.data.repository.YouTubePlaylistRepository
+import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedRepository
 import io.github.aedev.flow.data.subscriptions.SubscriptionWatchedVideos
 import io.github.aedev.flow.data.video.VideoDownloadManager
@@ -32,7 +35,13 @@ interface LocalServerEntryPoint {
 
     fun youTubePlaylistRepository(): YouTubePlaylistRepository
 
+    fun youTubeRepository(): YouTubeRepository
+
     fun videoFeedback(): VideoFeedbackUseCase
+
+    fun deArrow(): DeArrowRepository
+
+    fun aiList(): AiListRepository
 }
 
 fun localServerEntryPoint(context: Context): LocalServerEntryPoint =

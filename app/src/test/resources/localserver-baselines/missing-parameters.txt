@@ -18,6 +18,19 @@ GET /api/v1/cast/stop
   "status": "success"
 }
 
+GET /api/v1/dearrow
+=> 200 application/json
+{
+  "enabled": false,
+  "items": {}
+}
+
+GET /api/v1/dislikes
+=> 200 application/json
+{
+  "enabled": true
+}
+
 GET /api/v1/channel
 => 400 application/json
 {

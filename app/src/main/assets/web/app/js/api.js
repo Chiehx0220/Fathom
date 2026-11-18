@@ -83,6 +83,12 @@ FT.api = {
     block: (channelUrl, on, name) => act('/block_channel', { action: on ? 'block' : 'unblock', id: channelUrl, name }),
     // action: not_interested | watched | unwatched
     feedback: (video, action) => act('/video_feedback', { action, ...videoQuery(video), duration: video.duration || 0 }),
+    // { videos: [{ id, duration }], enabled } → { enabled, items: { id: { title?, thumbnailUrl? } } }
+    dearrow: ({ videos, enabled } = {}) => getJson('/api/v1/dearrow', { ids: videos && videos.map((v) => `${v.id}:${v.duration || 0}`).join(','), enabled }),
+    // { id: video url, enabled } → { enabled, dislikes?, likes? }
+    dislikes: ({ id, enabled } = {}) => getJson('/api/v1/dislikes', { id, enabled }),
+    // { channels, block, warn, allow, name, disallow } → { block, warn, channelCount?, updatedAt, allowed, verdicts }
+    aiList: ({ channels, block, warn, allow, name, disallow } = {}) => getJson('/api/v1/ailist', { channels: channels && channels.join(','), block, warn, allow, name, disallow }),
     handoff: (url, t, d, title) => act('/handoff', { id: url, t, d, title }),
     castDevices: (scan) => getJson('/api/v1/cast/devices', scan ? { scan: 1 } : {}),
     castStart: (usn, url, t, title) => act('/api/v1/cast/start', { usn, id: url, t, title, serviceId: FT.serviceOfUrl(url) }),

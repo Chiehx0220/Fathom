@@ -29,7 +29,7 @@ FT.register('channel', {
                     FT.avatar(c.name, c.thumbnailUrl, 'lg'),
                     h('div', { style: 'flex:1;min-width:200px' }, h('h1', {}, c.name), h('p', {}, c.subscriberCount >= 0 ? FT.t('count_subscribers', { count: FT.count(c.subscriberCount) }) : '')),
                     subscribe.el, block.el);
-                return { items: body.videos || [], next: body.nextPage, extra: [top] };
+                return { items: body.videos || [], next: body.nextPage, extra: [top, FT.aiList.notice({ id: c.id, name: c.name })] };
             },
         }, scope);
     },

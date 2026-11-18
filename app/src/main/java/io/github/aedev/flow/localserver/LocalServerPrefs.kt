@@ -43,6 +43,18 @@ fun HistoryDbHelper.setHideShorts(hide: Boolean) {
     runBlocking { playerPreferences().setShortsContentEnabled(!hide) }
 }
 
+fun HistoryDbHelper.deArrow(): Boolean = runBlocking { playerPreferences().deArrowEnabled.first() }
+
+fun HistoryDbHelper.setDeArrow(enabled: Boolean) {
+    runBlocking { playerPreferences().setDeArrowEnabled(enabled) }
+}
+
+fun HistoryDbHelper.returnYouTubeDislike(): Boolean = runBlocking { playerPreferences().rytdEnabled.first() }
+
+fun HistoryDbHelper.setReturnYouTubeDislike(enabled: Boolean) {
+    runBlocking { playerPreferences().setRytdEnabled(enabled) }
+}
+
 fun HistoryDbHelper.videoQuality(): String = runBlocking { playerPreferences().defaultQualityWifi.first().label }
 
 /** [endsAt]: epoch ms of timer expiry; 0 = no timer or inactive. */

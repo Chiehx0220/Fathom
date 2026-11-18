@@ -2,7 +2,7 @@
 (() => {
 const h = FT.h;
 
-const PANEL_ICONS = { appearance: 'palette', content: 'filter_list', playback: 'play_circle', focus: 'forest', device: 'smartphone' };
+const PANEL_ICONS = { appearance: 'palette', content: 'filter_list', services: 'link', focus: 'forest', device: 'smartphone' };
 let lastPanel = null;
 
 // Swatch art mirrors <html> theme attributes.
@@ -61,7 +61,7 @@ FT.toggleRow = (title, hint, on, save, key) => {
         paint();
         guard.run(save(on).then(() => { FT.api.forget(); })).catch(() => { on = !on; paint(); FT.toast(FT.t('could_not_save')); });
     };
-    const row = h('div', { class: 'setting' }, h('div', {}, h('b', {}, title), h('span', { class: 'hint' }, hint)), sw);
+    const row = h('div', { class: 'setting' }, h('div', {}, h('b', {}, title), hint ? h('span', { class: 'hint' }, hint) : null), sw);
     row.sync = (value, since) => { if (guard.stale(since)) return; on = !!value; paint(); };
     paint();
     return row;
@@ -135,7 +135,7 @@ const panelNav = (panels) => {
 };
 
 // Nav captions read row state from the DOM, so pushes, polls and local edits all show; stops with the scope.
-const followCaptions = (scope, root, panels, { sponsorBlock, blocked }) => {
+const followCaptions = (scope, root, panels, { blocked }) => {
     const on = (key) => !!FT.$(`[data-key="${key}"]`, root)?.classList.contains('on');
     const captions = {
         appearance: () => [FT.modes.find(([id]) => id === FT.theme.mode())?.[1], FT.palettes.find((p) => p.id === FT.theme.palette())?.name],
@@ -144,7 +144,10 @@ const followCaptions = (scope, root, panels, { sponsorBlock, blocked }) => {
             const blockedCount = blocked ? FT.$$('[data-id]', blocked.card).length : 0;
             return [filtered ? FT.t('sum_filters', { count: filtered }) : null, blockedCount ? FT.t('sum_blocked', { count: blockedCount }) : null];
         },
-        playback: () => [on('sponsorblock') ? FT.t('sum_sb_on', { count: FT.$$('.fold-value.on', sponsorBlock.card).length }) : FT.t('sum_sb_off')],
+        services: () => {
+            const switches = FT.$$('.switch', panels.find((panel) => panel.id === 'services').el);
+            return [FT.t('sum_services', { count: switches.filter((sw) => sw.classList.contains('on')).length, total: switches.length })];
+        },
         focus: () => [on('deep-flow') ? FT.t('settings_deep_flow') : null, on('break') ? FT.t('settings_break') + ' ' + (FT.$('[data-key="break-every"] .fold-value', root)?.textContent || '') : null],
         device: () => [FT.t(FT.remote.active ? 'sum_connected' : 'sum_not_connected')],
     };
@@ -170,7 +173,7 @@ FT.register('settings', {
         const panels = [
             ['appearance', appearanceSections()],
             ['content', [filters, extra.blocked]],
-            ['playback', [extra.sponsorBlock]],
+            ['services', [extra.sponsorBlock, extra.deArrow, extra.dislikes, extra.aiList]],
             ['focus', [deep, extra.wellbeing]],
             ['device', deviceSections()],
         ].map(([id, sections]) => ({ id, sections: sections.filter(Boolean) }))

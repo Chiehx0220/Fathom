@@ -96,7 +96,7 @@ FT.related = (info) => (info.relatedVideos || []).filter((v) => !v.isShort);
 FT.serviceOfUrl = (url) => (/bilibili\.com|^BV/i.test(url || '') ? 5 : 0);
 
 let toastTimer = 0;
-// `undo`: { label, run } adds an action button (stays longer, takes clicks).
+// `undo`: { label, run } adds an action button.
 FT.toast = (message, undo) => {
     const el = FT.$('#toast');
     if (!el) return;
@@ -116,6 +116,39 @@ FT.frame = (fn) => {
         if (queued) return;
         queued = true;
         requestAnimationFrame(() => { queued = false; fn(...args); });
+    };
+};
+
+// Batched, cached per-key lookups against the phone; `load([[key, extra], …])` → { active, answers: { key: answer } }; a failure answers null, uncached.
+FT.phoneLookup = (load, { max = 50, wait = 40 } = {}) => {
+    const cache = new Map();
+    let waiting = new Map();
+    let active = null; // null until the phone answers
+    let timer = 0;
+    const flush = async () => {
+        timer = 0;
+        const batch = [...waiting];
+        waiting = new Map();
+        let answers = {};
+        try {
+            const body = await load(batch.map(([key, entry]) => [key, entry.extra]));
+            active = body.active;
+            if (active) {
+                answers = body.answers;
+                for (const [key] of batch) cache.set(key, answers[key] || null);
+            }
+        } catch (e) { answers = {}; }
+        for (const [key, entry] of batch) entry.done.forEach((resolve) => resolve(answers[key] || null));
+    };
+    const ask = (key, extra) => new Promise((resolve) => {
+        const entry = waiting.get(key) || { extra, done: [] };
+        entry.done.push(resolve);
+        waiting.set(key, entry);
+        if (waiting.size >= max) { clearTimeout(timer); flush(); } else if (!timer) timer = setTimeout(flush, wait);
+    });
+    return {
+        get: (key, extra) => (active === false ? Promise.resolve(null) : cache.has(key) ? Promise.resolve(cache.get(key)) : ask(key, extra)),
+        reset(on) { cache.clear(); active = on === undefined ? null : on; },
     };
 };
 

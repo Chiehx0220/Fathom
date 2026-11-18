@@ -123,6 +123,7 @@ const actionRow = (service, info, scope) => {
     const like = FT.button(info.likeCount > 0 ? FT.count(info.likeCount) : FT.t('like'), 'thumb_up', null, '', 'like');
     like.setAttribute('aria-label', FT.t('like'));
     const dislike = FT.button(FT.t('dislike'), 'thumb_down', null, 'round', 'dislike');
+    if (service === 0) FT.dislikeCounts(info, like, dislike);
     const later = tool(FT.t('watch_later'), 'schedule', null, 'later');
     const paint = () => {
         like.classList.toggle('on', liked());
@@ -241,9 +242,11 @@ const render = async (root, params, scope) => {
     const actions = actionRow(service, info, scope);
     const queue = FT.queue.panel();
     scope.dispose(queue.stop);
+    const heading = h('h1', {}, info.title);
+    FT.dearrow.title(heading, info);
     const page = h('div', {},
         h('div', { class: 'watch-info' },
-            h('h1', {}, info.title),
+            heading,
             h('div', { class: 'who-row' },
                 h('a', { class: 'who-link', href: info.channelId ? FT.link.channel(info.channelId, service) : '#', tabindex: '-1', data: { f: '', key: 'channel', first: '1' } },
                     FT.avatar(info.channelName, info.channelThumbnailUrl), h('div', { class: 'grow' }, h('div', { class: 'who' }, info.channelName))),

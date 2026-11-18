@@ -28,6 +28,8 @@ FT.videoCard = (v, key) => {
         thumb(v), h('div', { class: 'card-title' }, v.title), h('div', { class: 'card-meta' }, meta(v)));
     el.item = v;
     el.kind = 'video';
+    FT.dearrow.card(el);
+    FT.aiList.card(el);
     return el;
 };
 
@@ -37,6 +39,8 @@ FT.videoRow = (v, key) => {
         thumb(v, false), h('div', { class: 'row-text' }, h('div', { class: 'card-title' }, v.title), h('div', { class: 'card-meta' }, meta(v))));
     el.item = v;
     el.kind = 'video';
+    FT.dearrow.card(el);
+    FT.aiList.card(el);
     return el;
 };
 

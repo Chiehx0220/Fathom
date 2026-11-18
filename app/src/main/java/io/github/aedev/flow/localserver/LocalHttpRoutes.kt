@@ -66,6 +66,9 @@ internal fun Route.localRoutes(blocking: CoroutineDispatcher) =
         api("/api/v1/settings") { handleApiSettings(it) }
         api("/api/v1/profiles") { handleApiProfiles(it) }
         api("/api/v1/blocked") { handleApiBlocked() }
+        api("/api/v1/dearrow") { handleApiDeArrow(it) }
+        api("/api/v1/dislikes") { handleApiDislikes(it) }
+        api("/api/v1/ailist") { handleApiAiList(it) }
         api("/api/v1/sponsorblock") { handleApiSponsorBlock(it) }
         api("/api/v1/wellbeing") { handleApiWellbeing(it) }
 

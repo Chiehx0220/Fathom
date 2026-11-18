@@ -142,6 +142,8 @@ class RouteBaselineTest {
                 "/api/v1/cast/devices",
                 "/api/v1/cast/start",
                 "/api/v1/cast/stop",
+                "/api/v1/dearrow",
+                "/api/v1/dislikes",
                 "/api/v1/channel",
                 "/api/v1/comments",
                 "/api/v1/download",
