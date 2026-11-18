@@ -123,7 +123,8 @@ GET /api/v1/settings
   "deepFlow": false,
   "deepFlowEndsAt": 0,
   "hideShorts": false,
-  "hideWatched": false
+  "hideWatched": false,
+  "profileInTopBar": true
 }
 
 GET /api/v1/settings?hideWatched=true&hideShorts=true
@@ -132,7 +133,8 @@ GET /api/v1/settings?hideWatched=true&hideShorts=true
   "deepFlow": false,
   "deepFlowEndsAt": 0,
   "hideShorts": true,
-  "hideWatched": true
+  "hideWatched": true,
+  "profileInTopBar": true
 }
 
 GET /api/v1/settings?hideWatched=false&hideShorts=false
@@ -141,7 +143,28 @@ GET /api/v1/settings?hideWatched=false&hideShorts=false
   "deepFlow": false,
   "deepFlowEndsAt": 0,
   "hideShorts": false,
-  "hideWatched": false
+  "hideWatched": false,
+  "profileInTopBar": true
+}
+
+GET /api/v1/settings?profileInTopBar=false
+=> 200 application/json
+{
+  "deepFlow": false,
+  "deepFlowEndsAt": 0,
+  "hideShorts": false,
+  "hideWatched": false,
+  "profileInTopBar": false
+}
+
+GET /api/v1/settings?profileInTopBar=true
+=> 200 application/json
+{
+  "deepFlow": false,
+  "deepFlowEndsAt": 0,
+  "hideShorts": false,
+  "hideWatched": false,
+  "profileInTopBar": true
 }
 
 GET /search-history

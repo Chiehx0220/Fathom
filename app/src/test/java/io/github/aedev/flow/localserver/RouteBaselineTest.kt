@@ -111,6 +111,8 @@ class RouteBaselineTest {
                 get("/api/v1/settings")
                 get("/api/v1/settings?hideWatched=true&hideShorts=true")
                 get("/api/v1/settings?hideWatched=false&hideShorts=false")
+                get("/api/v1/settings?profileInTopBar=false")
+                get("/api/v1/settings?profileInTopBar=true")
                 get("/search-history")
                 get("/search-history?delete=none")
             }

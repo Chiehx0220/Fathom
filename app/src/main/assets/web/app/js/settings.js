@@ -67,6 +67,25 @@ FT.toggleRow = (title, hint, on, save, key) => {
     return row;
 };
 
+// Switch on a /api/v1/settings field.
+const settingRow = (values, field, title, hint, key, after) => FT.toggleRow(title, hint, !!values[field], (on) => FT.api.settings({ [field]: on }).then(after), key);
+
+// Group of settingRow switches ({ field: row }); `refresh` mirrors the phone.
+const phoneSwitches = (title, rows) => {
+    const el = FT.settingsGroup(title, null, ...Object.values(rows));
+    el.refresh = async () => {
+        const since = performance.now();
+        const next = await FT.api.settings();
+        for (const [field, row] of Object.entries(rows)) row.sync(next[field], since);
+    };
+    el.pushed = true;
+    return el;
+};
+
+const topBarSection = (values) => phoneSwitches(FT.t('settings_top_bar'), {
+    profileInTopBar: settingRow(values, 'profileInTopBar', FT.t('settings_top_bar_profile'), FT.t('settings_top_bar_profile_hint'), 'top-bar-profile', () => FT.profiles.load()),
+});
+
 const appearanceSections = () => [
     FT.settingsGroup(FT.t('settings_theme'), FT.t('settings_theme_hint'),
         stack(pillRow(FT.modes, FT.theme.mode, (id) => { FT.theme.setMode(id); FT.$$('.swatch-art').forEach(syncArt); }, 'mode-theme-')),
@@ -74,19 +93,10 @@ const appearanceSections = () => [
     FT.settingsGroup(FT.t('settings_layout'), FT.t('settings_layout_hint'), stack(pillRow(FT.layouts, FT.layout.mode, FT.layout.setMode, 'layout-'))),
 ];
 
-const filtersSection = (values) => {
-    const hideWatched = FT.toggleRow(FT.t('filter_hide_watched'), FT.t('filter_hide_watched_hint'), !!values.hideWatched, (on) => FT.api.settings({ hideWatched: on }), 'hide-watched');
-    const hideShorts = FT.toggleRow(FT.t('filter_hide_shorts'), FT.t('filter_hide_shorts_hint'), !!values.hideShorts, (on) => FT.api.settings({ hideShorts: on }), 'hide-shorts');
-    const el = FT.settingsGroup(FT.t('settings_filters'), null, hideWatched, hideShorts);
-    el.refresh = async () => {
-        const since = performance.now();
-        const next = await FT.api.settings();
-        hideWatched.sync(next.hideWatched, since);
-        hideShorts.sync(next.hideShorts, since);
-    };
-    el.pushed = true;
-    return el;
-};
+const filtersSection = (values) => phoneSwitches(FT.t('settings_filters'), {
+    hideWatched: settingRow(values, 'hideWatched', FT.t('filter_hide_watched'), FT.t('filter_hide_watched_hint'), 'hide-watched'),
+    hideShorts: settingRow(values, 'hideShorts', FT.t('filter_hide_shorts'), FT.t('filter_hide_shorts_hint'), 'hide-shorts'),
+});
 
 // `el.follow()`: mirror phone-side changes; returns stop.
 const deepFlowSection = (values) => {
@@ -171,7 +181,7 @@ FT.register('settings', {
         const filters = values && filtersSection(values);
         const deep = values && deepFlowSection(values);
         const panels = [
-            ['appearance', appearanceSections()],
+            ['appearance', [...appearanceSections(), values && topBarSection(values)]],
             ['content', [filters, extra.blocked]],
             ['services', [extra.sponsorBlock, extra.deArrow, extra.dislikes, extra.aiList]],
             ['focus', [deep, extra.wellbeing]],

@@ -200,11 +200,18 @@ internal fun RequestContext.handleApiSponsor(params: Query): SponsorSegments {
     return SponsorSegments(segments)
 }
 
-// Filter settings; query params saved first.
+// Phone settings shared with the web page; query params saved first.
 internal fun RequestContext.handleApiSettings(params: Query): SettingsDto {
     params.bool("hideWatched")?.let(dbHelper::setHideWatched)
     params.bool("hideShorts")?.let(dbHelper::setHideShorts)
+    params.bool("profileInTopBar")?.let(dbHelper::setProfileInTopBar)
     params.bool("deepFlow")?.let(dbHelper::setDeepFlow)
     val deepFlowStatus = dbHelper.deepFlow()
-    return SettingsDto(dbHelper.hideWatched(), dbHelper.hideShorts(), deepFlowStatus.active, deepFlowStatus.endsAt)
+    return SettingsDto(
+        dbHelper.hideWatched(),
+        dbHelper.hideShorts(),
+        dbHelper.profileInTopBar(),
+        deepFlowStatus.active,
+        deepFlowStatus.endsAt,
+    )
 }

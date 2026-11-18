@@ -114,7 +114,8 @@ GET /api/v1/settings
   "deepFlow": false,
   "deepFlowEndsAt": 0,
   "hideShorts": false,
-  "hideWatched": false
+  "hideWatched": false,
+  "profileInTopBar": true
 }
 
 GET /api/v1/state

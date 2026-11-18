@@ -284,6 +284,7 @@ internal class SponsorSegments(
 internal class SettingsDto(
     val hideWatched: Boolean,
     val hideShorts: Boolean,
+    val profileInTopBar: Boolean,
     val deepFlow: Boolean,
     val deepFlowEndsAt: Long,
 )

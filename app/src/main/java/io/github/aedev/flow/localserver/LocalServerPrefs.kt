@@ -43,6 +43,12 @@ fun HistoryDbHelper.setHideShorts(hide: Boolean) {
     runBlocking { playerPreferences().setShortsContentEnabled(!hide) }
 }
 
+fun HistoryDbHelper.profileInTopBar(): Boolean = runBlocking { playerPreferences().showProfileInTopBar.first() }
+
+fun HistoryDbHelper.setProfileInTopBar(enabled: Boolean) {
+    runBlocking { playerPreferences().setShowProfileInTopBar(enabled) }
+}
+
 fun HistoryDbHelper.deArrow(): Boolean = runBlocking { playerPreferences().deArrowEnabled.first() }
 
 fun HistoryDbHelper.setDeArrow(enabled: Boolean) {
