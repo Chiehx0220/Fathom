@@ -176,6 +176,7 @@ internal fun RequestContext.handleApiSponsor(params: Query): SponsorSegments {
     val segments = mutableListOf<SponsorSegment>()
     if (serviceId == LocalServerMedia.SERVICE_YOUTUBE && videoUrl.isNotEmpty()) {
         try {
+            val actions = sponsorActions()
             for (segment in source.sponsorSegments(LocalServerMedia.getVideoId(videoUrl))) {
                 val label =
                     when (segment.category) {
@@ -187,7 +188,8 @@ internal fun RequestContext.handleApiSponsor(params: Query): SponsorSegments {
                         "music_offtopic" -> "non-music part"
                         else -> null
                     } ?: continue
-                segments += SponsorSegment(segment.startMs / 1000.0, segment.endMs / 1000.0, segment.category, label)
+                val action = (actions[segment.category] ?: continue).webAction() ?: continue
+                segments += SponsorSegment(segment.startMs / 1000.0, segment.endMs / 1000.0, segment.category, label, action)
             }
         } catch (e: Exception) {
             serverLog("SponsorBlock error: " + e.message)

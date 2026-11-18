@@ -49,6 +49,7 @@ object WebAssets {
             "app/js/list.js",
             "app/js/watch.js",
             "app/js/channel.js",
+            "app/js/settings-extra.js",
             "app/js/settings.js",
             "app/js/boot.js",
         )

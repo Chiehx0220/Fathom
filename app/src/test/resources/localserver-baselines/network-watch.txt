@@ -195,18 +195,21 @@ GET /api/v1/sponsor?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&serviceId=0
 {
   "segments": [
     {
+      "a": "button",
       "c": "intro",
       "e": 4.199,
       "l": "intro",
       "s": 0
     },
     {
+      "a": "button",
       "c": "interaction",
       "e": 20.5,
       "l": "reminder",
       "s": 10
     },
     {
+      "a": "button",
       "c": "music_offtopic",
       "e": 50,
       "l": "non-music part",

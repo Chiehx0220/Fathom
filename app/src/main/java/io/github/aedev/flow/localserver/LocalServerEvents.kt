@@ -65,7 +65,7 @@ private fun settingsValues(context: Context): Flow<List<Any?>> {
             preferences.showProfileInTopBar,
             data.breakReminder,
             data.breakFrequency,
-        )
+        ) + WEB_CATEGORIES.map { preferences.sbActionForCategory(it) }
     return combine(flows) { it.toList() }
 }
 

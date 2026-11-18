@@ -42,11 +42,21 @@ const placeMarks = () => {
 // segment_* i18n keys; fallback server label.
 const segmentName = (label) => FT.t('segment_' + String(label).replace(/[ -]/g, '_'), null, label);
 
+const skippedOnce = new WeakSet();
+
+// Segment action `a`: skip | once | button | show.
 const watch = () => {
     const btn = FT.$('#skip-btn');
     if (!P.current || !btn) return;
     const t = P.media().currentTime;
-    const seg = P.current.segments.find((s) => t >= s.s && t < s.e) || null;
+    const found = P.current.segments.find((s) => t >= s.s && t < s.e) || null;
+    if (found && (found.a === 'skip' || (found.a === 'once' && !skippedOnce.has(found)))) {
+        skippedOnce.add(found);
+        P.media().currentTime = found.e;
+        FT.toast(FT.t('skipped', { label: segmentName(found.l) }));
+        return;
+    }
+    const seg = found && (!found.a || found.a === 'button') ? found : null;
     if (seg === skipTarget) return;
     skipTarget = seg;
     btn.hidden = !seg;

@@ -56,6 +56,14 @@ body[data-input="keys"] .suggest-item.sel { background: var(--s2); box-shadow: 0
 .setting > div:first-child { flex: 1; }
 .setting b { display: block; font-weight: 500; }
 .setting span.hint { display: block; margin-top: 2px; }
+.setting.fold { flex-direction: column; align-items: stretch; gap: 0; padding: 0; }
+.fold-head { display: flex; align-items: center; gap: 16px; width: 100%; padding: 14px 18px; border: 0; border-radius: 18px; background: none; color: inherit; font: inherit; text-align: left; }
+.fold-head > div { flex: 1; }
+.fold-value { color: var(--mute); }
+.fold-head .i { color: var(--mute); transition: transform 0.15s; }
+.fold.open .fold-head .i { transform: rotate(180deg); }
+.fold .pills { padding: 0 18px 16px; }
+.fold:not(.open) .pills { display: none; }
 .switch { position: relative; width: 56px; height: 32px; flex: none; border: 0; border-radius: 16px; background: var(--s3); transition: background 0.15s; }
 .switch::after { content: ''; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--mute); transition: transform 0.15s var(--ease), background 0.15s; }
 .switch.on { background: var(--acc); }

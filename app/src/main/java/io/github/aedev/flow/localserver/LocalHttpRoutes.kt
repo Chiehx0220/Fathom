@@ -64,6 +64,9 @@ internal fun Route.localRoutes(blocking: CoroutineDispatcher) =
         api("/api/v1/sponsor") { handleApiSponsor(it) }
         api("/api/v1/settings") { handleApiSettings(it) }
         api("/api/v1/profiles") { handleApiProfiles(it) }
+        api("/api/v1/blocked") { handleApiBlocked() }
+        api("/api/v1/sponsorblock") { handleApiSponsorBlock(it) }
+        api("/api/v1/wellbeing") { handleApiWellbeing(it) }
 
         page("/vendor/{file...}") { reply, _ -> handleVendorAsset(reply, requestPath) }
         page("/fonts/{file...}") { reply, _ -> handleAppFont(reply, requestPath) }

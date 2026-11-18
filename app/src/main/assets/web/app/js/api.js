@@ -65,6 +65,9 @@ FT.api = {
     sponsor: (service, id) => getJson('/api/v1/sponsor', { serviceId: service, id }),
     settings: (changes) => getJson('/api/v1/settings', changes),
     // switchTo: profile id to switch to (the app restarts).
+    sponsorBlock: (changes) => getJson('/api/v1/sponsorblock', changes),
+    wellbeing: (changes) => getJson('/api/v1/wellbeing', changes),
+    blockedChannels: () => getJson('/api/v1/blocked'),
     profiles: (switchTo) => getJson('/api/v1/profiles', switchTo ? { switch: switchTo } : {}),
     download: (action, service, id, choice = {}) => getJson('/api/v1/download', { action, serviceId: service, id, ...choice }),
 

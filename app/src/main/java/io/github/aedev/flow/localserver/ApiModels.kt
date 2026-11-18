@@ -270,6 +270,7 @@ internal class SponsorSegment(
     val e: Double,
     val c: String,
     val l: String,
+    val a: String,
 )
 
 @Serializable
