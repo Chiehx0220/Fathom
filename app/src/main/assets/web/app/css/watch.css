@@ -59,23 +59,23 @@ body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
 .who-row .who-link { flex: 1; min-width: 0; }
 .who-row .btn.quiet { background: transparent; color: var(--mute); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 20%, transparent); }
 .who-row .btn.quiet:hover { background: var(--s1); color: var(--fg); }
-/* Subscribed: bell + label in one pill. */
+/* Subscribed: bell + label; like/dislike: connected groups, 2px gap, outer ends round. */
 .subscribe { display: inline-flex; flex: none; }
 .who-row .btn { flex: none; }
 .subscribe .btn:not(.round) { padding: 0 22px; }
-.subscribe.joined { overflow: hidden; border: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); border-radius: 23px; }
-.subscribe.joined .btn { height: 44px; border-radius: 0; background: transparent; box-shadow: none; }
+.subscribe.joined, .rate { gap: 2px; }
+.subscribe.joined .btn, .rate .btn { border-radius: 6px; }
+.subscribe.joined .btn { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 20%, transparent); }
 .subscribe.joined .btn:hover { background: var(--s1); }
+.subscribe.joined .btn:first-child, .rate .btn:first-child { border-radius: 23px 6px 6px 23px; }
+.subscribe.joined .btn:last-child, .rate .btn:last-child { border-radius: 6px 23px 23px 6px; }
 .subscribe.joined .notify-bell { width: auto; padding: 0 12px 0 18px; }
-.subscribe.joined .notify-bell + .btn { padding: 0 20px 0 14px; border-left: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); }
+.subscribe.joined .notify-bell + .btn { padding: 0 20px 0 14px; }
 .subscribe.joined .notify-bell.on { background: color-mix(in srgb, var(--acc) 20%, var(--bg)); color: var(--acc); }
 .subscribe.joined .notify-bell.on:hover { background: color-mix(in srgb, var(--acc) 28%, var(--bg)); }
 /* Actions: like pair, tools; wide = labels, narrow = icons + More. */
 .watch-actions { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 8px; }
-.rate { display: inline-flex; flex: none; overflow: hidden; border-radius: 23px; background: var(--s3); }
-.rate .btn { border-radius: 0; background: transparent; }
-.rate .btn:hover { background: color-mix(in srgb, var(--s3) 82%, var(--fg)); }
-.rate .btn + .btn { border-left: 1px solid color-mix(in srgb, var(--fg) 20%, transparent); }
+.rate { display: inline-flex; flex: none; }
 .rate .btn.round { width: auto; padding: 0 16px; }
 .watch-actions .btn.on { background: color-mix(in srgb, var(--acc) 20%, var(--bg)); color: var(--acc); }
 .watch-actions .btn.on:hover { background: color-mix(in srgb, var(--acc) 28%, var(--bg)); }
