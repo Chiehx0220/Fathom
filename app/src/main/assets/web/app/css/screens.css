@@ -85,7 +85,7 @@ body[data-input="keys"] .set-tab.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6p
 .fold-value.on { color: var(--fg); font-weight: 500; }
 .fold-head .i { color: var(--mute); transition: transform 0.15s; }
 .fold.open .fold-head .i { transform: rotate(180deg); }
-.fold .pills { padding: 0 20px 16px; }
+.fold .pills { padding: 12px 20px 16px; }
 .fold:not(.open) .pills { display: none; }
 .group .pill, .group .btn { background: var(--s2); }
 .group .pill:hover, .group .pill.on, .group .btn:hover { background: var(--s3); }
