@@ -159,3 +159,22 @@ FT.avatar = (name, src, extra = '') => {
     if (img) img.addEventListener('error', () => box.classList.add('failed'));
     return box;
 };
+
+// Re-read while visible: pushed `topics`, visibility, 3 s poll unless `covered` by an open socket.
+FT.followState = (scope, refresh, { topics = [], covered = false } = {}) => {
+    const run = () => { if (!document.hidden && scope.live()) refresh().catch(() => {}); };
+    const unsubscribe = topics.map((topic) => FT.events.on(topic, run));
+    const timer = setInterval(() => { if (!(covered && FT.events.connected())) run(); }, 3000);
+    document.addEventListener('visibilitychange', run);
+    scope.dispose(() => { clearInterval(timer); unsubscribe.forEach((off) => off()); document.removeEventListener('visibilitychange', run); });
+};
+
+// Edit guard: reads started before or during an edit are stale.
+FT.editGuard = () => {
+    let busy = 0;
+    let last = 0;
+    return {
+        run: (request) => { busy += 1; last = performance.now(); return request.finally(() => { busy -= 1; last = performance.now(); }); },
+        stale: (since) => busy > 0 || last >= since,
+    };
+};

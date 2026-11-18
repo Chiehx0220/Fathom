@@ -58,6 +58,7 @@ const open = async ({
   pointer = false,
 } = {}) => {
   const requests = [];
+  const sockets = [];
   const dom = new JSDOM(shell(services), {
     url: 'http://localhost/' + hash,
     runScripts: 'dangerously',
@@ -68,6 +69,13 @@ const open = async ({
       for (const [key, value] of Object.entries(stored)) window.localStorage.setItem(key, value);
       window.fetch = respond(routes, requests);
       window.matchMedia = (query) => ({ matches: pointer && query.includes('hover: hover'), media: query, addEventListener() {}, removeEventListener() {} });
+      // Fake sockets; `message(topic)` pushes.
+      window.WebSocket = class {
+        constructor(url) { this.url = url; sockets.push(this); setTimeout(() => this.onopen && this.onopen({}), 0); }
+        message(data) { this.onmessage({ data }); }
+        close() { if (this.onclose) this.onclose({ reason: '' }); }
+        send() {}
+      };
       window.scrollTo = () => {};
       window.Element.prototype.scrollIntoView = () => {};
       window.Element.prototype.scrollBy = () => {};
@@ -85,7 +93,7 @@ const open = async ({
   const settle = async (rounds = 12) => { for (let i = 0; i < rounds; i++) await new Promise((resolve) => setTimeout(resolve, 2)); };
   opened.push(window);
   await settle();
-  return { window, FT: window.FT, requests, settle };
+  return { window, FT: window.FT, requests, sockets, settle };
 };
 
 const video = (n, extra = {}) => ({

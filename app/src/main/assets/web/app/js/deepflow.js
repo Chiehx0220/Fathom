@@ -1,4 +1,4 @@
-// Deep Flow mirror; phone owns state/timer; polled while visible.
+// Deep Flow mirror; phone owns state/timer; pushed, polled only as fallback.
 (() => {
 const SYNC_MS = 3000;
 const SVG = 'http://www.w3.org/2000/svg';
@@ -52,14 +52,15 @@ FT.deepFlow = {
 
     onChange: (handler) => FT.on('ft:deepflow', handler),
 
-    // Polls while visible; syncs once on becoming visible.
+    // Sync on settings topic and visibility; poll only while push is down.
     watch() {
         let timer = null;
         const start = () => {
             if (timer) return;
             FT.deepFlow.sync();
-            timer = setInterval(FT.deepFlow.sync, SYNC_MS);
+            timer = setInterval(() => { if (!FT.events.connected()) FT.deepFlow.sync(); }, SYNC_MS);
         };
+        FT.events.on('settings', () => { if (!document.hidden) FT.deepFlow.sync(); });
         const stop = () => { clearInterval(timer); timer = null; };
         document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
         if (!document.hidden) start();

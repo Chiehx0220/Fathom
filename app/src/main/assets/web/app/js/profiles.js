@@ -131,6 +131,7 @@ FT.profiles = {
     },
 };
 
-// Phone setting may change meanwhile.
+// Profile list / top-bar setting changes.
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !cover) FT.profiles.load(); });
+for (const topic of ['profiles', 'settings']) FT.events.on(topic, () => { if (!document.hidden && !cover) FT.profiles.load(); });
 })();

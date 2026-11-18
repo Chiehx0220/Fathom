@@ -74,6 +74,7 @@ internal fun Application.installLocalServer(
     }
     routing {
         webSocket(REMOTE_PATH) { sockets.serve(this) }
+        webSocket(EVENTS_PATH) { serveEvents(this, appChangeTopics(dbHelper)) }
         localRoutes(blocking)
     }
 }
@@ -107,12 +108,12 @@ private fun admit(
         return false
     }
     if (!context.admits(reply, path, headers)) return false
-    if (path == REMOTE_PATH && !isAllowedWebSocketOrigin(headers["origin"], headers["host"])) {
+    if (path in SOCKET_PATHS && !isAllowedWebSocketOrigin(headers["origin"], headers["host"])) {
         serverLog("Refused WebSocket from origin ${headers["origin"]}")
         reply.send(403, "Forbidden: this page is not the server's own", "text/plain; charset=UTF-8")
         return false
     }
-    if (method == "OPTIONS" && path != REMOTE_PATH) {
+    if (method == "OPTIONS" && path !in SOCKET_PATHS) {
         reply.sendBytes(204, ByteArray(0), "text/plain", PREFLIGHT_HEADERS)
         return false
     }
