@@ -16,7 +16,7 @@ const paneFor = (el) => {
     ];
 };
 
-// options: { fetch(cursor) -> { items, next }, decorate(el), empty: { icon, title, text }, before: [elements] }
+// options: { fetch(cursor) -> { items, next }, decorate(el), empty: { icon, title, text }, before: [elements], queue: Play all / Shuffle }
 // Grid layout: card grid without the detail pane; the next page loads when `more` nears the viewport.
 FT.listView = async (root, options, scope) => {
     const wide = FT.layout.current() === 'grid';
@@ -24,6 +24,7 @@ FT.listView = async (root, options, scope) => {
     const list = h('div', { class: wide ? 'grid' : 'list' });
     const pane = h('aside', { class: 'pane' });
     const more = h('div', { class: 'more', hidden: true });
+    const loaded = [];
     let cursor = null;
     let loading = false;
     let done = false;
@@ -47,6 +48,7 @@ FT.listView = async (root, options, scope) => {
 
     const append = (items) => {
         for (const item of items) {
+            loaded.push(item);
             const row = wide ? FT.videoCard(item) : FT.videoRow(item);
             if (options.decorate) options.decorate(row);
             row.onRemoved = () => remove(row);
@@ -88,7 +90,8 @@ FT.listView = async (root, options, scope) => {
     done = !cursor;
     more.hidden = done;
     const body = wide ? h('div', {}, list, more) : h('div', { class: 'split' }, h('div', {}, list, more), pane);
-    root.replaceChildren(...[...(options.before || []), ...(first.extra || []), first.items.length ? body : null].filter(Boolean));
+    const start = options.queue && first.items.length ? FT.queue.buttons(() => loaded.filter((v) => v.kind !== 'channel')) : null;
+    root.replaceChildren(...[...(options.before || []), ...(first.extra || []), start, first.items.length ? body : null].filter(Boolean));
     const firstRow = FT.$(itemSelector, list);
     if (firstRow && !wide) showPane(firstRow);
 };
@@ -334,6 +337,7 @@ FT.register('library', {
         if (source) {
             await FT.listView(root, {
                 before,
+                queue: true,
                 empty: source.empty,
                 decorate: source.decorate,
                 fetch: async () => ({ items: (await source.load(service)).filter(sameService), next: null }),
@@ -379,6 +383,7 @@ FT.register('mylist', {
         const id = params.u;
         await FT.listView(root, {
             before: [],
+            queue: true,
             empty: { icon: 'playlist_remove', title: FT.t('playlist_empty'), text: FT.t('playlist_empty_hint') },
             decorate: (row) => { row.fromPlaylist = id; },
             fetch: async () => {
@@ -399,6 +404,7 @@ FT.register('playlist', {
         let meta = null;
         await FT.listView(root, {
             before: [],
+            queue: true,
             empty: { icon: 'playlist_remove', title: FT.t('playlist_empty'), text: FT.t('playlist_empty_hint') },
             fetch: async (cursor) => {
                 const body = await FT.api.playlist(service, id, cursor);

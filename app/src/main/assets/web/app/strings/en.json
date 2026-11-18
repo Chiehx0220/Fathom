@@ -282,5 +282,15 @@
   "settings_blocked_hint": "Their videos stay out of recommendations.",
   "no_blocked": "No blocked channels.",
   "unblock": "Unblock",
-  "unblocked": "Unblocked"
+  "unblocked": "Unblocked",
+  "play_all": "Play all",
+  "queue": "Queue",
+  "queue_position": "{at} of {of}",
+  "queue_previous": "Previous",
+  "queue_next": "Next",
+  "queue_shuffle": "Shuffle",
+  "queue_loop_off": "Loop: off",
+  "queue_loop_all": "Loop: all",
+  "queue_loop_one": "Loop: one",
+  "queue_close": "Close queue"
 }

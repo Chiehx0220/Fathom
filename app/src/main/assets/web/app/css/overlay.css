@@ -57,3 +57,10 @@ kbd { min-width: 26px; padding: 3px 7px; border-radius: 7px; background: var(--s
 .fresh .card-title::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--acc); vertical-align: middle; }
 .pill-rows { display: flex; flex-direction: column; }
 .pill-rows .pills { padding-bottom: 4px; }
+
+/* Playback queue. */
+.queue-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 0 var(--pad-x); }
+.queue-head h2 { font-size: 20px; font-weight: 500; }
+.queue-head .pills { padding: 6px 0; }
+.queue-place { color: var(--mute); font-size: 14px; }
+.queue-start { padding: 0 var(--pad-x) 12px; }

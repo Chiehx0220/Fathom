@@ -280,5 +280,15 @@
   "settings_blocked_hint": "這些頻道的影片不會出現在推薦中。",
   "no_blocked": "沒有封鎖的頻道。",
   "unblock": "解除封鎖",
-  "unblocked": "已解除封鎖"
+  "unblocked": "已解除封鎖",
+  "play_all": "全部播放",
+  "queue": "播放佇列",
+  "queue_position": "第 {at} 部，共 {of} 部",
+  "queue_previous": "上一部",
+  "queue_next": "下一部",
+  "queue_shuffle": "隨機播放",
+  "queue_loop_off": "循環：關",
+  "queue_loop_all": "循環：全部",
+  "queue_loop_one": "循環：單部",
+  "queue_close": "關閉佇列"
 }

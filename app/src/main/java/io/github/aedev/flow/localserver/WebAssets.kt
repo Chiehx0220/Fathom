@@ -24,6 +24,7 @@ object WebAssets {
             "app/js/api.js",
             "app/js/events.js",
             "app/js/ui.js",
+            "app/js/queue.js",
             "app/js/deepflow.js",
             "app/js/focus.js",
             "app/js/menu.js",

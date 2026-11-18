@@ -29,7 +29,14 @@ const tick = (next) => {
 };
 
 const schedule = () => {
-    const next = FT.related(P.current ? P.current.info : {})[0];
+    // Loop one: replay; queue end: none.
+    const queued = FT.queue.active();
+    if (queued && FT.queue.loop() === 'one') {
+        FT.player.seekTo(0);
+        if (FT.player.snapshot().paused) FT.player.toggle();
+        return;
+    }
+    const next = queued ? FT.queue.next() : FT.related(P.current ? P.current.info : {})[0];
     // Skip unless full dock (ended in mini: no navigation).
     if (!next || upNext || !P.tree || P.dockMode !== 'full') return;
     const counting = P.prefs.autoplay();

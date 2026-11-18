@@ -205,6 +205,7 @@ const render = async (root, params, scope) => {
     });
     const service = parseInt(params.s, 10) || 0;
     const url = params.u;
+    FT.queue.visit(url);
     mode.onPlayer = true;
     const slot = h('div', { class: 'watch-slot' });
     root.replaceChildren(slot, FT.loading());
@@ -229,6 +230,8 @@ const render = async (root, params, scope) => {
     const commentsHolder = h('section', { class: 'comments' }, h('h2', {}, FT.t('comments')), FT.loading());
     const related = FT.related(info);
     const actions = actionRow(service, info);
+    const queue = FT.queue.panel();
+    scope.dispose(queue.stop);
     const page = h('div', {},
         h('div', { class: 'watch-info' },
             h('h1', {}, info.title),
@@ -237,6 +240,7 @@ const render = async (root, params, scope) => {
                     FT.avatar(info.channelName, info.channelThumbnailUrl), h('div', { class: 'grow' }, h('div', { class: 'who' }, info.channelName))),
                 actions.subscribe),
             actions.row),
+        queue,
         info.chapters.length ? FT.shelf(FT.t('chapters'), FT.t('chapters_hint'), chapterCards(info), 'chapters') : null,
         about,
         related.length ? FT.shelf(FT.t('related'), FT.t('related_hint'), related.slice(0, 16).map((v) => FT.videoCard(v))) : null,
