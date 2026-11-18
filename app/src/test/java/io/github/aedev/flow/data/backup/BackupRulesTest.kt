@@ -83,6 +83,7 @@ class BackupRulesTest {
             "music_home_cache_prefs",
             "remote_hints",
             "fathom_pairing",
+            "fathom_server_resume",
         )
 
     private fun includes(

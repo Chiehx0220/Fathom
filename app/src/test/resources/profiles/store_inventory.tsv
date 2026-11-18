@@ -161,4 +161,5 @@ files_dir	profile_avatars/	main:data/profile/ProfileAvatarPhotos.kt	DEVICE	-	Ava
 cache_dir	master_live_slice.zip	main:data/profile/ProfileSlices.kt	CACHE	-	The running profile exported while a master backup is put together; deleted once the backup is written.
 prefs_datastore	remote_hints	main:localserver/remote/RemoteHints.kt	DEVICE	-	One-time web remote hint card.
 shared_prefs	fathom_pairing	main:localserver/PairingStorage.kt	DEVICE	-	Web remote pairing codes belong to the phone.
+shared_prefs	fathom_server_resume	main:localserver/ServerResume.kt	DEVICE	-	Two-minute mark that revives the web server after a profile-switch restart.
 cache_dir	launcher_icon_mask	main:platform/LauncherIconArt.kt	CACHE	-	The launcher icon mask rendered from the system shape; redrawn when missing.
