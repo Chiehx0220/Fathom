@@ -28,6 +28,37 @@ const present = (panel, focus, position) => {
     FT.focus.select(focus, { scroll: false });
 };
 
+// Watched, not interested (feeds only), block channel: the phone's video menu.
+const feedbackItems = (el, drop) => {
+    const it = el.item;
+    const watched = (it.progress || 0) >= 100;
+    const items = [{
+        icon: watched ? 'undo' : 'check', label: FT.t(watched ? 'mark_unwatched' : 'mark_watched'),
+        run: () => FT.api.feedback(it, watched ? 'unwatched' : 'watched').then(() => {
+            it.progress = watched ? 0 : 100;
+            const bar = FT.$('.prog', el);
+            if (bar) bar.remove();
+            FT.toast(FT.t(watched ? 'marked_unwatched' : 'marked_watched'));
+        }).catch(() => FT.toast(FT.t('could_not_save'))),
+    }];
+    if (!el.fromHistory && !el.fromLiked && !el.fromPlaylist) {
+        items.push({
+            icon: 'not_interested', label: FT.t('not_interested'),
+            run: () => FT.api.feedback(it, 'not_interested').then(() => { FT.toast(FT.t('not_interested_done')); drop(el); }).catch(() => FT.toast(FT.t('could_not_save'))),
+        });
+    }
+    if (it.channelId) {
+        items.push({
+            icon: 'block', label: FT.t('block_channel'), danger: true,
+            run: () => FT.setBlocked({ id: it.channelId, name: it.channelName || '' }, true).then(() => {
+                FT.$$('.card, .row-item').filter((c) => c !== el && c.kind === 'video' && c.item.channelId === it.channelId).forEach((c) => c.remove());
+                drop(el);
+            }).catch(() => FT.toast(FT.t('could_not_save'))),
+        });
+    }
+    return items;
+};
+
 FT.menu = {
     isOpen: () => !root().hidden,
 
@@ -67,6 +98,7 @@ FT.menu = {
     },
 
     itemsFor(el) {
+        const drop = (card) => { if (card.onRemoved) card.onRemoved(); else { card.remove(); FT.focus.first(); } };
         const removal = (icon, label, done, request) => ({
             icon, label, danger: true,
             run: () => request().then(() => { FT.toast(done); el.onRemoved(); }).catch(() => FT.toast(FT.t('could_not_remove'))),
@@ -87,6 +119,7 @@ FT.menu = {
             if (el.fromLiked) items.push(removal('thumb_down_off', FT.t('remove_like'), FT.t('removed_like'), () => FT.api.rate(it, 'remove')));
             if (el.fromPlaylist) items.push(removal('delete', FT.t('remove_from_playlist'), FT.t('removed_from_playlist'), () => FT.api.playlistSet(el.fromPlaylist, it, false)));
             if (it.channelId) items.push({ icon: 'account_circle', label: FT.t('go_to_channel'), run: () => { location.hash = FT.link.channel(it.channelId, it.serviceId); } });
+            items.push(...feedbackItems(el, drop));
             if (el.onRemoved && el.fromHistory) {
                 items.push({
                     icon: 'delete', label: FT.t('remove_from_history'), danger: true,

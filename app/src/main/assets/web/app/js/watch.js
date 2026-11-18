@@ -119,6 +119,7 @@ const actionRow = (service, info, scope) => {
     const tool = (label, icon, onclick, key, extra = '') => h('button', { type: 'button', class: ('btn tool ' + extra).trim(), data: { f: '', key }, onclick, 'aria-label': label, title: label },
         FT.icon(icon), h('span', { class: 'lbl' }, label));
     const subscribe = FT.subscribeButton(channel);
+    const block = FT.channelMenu(channel);
     const like = FT.button(info.likeCount > 0 ? FT.count(info.likeCount) : FT.t('like'), 'thumb_up', null, '', 'like');
     like.setAttribute('aria-label', FT.t('like'));
     const dislike = FT.button(FT.t('dislike'), 'thumb_down', null, 'round', 'dislike');
@@ -185,6 +186,7 @@ const actionRow = (service, info, scope) => {
         const since = performance.now();
         return FT.api.state(info.url, info.channelId).then((s) => {
             subscribe.set(s, since);
+            block.set(s, since);
             if (guard.stale(since)) return;
             st.later = !!s.watchLater;
             st.like = s.like || null;
@@ -194,7 +196,7 @@ const actionRow = (service, info, scope) => {
     sync().catch(() => {});
     FT.followState(scope, sync, { topics: ['subscriptions', 'likes', 'later'], covered: true });
     const row = h('div', { class: 'watch-actions' }, h('div', { class: 'rate', role: 'group' }, like, dislike), later, playlist, h('span', { class: 'rule', 'aria-hidden': 'true' }), share, audio, cast, download, more);
-    return { subscribe, row };
+    return { subscribe, block, row };
 };
 
 const chapterCards = (info) => info.chapters.map((c, i) => {
@@ -245,7 +247,7 @@ const render = async (root, params, scope) => {
             h('div', { class: 'who-row' },
                 h('a', { class: 'who-link', href: info.channelId ? FT.link.channel(info.channelId, service) : '#', tabindex: '-1', data: { f: '', key: 'channel', first: '1' } },
                     FT.avatar(info.channelName, info.channelThumbnailUrl), h('div', { class: 'grow' }, h('div', { class: 'who' }, info.channelName))),
-                actions.subscribe.el),
+                actions.subscribe.el, actions.block.el),
             actions.row),
         queue,
         info.chapters.length ? FT.shelf(FT.t('chapters'), FT.t('chapters_hint'), chapterCards(info), 'chapters') : null,

@@ -1,4 +1,4 @@
-// Subscribe button; when subscribed, a bell toggles the channel's notifications.
+// Subscribe button (when subscribed, a bell toggles notifications) and the channel's block menu.
 (() => {
 const h = FT.h;
 const SVG = 'http://www.w3.org/2000/svg';
@@ -62,5 +62,26 @@ FT.subscribeButton = (channel) => {
             paint();
         },
     };
+};
+
+// Block/unblock; a block offers undo; `done(blocked)` follows each change.
+FT.setBlocked = (channel, on, done) => FT.api.block(channel.id, on, channel.name).then(() => {
+    if (done) done(on);
+    const undo = { label: FT.t('undo'), run: () => FT.api.block(channel.id, false).then(() => { if (done) done(false); }).catch(() => FT.toast(FT.t('could_not_save'))) };
+    FT.toast(on ? FT.t('channel_blocked', { name: channel.name }) : FT.t('unblocked'), on ? undo : undefined);
+});
+
+// Overflow button by Subscribe; `set(state, since)` takes `blocked`.
+FT.channelMenu = (channel) => {
+    const guard = FT.editGuard();
+    let blocked = false;
+    const button = FT.button('', 'more_vert', null, 'round quiet', 'channel-menu');
+    button.setAttribute('aria-label', FT.t('more'));
+    button.title = FT.t('more');
+    button.onclick = () => FT.menu.open([{
+        icon: 'block', label: FT.t(blocked ? 'unblock_channel' : 'block_channel'), danger: !blocked,
+        run: () => guard.run(FT.setBlocked(channel, !blocked, (on) => { blocked = on; })).catch(() => FT.toast(FT.t('could_not_save'))),
+    }], { anchor: button });
+    return { el: button, set: (state, since) => { if (!guard.stale(since)) blocked = !!state.blocked; } };
 };
 })();

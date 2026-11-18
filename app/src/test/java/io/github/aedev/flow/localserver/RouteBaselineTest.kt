@@ -179,6 +179,7 @@ class RouteBaselineTest {
                 "/subscribe",
                 "/subtitles",
                 "/thumbnails",
+                "/video_feedback",
                 "/watch_later_action",
             )
     }

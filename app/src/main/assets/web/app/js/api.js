@@ -29,7 +29,9 @@ const videoQuery = (v) => ({
 });
 // Redirect/page answers: only ok matters.
 const act = async (path, params) => {
-    const query = new URLSearchParams({ ...params, back: 'ajax' });
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) if (value !== undefined && value !== null) query.set(key, value);
+    query.set('back', 'ajax');
     const res = await fetch(`${path}?${query}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 };
@@ -78,7 +80,9 @@ FT.api = {
 
     subscribe: (channel, on) => act('/subscribe', { action: on ? 'subscribe' : 'unsubscribe', id: channel.id, name: channel.name || '', avatar: channel.thumbnailUrl || '' }),
     notify: (channel, on) => act('/subscribe', { action: on ? 'notify_on' : 'notify_off', id: channel.id }),
-    block: (channelUrl, on) => act('/block_channel', { action: on ? 'block' : 'unblock', id: channelUrl }),
+    block: (channelUrl, on, name) => act('/block_channel', { action: on ? 'block' : 'unblock', id: channelUrl, name }),
+    // action: not_interested | watched | unwatched
+    feedback: (video, action) => act('/video_feedback', { action, ...videoQuery(video), duration: video.duration || 0 }),
     handoff: (url, t, d, title) => act('/handoff', { id: url, t, d, title }),
     castDevices: (scan) => getJson('/api/v1/cast/devices', scan ? { scan: 1 } : {}),
     castStart: (usn, url, t, title) => act('/api/v1/cast/start', { usn, id: url, t, title, serviceId: FT.serviceOfUrl(url) }),

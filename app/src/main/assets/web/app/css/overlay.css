@@ -2,6 +2,8 @@
 #layer { position: relative; z-index: 3000; }
 .toast { position: fixed; left: 50%; bottom: 90px; z-index: 3100; max-width: 80vw; padding: 12px 22px; border-radius: 22px; background: var(--s3); color: var(--fg); font-weight: 500; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4); opacity: 0; pointer-events: none; transform: translate(-50%, 12px); transition: opacity 0.2s, transform 0.2s var(--ease); }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.actionable.show { pointer-events: auto; }
+.toast-undo { margin-left: 18px; padding: 0; border: 0; background: none; color: var(--acc); font: inherit; font-weight: 500; }
 
 .menu-root { position: fixed; inset: 0; z-index: 3200; }
 .menu-scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); }

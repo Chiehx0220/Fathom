@@ -34,6 +34,7 @@ internal fun Route.localRoutes(blocking: CoroutineDispatcher) =
         api("/search-history") { handleSearchHistory(it) }
         api("/subscribe") { handleSubscribeAction(it) }
         api("/block_channel") { handleBlockChannelAction(it) }
+        api("/video_feedback") { handleVideoFeedbackAction(it) }
         api("/bookmark_playlist") { handlePlaylistBookmarkAction(it) }
         api("/watch_later_action") { handleWatchLaterAction(it) }
         api("/playlist_action") { handlePlaylistAction(it) }

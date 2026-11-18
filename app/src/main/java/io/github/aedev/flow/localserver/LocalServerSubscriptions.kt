@@ -81,19 +81,3 @@ fun HistoryDbHelper.blockedChannelIds(): Set<String> =
         ensureFlowNeuroInitialized()
         FlowNeuroEngine.getInstance(appContext).getBlockedChannels()
     }
-
-fun HistoryDbHelper.blockChannel(channelUrl: String) {
-    val channelId = channelUrlToId(channelUrl) ?: return
-    runBlocking {
-        ensureFlowNeuroInitialized()
-        FlowNeuroEngine.blockChannel(channelId)
-    }
-}
-
-fun HistoryDbHelper.unblockChannel(channelUrl: String) {
-    val channelId = channelUrlToId(channelUrl) ?: return
-    runBlocking {
-        ensureFlowNeuroInitialized()
-        FlowNeuroEngine.unblockChannel(channelId)
-    }
-}

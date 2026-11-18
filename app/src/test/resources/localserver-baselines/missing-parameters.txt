@@ -256,6 +256,13 @@ GET /thumbnails
 => 400 text/plain
 Bad Request: Missing 'id' parameter
 
+GET /video_feedback
+=> 400 application/json
+{
+  "error": "Missing 'url' parameter",
+  "status": "error"
+}
+
 GET /watch_later_action
 => 400 application/json
 {

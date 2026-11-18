@@ -59,6 +59,7 @@ internal val MUTATING_PATHS: Set<String> =
         "/search-history",
         "/subscribe",
         "/block_channel",
+        "/video_feedback",
         "/bookmark_playlist",
         "/watch_later_action",
         "/playlist_action",

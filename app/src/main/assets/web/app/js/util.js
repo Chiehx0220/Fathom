@@ -96,13 +96,17 @@ FT.related = (info) => (info.relatedVideos || []).filter((v) => !v.isShort);
 FT.serviceOfUrl = (url) => (/bilibili\.com|^BV/i.test(url || '') ? 5 : 0);
 
 let toastTimer = 0;
-FT.toast = (message) => {
+// `undo`: { label, run } adds an action button (stays longer, takes clicks).
+FT.toast = (message, undo) => {
     const el = FT.$('#toast');
     if (!el) return;
-    el.textContent = message;
+    const close = () => el.classList.remove('show');
+    el.replaceChildren(message);
+    if (undo) el.append(FT.h('button', { type: 'button', class: 'toast-undo', onclick: () => { close(); undo.run(); } }, undo.label));
+    el.classList.toggle('actionable', !!undo);
     el.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+    toastTimer = setTimeout(close, undo ? 6000 : 2200);
 };
 
 // Runs fn at most once per animation frame.

@@ -59,13 +59,14 @@ internal fun buildFlowVideoFromParams(
     uploader: String,
     thumbnailUrl: String?,
     uploaderUrl: String?,
+    durationSeconds: Int = 0,
 ) = FlowVideo(
     id = videoId,
     title = title,
     channelName = uploader,
     channelId = channelUrlToId(uploaderUrl) ?: "",
     thumbnailUrl = thumbnailUrl ?: "",
-    duration = 0,
+    duration = durationSeconds,
     viewCount = -1,
     uploadDate = "",
 )

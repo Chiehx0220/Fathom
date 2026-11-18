@@ -10,7 +10,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonArray
 import java.util.UUID
 
-// Toggle actions (subscribe/block/bookmark/history/watch-later/rate) + remote control (send-link/release-lock/remote-state).
+// Toggle actions (subscribe/block/bookmark/history/watch-later/rate/feedback) + remote control (send-link/release-lock/remote-state).
 
 // Client-supplied video metadata (server has not seen the video).
 private data class SharedVideoParams(
@@ -45,8 +45,24 @@ internal fun RequestContext.handleSubscribeAction(params: Query): Status {
 internal fun RequestContext.handleBlockChannelAction(params: Query): Status {
     val channelUrl = params.required("id")
     when (params["action"]) {
-        "block" -> dbHelper.blockChannel(channelUrl)
+        "block" -> dbHelper.blockChannel(channelUrl, params["name"].orEmpty())
         "unblock" -> dbHelper.unblockChannel(channelUrl)
+        else -> unknownAction()
+    }
+    return SUCCESS
+}
+
+/** Video menu feedback; the client supplies the card's metadata (server has not seen the video). */
+internal fun RequestContext.handleVideoFeedbackAction(params: Query): Status {
+    val url = params.required("url")
+    val videoId = LocalServerMedia.getVideoId(url)
+    if (videoId.isEmpty()) throw BadRequestException("Not a video")
+    val meta = parseSharedVideoParams(params)
+    val video = buildFlowVideoFromParams(videoId, meta.title, meta.uploader, meta.thumbnail, meta.uploaderUrl, params.int("duration") ?: 0)
+    when (params["action"]) {
+        "not_interested" -> dbHelper.markNotInterested(video)
+        "watched" -> dbHelper.markWatched(video)
+        "unwatched" -> dbHelper.markUnwatched(video)
         else -> unknownAction()
     }
     return SUCCESS

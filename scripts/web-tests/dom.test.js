@@ -121,7 +121,7 @@ test('the options menu opens for the selected video and Escape closes it back to
   key(window, 'm');
   assert.strictEqual(page.FT.menu.isOpen(), true);
   assert.deepStrictEqual(text(document.querySelectorAll('#menu .menu-item')).map((label) => label.replace(/^[a-z_]+(?=[A-Z])/, '')),
-    ['Open', 'Save to Watch later', 'Add to playlist', 'Go to channel']);
+    ['Open', 'Save to Watch later', 'Add to playlist', 'Go to channel', 'Mark as watched', 'Not interested', 'Block channel']);
   assert.strictEqual(document.querySelector('#menu .menu-title').textContent, 'Video 1');
   key(window, 'Escape');
   assert.strictEqual(page.FT.menu.isOpen(), false);
