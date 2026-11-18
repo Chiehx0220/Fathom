@@ -134,8 +134,8 @@ internal fun RequestContext.handleApiLibrary(): LibraryDto =
     )
 
 // Subscription feed: newest uploads, one request per channel.
-internal fun RequestContext.handleApiFeed(): SearchResult {
-    val items = dbHelper.withoutHidden(subscriptionFeed(dbHelper.subscriptions()))
+internal fun RequestContext.handleApiFeed(params: Query): SearchResult {
+    val items = dbHelper.withoutHidden(subscriptionFeed(groupSubscriptions(params["group"])))
     return items.toSearchResult(null)
 }
 

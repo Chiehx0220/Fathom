@@ -50,3 +50,10 @@ kbd { min-width: 26px; padding: 3px 7px; border-radius: 7px; background: var(--s
 .switching { position: fixed; inset: 0; z-index: 3300; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; background: var(--bg); text-align: center; }
 .switching strong { font-size: 20px; font-weight: 500; }
 .switching .hint { max-width: 420px; }
+
+/* Inbox: bell badge, unread rows. */
+.bell { position: relative; }
+.bell .badge { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--acc); color: var(--on-acc); font-size: 11px; font-weight: 500; line-height: 18px; text-align: center; }
+.fresh .card-title::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--acc); vertical-align: middle; }
+.pill-rows { display: flex; flex-direction: column; }
+.pill-rows .pills { padding-bottom: 4px; }

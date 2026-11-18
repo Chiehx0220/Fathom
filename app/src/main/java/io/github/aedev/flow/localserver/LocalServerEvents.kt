@@ -30,6 +30,7 @@ internal const val TOPIC_SETTINGS = "settings"
 internal const val TOPIC_SUBSCRIPTIONS = "subscriptions"
 internal const val TOPIC_LIKES = "likes"
 internal const val TOPIC_WATCH_LATER = "later"
+internal const val TOPIC_INBOX = "inbox"
 internal const val TOPIC_PROFILES = "profiles"
 
 private const val SETTLE_MS = 150L
@@ -70,6 +71,7 @@ private fun settingsValues(context: Context): Flow<List<Any?>> {
 
 internal fun appChangeTopics(dbHelper: HistoryDbHelper): Flow<String> {
     val context = dbHelper.appContext
+    val inbox = EntryPointAccessors.fromApplication(context, LocalServerInboxEntryPoint::class.java)
     val profiles = EntryPointAccessors.fromApplication(context, LocalServerProfilesEntryPoint::class.java)
     return changeTopics(
         listOf(
@@ -77,6 +79,7 @@ internal fun appChangeTopics(dbHelper: HistoryDbHelper): Flow<String> {
             TOPIC_SUBSCRIPTIONS to SubscriptionRepository.getInstance(context).getAllSubscriptions(),
             TOPIC_LIKES to context.likedVideosDataStore.data.map { it.asMap() },
             TOPIC_WATCH_LATER to dbHelper.playlistRepository().getWatchLaterIdsFlow(),
+            TOPIC_INBOX to inbox.notificationRepository().allNotifications,
             TOPIC_PROFILES to profiles.profileRepository().state,
         ),
     )

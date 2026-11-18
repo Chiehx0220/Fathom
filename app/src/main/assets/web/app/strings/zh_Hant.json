@@ -257,5 +257,10 @@
   "profile_switch_failed": "無法切換設定檔，請再試一次。",
   "profile_refused_car": "請先中斷車機連線再切換設定檔",
   "profile_refused_sync": "請等同步完成再切換設定檔",
-  "profile_refused_backup": "請等備份完成再切換設定檔"
+  "profile_refused_backup": "請等備份完成再切換設定檔",
+  "notifications": "通知",
+  "clear_all": "全部清除",
+  "inbox_empty": "你已查看完所有內容",
+  "inbox_empty_hint": "訂閱頻道的新影片會顯示在這裡。",
+  "groups_all": "全部"
 }

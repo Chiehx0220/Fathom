@@ -259,5 +259,10 @@
   "profile_switch_failed": "Couldn't switch profiles. Try again.",
   "profile_refused_car": "Disconnect from your car to switch profiles",
   "profile_refused_sync": "Wait for sync to finish to switch profiles",
-  "profile_refused_backup": "Wait for the backup to finish to switch profiles"
+  "profile_refused_backup": "Wait for the backup to finish to switch profiles",
+  "notifications": "Notifications",
+  "clear_all": "Clear all",
+  "inbox_empty": "You're all caught up",
+  "inbox_empty_hint": "New uploads from your subscriptions show up here.",
+  "groups_all": "All"
 }

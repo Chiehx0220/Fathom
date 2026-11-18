@@ -44,7 +44,10 @@ FT.api = {
         ? getJson('/api/v1/recommendations', { serviceId: service, more: 1 })
         : remembered(`rec:${service}`, 120000, () => getJson('/api/v1/recommendations', { serviceId: service })),
     home: (service) => remembered(`home:${service}`, 120000, () => getJson('/api/v1/home', { serviceId: service })),
-    feed: (service) => remembered(`feed:${service}`, 300000, () => getJson('/api/v1/feed', { serviceId: service })),
+    feed: (service, group) => remembered(`feed:${service}:${group || ''}`, 300000, () => getJson('/api/v1/feed', { serviceId: service, group })),
+    groups: () => getJson('/api/v1/groups'),
+    // options: count (unread only), clear; listing marks read.
+    notifications: (options) => getJson('/api/v1/notifications', options),
     history: () => getJson('/api/v1/history'),
     library: (service) => getJson('/api/v1/library', { serviceId: service }),
     downloads: () => getJson('/api/v1/downloads'),

@@ -53,7 +53,9 @@ internal fun Route.localRoutes(blocking: CoroutineDispatcher) =
         api("/api/v1/history") { handleApiHistory() }
         api("/api/v1/library") { handleApiLibrary() }
         api("/api/v1/downloads") { handleApiDownloads() }
-        api("/api/v1/feed") { handleApiFeed() }
+        api("/api/v1/feed") { handleApiFeed(it) }
+        api("/api/v1/notifications") { handleApiNotifications(it) }
+        api("/api/v1/groups") { handleApiGroups() }
         api("/api/v1/playlist") { handleApiPlaylist(it) }
         api("/api/v1/playlists") { handleApiPlaylists(it) }
         api("/api/v1/liked") { handleApiLiked() }

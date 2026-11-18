@@ -6,5 +6,6 @@ FT.events.connect();
 FT.remote.resume();
 FT.start();
 FT.profiles.load();
+FT.inbox.refresh();
 FT.deepFlow.watch();
 })();

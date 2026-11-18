@@ -31,6 +31,7 @@ object WebAssets {
             "app/js/cast.js",
             "app/js/playlists.js",
             "app/js/router.js",
+            "app/js/inbox.js",
             "app/js/player-state.js",
             "app/js/player-prefs.js",
             "app/js/player-progress.js",
