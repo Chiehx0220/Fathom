@@ -9,7 +9,7 @@ const STALE_MS = 5 * 60 * 1000;
 const SHELF_CHUNK = 14;
 
 // options.loadMore: () => Promise<{items, hasMore}>; deeper server round once local items run out, same row.
-// options.expand: hash link to the full list.js view (row overflow is drag-only otherwise).
+// options.expand: hash link to the full list view (row overflow is drag-only otherwise).
 // options.rows: preview rows in grid layout for a shelf without loadMore.
 // Grid layout: shelf is a grid; sentinel watches the viewport.
 const shelfOf = (scope, title, sub, items, options = {}) => {
@@ -166,4 +166,26 @@ const render = async (root, params, scope) => {
 };
 
 FT.register('home', { keepFor: () => Infinity, render });
+
+// Recommended shelf as a full list.
+FT.register('recommended', {
+    keepFor: () => FT.KEEP_MS,
+    async render(root, params, scope) {
+        const service = FT.store.service;
+        const known = new Set();
+        const head = h('div', { class: 'head' }, h('h1', {}, FT.t('recommended')));
+        let served = false;
+        await FT.listView(root, {
+            before: [head],
+            empty: { icon: 'video_library', title: FT.t('nothing_yet'), text: FT.t('nothing_yet_hint') },
+            async fetch(cursor) {
+                const body = !cursor && !served ? await FT.api.recommendations(service) : await FT.api.recommendations(service, true);
+                served = true;
+                const items = (body.videos || []).filter((v) => !v.isShort && !known.has(v.url));
+                items.forEach((v) => known.add(v.url));
+                return { items, next: body.hasMore !== false ? '1' : null };
+            },
+        }, scope);
+    },
+});
 })();

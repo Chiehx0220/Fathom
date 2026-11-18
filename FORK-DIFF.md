@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **111** (1168 changed lines). New files: **282**.
+- Modified upstream files: **111** (1168 changed lines). New files: **286**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
