@@ -178,3 +178,38 @@ test('the blocked list follows the phone', async () => {
   await page.settle();
   assert.strictEqual(document.querySelectorAll('[data-key^="unblock:"]').length, 0);
 });
+
+test('settings groups its sections into panels behind a side nav and shows one at a time', async () => {
+  const { document } = (await open({ routes: routes().routes, hash: '#/settings' })).window;
+  const tabs = [...document.querySelectorAll('.set-tab')];
+  assert.deepStrictEqual(tabs.map((tab) => tab.dataset.key), ['panel-appearance', 'panel-content', 'panel-playback', 'panel-focus', 'panel-device']);
+  const shown = () => [...document.querySelectorAll('.panel')].map((panel) => !panel.hidden);
+  assert.deepStrictEqual(shown(), [true, false, false, false, false]);
+  document.querySelector('[data-key="panel-playback"]').click();
+  assert.deepStrictEqual(shown(), [false, false, true, false, false]);
+  assert.strictEqual(document.querySelector('.set-tab[aria-current]').dataset.key, 'panel-playback');
+});
+
+test('switching SponsorBlock off dims its categories', async () => {
+  const { document } = (await open({ routes: routes().routes, hash: '#/settings' })).window;
+  const card = document.querySelector('[data-key="sponsorblock"]').closest('.group');
+  assert.ok(card.classList.contains('off'));
+  document.querySelector('[data-key="sponsorblock"]').click();
+  assert.ok(!card.classList.contains('off'));
+});
+
+test('each nav entry says what is set, and follows changes', async () => {
+  const page = await open({ routes: routes().routes, hash: '#/settings' });
+  const { document } = page.window;
+  const caption = (id) => document.querySelector(`[data-key="panel-${id}"] .set-sum`).textContent;
+  assert.strictEqual(caption('playback'), 'SponsorBlock off');
+  assert.strictEqual(caption('content'), '2 blocked');
+  assert.strictEqual(caption('focus'), 'All off');
+  document.querySelector('[data-key="sponsorblock"]').click();
+  document.querySelector('[data-key="hide-shorts"]').click();
+  document.querySelector('[data-key="break"]').click();
+  await page.settle();
+  assert.strictEqual(caption('playback'), 'SponsorBlock on · 6 categories');
+  assert.strictEqual(caption('content'), '1 filters on · 2 blocked');
+  assert.strictEqual(caption('focus'), 'Break reminder 30 min');
+});

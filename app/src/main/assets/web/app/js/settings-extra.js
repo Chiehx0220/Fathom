@@ -2,16 +2,15 @@
 (() => {
 const h = FT.h;
 
-const section = (title, ...rows) => h('section', { style: 'display:flex;flex-direction:column;gap:10px' }, h('h2', {}, title), ...rows);
-
-// Folded choice row; `choose(id)` saves, returns selected id; `row.sync(id, since)` applies a phone read.
-const choice = (title, hint, options, current, choose, key) => {
+// Folded choice row; `choose(id)` saves, returns selected id; `active(id)`: emphasise value; `row.sync(id, since)` applies a phone read.
+const choice = (title, hint, options, current, choose, key, active) => {
     const guard = FT.editGuard();
     let selected = current;
     const pills = h('div', { class: 'pills' });
     const value = h('span', { class: 'fold-value' });
     const paint = () => {
         value.textContent = options.find(([id]) => id === selected)[1];
+        value.classList.toggle('on', !active || active(selected));
         pills.replaceChildren(...options.map(([id, label]) => FT.pill(label, null, id === selected, () => {
             guard.run(choose(id).then((next) => { selected = next; paint(); })).catch(() => FT.toast(FT.t('could_not_save')));
         }, `${key}-${id}`)));
@@ -44,10 +43,13 @@ const actionLabel = (name) => {
 // `refresh()` re-reads in place; `pushed`: covered by the settings topic.
 const sponsorBlock = async () => {
     const body = await FT.api.sponsorBlock();
-    const master = FT.toggleRow(FT.t('settings_sponsorblock'), FT.t('settings_sponsorblock_hint'), body.enabled, (on) => FT.api.sponsorBlock({ enabled: on }), 'sponsorblock');
+    const master = FT.toggleRow(FT.t('sb_auto'), FT.t('settings_sponsorblock_hint'), body.enabled, (on) => FT.api.sponsorBlock({ enabled: on }), 'sponsorblock');
+    const skips = (action) => action === 'SKIP' || action === 'SKIP_BUTTON';
     const rows = new Map(body.categories.map((c) => [c.id, choice(categoryName(c.id), null, body.actions.map((a) => [a, actionLabel(a)]), c.action,
-        (action) => FT.api.sponsorBlock({ category: c.id, action }).then(() => { FT.api.forget(); return action; }), 'sb-' + c.id)]));
-    const el = section(FT.t('settings_sponsorblock'), master, ...rows.values());
+        (action) => FT.api.sponsorBlock({ category: c.id, action }).then(() => { FT.api.forget(); return action; }), 'sb-' + c.id, skips)]));
+    const el = FT.settingsGroup(FT.t('settings_sponsorblock'), null, master, ...rows.values());
+    master.onpaint = (on) => el.card.classList.toggle('off', !on);
+    master.onpaint(body.enabled);
     el.refresh = async () => {
         const since = performance.now();
         const next = await FT.api.sponsorBlock();
@@ -63,7 +65,7 @@ const wellbeing = async () => {
     const reminder = FT.toggleRow(FT.t('settings_break'), FT.t('settings_break_hint'), body.breakEnabled, (on) => FT.api.wellbeing({ breakEnabled: on }), 'break');
     const every = choice(FT.t('settings_break_every'), FT.t('settings_wellbeing_note'), body.breakOptions.map((m) => [m, FT.t('minutes_short', { count: m })]), body.breakMinutes,
         (minutes) => FT.api.wellbeing({ breakMinutes: minutes }).then((next) => next.breakMinutes), 'break-every');
-    const el = section(FT.t('settings_wellbeing'), reminder, every);
+    const el = FT.settingsGroup(FT.t('settings_wellbeing'), null, reminder, every);
     el.refresh = async () => {
         const since = performance.now();
         const next = await FT.api.wellbeing();
@@ -77,35 +79,33 @@ const wellbeing = async () => {
 const nameOf = (channel) => channel.name || decodeURIComponent(channel.id.replace(/\/+$/, '').split('/').pop() || channel.id);
 
 const blocked = async () => {
-    const body = await FT.api.blockedChannels();
+    let channels = (await FT.api.blockedChannels()).channels;
     const guard = FT.editGuard();
-    const list = h('div', { style: 'display:flex;flex-direction:column;gap:10px' });
-    const empty = h('p', { class: 'hint' }, FT.t('no_blocked'));
-    const show = (channels) => {
-        list.replaceChildren(...channels.map((channel) => {
-            const row = h('div', { class: 'setting' }, h('div', {}, h('b', {}, nameOf(channel))),
-                FT.button(FT.t('unblock'), 'person_remove', () => guard.run(FT.api.block(channel.id, false).then(() => { row.remove(); empty.hidden = list.children.length > 0; FT.toast(FT.t('unblocked')); })).catch(() => FT.toast(FT.t('could_not_save'))), '', 'unblock:' + channel.id));
-            row.dataset.id = channel.id;
-            return row;
-        }));
-        empty.hidden = channels.length > 0;
+    const el = FT.settingsGroup(FT.t('settings_blocked'), FT.t('settings_blocked_hint'));
+    const row = (channel) => h('div', { class: 'setting', data: { id: channel.id } }, h('div', {}, h('b', {}, nameOf(channel))),
+        FT.button(FT.t('unblock'), 'person_remove', () => guard.run(FT.api.block(channel.id, false).then(() => {
+            show(channels.filter((c) => c.id !== channel.id));
+            FT.toast(FT.t('unblocked'));
+        })).catch(() => FT.toast(FT.t('could_not_save'))), '', 'unblock:' + channel.id));
+    const show = (next) => {
+        channels = next;
+        el.card.replaceChildren(...(next.length ? next.map(row) : [h('div', { class: 'setting empty' }, h('span', { class: 'hint' }, FT.t('no_blocked')))]));
     };
-    show(body.channels);
-    const el = section(FT.t('settings_blocked'), h('p', { class: 'hint' }, FT.t('settings_blocked_hint')), list, empty);
+    show(channels);
     el.refresh = async () => {
         const since = performance.now();
-        const next = await FT.api.blockedChannels();
-        const same = next.channels.length === list.children.length && next.channels.every((c, i) => list.children[i].dataset.id === c.id);
-        if (!guard.stale(since) && !same) show(next.channels);
+        const next = (await FT.api.blockedChannels()).channels;
+        const same = next.length === channels.length && next.every((c, i) => channels[i].id === c.id);
+        if (!guard.stale(since) && !same) show(next);
     };
     return el;
 };
 
 FT.settingsExtra = {
-    // Page order; failed sections omitted.
+    // { sponsorBlock, wellbeing, blocked }; failed section → null.
     async sections() {
-        const built = await Promise.all([sponsorBlock(), wellbeing(), blocked()].map((p) => p.catch(() => null)));
-        return built.filter(Boolean);
+        const [sb, well, block] = await Promise.all([sponsorBlock(), wellbeing(), blocked()].map((p) => p.catch(() => null)));
+        return { sponsorBlock: sb, wellbeing: well, blocked: block };
     },
 };
 })();
