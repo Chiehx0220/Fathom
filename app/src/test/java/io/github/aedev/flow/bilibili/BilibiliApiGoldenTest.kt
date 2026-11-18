@@ -74,6 +74,12 @@ class BilibiliApiGoldenTest {
         }) { it.playback(bvid) }
 
     @Test
+    fun playbackBlockedByCaptcha() =
+        scenario("playback-captcha", {
+            serve(FakeBilibili.VIEW, "view.json").serve(FakeBilibili.PLAYURL, "playurl_captcha.json")
+        }) { it.playback(bvid) }
+
+    @Test
     fun playbackOtherError() =
         scenario("playback-other", {
             serve(FakeBilibili.VIEW, "view.json").serve(FakeBilibili.PLAYURL, "playurl_other.json")

@@ -67,6 +67,7 @@ internal data class PlayUrlResponse(
     @Serializable
     data class PlayUrlData(
         val dash: Dash? = null,
+        @SerialName("v_voucher") val voucher: String = "",
     )
 
     @Serializable

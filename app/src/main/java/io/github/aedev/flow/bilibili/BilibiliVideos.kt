@@ -81,6 +81,9 @@ internal class BilibiliVideos(
         }
         val dash = response.data?.dash
         if (dash == null || (dash.video.isNullOrEmpty() && dash.audio.isNullOrEmpty())) {
+            // Risk control: code 0, captcha voucher, no stream.
+            val voucher = response.data?.voucher.orEmpty()
+            if (voucher.isNotEmpty()) throw BilibiliContentNotAvailableException("Bilibili blocked us and asked for a captcha")
             throw BilibiliPaidContentException("Paid content")
         }
 

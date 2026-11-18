@@ -3,7 +3,7 @@
 This package ports the Bilibili service of PipePipeExtractor (PPE, GPL-3.0). Flow no longer depends
 on PPE (it uses NewPipeExtractor, like upstream); the port is kept in step by hand. The copy it was
 ported from is Chiehx0220/PipePipeExtractor at commit `aef9726d5b1172213066f60bc338eb4278651d61`.
-Upstream (InfinityLoop1308/PipePipeExtractor) has been ported up to `28a1a5ee` (after v5.5.0), live rooms included.
+Upstream (InfinityLoop1308/PipePipeExtractor) has been ported up to `dfaa8180` (2026-11-18, after v5.5.0), live rooms included.
 
 When Bilibili changes its risk control, diff the PPE files on the right against the files on the
 left, re-port only what changed, and update the commit above. PPE paths are under
