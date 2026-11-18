@@ -106,7 +106,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **148**.
+- Modified upstream files: **0** (0 changed lines). New files: **150**.
 
 ## Build
 
@@ -123,7 +123,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Tests
 
-- Modified upstream files: **19** (145 changed lines). New files: **91**.
+- Modified upstream files: **19** (146 changed lines). New files: **91**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -137,9 +137,9 @@ in it). **New files** never conflict; they are ours alone.
 | app/src/test/java/io/github/aedev/flow/player/stream/VideoCodecUtilsTest.kt | 6 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/shorts/ShortsStreamSelectionTest.kt | 5 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/video/DownloadStreamPolicyTest.kt | 5 | 0 |
+| app/src/test/resources/profiles/store_inventory.tsv | 5 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/repository/ChatReplayPageTest.kt | 2 | 2 |
 | app/src/test/java/io/github/aedev/flow/ui/screens/crash/CrashSummaryTest.kt | 3 | 1 |
-| app/src/test/resources/profiles/store_inventory.tsv | 4 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/backup/BackupRulesTest.kt | 3 | 0 |
 | app/src/test/java/io/github/aedev/flow/data/innertube/RssSubscriptionServiceTest.kt | 2 | 1 |
 | app/src/test/java/io/github/aedev/flow/player/stream/PlaybackLoadResolverTest.kt | 3 | 0 |

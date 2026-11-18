@@ -14,6 +14,7 @@ internal val LOCAL_ROUTES: List<RouteSpec> =
         page("/stream", Access.CROSS_ORIGIN) { reply, params -> handleStreamProxy(reply, params, headers) }
         page("/hlsvod", Access.CROSS_ORIGIN) { reply, params -> handleHlsVod(reply, params) }
         page("/downloadfile", Access.OWN_PAGE) { reply, params -> handleDownloadFile(reply, params, headers) }
+        page("/download-cover", Access.OWN_PAGE) { reply, params -> handleDownloadCover(reply, params) }
         page("/subtitles", Access.CROSS_ORIGIN) { reply, params -> handleSubtitlesProxy(reply, params) }
         page("/thumbnails", Access.CROSS_ORIGIN) { reply, params -> handleThumbnailsProxy(reply, params) }
         page("/image-proxy", Access.CROSS_ORIGIN) { reply, params -> handleImageProxy(reply, params) }

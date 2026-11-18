@@ -85,6 +85,7 @@ files_dir	lyrics/	main:data/lyrics/LyricsCacheManager.kt	DEVICE	-	Lyrics are con
 files_dir	offline_subtitles/	main:data/video/OfflineSubtitleStore.kt	DEVICE	-	Subtitles of downloads.
 files_dir	downloads/	main:data/video/VideoDownloadManager.kt	DEVICE	-	Internal downloads, and the staging fallback when external storage is missing.
 files_dir	download_covers/	main:data/video/storage/DownloadCovers.kt	DEVICE	-	Covers of downloads.
+files_dir	download_covers/	main:localserver/LocalServerCovers.kt	DEVICE	-	Serves the covers of downloads to the web page.
 files_dir	fonts/	main:data/local/CustomFontStore.kt	DEVICE	-	Imported font files; which one is used lives in app_font.
 files_dir	filesDir	main:data/backup/FlowBackupAgent.kt	DEVICE	-	Root for the restore cleanup; profile folders join it in Phase 1.
 files_dir	local_embedded_tags.json	main:data/localmedia/LocalEmbeddedTags.kt	DEVICE	-	Tags read from local files.

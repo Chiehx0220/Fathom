@@ -26,7 +26,7 @@ object WebFormat {
 
     private fun normalizeImageUrl(url: String): String {
         val trimmed = url.trim()
-        return if (trimmed.startsWith("//")) "https:$trimmed" else trimmed
+        return if (trimmed.startsWith("//")) "https:$trimmed" else coverRoute(trimmed)
     }
 
     /** Largest usable image URL; "" → web client draws no image. */
