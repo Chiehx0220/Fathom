@@ -36,7 +36,7 @@
     <string name="error_not_supported_hint">Bu format veya içerik türü Fathom\'da oynatılamaz.</string>
     <string name="error_extraction_failed_hint">YouTube formatını güncellemiş olabilir. Fathom yakında güncellenecektir — lütfen daha sonra tekrar dene.</string>
     <string name="diagnostics_report_subject">Fathom Tanılama Raporu</string>
-    <string name="diagnostics_reset_session_confirm_body">Fathom yeni bir oynatma kimliği oluşturacak. Videolar bir dakika sonra duruyorsa veya oynatılamıyorsa bunu dene.\\n\\nOynatma bir iki dakika boyunca sorunlu olabilir. Kaydedilen verilerin bundan etkilenmez.</string>
+    <string name="diagnostics_reset_session_confirm_body">Fathom yeni bir oynatma kimliği oluşturacak. Videolar bir dakika sonra duruyorsa veya oynamıyorsa bunu deneyin.\n\nOynatma bir iki dakika boyunca sorunlu olabilir. Kaydedilmiş verileriniz etkilenmez.</string>
     <string name="search_in_flow">Fathom\'da ara</string>
     <string name="discord_presence_privacy_body">Fathom oynattığın içeriğin başlığını, içerik üreticisini, kapak resmini ve ilerleme durumunu paylaşır. Varsayılan olarak kapalıdır. Discord belirtecin şifrelenir ve asla günlüğe kaydedilmez.</string>
     <string name="discord_presence_risk_dialog_body">Bağlantı kurmak Fathom\'a Discord belirtecini verir. Bu belirteç bu cihazda şifrelenmiş olarak kalır ve yalnızca Discord\'a gönderilir. Bu yöntem Discord\'un Hizmet Şartları\'nı ihlal eder, bu nedenle hesabın kısıtlanabilir veya yasaklanabilir.</string>
