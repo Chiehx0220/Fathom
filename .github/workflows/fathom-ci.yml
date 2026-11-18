@@ -17,22 +17,61 @@ concurrency:
 permissions:
   contents: read
 
+# Layout, runner, JDK and Gradle setup follow upstream's build.yml (#1372): formatting and
+# tests run on separate runners at the same time, with the CI Gradle properties in place
+# of --max-workers=1. The tests job writes the Gradle cache; formatting only restores it.
 jobs:
-  verify:
-    name: Format, test, compile
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+  checks:
+    name: Format
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
     steps:
       - name: Check out the code
         uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          # Spotless ratchetFrom compares against an old commit.
           fetch-depth: 0
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v6
         with:
-          java-version: '17'
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Use CI Gradle properties
+        run: mkdir -p ~/.gradle && cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+
+      # Read-only: the repository cache is near its 10 GB cap, and the tests job writes the entry.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Check Kotlin formatting
+        run: >
+          ./gradlew spotlessCheck
+          --build-cache --stacktrace
+
+  tests:
+    name: Unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Use CI Gradle properties
@@ -41,13 +80,15 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Check Kotlin formatting
-        run: |
-          chmod +x gradlew
-          ./gradlew spotlessCheck --build-cache --stacktrace
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-      - name: Run unit tests
-        run: ./gradlew :app:testGithubDebugUnitTest :app:testFossDebugUnitTest --build-cache --stacktrace
+      # Instrumentation tests are not executed in CI, but breakage there otherwise lands on main unnoticed.
+      - name: Run unit tests and compile instrumentation tests
+        run: >
+          ./gradlew :app:testGithubDebugUnitTest :app:testFossDebugUnitTest
+          :app:compileGithubDebugAndroidTestKotlin
+          --build-cache --stacktrace
 
       - name: Upload unit test results
         if: failure()
@@ -58,7 +99,3 @@ jobs:
             app/build/reports/tests
             app/build/test-results
           retention-days: 7
-
-      # Not executed in CI, but breakage there otherwise lands on main unnoticed.
-      - name: Compile instrumentation tests
-        run: ./gradlew :app:compileGithubDebugAndroidTestKotlin --build-cache --stacktrace
