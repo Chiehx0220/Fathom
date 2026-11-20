@@ -1,14 +1,14 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.StreamInfo
+import io.github.aedev.flow.content.StreamInfoItem
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.repository.YouTubeRepository
+import io.github.aedev.flow.player.stream.model.StreamType
 import io.github.aedev.flow.ui.screens.home.HomeFeedSources
 import kotlinx.coroutines.flow.first
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
-import org.schabi.newpipe.extractor.stream.StreamType
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
 // Native `YouTubeRepository`/`FlowNeuroEngine` access; [InfoItem] ↔ [FlowVideo].
@@ -48,7 +48,7 @@ fun StreamInfoItem.toFlowVideo(): FlowVideo {
         description = "",
         channelThumbnailUrl = WebFormat.getThumbnailUrl(this.uploaderAvatarUrl),
         tags = emptyList(),
-        isLive = this.streamType == StreamType.LIVE_STREAM || this.streamType == StreamType.AUDIO_LIVE_STREAM,
+        isLive = this.streamType == StreamType.LIVE_STREAM,
         isShort = durationSeconds in 1..120,
         serviceId = this.serviceId,
     )
@@ -70,7 +70,7 @@ fun StreamInfo.toFlowVideo(): FlowVideo {
         description = this.description?.content ?: "",
         channelThumbnailUrl = WebFormat.getThumbnailUrl(this.uploaderAvatars),
         tags = this.tags ?: emptyList(),
-        isLive = this.streamType == StreamType.LIVE_STREAM || this.streamType == StreamType.AUDIO_LIVE_STREAM,
+        isLive = this.streamType == StreamType.LIVE_STREAM,
         isShort = durationSeconds in 1..120,
         serviceId = this.serviceId,
     )
@@ -79,17 +79,17 @@ fun StreamInfo.toFlowVideo(): FlowVideo {
 /** [FlowVideo] → [InfoItem]. */
 fun FlowVideo.toStreamInfoItem(serviceId: Int): StreamInfoItem {
     val item = StreamInfoItem(serviceId, videoIdToUrl(this.id, serviceId), this.title, StreamType.VIDEO_STREAM)
-    item.setUploaderName(this.channelName)
-    item.setUploaderUrl(if (this.channelId.isNotEmpty()) channelIdToUrl(this.channelId, serviceId) else "")
+    item.uploaderName = this.channelName
+    item.uploaderUrl = if (this.channelId.isNotEmpty()) channelIdToUrl(this.channelId, serviceId) else ""
     if (this.thumbnailUrl.isNotEmpty()) {
         item.thumbnailUrl = this.thumbnailUrl
     }
     if (this.channelThumbnailUrl.isNotEmpty()) {
         item.uploaderAvatarUrl = this.channelThumbnailUrl
     }
-    item.setDuration(this.duration.toLong())
-    item.setViewCount(this.viewCount)
-    item.setTextualUploadDate(this.uploadDate)
-    if (this.description.isNotEmpty()) item.setShortDescription(this.description)
+    item.duration = this.duration.toLong()
+    item.viewCount = this.viewCount
+    item.textualUploadDate = this.uploadDate
+    if (this.description.isNotEmpty()) item.shortDescription = this.description
     return item
 }

@@ -1,10 +1,10 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliRef
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.StreamInfoItem
 import io.github.aedev.flow.data.subscriptions.SubscriptionFeedTimestamps
 import kotlinx.coroutines.flow.first
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit

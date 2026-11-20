@@ -1,5 +1,7 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.Page
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabContent
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
@@ -9,8 +11,6 @@ import io.github.aedev.flow.ui.youtubeChannelBrowseId
 import io.github.aedev.flow.ui.youtubeChannelUrl
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.Page
 
 /** YouTube Videos tab via app InnerTube. Continuation `yt:u:<token>` with owner in id/ids; unprefixed pages: extractor. */
 internal object LocalServerYouTubeChannel {
@@ -52,7 +52,13 @@ internal object LocalServerYouTubeChannel {
     ): ChannelPage? {
         if (nextPage != null) {
             val owner = ownerOf(nextPage)
-            val content = YouTube.channelTabContinuation(nextPage.url.removePrefix(MORE), owner, ChannelTabKind.Videos).getOrThrow()
+            val content =
+                YouTube
+                    .channelTabContinuation(
+                        nextPage.url.orEmpty().removePrefix(MORE),
+                        owner,
+                        ChannelTabKind.Videos,
+                    ).getOrThrow()
             return ChannelPage(
                 header(owner, channelUrl, subscribersOf(nextPage)),
                 itemsOf(content, channelUrl),

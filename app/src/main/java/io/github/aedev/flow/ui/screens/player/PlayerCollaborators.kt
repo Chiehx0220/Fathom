@@ -101,8 +101,6 @@ internal class PlayerCollaborators(
             context = context,
             playerManager = playerManager,
             playerPreferences = playerPreferences,
-            offlineSubtitleStore = offlineSubtitleStore,
-            localSubtitles = localSubtitles,
             cachedCategory = repository::cachedVideoCategory,
         )
 

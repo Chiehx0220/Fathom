@@ -1708,7 +1708,7 @@
     <string name="recognition_clear_history_body">Cette opération supprime toutes les chansons reconnues. Elle est irréversible.</string>
     <string name="player_settings_display">Affichage</string>
     <string name="player_settings_ambient_mode">Mode ambiant</string>
-    <string name="player_settings_ambient_mode_subtitle">Remplissez les bandes autour de la vidéo d\'une douce lueur aux couleurs de celle-ci</string>
+    <string name="player_settings_ambient_mode_subtitle">Remplit les bandes noires avec les couleurs de la vidéo</string>
     <string name="player_appearance_shorts_ui_title">Interface utilisateur de Shorts</string>
     <string name="player_appearance_shorts_ui_subtitle">Choisissez la partie de la superposition « Shorts » qui restera visible</string>
     <string name="shorts_player_ui_default">Par défaut</string>
@@ -2708,7 +2708,7 @@
     <string name="channel_post_poll_votes">%1$s</string>
     <string name="player_background_style_immersive">Illustration immersive</string>
     <string name="player_appearance_haptics_title">Vibration</string>
-    <string name="player_appearance_haptics_subtitle">Provoquer une légère vibration lorsque l\'utilisateur appuie ou effectue des gestes sur le lecteur</string>
+    <string name="player_appearance_haptics_subtitle">Vibrer légèrement lors des tapotements et des gestes</string>
     <string name="player_appearance_gesture_overlay_title">Style de superposition des gestes</string>
     <string name="player_appearance_scrub_preview_title">Aperçu du nettoyage</string>
     <string name="player_appearance_scrub_preview_subtitle">Ce que la barre de défilement affiche lorsque vous la faites glisser</string>
@@ -2950,7 +2950,7 @@
     <string name="settings_open_music_player_on_play_title">Ouvrez le lecteur complet pour de nouvelles chansons</string>
     <string name="settings_open_music_player_on_play_summary">Off conserve une nouvelle chanson dans le mini-lecteur</string>
     <string name="content_settings_live_chat_enabled_title">Chat en direct</string>
-    <string name="content_settings_live_chat_enabled_subtitle">Afficher le chat sur les flux en direct</string>
+    <string name="content_settings_live_chat_enabled_subtitle">Afficher le chat pendant les diffusions en direct et leurs rediffusions</string>
     <string name="content_settings_subs_collaborations_title">Collaborations</string>
     <string name="content_settings_subs_collaborations_subtitle">Vidéos réalisées avec les chaînes que vous suivez</string>
     <string name="nav_downloads">Téléchargements</string>
@@ -3615,7 +3615,7 @@
     <string name="error_rate_limited_hint">Attendez un moment et réessayez, ou changez de réseau.</string>
     <string name="error_bot_wall">YouTube bloque ce réseau</string>
     <string name="error_bot_wall_hint">Essayez un autre réseau ou désactivez votre VPN.</string>
-    <string name="error_bot_wall_network_hint">Essayez un autre réseau, tel que les données mobiles.</string>
+    <string name="error_bot_wall_network_hint">Essayez d\'utiliser les données mobiles, ou attendez un peu. En général, le problème se résout tout seul.</string>
     <string name="error_bot_wall_session">YouTube veut confirmer que vous n\'êtes pas un robot</string>
     <string name="error_bot_wall_session_hint">Réinitialisez la session YouTube, puis réessayez.</string>
     <string name="error_login_required">Connexion requise</string>
@@ -4210,7 +4210,7 @@
     <string name="settings_hide_password">Masquer le mot de passe</string>
     <string name="settings_proxy_unsaved">Vous avez des modifications non enregistrées</string>
     <string name="settings_keywords_history">recherches récentes, confidentialité, oublier, supprimer, saisie semi-automatique</string>
-    <string name="settings_keywords_wellbeing">temps d\'écran, bien-être numérique, sommeil, heure du coucher, pause, temps de visionnage, utilisation</string>
+    <string name="settings_keywords_wellbeing">temps passé devant les écrans, bien-être numérique, sommeil, heure du coucher, pause, temps de visionnage, utilisation, limite quotidienne, limite de temps</string>
     <string name="settings_sleep_window_summary">Fenêtre de veille : %1$s</string>
     <string name="settings_notification_permission_needed">Autoriser les notifications pour recevoir des rappels</string>
     <string name="settings_watch_time_week_total">%1$s cette semaine</string>
@@ -4852,9 +4852,9 @@
     <string name="crossfade_curve_s_curve">Lisse</string>
     <string name="crossfade_curve_s_curve_detail">Ça commence et ça se termine doucement, avec un changement au milieu</string>
     <string name="crossfade_curve_hold">Attendez</string>
-    <string name="crossfade_curve_hold_detail">Il maintient le titre en cours, puis change un peu plus tard</string>
+    <string name="crossfade_curve_hold_detail">آهنگ فعلی را تا زمانی که آهنگ بعدی وارد می‌شود، حفظ می‌کند</string>
     <string name="crossfade_curve_gentle">Doux</string>
-    <string name="crossfade_curve_gentle_detail">Plus doux au milieu du dégradé</string>
+    <string name="crossfade_curve_gentle_detail">آهنگ فعلی زودتر میرود، آهنگ بعدی به طور پیوسته می آید</string>
     <string name="lyrics_blur_other_lines">Faire disparaître les autres lignes</string>
     <string name="lyrics_blur_other_lines_summary">Désactivez cette option pour lire chaque ligne clairement</string>
     <string name="lyrics_background_solid">Solide</string>
@@ -4864,7 +4864,7 @@
     <string name="lyrics_background_moving">Mobile</string>
     <string name="lyrics_background_moving_detail">Des couleurs douces qui se fondent les unes dans les autres au rythme du morceau</string>
     <string name="lyrics_on_lock_screen">Paroles sur l\'écran de verrouillage</string>
-    <string name="lyrics_on_lock_screen_summary">Affiche la ligne en cours comme titre de la chanson, y compris dans d\'autres applications</string>
+    <string name="lyrics_on_lock_screen_summary">Affiche la ligne en cours comme titre du morceau, y compris dans d\'autres applications</string>
     <string name="lyrics_on_lock_screen_timing">Synchronisation des paroles sur l\'écran de verrouillage</string>
     <string name="lyrics_background">Arrière-plan</string>
     <string name="lyrics_on_lock_screen_timing_summary">Avancez les lignes si elles semblent en retard</string>
@@ -4941,4 +4941,82 @@
     <string name="settings_marquee_title">Texte défilant</string>
     <string name="settings_marquee_summary">Faites défiler les titres et les noms longs. Désactivez cette fonction sur les appareils moins performants.</string>
     <string name="settings_marquee_keywords">marquee, titre défilant, nom de l\'artiste, graves, prestation</string>
+    <string name="cover_shape_sunny">Ensoleillé</string>
+    <string name="cover_shape_burst">Salve</string>
+    <string name="cover_shape_soft_burst">Explosion douce</string>
+    <string name="cover_shape_heart">Cœur</string>
+    <string name="mini_background_outlined">En bref</string>
+    <string name="player_appearance_mini_long_press_like">J\'aime</string>
+    <string name="translate">Traduire</string>
+    <string name="downloads_folder_lost_body">Flow n\'a plus accès au dossier que vous aviez choisi pour les téléchargements, comme cela arrive souvent après une réinstallation. Sélectionnez-le à nouveau pour retrouver vos anciens téléchargements et continuer à y enregistrer vos fichiers.</string>
+    <string name="linked_intro_body">L\'historique, les playlists, les « J\'aime » et les paramètres restent les mêmes sur votre téléphone, votre téléviseur et votre ordinateur. Chiffrement de bout en bout.</string>
+    <string name="linked_synced_at">%1$s synchronisé</string>
+    <string name="linked_join_request_hint">N\'acceptez que si c\'est bien votre appareil.</string>
+    <string name="linked_auto_sync_off">Uniquement lorsque vous appuyez sur « Synchroniser maintenant ». Tant que cet appareil n\'est pas synchronisé, le serveur conserve toutes les données envoyées par vos autres appareils.</string>
+    <string name="linked_sync_choice_body">Désactivé : cet appareil cesse d\'envoyer des données et ignore celles provenant de vos autres appareils. Lorsque vous réactivez l\'un d\'entre eux, il se synchronise avec le reste du groupe. Le serveur n\'efface les anciennes données que lorsqu\'au moins un de vos appareils a effectué une synchronisation complète.</string>
+    <string name="profiles_action_settings_description">Profil : %1$s. Changer de profil ou ouvrir les paramètres</string>
+    <string name="tv_rail_now_playing_description">En cours de lecture : %1$s</string>
+    <string name="tv_rail_playing_on_description">En cours de lecture sur %1$s : %2$s</string>
+    <string name="notification_new_video_live">En direct : %1$s</string>
+    <string name="notification_new_video_scheduled">En direct de %1$s : %2$s</string>
+    <string name="notification_new_video_premiere">Première à %1$s : %2$s</string>
+    <string name="settings_classic_loader_keywords">chargeur, indicateur de chargement, progression, cercle, animation de chargement</string>
+    <string name="settings_nav_scroll_shrink">Réduire</string>
+    <string name="settings_translation_header">Traduire</string>
+    <string name="translate_with_server_summary">La traduction s\'effectue directement via le serveur LibreTranslate ou Lingva que vous indiquez</string>
+    <string name="settings_keywords_translation">traduire, traduction, traducteur, LibreTranslate, Lingva, serveur, commentaires, description</string>
+    <string name="ai_report_enabled_title">Rapport depuis le menu vidéo</string>
+    <plurals name="player_appearance_cover_shapes_count">
+        <item quantity="one">%d forme</item>
+        <item quantity="many">%d formes</item>
+        <item quantity="other">%d formes</item>
+    </plurals>
+    <plurals name="disk_read_ahead_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="many">%1$d minutes</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <plurals name="import_takeout_part_ads_removed">
+        <item quantity="one">%d publicité supprimée de l\'historique</item>
+        <item quantity="many">%d publicités supprimées de l\'historique</item>
+        <item quantity="other">%d publicités supprimées de l\'historique</item>
+    </plurals>
+    <string name="newpipe_extractor_credit">Les débuts de l\'extraction de vidéos YouTube par Flow</string>
+    <string name="error_members_only">Vidéo réservée aux membres</string>
+    <string name="error_members_only_hint">Abonnez-vous à cette chaîne YouTube pour la regarder.</string>
+    <string name="error_copyright_removed">Supprimé pour des raisons de droits d\'auteur</string>
+    <string name="error_copyright_removed_hint">%1$s a demandé à YouTube de supprimer cette vidéo.</string>
+    <string name="error_copyright_removed_hint_unnamed">Le titulaire des droits d\'auteur a demandé à YouTube de retirer cette vidéo.</string>
+    <string name="error_removed_by_uploader">Supprimé par l\'auteur de la publication</string>
+    <string name="error_removed_by_uploader_hint">L\'auteur de la vidéo a supprimé celle-ci de YouTube.</string>
+    <string name="error_policy_removed">Supprimé par YouTube</string>
+    <string name="error_policy_removed_hint">YouTube a supprimé cette vidéo car elle enfreignait ses règles.</string>
+    <string name="error_recording_unavailable">Enregistrement indisponible</string>
+    <string name="error_recording_unavailable_hint">Cette diffusion en direct s\'est terminée sans qu\'il y ait d\'enregistrement sur YouTube.</string>
+    <plurals name="songs_removed_from_queue">
+        <item quantity="one">%d titre a été retiré de la file d\'attente</item>
+        <item quantity="many">%d titres ont été supprimés de la file d\'attente</item>
+        <item quantity="other">%d titres ont été supprimés de la file d\'attente</item>
+    </plurals>
+    <plurals name="add_songs_to_playlist_title">
+        <item quantity="one">Ajouter %d titre à une playlist</item>
+        <item quantity="many">Ajouter %d titres à une playlist</item>
+        <item quantity="other">Ajouter %d titres à une playlist</item>
+    </plurals>
+    <plurals name="playlists_exported">
+        <item quantity="one">%d playlist enregistrée</item>
+        <item quantity="many">%d playlists enregistrées</item>
+        <item quantity="other">%d playlists enregistrées</item>
+    </plurals>
+    <plurals name="playlists_imported">
+        <item quantity="one">%d playlist importée</item>
+        <item quantity="many">%d playlists importées</item>
+        <item quantity="other">%d playlists importées</item>
+    </plurals>
+    <plurals name="app_lock_after_minutes">
+        <item quantity="one">Au bout de %1$d minute</item>
+        <item quantity="many">Au bout de %1$d minutes</item>
+        <item quantity="other">Au bout de %1$d minutes</item>
+    </plurals>
+    <string name="error_bot_wall_mobile_data_hint">Essayez de vous connecter au Wi-Fi, ou attendez un peu. En général, le problème se résout tout seul.</string>
 </resources>

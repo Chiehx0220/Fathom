@@ -16,19 +16,7 @@
     <string name="home_load_more_failed">ບໍ່ສາມາດໂຫຼດວິດີໂອເພີ່ມເຕີມໄດ້</string>
     <string name="home_load_more_failed_body">ກວດເບິ່ງການເຊື່ອມຕໍ່ຂອງທ່ານ</string>
     <string name="home_refresh_failed">ບໍ່ສາມາດໂຫຼດຂໍ້ມູນຟີດຂອງທ່ານໄດ້</string>
-    <plurals name="subscriptions_refresh_progress_template">
-        <item quantity="other">ກຳລັງໂຫຼດຊ່ອງ %1$d ຂອງ %2$d ຄືນໃໝ່</item>
-    </plurals>
-    <plurals name="subscriptions_refresh_checks_template">
-        <item quantity="other">ກຳລັງກວດສອບຊ່ອງ %1$d ຂອງ %2$d ສຳລັບ Shorts ແລະຖ່າຍທອດສົດ</item>
-    </plurals>
-    <plurals name="subscriptions_last_refreshed_template">
-        <item quantity="other">ໂຫຼດຂໍ້ມູນໃໝ່ຫຼ້າສຸດ %1$s - ເລືອກວິດີໂອ %2$d ແລ້ວ</item>
-    </plurals>
     <string name="subscriptions_last_refreshed_time_only_template">ປັບປຸງໃໝ່ຫຼ້າສຸດ %1$s</string>
-    <plurals name="subscriptions_failed_channels_title">
-        <item quantity="other">ບໍ່ສາມາດໂຫຼດຊ່ອງ %d ໄດ້</item>
-    </plurals>
     <string name="subscriptions_failed_channels_copy_logs">ສຳເນົາບັນທຶກ</string>
     <string name="content_settings_channel_group_badge_title">ສະແດງກຸ່ມຢູ່ໃນຮູບແທນຕົວຂອງຊ່ອງ</string>
     <string name="content_settings_channel_group_badge_subtitle">ປ້າຍກຳກັບຮູບແທນຕົວກັບກຸ່ມການສະໝັກຮັບຊົມຂອງເຂົາເຈົ້າ</string>
@@ -108,9 +96,6 @@
     <string name="downloaded">ດາວໂຫຼດແລ້ວ</string>
     <string name="download">ດາວໂຫຼດ</string>
     <string name="download_all">ດາວໂຫຼດທັງໝົດ</string>
-    <plurals name="download_all_confirmation">
-        <item quantity="other">ດາວໂຫຼດທັງໝົດ %1$d ວິດີໂອບໍ? ນີ້ອາດຈະໃຊ້ບ່ອນເກັບມ້ຽນທີ່ສໍາຄັນ.</item>
-    </plurals>
     <string name="save">ບັນທຶກ</string>
     <string name="saved">ບັນທຶກແລ້ວ</string>
     <string name="playlist_filter_owned">ເປັນເຈົ້າຂອງ</string>
@@ -165,9 +150,6 @@
     <string name="lyrics_not_available">ບໍ່ມີເນື້ອເພງ</string>
     <string name="refresh_lyrics">ໂຫຼດເນື້ອເພງຄືນໃໝ່</string>
     <string name="lyrics_save_file">ບັນທຶກເປັນໄຟລ໌ .lrc</string>
-    <plurals name="queue_track_count">
-        <item quantity="other">%1$d ເພງ</item>
-    </plurals>
     <string name="lyrics_saved">ບັນທຶກເນື້ອເພງແລ້ວ</string>
     <string name="lyrics_save_failed">ບໍ່ສາມາດບັນທຶກເນື້ອເພງໄດ້</string>
     <string name="lyrics_choose_source">ເລືອກແຫຼ່ງເນື້ອເພງ</string>
@@ -333,9 +315,6 @@
     <string name="desc_more">...ເພີ່ມເຕີມ</string>
     <string name="reply">ຕອບ</string>
     <string name="hide_replies">ເຊື່ອງການຕອບກັບ</string>
-    <plurals name="view_replies_template">
-        <item quantity="other">ເບິ່ງການຕອບກັບ %1$d</item>
-    </plurals>
     <string name="load_more_replies">ໂຫຼດການຕອບກັບເພີ່ມເຕີມ</string>
     <string name="select_text">ເລືອກຂໍ້ຄວາມ</string>
     <string name="pinned_comment">ປັກໝຸດຄຳເຫັນ</string>
@@ -408,9 +387,6 @@
     <string name="app_name_uppercase">FLOW</string>
     <string name="notification_badge_9_plus">9+</string>
     <string name="personalized_feed">ຟີດສ່ວນຕົວຂອງທ່ານ</string>
-    <plurals name="videos_curated_template">
-        <item quantity="other">ວິດີໂອ %1$d ທີ່ຄັດສັນມາສະເພາະສຳລັບທ່ານ</item>
-    </plurals>
     <string name="import_newpipe_backup">ນຳເຂົ້າ NewPipe Backup</string>
     <string name="importing_from_backup">ກຳລັງນຳເຂົ້າການສະໝັກຮັບຊົມຈາກການສຳຮອງຂໍ້ມູນ NewPipe...</string>
     <string name="search_subscriptions">ຊອກຫາການສະໝັກຮັບຊົມ</string>
@@ -426,9 +402,6 @@
     <string name="unsubscribed_from_template">ເຊົາຕິດຕາມຈາກ %1$s</string>
     <string name="hide_channel_shorts">ເຊື່ອງ Shorts ຈາກຊ່ອງນີ້</string>
     <string name="show_channel_shorts">ສະແດງ Shorts ຈາກຊ່ອງນີ້</string>
-    <plurals name="course_lessons_count">
-        <item quantity="other">ຫຼັກສູດ · %d ບົດຮຽນ</item>
-    </plurals>
     <plurals name="videos_count_template">
         <item quantity="other">%1$d ວິດີໂອ</item>
     </plurals>
@@ -441,9 +414,6 @@
     <plurals name="shorts_count_template">
         <item quantity="other">%1$d Shorts</item>
     </plurals>
-    <plurals name="library_items_count">
-        <item quantity="other">%1$d ລາຍການ</item>
-    </plurals>
     <string name="metadata_separator">·</string>
     <string name="list_separator_dot">" \"·\" "</string>
     <string name="player_time_separator">/</string>
@@ -453,9 +423,6 @@
     <string name="downloads_recover_body">Flow ບັນທຶກການດາວໂຫຼດໃນDownload/Flow ແລະMusic/Flow. ເພື່ອລາຍຊື່ໄຟລ໌ທີ່ຕິດຕັ້ງໄວ້ກ່ອນໜ້ານັ້ນ, ອະນຸຍາດໃຫ້ເຂົ້າເຖິງວິດີໂອ ແລະສຽງ.</string>
     <string name="downloads_recover_allow">ອະນຸຍາດໃຫ້ເຂົ້າເຖິງ</string>
     <string name="downloads_recover_dismiss">ບໍ່ແມ່ນດຽວນີ້</string>
-    <plurals name="downloads_recovered_count">
-        <item quantity="other">ພົບການດາວໂຫຼດ %d ຈາກການຕິດຕັ້ງກ່ອນໜ້ານີ້</item>
-    </plurals>
     <string name="downloads_recovered_none">ບໍ່ພົບການດາວໂຫຼດຈາກການຕິດຕັ້ງກ່ອນໜ້ານີ້</string>
     <string name="downloads_find_earlier_title">ຊອກຫາການດາວໂຫຼດກ່ອນໜ້ານີ້</string>
     <string name="downloads_find_earlier_running">ກຳລັງຊອກຫາ…</string>
@@ -550,9 +517,6 @@
     <string name="note_at_time">ໝາຍເຫດຢູ່ທີ່ %1$s</string>
     <string name="notes_title">ບັນທຶກ</string>
     <string name="notes_library_subtitle">ບັນທຶກຂອງທ່ານໃນວິດີໂອ ແລະຊ່ອງຕ່າງໆ</string>
-    <plurals name="notes_count">
-        <item quantity="other">ບັນທຶກ %d</item>
-    </plurals>
     <string name="notes_search_placeholder">ຊອກຫາບັນທຶກ</string>
     <string name="notes_filter_all">ທັງໝົດ</string>
     <string name="notes_filter_videos">ວິດີໂອ</string>
@@ -565,9 +529,6 @@
     <string name="notes_select">ເລືອກບັນທຶກ</string>
     <string name="notes_reorder">ຈັດຮຽງໃໝ່</string>
     <string name="notes_reorder_title">ຈັດຮຽງບັນທຶກຄືນໃໝ່</string>
-    <plurals name="notes_deleted">
-        <item quantity="other">ລຶບບັນທຶກ %d ແລ້ວ</item>
-    </plurals>
     <string name="notes_empty_title">ບໍ່ມີບັນທຶກເທື່ອ</string>
     <string name="notes_empty_body">ເພີ່ມອັນໜຶ່ງຈາກປຸ່ມບັນທຶກຂອງວິດີໂອ ຫຼືເມນູສະໝັກສະມາຊິກຂອງຊ່ອງ. ເວລາເຊັ່ນ 12: 34 ກາຍເປັນການເຊື່ອມຕໍ່.</string>
     <string name="notes_no_match_title">ບໍ່ມີບັນທຶກທີ່ກົງກັນ</string>
@@ -631,9 +592,6 @@
     <string name="notifications_save_to_watch_later">ບັນທຶກເພື່ອເບິ່ງພາຍຫຼັງ</string>
     <string name="notifications_open_settings">ການຕັ້ງຄ່າການແຈ້ງເຕືອນ</string>
     <string name="notifications_clear_title">ລຶບລ້າງການແຈ້ງເຕືອນທັງໝົດບໍ?</string>
-    <plurals name="notifications_clear_body">
-        <item quantity="other">ນີ້ຈະເປັນການລຶບການແຈ້ງເຕືອນ %d ອອກ. ທ່ານບໍ່ສາມາດຍົກເລີກສິ່ງນີ້ໄດ້.</item>
-    </plurals>
     <string name="notifications_clear_confirm">ລຶບລ້າງທັງໝົດ</string>
     <string name="clear_all_notifications">ລຶບລ້າງການແຈ້ງເຕືອນທັງໝົດ</string>
     <string name="delete">ລຶບ</string>
@@ -676,9 +634,6 @@
     <string name="deep_flow_duration_8h">8 ຊົ່ວໂມງ</string>
     <string name="deep_flow_duration_12h">12 ຊົ່ວໂມງ</string>
     <string name="deep_flow_duration_24h">24 ຊົ່ວໂມງ</string>
-    <plurals name="deep_flow_duration_hours">
-        <item quantity="other">%1$d ຊົ່ວໂມງ</item>
-    </plurals>
     <string name="settings_header_appearance">ຮູບລັກສະນະ</string>
     <string name="settings_header_content_playback">ເນື້ອຫາ &amp; ການຫຼິ້ນ</string>
     <string name="settings_header_data_management">ການຄຸ້ມຄອງຂໍ້ມູນ</string>
@@ -765,9 +720,6 @@
     <string name="appearance_category_dark">ມືດ</string>
     <string name="appearance_category_custom">ກຳນົດເອງ</string>
     <string name="appearance_category_special">ພິເສດ</string>
-    <plurals name="appearance_themes_count_all">
-        <item quantity="other">ຫົວຂໍ້ %1$d</item>
-    </plurals>
     <string name="appearance_applied_toast">ນຳໃຊ້: %1$s</string>
     <string name="appearance_customize_theme">ປັບແຕ່ງຮູບແບບສີສັນ</string>
     <string name="appearance_customizer_title">ຕົວແກ້ໄຂຮູບແບບສີສັນແບບກຳນົດເອງ</string>
@@ -946,9 +898,6 @@
     <string name="player_appearance_frame_step_subtitle">ສະແດງລູກສອນບາດກ້າວກັບຄືນໄປບ່ອນແລະກ້າວໄປຫນ້າໃນຂະນະທີ່ຢຸດຊົ່ວຄາວ</string>
     <string name="lyrics_provider_title">ຜູ້ໃຫ້ບໍລິການເນື້ອເພງ</string>
     <string name="lyrics_provider_subtitle">ເລືອກແຫຼ່ງທີ່ທ່ານຕ້ອງການສໍາລັບເນື້ອເພງ</string>
-    <plurals name="lyrics_providers_enabled">
-        <item quantity="other">ຜູ້ໃຫ້ບໍລິການ %1$d / %2$d ຖືກເປີດໃຊ້ແລ້ວ</item>
-    </plurals>
     <string name="lyrics_provider_lrclib">LrcLib</string>
     <string name="lyrics_provider_better_lyrics">ເນື້ອເພງທີ່ດີກວ່າ</string>
     <string name="lyrics_provider_simpmusic">SimpMusic</string>
@@ -1233,14 +1182,8 @@
     <string name="player_settings_shorts_playback_mode_loop">Loop (ເຮັດຊ້ຳປັດຈຸບັນສັ້ນ)</string>
     <string name="player_settings_shorts_playback_mode_auto_next">ຫຼິ້ນອັດຕະໂນມັດຕໍ່ໄປ (ລ່ວງໜ້າໄປຫາສັ້ນຕໍ່ໄປ)</string>
     <string name="player_settings_shorts_playback_mode_auto_interval">ເລື່ອນອັດຕະໂນມັດຫຼັງຈາກເວລາກຳນົດເອງ</string>
-    <plurals name="player_settings_shorts_playback_mode_auto_interval_summary">
-        <item quantity="other">ເລື່ອນອັດຕະໂນມັດທຸກໆ %1$d ວິນາທີ</item>
-    </plurals>
     <string name="player_settings_shorts_playback_mode_dialog_title">ໂໝດຫຼິ້ນ Shorts</string>
     <string name="player_settings_shorts_playback_mode_dialog_body">ຈະເກີດຫຍັງຂຶ້ນເມື່ອສັ້ນຈົບລົງ:</string>
-    <plurals name="player_settings_shorts_auto_scroll_seconds_template">
-        <item quantity="other">%1$d ວິນາທີ</item>
-    </plurals>
     <string name="player_settings_start_paused">ເລີ່ມວິດີໂອຢຸດຊົ່ວຄາວ</string>
     <string name="player_settings_start_paused_subtitle">ເປີດວິດີໂອໂດຍບໍ່ມີການຫຼິ້ນມັນຈົນກ່ວາທ່ານກົດຫຼິ້ນ</string>
     <string name="player_settings_open_fullscreen">ເປີດວິດີໂອໃນເຕັມຈໍ</string>
@@ -1253,9 +1196,6 @@
     <string name="player_settings_queue_autoplay_subtitle">ຫຼິ້ນວິດີໂອຕໍ່ໄປໃນລາຍການຫຼິ້ນ ຫຼືເບິ່ງພາຍຫຼັງ</string>
     <string name="player_settings_autoplay_countdown_title">ຫຼິ້ນອັດຕະໂນມັດຊັກຊ້າ</string>
     <string name="player_settings_autoplay_countdown_none">ບໍ່ມີ (ປ່ຽນທັນທີ)</string>
-    <plurals name="player_settings_autoplay_countdown_seconds_template">
-        <item quantity="other">%1$d ວິນາທີ</item>
-    </plurals>
     <string name="player_settings_autoplay_countdown_dialog_body">ນັບຖອຍຫຼັງກ່ອນທີ່ວິດີໂອຕໍ່ໄປຈະເລີ່ມຕົ້ນ. ທ່ານສາມາດຫຼິ້ນຄືນ, ຍົກເລີກ ຫຼືຂ້າມໄປຂ້າງໜ້າໃນຂະນະທີ່ມັນແລ່ນ.</string>
     <string name="autoplay_countdown_up_next">ຕໍ່ໄປ</string>
     <string name="autoplay_countdown_next_video">ວິດີໂອຕໍ່ໄປ</string>
@@ -1374,9 +1314,6 @@
     <string name="player_settings_video_codec_fallback_auto_desc">ໃຫ້ແອັບຯເລືອກ (ມັກ H.264)</string>
     <string name="player_settings_header_gestures">ທ່າທາງ</string>
     <string name="player_settings_double_tap_seek">ແຕະສອງເທື່ອຊອກຫາໄລຍະເວລາ</string>
-    <plurals name="player_settings_double_tap_seek_subtitle">
-        <item quantity="other">%1$d ວິນາທີຕໍ່ຂ້າງ ແຕະສອງເທື່ອ</item>
-    </plurals>
     <string name="player_settings_double_tap_seek_dialog_title">ແຕະສອງເທື່ອຊອກຫາໄລຍະເວລາ</string>
     <string name="player_settings_double_tap_seek_dialog_body">ແຕະສອງເທື່ອຢູ່ຂ້າງໃດຂ້າງໜຶ່ງໂດດໄປໄກປານໃດ.</string>
     <string name="player_settings_double_tap_seek_off">ປິດ</string>
@@ -1489,9 +1426,6 @@
     <string name="content_preferences_subtitle">ປັບແຕ່ງສິ່ງທີ່ທ່ານເຫັນ</string>
     <string name="interests_tab">ຄວາມສົນໃຈ</string>
     <string name="blocked_tab">ບລັອກ</string>
-    <plurals name="topics_count_template">
-        <item quantity="other">%1$d ຫົວຂໍ້</item>
-    </plurals>
     <string name="your_interests_title">ຄວາມສົນໃຈຂອງທ່ານ</string>
     <string name="your_interests_desc">ເລືອກຫົວຂໍ້ເພື່ອກໍານົດຄໍາແນະນໍາຂອງທ່ານ.</string>
     <string name="currently_following">ກຳລັງຕິດຕາມຢູ່</string>
@@ -1507,14 +1441,8 @@
     <string name="quick_add">ເພີ່ມດ່ວນ</string>
     <string name="common_topics_to_block">ຫົວຂໍ້ທົ່ວໄປທີ່ຈະບລັອກ</string>
     <string name="currently_blocked">ຕອນນີ້ຖືກບລັອກ</string>
-    <plurals name="topics_blocked_count_plural">
-        <item quantity="other">%1$d ຫົວຂໍ້</item>
-    </plurals>
     <string name="desc_remove_topic">ເອົາ %1$s ອອກ</string>
     <string name="desc_unblock_topic">ປົດບລັອກ %1$s</string>
-    <plurals name="selected_count_template">
-        <item quantity="other">ເລືອກ %1$d ແລ້ວ</item>
-    </plurals>
     <string name="select_videos">ເລືອກ</string>
     <string name="cancel_selection">ຍົກເລີກການເລືອກ</string>
     <string name="select_all">ເລືອກທັງໝົດ</string>
@@ -1530,16 +1458,10 @@
     <string name="bedtime_notification_note">ການແຈ້ງເຕືອນຈະຖືກສົ່ງໃນເວລາເລີ່ມຕົ້ນ.</string>
     <string name="remind_break">ເຕືອນຂ້ອຍໃຫ້ພັກຜ່ອນ</string>
     <string name="reminder_frequency">ຄວາມຖີ່ຂອງການແຈ້ງເຕືອນ</string>
-    <plurals name="every_min_template">
-        <item quantity="other">ທຸກໆ %1$d ນທ</item>
-    </plurals>
     <string name="daily_average_label">ສະເລ່ຍປະຈໍາວັນ</string>
     <string name="stats_today">ມື້ນີ້</string>
     <string name="stats_last_7_days">7 ມື້ທີ່ຜ່ານມາ</string>
     <string name="frequency_dialog_title">ຄວາມຖີ່</string>
-    <plurals name="every_minutes_template">
-        <item quantity="other">ທຸກໆ %1$d ນາທີ</item>
-    </plurals>
     <string name="this_week">ອາທິດນີ້</string>
     <string name="total_hours_template">ທັງໝົດ: %s ຊົ່ວໂມງ</string>
     <string name="no_watch_data">ບໍ່ມີຂໍ້ມູນໂມງເທື່ອ</string>
@@ -1555,9 +1477,6 @@
     <string name="confirm">ຢືນຢັນ</string>
     <string name="sleep_timer">ເຄື່ອງຈັບເວລານອນ</string>
     <string name="sleep_timer_duration">ໄລຍະເວລາ</string>
-    <plurals name="sleep_timer_minutes">
-        <item quantity="other">%1$d ນທ</item>
-    </plurals>
     <string name="sleep_timer_min_label">5 ນທ</string>
     <string name="sleep_timer_max_label">120 ນທ</string>
     <string name="sleep_timer_custom_label">ເວລາກຳນົດເອງ</string>
@@ -1579,26 +1498,14 @@
     <string name="search_suggestions_title">ຄົ້ນຫາຄໍາແນະນໍາ</string>
     <string name="show_suggestions_subtitle">ສະແດງຄຳແນະນຳໃນຂະນະທີ່ພິມ</string>
     <string name="max_history_size_title">ຂະໜາດປະຫວັດສາດສູງສຸດ</string>
-    <plurals name="currently_searches_template">
-        <item quantity="other">ໃນປັດຈຸບັນ: %1$d ການຊອກຫາ</item>
-    </plurals>
     <string name="auto_delete_history_title">ລຶບປະຫວັດອັດຕະໂນມັດ</string>
-    <plurals name="delete_after_days_template">
-        <item quantity="other">ລຶບອອກຫຼັງຈາກ %1$d ມື້</item>
-    </plurals>
     <string name="never_delete_automatically">ຢ່າລຶບອັດຕະໂນມັດ</string>
     <string name="retention_period_title">ໄລຍະເວລາເກັບຮັກສາ</string>
-    <plurals name="delete_older_than_template">
-        <item quantity="other">ລຶບການຊອກຫາທີ່ເກົ່າກວ່າ %1$d ມື້</item>
-    </plurals>
     <string name="clear_history_item_title">ລຶບປະຫວັດການຊອກຫາ</string>
     <string name="remove_all_queries">ເອົາຄໍາຖາມຄົ້ນຫາທັງຫມົດອອກ</string>
     <string name="clear_history_dialog_title">ລຶບປະຫວັດການຊອກຫາບໍ?</string>
     <string name="clear_history_dialog_text">ລຶບປະຫວັດການຊອກຫາທັງໝົດອອກຖາວອນ.</string>
     <string name="choose_history_size">ເລືອກຈຳນວນການຊອກຫາເພື່ອເກັບໄວ້:</string>
-    <plurals name="searches_count_template">
-        <item quantity="other">%1$d ຄົ້ນຫາ</item>
-    </plurals>
     <string name="delete_searches_older_than">ລຶບການຊອກຫາທີ່ເກົ່າກວ່າ:</string>
     <string name="period_one_week">1 ອາທິດ</string>
     <string name="period_one_month">1 ເດືອນ</string>
@@ -1660,25 +1567,10 @@
     <string name="import_takeout_step_history">ປະຫວັດການເບິ່ງ</string>
     <string name="import_takeout_step_subscriptions">ການສະໝັກຮັບຊົມ</string>
     <string name="import_takeout_step_activity">ມັກແລະການຊອກຫາ</string>
-    <plurals name="import_takeout_part_subscriptions">
-        <item quantity="other">ການສະໝັກຮັບຊົມ %d</item>
-    </plurals>
-    <plurals name="import_takeout_part_history">
-        <item quantity="other">%d ລາຍການປະຫວັດສາດ</item>
-    </plurals>
     <plurals name="import_takeout_part_playlists">
         <item quantity="other">%1$d ລາຍການຫຼິ້ນ (%2$d ວິດີໂອ)</item>
     </plurals>
-    <plurals name="import_takeout_part_music_playlists">
-        <item quantity="other">%d ລາຍການຫຼິ້ນໃນດົນຕີ</item>
-    </plurals>
-    <plurals name="import_takeout_part_music_library">
-        <item quantity="other">%d YouTube Music ເພງຫ້ອງສະໝຸດ</item>
-    </plurals>
     <string name="import_takeout_music_library_name">ຫ້ອງສະໝຸດ YouTube Music</string>
-    <plurals name="import_takeout_part_searches">
-        <item quantity="other">%d ຄົ້ນຫາ</item>
-    </plurals>
     <string name="import_yt_playlist">ນຳເຂົ້າລາຍການຫຼິ້ນ YouTube</string>
     <string name="import_yt_playlist_desc">ນຳເຂົ້າລາຍການຫຼິ້ນຈາກ YouTube Takeout CSV (Playlist-&lt;name&gt;.csv).</string>
     <string name="import_yt_watch_later">ນຳເຂົ້າເບິ່ງພາຍຫຼັງ</string>
@@ -1686,9 +1578,6 @@
     <string name="import_yt_music_playlist">ນຳເຂົ້າລາຍການຫຼິ້ນ YouTube Music</string>
     <string name="import_yt_music_playlist_desc">ນຳເຂົ້າລາຍການຫຼິ້ນເພງຈາກ YouTube Music Takeout CSV. ປາກົດຢູ່ກ້ອງລາຍການຫຼິ້ນເພງ.</string>
     <string name="import_yt_history_failed_template">ລົ້ມເຫລວໃນການນໍາເຂົ້າປະຫວັດການເບິ່ງ: %1$s</string>
-    <plurals name="import_yt_playlist_success_template">
-        <item quantity="other">ນຳເຂົ້າລາຍການຫຼິ້ນ “%1$s” ພ້ອມກັບວິດີໂອ %2$d</item>
-    </plurals>
     <string name="import_yt_playlist_failed_template">ລົ້ມເຫລວໃນການນໍາເຂົ້າລາຍການຫຼິ້ນ: %1$s</string>
     <string name="import_yt_history_empty_error">ບໍ່ພົບລາຍການປະຫວັດການເບິ່ງໃນໄຟລ໌ນີ້. ໃຫ້ແນ່ໃຈວ່າມັນເປັນໄຟລ໌ YouTube Takeout watch-history.html.</string>
     <string name="import_yt_playlist_empty_error">ບໍ່ພົບວິດີໂອໃນ CSV ນີ້. ໃຫ້ແນ່ໃຈວ່າມັນເປັນໄຟລ໌ CSV ລາຍການຫຼິ້ນ YouTube Takeout.</string>
@@ -1723,9 +1612,6 @@
     <string name="concurrent_threads_title">ການເຊື່ອມຕໍ່ຕໍ່ໄຟລ໌</string>
     <string name="concurrent_downloads_title">ດາວໂຫຼດພ້ອມກັນ</string>
     <string name="concurrent_downloads_summary">ດາວໂຫລດໄຟລ໌ຫຼາຍປານໃດໃນເວລາດຽວກັນ</string>
-    <plurals name="threads_per_download_template">
-        <item quantity="other">%1$d ກະທູ້ຕໍ່ການດາວໂຫຼດ</item>
-    </plurals>
     <string name="performance_optimization_note">ຫຼາຍຂຶ້ນໃນຄັ້ງດຽວສາມາດໄວຂຶ້ນໄດ້ ແຕ່ໃຊ້ແບັດເຕີຣີ ແລະຄວາມຮ້ອນຫຼາຍຂຶ້ນ.</string>
     <string name="location_dialog_subtitle">ເລືອກບ່ອນທີ່ໄຟລ໌ທີ່ດາວໂຫລດຖືກບັນທຶກໄວ້ໃນອຸປະກອນຂອງທ່ານ.</string>
     <string name="location_preset_header">ສະຖານທີ່ຕັ້ງລ່ວງໜ້າ</string>
@@ -1745,9 +1631,6 @@
     <string name="location_badge_recommended">ແນະນຳ</string>
     <string name="location_badge_active">ເຄື່ອນໄຫວ</string>
     <string name="select_threads_count_desc">ເລືອກຫົວຂໍ້ນັບ (1-8):</string>
-    <plurals name="threads_count_label">
-        <item quantity="other">%1$d ກະທູ້</item>
-    </plurals>
     <string name="support_donations_title">ການຊ່ວຍເຫຼືອ &amp; ການບໍລິຈາກ</string>
     <string name="support_flow_dev_title">ສະຫນັບສະຫນູນການພັດທະນາ Flow</string>
     <string name="support_flow_dev_desc">ຖ້າ Flow ເປັນປະໂຫຍດສໍາລັບທ່ານ, ທ່ານສາມາດສະຫນັບສະຫນູນມັນຢູ່ໃນ Open Collective, Patreon ຫຼືດ້ວຍ crypto ຂ້າງລຸ່ມນີ້. ຂອບໃຈ!</string>
@@ -1825,9 +1708,6 @@
     <string name="playlist_sort_most_popular">ນິຍົມທີ່ສຸດ</string>
     <string name="playlist_sort_date_published_newest">ວັນທີເຜີຍແຜ່ (ໃໝ່ສຸດ)</string>
     <string name="playlist_sort_date_published_oldest">ວັນທີເຜີຍແຜ່ (ເກົ່າທີ່ສຸດ)</string>
-    <plurals name="remove_selected_videos_title">
-        <item quantity="other">ລຶບວິດີໂອ %1$d ອອກບໍ?</item>
-    </plurals>
     <string name="remove_selected_playlist_text">ພວກມັນຈະຖືກລຶບອອກຈາກລາຍການຫຼິ້ນນີ້.</string>
     <string name="remove_selected_watch_later_text">ພວກມັນຈະຖືກລຶບອອກຈາກເບິ່ງໃນພາຍຫຼັງ.</string>
     <string name="welcome_to_flow">ຍິນດີຕ້ອນຮັບສູ່ Flow</string>
@@ -1841,9 +1721,6 @@
     <string name="onboarding_channels_search_placeholder">ຊອກຫາຊ່ອງ…</string>
     <string name="onboarding_channels_empty_prompt">ພິມຊື່ຊ່ອງເພື່ອຊອກຫາ</string>
     <string name="onboarding_channels_no_results">ບໍ່ພົບຊ່ອງສຳລັບ \"%1$s\"</string>
-    <plurals name="onboarding_channels_added_count">
-        <item quantity="other">ເພີ່ມຊ່ອງ %1$d ແລ້ວ</item>
-    </plurals>
     <string name="onboarding_channels_subscribers">ຜູ້ສະໝັກຮັບຊົມ %1$s</string>
     <string name="onboarding_channels_subscribed">ສະໝັກແລ້ວ</string>
     <string name="onboarding_channels_subscribe">ສະໝັກ</string>
@@ -1856,9 +1733,6 @@
     <string name="auto_backup_type_all_profiles">ມີຫຼາຍກວ່າຫນຶ່ງໂປຣໄຟລ໌, ການສໍາຮອງຂໍ້ມູນອັດຕະໂນມັດແມ່ນການສໍາຮອງຂໍ້ມູນຕົ້ນສະບັບ, ສະນັ້ນທຸກໂປຣໄຟລ໌ແມ່ນລວມ</string>
     <string name="master_restore_confirm">ຟື້ນຟູ</string>
     <string name="master_restore_old_into">ຂໍ້ມູນສຳຮອງນີ້ແມ່ນມາຈາກກ່ອນໂປຣໄຟລ໌, ສະນັ້ນມັນຈຶ່ງມີໂປຣໄຟລ໌ດຽວ. ມັນຈະຖືກຟື້ນຟູເປັນ %1$s.</string>
-    <plurals name="master_restore_waiting">
-        <item quantity="other">ກູ້ຂໍ້ມູນຕົ້ນສະບັບຄືນມາ. %1$s ຖືກຟື້ນຟູໃນຄັ້ງຕໍ່ໄປທີ່ທ່ານເປີດພວກມັນ.</item>
-    </plurals>
     <string name="master_restore_too_many">ການສຳຮອງຂໍ້ມູນນີ້ຈະເຮັດໃຫ້ຫຼາຍກວ່າ %1$d ໂປຣໄຟລ໌. ລຶບໂປຣໄຟລ໌, ຈາກນັ້ນລອງອີກຄັ້ງ.</string>
     <string name="onboarding_backup_restore_section">Backup &amp; Restore</string>
     <string name="onboarding_topic_selected">ເລືອກແລ້ວ</string>
@@ -1871,9 +1745,6 @@
     <string name="onboarding_import_source_youtube">YouTube</string>
     <string name="onboarding_import_footnote">ທຸກສິ່ງທຸກຢ່າງຢູ່ທີ່ນີ້ແມ່ນທາງເລືອກ. ການຕັ້ງຄ່າມີການນໍາເຂົ້າຄືກັນ.</string>
     <string name="onboarding_import_done">ນໍາເຂົ້າ</string>
-    <plurals name="onboarding_import_count">
-        <item quantity="other">%d ນໍາເຂົ້າ</item>
-    </plurals>
     <string name="onboarding_imported_count">ນຳເຂົ້າ %1$d %2$s</string>
     <string name="onboarding_imported">%1$s ນຳເຂົ້າແລ້ວ</string>
     <string name="onboarding_btn_skip">ຂ້າມ</string>
@@ -1886,9 +1757,6 @@
     <string name="onboarding_restore_backup">ຟື້ນຟູການສໍາຮອງຂໍ້ມູນ</string>
     <string name="onboarding_get_started">ເລີ່ມຕົ້ນ</string>
     <string name="onboarding_start_watching">ເລີ່ມເບິ່ງ</string>
-    <plurals name="onboarding_pick_more">
-        <item quantity="other">ເລືອກ %d ເພີ່ມເຕີມ</item>
-    </plurals>
     <string name="onboarding_welcome_title">ເຮັດໃຫ້ Flow ຂອງທ່ານ</string>
     <string name="onboarding_welcome_subtitle">ວິດີໂອ ແລະດົນຕີອ້ອມຮອບສິ່ງທີ່ທ່ານມັກ. ການຕັ້ງຄ່າໃຊ້ເວລານາທີ.</string>
     <string name="onboarding_alerts_title">ບໍ່ພາດການອັບໂຫຼດ</string>
@@ -1903,14 +1771,8 @@
     <string name="onboarding_alerts_footnote">ທ່ານສາມາດປ່ຽນສິ່ງເຫຼົ່ານີ້ໄດ້ທຸກເວລາໃນການຕັ້ງຄ່າ.</string>
     <string name="onboarding_ready_title">ເຈົ້າພ້ອມແລ້ວ</string>
     <string name="onboarding_ready_subtitle">ຟີດຂອງເຈົ້າພ້ອມແລ້ວ. ມັນແຫຼມຂຶ້ນເມື່ອທ່ານເບິ່ງ.</string>
-    <plurals name="onboarding_ready_interests">
-        <item quantity="other">ຄວາມສົນໃຈ %d</item>
-    </plurals>
     <plurals name="onboarding_ready_channels">
         <item quantity="other">%d ຊ່ອງ</item>
-    </plurals>
-    <plurals name="onboarding_ready_imports">
-        <item quantity="other">%d ນໍາເຂົ້າ</item>
     </plurals>
     <string name="cd_collapse_category">ຫຍໍ້ລົງ</string>
     <string name="cd_expand_category">ຂະຫຍາຍ</string>
@@ -2259,9 +2121,6 @@
     <string name="eq_imported">ນຳເຂົ້າລ່ວງໜ້າແລ້ວ</string>
     <string name="eq_paste_hint">ວາງ AutoEQ ຫຼື EqualizerAPO preset</string>
     <string name="eq_imported_badge">ນໍາເຂົ້າ</string>
-    <plurals name="eq_band_total">
-        <item quantity="other">%d ແຖບ</item>
-    </plurals>
     <string name="eq_settings_section">ສຽງ</string>
     <string name="eq_settings_summary">Presets, ແຖບແລະການນໍາເຂົ້າ AutoEQ</string>
     <string name="eq_settings_keywords">Equaliser, eq, bass, treble, autoeq, preamp, ສຽງ</string>
@@ -2300,9 +2159,6 @@
     <string name="empty_playlists_subtitle">ສ້າງລາຍການຫຼິ້ນທໍາອິດຂອງທ່ານເພື່ອຈັດລະບຽບເພງທີ່ທ່ານມັກ</string>
     <string name="empty_favorites_title">ບໍ່ມີລາຍການທີ່ມັກເທື່ອ</string>
     <string name="empty_favorites_subtitle">ແຕະໃສ່ໄອຄອນຫົວໃຈໃນເພງໃດກໍໄດ້ເພື່ອເພີ່ມມັນໃສ່ລາຍການທີ່ມັກຂອງທ່ານ</string>
-    <plurals name="favorites_count_template">
-        <item quantity="other">%1$d ເພງທີ່ມັກ</item>
-    </plurals>
     <string name="empty_history_title">ຍັງບໍ່ມີປະຫວັດ</string>
     <string name="empty_history_subtitle">ເລີ່ມຟັງເພງເພື່ອເບິ່ງປະຫວັດຂອງເຈົ້າຢູ່ບ່ອນນີ້</string>
     <string name="empty_downloads_title">ບໍ່ມີການດາວໂຫຼດເທື່ອ</string>
@@ -2399,9 +2255,6 @@
     <string name="content_settings_library_previews_title">ຕົວຢ່າງຫ້ອງສະໝຸດ</string>
     <string name="content_settings_library_previews_subtitle">ສະແດງແຖວຂອງລາຍການພາຍໃຕ້ແຕ່ລະພາກສ່ວນຫ້ອງສະໝຸດ</string>
     <string name="remove_incomplete_downloads">ເອົາການດາວໂຫຼດທີ່ບໍ່ສົມບູນອອກ</string>
-    <plurals name="remove_incomplete_downloads_message">
-        <item quantity="other">ເອົາ %1$d ຢຸດຊົ່ວຄາວ, ລົ້ມເຫລວ, ຫຼືການດາວໂຫຼດບາງສ່ວນບໍ? ການດາວໂຫຼດທີ່ສຳເລັດແລ້ວຈະບໍ່ຖືກແຕະຕ້ອງ.</item>
-    </plurals>
     <string name="audio_track">ເພງສຽງ</string>
     <string name="audio_track_number_template">%1$s %2$d</string>
     <string name="subtitle_auto_generated_template">%1$s (%2$s)</string>
@@ -2565,9 +2418,6 @@
     <string name="linked_sync_now">ຊິ້ງຂໍ້ມູນດຽວນີ້</string>
     <string name="linked_syncing">ກຳລັງຊິ້ງຂໍ້ມູນ…</string>
     <string name="linked_syncing_notification">ກຳລັງຊິງຄ໌ກັບອຸປະກອນທີ່ເຊື່ອມຕໍ່ຂອງທ່ານ…</string>
-    <plurals name="linked_received">
-        <item quantity="other">ໄດ້ຮັບການປ່ຽນແປງ %1$d ຈາກ %2$s</item>
-    </plurals>
     <string name="linked_devices">ອຸປະກອນ</string>
     <string name="linked_device_nearby">%1$s, ໃນເຄືອຂ່າຍນີ້, ຊິງຄ໌ %2$s</string>
     <string name="linked_device_synced">%1$s, ຊິງຄ໌ %2$s</string>
@@ -2757,9 +2607,6 @@
     <string name="sync_receive_option_body">ຮວມຫ້ອງສະໝຸດຂອງອຸປະກອນອື່ນເຂົ້າໃນອັນນີ້.</string>
     <string name="sync_select_all">ເລືອກທັງໝົດ</string>
     <string name="sync_select_none">ຈະແຈ້ງ</string>
-    <plurals name="sync_selected_count">
-        <item quantity="other">ເລືອກ %1$d ຈາກທັງໝົດ %2$d ແລ້ວ</item>
-    </plurals>
     <string name="sync_collection_playlists_body">ລາຍການຫຼິ້ນ, ອະລະບ້ຳ ແລະເບິ່ງພາຍຫຼັງ.</string>
     <string name="sync_collection_watch_history_body">ສິ່ງທີ່ທ່ານໄດ້ເບິ່ງແລະວິທີການທີ່ທ່ານໄດ້ມາ.</string>
     <string name="sync_collection_likes_body">ມັກ ແລະ ບໍ່ມັກວິດີໂອ ແລະເພງ.</string>
@@ -2804,9 +2651,6 @@
     <string name="export_newpipe_subs_desc">ໄຟລ໌ NewPipe JSON. ໃນ NewPipe, ໃຊ້ການນໍາເຂົ້າຈາກການສົ່ງອອກທີ່ຜ່ານມາ.</string>
     <string name="export_newpipe_subs_success">ສົ່ງອອກການສະໝັກຮັບຊົມ NewPipe ສຳເລັດແລ້ວ</string>
     <string name="export_newpipe_subs_failed">ລົ້ມເຫລວໃນການສົ່ງອອກການສະໝັກຮັບຊົມ NewPipe</string>
-    <plurals name="export_newpipe_subs_skipped">
-        <item quantity="other">ສົ່ງອອກແລ້ວ, ແຕ່ຊ່ອງ %1$d ທີ່ບໍ່ມີ ID ຊ່ອງຖືກປະໄວ້</item>
-    </plurals>
     <string name="backup_busy">ການນຳເຂົ້າ ຫຼືສົ່ງອອກອັນອື່ນຍັງດຳເນີນຢູ່</string>
     <string name="export_app_data_title">ສຳຮອງຂໍ້ມູນແອັບ</string>
     <string name="export_app_data_desc">ສົ່ງອອກການສະໝັກຮັບຊົມ, ປະຫວັດການເບິ່ງ, ລາຍການຫຼິ້ນ ແລະການຕັ້ງຄ່າຂອງທ່ານ</string>
@@ -3008,9 +2852,6 @@
     <string name="diagnostics_copied">ສຳເນົາລາຍງານໃສ່ຄລິບບອດແລ້ວ</string>
     <string name="add_all_to_playlist">ເພີ່ມໃສ່ລາຍການຫຼິ້ນຂອງຂ້ອຍ</string>
     <string name="merge_playlist_dialog_title">ເພີ່ມເພງທັງໝົດໃສ່…</string>
-    <plurals name="merge_playlist_success">
-        <item quantity="other">ເພີ່ມ %1$d ເພງໃສ່ “%2$s”</item>
-    </plurals>
     <string name="merge_playlist_no_playlists">ບໍ່ມີລາຍການຫຼິ້ນເທື່ອ. ສ້າງອັນທໍາອິດ!</string>
     <string name="profile_export_success">ສົ່ງໂປຣໄຟລ໌ສຳເລັດແລ້ວ</string>
     <string name="profile_export_failed">ການສົ່ງອອກລົ້ມເຫລວ</string>
@@ -3046,9 +2887,6 @@
     <string name="taste_live_affinity">ມີຊີວິດຊີວາ</string>
     <string name="taste_live_affinity_detail">ເນື້ອຫາສົດພໍດີກັບໂປຣໄຟລ໌</string>
     <string name="taste_topic_breadth">ຄວາມກວ້າງຂອງຫົວຂໍ້</string>
-    <plurals name="taste_topic_breadth_detail">
-        <item quantity="other">ຫົວຂໍ້ %1$d ໃນ vector ທົ່ວໂລກ</item>
-    </plurals>
     <string name="interest_weights_title">ນ້ຳໜັກດອກເບ້ຍ</string>
     <string name="interest_weights_subtitle">ຫົວຂໍ້ທີ່ມີນ້ໍາຫນັກສູງສຸດຫຼັງຈາກການທົດລອງແລະການກວດສອບຫຼັກຖານ</string>
     <string name="interest_weights_empty">ຍັງບໍ່ມີນ້ຳໜັກຫົວຂໍ້ເທື່ອ.</string>
@@ -3275,12 +3113,6 @@
     <string name="widget_unlike">ເອົາອອກຈາກທີ່ມັກ</string>
     <string name="widget_open_player">ເປີດຜູ້ນ</string>
     <string name="widget_short_badge">ສັ້ນ</string>
-    <plurals name="widget_minutes_left">
-        <item quantity="other">ຍັງເຫຼືອ %d ນາທີ</item>
-    </plurals>
-    <plurals name="widget_downloads_in_progress">
-        <item quantity="other">%d ກຳລັງດາວໂຫຼດ</item>
-    </plurals>
     <string name="widget_browse_downloads">ຊອກຫາການດາວໂຫຼດ</string>
     <string name="widget_shuffle">ສຸ່ມ</string>
     <string name="widget_identify_song">ກໍານົດເພງ</string>
@@ -3367,9 +3199,6 @@
     <string name="update_download_prompt">Flow ລຸ້ນໃໝ່ມີໃຫ້ແລ້ວ (%1$s). ດາວໂຫຼດ APK ຫຼ້າສຸດບໍ?</string>
     <string name="ui_instrumental">I N S T R U M E N T A L</string>
     <string name="ui_playlist_empty">ລາຍການຫຼິ້ນຫວ່າງເປົ່າ</string>
-    <plurals name="ui_downloading_videos">
-        <item quantity="other">ກຳລັງດາວໂຫຼດວິດີໂອ %1$d…</item>
-    </plurals>
     <string name="ui_playlist_saved_to_library">ບັນທຶກລາຍການຫຼິ້ນໄວ້ໃນຫ້ອງສະໝຸດແລ້ວ</string>
     <string name="ui_playlist_removed_from_library">ລຶບລາຍການຫຼິ້ນອອກຈາກຫ້ອງສະໝຸດແລ້ວ</string>
     <string name="ui_download_audio">ກຳລັງດາວໂຫຼດສຽງ: %1$skbps %2$s</string>
@@ -3381,9 +3210,6 @@
     <string name="sb_segment_notice">ພາກສ່ວນ %1$s</string>
     <string name="sb_off_for_video">ປິດ SponsorBlock ສໍາລັບວິດີໂອນີ້</string>
     <string name="sb_on_for_video">ເປີດ SponsorBlock ສໍາລັບວິດີໂອນີ້</string>
-    <plurals name="sb_video_segments">
-        <item quantity="other">%d ພາກສ່ວນໃນວິດີໂອນີ້</item>
-    </plurals>
     <string name="ui_started_download">ເລີ່ມການດາວໂຫຼດແລ້ວ: %1$s</string>
     <string name="ui_download_start_failed">ດາວໂຫຼດບໍ່ສຳເລັດ: %1$s</string>
     <string name="toast_unsubscribed_from">ເຊົາຕິດຕາມຈາກ %1$s</string>
@@ -3401,14 +3227,8 @@
     <string name="toast_playlist_deleted">ລຶບລາຍການຫຼິ້ນແລ້ວ</string>
     <string name="toast_playlist_renamed">ປ່ຽນຊື່ລາຍການຫຼິ້ນແລ້ວ</string>
     <string name="toast_starting_playlist_download">ກຳລັງເລີ່ມດາວໂຫຼດ %1$s…</string>
-    <plurals name="toast_downloaded_tracks_from_playlist">
-        <item quantity="other">ດາວໂຫຼດ %1$d ເພງຈາກ %2$s</item>
-    </plurals>
     <string name="toast_failed_to_download_playlist">ດາວໂຫຼດລາຍການຫຼິ້ນບໍ່ສຳເລັດ</string>
     <string name="toast_error_downloading_playlist">ເກີດຄວາມຜິດພາດໃນການດາວໂຫຼດລາຍການຫຼິ້ນ</string>
-    <plurals name="toast_downloaded_tracks">
-        <item quantity="other">ດາວໂຫຼດ %1$d ເພງ</item>
-    </plurals>
     <string name="toast_added_to_playlist">ເພີ່ມໃສ່ລາຍການຫຼິ້ນແລ້ວ</string>
     <string name="toast_failed_to_add_track">ເພີ່ມເພງບໍ່ສຳເລັດ</string>
     <string name="toast_removed_from_playlist">ລຶບອອກຈາກລາຍການຫຼິ້ນແລ້ວ</string>
@@ -3431,17 +3251,8 @@
     <string name="notification_download_paused">ຢຸດຊົ່ວຄາວ — %1$s</string>
     <string name="notification_download_paused_hint">ແຕະເພື່ອສືບຕໍ່</string>
     <string name="notification_download_progress">%1$d%% • %2$s / %3$s</string>
-    <plurals name="notification_downloads_active">
-        <item quantity="other">ກຳລັງດາວໂຫຼດ %1$d ລາຍການ</item>
-    </plurals>
-    <plurals name="notification_downloads_paused">
-        <item quantity="other">ການດາວໂຫຼດ %1$d ຢຸດຊົ່ວຄາວ</item>
-    </plurals>
     <string name="notification_more">+%1$d ເພີ່ມເຕີມ</string>
     <string name="notification_new_videos">ວິດີໂອໃໝ່</string>
-    <plurals name="notification_new_videos_from_subscriptions">
-        <item quantity="other">%1$d ວິດີໂອໃໝ່ຈາກການສະໝັກຮັບຊົມຂອງທ່ານ</item>
-    </plurals>
     <string name="notification_update_available">ມີໃຫ້ອັບເດດ: %1$s</string>
     <string name="notification_tap_to_update">ແຕະເພື່ອອັບເດດເປັນເວີຊັນຫຼ້າສຸດ.</string>
     <string name="update_downloading_notification">ກຳລັງດາວໂຫຼດ Flow %1$s</string>
@@ -3533,9 +3344,6 @@
     <string name="local_new_badge">ໃໝ່</string>
     <string name="local_grid_view">ສະແດງເປັນຕາໜ່າງ</string>
     <string name="local_list_view">ສະແດງເປັນລາຍຊື່</string>
-    <plurals name="local_hidden_count">
-        <item quantity="other">ເຊື່ອງໄຟລ໌ %1$d ແລ້ວ</item>
-    </plurals>
     <string name="local_manage">ຈັດການ</string>
     <string name="local_partial_access_title">Flow ສາມາດເບິ່ງໄດ້ແຕ່ວິດີໂອທີ່ທ່ານເລືອກ</string>
     <string name="local_partial_access_body">ອະນຸຍາດໃຫ້ເຂົ້າເຖິງວິດີໂອທັງໝົດເພື່ອເບິ່ງສ່ວນທີ່ເຫຼືອ.</string>
@@ -3551,12 +3359,6 @@
     <string name="local_menu_hide_folder">ເຊື່ອງໂຟນເດີນີ້</string>
     <string name="local_menu_delete_trash">ຍ້າຍມັນໄປໃສ່ຖັງຂີ້ເຫຍື້ອເປັນເວລາ 30 ມື້</string>
     <string name="local_menu_delete_permanent">ລຶບມັນອອກຈາກອຸປະກອນນີ້</string>
-    <plurals name="local_files_trashed">
-        <item quantity="other">ຍ້າຍໄຟລ໌ %1$d ໄປໃສ່ຖັງຂີ້ເຫຍື້ອ</item>
-    </plurals>
-    <plurals name="local_files_deleted">
-        <item quantity="other">ລຶບໄຟລ໌ %1$d ອອກແລ້ວ</item>
-    </plurals>
     <string name="local_delete_failed">ບໍ່ສາມາດລຶບໄຟລ໌ນັ້ນໄດ້</string>
     <string name="local_folder_hidden">ເຊື່ອງ %1$s</string>
     <string name="local_detail_folder">ໂຟນເດີ</string>
@@ -3580,12 +3382,6 @@
     <string name="local_setting_show_folder">ສະແດງ</string>
     <string name="local_section_library">ຫໍສະໝຸດ</string>
     <string name="downloads_search_hint">ຊອກຫາການດາວໂຫຼດ</string>
-    <plurals name="delete_downloads_dialog_text">
-        <item quantity="other">ລຶບການດາວໂຫຼດ %1$d ອອກຈາກອຸປະກອນນີ້ບໍ?</item>
-    </plurals>
-    <plurals name="downloads_deleted">
-        <item quantity="other">ລຶບການດາວໂຫຼດ %1$d ແລ້ວ</item>
-    </plurals>
     <string name="downloads_sort_newest">ໃໝ່ລ່າສຸດ</string>
     <string name="downloads_sort_oldest">ເກົ່າແກ່ທີ່ສຸດ</string>
     <string name="downloads_sort_largest">ໃຫຍ່ທີ່ສຸດ</string>
@@ -3602,9 +3398,6 @@
     <string name="playlist_type_builtin">ລາຍການຫຼິ້ນໃນຕົວ</string>
     <string name="playlist_type_yours">ລາຍການຫຼິ້ນຂອງເຈົ້າ</string>
     <string name="playlist_type_saved">ບັນທຶກຈາກ YouTube</string>
-    <plurals name="playlist_videos_removed">
-        <item quantity="other">ລຶບວິດີໂອ %1$d ອອກແລ້ວ</item>
-    </plurals>
     <string name="error_insecure_stream_blocked">ການຖ່າຍທອດທີ່ບໍ່ປອດໄພຖືກບລັອກໂດຍນະໂຍບາຍອຸປະກອນ.</string>
     <string name="error_expiring_stream_urls">ບໍ່ສາມາດຫຼິ້ນໄດ້ - stream URLs ສືບຕໍ່ໝົດອາຍຸ.</string>
     <string name="error_playback_device">ການຫຼິ້ນອຸປະກອນຜິດພາດ: %1$s</string>
@@ -3665,9 +3458,6 @@
     <string name="import_invalid_format">ຮູບແບບການສໍາຮອງຂໍ້ມູນທີ່ບໍ່ຮັບຮູ້ — ເຮັດໃຫ້ແນ່ໃຈວ່າທ່ານເລືອກໄຟລ໌ທີ່ຖືກຕ້ອງ</string>
     <string name="import_failed_template">ການນຳເຂົ້າລົ້ມເຫລວ: %1$s</string>
     <string name="duration_hours_minutes">%1$d ຊມ %2$d ນທ</string>
-    <plurals name="duration_minutes">
-        <item quantity="other">%1$d ນທ</item>
-    </plurals>
     <string name="duration_hours_short">%1$dຊມ</string>
     <string name="duration_hours_minutes_short">%1$dh %2$dm</string>
     <string name="storage_size_gb">%1$.1f GB</string>
@@ -3690,9 +3480,6 @@
     <string name="queue_after_this_template">%1$s ຫຼັງຈາກນີ້</string>
     <string name="reorder_queue_item">ຈັດຮຽງລາຍການຄິວຄືນໃໝ່</string>
     <string name="music_search_no_results">ບໍ່ມີຜົນການຊອກຫາສຳລັບ \"%1$s\"</string>
-    <plurals name="chapters_count_template">
-        <item quantity="other">%1$d ບົດ</item>
-    </plurals>
     <string name="settings_navigation_bar_title">ແຖບນໍາທາງ</string>
     <string name="settings_language_region_title">ພາສາ ແລະພາກພື້ນ</string>
     <string name="settings_playback_title">ຜູ້ນ &amp; ການຫຼິ້ນ</string>
@@ -3998,9 +3785,6 @@
     <string name="settings_theme_role_error">ຜິດພາດ</string>
     <string name="settings_theme_color_with_opacity">%1$s · %2$d%% ຄວາມໂປ່ງໃສ</string>
     <string name="settings_keywords_custom_themes">ຮູບແບບສີສັນທີ່ກໍາຫນົດເອງ, palette, ສີ, ສີ, ນໍາເຂົ້າ, ສົ່ງອອກ, ແບ່ງປັນ, desktop</string>
-    <plurals name="settings_custom_theme_imported">
-        <item quantity="other">ນຳເຂົ້າຮູບແບບສີສັນ %1$d ແລ້ວ</item>
-    </plurals>
     <string name="settings_custom_theme_in_use">ໃຊ້ຢູ່</string>
     <string name="settings_custom_theme_export_failed">ຮູບແບບສີສັນບໍ່ສາມາດຖືກບັນທຶກໄວ້ໄດ້</string>
     <string name="taste_title">ລົດຊາດຂອງເຈົ້າ</string>
@@ -4030,9 +3814,6 @@
     <string name="taste_music_stage">ຂັ້ນຕອນການຮຽນຮູ້</string>
     <string name="taste_hidden_title">ເຊື່ອງໄວ້ຈາກເຈົ້າ</string>
     <string name="taste_hidden_summary">ບລັອກຫົວຂໍ້, ຊ່ອງ ແລະສິນລະປິນ</string>
-    <plurals name="taste_hidden_count">
-        <item quantity="other">%d ລາຍການຖືກເຊື່ອງໄວ້</item>
-    </plurals>
     <string name="taste_hidden_none">ບໍ່ມີຫຍັງເຊື່ອງໄວ້</string>
     <string name="taste_hidden_empty_title">ບໍ່ມີຫຍັງຖືກເຊື່ອງໄວ້</string>
     <string name="taste_hidden_empty_body">ຫົວຂໍ້, ຊ່ອງ ແລະສິນລະປິນທີ່ທ່ານບລັອກສະແດງຢູ່ບ່ອນນີ້.</string>
@@ -4094,12 +3875,6 @@
     <plurals name="recap_views_count">
         <item quantity="other">%d views</item>
     </plurals>
-    <plurals name="recap_plays_count">
-        <item quantity="other">%d ຫຼິ້ນ</item>
-    </plurals>
-    <plurals name="recap_times_count">
-        <item quantity="other">%d ເທື່ອ</item>
-    </plurals>
     <string name="recap_topics_title">ຫົວຂໍ້ທີ່ທ່ານຄົ້ນຫາ</string>
     <string name="recap_topics_new">ໃໝ່ສຳລັບທ່ານ: %1$s</string>
     <string name="recap_formats_title">ເຈົ້າເບິ່ງແນວໃດ</string>
@@ -4109,12 +3884,6 @@
     <string name="recap_format_music">ດົນຕີ</string>
     <string name="recap_format_share">%1$s · %2$s</string>
     <string name="recap_discoveries_title">ໃໝ່ສຳລັບເຈົ້າ</string>
-    <plurals name="recap_new_channels">
-        <item quantity="other">%d ຊ່ອງໃໝ່</item>
-    </plurals>
-    <plurals name="recap_new_artists">
-        <item quantity="other">%d ສິນລະປິນໃໝ່</item>
-    </plurals>
     <string name="recap_passed_title">ສິ່ງທີ່ທ່ານຜ່ານໄປ</string>
     <string name="recap_passed_subtitle">ຂ້າມໄວ, ບໍ່ມັກ ຫຼືຖືກເຊື່ອງໄວ້</string>
     <string name="recap_skipped_videos">ວິດີໂອທີ່ທ່ານຂ້າມໄປ</string>
@@ -4161,9 +3930,6 @@
     <string name="recap_ready_open">ເປີດ</string>
     <string name="recap_ready_dismiss">ບໍ່ແມ່ນດຽວນີ້</string>
     <string name="recap_story_intro">%1$s ຂອງທ່ານໃນ Flow</string>
-    <plurals name="recap_story_intro_body">
-        <item quantity="other">ແຜ່ຫຼາຍ %d ມື້</item>
-    </plurals>
     <string name="recap_story_top_channel">ຊ່ອງທາງເທິງຂອງທ່ານ</string>
     <string name="recap_story_top_channel_body">%1$s, %2$s ຂອງການເບິ່ງ</string>
     <string name="recap_story_repeat">ຊ້ຳ</string>
@@ -4205,14 +3971,8 @@
     <string name="playlist_import_too_new">ລາຍການຫຼິ້ນນີ້ຕ້ອງການ Flow ເວີຊັນໃໝ່ກວ່າ</string>
     <string name="playlist_import_empty">ລາຍການຫຼິ້ນນີ້ບໍ່ມີວິດີໂອທີ່ຈະນໍາເຂົ້າ</string>
     <string name="playlist_import_unreadable">ບໍ່ສາມາດອ່ານໄຟລ໌ນີ້ໄດ້</string>
-    <plurals name="playlist_imported">
-        <item quantity="other">ນຳເຂົ້າ %1$s, %2$d ວິດີໂອ</item>
-    </plurals>
     <string name="content_settings_remove_watched_watch_later_title">ລຶບວິດີໂອທີ່ເບິ່ງແລ້ວອອກ</string>
     <string name="content_settings_remove_watched_watch_later_subtitle">ເອົາວິດີໂອອອກຈາກເບິ່ງພາຍຫຼັງເມື່ອທ່ານເຮັດສໍາເລັດ</string>
-    <plurals name="watch_later_watched_removed">
-        <item quantity="other">ລຶບ %d ວິດີໂອທີ່ເບິ່ງແລ້ວ</item>
-    </plurals>
     <string name="liked_videos_playlist">ວິດີໂອທີ່ມັກ</string>
     <string name="liked_music_playlist">ມັກດົນຕີ</string>
     <string name="liked_videos_empty_title">ບໍ່ມີວິດີໂອທີ່ມັກເທື່ອ</string>
@@ -4222,19 +3982,10 @@
     <string name="liked_video_template">ມັກ %1$s</string>
     <string name="liked_music_empty_title">ບໍ່ມີເພງທີ່ມັກເທື່ອ</string>
     <string name="liked_music_empty_body">ເພງທີ່ທ່ານມັກໃນເຄື່ອງຫຼິ້ນເພງຈະປາກົດຢູ່ບ່ອນນີ້</string>
-    <plurals name="liked_videos_removed">
-        <item quantity="other">ບໍ່ມັກວິດີໂອ %d</item>
-    </plurals>
     <string name="music_kind_album">ອະລະບໍ້າ</string>
     <string name="music_kind_saved">ບັນທຶກໃສ່ຫ້ອງສະໝຸດຂອງເຈົ້າແລ້ວ</string>
     <string name="music_playlist_empty_title">ລາຍການຫຼິ້ນນີ້ຫວ່າງເປົ່າ</string>
     <string name="music_playlist_empty_body">ເພີ່ມເພງຈາກເມນູຢູ່ເທິງສຸດ</string>
-    <plurals name="songs_removed_from_playlist">
-        <item quantity="other">ລຶບ %d ເພງອອກແລ້ວ</item>
-    </plurals>
-    <plurals name="songs_unliked">
-        <item quantity="other">ບໍ່ມັກ %d ເພງ</item>
-    </plurals>
     <string name="music_sort_collection">ລຳດັບລາຍການຫຼິ້ນ</string>
     <string name="music_sort_album_order">ລຳດັບອາລະບໍາ</string>
     <string name="music_sort_recently_liked">ມັກເມື່ອບໍ່ດົນມານີ້</string>
@@ -4245,15 +3996,6 @@
     <string name="music_sort_shortest">ສັ້ນທີ່ສຸດກ່ອນ</string>
     <string name="music_collection_no_matches">ບໍ່ມີເພງທີ່ກົງກັບ “%1$s”</string>
     <string name="select_songs">ເລືອກເພງ</string>
-    <plurals name="music_playlist_imported">
-        <item quantity="other">ນຳເຂົ້າ %1$s, %2$d ເພງ</item>
-    </plurals>
-    <plurals name="songs_downloading">
-        <item quantity="other">ກຳລັງດາວໂຫຼດ %d ເພງ</item>
-    </plurals>
-    <plurals name="songs_download_queued">
-        <item quantity="other">%d ເພງຖືກລໍຖ້າການດາວໂຫຼດ</item>
-    </plurals>
     <string name="songs_download_nothing_new">ທຸກຢ່າງຢູ່ທີ່ນີ້ຖືກດາວໂຫຼດແລ້ວ ຫຼືບໍ່ມີໃຫ້</string>
     <string name="save_as_playlist">ບັນທຶກເປັນລາຍການຫຼິ້ນ</string>
     <string name="daily_mix_saved_as_playlist">ບັນທຶກ %1$s ໃສ່ລາຍການຫຼິ້ນຂອງເຈົ້າແລ້ວ</string>
@@ -4346,9 +4088,6 @@
     <string name="onboarding_artists_title">ເລືອກນັກສິລະປິນບາງຄົນ</string>
     <string name="onboarding_artists_subtitle">ການເລືອກເພງຂອງເຈົ້າເລີ່ມຕົ້ນຈາກພວກມັນ. ຂ້າມມັນຖ້າທ່ານຕ້ອງການ.</string>
     <string name="onboarding_artists_search_placeholder">ຄົ້ນຫາສິລະປິນ</string>
-    <plurals name="onboarding_ready_artists">
-        <item quantity="other">%d ສິນລະປິນ</item>
-    </plurals>
     <string name="scrobbling_title">Scrobbling</string>
     <string name="scrobbling_summary">ສົ່ງສິ່ງທີ່ທ່ານຟັງ Last.fm, Libre.fm ຫຼື ListenBrainz</string>
     <string name="settings_keywords_scrobbling">scrobble scrobbling last.fm lastfm libre.fm librefm listenbrainz</string>
@@ -4370,9 +4109,6 @@
     <string name="scrobbling_local">ໄຟລ໌ Scrobble ໃນອຸປະກອນນີ້</string>
     <string name="scrobbling_local_summary">ໃຊ້ຊື່ສິນລະປິນ ແລະແທັກຊື່ຂອງແຕ່ລະໄຟລ໌</string>
     <string name="scrobbling_send_now">ສົ່ງລໍຖ້າຟັງ</string>
-    <plurals name="scrobbling_waiting">
-        <item quantity="other">%d ລໍຖ້າ</item>
-    </plurals>
     <string name="scrobbling_sign_in_title">ເຂົ້າສູ່ລະບົບ %1$s</string>
     <string name="scrobbling_user_name">ຊື່ຜູ້ໃຊ້</string>
     <string name="scrobbling_password">ລະຫັດຜ່ານ</string>
@@ -4398,9 +4134,6 @@
     <string name="scrobbling_import_offer_body">Flow ເພີ່ມ 20 ນັກສິລະປິນທີ່ມີຄົນຫຼິ້ນຫຼາຍທີ່ສຸດໃນປີທີ່ຜ່ານມາໃຫ້ກັບສິລະປິນທີ່ທ່ານມັກ. ທ່ານສາມາດລຶບພວກມັນອອກໄດ້ໃນພາຍຫຼັງ.</string>
     <string name="scrobbling_import_action">ນໍາເຂົ້າ</string>
     <string name="scrobbling_import_later">ບໍ່ແມ່ນດຽວນີ້</string>
-    <plurals name="scrobbling_import_done">
-        <item quantity="other">ເພີ່ມນັກສິລະປິນ %d ໃສ່ລາຍການທີ່ທ່ານມັກແລ້ວ</item>
-    </plurals>
     <string name="scrobbling_import_none">ບໍ່ມີສິນລະປິນໃຫມ່ທີ່ຈະເພີ່ມ</string>
     <string name="scrobbling_import_failed">ບໍ່ສາມາດອ່ານສິນລະປິນຍອດນິຍົມຂອງທ່ານໄດ້</string>
     <string name="music_home_lastfm_discover">ຄົ້ນພົບກັບ Last.fm</string>

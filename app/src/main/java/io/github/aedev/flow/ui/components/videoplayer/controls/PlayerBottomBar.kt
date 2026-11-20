@@ -38,11 +38,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import io.github.aedev.flow.R
+import io.github.aedev.flow.innertube.models.response.VideoChapter
 import io.github.aedev.flow.ui.theme.PlayerScrim
 import io.github.aedev.flow.ui.theme.PlayerScrimAffordance
 import io.github.aedev.flow.ui.theme.PlayerScrimContent
 import io.github.aedev.flow.ui.theme.PlayerScrimContentSecondary
-import org.schabi.newpipe.extractor.stream.StreamSegment
 
 /** A tappable text pill on video: the playback speed and the current quality. */
 @Composable
@@ -84,9 +84,9 @@ data class PlayerBottomBarMetrics(
     val pillHeight: Dp,
     val pillsRowMinHeight: Dp,
     val actionSpacing: Dp,
-    val horizontalPadding: Dp,
-    val seekbarHorizontalPadding: Dp,
-    val seekbarBottomPadding: Dp,
+    val horizontalPadding: () -> Dp,
+    val seekbarHorizontalPadding: () -> Dp,
+    val seekbarBottomPadding: () -> Dp,
     val expandIconSize: Dp,
     val chapterMaxWidth: Dp,
 )
@@ -104,7 +104,7 @@ internal fun PlayerBottomBar(
     showRemainingTime: Boolean,
     showCommentsButton: Boolean,
     isCommentsPanelOpen: Boolean,
-    currentChapter: StreamSegment?,
+    currentChapter: VideoChapter?,
     compactQualityLabel: String?,
     speedIndicatorLabel: String?,
     seekbarContent: PlayerSeekbarContent,
@@ -116,6 +116,7 @@ internal fun PlayerBottomBar(
     hidePills: Boolean,
     modifier: Modifier = Modifier,
     isLayerVisible: () -> Boolean = { true },
+    onFineScrub: (() -> Unit)? = null,
 ) {
     val accentColor = MaterialTheme.colorScheme.primary
     // Faded rather than removed: the pills hold the height the seek bar sits at, and a bar that
@@ -131,7 +132,7 @@ internal fun PlayerBottomBar(
             modifier
                 .fillMaxWidth()
                 .playerEdgeScrim(ScrimEdge.Bottom, PlayerScrim.copy(alpha = BOTTOM_BAR_SCRIM_ALPHA))
-                .padding(bottom = metrics.seekbarBottomPadding),
+                .insetPadding(bottom = metrics.seekbarBottomPadding),
     ) {
         Row(
             modifier =
@@ -140,11 +141,8 @@ internal fun PlayerBottomBar(
                     .heightIn(min = metrics.pillsRowMinHeight)
                     .zIndex(1f)
                     .graphicsLayer { alpha = pillsAlpha }
-                    .padding(
-                        start = metrics.horizontalPadding,
-                        end = metrics.horizontalPadding,
-                        top = if (isFullscreen) 4.dp else 0.dp,
-                    ),
+                    .insetPadding(metrics.horizontalPadding)
+                    .padding(top = if (isFullscreen) 4.dp else 0.dp),
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -249,6 +247,7 @@ internal fun PlayerBottomBar(
             onScrubFinished = onScrubFinished,
             isScrubbing = isScrubbing,
             seekbarZIndex = 2f,
+            onFineScrub = onFineScrub,
         )
     }
 }

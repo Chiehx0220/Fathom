@@ -2,11 +2,11 @@ package io.github.aedev.flow.data.model
 
 import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.content.ServiceIds
 import org.junit.Test
-import org.schabi.newpipe.extractor.ServiceList
 
 class VideoServiceIdentityTest {
-    private val youTube = ServiceList.YouTube.serviceId
+    private val youTube = ServiceIds.YOUTUBE
 
     private fun video(
         id: String,

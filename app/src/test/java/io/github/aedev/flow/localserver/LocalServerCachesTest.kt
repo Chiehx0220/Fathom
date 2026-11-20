@@ -1,9 +1,7 @@
 package io.github.aedev.flow.localserver
 
 import com.google.common.truth.Truth.assertThat
-import io.mockk.mockk
 import org.junit.Test
-import org.schabi.newpipe.extractor.stream.StreamExtractor
 
 class LocalServerCachesTest {
     private val hour = 3_600_000L
@@ -48,8 +46,8 @@ class LocalServerCachesTest {
 
     @Test
     fun `it holds any value type and drops the expired`() {
-        val cache = TtlCache<StreamExtractor>(maxItems = 15)
-        val extractors = List(16) { mockk<StreamExtractor>() }
+        val cache = TtlCache<Any>(maxItems = 15)
+        val extractors = List(16) { Any() }
         extractors.take(15).forEachIndexed { i, e -> cache.put("k$i", e, hour) }
 
         cache.put("k15", extractors[15], hour)

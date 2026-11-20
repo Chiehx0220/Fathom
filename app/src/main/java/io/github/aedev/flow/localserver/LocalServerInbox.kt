@@ -5,6 +5,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import io.github.aedev.flow.content.InfoItem
 import io.github.aedev.flow.data.local.NotificationRepository
 import io.github.aedev.flow.data.local.dao.SubscriptionGroupDao
 import io.github.aedev.flow.data.local.entity.NotificationEntity
@@ -111,7 +112,7 @@ internal fun RequestContext.handleApiGroups(): GroupsDto {
 }
 
 /** Subscriptions of group [name]; all if null/unknown. */
-internal fun RequestContext.groupSubscriptions(name: String?): List<org.schabi.newpipe.extractor.InfoItem> {
+internal fun RequestContext.groupSubscriptions(name: String?): List<InfoItem> {
     val all = dbHelper.subscriptions()
     if (name.isNullOrEmpty()) return all
     val urls =

@@ -1,8 +1,8 @@
 package io.github.aedev.flow.data.local
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.content.ServiceIds
 import io.github.aedev.flow.data.model.Video
-import org.schabi.newpipe.extractor.ServiceList
 
 /** Service whose uploads Home's fresh-subs/recommendation lanes show. Subscriptions, search unaffected. */
 enum class HomeContentSourceFilter {
@@ -16,7 +16,7 @@ enum class HomeContentSourceFilter {
         get() =
             when (this) {
                 MIX -> null
-                YOUTUBE -> ServiceList.YouTube.serviceId
+                YOUTUBE -> ServiceIds.YOUTUBE
                 BILIBILI -> BILIBILI_SERVICE_ID
             }
 

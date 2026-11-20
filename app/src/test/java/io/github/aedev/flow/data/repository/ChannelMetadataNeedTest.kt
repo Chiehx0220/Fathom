@@ -2,15 +2,15 @@ package io.github.aedev.flow.data.repository
 
 import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.content.ServiceIds
 import io.github.aedev.flow.data.model.Video
 import org.junit.Test
-import org.schabi.newpipe.extractor.ServiceList
 
 class ChannelMetadataNeedTest {
     private fun video(
         channelId: String = "UCkVfrGwV-iG9bSsgCbrNPxQ",
         avatar: String = "https://yt3.ggpht.com/avatar=s176",
-        serviceId: Int = ServiceList.YouTube.serviceId,
+        serviceId: Int = ServiceIds.YOUTUBE,
     ) = Video(
         id = "v",
         title = "t",

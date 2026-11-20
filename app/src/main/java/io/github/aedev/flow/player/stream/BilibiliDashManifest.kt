@@ -10,9 +10,9 @@ import androidx.media3.common.MediaItem
 import androidx.media3.datasource.DataSource
 import androidx.media3.exoplayer.source.MediaSource
 import io.github.aedev.flow.player.resolver.MediaSourceBuilder
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.Stream
-import org.schabi.newpipe.extractor.stream.VideoStream
+import io.github.aedev.flow.player.stream.model.AudioStream
+import io.github.aedev.flow.player.stream.model.Stream
+import io.github.aedev.flow.player.stream.model.VideoStream
 
 /** One-representation DASH manifest per stream from init/index ranges (plain file is CDN-throttled, short ranges fast). */
 object BilibiliDashManifest {

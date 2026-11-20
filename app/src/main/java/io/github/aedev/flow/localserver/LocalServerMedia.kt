@@ -2,22 +2,14 @@ package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliRef
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.ListExtractor
-import org.schabi.newpipe.extractor.ListExtractor.InfoItemsPage
-import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.StreamingService
-import org.schabi.newpipe.extractor.channel.ChannelExtractor
-import org.schabi.newpipe.extractor.exceptions.ExtractionException
-import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
-import org.schabi.newpipe.extractor.search.SearchExtractor
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.StreamExtractor
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.Page
+import io.github.aedev.flow.content.StreamInfoItem
+import io.github.aedev.flow.player.stream.model.AudioStream
+import io.github.aedev.flow.player.stream.model.AudioTrackType
 import java.util.Locale
 
-/** Media/channel data via extractors, shared by handlers. */
+/** Media ids and helpers shared by the handlers. */
 object LocalServerMedia {
     fun getVideoId(url: String?): String {
         if (url == null) return ""
@@ -47,36 +39,10 @@ object LocalServerMedia {
     }
 
     /** Service owning [url]; YouTube id if none. */
-    internal fun serviceIdOfUrl(url: String): Int = runCatching { NewPipe.getServiceByUrl(url).serviceId }.getOrDefault(0)
+    internal fun serviceIdOfUrl(url: String): Int = if (BilibiliRef.isBilibiliUrl(url)) BILIBILI_SERVICE_ID else SERVICE_YOUTUBE
 
-    internal fun fetchChannelUploads(channelUrl: String): List<InfoItem> =
-        LocalServerYouTubeChannel.uploads(channelUrl) ?: fetchChannelUploads(NewPipe.getServiceByUrl(channelUrl), channelUrl)
-
-    internal fun fetchChannelUploads(
-        service: StreamingService,
-        channelUrl: String,
-    ): List<InfoItem> {
-        try {
-            val channelExtractor = service.getChannelExtractor(channelUrl)
-            channelExtractor.fetchPage()
-            val tabExtractor = service.getChannelTabExtractor(resolveChannelTabHandler(channelExtractor, "videos"))
-            tabExtractor.fetchPage()
-            val pageItems: List<*>? = if (tabExtractor.initialPage != null) tabExtractor.initialPage.items else null
-            val list = ArrayList<InfoItem>()
-            if (pageItems != null) {
-                for (item in pageItems) {
-                    if (item is InfoItem) {
-                        list.add(item)
-                    }
-                }
-            }
-            backfillUploaderUrl(list, channelUrl)
-            return list
-        } catch (e: Exception) {
-            serverLog("Failed to fetch uploads for channel $channelUrl: " + e.message)
-            return ArrayList()
-        }
-    }
+    /** Uploads of a YouTube channel, newest first; empty when InnerTube gave none. */
+    internal fun fetchChannelUploads(channelUrl: String): List<InfoItem> = LocalServerYouTubeChannel.uploads(channelUrl).orEmpty()
 
     // Backfill uploader link: empty → channel route 404; items belong to channelUrl.
     internal fun backfillUploaderUrl(
@@ -87,28 +53,10 @@ object LocalServerMedia {
             if (item is StreamInfoItem) {
                 val currentUploaderUrl = item.uploaderUrl
                 if (currentUploaderUrl == null || currentUploaderUrl.trim().isEmpty()) {
-                    item.setUploaderUrl(channelUrl)
+                    item.uploaderUrl = channelUrl
                 }
             }
         }
-    }
-
-    // Channel handler for [tab] ("videos", "playlists", ...), else first tab.
-    internal fun resolveChannelTabHandler(
-        channelExtractor: ChannelExtractor,
-        tab: String,
-    ): ListLinkHandler =
-        channelExtractor.tabs.firstOrNull { handler -> handler.contentFilters.contains(tab) }
-            ?: channelExtractor.tabs.firstOrNull()
-            ?: throw ExtractionException("Channel exposes no tabs: ${channelExtractor.url}")
-
-    // Resume from nextPage token, else first page; getPage() reads only the token.
-    internal fun <R : InfoItem> fetchInitialOrPage(
-        extractor: ListExtractor<R>,
-        nextPage: Page?,
-    ): InfoItemsPage<R> {
-        extractor.fetchPage()
-        return if (nextPage != null) extractor.getPage(nextPage) else extractor.initialPage
     }
 
     const val SERVICE_YOUTUBE = 0
@@ -123,12 +71,6 @@ object LocalServerMedia {
         return false
     }
 
-    @Throws(ExtractionException::class)
-    fun getDefaultSearchExtractor(
-        service: StreamingService,
-        query: String,
-    ): SearchExtractor = service.getSearchExtractor(query)
-
     /** DASH audio codec: bare `"mp4a"` is invalid RFC 6381 (Representation dropped) → `mp4a.40.2`. */
     fun normalizeAudioCodec(codec: String?): String {
         if (codec == null || codec.trim().isEmpty()) {
@@ -141,8 +83,7 @@ object LocalServerMedia {
         return trimmed
     }
 
-    fun isOriginalAudioTrack(stream: AudioStream): Boolean =
-        stream.audioTrackType == org.schabi.newpipe.extractor.stream.AudioTrackType.ORIGINAL
+    fun isOriginalAudioTrack(stream: AudioStream): Boolean = stream.audioTrackType == AudioTrackType.ORIGINAL
 
     // Default audio-track priority: original, device locale, English, highest bitrate. Shared: stream proxy, manifest, track picker.
     fun audioTrackPriorityComparator(): Comparator<AudioStream> {
@@ -179,18 +120,4 @@ object LocalServerMedia {
             .first()
             .filter { it in '0'..'9' }
             .toIntOrNull() ?: 0
-
-    // One extractor + page fetch per video, first handler wins.
-    fun getCachedExtractor(
-        service: StreamingService,
-        serviceId: Int,
-        mediaUrl: String,
-    ): StreamExtractor {
-        val key = serviceId.toString() + "_" + mediaUrl
-        LocalServerCaches.extractorCache.get(key)?.let { return it }
-        val extractor = service.getStreamExtractor(mediaUrl)
-        extractor.fetchPage()
-        LocalServerCaches.extractorCache.put(key, extractor, 3600000)
-        return extractor
-    }
 }

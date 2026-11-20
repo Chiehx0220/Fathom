@@ -1,13 +1,13 @@
 package io.github.aedev.flow.localserver
 
 import android.app.Application
+import io.github.aedev.flow.content.Page
+import io.github.aedev.flow.player.stream.model.StreamType
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.ConscryptMode
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.stream.StreamType
 
 /** Network-backed route JSON from fixed extractor results. */
 @RunWith(RobolectricTestRunner::class)

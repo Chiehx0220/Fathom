@@ -8,12 +8,11 @@ package io.github.aedev.flow.player.stream
 import android.util.Log
 import io.github.aedev.flow.bilibili.BilibiliStreamFormat
 import io.github.aedev.flow.player.datasource.BilibiliMirrors
-import org.schabi.newpipe.extractor.MediaFormat
-import org.schabi.newpipe.extractor.services.youtube.ItagItem
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.DeliveryMethod
-import org.schabi.newpipe.extractor.stream.Stream
-import org.schabi.newpipe.extractor.stream.VideoStream
+import io.github.aedev.flow.player.stream.model.AudioStream
+import io.github.aedev.flow.player.stream.model.ItagInfo
+import io.github.aedev.flow.player.stream.model.MediaFormat
+import io.github.aedev.flow.player.stream.model.Stream
+import io.github.aedev.flow.player.stream.model.VideoStream
 import java.util.Locale
 
 /** Bilibili counterpart of [InnerTubeStreamBridge]: native formats → player streams; init/index ranges kept for DASH. */
@@ -28,22 +27,20 @@ object BilibiliStreamBridge {
             BilibiliMirrors.register(format.url, format.backupUrls)
             try {
                 val label = resolutionLabel(format)
-                val item = ItagItem(NO_ITAG, ItagItem.ItagType.VIDEO_ONLY, MediaFormat.MPEG_4, label)
+                val item = ItagInfo(NO_ITAG, ItagInfo.ItagType.VIDEO_ONLY, MediaFormat.MPEG_4, label, parseFps(format.frameRate))
                 item.codec = format.codecs
                 item.bitrate = format.bandwidth
                 item.width = format.width
                 item.height = format.height
-                item.fps = parseFps(format.frameRate)
                 item.applyRanges(format)
-                VideoStream
-                    .Builder()
-                    .setId("bilibili-$bvid-video-${format.id}-$index")
-                    .setContent(format.url, true)
-                    .setMediaFormat(MediaFormat.MPEG_4)
-                    .setIsVideoOnly(true)
-                    .setResolution(label)
-                    .setItagItem(item)
-                    .build()
+                VideoStream(
+                    id = "bilibili-$bvid-video-${format.id}-$index",
+                    content = format.url,
+                    format = MediaFormat.MPEG_4,
+                    itagItem = item,
+                    resolution = label,
+                    isVideoOnly = true,
+                )
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to build VideoStream for qn=${format.id}: ${e.message}")
                 null
@@ -60,18 +57,17 @@ object BilibiliStreamBridge {
             .mapIndexedNotNull { index, format ->
                 BilibiliMirrors.register(format.url, format.backupUrls)
                 try {
-                    val item = ItagItem(NO_ITAG, ItagItem.ItagType.AUDIO, MediaFormat.M4A, format.bandwidth)
+                    val item = ItagInfo(NO_ITAG, ItagInfo.ItagType.AUDIO, MediaFormat.M4A, null, 0)
                     item.codec = format.codecs
                     item.bitrate = format.bandwidth
                     item.applyRanges(format)
-                    AudioStream
-                        .Builder()
-                        .setId("bilibili-$bvid-audio-${format.id}-$index")
-                        .setContent(format.url, true)
-                        .setMediaFormat(MediaFormat.M4A)
-                        .setAverageBitrate(format.bandwidth)
-                        .setItagItem(item)
-                        .build()
+                    AudioStream(
+                        id = "bilibili-$bvid-audio-${format.id}-$index",
+                        content = format.url,
+                        format = MediaFormat.M4A,
+                        itagItem = item,
+                        averageBitrate = format.bandwidth,
+                    )
                 } catch (e: Exception) {
                     Log.w(TAG, "Failed to build AudioStream for qn=${format.id}: ${e.message}")
                     null
@@ -83,19 +79,19 @@ object BilibiliStreamBridge {
 
     /** Live room FLV address as the one muxed stream (no HLS published). */
     fun liveFlvStream(url: String): VideoStream =
-        VideoStream
-            .Builder()
-            .setId("bilibili-live-flv")
-            .setContent(url, true)
-            .setIsVideoOnly(false)
-            .setResolution("")
-            .setDeliveryMethod(DeliveryMethod.PROGRESSIVE_HTTP)
-            .build()
+        VideoStream(
+            id = "bilibili-live-flv",
+            content = url,
+            format = null,
+            itagItem = null,
+            resolution = "",
+            isVideoOnly = false,
+        )
 
     /** Stream built by this bridge. */
-    fun isBilibili(stream: Stream): Boolean = stream.id?.startsWith("bilibili-") == true
+    fun isBilibili(stream: Stream): Boolean = stream.id.startsWith("bilibili-")
 
-    private fun ItagItem.applyRanges(format: BilibiliStreamFormat) {
+    private fun ItagInfo.applyRanges(format: BilibiliStreamFormat) {
         format.initRange?.let {
             initStart = it.first.toInt()
             initEnd = it.last.toInt()

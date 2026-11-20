@@ -1,6 +1,6 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.stream.VideoStream
+import io.github.aedev.flow.player.stream.model.VideoStream
 
 /** Stream URL for a plain `/stream` request; null if [lists] has nothing for it. */
 internal fun pickStreamUrl(

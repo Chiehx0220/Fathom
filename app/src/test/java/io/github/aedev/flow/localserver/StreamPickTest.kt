@@ -2,12 +2,12 @@ package io.github.aedev.flow.localserver
 
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import io.github.aedev.flow.player.stream.model.AudioStream
+import io.github.aedev.flow.player.stream.model.AudioTrackType
+import io.github.aedev.flow.player.stream.model.ItagInfo
+import io.github.aedev.flow.player.stream.model.MediaFormat
+import io.github.aedev.flow.player.stream.model.VideoStream
 import org.junit.Test
-import org.schabi.newpipe.extractor.MediaFormat
-import org.schabi.newpipe.extractor.services.youtube.ItagItem
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.AudioTrackType
-import org.schabi.newpipe.extractor.stream.VideoStream
 import java.util.Locale
 import kotlin.random.Random
 
@@ -28,15 +28,14 @@ class StreamPickTest {
         itag: Int,
         resolution: String,
     ): VideoStream =
-        VideoStream
-            .Builder()
-            .setId(url)
-            .setContent(url, true)
-            .setMediaFormat(MediaFormat.MPEG_4)
-            .setIsVideoOnly(false)
-            .setResolution(resolution)
-            .setItagItem(ItagItem(itag, ItagItem.ItagType.VIDEO, MediaFormat.MPEG_4, resolution))
-            .build()
+        VideoStream(
+            url,
+            url,
+            MediaFormat.MPEG_4,
+            ItagInfo(itag, ItagInfo.ItagType.VIDEO, MediaFormat.MPEG_4, resolution, 0),
+            resolution,
+            isVideoOnly = false,
+        )
 
     private fun audio(
         url: String,
@@ -45,17 +44,16 @@ class StreamPickTest {
         trackId: String?,
         original: Boolean,
     ): AudioStream =
-        AudioStream
-            .Builder()
-            .setId(url)
-            .setContent(url, true)
-            .setMediaFormat(MediaFormat.M4A)
-            .setAverageBitrate(bitrate)
-            .setAudioTrackId(trackId)
-            .setAudioTrackType(if (original) AudioTrackType.ORIGINAL else AudioTrackType.DUBBED)
-            .setAudioLocale(trackId?.let(Locale::forLanguageTag))
-            .setItagItem(ItagItem(itag, ItagItem.ItagType.AUDIO, MediaFormat.M4A, "${bitrate}kbps"))
-            .build()
+        AudioStream(
+            url,
+            url,
+            MediaFormat.M4A,
+            ItagInfo(itag, ItagInfo.ItagType.AUDIO, MediaFormat.M4A, "${bitrate}kbps", 0),
+            averageBitrate = bitrate,
+            audioTrackId = trackId,
+            audioLocale = trackId?.let(Locale::forLanguageTag),
+            audioTrackType = if (original) AudioTrackType.ORIGINAL else AudioTrackType.DUBBED,
+        )
 
     // pre-StreamPick resolution, verbatim
     private fun legacy(

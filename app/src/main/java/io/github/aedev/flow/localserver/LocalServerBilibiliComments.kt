@@ -3,9 +3,9 @@ package io.github.aedev.flow.localserver
 import android.content.Context
 import io.github.aedev.flow.bilibili.BilibiliDanmaku
 import io.github.aedev.flow.bilibili.BilibiliRef
+import io.github.aedev.flow.content.Page
 import io.github.aedev.flow.di.bilibiliApi
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.Page
 
 /** Comments + danmaku. Continuation [Page] url: "c:<offset>"; replies "r:<rpid>:<page>". */
 internal object LocalServerBilibiliComments {

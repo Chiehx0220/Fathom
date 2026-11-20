@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
-import org.schabi.newpipe.extractor.ServiceList
+import io.github.aedev.flow.content.ServiceIds
 
 /** Two pills: service for search/paste-link resolution. */
 @Composable
@@ -20,7 +20,7 @@ fun SearchServiceSwitcher(
 ) {
     val options =
         listOf(
-            ServiceList.YouTube.serviceId to "YouTube",
+            ServiceIds.YOUTUBE to "YouTube",
             BILIBILI_SERVICE_ID to "Bilibili",
         )
     Row(

@@ -1,7 +1,7 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.content.SubtitlesStream
 import okhttp3.Request
-import org.schabi.newpipe.extractor.stream.SubtitlesStream
 
 internal fun RequestContext.handleSubtitlesProxy(
     reply: Reply,

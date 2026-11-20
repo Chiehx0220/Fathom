@@ -4,6 +4,13 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import io.github.aedev.flow.bilibili.fake.FakeBilibili
 import io.github.aedev.flow.bilibili.fake.verifyGolden
+import io.github.aedev.flow.content.ChannelInfoItem
+import io.github.aedev.flow.content.CommentsInfoItem
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.Page
+import io.github.aedev.flow.content.PlaylistInfoItem
+import io.github.aedev.flow.content.StreamInfo
+import io.github.aedev.flow.content.StreamInfoItem
 import io.github.aedev.flow.di.bilibiliApiProvider
 import org.junit.After
 import org.junit.Assert.assertTrue
@@ -13,13 +20,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.ConscryptMode
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.channel.ChannelInfoItem
-import org.schabi.newpipe.extractor.comments.CommentsInfoItem
-import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
 
 /** Bilibili backend over the fake client. */
 @RunWith(RobolectricTestRunner::class)

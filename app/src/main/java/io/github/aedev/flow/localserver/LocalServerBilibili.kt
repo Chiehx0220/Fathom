@@ -6,11 +6,11 @@ import io.github.aedev.flow.bilibili.BilibiliChannelPageKey
 import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.bilibili.BilibiliSearchItem
 import io.github.aedev.flow.bilibili.BilibiliSearchType
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.Page
+import io.github.aedev.flow.content.PlaylistInfoItem
 import io.github.aedev.flow.di.bilibiliApi
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 
 /** Bilibili lists as NewPipe item/page types; blocking. Continuation = [Page] url: page number or "<page>:<lastAid>". */
 internal object LocalServerBilibili {
@@ -121,8 +121,8 @@ internal object LocalServerBilibili {
                 lists.items.map { ref ->
                     PlaylistInfoItem(serviceId, BilibiliRef.Series(ref.kind, ref.mid, ref.id, ref.name).id, ref.name).apply {
                         thumbnailUrl = ref.coverUrl
-                        setUploaderName(info.name)
-                        setStreamCount(ref.videoCount.toLong())
+                        uploaderName = info.name
+                        streamCount = ref.videoCount.toLong()
                     }
                 }
             return ChannelPage(header, items, Page((page + 1).toString()).takeIf { lists.hasMore })

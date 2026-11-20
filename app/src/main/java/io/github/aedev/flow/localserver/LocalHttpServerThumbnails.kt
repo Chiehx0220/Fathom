@@ -1,6 +1,6 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.stream.Frameset
+import io.github.aedev.flow.content.Frameset
 import java.net.URI
 import java.net.URLEncoder
 import java.util.Locale

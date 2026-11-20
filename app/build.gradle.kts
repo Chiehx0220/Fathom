@@ -151,6 +151,8 @@ android {
             isDebuggable = true
             isMinifyEnabled = false
             isShrinkResources = false
+            // `-Pflow.unitTestCoverage` turns on JaCoCo for the unit tests (createGithubDebugUnitTestCoverageReport).
+            enableUnitTestCoverage = providers.gradleProperty("flow.unitTestCoverage").isPresent
         }
         release {
             buildConfigField("String", "UPDATE_CHANNEL", "\"stable\"")
@@ -295,6 +297,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigationevent)
 
     // --- Compose (Using BOM is best practice) ---
     implementation(platform(libs.androidx.compose.bom))
@@ -339,7 +342,6 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
 
     // --- Data & Network ---
-    implementation(libs.newpipe.extractor)
 
     // Networking
     implementation(libs.okhttp)

@@ -4,9 +4,9 @@ import io.github.aedev.flow.bilibili.BilibiliVideoInfo
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
 import io.github.aedev.flow.player.sabr.integration.SabrStreamInfo
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.StreamType
-import org.schabi.newpipe.extractor.stream.VideoStream
+import io.github.aedev.flow.player.stream.model.AudioStream
+import io.github.aedev.flow.player.stream.model.StreamType
+import io.github.aedev.flow.player.stream.model.VideoStream
 
 /**
  * Everything resolving one video's streams produced: enough to start playback, build a preloaded

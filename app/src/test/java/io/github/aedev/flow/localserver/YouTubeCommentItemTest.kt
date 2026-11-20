@@ -1,6 +1,7 @@
 package io.github.aedev.flow.localserver
 
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.content.Page
 import io.github.aedev.flow.data.model.Comment
 import org.junit.Test
 
@@ -55,14 +56,12 @@ class YouTubeCommentItemTest {
     fun onlyThisObjectsOwnContinuationsAreItsToAnswer() {
         assertThat(
             LocalServerYouTubeComments.owns(
-                org.schabi.newpipe.extractor
-                    .Page("yt:c:abc"),
+                Page("yt:c:abc"),
             ),
         ).isTrue()
         assertThat(
             LocalServerYouTubeComments.owns(
-                org.schabi.newpipe.extractor
-                    .Page("https://www.youtube.com/youtubei"),
+                Page("https://www.youtube.com/youtubei"),
             ),
         ).isFalse()
         assertThat(LocalServerYouTubeComments.owns(null)).isFalse()

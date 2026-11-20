@@ -2,8 +2,8 @@ package io.github.aedev.flow.data.local.entity
 
 import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.content.ServiceIds
 import org.junit.Test
-import org.schabi.newpipe.extractor.ServiceList
 
 class VideoEntityServiceTest {
     private fun stub(id: String) =
@@ -27,6 +27,6 @@ class VideoEntityServiceTest {
 
     @Test
     fun `YouTube stub row stays YouTube`() {
-        assertThat(stub("dQw4w9WgXcQ").toDomain().serviceId).isEqualTo(ServiceList.YouTube.serviceId)
+        assertThat(stub("dQw4w9WgXcQ").toDomain().serviceId).isEqualTo(ServiceIds.YOUTUBE)
     }
 }

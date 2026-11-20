@@ -4,12 +4,12 @@ import io.github.aedev.flow.bilibili.BilibiliChannelVideo
 import io.github.aedev.flow.bilibili.BilibiliComment
 import io.github.aedev.flow.bilibili.BilibiliLiveItem
 import io.github.aedev.flow.bilibili.BilibiliRef
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.comments.CommentsInfoItem
-import org.schabi.newpipe.extractor.localization.DateWrapper
-import org.schabi.newpipe.extractor.stream.Description
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
-import org.schabi.newpipe.extractor.stream.StreamType
+import io.github.aedev.flow.content.CommentsInfoItem
+import io.github.aedev.flow.content.DateWrapper
+import io.github.aedev.flow.content.Description
+import io.github.aedev.flow.content.Page
+import io.github.aedev.flow.content.StreamInfoItem
+import io.github.aedev.flow.player.stream.model.StreamType
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -33,11 +33,11 @@ internal fun bilibiliVideoItem(
 ): StreamInfoItem =
     StreamInfoItem(LocalServerBilibili.serviceId, LocalServerBilibili.videoUrl(id), title, StreamType.VIDEO_STREAM).apply {
         this.thumbnailUrl = thumbnailUrl
-        setUploaderName(uploaderName)
-        setUploaderUrl(if (uploaderMid > 0) LocalServerBilibili.channelUrl(uploaderMid.toString()) else "")
+        this.uploaderName = uploaderName
+        uploaderUrl = if (uploaderMid > 0) LocalServerBilibili.channelUrl(uploaderMid.toString()) else ""
         this.uploaderAvatarUrl = uploaderAvatarUrl
-        setDuration(durationSec.toLong())
-        setViewCount(views)
+        duration = durationSec.toLong()
+        viewCount = views
     }
 
 /** Live room row: opens the room, shown live. */
@@ -49,9 +49,9 @@ internal fun bilibiliLiveItem(room: BilibiliLiveItem): StreamInfoItem =
         StreamType.LIVE_STREAM,
     ).apply {
         thumbnailUrl = room.coverUrl
-        setUploaderName(room.uploaderName)
+        uploaderName = room.uploaderName
         uploaderAvatarUrl = room.uploaderAvatarUrl
-        setViewCount(room.viewerCount)
+        viewCount = room.viewerCount
     }
 
 /** Uploader video-list row; name/avatar from caller (list has neither). */
@@ -64,14 +64,14 @@ internal fun BilibiliChannelVideo.toStreamItem(
     val video = this
     return StreamInfoItem(LocalServerBilibili.serviceId, LocalServerBilibili.videoUrl("$bvid?p=1"), title, StreamType.VIDEO_STREAM).apply {
         thumbnailUrl = video.thumbnailUrl
-        setUploaderName(uploaderName.ifEmpty { video.authorName })
-        setUploaderUrl(uploaderUrl)
+        this.uploaderName = uploaderName.ifEmpty { video.authorName }
+        this.uploaderUrl = uploaderUrl
         this.uploaderAvatarUrl = uploaderAvatarUrl
-        setDuration(video.durationSec.toLong())
-        setViewCount(video.viewCount)
+        duration = video.durationSec.toLong()
+        viewCount = video.viewCount
         if (video.uploadTimeSec > 0) {
-            setTextualUploadDate(formatBilibiliDate(video.uploadTimeSec))
-            setUploadDate(DateWrapper(OffsetDateTime.ofInstant(Instant.ofEpochSecond(video.uploadTimeSec), ZoneOffset.UTC)))
+            textualUploadDate = formatBilibiliDate(video.uploadTimeSec)
+            uploadDate = DateWrapper(OffsetDateTime.ofInstant(Instant.ofEpochSecond(video.uploadTimeSec), ZoneOffset.UTC))
         }
     }
 }
@@ -83,17 +83,17 @@ internal fun BilibiliComment.toCommentItem(
 ): CommentsInfoItem {
     val comment = this
     return CommentsInfoItem(LocalServerBilibili.serviceId, videoUrl, authorName).apply {
-        setCommentId(comment.id)
-        setCommentText(Description(comment.text, Description.PLAIN_TEXT))
-        setUploaderName(comment.authorName)
-        setUploaderUrl(if (comment.authorMid > 0) LocalServerBilibili.channelUrl(comment.authorMid.toString()) else "")
+        commentId = comment.id
+        commentText = Description(comment.text, Description.PLAIN_TEXT)
+        uploaderName = comment.authorName
+        uploaderUrl = if (comment.authorMid > 0) LocalServerBilibili.channelUrl(comment.authorMid.toString()) else ""
         uploaderAvatarUrl = comment.authorAvatarUrl
-        setLikeCount(comment.likeCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
-        setTextualUploadDate(formatBilibiliDate(comment.postedSec))
-        setPinned(comment.isPinned)
-        setHeartedByUploader(comment.isLikedByUploader)
-        setReplyCount(comment.replyCount)
-        if (hasReplies && comment.replyCount > 0) setReplies(Page("r:${comment.id}:1"))
+        likeCount = comment.likeCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+        textualUploadDate = formatBilibiliDate(comment.postedSec)
+        isPinned = comment.isPinned
+        isHeartedByUploader = comment.isLikedByUploader
+        replyCount = comment.replyCount
+        if (hasReplies && comment.replyCount > 0) replies = Page("r:${comment.id}:1")
     }
 }
 

@@ -12,16 +12,15 @@ import io.github.aedev.flow.player.stream.ClientGateTracker
 import io.github.aedev.flow.player.stream.InnerTubeStreamBridge
 import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
 import io.github.aedev.flow.player.stream.TizenStreamResolver
+import io.github.aedev.flow.player.stream.model.AudioStream
+import io.github.aedev.flow.player.stream.model.VideoStream
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.VideoStream
 import java.util.concurrent.ConcurrentHashMap
 
-/** YouTube streams: PoToken-attested multi-client InnerTube, not NewPipe's unattested client. Metadata stays on extractor. */
+/** YouTube streams: PoToken-attested multi-client InnerTube. Metadata comes from [LocalServerYouTubeInfo]. */
 internal object LocalServerYouTubeStreams {
     private const val TAG = "LocalServerYouTube"
     private const val EXTRACTION_TTL_MS = 50 * 60 * 1000L
@@ -128,50 +127,30 @@ internal object LocalServerYouTubeStreams {
     fun invalidate(videoId: String) {
         extractionCache.remove(videoId)
     }
-
-    /** Overlays [info] streams with InnerTube's, NewPipe's kept: InnerTube favors AV1/VP9; NewPipe H.264 = [StreamCatalog] fallback. */
-    fun overlay(
-        info: StreamInfo,
-        videoId: String,
-    ) {
-        val result = extractionFor(videoId) ?: return
-        InnerTubeStreamBridge.convertVideoFormats(result.videoFormats).takeIf { it.isNotEmpty() }?.let {
-            info.videoOnlyStreams = unionByItag(it, info.videoOnlyStreams.orEmpty()) { s -> s.itag }
-        }
-        InnerTubeStreamBridge.convertAudioFormats(result.audioFormats).takeIf { it.isNotEmpty() }?.let {
-            info.audioStreams = unionByItag(it, info.audioStreams.orEmpty()) { s -> s.itag }
-        }
-    }
 }
 
-/** [preferred] first, then [fallback] entries not present under the same itag. */
-private fun <T> unionByItag(
-    preferred: List<T>,
-    fallback: List<T>,
-    itagOf: (T) -> Int,
-): List<T> {
-    val seenItags = preferred.mapNotNullTo(HashSet()) { itagOf(it).takeIf { itag -> itag > 0 } }
-    return preferred + fallback.filter { itagOf(it) <= 0 || seenItags.add(itagOf(it)) }
-}
-
-/** [base] streams ∪ InnerTube video-only/audio for [videoId], InnerTube first. */
-internal class MergedYouTubeStreams(
-    private val base: StreamLists,
+/** Streams for one YouTube video from the InnerTube extraction: video-only and audio lists (muxed lists stay empty). */
+internal class YouTubeStreamLists(
     private val videoId: String,
 ) : StreamLists {
-    private val innerTube by lazy { LocalServerYouTubeStreams.extractionFor(videoId) }
+    private val extraction by lazy { LocalServerYouTubeStreams.extractionFor(videoId) }
 
-    override val length: Long get() = base.length
-    override val videoStreams: List<VideoStream> get() = base.videoStreams
-    override val hlsUrl: String? get() = base.hlsUrl
+    override val length: Long
+        get() =
+            extraction
+                ?.playerResponse
+                ?.videoDetails
+                ?.lengthSeconds
+                ?.toLongOrNull() ?: 0L
+
+    override val videoStreams: List<VideoStream> get() = emptyList()
+    override val hlsUrl: String? get() = extraction?.liveHlsUrl
 
     override val videoOnlyStreams: List<VideoStream> by lazy {
-        val preferred = innerTube?.let { InnerTubeStreamBridge.convertVideoFormats(it.videoFormats) }.orEmpty()
-        unionByItag(preferred, base.videoOnlyStreams) { it.itag }
+        extraction?.let { InnerTubeStreamBridge.convertVideoFormats(it.videoFormats) }.orEmpty()
     }
 
     override val audioStreams: List<AudioStream> by lazy {
-        val preferred = innerTube?.let { InnerTubeStreamBridge.convertAudioFormats(it.audioFormats) }.orEmpty()
-        unionByItag(preferred, base.audioStreams) { it.itag }
+        extraction?.let { InnerTubeStreamBridge.convertAudioFormats(it.audioFormats) }.orEmpty()
     }
 }

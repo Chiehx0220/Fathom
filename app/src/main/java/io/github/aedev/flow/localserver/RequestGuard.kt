@@ -1,6 +1,6 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.Page
+import io.github.aedev.flow.content.Page
 import java.util.Locale
 
 /*

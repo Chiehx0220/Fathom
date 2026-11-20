@@ -1,0 +1,130 @@
+package io.github.aedev.flow.localserver
+
+import android.content.Context
+import io.github.aedev.flow.content.DateWrapper
+import io.github.aedev.flow.content.Description
+import io.github.aedev.flow.content.Frameset
+import io.github.aedev.flow.content.Image
+import io.github.aedev.flow.content.ServiceIds
+import io.github.aedev.flow.content.StreamInfo
+import io.github.aedev.flow.content.StreamSegment
+import io.github.aedev.flow.content.SubtitlesStream
+import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.repository.YouTubeRepository
+import io.github.aedev.flow.innertube.models.response.PlayerResponse
+import io.github.aedev.flow.player.stream.InnerTubeStreamBridge
+import io.github.aedev.flow.player.stream.StoryboardSpec
+import io.github.aedev.flow.player.stream.model.StreamType
+import io.github.aedev.flow.utils.youtubeVideoIdFromUrl
+import kotlinx.coroutines.runBlocking
+import java.time.Instant
+
+/**
+ * One YouTube video's [StreamInfo] for the watch page, downloads and subtitle routes: details from the app repository,
+ * streams, captions and storyboard from the PoToken-attested InnerTube extraction. Related videos are filled in by the caller.
+ */
+internal object LocalServerYouTubeInfo {
+    fun streamInfo(
+        context: Context,
+        mediaUrl: String,
+    ): StreamInfo {
+        val videoId = youtubeVideoIdFromUrl(mediaUrl) ?: LocalServerMedia.getVideoId(mediaUrl)
+        require(videoId.isNotBlank()) { "Not a YouTube video: $mediaUrl" }
+        val repo = YouTubeRepository.getInstance(PlayerPreferences(context))
+        val video = runBlocking { repo.getVideo(videoId) }
+        val extraction = LocalServerYouTubeStreams.extractionFor(videoId)
+        val player = extraction?.playerResponse
+        if (video == null && player == null) throw IllegalStateException("YouTube video $videoId unavailable")
+
+        val details = player?.videoDetails
+        val url = "https://www.youtube.com/watch?v=$videoId"
+        val live = extraction?.isLive == true || video?.isLive == true
+        val info =
+            StreamInfo(
+                ServiceIds.YOUTUBE,
+                url,
+                url,
+                if (live) StreamType.LIVE_STREAM else StreamType.VIDEO_STREAM,
+                videoId,
+                video?.title ?: details?.title.orEmpty(),
+            )
+        video?.let { applyVideo(info, it) }
+        info.duration = details?.lengthSeconds?.toLongOrNull() ?: video?.duration?.toLong() ?: -1L
+        if (extraction != null) {
+            info.videoOnlyStreams = InnerTubeStreamBridge.convertVideoFormats(extraction.videoFormats)
+            info.audioStreams = InnerTubeStreamBridge.convertAudioFormats(extraction.audioFormats)
+            info.hlsUrl = extraction.liveHlsUrl.orEmpty()
+            info.dashMpdUrl = extraction.liveDashUrl.orEmpty()
+        }
+        player?.let {
+            info.subtitles = subtitlesOf(it)
+            info.previewFrames = framesOf(it, info.duration)
+        }
+        info.streamSegments =
+            runCatching { runBlocking { repo.videoChapters(videoId) } }
+                .getOrDefault(emptyList())
+                .map { chapter -> StreamSegment(chapter.title, chapter.startTimeSeconds).also { it.previewUrl = chapter.thumbnailUrl } }
+        return info
+    }
+
+    private fun applyVideo(
+        info: StreamInfo,
+        video: Video,
+    ) {
+        info.thumbnails = listOf(Image(video.thumbnailUrl))
+        info.description = Description(video.description, Description.PLAIN_TEXT)
+        info.viewCount = video.viewCount
+        info.likeCount = video.likeCount
+        info.uploaderName = video.channelName
+        info.uploaderUrl = channelUrlOf(video.channelId)
+        info.uploaderAvatars =
+            (video.channelThumbnailUrls.ifEmpty { listOf(video.channelThumbnailUrl) }).filter { it.isNotBlank() }.map { Image(it) }
+        info.isUploaderVerified = video.isVerifiedChannel
+        info.textualUploadDate = video.uploadDate.takeIf { it.isNotBlank() }
+        if (video.timestampIsExact) info.uploadDate = DateWrapper(Instant.ofEpochMilli(video.timestamp))
+        info.category = video.category.orEmpty()
+        info.tags = video.tags
+        info.isShortFormContent = video.isShort
+    }
+
+    private fun channelUrlOf(channelId: String): String =
+        when {
+            channelId.isBlank() -> ""
+            channelId.startsWith("@") -> "https://www.youtube.com/$channelId"
+            else -> "https://www.youtube.com/channel/$channelId"
+        }
+
+    private fun subtitlesOf(player: PlayerResponse): List<SubtitlesStream> =
+        player.captions
+            ?.playerCaptionsTracklistRenderer
+            ?.captionTracks
+            .orEmpty()
+            .mapNotNull { track ->
+                val base = track.baseUrl ?: return@mapNotNull null
+                val tag = track.languageCode ?: return@mapNotNull null
+                SubtitlesStream(base, tag, isAutoGenerated = track.kind == "asr", extension = "vtt")
+            }
+
+    private fun framesOf(
+        player: PlayerResponse,
+        durationSeconds: Long,
+    ): List<Frameset> =
+        StoryboardSpec
+            .parse(player.storyboards?.playerStoryboardSpecRenderer?.spec, durationSeconds * 1000L)
+            .mapNotNull { level ->
+                val perSheet = level.columns * level.rows
+                val sheets = (level.frameCount + perSheet - 1) / perSheet
+                val urls = (0 until sheets).mapNotNull { level.tileAt(it.toLong() * perSheet * level.intervalMs)?.sheetUrl }
+                if (urls.size != sheets) return@mapNotNull null
+                Frameset(
+                    urls,
+                    level.thumbnailWidth,
+                    level.thumbnailHeight,
+                    level.frameCount,
+                    level.intervalMs.toInt(),
+                    level.columns,
+                    level.rows,
+                )
+            }
+}

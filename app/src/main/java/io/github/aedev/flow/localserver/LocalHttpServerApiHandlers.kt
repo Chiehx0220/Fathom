@@ -1,10 +1,10 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.Page
 import io.github.aedev.flow.data.recommendation.InteractionType
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.Page
 
 // `/api/v1/...` handlers.
 

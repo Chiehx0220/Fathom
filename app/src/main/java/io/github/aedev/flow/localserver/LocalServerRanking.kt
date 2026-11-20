@@ -1,5 +1,8 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.StreamInfo
+import io.github.aedev.flow.content.StreamInfoItem
 import io.github.aedev.flow.data.model.isYouTubeServiceId
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.InteractionType
@@ -8,9 +11,6 @@ import io.github.aedev.flow.player.PlayerRelatedVideosPolicy
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import java.util.Collections
 import java.util.IdentityHashMap
 import io.github.aedev.flow.data.model.Video as FlowVideo
@@ -66,7 +66,7 @@ fun HistoryDbHelper.reportFlowNeuroInteraction(
     }
 }
 
-/** Related, watch-page order: InnerTube `/next`, extractor list only if empty ([PlayerRelatedVideosPolicy]); Bilibili keeps extractor list. */
+/** Related, watch-page order: InnerTube `/next` ([PlayerRelatedVideosPolicy]); Bilibili supplies its own list. */
 fun HistoryDbHelper.relatedVideos(
     info: StreamInfo,
     serviceId: Int,
@@ -74,7 +74,6 @@ fun HistoryDbHelper.relatedVideos(
     val videoId = LocalServerMedia.getVideoId(info.url)
     val repo = youTubeRepository()
     val shortsEnabled = !hideShorts()
-    val fromStreamInfo = repo.getRelatedVideosFromStreamInfo(info)
     val fromInnerTube =
         if (serviceId.isYouTubeServiceId) {
             runBlocking {
@@ -87,7 +86,7 @@ fun HistoryDbHelper.relatedVideos(
         PlayerRelatedVideosPolicy.select(
             videoId,
             primary = fromInnerTube,
-            fallback = fromStreamInfo,
+            fallback = emptyList(),
             current = emptyList(),
             shortsEnabled = shortsEnabled,
         )

@@ -1,11 +1,11 @@
 package io.github.aedev.flow.ui.components.shared
 
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.content.ServiceIds
 import io.github.aedev.flow.data.model.Video
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.schabi.newpipe.extractor.ServiceList
 
 class PlatformBadgeMixTest {
     private fun video(
@@ -25,7 +25,7 @@ class PlatformBadgeMixTest {
 
     @Test
     fun `a list of one service is not mixed`() {
-        val youtube = ServiceList.YouTube.serviceId
+        val youtube = ServiceIds.YOUTUBE
         assertFalse(listOf(video("a", youtube), video("b", youtube)).mixesServices())
         assertFalse(listOf(video("a", BILIBILI_SERVICE_ID)).mixesServices())
         assertFalse(emptyList<Video>().mixesServices())
@@ -33,6 +33,6 @@ class PlatformBadgeMixTest {
 
     @Test
     fun `a list with two services is mixed`() {
-        assertTrue(listOf(video("a", ServiceList.YouTube.serviceId), video("b", BILIBILI_SERVICE_ID)).mixesServices())
+        assertTrue(listOf(video("a", ServiceIds.YOUTUBE), video("b", BILIBILI_SERVICE_ID)).mixesServices())
     }
 }

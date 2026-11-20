@@ -1,29 +1,22 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.player.stream.model.ItagInfo
+import io.github.aedev.flow.player.stream.model.MediaFormat
+import io.github.aedev.flow.player.stream.model.VideoStream
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.schabi.newpipe.extractor.MediaFormat
-import org.schabi.newpipe.extractor.services.youtube.ItagItem
-import org.schabi.newpipe.extractor.stream.VideoStream
 
 class DownloadQualitiesTest {
     private fun stream(
         id: String,
         resolution: String,
         codec: String,
-    ) = VideoStream
-        .Builder()
-        .setId(id)
-        .setContent("https://example.invalid/$id", true)
-        .setMediaFormat(MediaFormat.MPEG_4)
-        .setIsVideoOnly(true)
-        .setResolution(resolution)
-        .setItagItem(
-            ItagItem(137, ItagItem.ItagType.VIDEO_ONLY, MediaFormat.MPEG_4, resolution).also {
-                it.codec = codec
-                it.height = resolution.takeWhile(Char::isDigit).toInt()
-            },
-        ).build()
+    ): VideoStream {
+        val item = ItagInfo(137, ItagInfo.ItagType.VIDEO_ONLY, MediaFormat.MPEG_4, resolution, 0)
+        item.codec = codec
+        item.height = resolution.takeWhile(Char::isDigit).toInt()
+        return VideoStream(id, "https://example.invalid/$id", MediaFormat.MPEG_4, item, resolution, isVideoOnly = true)
+    }
 
     @Test
     fun `heights are tallest first with their codecs in download preference order`() {

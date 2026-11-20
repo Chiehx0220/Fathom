@@ -1,19 +1,19 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.Image
-import org.schabi.newpipe.extractor.MediaFormat
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.channel.ChannelInfoItem
-import org.schabi.newpipe.extractor.comments.CommentsInfoItem
-import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
-import org.schabi.newpipe.extractor.services.youtube.ItagItem
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.Description
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
-import org.schabi.newpipe.extractor.stream.StreamSegment
-import org.schabi.newpipe.extractor.stream.StreamType
-import org.schabi.newpipe.extractor.stream.VideoStream
+import io.github.aedev.flow.content.ChannelInfoItem
+import io.github.aedev.flow.content.CommentsInfoItem
+import io.github.aedev.flow.content.Description
+import io.github.aedev.flow.content.Image
+import io.github.aedev.flow.content.Page
+import io.github.aedev.flow.content.PlaylistInfoItem
+import io.github.aedev.flow.content.StreamInfo
+import io.github.aedev.flow.content.StreamInfoItem
+import io.github.aedev.flow.content.StreamSegment
+import io.github.aedev.flow.player.stream.model.AudioStream
+import io.github.aedev.flow.player.stream.model.ItagInfo
+import io.github.aedev.flow.player.stream.model.MediaFormat
+import io.github.aedev.flow.player.stream.model.StreamType
+import io.github.aedev.flow.player.stream.model.VideoStream
 
 internal fun images(url: String) = listOf(Image(url, 90, 120, Image.ResolutionLevel.MEDIUM))
 
@@ -80,43 +80,38 @@ internal fun zooInfo(): StreamInfo =
         description = Description("<b>Hi</b> at 0:05", Description.HTML)
         videoStreams =
             listOf(
-                VideoStream
-                    .Builder()
-                    .setId("18")
-                    .setContent("https://example.invalid/18", true)
-                    .setMediaFormat(MediaFormat.MPEG_4)
-                    .setIsVideoOnly(false)
-                    .setResolution("360p")
-                    .setItagItem(ItagItem(18, ItagItem.ItagType.VIDEO, MediaFormat.MPEG_4, "360p").also { it.height = 360 })
-                    .build(),
+                VideoStream(
+                    "18",
+                    "https://example.invalid/18",
+                    MediaFormat.MPEG_4,
+                    ItagInfo(18, ItagInfo.ItagType.VIDEO, MediaFormat.MPEG_4, "360p", 0).also { it.height = 360 },
+                    "360p",
+                    isVideoOnly = false,
+                ),
             )
         videoOnlyStreams =
             listOf(
-                VideoStream
-                    .Builder()
-                    .setId("137")
-                    .setContent("https://example.invalid/137", true)
-                    .setMediaFormat(MediaFormat.MPEG_4)
-                    .setIsVideoOnly(true)
-                    .setResolution("1080p")
-                    .setItagItem(
-                        ItagItem(137, ItagItem.ItagType.VIDEO_ONLY, MediaFormat.MPEG_4, "1080p").also {
-                            it.height = 1080
-                            it.codec =
-                                "avc1.640028"
-                        },
-                    ).build(),
+                VideoStream(
+                    "137",
+                    "https://example.invalid/137",
+                    MediaFormat.MPEG_4,
+                    ItagInfo(137, ItagInfo.ItagType.VIDEO_ONLY, MediaFormat.MPEG_4, "1080p", 0).also {
+                        it.height = 1080
+                        it.codec = "avc1.640028"
+                    },
+                    "1080p",
+                    isVideoOnly = true,
+                ),
             )
         audioStreams =
             listOf(
-                AudioStream
-                    .Builder()
-                    .setId("140")
-                    .setContent("https://example.invalid/140", true)
-                    .setMediaFormat(MediaFormat.M4A)
-                    .setAverageBitrate(128)
-                    .setItagItem(ItagItem(140, ItagItem.ItagType.AUDIO, MediaFormat.M4A, "128kbps"))
-                    .build(),
+                AudioStream(
+                    "140",
+                    "https://example.invalid/140",
+                    MediaFormat.M4A,
+                    ItagInfo(140, ItagInfo.ItagType.AUDIO, MediaFormat.M4A, "128kbps", 0),
+                    averageBitrate = 128,
+                ),
             )
         streamSegments =
             listOf(StreamSegment("Intro", 0), StreamSegment("Zoo", 5).apply { previewUrl = "https://i.ytimg.example/seg.jpg" })

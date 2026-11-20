@@ -1,5 +1,8 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.PlaylistInfoItem
+import io.github.aedev.flow.content.StreamInfoItem
 import io.github.aedev.flow.data.local.LikedVideoInfo
 import io.github.aedev.flow.data.local.LikedVideosRepository
 import io.github.aedev.flow.data.local.PlaylistRepository
@@ -7,9 +10,6 @@ import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import io.github.aedev.flow.data.recommendation.InteractionType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
 internal fun HistoryDbHelper.playlistRepository() = PlaylistRepository(appContext)

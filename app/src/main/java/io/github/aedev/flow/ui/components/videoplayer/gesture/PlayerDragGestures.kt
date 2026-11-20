@@ -19,27 +19,22 @@ import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.ui.components.shared.PlayerSpeedSwipe
 import io.github.aedev.flow.ui.components.shared.SpeedSwipeDrag
 import io.github.aedev.flow.ui.components.shared.SpeedSwipeStepTravel
+import io.github.aedev.flow.ui.components.videoplayer.motion.PlayerGestureThresholds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 private const val SEEK_DRAG_SPAN_MS = 90_000L
+
+/** How long the offer to cancel a seek lasts once the swipe has come back to its start. */
+private const val SEEK_CANCEL_WINDOW_MS = 2_000L
 
 /** Target movement between haptic ticks while dragging to seek. */
 private const val SEEK_DRAG_HAPTIC_STEP_MS = 5_000L
 
 /** Distance from the top and bottom edges where drags are left to the controls beneath them. */
 private val DragEdgeIgnore = 40.dp
-
-/** Downward travel in the centre zone that commits to leaving fullscreen. */
-private const val EXIT_FULLSCREEN_DRAG_PX = 80f
-
-private const val EXIT_FULLSCREEN_OVERSHOOT_PX = 140f
-
-/** An upward flick faster than this opens the more videos row however short the swipe was. */
-private const val MORE_VIDEOS_FLING_PX_PER_S = 1_000f
 
 private const val VERTICAL_DRAG_SENSITIVITY = 1.5f
 
@@ -66,6 +61,7 @@ internal fun Modifier.playerDragGestures(
     onShowVolumeChange: State<(Boolean) -> Unit>,
     onSeekDragChange: State<(Boolean) -> Unit>,
     onSeekDragUpdate: State<(targetMs: Long, deltaMs: Long) -> Unit>,
+    onSeekCancelArmed: State<(Boolean) -> Unit>,
     brightnessLevel: State<() -> Float>,
     volumeLevel: State<() -> Float>,
     maxVolume: State<Int>,
@@ -97,6 +93,7 @@ internal fun Modifier.playerDragGestures(
     val currentOnShowVolumeChange by onShowVolumeChange
     val currentOnSeekDragChange by onSeekDragChange
     val currentOnSeekDragUpdate by onSeekDragUpdate
+    val currentOnSeekCancelArmed by onSeekCancelArmed
     val currentBrightnessLevel by brightnessLevel
     val currentVolumeLevel by volumeLevel
     val currentMaxVolume by maxVolume
@@ -119,6 +116,7 @@ internal fun Modifier.playerDragGestures(
     // Outside fullscreen only the sideways seek is claimed: vertical drags stay unconsumed so the
     // player sheet keeps them for minimising and entering fullscreen.
     return this.pointerInput(currentIsFullscreen) {
+        val thresholds = PlayerGestureThresholds(density)
         var isCenterZone = false
         var isSpeedDrag = false
         val speedDrag =
@@ -165,6 +163,8 @@ internal fun Modifier.playerDragGestures(
         var seekDragBaseMs = 0L
         var seekDragTargetMs = 0L
         var seekDragTravelPx = 0f
+        var seekDragFarthestPx = 0f
+        var seekCancelArmedAtMs = -1L
         var lastSeekHapticMs = 0L
 
         fun applyBrightnessDrag(dy: Float) {
@@ -274,11 +274,11 @@ internal fun Modifier.playerDragGestures(
         }
 
         fun exitDragOffset(): Float =
-            if (exitDragTravel > EXIT_FULLSCREEN_DRAG_PX) {
-                EXIT_FULLSCREEN_DRAG_PX +
+            if (exitDragTravel > thresholds.exitFullscreenDrag) {
+                thresholds.exitFullscreenDrag +
                     resistedTravel(
-                        exitDragTravel - EXIT_FULLSCREEN_DRAG_PX,
-                        EXIT_FULLSCREEN_OVERSHOOT_PX,
+                        exitDragTravel - thresholds.exitFullscreenDrag,
+                        thresholds.exitFullscreenOvershoot,
                     )
             } else {
                 exitDragTravel
@@ -292,7 +292,7 @@ internal fun Modifier.playerDragGestures(
             exitSettleJob?.cancel()
             exitDragTravel = (exitDragTravel + dy).coerceAtLeast(0f)
 
-            val pastCommit = exitDragTravel >= EXIT_FULLSCREEN_DRAG_PX
+            val pastCommit = exitDragTravel >= thresholds.exitFullscreenDrag
             if (pastCommit != exitDragPastCommit) {
                 exitDragPastCommit = pastCommit
                 haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
@@ -346,7 +346,7 @@ internal fun Modifier.playerDragGestures(
             }
             moreSettleJob?.cancel()
             moreDragTravel = (moreDragTravel - dy).coerceAtLeast(0f)
-            val pastCommit = moreDragTravel >= EXIT_FULLSCREEN_DRAG_PX
+            val pastCommit = moreDragTravel >= thresholds.exitFullscreenDrag
             if (pastCommit != moreDragPastCommit) {
                 moreDragPastCommit = pastCommit
                 haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
@@ -355,7 +355,7 @@ internal fun Modifier.playerDragGestures(
         }
 
         fun endMoreDrag(commit: Boolean) {
-            val flung = moreDragTravel > 0f && exitVelocity.calculateVelocity().y < -MORE_VIDEOS_FLING_PX_PER_S
+            val flung = moreDragTravel > 0f && exitVelocity.calculateVelocity().y < -thresholds.moreVideosFlingVelocity
             val opening = commit && (moreDragPastCommit || flung)
             moreDragPastCommit = false
             if (opening) {
@@ -391,8 +391,32 @@ internal fun Modifier.playerDragGestures(
             seekDragTargetMs = seekDragBaseMs
             lastSeekHapticMs = seekDragBaseMs
             seekDragTravelPx = 0f
+            seekDragFarthestPx = 0f
+            seekCancelArmedAtMs = -1L
             currentOnSeekDragUpdate(seekDragTargetMs, 0L)
             currentOnSeekDragChange(true)
+        }
+
+        // Coming back to where the swipe started, after going well away from it, offers to call the
+        // seek off: letting go there leaves playback where it was. The offer lapses after a while.
+        fun updateSeekCancel() {
+            seekDragFarthestPx = maxOf(seekDragFarthestPx, abs(seekDragTravelPx))
+            val now = SystemClock.uptimeMillis()
+            val back = seekDragFarthestPx >= thresholds.seekUndoAway && abs(seekDragTravelPx) <= thresholds.seekUndoBack
+            val armed = seekCancelArmedAtMs >= 0L
+            when {
+                back && !armed -> {
+                    seekCancelArmedAtMs = now
+                    haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                    currentOnSeekCancelArmed(true)
+                }
+
+                armed && (!back || now - seekCancelArmedAtMs > SEEK_CANCEL_WINDOW_MS) -> {
+                    seekCancelArmedAtMs = -1L
+                    seekDragFarthestPx = abs(seekDragTravelPx)
+                    currentOnSeekCancelArmed(false)
+                }
+            }
         }
 
         fun updateSeekDrag(dx: Float) {
@@ -414,10 +438,16 @@ internal fun Modifier.playerDragGestures(
                 lastSeekHapticMs = clamped
                 haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
             }
+            updateSeekCancel()
         }
 
         fun endSeekDrag(commit: Boolean) {
-            if (commit && seekDragTargetMs != seekDragBaseMs) {
+            val cancelled = seekCancelArmedAtMs >= 0L
+            if (cancelled) {
+                seekCancelArmedAtMs = -1L
+                currentOnSeekCancelArmed(false)
+            }
+            if (commit && !cancelled && seekDragTargetMs != seekDragBaseMs) {
                 val manager = EnhancedPlayerManager.getInstance()
                 val player = manager.getPlayer()
                 val isLive = manager.playerState.value.isLive || player?.isCurrentMediaItemLive == true
@@ -518,11 +548,6 @@ internal fun Modifier.playerDragGestures(
                             endMoreDrag(commit = isCenterZone)
                             endExitDrag(commit = isCenterZone)
                             endSpeedDrag()
-                            scope.launch {
-                                delay(500) // Delay hiding controls
-                                currentOnShowBrightnessChange(false)
-                                currentOnShowVolumeChange(false)
-                            }
                         }
                     }
                     isCenterZone = false
@@ -553,7 +578,10 @@ internal fun Modifier.playerDragGestures(
             moreSettleJob?.cancel()
             currentOnExitFullscreenDrag(0f)
             currentOnMoreVideosDrag(0f)
-            if (seekDragStarted) currentOnSeekDragChange(false)
+            if (seekDragStarted) {
+                currentOnSeekDragChange(false)
+                currentOnSeekCancelArmed(false)
+            }
             endSpeedDrag()
         }
     }

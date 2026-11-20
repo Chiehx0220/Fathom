@@ -1,13 +1,13 @@
 package io.github.aedev.flow.localserver
 
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.player.stream.model.AudioStream
+import io.github.aedev.flow.player.stream.model.AudioTrackType
 import io.github.aedev.flow.testing.DefaultLocaleRule
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Rule
 import org.junit.Test
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.AudioTrackType
 import java.util.Locale
 
 class LocalServerMediaTest {

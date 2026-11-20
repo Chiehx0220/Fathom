@@ -2,8 +2,8 @@ package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliRef
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
+import io.github.aedev.flow.content.ServiceIds
 import io.github.aedev.flow.data.model.isYouTubeServiceId
-import org.schabi.newpipe.extractor.ServiceList
 
 /*
  * Local-server URL-keyed InfoItems ↔ native bare-id keys; YouTube and Bilibili.
@@ -12,7 +12,7 @@ import org.schabi.newpipe.extractor.ServiceList
 /** Bare channel id → URL: YouTube canonical, or Bilibili space page for numeric id. */
 fun channelIdToUrl(
     channelId: String,
-    serviceId: Int = ServiceList.YouTube.serviceId,
+    serviceId: Int = ServiceIds.YOUTUBE,
 ): String =
     if (LocalServerBilibili.isBilibili(serviceId)) {
         LocalServerBilibili.channelUrl(channelId)
@@ -41,7 +41,7 @@ fun channelUrlToId(url: String?): String? {
 /** Bare id → YouTube or Bilibili URL; `item.url` must parse back to the id. */
 fun videoIdToUrl(
     videoId: String,
-    serviceId: Int = ServiceList.YouTube.serviceId,
+    serviceId: Int = ServiceIds.YOUTUBE,
 ): String {
     // Pre-normalisation rows hold a whole Bilibili link as id: read as its id.
     val id = LocalServerMedia.getVideoId(videoId)

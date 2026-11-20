@@ -1,9 +1,9 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.content.Page
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.schabi.newpipe.extractor.Page
 import java.util.Base64
 
 private const val MAX_TOKEN_CHARS = 65_536

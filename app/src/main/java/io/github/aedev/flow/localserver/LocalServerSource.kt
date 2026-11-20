@@ -1,17 +1,13 @@
 package io.github.aedev.flow.localserver
 
 import android.content.Context
-import io.github.aedev.flow.player.stream.InnerTubeVideoStreamExtractor
+import io.github.aedev.flow.content.CommentsInfoItem
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.Page
+import io.github.aedev.flow.content.StreamInfo
+import io.github.aedev.flow.player.stream.model.AudioStream
+import io.github.aedev.flow.player.stream.model.VideoStream
 import io.github.aedev.flow.utils.youtubeVideoIdFromUrl
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.NewPipe
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.comments.CommentsInfoItem
-import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.StreamExtractor
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.VideoStream
 
 internal class ListPage(
     val items: List<InfoItem>,
@@ -108,17 +104,6 @@ internal interface StreamLists {
     val videoOnlyStreams: List<VideoStream>
     val audioStreams: List<AudioStream>
     val hlsUrl: String?
-}
-
-internal class ExtractorStreams(
-    private val extractor: StreamExtractor,
-) : StreamLists {
-    // Extractor getters not thread-safe; watch page may read the same one.
-    override val length: Long get() = synchronized(extractor) { extractor.length }
-    override val videoStreams: List<VideoStream> get() = synchronized(extractor) { extractor.videoStreams.orEmpty() }
-    override val videoOnlyStreams: List<VideoStream> get() = synchronized(extractor) { extractor.videoOnlyStreams.orEmpty() }
-    override val audioStreams: List<AudioStream> get() = synchronized(extractor) { extractor.audioStreams.orEmpty() }
-    override val hlsUrl: String? get() = synchronized(extractor) { extractor.hlsUrl }
 }
 
 internal class InfoStreams(

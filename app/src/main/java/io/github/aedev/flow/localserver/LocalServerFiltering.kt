@@ -1,7 +1,7 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.StreamInfoItem
 
 private const val SHORTS_MAX_SECONDS = 120L
 

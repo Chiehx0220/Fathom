@@ -8,14 +8,14 @@ import io.github.aedev.flow.bilibili.fake.FakeBilibili
 import io.github.aedev.flow.bilibili.fake.verifyGolden
 import io.github.aedev.flow.data.local.VideoQuality
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.player.stream.model.AudioStream
+import io.github.aedev.flow.player.stream.model.VideoStream
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.ConscryptMode
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.VideoStream
 
 /** Fake API → mappers → playback step → player streams. */
 @RunWith(RobolectricTestRunner::class)

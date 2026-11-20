@@ -1,6 +1,6 @@
 package io.github.aedev.flow.bilibili
 
-import org.schabi.newpipe.extractor.ServiceList
+import io.github.aedev.flow.content.ServiceIds
 
 /** Bilibili service id in saved data (subscriptions, history, playlists). PipePipeExtractor numbering, kept for saved-data compatibility. */
 const val BILIBILI_SERVICE_ID = 5
@@ -8,7 +8,7 @@ const val BILIBILI_SERVICE_ID = 5
 // Service by id shape (pre-service-id rows carry 0); single entry point.
 
 /** Video without saved service id: YouTube unless [videoId] has Bilibili shape. */
-fun serviceIdOfVideo(videoId: String): Int = serviceIdOfVideo(videoId, ServiceList.YouTube.serviceId)
+fun serviceIdOfVideo(videoId: String): Int = serviceIdOfVideo(videoId, ServiceIds.YOUTUBE)
 
 /** [saved] unless [videoId] has Bilibili shape ("BV1xx?p=2"). */
 fun serviceIdOfVideo(
@@ -17,7 +17,7 @@ fun serviceIdOfVideo(
 ): Int = if (BilibiliRef.isVideoId(videoId)) BILIBILI_SERVICE_ID else saved
 
 /** Channel without saved service id: YouTube unless [channelId] is a bare number (uploader mid). */
-fun serviceIdOfChannel(channelId: String): Int = serviceIdOfChannel(channelId, ServiceList.YouTube.serviceId)
+fun serviceIdOfChannel(channelId: String): Int = serviceIdOfChannel(channelId, ServiceIds.YOUTUBE)
 
 /** [saved] unless [channelId] is a bare number (uploader mid). */
 fun serviceIdOfChannel(

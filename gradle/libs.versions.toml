@@ -6,6 +6,7 @@ conscrypt = "2.6.1"
 bouncycastle = "1.86"
 kotlinBip39 = "1.0.9"
 activityCompose = "1.13.0"
+navigationEvent = "1.2.0"  # pinned above the 1.1.x that activity and compose ask for: 1.1.x crashes on a back swipe while a popup closes (#2190)
 composeBom = "2026.11.00"
 navigationCompose = "2.10.0"
 lifecycle = "2.11.0"
@@ -15,7 +16,6 @@ coil = "3.5.0"
 composeReorderable = "3.1.0"
 hilt = "2.60.1"
 hiltNavigationCompose = "1.4.0"
-newPipeExtractor = "v0.26.5"
 okhttp = "5.4.0"
 ktor = "3.5.2"
 kotlinxSerialization = "1.11.0"
@@ -57,6 +57,7 @@ androidxTestCore = "1.7.0"
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-navigationevent = { group = "androidx.navigationevent", name = "navigationevent", version.ref = "navigationEvent" }
 # Alpha BOM: pins material3 1.5.0-rc01 (M3 Expressive) + compose 1.13.0-rc01 consistently.
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom-alpha", version.ref = "composeBom" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
@@ -84,7 +85,6 @@ coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp"
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
-newpipe-extractor = { group = "com.github.TeamNewPipe", name = "NewPipeExtractor", version.ref = "newPipeExtractor" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }

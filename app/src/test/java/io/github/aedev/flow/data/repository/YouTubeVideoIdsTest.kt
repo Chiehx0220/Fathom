@@ -2,13 +2,13 @@ package io.github.aedev.flow.data.repository
 
 import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
+import io.github.aedev.flow.content.ServiceIds
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.needsCollaboratorResolution
 import io.github.aedev.flow.player.stream.UpcomingPremiere
 import io.github.aedev.flow.player.stream.UpcomingPremiereProbe
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import org.schabi.newpipe.extractor.ServiceList
 
 class YouTubeVideoIdsTest {
     private fun video(serviceId: Int) =
@@ -38,7 +38,7 @@ class YouTubeVideoIdsTest {
 
     @Test
     fun `only a YouTube video can need its collaborators looked up`() {
-        assertThat(video(ServiceList.YouTube.serviceId).needsCollaboratorResolution()).isTrue()
+        assertThat(video(ServiceIds.YOUTUBE).needsCollaboratorResolution()).isTrue()
         assertThat(video(BILIBILI_SERVICE_ID).needsCollaboratorResolution()).isFalse()
     }
 

@@ -1,15 +1,15 @@
 package io.github.aedev.flow.localserver
 
+import io.github.aedev.flow.content.ChannelInfoItem
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.Page
+import io.github.aedev.flow.content.PlaylistInfoItem
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.paging.SearchResultItem
 import io.github.aedev.flow.data.paging.toResultItems
 import io.github.aedev.flow.innertube.YouTube
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.channel.ChannelInfoItem
-import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 
 /** YouTube search via app InnerTube; continuation `yt:s:<token>`, unprefixed: extractor. No shelves. */
 internal object LocalServerYouTubeSearch {

@@ -36,15 +36,19 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.ui.components.videoplayer.motion.BODY_CONTENT_MAX_EXPAND_FRACTION
 import io.github.aedev.flow.ui.components.videoplayer.motion.DraggablePlayerGestureHandler
-import io.github.aedev.flow.ui.components.videoplayer.motion.DraggablePlayerGestureMetrics
+import io.github.aedev.flow.ui.components.videoplayer.motion.MINI_PLAYER_SMALLEST_SHARE
 import io.github.aedev.flow.ui.components.videoplayer.motion.MiniPlayerPinchGestureHandler
 import io.github.aedev.flow.ui.components.videoplayer.motion.PlayerBodyNestedScrollConnection
 import io.github.aedev.flow.ui.components.videoplayer.motion.computeDraggablePlayerGeometry
 import io.github.aedev.flow.ui.components.videoplayer.motion.draggablePlayerGestures
 import io.github.aedev.flow.ui.components.videoplayer.motion.keyboardSafeMiniY
 import io.github.aedev.flow.ui.components.videoplayer.motion.lerpClamped
+import io.github.aedev.flow.ui.components.videoplayer.motion.liveVisualMiniScale
 import io.github.aedev.flow.ui.components.videoplayer.motion.miniPlayerPinchGesture
 import io.github.aedev.flow.ui.components.videoplayer.motion.morphCornerRadiusPx
+import io.github.aedev.flow.ui.components.videoplayer.motion.rememberDraggablePlayerGestureMetrics
+import io.github.aedev.flow.ui.components.videoplayer.motion.rememberMiniPlayerActions
+import io.github.aedev.flow.ui.components.videoplayer.motion.rememberPlayerGestureThresholds
 import io.github.aedev.flow.ui.components.videoplayer.motion.resnapTargets
 import io.github.aedev.flow.ui.components.videoplayer.motion.resolveOpenOriginRect
 import io.github.aedev.flow.ui.components.videoplayer.motion.tallVideoMaxHeight
@@ -140,10 +144,6 @@ fun DraggablePlayerLayout(
     var playerHeightFraction by remember { mutableFloatStateOf(1f) }
     LaunchedEffect(videoAspectRatio) { playerHeightFraction = 1f }
 
-    LaunchedEffect(isFullscreen) {
-        if (!isFullscreen) state.settlePortraitFullscreen()
-    }
-
     val statusBarHeight = WindowInsets.statusBars.getTop(density).toFloat()
     val systemLayoutDirection = LocalLayoutDirection.current
     val windowPosition = remember { WindowPosition() }
@@ -171,13 +171,7 @@ fun DraggablePlayerLayout(
         ) {
             val screenWidth = constraints.maxWidth.toFloat()
             val screenHeight = constraints.maxHeight.toFloat()
-            val showImmersiveFullscreen =
-                isImmersivePlayer(
-                    isExpanded = state.currentValue == PlayerSheetValue.Expanded,
-                    isFullscreen = isFullscreen,
-                    isLandscape = isLandscape,
-                    isLargeWindow = isLargeWindow,
-                )
+            val showImmersiveFullscreen = rememberImmersiveFullscreen(state, isFullscreen, isLandscape, isLargeWindow)
 
             val geometry =
                 computeDraggablePlayerGeometry(
@@ -201,7 +195,7 @@ fun DraggablePlayerLayout(
                             Float.MAX_VALUE
                         },
                     videoAspectRatio = videoAspectRatio,
-                    currentSizeScale = state.miniSizeScale.targetValue,
+                    currentSizeScale = state.restingMiniScale,
                     corner = state.corner,
                     isShrinkingToCorner = state.isShrinkingToCorner,
                     cachedTargetX = state.cachedTargetX,
@@ -281,14 +275,14 @@ fun DraggablePlayerLayout(
                     }
                 }
             val cornerRadiusProvider =
-                remember(openRectProvider, expandedVideoWidth, miniCornerRadiusPx, visualMiniScale) {
+                remember(openRectProvider, expandedVideoWidth, miniCornerRadiusPx, geometry) {
                     {
                         morphCornerRadiusPx(
                             fraction = state.expandFraction.value,
                             origin = openRectProvider(),
                             expandedVideoWidth = expandedVideoWidth,
                             miniCornerRadiusPx = miniCornerRadiusPx,
-                            visualMiniScale = visualMiniScale,
+                            visualMiniScale = geometry.liveVisualMiniScale(state.miniSizeScale.value),
                         )
                     }
                 }
@@ -343,8 +337,9 @@ fun DraggablePlayerLayout(
             val portraitFsActivationState = rememberUpdatedState(portraitFsActivationPx)
             val onEnterPortraitFsState = rememberUpdatedState(onEnterPortraitFullscreen)
             val pagedVideoHeight = geometry.expandedVideoHeight.coerceAtMost(tallVideoCeiling)
+            val gestureThresholds = rememberPlayerGestureThresholds()
             val nestedScrollConnection =
-                remember(pagedVideoHeight, geometry.baseVideoHeight) {
+                remember(pagedVideoHeight, geometry.baseVideoHeight, gestureThresholds) {
                     PlayerBodyNestedScrollConnection(
                         expandedVideoHeight = pagedVideoHeight,
                         baseVideoHeight = geometry.baseVideoHeight,
@@ -356,6 +351,7 @@ fun DraggablePlayerLayout(
                         portraitFsTravel = portraitFsTravelProvider,
                         portraitFsEnabled = { portraitFsEnabledState.value },
                         portraitFsActivationPx = { portraitFsActivationState.value },
+                        thresholds = gestureThresholds,
                         expandFraction = { state.expandFraction.value },
                         onEnterPortraitFullscreen = { onEnterPortraitFsState.value },
                         scrollAwayEnabled = { scrollAwayActiveState.value },
@@ -373,50 +369,53 @@ fun DraggablePlayerLayout(
                 PortraitFullscreenBackdropFade(state = state, thumbnailUrl = thumbnailUrl)
             }
 
-            // Kept composed behind a portrait fullscreen video, so leaving it has no page to build.
-            if (!showImmersiveFullscreen || !isLandscape) {
-                DraggablePlayerPage(
-                    state = state,
-                    hidden = showImmersiveFullscreen,
-                    isTwoPaneWindow = isTwoPaneWindow,
-                    statusBarHeight = statusBarHeight,
-                    screenWidth = screenWidth,
-                    screenHeight = screenHeight,
-                    videoHeightProvider = currentExpandedVideoHeightProvider,
-                    portraitFsFraction = { state.portraitFsFraction },
-                    portraitFsTravel = portraitFsTravelProvider,
-                    openRect = openRectProvider,
-                    nestedScrollConnection = nestedScrollConnection,
-                    layoutDirection = systemLayoutDirection,
-                    scrollAwayEnabled = scrollAwayActive,
-                    bodyContent = bodyContent,
-                )
-            }
+            // Kept composed behind a fullscreen video in either orientation, so leaving it has no
+            // page to build and the related list keeps its scroll.
+            DraggablePlayerPage(
+                state = state,
+                hidden = showImmersiveFullscreen,
+                isTwoPaneWindow = isTwoPaneWindow,
+                statusBarHeight = statusBarHeight,
+                screenWidth = screenWidth,
+                screenHeight = screenHeight,
+                videoHeightProvider = currentExpandedVideoHeightProvider,
+                portraitFsFraction = { state.portraitFsFraction },
+                portraitFsTravel = portraitFsTravelProvider,
+                openRect = openRectProvider,
+                nestedScrollConnection = nestedScrollConnection,
+                layoutDirection = systemLayoutDirection,
+                scrollAwayEnabled = scrollAwayActive,
+                bodyContent = bodyContent,
+            )
 
-            val gestureMetrics = remember(state) { DraggablePlayerGestureMetrics() }
-            SideEffect {
-                gestureMetrics.update(
+            val gestureMetrics =
+                rememberDraggablePlayerGestureMetrics(
+                    state = state,
                     geometry = geometry,
                     isLargeWindow = isLargeWindow,
                     isLandscape = isLandscape,
                     isFullscreen = isFullscreen,
                     tapToExpand = tapToExpand,
+                    thresholds = gestureThresholds,
+                    minSizeScale = (MINI_PLAYER_SMALLEST_SHARE / miniPlayerScale).coerceAtMost(1f),
                     onFullscreenGesture = onFullscreenGesture,
                     onCollapseGesture = onCollapseGesture,
                     onDismiss = onDismiss,
                 )
-            }
             val gestureHandler =
                 remember(state, gestureMetrics) { DraggablePlayerGestureHandler(state, gestureMetrics) }
             val pinchHandler =
                 remember(state, gestureMetrics) { MiniPlayerPinchGestureHandler(state, gestureMetrics) }
-            MiniPlayerTuckHandle(
+            MiniPlayerEdgeLayers(
                 state = state,
                 miniY = miniRestingY,
+                miniWidth = geometry.miniWidth,
                 miniHeight = geometry.miniHeight,
-                onUntuck = gestureHandler::untuck,
+                screenWidth = geometry.screenWidth,
+                handler = gestureHandler,
             )
 
+            val miniActions = rememberMiniPlayerActions(state, gestureHandler, onDismiss)
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                 Box(
                     modifier =
@@ -438,6 +437,7 @@ fun DraggablePlayerLayout(
                                 // shape while a finger is down or the drag coroutine is reset.
                                 .miniPlayerPinchGesture(pinchHandler)
                                 .draggablePlayerGestures(gestureHandler)
+                                .then(miniActions)
                         },
                 ) {
                     videoContent(Modifier.fillMaxSize())

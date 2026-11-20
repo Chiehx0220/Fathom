@@ -5,6 +5,7 @@ import io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID
 import io.github.aedev.flow.bilibili.BilibiliApi
 import io.github.aedev.flow.bilibili.BilibiliRelated
 import io.github.aedev.flow.bilibili.BilibiliUploader
+import io.github.aedev.flow.content.ServiceIds
 import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.model.Video
 import io.mockk.coEvery
@@ -15,7 +16,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertThrows
 import org.junit.Test
-import org.schabi.newpipe.extractor.ServiceList
 
 class VideoSourcesTest {
     private class FakeSource(
@@ -29,13 +29,13 @@ class VideoSourcesTest {
         override suspend fun related(videoId: String): List<Video> = emptyList()
     }
 
-    private val youtube = FakeSource(ServiceList.YouTube.serviceId)
+    private val youtube = FakeSource(ServiceIds.YOUTUBE)
     private val bilibili = FakeSource(BILIBILI_SERVICE_ID)
     private val sources = VideoSources(listOf(youtube, bilibili))
 
     @Test
     fun `YouTube's service id is the literal 0 that default parameters across the app rely on`() {
-        assertThat(ServiceList.YouTube.serviceId).isEqualTo(0)
+        assertThat(ServiceIds.YOUTUBE).isEqualTo(0)
     }
 
     @Test
@@ -65,7 +65,7 @@ class VideoSourcesTest {
             val bilibiliHit = video("BV1xx411c7mD")
             val searching =
                 listOf(
-                    SearchingSource(ServiceList.YouTube.serviceId, emptyList()),
+                    SearchingSource(ServiceIds.YOUTUBE, emptyList()),
                     SearchingSource(BILIBILI_SERVICE_ID, listOf(bilibiliHit)),
                 )
             var youtubeAsked = 0
@@ -92,7 +92,7 @@ class VideoSourcesTest {
 
     @Test
     fun `a wrong saved service id loses to the shape of the id`() {
-        assertThat(sources.forVideo("BV1xx411c7mD", savedServiceId = ServiceList.YouTube.serviceId)).isSameInstanceAs(bilibili)
+        assertThat(sources.forVideo("BV1xx411c7mD", savedServiceId = ServiceIds.YOUTUBE)).isSameInstanceAs(bilibili)
     }
 
     @Test

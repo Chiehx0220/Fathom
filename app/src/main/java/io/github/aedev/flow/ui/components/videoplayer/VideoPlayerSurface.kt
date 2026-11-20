@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -52,6 +53,7 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.PictureInPictureHelper
 import io.github.aedev.flow.player.PipBounds
+import io.github.aedev.flow.player.stream.StoryboardLevel
 import io.github.aedev.flow.player.toDisplayAspectRatioOrNull
 import io.github.aedev.flow.ui.components.shared.clipToCornerRadius
 import io.github.aedev.flow.ui.components.shared.flowPlayerViewLayout
@@ -71,6 +73,7 @@ fun VideoPlayerSurface(
     ambientMode: Boolean = false,
     ambientFrames: AmbientFrameHolder? = null,
     ambientGlow: Boolean = false,
+    ambientStoryboard: List<StoryboardLevel> = emptyList(),
     spherical: Boolean = false,
     sphericalMotion: Boolean = true,
     sphericalTouch: Boolean = false,
@@ -240,7 +243,13 @@ fun VideoPlayerSurface(
 
     val currentSurfaceRestoreTrigger = surfaceRestoreTrigger
 
-    AmbientFrameCaptureEffect(playerView, !spherical && (ambientActive || ambientGlow), frames)
+    AmbientFrameCaptureEffect(
+        playerView = playerView,
+        active = !spherical && (ambientActive || ambientGlow),
+        holder = frames,
+        storyboard = ambientStoryboard,
+        thumbnailUrl = video.thumbnailUrl,
+    )
 
     Box(modifier = modifier.fillMaxSize()) {
         if (ambientActive) AmbientBars(frames, ambientVideoAspect)
@@ -400,7 +409,7 @@ private fun Modifier.forwardTouchesTo(
 
 private const val SEEK_FRAME_REDRAW_DELAY_MS = 50L
 
-/** Reads the frame in its own scope, so each new frame recomposes the bars and not the surface. */
+/** Only the first frame recomposes here; every frame after it is read in draw. */
 @Composable
 private fun AmbientBars(
     frames: AmbientFrameHolder,
@@ -410,11 +419,10 @@ private fun AmbientBars(
     // its dark base, which used to black out the backdrop around the video for a moment.
     val ambientAppear = remember { Animatable(0f) }
     val ambientFade = MaterialTheme.motionScheme.slowEffectsSpec<Float>()
-    val frame = frames.state.frame
-    val ambientReady = frame != null
+    val ambientReady by remember(frames) { derivedStateOf { frames.state.frame != null } }
     LaunchedEffect(ambientReady) { if (ambientReady) ambientAppear.animateTo(1f, ambientFade) }
     VideoAmbientBackground(
-        frame = frame,
+        frames = frames,
         videoAspect = videoAspect,
         modifier = Modifier.fillMaxSize().graphicsLayer { alpha = ambientAppear.value },
     )

@@ -1,33 +1,32 @@
 package io.github.aedev.flow.localserver
 
 import android.content.Context
+import io.github.aedev.flow.content.CommentsInfoItem
+import io.github.aedev.flow.content.Description
+import io.github.aedev.flow.content.Page
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.repository.YouTubeRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.comments.CommentsInfoItem
-import org.schabi.newpipe.extractor.stream.Description
 
-/**
- * YouTube comments via app InnerTube (extractor lacks newer avatars). Continuation `yt:c:<token>`, replies `yt:r:<token>`; unprefixed
- * pages: extractor.
- */
+/** YouTube comments via app InnerTube. Continuation `yt:c:<token>`, replies `yt:r:<token>`. */
 internal object LocalServerYouTubeComments {
     private const val MORE = "yt:c:"
     private const val REPLIES = "yt:r:"
 
-    /** Continuation made by this object; [LocalServerSource] does not hand it to the extractor. */
+    /** Continuation made by this object. */
     fun owns(page: Page?): Boolean = page?.url?.startsWith("yt:") == true
 
     /**
-     * One page; null on empty first page → extractor answers (knows comments-off). Failed continuation ends the list.
+     * One page. Comments turned off is reported as [CommentsResult.disabled]. A failed continuation ends the list; a failed
+     * first page throws, so the route answers with an error rather than an empty list.
      */
     fun comments(
         context: Context,
         videoUrl: String,
         nextPage: Page?,
-    ): CommentsResult? {
+    ): CommentsResult {
         val videoId = LocalServerMedia.getVideoId(videoUrl)
         val token = nextPage?.url.orEmpty()
         val repo = YouTubeRepository.getInstance(PlayerPreferences(context))
@@ -38,9 +37,7 @@ internal object LocalServerYouTubeComments {
                         repo.getVideoCommentReplies(videoId, token.removePrefix(REPLIES)).let { page ->
                             CommentsResult(
                                 page.comments.map { it.toCommentItem(videoUrl, hasReplies = false) },
-                                page.continuation?.let {
-                                    Page(REPLIES + it)
-                                },
+                                page.continuation?.let { Page(REPLIES + it) },
                             )
                         }
                     }
@@ -49,35 +46,31 @@ internal object LocalServerYouTubeComments {
                         repo.getMoreVideoComments(videoId, token.removePrefix(MORE)).let { page ->
                             CommentsResult(
                                 page.comments.map { it.toCommentItem(videoUrl, hasReplies = true) },
-                                page.continuation?.let {
-                                    Page(MORE + it)
-                                },
+                                page.continuation?.let { Page(MORE + it) },
                             )
                         }
                     }
 
+                    // A cursor this object did not make: nothing to continue.
                     nextPage != null -> {
-                        null
+                        CommentsResult(emptyList(), null)
                     }
 
                     else -> {
                         val page = repo.getVideoComments(videoId)
-                        if (page.comments.isEmpty()) {
-                            null
-                        } else {
-                            CommentsResult(
-                                page.comments.map { it.toCommentItem(videoUrl, hasReplies = true) },
-                                page.continuation?.let {
-                                    Page(MORE + it)
-                                },
-                            )
-                        }
+                        CommentsResult(
+                            page.comments.map { it.toCommentItem(videoUrl, hasReplies = true) },
+                            page.continuation?.let { Page(MORE + it) },
+                            disabled = page.disabled,
+                        )
                     }
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             serverLog("InnerTube comments failed: ${e.message}")
-            if (owns(nextPage)) CommentsResult(emptyList(), null) else null
+            if (nextPage != null) CommentsResult(emptyList(), null) else throw e
         }
     }
 }
@@ -89,16 +82,16 @@ internal fun Comment.toCommentItem(
 ): CommentsInfoItem {
     val comment = this
     return CommentsInfoItem(0, videoUrl, author).apply {
-        setCommentId(comment.id)
-        setCommentText(Description(comment.text, Description.PLAIN_TEXT))
-        setUploaderName(comment.author)
-        setUploaderUrl(if (comment.authorChannelId.isEmpty()) "" else channelIdToUrl(comment.authorChannelId))
+        commentId = comment.id
+        commentText = Description(comment.text, Description.PLAIN_TEXT)
+        uploaderName = comment.author
+        uploaderUrl = if (comment.authorChannelId.isEmpty()) "" else channelIdToUrl(comment.authorChannelId)
         uploaderAvatarUrl = comment.authorThumbnail.takeIf { it.isNotBlank() }
-        setLikeCount(comment.likeCount)
-        setTextualUploadDate(comment.publishedTime)
-        setPinned(comment.isPinned)
-        setReplyCount(comment.replyCount)
+        likeCount = comment.likeCount
+        textualUploadDate = comment.publishedTime
+        isPinned = comment.isPinned
+        replyCount = comment.replyCount
         val replies = comment.continuationToken
-        if (hasReplies && comment.replyCount > 0 && replies != null) setReplies(Page("yt:r:$replies"))
+        if (hasReplies && comment.replyCount > 0 && replies != null) this.replies = Page("yt:r:$replies")
     }
 }

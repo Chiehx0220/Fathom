@@ -1,8 +1,8 @@
 package io.github.aedev.flow.localserver
 
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.content.Image
 import org.junit.Test
-import org.schabi.newpipe.extractor.Image
 
 class NoThumbnailTest {
     private val legacyPlaceholder =

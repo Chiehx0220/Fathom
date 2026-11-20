@@ -8,11 +8,11 @@ import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.model.resolvedServiceId
 import io.github.aedev.flow.di.bilibiliApi
+import io.github.aedev.flow.player.stream.model.StreamType
 import io.github.aedev.flow.utils.NetworkState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
-import org.schabi.newpipe.extractor.stream.StreamType
 
 /** Next Bilibili video for gapless preload, same data as YouTube side. */
 internal object BilibiliPreloadResolver {

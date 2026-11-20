@@ -5,6 +5,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,14 +29,40 @@ import io.github.aedev.flow.ui.screens.player.state.expandsOnLoad
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 
-/** Collapsing the sheet, or leaving fullscreen, drops every surface the expanded player owns. */
+/** How far a collapse has to move the video before the full controls hand over. */
+private const val CONTROLS_HANDOFF_FRACTION = 0.01f
+
+/**
+ * Collapsing the sheet, or leaving fullscreen, drops every surface the expanded player owns. A zoom
+ * belongs to the fullscreen it was made in, so leaving fullscreen also sets it back.
+ */
 @Composable
 internal fun PlayerSheetCollapseSyncEffects(
     playerSheetState: PlayerDraggableState,
     screenState: PlayerScreenState,
+    isFullscreenShown: Boolean,
 ) {
+    // A collapse hands the video to the mini player's controls: the full controls fade out as soon
+    // as it starts instead of shrinking with the video, and come back only if the drag is called off.
+    val collapsing by remember(playerSheetState) {
+        derivedStateOf { playerSheetState.fraction > CONTROLS_HANDOFF_FRACTION }
+    }
+    var controlsBeforeCollapse by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(collapsing) {
+        if (collapsing) {
+            if (controlsBeforeCollapse == null && playerSheetState.currentValue == PlayerSheetValue.Expanded) {
+                controlsBeforeCollapse = screenState.showControls
+            }
+            screenState.showControls = false
+        } else {
+            if (controlsBeforeCollapse == true) screenState.showControls = true
+            controlsBeforeCollapse = null
+        }
+    }
+
     LaunchedEffect(playerSheetState.currentValue) {
         if (playerSheetState.currentValue == PlayerSheetValue.Collapsed) {
+            controlsBeforeCollapse = null
             screenState.isFullscreen = false
             screenState.isFullscreenPortrait = false
             screenState.dismissMediaSheets()
@@ -48,8 +75,18 @@ internal fun PlayerSheetCollapseSyncEffects(
 
     LaunchedEffect(screenState.isFullscreen) {
         screenState.dismissMediaSheets()
-        screenState.exitDragOffsetY = 0f
         screenState.moreVideosDragY = 0f
+    }
+
+    // A released exit drag holds the video where the finger left it until the window has turned,
+    // instead of snapping back to the centre for the length of the rotation.
+    LaunchedEffect(isFullscreenShown) {
+        screenState.exitDragOffsetY = 0f
+        if (!isFullscreenShown) {
+            screenState.zoomScale = 1f
+            screenState.zoomOffsetX = 0f
+            screenState.zoomOffsetY = 0f
+        }
     }
 }
 
@@ -268,7 +305,6 @@ internal fun PlayerEndAndPipEffects(
     screenState: PlayerScreenState,
     isInPipMode: Boolean,
     isEnteringPip: Boolean,
-    isLandscape: Boolean,
     pipForcedFullscreen: MutableState<Boolean>,
 ) {
     // Controls drawn as the window shrinks end up in the PiP animation's first frames.
@@ -286,7 +322,9 @@ internal fun PlayerEndAndPipEffects(
         }
     }
 
-    LaunchedEffect(isInPipMode, isLandscape) {
+    // Any way out of PiP gives back the fullscreen choice the viewer had before it. Waiting for a
+    // portrait window left the forced fullscreen on for good when the phone was held sideways.
+    LaunchedEffect(isInPipMode) {
         if (isInPipMode) {
             playerSheetState.expand()
             if (!screenState.isFullscreen) {
@@ -294,7 +332,7 @@ internal fun PlayerEndAndPipEffects(
                 screenState.isFullscreen = true
             }
             screenState.showControls = false
-        } else if (pipForcedFullscreen.value && !isLandscape) {
+        } else if (pipForcedFullscreen.value) {
             pipForcedFullscreen.value = false
             screenState.isFullscreen = false
         }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
@@ -23,9 +24,6 @@ import kotlin.math.abs
 
 private const val DRAG_MODE_FRACTION = 0
 private const val DRAG_MODE_EXPAND_SCALE = 1
-
-/** Screen-space movement under which a mini player press still counts as a tap. */
-private const val MINI_TAP_MOVEMENT_PX = 24f
 
 /**
  * Where a mini player drag left the finger, how far it went, whether the player followed it, and
@@ -179,10 +177,14 @@ internal class DraggablePlayerGestureHandler(
                     } else if (isCollapseDrag && detectedDirection == -1) {
                         change.consume()
                         totalUpwardDrag += -delta.y
-                        pendingExpandScale = expandDragZoomFor(totalUpwardDrag)
+                        pendingExpandScale = expandDragZoomFor(totalUpwardDrag, metrics.thresholds)
                         pendingMode = DRAG_MODE_EXPAND_SCALE
                         snapSignal.trySend(Unit)
                     }
+                }
+                currentEvent.changes.firstOrNull { it.id == dragPointerId }?.let { up ->
+                    fingerPath += up.positionChange() * metrics.liveGestureScale(state)
+                    velocityTracker.addLiftOff(up.uptimeMillis, fingerPath)
                 }
             } finally {
                 snapSignal.close()
@@ -203,7 +205,7 @@ internal class DraggablePlayerGestureHandler(
 
         if (isCollapseDrag && detectedDirection == -1) {
             val velY = velocityTracker.calculateVelocity().y
-            if (shouldEnterFullscreenFromSwipe(totalUpwardDrag, velY)) {
+            if (shouldEnterFullscreenFromSwipe(totalUpwardDrag, velY, metrics.thresholds)) {
                 metrics.onFullscreenGesture?.invoke()
             }
             return
@@ -212,7 +214,7 @@ internal class DraggablePlayerGestureHandler(
         if (isCollapseDrag) {
             val velY = velocityTracker.calculateVelocity().y
             val collapseTravel = metrics.targetMiniY - metrics.statusBarHeight
-            if (shouldCollapseOnRelease(state.expandFraction.value, velY)) {
+            if (shouldCollapseOnRelease(state.expandFraction.value, velY, metrics.thresholds)) {
                 metrics.onCollapseGesture?.invoke()
                 state.collapse(fractionVelocity(velY, collapseTravel))
             } else {
@@ -224,7 +226,7 @@ internal class DraggablePlayerGestureHandler(
 
     /**
      * A press on the mini player. It follows the finger from half the touch slop, and a release that
-     * travelled less than [MINI_TAP_MOVEMENT_PX] is a tap. A second finger hands the gesture to the
+     * travelled less than [PlayerGestureThresholds.miniTapMovement] is a tap. A second finger hands the gesture to the
      * pinch, so the player is never dragged and re-cornered underneath a resize.
      */
     private suspend fun AwaitPointerEventScope.handleMiniGesture(
@@ -241,7 +243,7 @@ internal class DraggablePlayerGestureHandler(
                 awaitAllPointersUp()
             }
 
-            drag.travel < MINI_TAP_MOVEMENT_PX -> {
+            drag.travel < metrics.thresholds.miniTapMovement -> {
                 if (drag.moved) releaseMini(drag.fingerAt, startCorner)
                 onMiniTap(down.uptimeMillis, downConsumedByChild)
             }
@@ -271,7 +273,15 @@ internal class DraggablePlayerGestureHandler(
             while (true) {
                 val event = awaitPointerEvent(PointerEventPass.Main)
                 val change = event.changes.firstOrNull { it.id == down.id }
-                if (change == null || !change.pressed) break
+                if (change == null || !change.pressed) {
+                    if (change != null) {
+                        velocityTracker.addLiftOff(
+                            change.uptimeMillis,
+                            fingerPath + change.positionChange() * metrics.liveGestureScale(state),
+                        )
+                    }
+                    break
+                }
                 if (change.isConsumed || event.changes.count { it.pressed } > 1) {
                     return MiniDrag(Offset(rawX, rawY), travel, following, interrupted = true)
                 }
@@ -289,14 +299,23 @@ internal class DraggablePlayerGestureHandler(
                     rawX += delta.x
                     rawY += delta.y
                     snapSignal.trySend(Unit)
+                    armClose(isPastMiniCloseLine(rawY, metrics.maxY, metrics.miniHeight))
                 }
             }
         } finally {
             snapSignal.close()
             snapDriver.cancel()
             state.isDragging = false
+            state.isCloseArmed = false
         }
         return MiniDrag(Offset(rawX, rawY), travel, following, interrupted = false)
+    }
+
+    /** Shows that letting go now closes the player, with one tick as the line is crossed. */
+    private fun armClose(armed: Boolean) {
+        if (armed == state.isCloseArmed) return
+        state.isCloseArmed = armed
+        if (armed) metrics.haptics?.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
     }
 
     private fun onMiniTap(
@@ -340,7 +359,7 @@ internal class DraggablePlayerGestureHandler(
         }
     }
 
-    private fun toggleWideMode() {
+    fun toggleWideMode() {
         if (state.isInlineMode) {
             state.shrinkToCorner(
                 baseMiniWidth = metrics.baseMiniWidth,
@@ -386,7 +405,8 @@ internal class DraggablePlayerGestureHandler(
         val velocity = velocityTracker.calculateVelocity()
         val velY = velocity.y
         val velX = velocity.x
-        if (shouldCloseMiniDownward(fingerAt.y, metrics.maxY, metrics.miniHeight, !startCorner.isTop, velX, velY)) {
+        val startedAtBottom = !startCorner.isTop
+        if (shouldCloseMiniDownward(fingerAt.y, metrics.maxY, metrics.miniHeight, startedAtBottom, velX, velY, metrics.thresholds)) {
             closeDownward(velY)
             return
         }
@@ -401,6 +421,7 @@ internal class DraggablePlayerGestureHandler(
                 bounds = bounds,
                 scaledVelocityX = velX,
                 scaledVelocityY = velY,
+                thresholds = metrics.thresholds,
             )
         val targetX = cornerTargetX(newCorner, bounds.minX, bounds.maxX)
         val targetY = cornerTargetY(newCorner, bounds.minY, bounds.maxY)
@@ -420,7 +441,7 @@ internal class DraggablePlayerGestureHandler(
             return
         }
 
-        val tuckSide = resolveMiniPlayerTuck(fingerAt.x, startCorner.isLeft, bounds, metrics.miniWidth, velX, velY)
+        val tuckSide = resolveMiniPlayerTuck(fingerAt.x, startCorner.isLeft, bounds, metrics.miniWidth, velX, velY, metrics.thresholds)
         if (tuckSide != null) {
             tuck(tuckSide, currentY, velX)
             return
@@ -457,6 +478,71 @@ internal class DraggablePlayerGestureHandler(
         }
     }
 
+    private var tabFinger = Offset.Zero
+    private var tabPath = Offset.Zero
+    private var tabStartCorner = MiniPlayerCorner.BottomRight
+
+    /** A drag on the tuck tab takes hold of the tucked player where it is. */
+    fun startTabDrag() {
+        state.scope.launch { state.motion.stopOffsets() }
+        tabStartCorner = state.corner
+        tabFinger = Offset(state.offsetX.value, state.offsetY.value)
+        tabPath = Offset.Zero
+        velocityTracker.resetTracking()
+        state.isDragging = true
+    }
+
+    /** The tab is not under the morph's scale, so its deltas are already screen travel. */
+    fun tabDrag(
+        uptimeMillis: Long,
+        delta: Offset,
+    ) {
+        tabPath += delta
+        velocityTracker.addPosition(uptimeMillis, tabPath)
+        tabFinger += delta
+        val x = tabFinger.x
+        val y = miniDragY(tabFinger.y)
+        state.scope.launch {
+            state.offsetX.snapTo(x)
+            state.offsetY.snapTo(y)
+        }
+    }
+
+    /** Lets go of a player pulled out by its tab: it settles by the same rules as any mini drag. */
+    fun endTabDrag(uptimeMillis: Long) {
+        velocityTracker.addPosition(uptimeMillis, tabPath)
+        state.isDragging = false
+        state.tuckedSide = null
+        releaseMini(tabFinger, tabStartCorner)
+    }
+
+    /** Moves the mini player clockwise to the next corner, for accessibility services. */
+    fun moveToNextCorner() {
+        if (state.tuckedSide != null || state.isInlineMode) return
+        val next =
+            when (state.corner) {
+                MiniPlayerCorner.TopLeft -> MiniPlayerCorner.TopRight
+                MiniPlayerCorner.TopRight -> MiniPlayerCorner.BottomRight
+                MiniPlayerCorner.BottomRight -> MiniPlayerCorner.BottomLeft
+                MiniPlayerCorner.BottomLeft -> MiniPlayerCorner.TopLeft
+            }
+        state.corner = next
+        val bounds = metrics.bounds
+        state.scope.launch {
+            state.motion.moveOffsets {
+                launch { state.offsetX.animateTo(cornerTargetX(next, bounds.minX, bounds.maxX), miniSnapSpringSpec) }
+                launch { state.offsetY.animateTo(cornerTargetY(next, bounds.minY, bounds.maxY), miniSnapSpringSpec) }
+            }
+        }
+    }
+
+    /** Tucks the mini player past the edge its corner is on, for accessibility services. */
+    fun tuckToNearestSide() {
+        if (state.tuckedSide != null || state.isInlineMode) return
+        val side = if (state.corner.isLeft) MiniPlayerTuckSide.Left else MiniPlayerTuckSide.Right
+        tuck(side, state.offsetY.value, velocityX = 0f)
+    }
+
     /** Brings a tucked mini player back to the corner on the side it was tucked into. */
     fun untuck() {
         if (state.tuckedSide == null) return
@@ -472,6 +558,15 @@ internal class DraggablePlayerGestureHandler(
         }
     }
 }
+
+/**
+ * Records where and when the finger lifted. Without it a finger that stops and then lets go keeps
+ * the speed of its last movement, so a drag that was held still could still release as a fling.
+ */
+private fun VelocityTracker.addLiftOff(
+    uptimeMillis: Long,
+    position: Offset,
+) = addPosition(uptimeMillis, position)
 
 internal fun Modifier.draggablePlayerGestures(handler: DraggablePlayerGestureHandler): Modifier =
     pointerInput(handler) {

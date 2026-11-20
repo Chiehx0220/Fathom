@@ -4,7 +4,13 @@ import android.content.Context
 import io.github.aedev.flow.bilibili.BilibiliContentNotAvailableException
 import io.github.aedev.flow.bilibili.BilibiliLiveMessage
 import io.github.aedev.flow.bilibili.BilibiliRef
+import io.github.aedev.flow.content.DateWrapper
+import io.github.aedev.flow.content.Description
+import io.github.aedev.flow.content.Image
+import io.github.aedev.flow.content.StreamInfo
+import io.github.aedev.flow.content.StreamInfoItem
 import io.github.aedev.flow.di.bilibiliApi
+import io.github.aedev.flow.player.stream.model.StreamType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -13,12 +19,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.Image
-import org.schabi.newpipe.extractor.localization.DateWrapper
-import org.schabi.newpipe.extractor.stream.Description
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
-import org.schabi.newpipe.extractor.stream.StreamType
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset

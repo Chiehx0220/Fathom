@@ -1,6 +1,7 @@
 package io.github.aedev.flow.data.source
 
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
+import io.github.aedev.flow.content.ServiceIds
 import io.github.aedev.flow.data.local.HomeContentSourceFilter
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.local.homeContentSourceFilter
@@ -9,7 +10,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
-import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,7 +33,7 @@ class VideoSources(
         coroutineScope {
             forFilter(homeFilter())
                 .map { source ->
-                    async { if (source.serviceId == ServiceList.YouTube.serviceId) youtube(query) else source.search(query) }
+                    async { if (source.serviceId == ServiceIds.YOUTUBE) youtube(query) else source.search(query) }
                 }.awaitAll()
                 .flatten()
         }
@@ -43,7 +43,7 @@ class VideoSources(
     /** Saved service id may be wrong; id shape wins. */
     fun forVideo(
         videoId: String,
-        savedServiceId: Int = ServiceList.YouTube.serviceId,
+        savedServiceId: Int = ServiceIds.YOUTUBE,
     ): VideoSource? = forService(serviceIdOfVideo(videoId, savedServiceId))
 
     fun forVideo(video: Video): VideoSource? = forVideo(video.id, video.serviceId)

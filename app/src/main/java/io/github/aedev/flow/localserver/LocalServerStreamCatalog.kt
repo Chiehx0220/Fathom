@@ -1,8 +1,8 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.MediaFormat
-import org.schabi.newpipe.extractor.stream.AudioStream
-import org.schabi.newpipe.extractor.stream.VideoStream
+import io.github.aedev.flow.player.stream.model.AudioStream
+import io.github.aedev.flow.player.stream.model.MediaFormat
+import io.github.aedev.flow.player.stream.model.VideoStream
 import java.net.URLEncoder
 
 /** Web-player offer: qualities + audio tracks by short id; `/stream?rep=` (Bilibili has no unique itag). */
@@ -117,7 +117,7 @@ internal class StreamCatalog(
                         id,
                         url,
                         bandwidth,
-                        vs.codec.orEmpty(),
+                        vs.codec.orEmpty().forMse(),
                         vs.width,
                         vs.height,
                         vs.fps,

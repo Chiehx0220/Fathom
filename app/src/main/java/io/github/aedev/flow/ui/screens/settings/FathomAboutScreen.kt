@@ -142,7 +142,7 @@ internal fun FathomAboutScreen(onBack: (() -> Unit)?) {
             link(
                 key = "about.legal.newpipe",
                 title = { stringResource(R.string.newpipe_extractor_title) },
-                subtitle = { stringResource(R.string.newpipe_extractor_subtitle) },
+                subtitle = { stringResource(R.string.newpipe_extractor_credit) },
                 icon = Icons.Outlined.Extension,
                 onClick = { open(AboutLinks.NEWPIPE_EXTRACTOR) },
             )

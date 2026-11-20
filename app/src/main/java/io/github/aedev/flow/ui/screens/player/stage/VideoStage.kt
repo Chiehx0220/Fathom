@@ -1,10 +1,14 @@
 package io.github.aedev.flow.ui.screens.player.stage
 
 import android.content.res.Configuration
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -29,15 +34,21 @@ import io.github.aedev.flow.ui.components.shared.MediaBufferingIndicator
 import io.github.aedev.flow.ui.components.shared.VideoThumbnailImage
 import io.github.aedev.flow.ui.components.videoplayer.MINI_PLAYER_CORNER_RADIUS_DP
 import io.github.aedev.flow.ui.components.videoplayer.VideoPlayerSurface
+import io.github.aedev.flow.ui.components.videoplayer.fadedOutByCollapse
 import io.github.aedev.flow.ui.components.videoplayer.gesture.chapterSkipTarget
 import io.github.aedev.flow.ui.components.videoplayer.gesture.videoPlayerControls
 import io.github.aedev.flow.ui.components.videoplayer.gesture.videoPlayerZoom
+import io.github.aedev.flow.ui.components.videoplayer.motion.rememberPlayerGestureThresholds
 import io.github.aedev.flow.ui.components.videoplayer.overlay.ChapterSkipFeedback
 import io.github.aedev.flow.ui.components.videoplayer.placedWhen
 import io.github.aedev.flow.ui.components.videoplayer.subtitle.Media3SubtitleOverlay
 import io.github.aedev.flow.ui.screens.player.saveChosenPlaybackSpeed
+import io.github.aedev.flow.ui.screens.player.state.PlayerResizeMode
+import io.github.aedev.flow.ui.screens.player.state.PlayerScreenState
 import io.github.aedev.flow.ui.screens.player.state.PlayerSheet
 import io.github.aedev.flow.ui.screens.player.state.effectiveResizeMode
+import kotlinx.coroutines.flow.collectLatest
+import kotlin.math.abs
 
 /**
  * The player's video slot: the surface itself, the gesture and zoom transforms wrapped around it,
@@ -111,6 +122,7 @@ internal fun VideoStage(
     }
 
     // ALWAYS use the same video surface
+    val exitGive = rememberExitDragGive(screenState, session.isFullscreenShown)
     val gestureModifier =
         if (gesturesActive) {
             modifier
@@ -131,7 +143,9 @@ internal fun VideoStage(
                     currentPosition = { screenState.currentPosition },
                     duration = screenState.duration,
                     scope = scope,
-                    isFullscreen = screenState.isFullscreen,
+                    // The gestures follow what is on screen: during the wait for the window to turn,
+                    // the layout is still the one being left, and so are its gestures.
+                    isFullscreen = session.isFullscreenShown,
                     onBrightnessChange = updateBrightnessLevel,
                     onShowBrightnessChange = { screenState.showBrightnessOverlay = it },
                     onVolumeChange = { level ->
@@ -145,6 +159,7 @@ internal fun VideoStage(
                         screenState.isSeekDragging = dragging
                         screenState.onInteraction()
                     },
+                    onSeekCancelArmed = { screenState.isSeekCancelArmed = it },
                     onSeekDragUpdate = { targetMs, deltaMs ->
                         screenState.seekDragTargetMs = targetMs
                         screenState.seekDragDeltaMs = deltaMs
@@ -205,6 +220,20 @@ internal fun VideoStage(
                     offsetY = { screenState.zoomOffsetY },
                     // A 360 video is moved by looking around, so a pinch only zooms it.
                     panEnabled = !spherical,
+                    // Only a fitted picture has bars to fill; a zoomed or stretched one already fills the box.
+                    videoAspectRatio = {
+                        if (spherical || !(screenState.isFullscreen || isLandscapeWindow) ||
+                            resizeMode != PlayerResizeMode.FIT
+                        ) {
+                            0f
+                        } else {
+                            videoAspectRatio
+                        }
+                    },
+                    onFillDetent = { atFill ->
+                        screenState.isZoomAtFill = atFill
+                        if (atFill) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                    },
                     onTwoFingerDoubleTap = if (canSkipChapters) { forward -> skipChapter(forward) } else null,
                     onTransform = { newScale, newOffsetX, newOffsetY ->
                         screenState.zoomScale = newScale
@@ -214,7 +243,9 @@ internal fun VideoStage(
                         screenState.zoomIndicatorSequence += 1
                     },
                 ).graphicsLayer {
-                    if (screenState.isFullscreen) translationY = screenState.exitDragOffsetY
+                    if (session.isFullscreenShown) translationY = screenState.exitDragOffsetY
+                    scaleX = 1f - exitGive.value
+                    scaleY = 1f - exitGive.value
                 }
         } else {
             modifier
@@ -255,6 +286,7 @@ internal fun VideoStage(
                 ambientMode = prefs.ambientModeEnabled && !isMinimized && !localIsInPipMode,
                 ambientFrames = session.ambient.frames,
                 ambientGlow = session.ambient.glow,
+                ambientStoryboard = playerUiState.storyboard,
                 spherical = spherical,
                 sphericalMotion = prefs.sphericalMotionEnabled,
                 sphericalTouch = gesturesActive,
@@ -277,7 +309,7 @@ internal fun VideoStage(
                         ),
                     videoAspectRatio = videoAspectRatio,
                     resizeMode = resizeMode,
-                    modifier = Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced),
+                    modifier = Modifier.fillMaxSize().fadedOutByCollapse { playerSheetState.fraction },
                 )
                 DanmakuOverlay(video, playerUiState.isLive, screenState, Modifier.fillMaxSize().placedWhen(expandedSurfacesPlaced))
             }
@@ -301,7 +333,7 @@ internal fun VideoStage(
 
         // Non-zoomable UI overlays (always at full-screen position)
         if (expandedSurfacesMounted && !localIsInPipMode) {
-            Box(modifier = Modifier.matchParentSize().placedWhen(expandedSurfacesPlaced)) {
+            Box(modifier = Modifier.matchParentSize().fadedOutByCollapse { playerSheetState.fraction }) {
                 VideoStageOverlays(session = session)
             }
         }
@@ -339,4 +371,34 @@ internal fun VideoStage(
             }
         }
     }
+}
+
+/** How much smaller the video gets as an exit drag reaches its commit point. */
+private const val EXIT_DRAG_SHRINK = 0.05f
+
+/**
+ * How much the video gives as it is pulled out of fullscreen: it follows the drag toward 95% over
+ * the travel that commits the exit, and eases back once fullscreen ends, so a portrait exit, where
+ * the slide takes over from the finger, does not jump back to full size as it starts.
+ */
+@Composable
+private fun rememberExitDragGive(
+    screenState: PlayerScreenState,
+    isFullscreenShown: Boolean,
+): Animatable<Float, AnimationVector1D> {
+    val give = remember { Animatable(0f) }
+    val commitPx = rememberPlayerGestureThresholds().exitFullscreenDrag
+    val settle = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
+    val shown by rememberUpdatedState(isFullscreenShown)
+    LaunchedEffect(screenState, commitPx) {
+        snapshotFlow { if (shown) screenState.exitDragOffsetY else 0f }
+            .collectLatest { offset ->
+                if (offset != 0f) {
+                    give.snapTo((abs(offset) / commitPx).coerceIn(0f, 1f) * EXIT_DRAG_SHRINK)
+                } else {
+                    give.animateTo(0f, settle)
+                }
+            }
+    }
+    return give
 }

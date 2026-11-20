@@ -1,11 +1,11 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
+import io.github.aedev.flow.content.InfoItem
 import io.github.aedev.flow.data.local.LikedVideosRepository
 import io.github.aedev.flow.data.model.PlaylistInfo
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.InfoItem
 import io.github.aedev.flow.data.model.Video as FlowVideo
 
 /** User-created video playlists; Watch Later, saved and music playlists are excluded. */

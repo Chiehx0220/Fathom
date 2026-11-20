@@ -1,9 +1,10 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.stream.Description
-import org.schabi.newpipe.extractor.stream.StreamInfo
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
-import org.schabi.newpipe.extractor.stream.StreamType
+import io.github.aedev.flow.content.Description
+import io.github.aedev.flow.content.StreamInfo
+import io.github.aedev.flow.content.StreamInfoItem
+import io.github.aedev.flow.content.suffix
+import io.github.aedev.flow.player.stream.model.StreamType
 
 /** Watch page: card fields + description, related, playback proxy URLs (`/stream`, `/hlsvod`, `/subtitles`), chapters. */
 internal fun StreamInfo.toDetail(serviceId: Int): VideoDetail {
@@ -31,7 +32,7 @@ internal fun StreamInfo.toDetail(serviceId: Int): VideoDetail {
         uploadDate = textualUploadDate ?: "",
         description = description?.content ?: "",
         descriptionType = if (description?.type == Description.HTML) "html" else "text",
-        isLive = streamType == StreamType.LIVE_STREAM || streamType == StreamType.AUDIO_LIVE_STREAM,
+        isLive = streamType == StreamType.LIVE_STREAM,
         isShort = duration in 1..SHORT_MAX_SECONDS,
         relatedVideos = relatedItems.orEmpty().filterIsInstance<StreamInfoItem>().map { it.toVideoCard() },
         playback = playback(serviceId, encodedUrl),

@@ -1,6 +1,5 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.stream.StreamExtractor
 import java.util.concurrent.TimeUnit
 
 /** Process-wide proxy-handler caches + fetch HTTP client. */
@@ -10,8 +9,6 @@ internal object LocalServerCaches {
     // InnerTube client that minted each cached URL: googlevideo 403s on UA/client mismatch.
     internal val streamUaCache = TtlCache<String>(maxItems = 60)
 
-    // One extraction per video for watch + manifest handlers; smaller than streamUrlCache.
-    internal val extractorCache = TtlCache<StreamExtractor>(maxItems = 15)
     internal val httpClient: okhttp3.OkHttpClient =
         okhttp3.OkHttpClient
             .Builder()

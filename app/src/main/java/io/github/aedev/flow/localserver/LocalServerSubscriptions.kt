@@ -1,13 +1,13 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliRef
+import io.github.aedev.flow.content.ChannelInfoItem
+import io.github.aedev.flow.content.InfoItem
 import io.github.aedev.flow.data.local.SubscriptionRepository
 import io.github.aedev.flow.data.local.subscribeOrUpdateInfo
 import io.github.aedev.flow.data.recommendation.FlowNeuroEngine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.channel.ChannelInfoItem
 
 /** Native storage, no bridge; bare-ID models ↔ URL-keyed [InfoItem]. `runBlocking`: handlers run on background pool. */
 

@@ -3,6 +3,7 @@ package io.github.aedev.flow.ui.components.videoplayer.motion
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.material3.MotionScheme
+import androidx.compose.ui.unit.dp
 
 /** Open and expand: M3's standard slow spatial spring, about 300 ms like YouTube's own. */
 internal val playerOpenSpringSpec: FiniteAnimationSpec<Float> = MotionScheme.standard().slowSpatialSpec()
@@ -24,8 +25,8 @@ internal val portraitFullscreenSettleSpec = spring<Float>(dampingRatio = 1f, sti
 /** Expansion fraction past which the body panel is fully transparent. */
 internal const val BODY_CONTENT_MAX_EXPAND_FRACTION = 0.3f
 
-/** How far the page under the video slides down, in px, over a full collapse. */
-internal const val BODY_SLIDE_PX = 80f
+/** How far the page under the video slides down over a full collapse. */
+internal val BodySlideDistance = 27.dp
 
 /**
  * Expansion fractions past which the expanded-only surfaces are composed (below) or dropped
@@ -34,6 +35,15 @@ internal const val BODY_SLIDE_PX = 80f
  */
 internal const val EXPANDED_SURFACES_MOUNT_FRACTION = 0.05f
 internal const val EXPANDED_SURFACES_UNMOUNT_FRACTION = 0.95f
+
+/** Share of the widest size from which the mini player counts as wide and centres on a phone. */
+internal const val WIDE_SIZE_SHARE = 0.98f
+
+/**
+ * The smallest a pinch leaves the mini player, as a share of the window's short side: the Small
+ * size preset, so the controls always have the room that preset was laid out for.
+ */
+internal const val MINI_PLAYER_SMALLEST_SHARE = 0.35f
 
 /** Delay before an off-target mini player is nudged back to its resting corner. */
 internal const val MINI_RESNAP_DEBOUNCE_MS = 50L

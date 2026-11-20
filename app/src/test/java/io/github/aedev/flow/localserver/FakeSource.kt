@@ -1,8 +1,8 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.stream.StreamInfo
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.Page
+import io.github.aedev.flow.content.StreamInfo
 
 /** Default test source; any call fails. */
 internal object NoNetwork : ContentSource {

@@ -153,6 +153,7 @@ object InnerTubeVideoStreamExtractor {
             dropGatesOnIdentityChange()
             blockedVideoIds.remove(videoId)
             goneVideoIds.remove(videoId)
+            refusals.remove(videoId)
             if (forceSabr) {
                 val failureReasons = mutableListOf<String>()
                 trySabrClients(videoId, failureReasons)?.let {
@@ -172,10 +173,10 @@ object InnerTubeVideoStreamExtractor {
 
             // A wall at /player issues no stream URLs, so no 403 ever reaches the re-roll that GVS
             // refusals trigger, and a retry would ask again with the same walled visitor (#1354).
-            val fullWall = PlayabilityVerdict.everyClientWalled(failureReasons)
-            val reroll = if (fullWall) WebPoTokenSession.rerollAfterPlayerWall(walledGeneration) else null
+            val walled = PlayabilityVerdict.wallExplains(failureReasons)
+            val reroll = if (walled) WebPoTokenSession.rerollAfterPlayerWall(walledGeneration) else null
             if (reroll == PlayerWallReroll.REROLLED) {
-                PlayerDiagnostics.logWarning(TAG, "every client bot-walled $videoId, retrying once with a fresh visitor")
+                PlayerDiagnostics.logWarning(TAG, "bot wall on $videoId, retrying once with a fresh visitor")
                 dropGatesOnIdentityChange()
                 failureReasons = mutableListOf()
                 walkLadder(videoId, audioOnly, failureReasons)?.let { return@withContext it }
@@ -184,7 +185,7 @@ object InnerTubeVideoStreamExtractor {
 
             Log.e(TAG, "All clients failed for $videoId (forceSabr=$forceSabr). Reasons: ${failureReasons.joinToString(" | ")}")
             PlayerDiagnostics.logError(TAG, "ALL clients failed $videoId: ${failureReasons.joinToString(" | ")}")
-            if (PlayabilityVerdict.everyClientWalled(failureReasons)) {
+            if (PlayabilityVerdict.wallExplains(failureReasons)) {
                 PlayerDiagnostics.logError(TAG, "bot wall $videoId: ${WebPoTokenSession.identitySummary()} freshWalled=$freshVisitorWalled")
             }
             if (PlayabilityVerdict.isGone(failureReasons)) goneVideoIds += videoId
@@ -318,12 +319,18 @@ object InnerTubeVideoStreamExtractor {
     /** Why the last extraction of [videoId] failed, when YouTube refused the viewer rather than the video. */
     fun blockOf(videoId: String): PlaybackBlock? = blockedVideoIds[videoId]
 
+    private val refusals = java.util.concurrent.ConcurrentHashMap<String, YouTubeRefusal>()
+
+    /** What YouTube said about [videoId] when its last extraction failed, in its own terms. */
+    fun refusalOf(videoId: String): YouTubeRefusal? = refusals[videoId]
+
     private fun recordBlock(
         videoId: String,
         failureReasons: List<String>,
         freshVisitorWalled: Boolean = false,
     ) {
         PlayabilityVerdict.block(failureReasons, freshVisitorWalled)?.let { blockedVideoIds[videoId] = it }
+        PlayabilityVerdict.refusalOf(failureReasons)?.let { refusals[videoId] = it }
     }
 
     /** The clients GVS is not currently refusing to serve. See [ClientGateTracker]. */

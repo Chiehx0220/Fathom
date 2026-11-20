@@ -1,9 +1,9 @@
 package io.github.aedev.flow.data.source
 
+import io.github.aedev.flow.content.ServiceIds
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.innertube.YouTubeSearchParams
-import org.schabi.newpipe.extractor.ServiceList
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,7 +13,7 @@ class YouTubeVideoSource
     constructor(
         private val repository: YouTubeRepository,
     ) : VideoSource {
-        override val serviceId: Int = ServiceList.YouTube.serviceId
+        override val serviceId: Int = ServiceIds.YOUTUBE
 
         override suspend fun search(
             query: String,

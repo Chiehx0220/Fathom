@@ -1,15 +1,15 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliDanmakuPosition
+import io.github.aedev.flow.content.ChannelInfoItem
+import io.github.aedev.flow.content.CommentsInfoItem
+import io.github.aedev.flow.content.Description
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.Page
+import io.github.aedev.flow.content.PlaylistInfoItem
+import io.github.aedev.flow.content.StreamInfoItem
+import io.github.aedev.flow.player.stream.model.StreamType
 import kotlinx.serialization.json.JsonElement
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.Page
-import org.schabi.newpipe.extractor.channel.ChannelInfoItem
-import org.schabi.newpipe.extractor.comments.CommentsInfoItem
-import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
-import org.schabi.newpipe.extractor.stream.Description
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
-import org.schabi.newpipe.extractor.stream.StreamType
 
 // Extractor results → wire shapes. `channelId` = full channel URL.
 
@@ -22,7 +22,7 @@ internal fun BilibiliDanmakuPosition.webName() =
         BilibiliDanmakuPosition.SCROLL -> "scroll"
     }
 
-private fun StreamType?.isLive() = this == StreamType.LIVE_STREAM || this == StreamType.AUDIO_LIVE_STREAM
+private fun StreamType?.isLive() = this == StreamType.LIVE_STREAM
 
 /** Empty without real avatar (client draws initial). */
 private fun realAvatar(

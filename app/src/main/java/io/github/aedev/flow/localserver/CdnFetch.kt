@@ -1,11 +1,11 @@
 package io.github.aedev.flow.localserver
 
 import io.github.aedev.flow.bilibili.BilibiliCdn
+import io.github.aedev.flow.innertube.models.YouTubeClient
 import io.github.aedev.flow.player.datasource.GoogleVideoRequestPolicy
 import io.github.aedev.flow.player.error.StreamDenialClassifier
 import okhttp3.Request
 import okhttp3.Response
-import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 
 private const val DEFAULT_USER_AGENT =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -78,12 +78,12 @@ private fun cachedOrGuessedUserAgent(
     cacheKey: String,
 ): String {
     LocalServerCaches.streamUaCache.get(cacheKey)?.let { return it }
-    // No cached InnerTube User-Agent (older entry or NewPipe fallback): guess from URL's client marker.
+    // No cached InnerTube User-Agent (older entry): guess from URL's client marker.
     return try {
         when {
-            "c=IOS" in directUrl || "c=ios" in directUrl -> YoutubeParsingHelper.getIosUserAgent(null)
-            "c=VISIONOS" in directUrl || "c=visionos" in directUrl -> YoutubeParsingHelper.getVisionOsUserAgent(null)
-            else -> YoutubeParsingHelper.getAndroidUserAgent(null)
+            "c=IOS" in directUrl || "c=ios" in directUrl -> YouTubeClient.IOS.userAgent
+            "c=VISIONOS" in directUrl || "c=visionos" in directUrl -> YouTubeClient.VISIONOS.userAgent
+            else -> YouTubeClient.ANDROID.userAgent
         }
     } catch (e: Exception) {
         DEFAULT_USER_AGENT

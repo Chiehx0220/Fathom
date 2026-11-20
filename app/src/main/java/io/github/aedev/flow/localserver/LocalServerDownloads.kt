@@ -9,9 +9,9 @@ import io.github.aedev.flow.data.local.entity.DownloadWithItems
 import io.github.aedev.flow.data.video.DownloadStreamPolicy
 import io.github.aedev.flow.data.video.storage.DownloadFiles
 import io.github.aedev.flow.player.stream.VideoCodecUtils
+import io.github.aedev.flow.player.stream.model.VideoStream
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException

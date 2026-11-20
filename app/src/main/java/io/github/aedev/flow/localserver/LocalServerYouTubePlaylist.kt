@@ -1,42 +1,62 @@
 package io.github.aedev.flow.localserver
 
 import android.content.Context
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.Page
+import io.github.aedev.flow.content.ServiceIds
 import io.github.aedev.flow.data.model.Video
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.Page
 
 /**
- * Short YouTube playlist via app repository, first page only, else extractor; InnerTube lacks video count (header -1).
+ * YouTube playlist via the app's playlist repository. Continuation `yt:l:<token>` with the playlist id in [Page.id].
+ * A failed first page throws, so the route answers with an error; a failed continuation ends the list.
  */
 internal object LocalServerYouTubePlaylist {
-    private const val YOUTUBE = 0
+    private const val MORE = "yt:l:"
     private const val UNKNOWN_COUNT = -1L
-    private const val FULL_PAGE = 100
 
     fun page(
         context: Context,
         playlistUrl: String,
         nextPage: Page?,
-    ): PlaylistPage? {
-        if (nextPage != null) return null
-        val id = playlistUrlToId(playlistUrl) ?: return null
+    ): PlaylistPage {
+        val id =
+            nextPage?.id?.takeIf { nextPage.url?.startsWith(MORE) == true }
+                ?: playlistUrlToId(playlistUrl)
+                ?: throw IllegalArgumentException("Not a YouTube playlist: $playlistUrl")
         val repository = localServerEntryPoint(context).youTubePlaylistRepository()
         return try {
             runBlocking {
-                val first = repository.firstPage(id) ?: return@runBlocking null
-                if (first.title.isBlank() || first.continuation != null || first.videos.size >= FULL_PAGE) return@runBlocking null
-                val header = PlaylistHeader(first.title, playlistUrl, first.ownerName.orEmpty(), UNKNOWN_COUNT)
-                PlaylistPage(header, items(first.videos), null)
+                if (nextPage != null) {
+                    val token = nextPage.url?.takeIf { it.startsWith(MORE) }?.removePrefix(MORE)
+                    val more = token?.let { repository.nextPage(id, it) }
+                    val header = PlaylistHeader("", playlistUrl, "", UNKNOWN_COUNT)
+                    PlaylistPage(header, items(more?.first.orEmpty()), more?.second?.let { cursor(id, it) })
+                } else {
+                    val first = repository.firstPage(id) ?: throw IllegalStateException("Playlist $id unavailable")
+                    val header =
+                        PlaylistHeader(
+                            first.title,
+                            playlistUrl,
+                            first.ownerName.orEmpty(),
+                            first.videoCount?.toLong() ?: UNKNOWN_COUNT,
+                        )
+                    PlaylistPage(header, items(first.videos), first.continuation?.let { cursor(id, it) })
+                }
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             serverLog("InnerTube playlist failed: ${e.message}")
-            null
+            if (nextPage != null) PlaylistPage(PlaylistHeader("", playlistUrl, "", UNKNOWN_COUNT), emptyList(), null) else throw e
         }
     }
 
-    private fun items(videos: List<Video>): List<InfoItem> = videos.map { it.toStreamInfoItem(YOUTUBE) }
+    private fun cursor(
+        playlistId: String,
+        token: String,
+    ) = Page(url = MORE + token, id = playlistId)
+
+    private fun items(videos: List<Video>): List<InfoItem> = videos.map { it.toStreamInfoItem(ServiceIds.YOUTUBE) }
 }

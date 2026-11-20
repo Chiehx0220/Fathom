@@ -1,9 +1,9 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.Image
-import org.schabi.newpipe.extractor.InfoItem
-import org.schabi.newpipe.extractor.comments.CommentsInfoItem
-import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import io.github.aedev.flow.content.CommentsInfoItem
+import io.github.aedev.flow.content.Image
+import io.github.aedev.flow.content.InfoItem
+import io.github.aedev.flow.content.StreamInfoItem
 
 /** One image per item: reads the largest of NewPipeExtractor's size list, writes a single entry. */
 internal var InfoItem.thumbnailUrl: String?
@@ -15,13 +15,13 @@ internal var InfoItem.thumbnailUrl: String?
 internal var StreamInfoItem.uploaderAvatarUrl: String?
     get() = uploaderAvatars.bestUrl()
     set(value) {
-        setUploaderAvatars(value.asImages())
+        uploaderAvatars = value.asImages()
     }
 
 internal var CommentsInfoItem.uploaderAvatarUrl: String?
     get() = uploaderAvatars.bestUrl()
     set(value) {
-        setUploaderAvatars(value.asImages())
+        uploaderAvatars = value.asImages()
     }
 
 private fun List<Image>?.bestUrl(): String? = this?.maxByOrNull { it.height }?.url

@@ -1,22 +1,15 @@
 package io.github.aedev.flow.localserver
 
-import org.schabi.newpipe.extractor.Image
+import io.github.aedev.flow.content.Image
+import io.github.aedev.flow.content.ServiceIds
 
 // Shared page toolbox: formatting, escaping, thumbnails.
 object WebFormat {
-    /** Service display name: Bilibili fixed, others from registered extractor service. */
+    /** Service display name. */
     @JvmStatic
     fun getServiceName(serviceId: Int): String {
         if (LocalServerBilibili.isBilibili(serviceId)) return "Bilibili"
-        return try {
-            val name =
-                org.schabi.newpipe.extractor.NewPipe
-                    .getService(serviceId)
-                    .serviceInfo.name
-            if (name.isNullOrEmpty()) "Fathom" else name
-        } catch (e: Exception) {
-            "Fathom"
-        }
+        return if (serviceId == ServiceIds.YOUTUBE) "YouTube" else "Fathom"
     }
 
     // Stock placeholder of earlier builds still in saved entries: treated as no image.

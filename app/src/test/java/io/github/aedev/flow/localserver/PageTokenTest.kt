@@ -1,8 +1,8 @@
 package io.github.aedev.flow.localserver
 
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.content.Page
 import org.junit.Test
-import org.schabi.newpipe.extractor.Page
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.util.Base64
