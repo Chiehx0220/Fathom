@@ -5,7 +5,7 @@ import io.github.aedev.flow.content.Image
 import io.github.aedev.flow.content.InfoItem
 import io.github.aedev.flow.content.StreamInfoItem
 
-/** One image per item: reads the largest of NewPipeExtractor's size list, writes a single entry. */
+/** One image per item: largest of the size list → single entry. */
 internal var InfoItem.thumbnailUrl: String?
     get() = thumbnails.bestUrl()
     set(value) {

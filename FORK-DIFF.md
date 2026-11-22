@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **111** (1155 changed lines). New files: **287**.
+- Modified upstream files: **110** (1148 changed lines). New files: **287**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -77,7 +77,6 @@ in it). **New files** never conflict; they are ours alone.
 | ui/PlayerNavigation.kt | 5 | 3 |
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
 | utils/YouTubeLink.kt | 8 | 0 |
-| data/comments/CommentsSource.kt | 7 | 0 |
 | data/video/downloader/work/DownloadTransfer.kt | 7 | 0 |
 | player/stream/InnerTubeVideoStreamExtractor.kt | 7 | 0 |
 | ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
@@ -90,7 +89,8 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/dialogs/PlayerSettingsSheetHost.kt | 6 | 0 |
 | ui/screens/subscriptions/SubscriptionsFeedContent.kt | 4 | 2 |
 | data/local/migrations/Migrations.kt | 5 | 0 |
-| ... 51 more, each small | | |
+| player/datasource/YouTubeHttpDataSource.kt | 3 | 2 |
+| ... 50 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 

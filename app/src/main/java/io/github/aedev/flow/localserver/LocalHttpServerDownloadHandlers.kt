@@ -62,14 +62,14 @@ private fun RequestContext.startNativeDownload(
     val video =
         FlowVideo(
             id = videoId,
-            title = info.name?.ifBlank { null } ?: "Unknown",
-            channelName = info.uploaderName ?: "",
-            channelId = info.uploaderUrl?.substringAfterLast("/") ?: "local",
+            title = info.name.ifBlank { null } ?: "Unknown",
+            channelName = info.uploaderName,
+            channelId = info.uploaderUrl.substringAfterLast("/") ?: "local",
             thumbnailUrl = info.thumbnails.maxByOrNull { it.height }?.url ?: "",
             duration = info.duration.toInt(),
             viewCount = info.viewCount.coerceAtLeast(0),
             uploadDate = "",
-            description = info.description?.content ?: "",
+            description = info.description.content ?: "",
             serviceId = serviceId,
         )
 

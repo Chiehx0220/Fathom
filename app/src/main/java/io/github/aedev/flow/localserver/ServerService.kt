@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/** Foreground promotion + notification for embedded web server; assumes NewPipe.init() ran (re-init races extraction). */
+/** Foreground service + notification for the embedded web server. */
 class ServerService : Service() {
     private var server: LocalHttpServer? = null
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

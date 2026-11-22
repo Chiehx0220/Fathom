@@ -12,7 +12,7 @@ import io.github.aedev.flow.content.PlaylistInfoItem
 import io.github.aedev.flow.di.bilibiliApi
 import kotlinx.coroutines.runBlocking
 
-/** Bilibili lists as NewPipe item/page types; blocking. Continuation = [Page] url: page number or "<page>:<lastAid>". */
+/** Bilibili lists as content-model item/page types; blocking. Continuation = [Page] url: page number or "<page>:<lastAid>". */
 internal object LocalServerBilibili {
     private const val POPULAR_PAGES = 5
     private const val SEARCH_LIVES = 3

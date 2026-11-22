@@ -24,11 +24,11 @@ object WebFormat {
 
     /** Largest usable image URL; "" → web client draws no image. */
     @JvmStatic
-    fun getThumbnailUrl(thumbnails: List<Image>?): String {
-        if (thumbnails != null && thumbnails.isNotEmpty()) {
+    fun getThumbnailUrl(thumbnails: List<Image>): String {
+        if (thumbnails.isNotEmpty()) {
             for (i in thumbnails.indices.reversed()) {
                 val img = thumbnails[i]
-                if (img != null && isUsableImageUrl(img.url)) {
+                if (isUsableImageUrl(img.url)) {
                     return normalizeImageUrl(img.url)
                 }
             }
@@ -37,7 +37,7 @@ object WebFormat {
     }
 
     @JvmStatic
-    fun hasThumbnail(thumbnails: List<Image>?): Boolean = thumbnails != null && thumbnails.any { it != null && isUsableImageUrl(it.url) }
+    fun hasThumbnail(thumbnails: List<Image>): Boolean = thumbnails.any { isUsableImageUrl(it.url) }
 
     // Image shape: items = URL string; StreamInfo/ChannelExtractor = List<Image>. This overload: URL.
     @JvmStatic

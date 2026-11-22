@@ -18,7 +18,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-// Bilibili rows as NewPipe item types.
+// Bilibili rows as content-model item types.
 
 /** List video row, from fields every Bilibili list carries. */
 internal fun bilibiliVideoItem(

@@ -113,7 +113,7 @@ private object BilibiliBackend : LocalServerBackend {
     ) = LocalServerBilibiliStreams.streamInfo(context, mediaUrl)
 }
 
-/** YouTube through the app's InnerTube stack. Unsupported requests throw instead of answering with a made-up empty page. */
+/** YouTube via InnerTube; unsupported requests throw, no fabricated empty page. */
 private object YouTubeBackend : LocalServerBackend {
     override fun home(
         context: Context,

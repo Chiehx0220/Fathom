@@ -1,10 +1,6 @@
 package io.github.aedev.flow.localserver
 
-/**
- * The `codecs` string as a browser's MediaSource accepts it. The shared stream model keeps the lower-cased string the player
- * uses, but AV1's tier letter (`M` or `H`, after the level digits) is case-sensitive in MSE: `av01.0.08m.08` is rejected, the
- * video AdaptationSet is dropped and web playback is audio-only.
- */
+/** `codecs` as MediaSource accepts it: AV1 tier letter (`M`/`H`) uppercase; lowercase rejected → video AdaptationSet dropped, audio-only. */
 internal fun String.forMse(): String {
     if (!startsWith("av01.", ignoreCase = true)) return this
     val parts = split('.').toMutableList()

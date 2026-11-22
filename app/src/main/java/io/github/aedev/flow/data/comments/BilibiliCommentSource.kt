@@ -30,7 +30,7 @@ internal class BilibiliCommentSource(
         return CommentsPageResult(comments = page.comments.map { it.toComment() }, continuation = page.nextOffset)
     }
 
-    /** [continuation] is "<comment id>:<page>": the reply API needs the parent comment, the interface has no slot for it. */
+    /** [continuation] = "<comment id>:<page>"; reply API needs the parent id. */
     override suspend fun replies(
         videoId: String,
         continuation: String,

@@ -36,10 +36,10 @@ internal fun InfoItem.toVideoCard(): VideoCard {
     val stream = this as? StreamInfoItem
     return VideoCard(
         id = LocalServerMedia.getVideoId(url),
-        url = url ?: "",
+        url = url,
         serviceId = serviceId,
-        title = name ?: "",
-        channelName = stream?.uploaderName ?: name ?: "",
+        title = name,
+        channelName = stream?.uploaderName ?: name,
         channelId = stream?.uploaderUrl ?: "",
         thumbnailUrl = WebFormat.getThumbnailUrl(thumbnailUrl),
         channelThumbnailUrl =
@@ -58,7 +58,7 @@ internal fun ChannelInfoItem.toCard() =
     ChannelCard(
         id = url,
         serviceId = serviceId,
-        name = name ?: "",
+        name = name,
         thumbnailUrl = sameOriginImageUrl(WebFormat.getThumbnailUrl(thumbnailUrl)),
         subscriberCount = subscriberCount.coerceAtLeast(-1),
         url = url,
@@ -68,7 +68,7 @@ internal fun PlaylistInfoItem.toCard() =
     PlaylistCard(
         id = url,
         serviceId = serviceId,
-        name = name ?: "",
+        name = name,
         thumbnailUrl = WebFormat.getThumbnailUrl(thumbnailUrl),
         videoCount = streamCount.coerceAtLeast(0).toInt(),
         isLocal = false,
@@ -115,7 +115,7 @@ internal fun CommentsInfoItem.toDto() =
         id = commentId ?: "",
         author = uploaderName ?: "",
         authorThumbnail = realAvatar(WebFormat.hasThumbnail(uploaderAvatarUrl)) { WebFormat.getThumbnailUrl(uploaderAvatarUrl) },
-        text = commentText.content ?: "",
+        text = commentText.content,
         textType = if (commentText.type == Description.HTML) "html" else "text",
         likeCount = likeCount.coerceAtLeast(0),
         publishedTime = textualUploadDate ?: "",

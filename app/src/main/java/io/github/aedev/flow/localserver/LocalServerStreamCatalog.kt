@@ -108,7 +108,7 @@ internal class StreamCatalog(
                 .filter { it.format == MediaFormat.MPEG_4 && it.hasIndex() && (it.itag <= 0 || seen.add(it.itag)) }
                 .sortedWith(compareBy<VideoStream>({ it.height }, { it.fps }, { it.bitrate }))
                 .mapNotNull { vs ->
-                    val url = vs.content?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                    val url = vs.content.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
                     val bandwidth = bandwidthBps(vs.bitrate.toLong(), fallbackBps = 1_000_000L)
                     // YouTube itag unique per quality; Bilibili none: qualities told apart by attributes.
                     val id = if (vs.itag > 0) "v${vs.itag}" else "v${vs.height}p${vs.fps}_$bandwidth"
@@ -145,7 +145,7 @@ internal class StreamCatalog(
                 val ids = HashSet<String>()
                 val audios =
                     members.mapNotNull { stream ->
-                        val url = stream.content?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                        val url = stream.content.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
                         val bandwidth = bandwidthBps(stream.bitrateOf().toLong(), fallbackBps = 128_000L)
                         // Same itag once per language: track in id.
                         val id =
@@ -178,7 +178,7 @@ internal class StreamCatalog(
 
         private fun AudioStream.bitrateOf() = if (averageBitrate > 0) averageBitrate else bitrate
 
-        /** Representation bandwidth, bps; raw < 5000 = kbps from NewPipe static itag table, rescaled. */
+        /** Representation bandwidth, bps; raw < 5000 read as kbps. */
         private fun bandwidthBps(
             raw: Long,
             fallbackBps: Long,

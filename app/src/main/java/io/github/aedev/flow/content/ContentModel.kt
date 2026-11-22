@@ -7,18 +7,14 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.Locale
 
-/*
- * Service-neutral content types shared by the local server, the Bilibili client glue and saved-data
- * code. They replace the NewPipeExtractor item classes that upstream Flow removed; the shape follows
- * those classes so call sites changed only in their imports. No network or parsing code lives here.
- */
+// Service-neutral item, page and stream-info types; data only, no network or parsing.
 
-/** Service ids as stored in saved data. Bilibili's is [io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID]. */
+/** Service ids in saved data; Bilibili: [io.github.aedev.flow.bilibili.BILIBILI_SERVICE_ID]. */
 object ServiceIds {
     const val YOUTUBE = 0
 }
 
-/** Continuation cursor of a paged list: whichever of these fields the owning source filled in. */
+/** Paging cursor; fields set by the owning source. */
 class Page(
     val url: String? = null,
     val id: String? = null,
@@ -179,7 +175,7 @@ class SubtitlesStream(
     val displayLanguageName: String get() = locale.getDisplayName(locale).ifBlank { languageTag }
 }
 
-/** One video's full details: what the watch page, downloads and subtitle routes read. */
+/** Full video details for watch page, downloads, subtitles. */
 class StreamInfo(
     val serviceId: Int,
     val url: String,

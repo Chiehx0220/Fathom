@@ -82,10 +82,10 @@ internal fun RequestContext.handleApiVideo(params: Query): VideoDetail {
     val info = source.watchInfo(serviceId, params.required("id"))
     val thumbUrl =
         info.thumbnails
-            ?.lastOrNull()
+            .lastOrNull()
             ?.url
             .orEmpty()
-    val uploaderAvatarUrl = info.uploaderAvatars?.takeIf { it.isNotEmpty() }?.let { WebFormat.getThumbnailUrl(it) }
+    val uploaderAvatarUrl = info.uploaderAvatars.takeIf { it.isNotEmpty() }?.let { WebFormat.getThumbnailUrl(it) }
     dbHelper.saveToHistory(info.name, info.url, info.uploaderName, thumbUrl, serviceId, info.uploaderUrl, uploaderAvatarUrl)
     // FlowNeuro click, best-effort.
     dbHelper.reportFlowNeuroInteraction(info, InteractionType.CLICK)

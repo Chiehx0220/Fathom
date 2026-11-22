@@ -18,10 +18,7 @@ internal object LocalServerYouTubeComments {
     /** Continuation made by this object. */
     fun owns(page: Page?): Boolean = page?.url?.startsWith("yt:") == true
 
-    /**
-     * One page. Comments turned off is reported as [CommentsResult.disabled]. A failed continuation ends the list; a failed
-     * first page throws, so the route answers with an error rather than an empty list.
-     */
+    /** One page; [CommentsResult.disabled] when off. Failed continuation ends list; failed first page throws. */
     fun comments(
         context: Context,
         videoUrl: String,

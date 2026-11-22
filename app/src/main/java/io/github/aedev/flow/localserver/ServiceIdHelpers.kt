@@ -51,7 +51,7 @@ fun videoIdToUrl(
 
 fun playlistIdToUrl(playlistId: String): String = "https://www.youtube.com/playlist?list=$playlistId"
 
-/** Bare `list=` id of a playlist URL; matches NewPipeExtractor's playlist id. */
+/** Bare `list=` id of a playlist URL; playlist id. */
 fun playlistUrlToId(url: String?): String? {
     if (url == null) return null
     val idx = url.indexOf("list=")

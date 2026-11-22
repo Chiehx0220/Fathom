@@ -20,10 +20,7 @@ import io.github.aedev.flow.utils.youtubeVideoIdFromUrl
 import kotlinx.coroutines.runBlocking
 import java.time.Instant
 
-/**
- * One YouTube video's [StreamInfo] for the watch page, downloads and subtitle routes: details from the app repository,
- * streams, captions and storyboard from the PoToken-attested InnerTube extraction. Related videos are filled in by the caller.
- */
+/** YouTube [StreamInfo] for watch page, downloads, subtitles: details from repository; streams, captions, storyboard from PoToken-attested InnerTube; related by caller. */
 internal object LocalServerYouTubeInfo {
     fun streamInfo(
         context: Context,

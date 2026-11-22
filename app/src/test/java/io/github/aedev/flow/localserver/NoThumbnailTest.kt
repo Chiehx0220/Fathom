@@ -14,7 +14,6 @@ class NoThumbnailTest {
     fun `a missing thumbnail is an empty url, not a stock image`() {
         assertThat(WebFormat.getThumbnailUrl(null as String?)).isEqualTo("")
         assertThat(WebFormat.getThumbnailUrl("  ")).isEqualTo("")
-        assertThat(WebFormat.getThumbnailUrl(null as List<Image>?)).isEqualTo("")
         assertThat(WebFormat.getThumbnailUrl(emptyList<Image>())).isEqualTo("")
         assertThat(WebFormat.hasThumbnail(null as String?)).isFalse()
         assertThat(WebFormat.hasThumbnail(emptyList<Image>())).isFalse()
