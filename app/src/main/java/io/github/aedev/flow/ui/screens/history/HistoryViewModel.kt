@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.aedev.flow.bilibili.BilibiliRef
+import io.github.aedev.flow.data.engagement.HiddenContent
+import io.github.aedev.flow.data.engagement.HiddenContentStore
 import io.github.aedev.flow.data.local.VideoHistoryEntry
 import io.github.aedev.flow.data.local.ViewHistory
 import io.github.aedev.flow.data.local.dao.VideoDao
@@ -73,6 +75,7 @@ class HistoryViewModel
         private val watchHistoryDao: WatchHistoryDao,
         private val shortsContentFilter: ShortsContentFilter,
         private val shortsQueueHandoff: ShortsQueueHandoff,
+        hiddenContent: HiddenContentStore,
     ) : ViewModel() {
         private val isEnriching = AtomicBoolean(false)
         private val attemptedEnrichment = HashSet<String>()
@@ -106,7 +109,10 @@ class HistoryViewModel
 
         val displayEntries: StateFlow<List<VideoHistoryEntry>> =
             combine(
-                _uiState.map { it.historyEntries }.distinctUntilChanged(),
+                _uiState
+                    .map { it.historyEntries }
+                    .distinctUntilChanged()
+                    .combine(hiddenContent.hidden) { entries, hidden -> entries.withoutHidden(hidden) },
                 _searchQuery,
                 _contentFilter,
                 _sortOrder,
@@ -351,3 +357,7 @@ data class HistoryUiState(
     val isLoading: Boolean = false,
     val shortsEnabled: Boolean = true,
 )
+
+/** History without what the viewer marked "Not interested" or blocked since the screen loaded it. */
+internal fun List<VideoHistoryEntry>.withoutHidden(hidden: HiddenContent): List<VideoHistoryEntry> =
+    if (hidden.isEmpty) this else filterNot { hidden.hides(it.videoId, it.channelId) }

@@ -109,6 +109,7 @@ class PlayerPreferences(
         val VIDEO_AMBIENT_GLOW_ENABLED = booleanPreferencesKey("video_ambient_glow_enabled")
         val VIDEO_AMBIENT_IMMERSIVE_ENABLED = booleanPreferencesKey("video_ambient_immersive_enabled")
         val VIDEO_AMBIENT_GLOW_BATTERY_SAVER = booleanPreferencesKey("video_ambient_glow_battery_saver")
+        val VIDEO_AMBIENT_RESPONSIVE = booleanPreferencesKey("video_ambient_responsive")
         val VIDEO_AMBIENT_IMMERSIVE_SCROLL_DIM = booleanPreferencesKey("video_ambient_immersive_scroll_dim")
         val PREFERRED_SUBTITLE_LANGUAGE = stringPreferencesKey("preferred_subtitle_language")
         val TRANSCRIPT_LANGUAGE = stringPreferencesKey("transcript_language")
@@ -185,6 +186,8 @@ class PlayerPreferences(
         val HOME_NAVIGATION_ENABLED = booleanPreferencesKey("home_navigation_enabled")
         val SHORTS_NAVIGATION_ENABLED = booleanPreferencesKey("shorts_navigation_enabled")
         val BOTTOM_NAV_HIDE_ON_SCROLL = booleanPreferencesKey("bottom_nav_hide_on_scroll")
+        val TOP_BAR_HIDE_ON_SCROLL = booleanPreferencesKey("top_bar_hide_on_scroll")
+        val VIDEO_CARD_STYLE = stringPreferencesKey("video_card_style")
         val BOTTOM_NAV_LABELS = stringPreferencesKey("bottom_nav_labels")
         val BOTTOM_NAV_STYLE = stringPreferencesKey("bottom_nav_style")
         val BOTTOM_NAV_SCRUB = booleanPreferencesKey("bottom_nav_scrub")
@@ -229,10 +232,12 @@ class PlayerPreferences(
         val LYRICS_PROVIDER_ENABLED_AMLL = booleanPreferencesKey("lyrics_provider_enabled_amll")
         val CONTINUE_WATCHING_ENABLED = booleanPreferencesKey("continue_watching_enabled")
         val SHOW_RELATED_VIDEOS = booleanPreferencesKey("show_related_videos")
+        val SHOW_RELATED_COLLECTIONS = booleanPreferencesKey("show_related_collections")
         val HOME_VIEW_MODE = stringPreferencesKey("home_view_mode")
         val HOME_FEED_COLUMNS = stringPreferencesKey("home_feed_columns")
         val HOME_FEED_ENABLED = booleanPreferencesKey("home_feed_enabled")
         val REFRESH_HOME_ON_RESELECT = booleanPreferencesKey("refresh_home_on_reselect")
+        val FEED_AUTOPLAY = stringPreferencesKey("feed_autoplay")
         val HOME_CHIPS_ENABLED = booleanPreferencesKey("home_chips_enabled")
         val HOME_NEW_VIDEOS_BUTTON_ENABLED = booleanPreferencesKey("home_new_videos_button_enabled")
         val RELATED_CARD_STYLE = stringPreferencesKey("related_card_style")
@@ -455,6 +460,7 @@ class PlayerPreferences(
         val LINKED_LEFT_OUT = device(stringSetPreferencesKey("linked_left_out"))
         val LINKED_TAKEN_BACK = device(stringSetPreferencesKey("linked_taken_back"))
         val DEFAULT_QUALITY_CELLULAR = device(stringPreferencesKey("default_quality_cellular"))
+        val REMEMBER_VIDEO_QUALITY = device(booleanPreferencesKey("remember_video_quality"))
         val DEFAULT_VIDEO_CODEC = device(stringPreferencesKey("default_video_codec"))
         val FALLBACK_VIDEO_CODEC = device(stringPreferencesKey("fallback_video_codec"))
         val TILT_FULLSCREEN_ROTATION_LOCKED = device(booleanPreferencesKey("tilt_fullscreen_rotation_locked"))
@@ -477,6 +483,7 @@ class PlayerPreferences(
         val BUFFER_PROFILE = device(stringPreferencesKey("buffer_profile"))
         val DISK_READ_AHEAD_MINUTES = device(intPreferencesKey("disk_read_ahead_minutes"))
         val DISK_READ_AHEAD_UNMETERED_ONLY = device(booleanPreferencesKey("disk_read_ahead_unmetered_only"))
+        val BANDWIDTH_SEEDS = device(stringPreferencesKey("bandwidth_seeds"))
 
         // Download settings
         val DOWNLOAD_THREADS = device(intPreferencesKey("download_threads"))
@@ -1691,6 +1698,33 @@ class PlayerPreferences(
         }
     }
 
+    // When OFF, the feed tabs' top bar stays pinned instead of scrolling away with the feed.
+    val topBarHideOnScroll: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.TOP_BAR_HIDE_ON_SCROLL] ?: true
+            }
+
+    suspend fun setTopBarHideOnScroll(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.TOP_BAR_HIDE_ON_SCROLL] = enabled
+        }
+    }
+
+    val videoCardStyle: Flow<VideoCardStyle> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.VIDEO_CARD_STYLE]
+                    ?.let { stored -> runCatching { VideoCardStyle.valueOf(stored) }.getOrNull() }
+                    ?: VideoCardStyle.ROUNDED
+            }.distinctUntilChanged()
+
+    suspend fun setVideoCardStyle(style: VideoCardStyle) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.VIDEO_CARD_STYLE] = style.name
+        }
+    }
+
     val bottomNavLabels: Flow<NavBarLabels> =
         context.playerPreferencesDataStore.data
             .map { preferences ->
@@ -1880,6 +1914,17 @@ class PlayerPreferences(
         }
     }
 
+    /** Playlists, Mixes and the Shorts shelf among related videos. */
+    val showRelatedCollections: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences -> preferences[Keys.SHOW_RELATED_COLLECTIONS] ?: true }
+
+    suspend fun setShowRelatedCollections(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.SHOW_RELATED_COLLECTIONS] = enabled
+        }
+    }
+
     /** Seconds a double tap on either side jumps; 0 turns double-tap seek off. */
     val doubleTapSeekSeconds: Flow<Int> =
         context.devicePreferencesDataStore.data
@@ -1954,6 +1999,19 @@ class PlayerPreferences(
     suspend fun setRefreshHomeOnReselect(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.REFRESH_HOME_ON_RESELECT] = enabled
+        }
+    }
+
+    val feedAutoplay: Flow<FeedAutoplay> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                runCatching { FeedAutoplay.valueOf(preferences[Keys.FEED_AUTOPLAY] ?: FeedAutoplay.OFF.name) }
+                    .getOrDefault(FeedAutoplay.OFF)
+            }
+
+    suspend fun setFeedAutoplay(mode: FeedAutoplay) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.FEED_AUTOPLAY] = mode.name
         }
     }
 
@@ -2083,13 +2141,13 @@ class PlayerPreferences(
     val defaultQualityWifi: Flow<VideoQuality> =
         context.devicePreferencesDataStore.data
             .map { preferences ->
-                VideoQuality.fromString(preferences[DeviceKeys.DEFAULT_QUALITY_WIFI] ?: "1080p")
+                VideoQuality.fromString(preferences[DeviceKeys.DEFAULT_QUALITY_WIFI] ?: VideoQuality.AUTO.label)
             }
 
     val defaultQualityCellular: Flow<VideoQuality> =
         context.devicePreferencesDataStore.data
             .map { preferences ->
-                VideoQuality.fromString(preferences[DeviceKeys.DEFAULT_QUALITY_CELLULAR] ?: "480p")
+                VideoQuality.fromString(preferences[DeviceKeys.DEFAULT_QUALITY_CELLULAR] ?: VideoQuality.AUTO.label)
             }
 
     suspend fun setDefaultQualityWifi(quality: VideoQuality) {
@@ -2102,6 +2160,24 @@ class PlayerPreferences(
         context.devicePreferencesDataStore.edit { preferences ->
             preferences[DeviceKeys.DEFAULT_QUALITY_CELLULAR] = quality.label
         }
+    }
+
+    /** Whether a quality picked in the player becomes the default for the network it was picked on (#2178). */
+    val rememberVideoQuality: Flow<Boolean> =
+        context.devicePreferencesDataStore.data.map { it[DeviceKeys.REMEMBER_VIDEO_QUALITY] ?: false }
+
+    suspend fun setRememberVideoQuality(enabled: Boolean) {
+        context.devicePreferencesDataStore.edit { it[DeviceKeys.REMEMBER_VIDEO_QUALITY] = enabled }
+    }
+
+    /** Saves an in-player pick ([height] 0 is Auto) as this network's default, when [rememberVideoQuality] is on. */
+    suspend fun rememberPickedQuality(
+        height: Int,
+        onWifi: Boolean,
+    ) {
+        if (!rememberVideoQuality.first()) return
+        val quality = if (height <= 0) VideoQuality.AUTO else VideoQuality.fromHeight(height)
+        if (onWifi) setDefaultQualityWifi(quality) else setDefaultQualityCellular(quality)
     }
 
     val defaultVideoCodec: Flow<VideoCodec> =
@@ -2412,6 +2488,19 @@ class PlayerPreferences(
     suspend fun setVideoAmbientGlowInBatterySaver(enabled: Boolean) {
         context.playerPreferencesDataStore.edit { preferences ->
             preferences[Keys.VIDEO_AMBIENT_GLOW_BATTERY_SAVER] = enabled
+        }
+    }
+
+    /** Whether the ambient light follows the picture quickly instead of gliding (#2234). */
+    val videoAmbientResponsive: Flow<Boolean> =
+        context.playerPreferencesDataStore.data
+            .map { preferences ->
+                preferences[Keys.VIDEO_AMBIENT_RESPONSIVE] ?: false
+            }
+
+    suspend fun setVideoAmbientResponsive(enabled: Boolean) {
+        context.playerPreferencesDataStore.edit { preferences ->
+            preferences[Keys.VIDEO_AMBIENT_RESPONSIVE] = enabled
         }
     }
 
@@ -4429,6 +4518,14 @@ class PlayerPreferences(
         context.devicePreferencesDataStore.edit { it[DeviceKeys.DISK_READ_AHEAD_MINUTES] = minutes }
     }
 
+    /** The last bandwidth estimate per network type, encoded by `BandwidthSeeds`. */
+    val bandwidthSeeds: Flow<String> =
+        context.devicePreferencesDataStore.data.map { it[DeviceKeys.BANDWIDTH_SEEDS].orEmpty() }
+
+    suspend fun setBandwidthSeeds(encoded: String) {
+        context.devicePreferencesDataStore.edit { it[DeviceKeys.BANDWIDTH_SEEDS] = encoded }
+    }
+
     val diskReadAheadUnmeteredOnly: Flow<Boolean> =
         context.devicePreferencesDataStore.data.map { it[DeviceKeys.DISK_READ_AHEAD_UNMETERED_ONLY] ?: true }
 
@@ -5881,6 +5978,12 @@ enum class HomeFeedColumns(
 
 enum class PlayerRelatedCardStyle {
     COMPACT,
+    FULL_WIDTH,
+}
+
+/** How a feed's single phone column draws its cards: inset with rounded corners, or full width without. */
+enum class VideoCardStyle {
+    ROUNDED,
     FULL_WIDTH,
 }
 

@@ -63,6 +63,7 @@ import io.github.aedev.flow.ui.theme.PlayerScrim
 import io.github.aedev.flow.ui.utils.rememberIsOnWifi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 private val SnackbarBottomPadding = 80.dp
 
@@ -117,6 +118,7 @@ fun ShortsScreen(
     val hasMoreComments by viewModel.hasMoreComments.collectAsState()
     val commentTotalText by viewModel.commentTotalText.collectAsState()
     val commentsDisabled by viewModel.commentsDisabled.collectAsState()
+    val descriptionPages by viewModel.shortDescriptionPages.collectAsState()
     val visibleComments =
         remember(comments, commentSortFilter) {
             applyVideoCommentFilters(comments, commentSortFilter)
@@ -177,10 +179,12 @@ fun ShortsScreen(
                     if (settingsSheet.isOpen && settingsSheet.targetIndex != pagerState.settledPage) settingsSheet.close()
                 }
 
+                val playPage by rememberShortsPlayPage(pagerState)
                 ShortsPagerPlaybackEffects(
-                    pagerState = pagerState,
+                    playPage = playPage,
                     shorts = uiState.shorts,
                     targetHeight = shortsTargetHeight,
+                    isWifi = isWifi,
                     playerPreferences = playerPreferences,
                     viewModel = viewModel,
                 )
@@ -200,7 +204,8 @@ fun ShortsScreen(
                     val short = uiState.shorts[page]
                     ShortsReelPage(
                         short = short,
-                        isActive = page == pagerState.currentPage,
+                        isActive = page == playPage,
+                        attachSurface = abs(page - playPage) <= 1,
                         pageIndex = page,
                         viewModel = viewModel,
                         settings = reelSettings,
@@ -255,12 +260,14 @@ fun ShortsScreen(
                         if (filter == CommentSortFilter.TIMED) {
                             viewModel.selectTimedComments(videoId, timedCommentOrders(commentSortOptions))
                         } else {
-                            videoCommentSortFor(commentSortOptions, filter)?.let { sort -> viewModel.selectCommentSort(videoId, sort) }
+                            videoCommentSortFor(commentSortOptions, filter)?.let { sort ->
+                                viewModel.selectCommentSort(videoId, sort, filter.readsAhead)
+                            }
                         }
                     }
                 },
                 isLoadingMore = isLoadingMoreComments,
-                hasMore = commentSortFilter == CommentSortFilter.TIMED && hasMoreComments,
+                hasMore = hasMoreComments,
                 onLoadMore = {
                     uiState.shorts
                         .getOrNull(uiState.currentIndex)
@@ -283,8 +290,10 @@ fun ShortsScreen(
         if (showDescriptionSheet && uiState.shorts.isNotEmpty()) {
             DisposableEffect(Unit) { onDispose { sheetInsets.release() } }
             val safeIndex = uiState.currentIndex.coerceIn(0, uiState.shorts.size - 1)
+            val short = uiState.shorts[safeIndex]
             FlowDescriptionBottomSheet(
-                video = uiState.shorts[safeIndex].toVideo(),
+                video = short.toVideo(),
+                descriptionPage = descriptionPages[short.id],
                 expandedHeight = sheetExpandedHeight,
                 onSheetProgressChange = { progress -> sheetInsets.follow(sheetExpandedHeightPx * progress) },
                 dismissOnOutsideTap = true,

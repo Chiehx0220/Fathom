@@ -5,6 +5,7 @@ import io.github.aedev.flow.data.model.LiveChatMessage
 import io.github.aedev.flow.data.model.LiveChatMessageType
 import io.github.aedev.flow.data.model.LiveChatSegment
 import io.github.aedev.flow.innertube.YouTube
+import io.github.aedev.flow.innertube.models.response.ChatReplaySeed
 import io.github.aedev.flow.innertube.models.response.GetLiveChatResponse
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,7 @@ import javax.inject.Singleton
 class LiveChatRepository
     @Inject
     constructor(
+        private val youTubeRepository: YouTubeRepository,
         private val bilibili: BilibiliLiveChatFeed,
     ) {
         data class LiveChatPage(
@@ -32,7 +34,7 @@ class LiveChatRepository
             withContext(Dispatchers.IO) {
                 bilibili.seed(videoId)?.let { return@withContext it }
                 try {
-                    YouTube.liveChatContinuation(videoId).getOrNull()
+                    ChatReplaySeed.liveToken(youTubeRepository.watchNextResponse(videoId))
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

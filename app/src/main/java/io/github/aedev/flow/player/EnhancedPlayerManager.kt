@@ -32,12 +32,14 @@ import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.model.SponsorBlockCategories
 import io.github.aedev.flow.data.model.SponsorBlockSegment
 import io.github.aedev.flow.data.model.Video
+import io.github.aedev.flow.data.repository.WatchRelatedPages
 import io.github.aedev.flow.data.repository.YouTubeRepository
 import io.github.aedev.flow.innertube.YouTube
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
 import io.github.aedev.flow.player.analytics.PlaybackAnalyticsLogger
 import io.github.aedev.flow.player.analytics.RenderedFirstFrameListener
 import io.github.aedev.flow.player.analytics.SphericalVideoListener
+import io.github.aedev.flow.player.analytics.VideoStartupTrace
 import io.github.aedev.flow.player.audio.AudioEffectsEntryPoint
 import io.github.aedev.flow.player.audio.AudioFeaturesManager
 import io.github.aedev.flow.player.audio.AudioSessionAnnouncer
@@ -50,6 +52,7 @@ import io.github.aedev.flow.player.config.VideoSizeCap
 import io.github.aedev.flow.player.config.resetVideoSizeTo
 import io.github.aedev.flow.player.error.PlayerDiagnostics
 import io.github.aedev.flow.player.error.PlayerErrorHandler
+import io.github.aedev.flow.player.factory.BandwidthSeedRecorder
 import io.github.aedev.flow.player.factory.PlayerFactory
 import io.github.aedev.flow.player.media.MediaLoader
 import io.github.aedev.flow.player.preload.GaplessPreloadController
@@ -57,7 +60,9 @@ import io.github.aedev.flow.player.preload.PreloadTarget
 import io.github.aedev.flow.player.quality.AdaptiveLadder
 import io.github.aedev.flow.player.quality.LiveQualityPick
 import io.github.aedev.flow.player.quality.LiveQualitySelection
+import io.github.aedev.flow.player.quality.PlayerViewport
 import io.github.aedev.flow.player.quality.QualityManager
+import io.github.aedev.flow.player.quality.VideoDecoderSupport
 import io.github.aedev.flow.player.recovery.ClearedMediaRecoveryState
 import io.github.aedev.flow.player.recovery.StreamDenialReloader
 import io.github.aedev.flow.player.resolver.AdaptiveDashManifest
@@ -109,7 +114,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -140,6 +147,8 @@ class EnhancedPlayerManager private constructor() {
     private var player: ExoPlayer? = null
     private var trackSelector: DefaultTrackSelector? = null
     private var bandwidthMeter: DefaultBandwidthMeter? = null
+    private var bandwidthSeedRecorder: BandwidthSeedRecorder? = null
+    private var viewportJob: Job? = null
     private var analyticsLogger: PlaybackAnalyticsLogger? = null
     private var videoEqualizer: EqualizerAudioProcessor? = null
     private var eqObserver: Job? = null
@@ -274,7 +283,12 @@ class EnhancedPlayerManager private constructor() {
                         resolved.enrichedVideo
                             .toVideoSessionMetadata()
                             .toMedia3Metadata(),
-                    adaptiveLadder = AdaptiveLadder.forPreload(resolved.videoStream, videoStreams, resolved.preferredCodec),
+                    adaptiveLadder =
+                        AdaptiveLadder.forPreload(
+                            resolved.videoStream,
+                            autoLadderStreams(videoStreams),
+                            resolved.preferredCodec,
+                        ),
                 )
             },
             log = { autoNextLog(it) },
@@ -532,6 +546,10 @@ class EnhancedPlayerManager private constructor() {
     private var diskReadAhead: DiskReadAhead? = null
     private var qualityManager: QualityManager? = null
     private var surfaceManager: SurfaceManager? = null
+
+    // What the player view on screen actually inflated; the TV interface picks a SurfaceView on any version.
+    @Volatile
+    private var videoOutputIsSurfaceView = VideoSurfacePolicy.usesSurfaceView(Build.VERSION.SDK_INT)
     private var sponsorBlockHandler: SponsorBlockHandler? = null
     val danmaku = PlayerDanmaku()
     private var playbackTracker: PlaybackTracker? = null
@@ -602,6 +620,8 @@ class EnhancedPlayerManager private constructor() {
         if (player != null) return
         val applicationContext = context.applicationContext
         appContext = applicationContext
+        // Off the startup path: the decoder lists only matter once Auto picks a rung.
+        scope.launch(Dispatchers.IO) { VideoDecoderSupport.prewarm(applicationContext) }
         withContext(Dispatchers.IO) {
             playerFactory.preloadPreferences(applicationContext)
             PlayerCacheManager.preload(applicationContext)
@@ -625,9 +645,16 @@ class EnhancedPlayerManager private constructor() {
         audioFeaturesManager = AudioFeaturesManager(scope, _playerState)
 
         // Initialize bandwidth meter and track selector via factory
-        bandwidthMeter = playerFactory.createBandwidthMeter(context)
+        bandwidthMeter =
+            playerFactory.createBandwidthMeter(context).also { bandwidthSeedRecorder = BandwidthSeedRecorder(context, scope, it) }
         videoSizeCap = VideoSizeCap.forDevice(context)
         trackSelector = playerFactory.createTrackSelector(context, videoSizeCap)
+        VideoDecoderSupport.attach(context)
+        viewportJob =
+            combine(GlobalPlayerState.miniPlayerExpansionState, GlobalPlayerState.isInPipMode, PlayerViewport::isSmall)
+                .distinctUntilChanged()
+                .onEach { small -> trackSelector?.let { PlayerViewport.apply(it, small) } }
+                .launchIn(scope)
 
         // Initialize media loader
         mediaLoader =
@@ -792,7 +819,10 @@ class EnhancedPlayerManager private constructor() {
                 }
             }
         player?.addAnalyticsListener(
-            RenderedFirstFrameListener(currentVideoId = { currentVideoId }) { videoId -> _firstFrameVideoId.value = videoId },
+            RenderedFirstFrameListener(currentVideoId = { currentVideoId }) { videoId ->
+                _firstFrameVideoId.value = videoId
+                VideoStartupTrace.onFirstFrame(videoId)
+            },
         )
         player?.addAnalyticsListener(
             SphericalVideoListener { spherical ->
@@ -1053,7 +1083,7 @@ class EnhancedPlayerManager private constructor() {
 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     _playerState.value = _playerState.value.copy(isPlaying = isPlaying)
-                    if (isPlaying) abandonedSkips.onPlaybackStarted()
+                    if (isPlaying) abandonedSkips.onPlaybackStarted() else bandwidthSeedRecorder?.save()
                     autoNextLog("onIsPlayingChanged isPlaying=$isPlaying")
                 }
 
@@ -1474,7 +1504,7 @@ class EnhancedPlayerManager private constructor() {
 
         if (localFilePath != null) {
             Log.d(TAG, "loadMediaInternal: Playing local file: $localFilePath")
-            qualityManager?.isAdaptiveLadderActive = false
+            qualityManager?.setActiveLadder(emptyList())
             return mediaLoader?.loadMedia(
                 player = player,
                 context = appContext,
@@ -1547,7 +1577,7 @@ class EnhancedPlayerManager private constructor() {
                 mediaMetadata = sessionMetadata?.toMedia3Metadata() ?: MediaMetadata.EMPTY,
                 adaptiveLadder = ladder,
             ) ?: false
-        qualityManager?.isAdaptiveLadderActive = result && mediaLoader?.lastSourceWasAdaptiveLadder == true
+        qualityManager?.setActiveLadder(if (result && mediaLoader?.lastSourceWasAdaptiveLadder == true) ladder else emptyList())
         if (result) {
             qualityManager?.isDashSource = !currentDashManifestUrl.isNullOrEmpty()
         }
@@ -2271,10 +2301,34 @@ class EnhancedPlayerManager private constructor() {
         val videos: List<Video> = emptyList(),
     )
 
+    /**
+     * A preloaded video's related list is read once it plays, not when it is preloaded: most
+     * preloads are never reached, and each read is a whole watch response held in memory (#2204).
+     */
+    private fun loadAutoplayCandidates(videoId: String) {
+        scope.launch {
+            val related =
+                try {
+                    visibleRelatedCandidates(videoId)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "Related videos for $videoId not loaded", e)
+                    return@launch
+                }
+            if (currentVideoId == videoId) setAutoplayCandidates(videoId, related, autoplayEnabled)
+        }
+    }
+
     private suspend fun visibleRelatedCandidates(videoId: String): List<Video> {
-        val candidates = YouTubeRepository.getInstance().getRelatedCandidates(videoId)
+        val repository = YouTubeRepository.getInstance()
+        val page = WatchRelatedPages(repository).firstPage(videoId)
+        val candidates = page?.videos ?: repository.getRelatedCandidates(videoId)
         return withContext(Dispatchers.Default) {
-            PlayerRelatedVideosPolicy.sanitizeHidden(videoId, candidates, feedExclusionsSource, watchedSuggestionsSource)
+            PlayerRelatedVideosPolicy.upNextFirst(
+                PlayerRelatedVideosPolicy.sanitizeHidden(videoId, candidates, feedExclusionsSource, watchedSuggestionsSource),
+                page?.upNextVideoId,
+            )
         }
     }
 
@@ -2343,10 +2397,10 @@ class EnhancedPlayerManager private constructor() {
                 durationSeconds = InnerTubeVideoMapper.durationSeconds(extraction),
                 dashManifestUrl = extraction.liveDashUrl,
                 streamType = InnerTubeVideoMapper.streamType(extraction),
-                relatedVideos = visibleRelatedCandidates(video.id),
                 preferredCodec = preferredCodecKey,
                 itVideoFormats = extraction.videoFormats,
                 itAudioFormats = extraction.audioFormats,
+                extraction = extraction,
             )
         }
 
@@ -2367,6 +2421,8 @@ class EnhancedPlayerManager private constructor() {
         val pre = preload.consume() ?: return
         autoNextLog("promotePreloadedItem ${pre.data.enrichedVideo.id} fromQueue=${pre.fromQueue}")
         val data = pre.data
+        // Before the id changes: the watch page's load for it starts from that change.
+        data.extraction?.let { InnerTubeVideoStreamExtractor.handOffPromoted(data.enrichedVideo.id, it) }
         Log.d(TAG, "Gapless: promoting auto-advanced item ${data.enrichedVideo.id} (fromQueue=${pre.fromQueue})")
 
         mediaLoader?.releaseSabr()
@@ -2393,7 +2449,7 @@ class EnhancedPlayerManager private constructor() {
         castAudioStreams = data.audioStreams
         subtitleTracks.load(data.enrichedVideo.id, StreamProcessor.processCaptions(data.subtitles), acceptsEmbedded = false)
         resetSubtitleDelayFor(data.enrichedVideo.id)
-        val ladder = AdaptiveLadder.forPreload(data.videoStream, availableVideoStreams, data.preferredCodec)
+        val ladder = AdaptiveLadder.forPreload(data.videoStream, autoLadderStreams(availableVideoStreams), data.preferredCodec)
         currentVideoStream = data.videoStream ?: ladder.lastOrNull() ?: availableVideoStreams.firstOrNull()
         currentAudioStream = data.audioStream
         applySubtitleTrackSelection()
@@ -2403,7 +2459,7 @@ class EnhancedPlayerManager private constructor() {
         qualityManager?.preferredCodecKey = data.preferredCodec
         qualityManager?.isDashSource = !currentDashManifestUrl.isNullOrEmpty()
         qualityManager?.setCurrentStream(currentVideoStream)
-        qualityManager?.isAdaptiveLadderActive = AdaptiveDashManifest.build(ladder, data.durationSeconds) != null
+        qualityManager?.setActiveLadder(if (AdaptiveDashManifest.build(ladder, data.durationSeconds) != null) ladder else emptyList())
         if (data.videoStream != null) {
             qualityManager?.setManualMode(VideoCodecUtils.qualityHeightFromStream(data.videoStream))
         }
@@ -2422,7 +2478,8 @@ class EnhancedPlayerManager private constructor() {
             channel = data.enrichedVideo.channelName,
             thumbnail = data.enrichedVideo.thumbnailUrl,
         )
-        setAutoplayCandidates(data.enrichedVideo.id, data.relatedVideos, autoplayEnabled)
+        setAutoplayCandidates(data.enrichedVideo.id, emptyList(), autoplayEnabled)
+        loadAutoplayCandidates(data.enrichedVideo.id)
 
         val isAutoMode = data.videoStream == null
         _playerState.value =
@@ -3333,6 +3390,10 @@ class EnhancedPlayerManager private constructor() {
         )
     }
 
+    fun setVideoOutputIsSurfaceView(value: Boolean) {
+        videoOutputIsSurfaceView = value
+    }
+
     fun restoreVideoOutput() {
         val p = player ?: return
         val displayInteractive = isDisplayInteractive()
@@ -3340,7 +3401,7 @@ class EnhancedPlayerManager private constructor() {
         val surfaceValid = surfaceManager?.isSurfaceValid() == true || _playerState.value.showsSpherical
         val canRestore =
             VideoSurfacePolicy.canRestoreVideoOutput(
-                sdkInt = Build.VERSION.SDK_INT,
+                outputIsSurfaceView = videoOutputIsSurfaceView,
                 isDisplayInteractive = displayInteractive,
                 isSurfaceValid = surfaceValid,
             )
@@ -3409,6 +3470,10 @@ class EnhancedPlayerManager private constructor() {
     // ===== Bandwidth & Renderer Info =====
 
     fun getBandwidthEstimate(): Long = bandwidthMeter?.bitrateEstimate ?: 0L
+
+    /** The streams a preloaded ladder may hold; the same filter Auto applies to the playing video. */
+    private fun autoLadderStreams(streams: List<VideoStream>): List<VideoStream> =
+        VideoDecoderSupport.forAuto(streams).filter(videoSizeCap::fits)
 
     fun logBandwidthInfo() {
         val mbps = getBandwidthEstimate() / 1_000_000.0
@@ -3532,6 +3597,10 @@ class EnhancedPlayerManager private constructor() {
         audioSessionAnnouncer = null
         diskReadAhead?.release()
         diskReadAhead = null
+        bandwidthSeedRecorder?.release()
+        bandwidthSeedRecorder = null
+        viewportJob?.cancel()
+        viewportJob = null
         player?.release()
         player = null
         playerFactory.clearPreferences()

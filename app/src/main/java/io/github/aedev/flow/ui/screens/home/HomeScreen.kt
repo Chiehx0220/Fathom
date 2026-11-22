@@ -20,9 +20,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -30,11 +29,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,28 +42,38 @@ import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.HomeFeedColumns
 import io.github.aedev.flow.data.local.HomeViewMode
 import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.data.local.VideoCardStyle
 import io.github.aedev.flow.data.local.VideoHistoryEntry
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
 import io.github.aedev.flow.player.DeepFlowManager
+import io.github.aedev.flow.ui.OnTabReselected
 import io.github.aedev.flow.ui.TabScrollEventBus
 import io.github.aedev.flow.ui.components.layout.LocalFlowBottomInsets
 import io.github.aedev.flow.ui.components.layout.floatAboveBottomChrome
 import io.github.aedev.flow.ui.components.layout.navigation.FlowTab
+import io.github.aedev.flow.ui.components.layout.topbar.FlowScrollAwayLayout
 import io.github.aedev.flow.ui.components.layout.topbar.FlowTopBar
+import io.github.aedev.flow.ui.components.layout.topbar.rememberFlowScrollAwayState
 import io.github.aedev.flow.ui.components.rememberFeedGridLayout
 import io.github.aedev.flow.ui.components.shared.FlowPullToRefreshBox
 import io.github.aedev.flow.ui.components.shared.ProvidePlatformBadge
+import io.github.aedev.flow.ui.components.shared.card.LocalVideoCardThumbnailOverlay
 import io.github.aedev.flow.ui.screens.home.chips.HomeChipRow
+import io.github.aedev.flow.ui.utils.reachUnderStatusBar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 private const val MILLIS_PER_SECOND = 1000L
 
+// Below this a preview has shown too little to be worth resuming from; the video opens as any other.
+private const val MIN_HANDOFF_POSITION_MS = 1_000L
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onVideoClick: (Video) -> Unit,
+    onOpenPreview: (Video, positionMs: Long) -> Unit,
     onShortClick: (ShortsQueueSource) -> Unit,
     onSearchClick: () -> Unit,
     onNavigateToHistory: () -> Unit = {},
@@ -76,6 +85,8 @@ fun HomeScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val preferences = remember(context) { PlayerPreferences(context) }
+    val topBarHideOnScroll by preferences.topBarHideOnScroll.collectAsStateWithLifecycle(initialValue = true)
+    val videoCardStyle by preferences.videoCardStyle.collectAsStateWithLifecycle(initialValue = VideoCardStyle.ROUNDED)
     val homeViewMode by preferences.homeViewMode.collectAsStateWithLifecycle(initialValue = HomeViewMode.GRID)
     val homeFeedColumns by preferences.homeFeedColumns.collectAsStateWithLifecycle(initialValue = HomeFeedColumns.AUTO)
     val homeFeedEnabled by preferences.homeFeedEnabled.collectAsStateWithLifecycle(initialValue = true)
@@ -87,8 +98,8 @@ fun HomeScreen(
     val gridStates = rememberHomeGridStates()
     val coroutineScope = rememberCoroutineScope()
     val chips by viewModel.chips.collectAsStateWithLifecycle()
-    val chipRowState = rememberTopAppBarState()
-    val chipRowBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(chipRowState)
+    val headerState = rememberFlowScrollAwayState()
+    val headerSpec = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
     val snackbarHostState = remember { SnackbarHostState() }
     val refreshFailed = stringResource(R.string.home_refresh_failed)
     val retryLabel = stringResource(R.string.retry)
@@ -109,6 +120,22 @@ fun HomeScreen(
         refreshHomeOnReselect = refreshHomeOnReselect,
     )
 
+    val previewViewModel: HomePreviewViewModel = hiltViewModel()
+    HomePreviewEffects(
+        viewModel = previewViewModel,
+        gridState = gridStates.feed,
+        videos = uiState.videos,
+        enabled = homeFeedEnabled && chips.isAll && homeViewMode != HomeViewMode.LIST,
+    )
+    val openVideo: (Video) -> Unit = { video ->
+        val previewedTo = previewViewModel.openAt(video.id)
+        if (previewedTo != null && previewedTo >= MIN_HANDOFF_POSITION_MS) onOpenPreview(video, previewedTo) else onVideoClick(video)
+    }
+    val previewOverlay =
+        rememberHomePreviewOverlay(previewViewModel) { videoId ->
+            uiState.videos.firstOrNull { it.id == videoId }?.let(openVideo)
+        }
+
     val haptic = LocalHapticFeedback.current
     val homeLabel = stringResource(R.string.nav_home)
     val deepFlowLabel = stringResource(R.string.deep_flow_mode_title)
@@ -118,97 +145,97 @@ fun HomeScreen(
         coroutineScope.launch { DeepFlowManager.toggle(context) }
     }
     val logoClicks = Modifier.homeLogoClicks(homeLabel, deepFlowLabel, onClick = reselectHome, onLongClick = toggleDeepFlow)
+    OnTabReselected(FlowTab.Home.route) { headerState.show(headerSpec) }
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().reachUnderStatusBar(),
         contentWindowInsets = WindowInsets(0.dp),
         snackbarHost = {
             SnackbarHost(snackbarHostState, Modifier.floatAboveBottomChrome(LocalFlowBottomInsets.current))
         },
-        topBar = {
-            FlowTopBar(
-                title = {
-                    Text(
-                        stringResource(R.string.app_name_uppercase),
-                        modifier = logoClicks,
-                        style =
-                            MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 1.sp,
-                            ),
-                    )
-                },
-                leading =
-                    if (showAppLogoIcon) {
-                        {
-                            FathomHeaderLogoIcon(
-                                isDeepFlowActive = deepFlowActive,
-                                modifier = Modifier.size(26.dp).then(logoClicks),
+    ) { padding ->
+        FlowScrollAwayLayout(
+            modifier = Modifier.padding(padding),
+            state = headerState,
+            hideOnScroll = topBarHideOnScroll,
+            header = {
+                FlowTopBar(
+                    title = {
+                        Text(
+                            stringResource(R.string.app_name_uppercase),
+                            modifier = logoClicks,
+                            style =
+                                MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 1.sp,
+                                ),
+                        )
+                    },
+                    leading =
+                        if (showAppLogoIcon) {
+                            {
+                                FathomHeaderLogoIcon(
+                                    isDeepFlowActive = deepFlowActive,
+                                    modifier = Modifier.size(26.dp).then(logoClicks),
+                                )
+                            }
+                        } else {
+                            null
+                        },
+                    actions = {
+                        IconButton(onClick = onSearchClick) {
+                            Icon(
+                                Icons.Outlined.Search,
+                                contentDescription = stringResource(R.string.search),
                             )
                         }
-                    } else {
-                        null
-                    },
-                actions = {
-                    IconButton(onClick = onSearchClick) {
-                        Icon(
-                            Icons.Outlined.Search,
-                            contentDescription = stringResource(R.string.search),
-                        )
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .background(MaterialTheme.colorScheme.background),
-        ) {
-            if (homeFeedEnabled) {
-                HomeChipRow(
-                    state = chips,
-                    scrollState = chipRowState,
-                    onSelect = { key ->
-                        chipRowState.heightOffset = 0f
-                        viewModel.selectChip(key)
-                    },
-                    leading = {
-                        // Source filter shapes the mixed feed only: picking one returns to All.
-                        HomeContentSourceFilterChip(
-                            selected = contentSourceFilter,
-                            onSelect = viewModel::setContentSourceFilter,
-                        )
                     },
                 )
-            }
+                if (homeFeedEnabled) {
+                    HomeChipRow(
+                        state = chips,
+                        onSelect = { key ->
+                            coroutineScope.launch { headerState.show(headerSpec) }
+                            viewModel.selectChip(key)
+                        },
+                        leading = {
+                            // Source filter shapes the mixed feed only: picking one returns to All.
+                            HomeContentSourceFilterChip(
+                                selected = contentSourceFilter,
+                                onSelect = viewModel::setContentSourceFilter,
+                            )
+                        },
+                    )
+                }
+            },
+        ) { topPadding ->
             ResettableHomePullToRefreshBox(
                 resetKey = uiState.isLoading && uiState.videos.isEmpty(),
                 isRefreshing = if (chips.isAll) uiState.isRefreshing else chips.isRefreshing,
                 onRefresh = { if (chips.isAll) viewModel.refreshFeed() else viewModel.refreshSelectedChip() },
+                indicatorTopPadding = topPadding,
                 showPlatformBadge = contentSourceFilter.isMix,
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .nestedScroll(chipRowBehavior.nestedScrollConnection),
+                modifier = Modifier.fillMaxSize(),
             ) {
-                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    HomeFeedBody(
-                        viewModel = viewModel,
-                        uiState = uiState,
-                        chips = chips,
-                        gridStates = gridStates,
-                        feedLayout = rememberFeedGridLayout(maxWidth, homeFeedColumns),
-                        isListView = homeViewMode == HomeViewMode.LIST,
-                        homeFeedEnabled = homeFeedEnabled,
-                        onVideoClick = onVideoClick,
-                        onPlayMix = onPlayMix,
-                        onShortClick = onShortClick,
-                        onNavigateToHistory = onNavigateToHistory,
-                        onOpenShortsFeed = onOpenShortsFeed,
-                    )
+                CompositionLocalProvider(LocalVideoCardThumbnailOverlay provides previewOverlay) {
+                    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                        HomeFeedBody(
+                            viewModel = viewModel,
+                            uiState = uiState,
+                            chips = chips,
+                            gridStates = gridStates,
+                            feedLayout = rememberFeedGridLayout(maxWidth, homeFeedColumns, cardStyle = videoCardStyle),
+                            isListView = homeViewMode == HomeViewMode.LIST,
+                            homeFeedEnabled = homeFeedEnabled,
+                            onVideoClick = openVideo,
+                            onPlayMix = onPlayMix,
+                            onShortClick = onShortClick,
+                            onNavigateToHistory = onNavigateToHistory,
+                            onOpenShortsFeed = onOpenShortsFeed,
+                            topPadding = topPadding,
+                            headerOffsetPx = { headerState.headerOffsetPx },
+                        )
+                    }
                 }
             }
         }
@@ -236,6 +263,7 @@ private fun ResettableHomePullToRefreshBox(
     resetKey: Boolean,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
+    indicatorTopPadding: Dp,
     showPlatformBadge: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
@@ -244,6 +272,7 @@ private fun ResettableHomePullToRefreshBox(
         FlowPullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = onRefresh,
+            indicatorTopPadding = indicatorTopPadding,
             modifier = modifier,
             content = { ProvidePlatformBadge(showPlatformBadge) { content() } },
         )

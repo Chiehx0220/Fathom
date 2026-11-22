@@ -2,6 +2,7 @@ package io.github.aedev.flow.data.repository
 
 import com.google.common.truth.Truth.assertThat
 import io.github.aedev.flow.innertube.models.response.GetLiveChatResponse
+import io.mockk.mockk
 import kotlinx.serialization.json.Json
 import org.junit.Test
 

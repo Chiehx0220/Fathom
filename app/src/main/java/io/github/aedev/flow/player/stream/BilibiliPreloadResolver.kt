@@ -74,7 +74,6 @@ internal object BilibiliPreloadResolver {
                     .toLong(),
             dashManifestUrl = null,
             streamType = StreamType.VIDEO_STREAM,
-            relatedVideos = step.relatedVideos,
             preferredCodec = preferences.codecKey,
             itVideoFormats = emptyList(),
             itAudioFormats = emptyList(),

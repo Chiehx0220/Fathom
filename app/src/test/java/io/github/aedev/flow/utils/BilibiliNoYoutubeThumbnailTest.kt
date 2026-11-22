@@ -8,9 +8,9 @@ class BilibiliNoYoutubeThumbnailTest {
     fun `a Bilibili video is never given a YouTube thumbnail link`() {
         assertThat(ThumbnailUrlResolver.buildHighQualityYoutubeThumbnail("BV1xx411c7mD")).isEmpty()
         assertThat(ThumbnailUrlResolver.buildFallbackYoutubeThumbnail("BV1xx411c7mD?p=2")).isEmpty()
-        assertThat(ThumbnailUrlResolver.youtubeThumbnailCandidates("live:12345")).isEmpty()
+        assertThat(ThumbnailUrlResolver.resolveVideoThumbnailModels("live:12345", null)).isEmpty()
         assertThat(ThumbnailUrlResolver.normalizeVideoThumbnail("BV1xx411c7mD", null)).isEmpty()
-        assertThat(ThumbnailUrlResolver.resolveVideoThumbnailCandidates("BV1xx411c7mD", null)).isEmpty()
+        assertThat(ThumbnailUrlResolver.resolveVideoThumbnailModels("BV1xx411c7mD", null)).isEmpty()
     }
 
     @Test

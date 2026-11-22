@@ -12,6 +12,7 @@ import androidx.media3.common.Player
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.currentCoroutineContext
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.isActive
@@ -27,7 +29,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.exp
 
-private const val CAPTURE_MS_ASYNC = 750L
+private const val CAPTURE_MS_ASYNC = 900L
+private const val CAPTURE_MS_RESPONSIVE = 750L
 private const val CAPTURE_MS_BLOCKING = 1800L
 
 /** How often the frame is sampled: the bars and the glow change slowly, a lit page follows the picture. */
@@ -40,7 +43,7 @@ private const val LIVELY_STILL_MS = 1000L
 internal const val IDLE_MS = 1500L
 
 /**
- * Temporal smoothing for a lit page, which samples every [LIVELY_CHANGING_MS]. One exponential filter over the pixel buffer replaces what used to be three
+ * Temporal smoothing for live frames, unless the viewer asked for a responsive light. One exponential filter over the pixel buffer replaces what used to be three
  * overlapping Compose animations — `Crossfade(800ms)` on the frame plus `animateColorAsState(700ms)`
  * on base and accent.
  *
@@ -64,17 +67,17 @@ private const val SMOOTH_TICK_MS = 60L
 private const val SMOOTH_TAU_MS = 600f
 
 /**
- * Live frames at the standard pace, storyboard frames and thumbnails arrive hundreds of ms or
- * seconds apart, so they crossfade instead of going through the filter. The fade steps on its own 15 fps clock and only moves an alpha read in draw, so it
- * never drives the display at its refresh rate; at the glow's brightness a step is about one sRGB
- * level. One change per [MIN_STORYBOARD_STEP_MS] stays far under WCAG 2.3.1's three flashes a second.
+ * Storyboard frames, thumbnails and the live frames of a responsive light arrive hundreds of ms
+ * or seconds apart, so they crossfade instead of going through the filter. The fade steps on its
+ * own 15 fps clock and only moves an alpha read in draw, so it never drives the display at its
+ * refresh rate; at the glow's brightness a step is about one sRGB level.
  */
 private const val FADE_TICK_MS = 66L
 
 /**
- * A live frame at the standard pace is current when it is read, so it fades in quickly and the
- * light trails the picture by under a second without ever running ahead of it. Captures are at
- * least [CAPTURE_MS_ASYNC] apart, so the fades stay far under three flashes a second.
+ * A responsive light fades to each live frame quickly, so it trails the picture by under a second.
+ * Captures are at least [CAPTURE_MS_RESPONSIVE] apart, so the fades stay under three flashes a
+ * second, but flashing scenes swing fully instead of being smoothed (#2234): it is opt-in.
  */
 private const val LIVE_FADE_MS = 450L
 
@@ -105,6 +108,7 @@ internal class AmbientPipeline(
     private val pixelDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val pageStyle: () -> AmbientPageStyle? = { null },
     private val capturePace: () -> AmbientCadence = { AmbientCadence.STANDARD },
+    private val responsive: () -> Boolean = { false },
 ) {
     private val sample = Bitmap.createBitmap(SAMPLE_W, SAMPLE_H, Bitmap.Config.ARGB_8888)
     private val samplePixels = IntArray(SAMPLE_W * SAMPLE_H)
@@ -205,12 +209,12 @@ internal class AmbientPipeline(
                     val wait = storyboardDelayMs(position, step, fade, player.playbackParameters.speed)
                     jumped = withTimeoutOrNull(wait) { player.renderedFrames().first() } != null
                 } else {
-                    awaitPlayingOrNewFrame(playerView, isPlaying)
+                    awaitPlayingOrNewFrame(isPlaying, playerView.player?.renderedFrames())
                     jumped = true
                 }
             } else {
                 val cadence = capturePass(playerView, hot())
-                if (playing) delay(cadence) else awaitPlayingOrNewFrame(playerView, isPlaying)
+                if (playing) delay(cadence) else awaitPlayingOrNewFrame(isPlaying, playerView.player?.renderedFrames())
             }
         }
     }
@@ -222,14 +226,20 @@ internal class AmbientPipeline(
     ): Long {
         val surface = playerView.videoSurfaceView
         if (surface == null || surface.width <= 0 || surface.height <= 0) return IDLE_MS
-        val base = if (surface is TextureView) CAPTURE_MS_BLOCKING else CAPTURE_MS_ASYNC
+        val crossfades = liveFramesCrossfade(capturePace(), responsive())
+        val base =
+            when {
+                surface is TextureView -> CAPTURE_MS_BLOCKING
+                crossfades -> CAPTURE_MS_RESPONSIVE
+                else -> CAPTURE_MS_ASYNC
+            }
         return when (captureSurface(surface, sample, handler)) {
             CAPTURE_OK -> {
                 consecutiveFailures = 0
                 // Heavy work off Main; withContext joins before anything is published, so the
                 // staging buffers are never read concurrently.
                 val accepted = withContext(pixelDispatcher) { computeTarget() }
-                if (accepted && capturePace() == AmbientCadence.STANDARD) {
+                if (accepted && crossfades) {
                     offerStill(stagingGrid, LIVE_FADE_MS)
                 } else if (accepted) {
                     stagingGrid.copyInto(targetGrid)
@@ -256,15 +266,6 @@ internal class AmbientPipeline(
                 base * (1L shl consecutiveFailures.coerceAtMost(3)).coerceAtMost(MAX_BACKOFF_MULTIPLIER)
             }
         }
-    }
-
-    private suspend fun awaitPlayingOrNewFrame(
-        playerView: PlayerView,
-        isPlaying: Flow<Boolean>,
-    ) {
-        val playing = isPlaying.filter { it }.map { }
-        val player = playerView.player
-        (if (player == null) playing else merge(playing, player.renderedFrames())).first()
     }
 
     /** Runs on Default. Returns true when the frame differed enough to become a new target. */
@@ -466,11 +467,32 @@ internal fun ambientUsesStoryboard(
     blockingSurface: Boolean,
 ): Boolean = hasStoryboard && (!captureSupported || hot || blockingSurface)
 
+/**
+ * Whether live frames crossfade one by one instead of walking the filter: only when the viewer
+ * chose a responsive light, and never on a lit page, which samples too often for separate fades.
+ */
+internal fun liveFramesCrossfade(
+    pace: AmbientCadence,
+    responsive: Boolean,
+): Boolean = responsive && pace == AmbientCadence.STANDARD
+
 /** A decoded picture and the part of it that is the video. */
 internal class AmbientStill(
     val bitmap: Bitmap,
     val rect: Rect,
 )
+
+/**
+ * Returns once [isPlaying] turns true or a new frame is drawn. A flow that ends without either
+ * (a Shorts page with no player passes `flowOf(false)`) holds until cancelled instead of throwing.
+ */
+internal suspend fun awaitPlayingOrNewFrame(
+    isPlaying: Flow<Boolean>,
+    renderedFrames: Flow<Unit>?,
+) {
+    val playing = isPlaying.filter { it }.map { }
+    (if (renderedFrames == null) playing else merge(playing, renderedFrames)).firstOrNull() ?: awaitCancellation()
+}
 
 /** One emission per frame the player draws after a seek, a new item or a new surface. */
 internal fun Player.renderedFrames(): Flow<Unit> =

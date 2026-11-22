@@ -15,12 +15,12 @@ internal class BilibiliCommentSource(
 ) : CommentsSource {
     private val api by lazy(apiProvider)
 
-    override suspend fun first(
+    override suspend fun firstPage(
         videoId: String,
         sortToken: String?,
-    ): CommentsPageResult = more(videoId, continuation = "")
+    ): CommentsPageResult = nextPage(videoId, continuation = "")
 
-    override suspend fun more(
+    override suspend fun nextPage(
         videoId: String,
         continuation: String,
     ): CommentsPageResult {
@@ -31,6 +31,16 @@ internal class BilibiliCommentSource(
     }
 
     override suspend fun replies(
+        videoId: String,
+        continuation: String,
+    ): CommentsPageResult = CommentsPageResult.EMPTY
+
+    override suspend fun timed(
+        videoId: String,
+        sectionToken: String,
+    ): CommentsPageResult = CommentsPageResult.EMPTY
+
+    override suspend fun repliesOf(
         videoId: String,
         commentId: String,
         continuation: String,

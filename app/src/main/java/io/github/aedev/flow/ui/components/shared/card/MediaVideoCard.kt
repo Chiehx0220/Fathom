@@ -38,6 +38,12 @@ object VideoCardDefaults {
     val AvatarSize: Dp = 40.dp
 
     val RowVerticalPadding: Dp = 8.dp
+
+    /** The gap between a row's title and the lines under it. */
+    val RowTitleGap: Dp = 6.dp
+
+    /** The gap between the lines under a stacked card's thumbnail. */
+    val StackedTextSpacing: Dp = 4.dp
 }
 
 /**
@@ -50,6 +56,7 @@ object VideoCardDefaults {
  * [density] is the grid's [io.github.aedev.flow.ui.components.FeedGridLayout.cardDensity].
  * [reason] is a short line under the details saying why the feed shows this video; null shows none.
  * [whyShown] says why a feed shows this video, on the menu's Details page.
+ * [fullBleed] draws a stacked card's thumbnail without corners, for the full-width card style.
  */
 @Composable
 fun MediaVideoCard(
@@ -63,6 +70,7 @@ fun MediaVideoCard(
     reason: String? = null,
     whyShown: String? = null,
     density: VideoCardDensity = VideoCardDensity.Regular,
+    fullBleed: Boolean = false,
 ) {
     when (layout) {
         VideoCardLayout.Stacked -> {
@@ -74,6 +82,7 @@ fun MediaVideoCard(
                 density = density,
                 reason = reason,
                 whyShown = whyShown,
+                fullBleed = fullBleed,
                 modifier = modifier,
             )
         }

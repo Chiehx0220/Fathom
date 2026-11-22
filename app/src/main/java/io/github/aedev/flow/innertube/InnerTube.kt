@@ -14,6 +14,8 @@ import io.github.aedev.flow.innertube.models.response.NextResponse
 import io.github.aedev.flow.innertube.models.response.PlayerResponse
 import io.github.aedev.flow.innertube.utils.parseCookieString
 import io.github.aedev.flow.innertube.utils.sha1
+import io.github.aedev.flow.network.FlowRequestLog
+import io.github.aedev.flow.network.SharedConnectionPool
 import io.ktor.client.*
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.*
@@ -155,14 +157,8 @@ class InnerTube {
             // PERFORMANCE OPTIMIZED: Enhanced network configuration
             engine {
                 config {
-                    // Aggressive connection pool for faster connection reuse
-                    connectionPool(
-                        okhttp3.ConnectionPool(
-                            15, // Increased from 10 - more connections available
-                            5, // keepAliveDuration
-                            java.util.concurrent.TimeUnit.MINUTES,
-                        ),
-                    )
+                    FlowRequestLog.install(this)
+                    connectionPool(SharedConnectionPool.pool)
 
                     // Faster timeout configurations - fail fast, retry smart
                     connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
@@ -463,6 +459,19 @@ class InnerTube {
         }
     }
 
+    /** The next page of a main-site panel whose continuation service is `/browse`. */
+    suspend fun webBrowseContinuation(
+        client: YouTubeClient,
+        continuation: String,
+    ) = webBrowse(client) { requestVisitorData ->
+        BrowseBody(
+            context = client.toContext(locale, requestVisitorData, null),
+            browseId = null,
+            params = null,
+            continuation = continuation,
+        )
+    }
+
     suspend fun postCommentsBrowse(
         client: YouTubeClient,
         postId: String? = null,
@@ -724,30 +733,11 @@ class InnerTube {
         parameter("prettyPrint", false)
     }
 
-    suspend fun nextForLiveChat(videoId: String) =
-        withRetry {
-            val client = YouTubeClient.WEB
-            httpClient.post("https://www.youtube.com/youtubei/v1/next") {
-                webYouTubeHeaders(client)
-                setBody(
-                    NextBody(
-                        context = client.toContext(locale, visitorData, null),
-                        videoId = videoId,
-                        playlistId = null,
-                        playlistSetVideoId = null,
-                        index = null,
-                        params = null,
-                        continuation = null,
-                    ),
-                )
-            }
-        }
-
     /**
      * The watch page for [videoId] or one of its continuations, on the main site.
      *
-     * The comment section only exists on the web watch response, so this posts to the same host
-     * and headers as [nextForLiveChat] rather than the music API the default request points at.
+     * The comment section and the chat seed only exist on the web watch response, so this posts to
+     * the main site rather than the music API the default request points at.
      */
     suspend fun nextWatch(
         videoId: String? = null,
@@ -764,6 +754,24 @@ class InnerTube {
                     playlistSetVideoId = null,
                     index = null,
                     params = null,
+                    continuation = continuation,
+                ),
+            )
+        }
+    }
+
+    /** The watch page's refreshed counts and date, on the same host and headers as [nextWatch]. */
+    suspend fun updatedMetadata(
+        videoId: String? = null,
+        continuation: String? = null,
+    ) = withRetry {
+        val client = YouTubeClient.WEB
+        httpClient.post("https://www.youtube.com/youtubei/v1/updated_metadata") {
+            webYouTubeHeaders(client)
+            setBody(
+                UpdatedMetadataBody(
+                    context = client.toContext(locale, visitorData, null),
+                    videoId = videoId,
                     continuation = continuation,
                 ),
             )
@@ -894,6 +902,15 @@ class InnerTube {
     }
 
     suspend fun getSwJsData() = httpClient.get("https://music.youtube.com/sw.js_data")
+
+    /** Mints a new visitor: no visitorData goes out, so the answer is not the one in use. */
+    suspend fun visitorId(client: YouTubeClient) =
+        withRetry {
+            httpClient.post("https://www.youtube.com/youtubei/v1/visitor_id") {
+                webYouTubeHeaders(client, visitor = null)
+                setBody(VisitorIdBody(context = client.toContext(locale, null, null)))
+            }
+        }
 
     suspend fun getWebServiceWorker(): String =
         httpClient

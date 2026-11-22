@@ -40,7 +40,7 @@ internal fun List<Any>.orBilibiliCover(
     val cover by produceState<String?>(null, bvid) { value = bvid?.let { BilibiliCoverCache.shared.coverOf(context, it) } }
     val resolved = cover
     if (bvid == null || resolved == null || quality == null) return this
-    return ThumbnailUrlResolver.resolveVideoThumbnailCandidates(videoId, resolved, quality, portrait)
+    return ThumbnailUrlResolver.resolveVideoThumbnailModels(videoId, resolved, quality, portrait)
 }
 
 /** One request per video, max [MAX_PARALLEL] concurrent, failures skipped [RETRY_MS]; runs on [scope]. */

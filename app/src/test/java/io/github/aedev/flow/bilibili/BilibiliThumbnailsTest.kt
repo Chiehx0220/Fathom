@@ -1,6 +1,7 @@
 package io.github.aedev.flow.bilibili
 
 import com.google.common.truth.Truth.assertThat
+import io.github.aedev.flow.data.images.YouTubeThumbnail
 import io.github.aedev.flow.data.local.ThumbnailQuality
 import io.github.aedev.flow.utils.ThumbnailUrlResolver
 import org.junit.Test
@@ -40,7 +41,7 @@ class BilibiliThumbnailsTest {
 
     @Test
     fun `the video thumbnail resolver sends a Bilibili cover through it`() {
-        val low = ThumbnailUrlResolver.resolveVideoThumbnailCandidates("BV1bia36FEuo?p=1", cover, ThumbnailQuality.LOW)
+        val low = ThumbnailUrlResolver.resolveVideoThumbnailModels("BV1bia36FEuo?p=1", cover, ThumbnailQuality.LOW)
 
         assertThat(low).containsExactly("$cover@320w.webp", cover).inOrder()
     }
@@ -48,18 +49,18 @@ class BilibiliThumbnailsTest {
     @Test
     fun `off fetches no Bilibili cover at all, but one stored on the device still shows`() {
         assertThat(bilibiliThumbnailCandidates(cover, ThumbnailQuality.OFF, portrait = false)).isNull()
-        assertThat(ThumbnailUrlResolver.resolveVideoThumbnailCandidates("BV1bia36FEuo?p=1", cover, ThumbnailQuality.OFF)).isEmpty()
+        assertThat(ThumbnailUrlResolver.resolveVideoThumbnailModels("BV1bia36FEuo?p=1", cover, ThumbnailQuality.OFF)).isEmpty()
 
         val saved = "file:///storage/emulated/0/Download/Flow/cover.jpg"
-        assertThat(ThumbnailUrlResolver.resolveVideoThumbnailCandidates("BV1bia36FEuo?p=1", saved, ThumbnailQuality.OFF))
+        assertThat(ThumbnailUrlResolver.resolveVideoThumbnailModels("BV1bia36FEuo?p=1", saved, ThumbnailQuality.OFF))
             .containsExactly(saved)
     }
 
     @Test
     fun `a YouTube thumbnail is untouched`() {
-        val low = ThumbnailUrlResolver.resolveVideoThumbnailCandidates("dQw4w9WgXcQ", null, ThumbnailQuality.LOW)
+        val low = ThumbnailUrlResolver.resolveVideoThumbnailModels("dQw4w9WgXcQ", null, ThumbnailQuality.LOW)
 
-        val base = "https://i.ytimg.com/vi/dQw4w9WgXcQ"
-        assertThat(low).containsExactly("$base/mqdefault.jpg", "$base/hqdefault.jpg").inOrder()
+        assertThat(low).hasSize(1)
+        assertThat(low.single()).isInstanceOf(YouTubeThumbnail::class.java)
     }
 }

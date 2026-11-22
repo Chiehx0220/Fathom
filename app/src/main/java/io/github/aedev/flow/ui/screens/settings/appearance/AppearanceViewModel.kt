@@ -14,6 +14,7 @@ import io.github.aedev.flow.data.local.NavBarLabels
 import io.github.aedev.flow.data.local.NavBarScroll
 import io.github.aedev.flow.data.local.NavBarStyle
 import io.github.aedev.flow.data.local.PlayerPreferences
+import io.github.aedev.flow.data.local.VideoCardStyle
 import io.github.aedev.flow.platform.AppIconController
 import io.github.aedev.flow.platform.AppUiMode
 import io.github.aedev.flow.ui.components.layout.navigation.NavigationVisibility
@@ -56,6 +57,8 @@ class AppearanceViewModel
         val separatePlaylists = preferences.separatePlaylistKinds.asState(false)
         val appLogo = preferences.showAppLogoIcon.asState(true)
         val topBarProfile = preferences.showProfileInTopBar.asState(true)
+        val topBarHideOnScroll = preferences.topBarHideOnScroll.asState(true)
+        val videoCardStyle = preferences.videoCardStyle.asState(VideoCardStyle.ROUNDED)
         val settingsInProfileMenu = preferences.settingsInProfileMenu.asState(false)
         val groupBadges = preferences.showChannelGroupBadges.asState(false)
         val cardLikeButtons = preferences.videoCardActionsEnabled.asState(false)
@@ -160,6 +163,10 @@ class AppearanceViewModel
         fun setDownloadsTab(enabled: Boolean) = write { preferences.setDownloadsNavigationEnabled(enabled) }
 
         fun setHideNavOnScroll(enabled: Boolean) = write { preferences.setBottomNavHideOnScroll(enabled) }
+
+        fun setTopBarHideOnScroll(enabled: Boolean) = write { preferences.setTopBarHideOnScroll(enabled) }
+
+        fun setVideoCardStyle(style: VideoCardStyle) = write { preferences.setVideoCardStyle(style) }
 
         fun setNavLabels(labels: NavBarLabels) = write { preferences.setBottomNavLabels(labels) }
 

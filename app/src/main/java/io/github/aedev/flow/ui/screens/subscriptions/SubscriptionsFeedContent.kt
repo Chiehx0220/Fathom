@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.data.local.HomeFeedColumns
+import io.github.aedev.flow.data.local.VideoCardStyle
 import io.github.aedev.flow.data.model.Channel
 import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.shorts.queue.ShortsQueueSource
@@ -60,10 +61,12 @@ internal fun SubscriptionsFeedContent(
     modifier: Modifier = Modifier,
     maxAutoColumns: Int = FEED_MAX_AUTO_COLUMNS,
     minCellWidth: Dp = FeedCardMinWidth,
+    cardStyle: VideoCardStyle = VideoCardStyle.ROUNDED,
     showShorts: Boolean = true,
     onPostsClick: (() -> Unit)? = null,
     pinnedCount: Int = 0,
     onTogglePin: ((Channel) -> Unit)? = null,
+    topPadding: Dp = 0.dp,
 ) {
     val pullRefreshState = rememberPullToRefreshState()
 
@@ -77,10 +80,11 @@ internal fun SubscriptionsFeedContent(
         isRefreshing = state.isLoading,
         onRefresh = onRefresh,
         state = pullRefreshState,
+        indicatorTopPadding = topPadding,
         modifier = modifier.fillMaxSize(),
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            val feedLayout = rememberFeedGridLayout(maxWidth, columnPreference, maxAutoColumns, minCellWidth)
+            val feedLayout = rememberFeedGridLayout(maxWidth, columnPreference, maxAutoColumns, minCellWidth, cardStyle)
             val listMode = !state.isFullWidthView
             val plan =
                 rememberFeedGridPlan(
@@ -96,10 +100,10 @@ internal fun SubscriptionsFeedContent(
                 columns = plan.cells,
                 state = gridState,
                 modifier = Modifier.fillMaxSize().dpadFocusGroup(),
-                contentPadding = plan.contentPadding(top = FeedTopPadding, bottom = flowBottomContentPadding()),
+                contentPadding = plan.contentPadding(top = FeedTopPadding + topPadding, bottom = flowBottomContentPadding()),
                 verticalArrangement = Arrangement.spacedBy(plan.rowSpacing),
             ) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
+                item(key = "subscriptions_header", contentType = "subscriptions_header", span = { GridItemSpan(maxLineSpan) }) {
                     Column {
                         SubscriptionsFeedHeader(
                             state = state,
@@ -139,7 +143,7 @@ internal fun SubscriptionsFeedContent(
                 }
 
                 if (showShorts && state.isShortsShelfEnabled && state.shorts.isNotEmpty()) {
-                    item(span = { GridItemSpan(maxLineSpan) }) {
+                    item(key = "subscriptions_shorts", contentType = "subscriptions_shorts", span = { GridItemSpan(maxLineSpan) }) {
                         Column {
                             MediaShortsShelf(
                                 shorts = state.shorts,
@@ -159,7 +163,7 @@ internal fun SubscriptionsFeedContent(
                     show = videos.mixesServices(),
                     items = videos,
                     key = { _, video -> video.id },
-                    contentType = { _, _ -> "video" },
+                    contentType = { index, _ -> if (plan.isListCard(index)) "video_row" else "video_stacked" },
                     span = { index, _ -> plan.span(index, spansOwnRow = false, maxLineSpan = maxLineSpan) },
                 ) { index, video ->
                     MediaVideoCard(
@@ -169,6 +173,7 @@ internal fun SubscriptionsFeedContent(
                         useInternalPadding = !feedLayout.cardsBleed,
                         thumbnailWidth = plan.listThumbnailWidth,
                         density = plan.cardDensity,
+                        fullBleed = feedLayout.thumbnailsBleed,
                     )
                 }
             }

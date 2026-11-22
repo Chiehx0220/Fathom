@@ -2,41 +2,59 @@ package io.github.aedev.flow.data.comments
 
 import io.github.aedev.flow.data.repository.YouTubeRepository
 
-/** [CommentsPager] page source; each service adapts its API to this shape. */
+/** Where a [CommentsPager] reads one video's comments from. */
 internal interface CommentsSource {
-    suspend fun first(
+    /** The first page in the order [sortToken] names, or the section's own default when it is null. */
+    suspend fun firstPage(
         videoId: String,
         sortToken: String?,
     ): CommentsPageResult
 
-    suspend fun more(
+    suspend fun nextPage(
         videoId: String,
         continuation: String,
     ): CommentsPageResult
 
     suspend fun replies(
         videoId: String,
+        continuation: String,
+    ): CommentsPageResult
+
+    /** Replies of [commentId]; a service whose reply cursor needs the parent comment overrides this. */
+    suspend fun repliesOf(
+        videoId: String,
         commentId: String,
         continuation: String,
+    ): CommentsPageResult = replies(videoId, continuation)
+
+    /** YouTube's own Timed list, read through any token of the section; empty when there is none. */
+    suspend fun timed(
+        videoId: String,
+        sectionToken: String,
     ): CommentsPageResult
 }
 
-internal class YouTubeCommentsSource(
+/** A video's comment section, opened from the watch response the player already holds. */
+internal class VideoCommentsSource(
     private val repository: YouTubeRepository,
 ) : CommentsSource {
-    override suspend fun first(
+    override suspend fun firstPage(
         videoId: String,
         sortToken: String?,
     ) = repository.getVideoComments(videoId, sortToken)
 
-    override suspend fun more(
+    override suspend fun nextPage(
         videoId: String,
         continuation: String,
     ) = repository.getMoreVideoComments(videoId, continuation)
 
     override suspend fun replies(
         videoId: String,
-        commentId: String,
         continuation: String,
     ) = repository.getVideoCommentReplies(videoId, continuation)
+
+    override suspend fun timed(
+        videoId: String,
+        sectionToken: String,
+    ) = repository.getTimedComments(videoId, sectionToken)
 }

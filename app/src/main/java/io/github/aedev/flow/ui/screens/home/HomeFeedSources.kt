@@ -202,7 +202,7 @@ class HomeFeedSources
                         if (serviceIdOfVideo(seedId) == BILIBILI_SERVICE_ID) {
                             sources.forService(BILIBILI_SERVICE_ID)?.related(seedId).orEmpty()
                         } else {
-                            repository.getRelatedCandidates(seedId)
+                            repository.getRelatedCandidates(seedId, forFeed = true)
                         }
                     } ?: emptyList()
                 }

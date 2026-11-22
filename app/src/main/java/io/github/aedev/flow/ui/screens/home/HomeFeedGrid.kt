@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.aedev.flow.R
 import io.github.aedev.flow.data.local.VideoHistoryEntry
@@ -38,7 +39,7 @@ internal fun HomeFeedGrid(
     isListView: Boolean,
     gridState: LazyGridState,
     onVideoClick: (Video) -> Unit,
-    onEnrichChannelMetadata: (Video) -> Unit,
+    onEnrichChannelMetadata: ((Video) -> Unit)?,
     onContinueWatchingClick: (VideoHistoryEntry) -> Unit,
     onContinueWatchingRemove: (String) -> Unit,
     onShortClick: (List<Video>, Video) -> Unit,
@@ -50,6 +51,7 @@ internal fun HomeFeedGrid(
     onRetryLoadMore: () -> Unit = {},
     footerMinVideos: Int = FEED_FOOTER_MIN_VIDEOS,
     showShorts: Boolean = true,
+    topPadding: Dp = 0.dp,
 ) {
     val videos = uiState.videos
     val channelMemoryReason = stringResource(R.string.home_reason_channel_memory)
@@ -82,19 +84,27 @@ internal fun HomeFeedGrid(
                 .dpadFocusGroup()
                 .testTag("home_feed"),
         state = gridState,
-        contentPadding = plan.contentPadding(top = FeedTopPadding, bottom = flowBottomContentPadding()),
+        contentPadding = plan.contentPadding(top = FeedTopPadding + topPadding, bottom = flowBottomContentPadding()),
         verticalArrangement = Arrangement.spacedBy(plan.rowSpacing),
     ) {
         itemsIndexed(
             items = rows,
             key = { _, row -> row.key },
-            contentType = { _, row -> row::class },
+            contentType = { index, row ->
+                when (row) {
+                    is HomeFeedRow.VideoCard -> if (plan.isListCard(index)) HomeContentType.VideoRow else HomeContentType.VideoStacked
+                    HomeFeedRow.ContinueWatching -> HomeContentType.ContinueWatching
+                    HomeFeedRow.Shorts -> HomeContentType.Shorts
+                }
+            },
             span = { index, row -> plan.span(index, row.spansRow, maxLineSpan) },
         ) { index, row ->
             when (row) {
                 is HomeFeedRow.VideoCard -> {
-                    LaunchedEffect(row.video.id, row.video.channelId, row.video.channelThumbnailUrl) {
-                        onEnrichChannelMetadata(row.video)
+                    if (onEnrichChannelMetadata != null) {
+                        LaunchedEffect(row.video.id, row.video.channelId, row.video.channelThumbnailUrl) {
+                            onEnrichChannelMetadata(row.video)
+                        }
                     }
                     MediaVideoCard(
                         video = row.video,
@@ -103,6 +113,7 @@ internal fun HomeFeedGrid(
                         useInternalPadding = !feedLayout.cardsBleed,
                         thumbnailWidth = plan.listThumbnailWidth,
                         density = plan.cardDensity,
+                        fullBleed = feedLayout.thumbnailsBleed,
                         reason = channelMemoryReason.takeIf { uiState.origins[row.video.id]?.kind == HomeCardOrigin.Kind.CHANNEL_MEMORY },
                         whyShown = uiState.origins[row.video.id]?.label(),
                         modifier = Modifier.testTag("home_video_card"),
@@ -139,6 +150,7 @@ internal fun HomeFeedGrid(
         if (uiState.isLoadingMore) {
             item(
                 key = "loading_indicator",
+                contentType = HomeContentType.LoadingMore,
                 span = { GridItemSpan(maxLineSpan) },
             ) {
                 FlowFeedProgress()
@@ -148,6 +160,7 @@ internal fun HomeFeedGrid(
         if (uiState.loadMoreFailed && !uiState.isLoadingMore) {
             item(
                 key = "load_more_failed",
+                contentType = HomeContentType.LoadMoreFailed,
                 span = { GridItemSpan(maxLineSpan) },
             ) {
                 HomeLoadMoreFailed(onRetry = onRetryLoadMore)
@@ -157,6 +170,7 @@ internal fun HomeFeedGrid(
         if (!uiState.hasMorePages && videos.size > footerMinVideos && !uiState.isLoadingMore) {
             item(
                 key = "feed_footer",
+                contentType = HomeContentType.EndFooter,
                 span = { GridItemSpan(maxLineSpan) },
             ) {
                 FlowFeedFooter(
@@ -167,3 +181,6 @@ internal fun HomeFeedGrid(
         }
     }
 }
+
+// A row-layout card and a stacked one have different trees, so each gets its own reuse pool.
+private enum class HomeContentType { VideoRow, VideoStacked, ContinueWatching, Shorts, LoadingMore, LoadMoreFailed, EndFooter }
