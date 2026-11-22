@@ -13,8 +13,8 @@ import io.github.aedev.flow.data.video.AutoDownloadResolution
 import io.github.aedev.flow.data.video.AutoDownloadTrigger
 import io.github.aedev.flow.player.EnhancedPlayerManager
 import io.github.aedev.flow.player.GlobalPlayerState
-import io.github.aedev.flow.player.stream.LiveFromBilibili
 import io.github.aedev.flow.player.analytics.VideoStartupTrace
+import io.github.aedev.flow.player.stream.LiveFromBilibili
 import io.github.aedev.flow.player.stream.PlaybackLoadResolver
 import io.github.aedev.flow.player.stream.PlaybackResolutionRequest
 import io.github.aedev.flow.player.stream.ResolvedPlayback

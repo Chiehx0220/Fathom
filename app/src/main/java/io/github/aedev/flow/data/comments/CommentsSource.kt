@@ -20,13 +20,6 @@ internal interface CommentsSource {
         continuation: String,
     ): CommentsPageResult
 
-    /** Replies of [commentId]; a service whose reply cursor needs the parent comment overrides this. */
-    suspend fun repliesOf(
-        videoId: String,
-        commentId: String,
-        continuation: String,
-    ): CommentsPageResult = replies(videoId, continuation)
-
     /** YouTube's own Timed list, read through any token of the section; empty when there is none. */
     suspend fun timed(
         videoId: String,

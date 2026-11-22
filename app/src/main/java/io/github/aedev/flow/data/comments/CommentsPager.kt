@@ -372,7 +372,7 @@ internal class CommentsPager(
         if (!repliesInFlight.add(comment.id)) return
         scope.launch {
             try {
-                val page = sourceFor(videoId).repliesOf(videoId, comment.id, continuation)
+                val page = sourceFor(videoId).replies(videoId, continuation)
                 val replies = page.comments
                 _comments.value =
                     _comments.value.map { current ->

@@ -26,7 +26,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **110** (1155 changed lines). New files: **288**.
+- Modified upstream files: **111** (1155 changed lines). New files: **287**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -41,12 +41,12 @@ in it). **New files** never conflict; they are ours alone.
 | data/backup/NewPipeSubscriptionCodec.kt | 23 | 5 |
 | data/video/VideoDownloadOptionsLoader.kt | 25 | 1 |
 | ui/screens/search/SearchViewModel.kt | 20 | 4 |
+| data/repository/YouTubeRepository.kt | 16 | 7 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | data/video/VideoDownloadManager.kt | 21 | 2 |
 | player/resolver/VideoPlaybackResolver.kt | 21 | 2 |
 | data/innertube/RssSubscriptionService.kt | 19 | 3 |
 | data/local/ViewHistory.kt | 22 | 0 |
-| data/repository/YouTubeRepository.kt | 15 | 6 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 18 | 3 |
 | ui/screens/player/PlaybackSessionApplier.kt | 21 | 0 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 16 | 4 |
@@ -61,28 +61,27 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/effects/PlayerLoadEffects.kt | 13 | 2 |
 | data/update/GitHubRelease.kt | 7 | 7 |
 | ui/FlowNavigation.kt | 7 | 7 |
-| utils/ThumbnailUrlResolver.kt | 7 | 6 |
-| data/comments/CommentsPager.kt | 9 | 3 |
+| ui/screens/player/PlayerSecondaryMetadataLoader.kt | 10 | 4 |
 | player/stream/PlaybackLoadResolver.kt | 11 | 1 |
-| ui/screens/player/PlayerSecondaryMetadataLoader.kt | 9 | 3 |
 | data/local/LikedVideosRepository.kt | 10 | 1 |
 | ui/FlowApp.kt | 2 | 9 |
 | ui/screens/player/WatchSessionTracker.kt | 8 | 3 |
 | ui/screens/player/content/PlayerErrorPanel.kt | 8 | 3 |
+| data/comments/CommentsPager.kt | 7 | 3 |
 | data/local/entity/VideoEntity.kt | 7 | 3 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 7 | 3 |
+| utils/ThumbnailUrlResolver.kt | 6 | 4 |
 | ui/screens/player/content/RelatedVideosList.kt | 6 | 3 |
 | ui/screens/playlists/PlaylistDetailViewModel.kt | 8 | 1 |
-| player/stream/ResolvedStreamData.kt | 8 | 0 |
 | sync/merge/CollectionMergers.kt | 4 | 4 |
 | ui/PlayerNavigation.kt | 5 | 3 |
 | ui/screens/player/PlaybackPreparer.kt | 6 | 2 |
 | utils/YouTubeLink.kt | 8 | 0 |
+| data/comments/CommentsSource.kt | 7 | 0 |
 | data/video/downloader/work/DownloadTransfer.kt | 7 | 0 |
 | player/stream/InnerTubeVideoStreamExtractor.kt | 7 | 0 |
 | ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
 | data/model/Models.kt | 6 | 0 |
-| data/repository/LiveChatRepository.kt | 5 | 1 |
 | sync/canonical/Canonical.kt | 6 | 0 |
 | sync/mapping/SimpleMappers.kt | 6 | 0 |
 | ui/AppHooks.kt | 2 | 4 |
@@ -90,7 +89,8 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/channel/ChannelCommunityController.kt | 5 | 1 |
 | ui/screens/player/dialogs/PlayerSettingsSheetHost.kt | 6 | 0 |
 | ui/screens/subscriptions/SubscriptionsFeedContent.kt | 4 | 2 |
-| ... 50 more, each small | | |
+| data/local/migrations/Migrations.kt | 5 | 0 |
+| ... 51 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 

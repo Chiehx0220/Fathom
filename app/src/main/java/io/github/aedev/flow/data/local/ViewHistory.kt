@@ -11,8 +11,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import io.github.aedev.flow.bilibili.serviceIdOfVideo
 import io.github.aedev.flow.data.local.dao.WatchHistoryDao
 import io.github.aedev.flow.data.local.dao.WatchProgress
-import io.github.aedev.flow.data.local.dao.WatchedVideoIdentity
 import io.github.aedev.flow.data.local.dao.WatchProgressFingerprint
+import io.github.aedev.flow.data.local.dao.WatchedVideoIdentity
 import io.github.aedev.flow.data.local.entity.WatchHistoryEntity
 import io.github.aedev.flow.data.localmedia.LocalMediaIds
 import io.github.aedev.flow.data.profile.StoreScope

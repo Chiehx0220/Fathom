@@ -30,27 +30,23 @@ internal class BilibiliCommentSource(
         return CommentsPageResult(comments = page.comments.map { it.toComment() }, continuation = page.nextOffset)
     }
 
+    /** [continuation] is "<comment id>:<page>": the reply API needs the parent comment, the interface has no slot for it. */
     override suspend fun replies(
         videoId: String,
         continuation: String,
-    ): CommentsPageResult = CommentsPageResult.EMPTY
+    ): CommentsPageResult {
+        val commentId = continuation.substringBeforeLast(':')
+        val page = api.commentReplies(bvidOf(videoId), commentId, continuation.substringAfterLast(':').toIntOrNull() ?: 1)
+        return CommentsPageResult(
+            comments = page.replies.map { it.toComment(hasReplies = false) },
+            continuation = page.nextPage?.let { "$commentId:$it" },
+        )
+    }
 
     override suspend fun timed(
         videoId: String,
         sectionToken: String,
     ): CommentsPageResult = CommentsPageResult.EMPTY
-
-    override suspend fun repliesOf(
-        videoId: String,
-        commentId: String,
-        continuation: String,
-    ): CommentsPageResult {
-        val page = api.commentReplies(bvidOf(videoId), commentId, continuation.toIntOrNull() ?: 1)
-        return CommentsPageResult(
-            comments = page.replies.map { it.toComment(hasReplies = false) },
-            continuation = page.nextPage?.toString(),
-        )
-    }
 
     private fun bvidOf(videoId: String) = BilibiliRef.Video.parse(videoId).bvid
 
@@ -64,7 +60,7 @@ internal class BilibiliCommentSource(
             publishedTime = formatTime(postedSec),
             replyCount = replyCount,
             // Replies page 1; pager swaps in next pages.
-            continuationToken = if (hasReplies && replyCount > 0) "1" else null,
+            continuationToken = if (hasReplies && replyCount > 0) "$id:1" else null,
             isPinned = isPinned,
             authorChannelId = authorMid.takeIf { it > 0 }?.toString().orEmpty(),
             isHearted = isLikedByUploader,
