@@ -26,21 +26,21 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **110** (1148 changed lines). New files: **287**.
+- Modified upstream files: **114** (1161 changed lines). New files: **287**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
 | ui/screens/home/chips/HomeChipFeeds.kt | 32 | 34 |
-| ui/screens/home/HomeViewModel.kt | 40 | 9 |
 | ui/screens/categories/CategoriesScreen.kt | 36 | 6 |
 | data/local/BackupRepository.kt | 20 | 17 |
 | data/local/SubscriptionRecordCodec.kt | 22 | 15 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
+| ui/screens/search/SearchViewModel.kt | 23 | 7 |
 | data/paging/SearchPagingSource.kt | 17 | 12 |
 | ui/screens/channel/ChannelViewModel.kt | 22 | 7 |
+| ui/screens/home/HomeViewModel.kt | 27 | 2 |
 | data/backup/NewPipeSubscriptionCodec.kt | 23 | 5 |
 | data/video/VideoDownloadOptionsLoader.kt | 25 | 1 |
-| ui/screens/search/SearchViewModel.kt | 20 | 4 |
 | data/repository/YouTubeRepository.kt | 16 | 7 |
 | data/update/UpdateRepository.kt | 14 | 9 |
 | data/video/VideoDownloadManager.kt | 21 | 2 |
@@ -58,6 +58,7 @@ in it). **New files** never conflict; they are ours alone.
 | player/EnhancedPlayerManager.kt | 16 | 1 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
+| ui/screens/home/HomeFeedLoader.kt | 10 | 5 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 13 | 2 |
 | data/update/GitHubRelease.kt | 7 | 7 |
 | ui/FlowNavigation.kt | 7 | 7 |
@@ -89,8 +90,7 @@ in it). **New files** never conflict; they are ours alone.
 | ui/screens/player/dialogs/PlayerSettingsSheetHost.kt | 6 | 0 |
 | ui/screens/subscriptions/SubscriptionsFeedContent.kt | 4 | 2 |
 | data/local/migrations/Migrations.kt | 5 | 0 |
-| player/datasource/YouTubeHttpDataSource.kt | 3 | 2 |
-| ... 50 more, each small | | |
+| ... 54 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)
 

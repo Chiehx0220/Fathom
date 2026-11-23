@@ -93,7 +93,7 @@ private suspend fun HistoryDbHelper.rankAndConvert(
     return ranked.map { it.toStreamInfoItem(serviceId) }
 }
 
-/** Wave-1 home feed, YouTube-only, no wave-2 / persistent cache. Upstream-owned: re-verify after sync. */
+/** Wave-1 home feed, YouTube-only, no wave-2 / persistent cache / neighbours. Mirrors HomeFeedLoader lanes: re-verify after sync. */
 fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int): Pair<List<InfoItem>, Boolean> =
     runBlocking {
         val cacheKey = serviceId
@@ -147,11 +147,16 @@ fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int): Pair<List<InfoItem>, B
                 watched = context.watched,
                 exclusions = context.exclusions,
                 isRecentlyShown = { id -> NeuroScoring.isRecentlySeen(context.brain.feedHistory[id], now) },
+                timesShown = { id -> context.brain.feedHistory[id]?.showCount ?: 0 },
                 taste = context.taste,
                 now = now,
                 freshSlotTarget = dynamicFreshSubSlots(subIds.size),
                 subAvatarMap = context.subAvatarMap,
                 rank = { pool -> runCatching { FlowNeuroEngine.rank(pool, subIds) }.getOrDefault(pool) },
+                rankRelevant = { pool ->
+                    runCatching { FlowNeuroEngine.rank(pool, subIds, NeuroScoring.LANE_RELEVANCE_FLOOR) }.getOrDefault(pool)
+                },
+                share = { pool -> runCatching { FlowNeuroEngine.shareByInterest(pool) }.getOrDefault(pool) },
             )
         val mix =
             assembleHomeFeed(

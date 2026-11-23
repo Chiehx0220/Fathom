@@ -182,7 +182,6 @@ internal class HomeFeedLoader(
 
                     val discoveryPairs = results.discovery
                     val bilibili = bilibiliFeeds.await()
-                    // Bilibili trending joins discovery: no separate viral lane.
                     val rawDiscovery = discoveryPairs.flatMap { it.second } + bilibili.viral
                     val relatedFetch = results.related
                     val rawRelated = relatedFetch.candidates
