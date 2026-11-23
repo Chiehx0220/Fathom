@@ -21,10 +21,12 @@ import io.github.aedev.flow.data.notes.NoteKind
 import io.github.aedev.flow.data.notes.NotesRepository
 import io.github.aedev.flow.data.subscriptions.markChannelSeen
 import io.github.aedev.flow.innertube.YouTube
+import io.github.aedev.flow.innertube.pages.channel.ChannelTabContent
 import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
 import io.github.aedev.flow.innertube.pages.renderer.FeedItemOwner
 import io.github.aedev.flow.ui.youtubeChannelBrowseId
 import io.github.aedev.flow.ui.youtubeChannelUrl
+import io.github.aedev.flow.utils.LoadErrorKind
 import io.github.aedev.flow.utils.PerformanceDispatcher
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -236,13 +238,13 @@ class ChannelViewModel
                         loadSubscriptionState(channelId)
                         observeNote(channelId)
                         markSeen(channelId)
-                        onTabsResolved()
+                        onTabsResolved(page.tabs.firstOrNull { it.selected }?.kind, page.initialTab)
                     },
                     onFailure = { error ->
                         Log.e(TAG, "Failed to load channel", error)
                         _uiState.update {
                             it.copy(
-                                error = error.message ?: appContext.getString(R.string.error_failed_to_load_channel),
+                                error = appContext.getString(LoadErrorKind.of(error).messageRes(R.string.error_failed_to_load_channel)),
                                 isLoading = false,
                             )
                         }
@@ -259,10 +261,14 @@ class ChannelViewModel
             playerPreferences.updateSubscriptionChannelSeenAt { stored -> markChannelSeen(stored, channelId, now, subscribed) }
         }
 
-        private fun onTabsResolved() {
+        private fun onTabsResolved(
+            landingKind: ChannelTabKind?,
+            landing: ChannelTabContent?,
+        ) {
             val state = _uiState.value
             val channelId = state.channelId ?: return
             tabController.reset(channelId, channelOwner())
+            if (landingKind != null && landing != null) tabController.seedSections(landingKind, landing)
             val first = state.selectedTab ?: state.tabs.firstOrNull()?.kind ?: return
             _uiState.update { it.copy(selectedTab = first) }
             ensureTabLoaded(first)

@@ -32,6 +32,7 @@ import io.github.aedev.flow.ui.components.FEED_MAX_AUTO_COLUMNS
 import io.github.aedev.flow.ui.components.FeedCardMinWidth
 import io.github.aedev.flow.ui.components.layout.navigation.LocalMediaNavigator
 import io.github.aedev.flow.ui.components.rememberFeedGridLayout
+import io.github.aedev.flow.ui.components.search.SearchCorrectionRow
 import io.github.aedev.flow.ui.components.search.SearchFilterBar
 import io.github.aedev.flow.ui.components.search.SearchResultActions
 import io.github.aedev.flow.ui.components.search.SearchResults
@@ -39,9 +40,11 @@ import io.github.aedev.flow.ui.components.search.SearchShortsGrid
 import io.github.aedev.flow.ui.components.shared.FeedGridSkeleton
 import io.github.aedev.flow.ui.components.shared.FlowEmptyState
 import io.github.aedev.flow.ui.components.shared.FlowErrorState
+import io.github.aedev.flow.ui.components.shared.RetryWhenBackOnline
 import io.github.aedev.flow.ui.components.shared.SubscriptionBellViewModel
 import io.github.aedev.flow.ui.components.shared.quickactions.QuickActionsViewModel
 import io.github.aedev.flow.ui.components.shared.sharedSubscriptionBellViewModel
+import io.github.aedev.flow.utils.LoadErrorKind
 import io.github.aedev.flow.utils.YouTubeLink
 import io.github.aedev.flow.utils.parseYouTubeLink
 
@@ -103,6 +106,7 @@ internal fun ColumnScope.SearchResultsBody(
     onPlaylistClick: (Playlist) -> Unit,
     onShortsQueue: (ShortsQueueSource) -> Unit,
     dismissKeyboard: () -> Unit,
+    onSearch: (String) -> Unit,
     maxAutoColumns: Int = FEED_MAX_AUTO_COLUMNS,
     minCellWidth: Dp = FeedCardMinWidth,
     bell: SubscriptionBellViewModel = sharedSubscriptionBellViewModel(),
@@ -117,6 +121,18 @@ internal fun ColumnScope.SearchResultsBody(
         onFilterChange = viewModel::updateFilters,
         modifier = Modifier.padding(vertical = FilterBarVerticalPadding),
     )
+
+    RetryWhenBackOnline(pagingItems)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    uiState.header.correction
+        ?.takeUnless { uiState.exactQuery }
+        ?.let { correction ->
+            SearchCorrectionRow(
+                correction = correction,
+                onSearchExactly = viewModel::searchExactly,
+                onSearchCorrected = onSearch,
+            )
+        }
 
     val refreshState = pagingItems.loadState.refresh
     BoxWithConstraints(modifier = Modifier.weight(1f)) {
@@ -148,7 +164,7 @@ internal fun ColumnScope.SearchResultsBody(
 
             refreshState is LoadState.Error && pagingItems.itemCount == 0 -> {
                 FlowErrorState(
-                    error = refreshState.error.localizedMessage ?: stringResource(R.string.search_failed),
+                    error = stringResource(LoadErrorKind.of(refreshState.error).messageRes(R.string.search_failed)),
                     onRetry = pagingItems::retry,
                 )
             }

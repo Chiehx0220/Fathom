@@ -38,6 +38,7 @@ class SearchPagingSource(
     private val onHeader: (SearchHeader) -> Unit = {},
     private val loadPage: SearchPageLoader = DefaultSearchPageLoader,
     private val watchedVideos: WatchedVideoLookup = WatchedVideoLookup { emptySet() },
+    private val exactQuery: Boolean = false,
     private val loadContext: CoroutineContext = PerformanceDispatcher.networkIO,
     private val exclusions: suspend () -> FeedExclusions = { FeedExclusions.NONE },
     private val bilibiliApi: BilibiliApi? = null,
@@ -63,7 +64,7 @@ class SearchPagingSource(
             do {
                 val (items, next) =
                     if (isYouTube) {
-                        val page = loadPage(query, filter.toSearchParams(), continuation)
+                        val page = loadPage(query, filter.toSearchParams(exactQuery), continuation)
                         if (params.key == null && requests == 0) onHeader(page.header)
                         page.toResults(filter, shortsEnabled) to page.continuation
                     } else {

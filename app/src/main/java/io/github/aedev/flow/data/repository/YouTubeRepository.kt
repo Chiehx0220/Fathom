@@ -293,7 +293,7 @@ class YouTubeRepository
             continuation: String? = null,
             params: String? = null,
         ): Result<Pair<List<Video>, String?>> =
-            withContext(Dispatchers.IO) {
+            withContext(PerformanceDispatcher.networkIO) {
                 YouTube
                     .videoSearch(query, params = params, continuation = continuation)
                     .map { page ->

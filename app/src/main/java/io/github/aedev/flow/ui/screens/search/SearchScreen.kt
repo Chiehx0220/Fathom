@@ -138,6 +138,7 @@ fun SearchScreen(
                     },
                 focusRequester = focusRequester,
                 onFieldFocused = state::startTyping,
+                privateKeyboard = state.deepFlow.active,
                 actions =
                     if (showResults) {
                         {
@@ -191,6 +192,7 @@ fun SearchScreen(
                 onPlaylistClick = onPlaylistClick,
                 onShortsQueue = onShortsQueue,
                 dismissKeyboard = state::stopTyping,
+                onSearch = submit,
             )
         }
         MediaPostCommentsSheet(
