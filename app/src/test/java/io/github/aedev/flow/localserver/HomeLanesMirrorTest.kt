@@ -4,10 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.File
 
-/**
- * [buildHomeFeedLanes] and [assembleHomeFeed] defaults hide new upstream parameters from the compiler;
- * every parameter is passed by [buildAndRankHomeFeed] or listed here as omitted on purpose.
- */
+/** Defaults hide new upstream parameters from the compiler: each of [buildHomeFeedLanes], [assembleHomeFeed] is passed by [buildAndRankHomeFeed] or listed as omitted. */
 class HomeLanesMirrorTest {
     private val assembly = File("src/main/java/io/github/aedev/flow/ui/screens/home/HomeFeedAssembly.kt").readText()
     private val mirror = File("src/main/java/io/github/aedev/flow/localserver/LocalServerHomeFeed.kt").readText()
