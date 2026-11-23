@@ -41,6 +41,17 @@ const BASE=sh(`git merge-base HEAD ${UPSTREAM}`).trim();
 const num=sh(`git diff ${BASE} HEAD --numstat --no-renames -- app/src/main app/src/test build.gradle.kts gradle app/build.gradle.kts`).trim().split("\n").filter(Boolean).map(l=>{const [a,d,p]=l.split("\t");return {a:+a||0,d:+d||0,p}});
 const isNew=p=>{try{sh(`git cat-file -e ${BASE}:${p}`);return false}catch(e){return true}};
 const rows=num.map(r=>({...r,isNew:isNew(r.p)}));
+// Fork code that copies upstream behavior by hand: compile cannot flag drift. Tag: `@mirrors <upstream symbol>: note`.
+const mirrors=[];
+try{
+ for(const l of sh(`git grep -n -I -e @mirrors HEAD -- app/src/main`).split("\n").filter(Boolean)){
+  const m=/^HEAD:([^:]+):(\d+):(.*)$/.exec(l);
+  const t=m&&/@mirrors\s+([^:]+):\s*(.*?)\s*(\*\/)?\s*$/.exec(m[3]);
+  if(!t||!isNew(m[1]))continue;
+  mirrors.push({p:m[1].replace("app/src/main/java/io/github/aedev/flow/",""),line:+m[2],symbol:t[1].trim(),note:t[2].trim()});
+ }
+}catch(e){}
+mirrors.sort((a,b)=>a.p===b.p?a.line-b.line:a.p<b.p?-1:1);
 const area=p=>{
  if(/\/bilibili\//.test(p)||/Bilibili/.test(p)) return "Bilibili (native client, mappers, player/paging glue)";
  if(/io\/github\/aedev\/flow\/localserver\//.test(p)) return "Local server (fork-only feature)";
@@ -77,8 +88,22 @@ in it). **New files** never conflict; they are ours alone.
 5. \`node scripts/fork-diff.js --check\` compares the size of that surface with \`scripts/fork-diff-budget.json\`
    and fails when it grew; \`--update-budget\` lowers the budget after a cleanup. \`--check-doc\` fails when this
    file is out of date.
+6. After a merge, compare each row of "Hand-written copies of upstream behavior" below with its upstream
+   symbol: compilation does not catch drift there.
 
 `;
+if(mirrors.length){
+ md+=`## Hand-written copies of upstream behavior
+
+Fork code that reproduces an upstream flow instead of calling it, tagged \`@mirrors <upstream symbol>: note\` in the source.
+An upstream change to the symbol leaves this code compiling and silently different.
+
+| Fork code | Mirrors | Note |
+|---|---|---|
+`;
+ for(const r of mirrors)md+=`| ${r.p} | \`${r.symbol}\` | ${r.note.replace(/\|/g,"\\|")} |\n`;
+ md+="\n";
+}
 const order=["Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)","FlowNeuro (Chinese text handling)","Bilibili (native client, mappers, player/paging glue)","Local server (fork-only feature)","Build","Resources / strings","Tests"];
 for(const g of order){
  const rs=(groups[g]||[]);if(!rs.length)continue;

@@ -53,7 +53,7 @@ fun HistoryDbHelper.isNotifying(channelUrl: String?): Boolean {
     return channelId in runBlocking { subscriptionRepository().notifyingChannelIds().first() }
 }
 
-/** Channel bell; same switch as native. */
+/** @mirrors ChannelViewModel.setChannelNotifications: channel bell, same switch. */
 fun HistoryDbHelper.setNotifying(
     channelUrl: String,
     enabled: Boolean,

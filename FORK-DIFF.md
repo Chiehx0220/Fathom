@@ -23,10 +23,26 @@ in it). **New files** never conflict; they are ours alone.
 5. `node scripts/fork-diff.js --check` compares the size of that surface with `scripts/fork-diff-budget.json`
    and fails when it grew; `--update-budget` lowers the budget after a cleanup. `--check-doc` fails when this
    file is out of date.
+6. After a merge, compare each row of "Hand-written copies of upstream behavior" below with its upstream
+   symbol: compilation does not catch drift there.
+
+## Hand-written copies of upstream behavior
+
+Fork code that reproduces an upstream flow instead of calling it, tagged `@mirrors <upstream symbol>: note` in the source.
+An upstream change to the symbol leaves this code compiling and silently different.
+
+| Fork code | Mirrors | Note |
+|---|---|---|
+| localserver/LocalServerHomeFeed.kt | `HomeFeedLoader.loadFlowFeed` | concurrent FlowNeuro discovery round; [resetDepth] fresh session vs load-more; wave-1 query count. |
+| localserver/LocalServerHomeFeed.kt | `HomeFeedLoader.loadFlowFeed` | wave-1 lanes, YouTube-only, no wave-2 / persistent cache / neighbours; HomeLanesMirrorTest guards the arguments. |
+| localserver/LocalServerHomeFeed.kt | `HomeLoadMorePages` | deeper discovery round, ranked, uncached; discovery depth shared. |
+| localserver/LocalServerLibrary.kt | `VideoFeedbackUseCase.toggleWatchLater` | also reports SAVED to FlowNeuroEngine, best-effort. |
+| localserver/LocalServerLibrary.kt | `VideoPlayerViewModel.likeVideo, VideoPlayerViewModel.dislikeVideo` | via `LikedVideosRepository` (DataStore). `-1`/empty as [addWatchLater]. |
+| localserver/LocalServerSubscriptions.kt | `ChannelViewModel.setChannelNotifications` | channel bell, same switch. |
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **114** (1161 changed lines). New files: **287**.
+- Modified upstream files: **114** (1160 changed lines). New files: **287**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -58,10 +74,10 @@ in it). **New files** never conflict; they are ours alone.
 | player/EnhancedPlayerManager.kt | 16 | 1 |
 | ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
-| ui/screens/home/HomeFeedLoader.kt | 10 | 5 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 13 | 2 |
 | data/update/GitHubRelease.kt | 7 | 7 |
 | ui/FlowNavigation.kt | 7 | 7 |
+| ui/screens/home/HomeFeedLoader.kt | 9 | 5 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 10 | 4 |
 | player/stream/PlaybackLoadResolver.kt | 11 | 1 |
 | data/local/LikedVideosRepository.kt | 10 | 1 |
@@ -106,7 +122,7 @@ in it). **New files** never conflict; they are ours alone.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **153**.
+- Modified upstream files: **0** (0 changed lines). New files: **154**.
 
 ## Build
 

@@ -35,7 +35,7 @@ private data class HomeFeedCacheEntry(
 
 private val homeFeedCache = ConcurrentHashMap<Int, HomeFeedCacheEntry>()
 
-/** Concurrent FlowNeuro discovery round; [resetDepth] fresh session vs load-more. Query count = native wave-1. */
+/** @mirrors HomeFeedLoader.loadFlowFeed: concurrent FlowNeuro discovery round; [resetDepth] fresh session vs load-more; wave-1 query count. */
 private suspend fun CoroutineScope.fetchDiscoveryVideos(
     repo: YouTubeRepository,
     resetDepth: Boolean,
@@ -93,7 +93,7 @@ private suspend fun HistoryDbHelper.rankAndConvert(
     return ranked.map { it.toStreamInfoItem(serviceId) }
 }
 
-/** Wave-1 home feed, YouTube-only, no wave-2 / persistent cache / neighbours. Mirrors HomeFeedLoader lanes: re-verify after sync. */
+/** @mirrors HomeFeedLoader.loadFlowFeed: wave-1 lanes, YouTube-only, no wave-2 / persistent cache / neighbours; HomeLanesMirrorTest guards the arguments. */
 fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int): Pair<List<InfoItem>, Boolean> =
     runBlocking {
         val cacheKey = serviceId
@@ -174,7 +174,7 @@ fun HistoryDbHelper.buildAndRankHomeFeed(serviceId: Int): Pair<List<InfoItem>, B
         result to true
     }
 
-/** Load more: deeper discovery round, ranked, uncached; discovery depth shared with native. */
+/** @mirrors HomeLoadMorePages: deeper discovery round, ranked, uncached; discovery depth shared. */
 fun HistoryDbHelper.continueDiscoveryFeed(serviceId: Int): Pair<List<InfoItem>, Boolean> =
     runBlocking {
         ensureFlowNeuroInitialized()

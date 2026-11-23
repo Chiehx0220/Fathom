@@ -71,7 +71,7 @@ internal fun buildFlowVideoFromParams(
     uploadDate = "",
 )
 
-/** Also reports SAVED to FlowNeuroEngine (as native toggleWatchLater), best-effort. */
+/** @mirrors VideoFeedbackUseCase.toggleWatchLater: also reports SAVED to FlowNeuroEngine, best-effort. */
 fun HistoryDbHelper.addWatchLater(
     url: String,
     title: String,
@@ -107,7 +107,7 @@ fun HistoryDbHelper.watchLaterItems(): List<InfoItem> =
 
 private fun HistoryDbHelper.likedVideosRepository() = LikedVideosRepository.getInstance(appContext)
 
-/** Like/dislike via `LikedVideosRepository` (DataStore), as native likeVideo/dislikeVideo. `-1`/empty as [addWatchLater]. */
+/** @mirrors VideoPlayerViewModel.likeVideo, VideoPlayerViewModel.dislikeVideo: via `LikedVideosRepository` (DataStore). `-1`/empty as [addWatchLater]. */
 fun HistoryDbHelper.likeState(videoUrl: String): String? {
     val videoId = LocalServerMedia.getVideoId(videoUrl)
     if (videoId.isEmpty()) return null
