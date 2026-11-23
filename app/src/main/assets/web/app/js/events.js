@@ -18,7 +18,10 @@ const connect = () => {
         if (lost) listeners.forEach((set) => set.forEach((fn) => fn()));
         lost = false;
     };
-    ws.onmessage = (event) => (listeners.get(String(event.data)) || []).forEach((fn) => fn());
+    ws.onmessage = (event) => {
+        FT.api.fresh();
+        (listeners.get(String(event.data)) || []).forEach((fn) => fn());
+    };
     ws.onclose = () => {
         up = false;
         lost = true;

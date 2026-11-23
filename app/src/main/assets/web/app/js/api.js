@@ -15,6 +15,8 @@ const getJson = async (path, params) => {
 
 // TTL memo for slow lists.
 const memo = new Map();
+// Burst reads share one request.
+const BURST_MS = 1000;
 const remembered = (key, ttlMs, load) => {
     const hit = memo.get(key);
     if (hit && Date.now() - hit.at < ttlMs) return hit.value;
@@ -40,6 +42,8 @@ const playlistAction = (params) => getJson('/playlist_action', params);
 
 FT.api = {
     forget: () => memo.clear(),
+    // Pushes and visibility returns read past the burst window.
+    fresh: () => { memo.delete('settings'); memo.delete('blocked'); },
 
     // more: fresh discovery round (infinite scroll), never memoized (handleApiRecommendations more=1).
     recommendations: (service, more) => more
@@ -65,11 +69,13 @@ FT.api = {
     comments: (service, id, nextPage) => getJson('/api/v1/comments', { serviceId: service, id, nextPage }),
     state: (id, channel) => getJson('/api/v1/state', { id, channel }),
     sponsor: (service, id) => getJson('/api/v1/sponsor', { serviceId: service, id }),
-    settings: (changes) => getJson('/api/v1/settings', changes),
+    settings: (changes) => changes
+        ? getJson('/api/v1/settings', changes).finally(() => memo.delete('settings'))
+        : remembered('settings', BURST_MS, () => getJson('/api/v1/settings')),
     // switchTo: profile id to switch to (the app restarts).
     sponsorBlock: (changes) => getJson('/api/v1/sponsorblock', changes),
     wellbeing: (changes) => getJson('/api/v1/wellbeing', changes),
-    blockedChannels: () => getJson('/api/v1/blocked'),
+    blockedChannels: () => remembered('blocked', BURST_MS, () => getJson('/api/v1/blocked')),
     profiles: (switchTo) => getJson('/api/v1/profiles', switchTo ? { switch: switchTo } : {}),
     download: (action, service, id, choice = {}) => getJson('/api/v1/download', { action, serviceId: service, id, ...choice }),
 
@@ -80,7 +86,7 @@ FT.api = {
 
     subscribe: (channel, on) => act('/subscribe', { action: on ? 'subscribe' : 'unsubscribe', id: channel.id, name: channel.name || '', avatar: channel.thumbnailUrl || '' }),
     notify: (channel, on) => act('/subscribe', { action: on ? 'notify_on' : 'notify_off', id: channel.id }),
-    block: (channelUrl, on, name) => act('/block_channel', { action: on ? 'block' : 'unblock', id: channelUrl, name }),
+    block: (channelUrl, on, name) => act('/block_channel', { action: on ? 'block' : 'unblock', id: channelUrl, name }).finally(() => memo.delete('blocked')),
     // action: not_interested | watched | unwatched
     feedback: (video, action) => act('/video_feedback', { action, ...videoQuery(video), duration: video.duration || 0 }),
     // { videos: [{ id, duration }], enabled } → { enabled, items: { id: { title?, thumbnailUrl? } } }

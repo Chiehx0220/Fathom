@@ -199,7 +199,11 @@ FT.avatar = (name, src, extra = '') => {
 
 // Re-read while visible: pushed `topics`, visibility, 3 s poll unless `covered` by an open socket.
 FT.followState = (scope, refresh, { topics = [], covered = false } = {}) => {
-    const run = () => { if (!document.hidden && scope.live()) refresh().catch(() => {}); };
+    const run = () => {
+        if (document.hidden || !scope.live()) return;
+        FT.api.fresh();
+        refresh().catch(() => {});
+    };
     const unsubscribe = topics.map((topic) => FT.events.on(topic, run));
     const timer = setInterval(() => { if (!(covered && FT.events.connected())) run(); }, 3000);
     document.addEventListener('visibilitychange', run);
