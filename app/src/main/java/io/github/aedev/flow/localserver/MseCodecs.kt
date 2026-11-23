@@ -1,6 +1,6 @@
 package io.github.aedev.flow.localserver
 
-/** `codecs` as MediaSource accepts it: AV1 tier letter (`M`/`H`) uppercase; lowercase rejected → video AdaptationSet dropped, audio-only. */
+/** MSE `codecs`: AV1 tier letter (`M`/`H`) uppercase; lowercase rejected → video AdaptationSet dropped. */
 internal fun String.forMse(): String {
     if (!startsWith("av01.", ignoreCase = true)) return this
     val parts = split('.').toMutableList()

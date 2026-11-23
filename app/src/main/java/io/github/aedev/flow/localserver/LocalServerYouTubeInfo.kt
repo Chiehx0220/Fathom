@@ -58,7 +58,7 @@ internal object LocalServerYouTubeInfo {
             info.subtitles = subtitlesOf(it)
             info.previewFrames = framesOf(it, info.duration)
         }
-        // The summary has no description; the watch response does. Best-effort: a missing one leaves the field empty.
+        // Summary lacks description, watch response has it; best-effort, empty on miss.
         runCatching { runBlocking { repo.getVideoDescription(videoId) } }.getOrNull()?.description?.text?.takeIf { it.isNotBlank() }?.let {
             info.description = Description(it, Description.PLAIN_TEXT)
         }

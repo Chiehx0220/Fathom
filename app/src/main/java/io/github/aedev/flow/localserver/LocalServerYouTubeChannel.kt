@@ -9,8 +9,6 @@ import io.github.aedev.flow.innertube.pages.renderer.FeedItem
 import io.github.aedev.flow.innertube.pages.renderer.FeedItemOwner
 import io.github.aedev.flow.ui.youtubeChannelBrowseId
 import io.github.aedev.flow.ui.youtubeChannelUrl
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.runBlocking
 
 /** YouTube Videos tab via app InnerTube. Continuation `yt:u:<token>` with owner in id/ids; unprefixed pages: extractor. */
 internal object LocalServerYouTubeChannel {
@@ -30,15 +28,11 @@ internal object LocalServerYouTubeChannel {
     ): ChannelPage? {
         if (tab != "videos" || sort != null) return null
         if (nextPage != null && !owns(nextPage)) return null
-        return try {
-            runBlocking { load(channelUrl, nextPage, withAbout) }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            serverLog("InnerTube channel failed: ${e.message}")
-            // Failed continuation ends the list; failed first page → extractor.
-            nextPage?.takeIf { owns(it) }?.let { ChannelPage(header(ownerOf(it), channelUrl), emptyList(), null) }
-        }
+        // Failed continuation ends the list; failed first page → extractor.
+        return blockingOrElse(
+            "InnerTube channel",
+            { nextPage?.takeIf { owns(it) }?.let { ChannelPage(header(ownerOf(it), channelUrl), emptyList(), null) } },
+        ) { load(channelUrl, nextPage, withAbout) }
     }
 
     /** Uploads of [channelUrl], newest first; null if InnerTube gave none. About request omitted. */

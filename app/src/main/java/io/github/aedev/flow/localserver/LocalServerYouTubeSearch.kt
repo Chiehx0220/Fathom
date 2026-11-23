@@ -8,8 +8,6 @@ import io.github.aedev.flow.data.model.Video
 import io.github.aedev.flow.data.paging.SearchResultItem
 import io.github.aedev.flow.data.paging.toResultItems
 import io.github.aedev.flow.innertube.YouTube
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.runBlocking
 
 /** YouTube search via app InnerTube; continuation `yt:s:<token>`, unprefixed: extractor. No shelves. */
 internal object LocalServerYouTubeSearch {
@@ -27,22 +25,15 @@ internal object LocalServerYouTubeSearch {
         nextPage: Page?,
     ): ListPage? {
         if (nextPage != null && !owns(nextPage)) return null
-        return try {
-            runBlocking {
-                val page = YouTube.videoSearch(query, null, nextPage?.url?.removePrefix(MORE)).getOrThrow()
-                val items = page.toResultItems(shortsEnabled = true).mapNotNull { it.toInfoItem() }
-                if (items.isEmpty() && nextPage == null) {
-                    null
-                } else {
-                    ListPage(items, page.continuation?.let { Page(MORE + it) })
-                }
+        // Failed continuation ends the list; failed first page → extractor.
+        return blockingOrElse("InnerTube search", { if (owns(nextPage)) ListPage(emptyList(), null) else null }) {
+            val page = YouTube.videoSearch(query, null, nextPage?.url?.removePrefix(MORE)).getOrThrow()
+            val items = page.toResultItems(shortsEnabled = true).mapNotNull { it.toInfoItem() }
+            if (items.isEmpty() && nextPage == null) {
+                null
+            } else {
+                ListPage(items, page.continuation?.let { Page(MORE + it) })
             }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            serverLog("InnerTube search failed: ${e.message}")
-            // Failed continuation ends the list; failed first page → extractor.
-            if (owns(nextPage)) ListPage(emptyList(), null) else null
         }
     }
 

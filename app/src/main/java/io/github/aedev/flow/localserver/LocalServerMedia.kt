@@ -85,7 +85,7 @@ object LocalServerMedia {
 
     fun isOriginalAudioTrack(stream: AudioStream): Boolean = stream.audioTrackType == AudioTrackType.ORIGINAL
 
-    // Default audio-track priority: original, device locale, English, highest bitrate. Shared: stream proxy, manifest, track picker.
+    // Default audio-track order: original, device locale, English, highest bitrate; shared by proxy, manifest, picker.
     fun audioTrackPriorityComparator(): Comparator<AudioStream> {
         val langCode = Locale.getDefault().language
         return Comparator { a, b ->

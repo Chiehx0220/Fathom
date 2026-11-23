@@ -65,7 +65,7 @@ internal fun RequestContext.handleAppFont(
     reply.sendBytes(200, bytes, "font/woff2", mapOf("Cache-Control" to IMMUTABLE))
 }
 
-// SPA shell, CSS, JS. ?v= ignored: content change changes WebAssets.appVersion, so max-age=31536000 immutable is safe.
+// SPA shell, CSS, JS; ?v= ignored (content change bumps WebAssets.appVersion): immutable max-age.
 internal fun RequestContext.handleAppShell(reply: Reply) {
     reply.send(200, WebShell.appPage(), "text/html; charset=UTF-8")
 }

@@ -27,7 +27,7 @@ internal object LocalServerBilibiliStreams {
     private val infoCache = ConcurrentHashMap<String, CachedInfo>()
 
     /**
-     * Metadata, video-only + audio-only DASH streams, related list. Short-lived cache (watch page, manifest, stream requests share one video).
+     * Metadata, video-only + audio-only DASH, related list. Short-lived cache shared by watch page, manifest, stream requests.
      */
     fun streamInfo(
         context: Context,

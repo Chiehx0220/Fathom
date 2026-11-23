@@ -2,7 +2,7 @@ package io.github.aedev.flow.localserver
 
 import java.io.File
 
-// GET /download-cover?f=<name>.jpg: cover saved with a download; app storage is out of reach of another device's browser
+// GET /download-cover?f=<name>.jpg: download's saved cover; app storage unreachable from other devices
 
 /** `DownloadCovers` directory under the app's files. */
 internal const val COVER_DIRECTORY = "download_covers"

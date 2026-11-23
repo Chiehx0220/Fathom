@@ -7,8 +7,6 @@ import io.github.aedev.flow.content.Page
 import io.github.aedev.flow.data.local.PlayerPreferences
 import io.github.aedev.flow.data.model.Comment
 import io.github.aedev.flow.data.repository.YouTubeRepository
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.runBlocking
 
 /** YouTube comments via app InnerTube. Continuation `yt:c:<token>`, replies `yt:r:<token>`. */
 internal object LocalServerYouTubeComments {
@@ -27,47 +25,43 @@ internal object LocalServerYouTubeComments {
         val videoId = LocalServerMedia.getVideoId(videoUrl)
         val token = nextPage?.url.orEmpty()
         val repo = YouTubeRepository.getInstance(PlayerPreferences(context))
-        return try {
-            runBlocking {
-                when {
-                    token.startsWith(REPLIES) -> {
-                        repo.getVideoCommentReplies(videoId, token.removePrefix(REPLIES)).let { page ->
-                            CommentsResult(
-                                page.comments.map { it.toCommentItem(videoUrl, hasReplies = false) },
-                                page.continuation?.let { Page(REPLIES + it) },
-                            )
-                        }
-                    }
-
-                    token.startsWith(MORE) -> {
-                        repo.getMoreVideoComments(videoId, token.removePrefix(MORE)).let { page ->
-                            CommentsResult(
-                                page.comments.map { it.toCommentItem(videoUrl, hasReplies = true) },
-                                page.continuation?.let { Page(MORE + it) },
-                            )
-                        }
-                    }
-
-                    // A cursor this object did not make: nothing to continue.
-                    nextPage != null -> {
-                        CommentsResult(emptyList(), null)
-                    }
-
-                    else -> {
-                        val page = repo.getVideoComments(videoId)
+        return blockingOrElse(
+            "InnerTube comments",
+            { e -> if (nextPage != null) CommentsResult(emptyList(), null) else throw e },
+        ) {
+            when {
+                token.startsWith(REPLIES) -> {
+                    repo.getVideoCommentReplies(videoId, token.removePrefix(REPLIES)).let { page ->
                         CommentsResult(
-                            page.comments.map { it.toCommentItem(videoUrl, hasReplies = true) },
-                            page.continuation?.let { Page(MORE + it) },
-                            disabled = page.disabled,
+                            page.comments.map { it.toCommentItem(videoUrl, hasReplies = false) },
+                            page.continuation?.let { Page(REPLIES + it) },
                         )
                     }
                 }
+
+                token.startsWith(MORE) -> {
+                    repo.getMoreVideoComments(videoId, token.removePrefix(MORE)).let { page ->
+                        CommentsResult(
+                            page.comments.map { it.toCommentItem(videoUrl, hasReplies = true) },
+                            page.continuation?.let { Page(MORE + it) },
+                        )
+                    }
+                }
+
+                // A cursor this object did not make: nothing to continue.
+                nextPage != null -> {
+                    CommentsResult(emptyList(), null)
+                }
+
+                else -> {
+                    val page = repo.getVideoComments(videoId)
+                    CommentsResult(
+                        page.comments.map { it.toCommentItem(videoUrl, hasReplies = true) },
+                        page.continuation?.let { Page(MORE + it) },
+                        disabled = page.disabled,
+                    )
+                }
             }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            serverLog("InnerTube comments failed: ${e.message}")
-            if (nextPage != null) CommentsResult(emptyList(), null) else throw e
         }
     }
 }

@@ -29,7 +29,7 @@ private suspend fun attempt(
         false
     }
 
-/** Native block (`UC` ids) also keeps the name, counts the action, refreshes feeds; other ids, or a failure, only join the engine's block list. */
+/** Native block (`UC` ids): name kept, action counted, feeds refreshed; other ids or failure: engine block list only. */
 internal fun HistoryDbHelper.blockChannel(
     channelUrl: String,
     name: String,
