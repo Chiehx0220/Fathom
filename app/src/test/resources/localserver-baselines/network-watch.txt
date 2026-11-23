@@ -25,6 +25,7 @@ GET /api/v1/video?id=https://www.youtube.com/watch?v=jNQXAC9IVRw&serviceId=0
   "description": "<b>Hi<\/b> at 0:05",
   "descriptionType": "html",
   "duration": 19,
+  "hasPreview": false,
   "id": "jNQXAC9IVRw",
   "isLive": false,
   "isShort": true,

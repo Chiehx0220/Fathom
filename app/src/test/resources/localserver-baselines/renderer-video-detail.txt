@@ -17,6 +17,7 @@
   "description": "<b>Hi<\/b> at 0:05",
   "descriptionType": "html",
   "duration": 19,
+  "hasPreview": false,
   "id": "jNQXAC9IVRw",
   "isLive": false,
   "isShort": true,

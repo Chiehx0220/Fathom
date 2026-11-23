@@ -118,11 +118,11 @@ An upstream change to the symbol leaves this code compiling and silently differe
 
 ## Bilibili (native client, mappers, player/paging glue)
 
-- Modified upstream files: **0** (0 changed lines). New files: **144**.
+- Modified upstream files: **0** (0 changed lines). New files: **147**.
 
 ## Local server (fork-only feature)
 
-- Modified upstream files: **0** (0 changed lines). New files: **154**.
+- Modified upstream files: **0** (0 changed lines). New files: **155**.
 
 ## Build
 

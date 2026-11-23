@@ -239,6 +239,7 @@ internal class VideoDetail(
     val playback: PlaybackDto,
     val subtitles: List<SubtitleDto>,
     val chapters: List<ChapterDto>,
+    val hasPreview: Boolean,
 )
 
 @Serializable

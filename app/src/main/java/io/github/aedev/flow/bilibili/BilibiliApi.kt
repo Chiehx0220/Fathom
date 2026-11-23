@@ -1,5 +1,6 @@
 package io.github.aedev.flow.bilibili
 
+import io.github.aedev.flow.content.Frameset
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.Json
@@ -43,6 +44,9 @@ class BilibiliApi(
 
     /** Chapter marks of one part; empty if none. */
     suspend fun chapters(info: BilibiliVideoInfo): List<BilibiliChapter> = videos.chapters(info)
+
+    /** Seek-bar previews of one part; null if none. */
+    suspend fun videoshot(info: BilibiliVideoInfo): Frameset? = videos.videoshot(info)
 
     /** Danmaku of one part; live chat: [liveMessages]. */
     suspend fun danmaku(info: BilibiliVideoInfo): List<BilibiliDanmaku> = videos.danmaku(info)

@@ -45,6 +45,7 @@ internal fun StreamInfo.toDetail(serviceId: Int): VideoDetail {
                     it.previewUrl.takeUnless(String?::isNullOrBlank)?.let(WebFormat::getThumbnailUrl) ?: "",
                 )
             },
+        hasPreview = previewFrames.bestForSeekBar() != null,
     )
 }
 

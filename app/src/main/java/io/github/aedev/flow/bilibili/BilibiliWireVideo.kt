@@ -5,8 +5,10 @@ package io.github.aedev.flow.bilibili
  * Used fields only.
  */
 
+import io.github.aedev.flow.content.Frameset
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.math.roundToInt
 
 @Serializable
 internal data class ViewResponse(
@@ -124,6 +126,35 @@ internal data class PlayerV2Response(
         val from: Long = 0,
         val imgUrl: String = "",
     )
+}
+
+@Serializable
+internal data class VideoshotResponse(
+    val code: Int = 0,
+    val data: Data? = null,
+) {
+    @Serializable
+    data class Data(
+        val image: List<String> = emptyList(),
+        /** Frame times in seconds behind one leading placeholder. */
+        val index: List<Int> = emptyList(),
+        @SerialName("img_x_len") val columns: Int = 0,
+        @SerialName("img_y_len") val rows: Int = 0,
+        @SerialName("img_x_size") val frameWidth: Int = 0,
+        @SerialName("img_y_size") val frameHeight: Int = 0,
+    )
+
+    /** Null: error code, or sheet grid without frames. */
+    fun toFrameset(): Frameset? {
+        val shot = data?.takeIf { code == 0 } ?: return null
+        val perSheet = shot.columns * shot.rows
+        val times = shot.index.drop(1).take(shot.image.size * perSheet)
+        if (shot.image.isEmpty() || perSheet <= 0 || shot.frameWidth <= 0 || shot.frameHeight <= 0 || times.size < 2) return null
+        val intervalMs = ((times.last() - times.first()) * 1000.0 / (times.size - 1)).roundToInt()
+        if (intervalMs <= 0) return null
+        val sheets = shot.image.map { if (it.startsWith("//")) "https:$it" else it }
+        return Frameset(sheets, shot.frameWidth, shot.frameHeight, times.size, intervalMs, shot.columns, shot.rows)
+    }
 }
 
 @Serializable

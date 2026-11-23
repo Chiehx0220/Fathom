@@ -6,6 +6,7 @@
  */
 package io.github.aedev.flow.bilibili
 
+import io.github.aedev.flow.content.Frameset
 import kotlinx.serialization.json.Json
 
 /** Video endpoints: metadata, playback, chapters, danmaku, related, popular. */
@@ -115,6 +116,16 @@ internal class BilibiliVideos(
             .map { BilibiliChapter(it.content, it.from.toInt(), it.imgUrl.takeIf { url -> url.isNotBlank() }) }
     }
 
+    /** Seek-bar previews of one part; null if Bilibili has none. */
+    suspend fun videoshot(info: BilibiliVideoInfo): Frameset? {
+        val headers = session.headers(BilibiliRef.Video(info.bvid).url)
+        val response =
+            json.decodeFromString<VideoshotResponse>(
+                session.get("$VIDEOSHOT_URL?bvid=${info.bvid}&cid=${info.cid}&index=1", headers),
+            )
+        return response.toFrameset()
+    }
+
     /** Danmaku of one part; live chat: [liveMessages]. */
     suspend fun danmaku(info: BilibiliVideoInfo): List<BilibiliDanmaku> {
         val headers = session.headers(BilibiliRef.Video(info.bvid).url)
@@ -184,6 +195,7 @@ internal class BilibiliVideos(
         const val VIEW_URL = "https://api.bilibili.com/x/web-interface/wbi/view"
         const val PLAYURL_URL = "https://api.bilibili.com/x/player/wbi/playurl"
         const val PLAYER_V2_URL = "https://api.bilibili.com/x/player/wbi/v2"
+        const val VIDEOSHOT_URL = "https://api.bilibili.com/x/player/videoshot"
         const val DANMAKU_URL = "https://api.bilibili.com/x/v1/dm/list.so?oid="
         const val RELATED_URL = "https://api.bilibili.com/x/web-interface/archive/related?bvid="
         const val POPULAR_URL = "https://api.bilibili.com/x/web-interface/popular"
