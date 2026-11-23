@@ -14,7 +14,7 @@ const meta = (v) => [v.channelName, FT.views(v.viewCount), v.uploadDate].filter(
 FT.meta = meta;
 
 const thumb = (v, badge) => {
-    const box = h('div', { class: 'thumb' }, v.thumbnailUrl ? h('img', { src: FT.cardThumb(v.thumbnailUrl), alt: '', loading: 'lazy' }) : null);
+    const box = h('div', { class: 'thumb' }, v.thumbnailUrl ? h('img', { src: FT.cardThumb(v.thumbnailUrl), alt: '', loading: 'lazy', decoding: 'async' }) : null);
     if (v.isLive) box.append(h('span', { class: 'dur live' }, FT.t('live')));
     else if (v.duration > 0) box.append(h('span', { class: 'dur' }, FT.duration(v.duration)));
     if (v.progress > 0 && v.progress < 100) box.append(h('div', { class: 'prog' }, h('i', { style: `width:${v.progress}%` })));
@@ -45,7 +45,7 @@ FT.videoRow = (v, key) => {
 };
 
 FT.channelCard = (c) => {
-    const box = h('div', { class: 'thumb' }, c.thumbnailUrl ? h('img', { src: c.thumbnailUrl, alt: '', loading: 'lazy' }) : null);
+    const box = h('div', { class: 'thumb' }, c.thumbnailUrl ? h('img', { src: c.thumbnailUrl, alt: '', loading: 'lazy', decoding: 'async' }) : null);
     const el = h('a', { class: 'card channel', href: FT.link.channel(c.id, c.serviceId), tabindex: '-1', data: { f: '', key: c.id } },
         box, h('div', { class: 'card-title' }, c.name), h('div', { class: 'card-meta' }, c.subscriberCount >= 0 ? FT.t('count_subscribers', { count: FT.count(c.subscriberCount) }) : ''));
     el.item = c;
@@ -54,7 +54,7 @@ FT.channelCard = (c) => {
 };
 
 FT.playlistCard = (p) => {
-    const box = h('div', { class: 'thumb' }, p.thumbnailUrl ? h('img', { src: p.thumbnailUrl, alt: '', loading: 'lazy' }) : null, p.videoCount ? h('span', { class: 'dur' }, FT.tn('count_videos', p.videoCount)) : null);
+    const box = h('div', { class: 'thumb' }, p.thumbnailUrl ? h('img', { src: p.thumbnailUrl, alt: '', loading: 'lazy', decoding: 'async' }) : null, p.videoCount ? h('span', { class: 'dur' }, FT.tn('count_videos', p.videoCount)) : null);
     const el = h('a', { class: 'card', href: FT.link.playlist(p), tabindex: '-1', data: { f: '', key: p.id } }, box, h('div', { class: 'card-title' }, p.name));
     el.item = p;
     el.kind = 'playlist';

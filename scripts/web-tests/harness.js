@@ -57,6 +57,7 @@ const load = ({
       createElement: element,
       createTextNode: (text) => ({ nodeType: 3, text: String(text) }),
       querySelector: () => null,
+      addEventListener: () => {},
     },
     localStorage: {
       getItem: (key) => (key in storage ? storage[key] : null),
