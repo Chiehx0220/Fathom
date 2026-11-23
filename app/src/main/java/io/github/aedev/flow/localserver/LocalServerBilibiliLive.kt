@@ -47,8 +47,8 @@ internal object LocalServerBilibiliLive {
         val room = playback.room
         val url = BilibiliRef.Live(room.roomId).url
 
-        val info = StreamInfo(LocalServerBilibili.serviceId, url, url, StreamType.LIVE_STREAM, room.roomId.toString(), room.title, 0)
-        info.thumbnails = listOf(Image(room.coverUrl, -1, -1, Image.ResolutionLevel.UNKNOWN))
+        val info = StreamInfo(LocalServerBilibili.serviceId, url, url, StreamType.LIVE_STREAM, room.roomId.toString(), room.title)
+        info.thumbnails = listOf(Image(room.coverUrl))
         info.description = Description(room.tags.joinToString(" "), Description.PLAIN_TEXT)
         info.viewCount = room.viewerCount
         if (room.startedAtSec > 0) {
@@ -56,7 +56,7 @@ internal object LocalServerBilibiliLive {
         }
         info.uploaderName = room.uploader.name
         info.uploaderUrl = LocalServerBilibili.channelUrl(room.uploader.mid.toString())
-        info.uploaderAvatars = listOf(Image(room.uploader.avatarUrl, -1, -1, Image.ResolutionLevel.UNKNOWN))
+        info.uploaderAvatars = listOf(Image(room.uploader.avatarUrl))
         info.hlsUrl = hls
         info.relatedItems = runCatching { runBlocking { api.recommendedLives() } }.getOrDefault(emptyList()).map(::bilibiliLiveItem)
         return info

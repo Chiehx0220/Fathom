@@ -57,7 +57,6 @@ data class MusicTrack(
     val albumId: String? = null,
     val artists: List<MusicArtist> = emptyList(),
     val itemType: MusicItemType = MusicItemType.SONG,
-    /** Service of the id (serviceIdOfVideo). */
     val serviceId: Int = serviceIdOfVideo(videoId),
 ) {
     val highResThumbnailUrl: String

@@ -8,7 +8,7 @@ class NoThumbnailTest {
     private val legacyPlaceholder =
         "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=300&auto=format&fit=crop"
 
-    private fun image(url: String) = Image(url, -1, -1, Image.ResolutionLevel.UNKNOWN)
+    private fun image(url: String) = Image(url)
 
     @Test
     fun `a missing thumbnail is an empty url, not a stock image`() {

@@ -27,10 +27,7 @@ class Image(
     val url: String,
     val height: Int = HEIGHT_UNKNOWN,
     val width: Int = WIDTH_UNKNOWN,
-    val estimatedResolutionLevel: ResolutionLevel = ResolutionLevel.UNKNOWN,
 ) {
-    enum class ResolutionLevel { HIGH, MEDIUM, LOW, UNKNOWN }
-
     companion object {
         const val HEIGHT_UNKNOWN = -1
         const val WIDTH_UNKNOWN = -1
@@ -43,7 +40,6 @@ class Description(
 ) {
     companion object {
         const val HTML = 1
-        const val MARKDOWN = 2
         const val PLAIN_TEXT = 3
         val EMPTY_DESCRIPTION = Description("", PLAIN_TEXT)
     }
@@ -62,10 +58,7 @@ class DateWrapper(
     fun offsetDateTime(): OffsetDateTime = OffsetDateTime.ofInstant(instant, java.time.ZoneOffset.UTC)
 }
 
-enum class InfoType { STREAM, PLAYLIST, CHANNEL, COMMENT }
-
 sealed class InfoItem(
-    val infoType: InfoType,
     val serviceId: Int,
     val url: String,
     val name: String,
@@ -78,7 +71,7 @@ class StreamInfoItem(
     url: String,
     name: String,
     val streamType: StreamType,
-) : InfoItem(InfoType.STREAM, serviceId, url, name) {
+) : InfoItem(serviceId, url, name) {
     var uploaderName: String? = null
     var viewCount: Long = -1
     var duration: Long = -1
@@ -95,7 +88,7 @@ class ChannelInfoItem(
     serviceId: Int,
     url: String,
     name: String,
-) : InfoItem(InfoType.CHANNEL, serviceId, url, name) {
+) : InfoItem(serviceId, url, name) {
     var description: String? = null
     var subscriberCount: Long = -1
     var streamCount: Long = -1
@@ -106,7 +99,7 @@ class PlaylistInfoItem(
     serviceId: Int,
     url: String,
     name: String,
-) : InfoItem(InfoType.PLAYLIST, serviceId, url, name) {
+) : InfoItem(serviceId, url, name) {
     var uploaderName: String? = null
     var uploaderUrl: String? = null
     var isUploaderVerified: Boolean = false
@@ -118,7 +111,7 @@ class CommentsInfoItem(
     serviceId: Int,
     url: String,
     name: String,
-) : InfoItem(InfoType.COMMENT, serviceId, url, name) {
+) : InfoItem(serviceId, url, name) {
     var commentId: String? = null
     var commentText: Description = Description.EMPTY_DESCRIPTION
     var uploaderName: String? = null
@@ -127,20 +120,15 @@ class CommentsInfoItem(
     var textualUploadDate: String? = null
     var uploadDate: DateWrapper? = null
     var likeCount: Int = NO_LIKE_COUNT
-    var textualLikeCount: String? = null
     var isHeartedByUploader: Boolean = false
     var isPinned: Boolean = false
     var isUploaderVerified: Boolean = false
-    var streamPosition: Int = NO_STREAM_POSITION
     var replyCount: Int = UNKNOWN_REPLY_COUNT
     var replies: Page? = null
-    var isChannelOwner: Boolean = false
-    var hasCreatorReply: Boolean = false
     var isEdited: Boolean = false
 
     companion object {
         const val NO_LIKE_COUNT = -1
-        const val NO_STREAM_POSITION = -1
         const val UNKNOWN_REPLY_COUNT = -1
     }
 }
@@ -183,7 +171,6 @@ class StreamInfo(
     var streamType: StreamType,
     val id: String,
     val name: String,
-    var ageLimit: Int = 0,
 ) {
     var thumbnails: List<Image> = emptyList()
     var textualUploadDate: String? = null
@@ -197,7 +184,6 @@ class StreamInfo(
     var uploaderUrl: String = ""
     var uploaderAvatars: List<Image> = emptyList()
     var isUploaderVerified: Boolean = false
-    var uploaderSubscriberCount: Long = -1
     var videoStreams: List<VideoStream> = emptyList()
     var audioStreams: List<AudioStream> = emptyList()
     var videoOnlyStreams: List<VideoStream> = emptyList()

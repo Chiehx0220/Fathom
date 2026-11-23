@@ -34,7 +34,6 @@ internal data class ChannelTabState(
     val loaded: Boolean = false,
 )
 
-/** Channel screen tab-content source; each service's controller fills it in this shape. */
 internal interface ChannelTabSource {
     val states: StateFlow<Map<ChannelTabKind, ChannelTabState>>
 

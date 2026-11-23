@@ -15,7 +15,7 @@ import io.github.aedev.flow.player.stream.model.MediaFormat
 import io.github.aedev.flow.player.stream.model.StreamType
 import io.github.aedev.flow.player.stream.model.VideoStream
 
-internal fun images(url: String) = listOf(Image(url, 90, 120, Image.ResolutionLevel.MEDIUM))
+internal fun images(url: String) = listOf(Image(url, 90, 120))
 
 internal fun stream(
     id: String,
@@ -67,7 +67,6 @@ internal fun zooInfo(): StreamInfo =
         StreamType.VIDEO_STREAM,
         "jNQXAC9IVRw",
         "Me at the zoo",
-        0,
     ).apply {
         uploaderName = "jawed"
         uploaderUrl = "https://www.youtube.com/channel/UC4QobU6STFB0P71PMvOGN5A"

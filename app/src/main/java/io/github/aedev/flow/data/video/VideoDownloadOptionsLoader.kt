@@ -41,7 +41,6 @@ class VideoDownloadOptionsLoader
     ) {
         suspend fun load(video: Video): VideoDownloadOptions? =
             withContext(PerformanceDispatcher.networkIO) {
-                // Live room: nothing to download.
                 if (BilibiliRef.Live.ofId(video.id) != null) return@withContext null
                 if (BilibiliRef.isVideoId(video.id)) return@withContext loadBilibili(video)
                 val result =

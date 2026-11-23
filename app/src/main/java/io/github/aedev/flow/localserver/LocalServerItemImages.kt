@@ -26,5 +26,4 @@ internal var CommentsInfoItem.uploaderAvatarUrl: String?
 
 private fun List<Image>?.bestUrl(): String? = this?.maxByOrNull { it.height }?.url
 
-private fun String?.asImages(): List<Image> =
-    if (isNullOrBlank()) emptyList() else listOf(Image(this, Image.HEIGHT_UNKNOWN, Image.WIDTH_UNKNOWN, Image.ResolutionLevel.UNKNOWN))
+private fun String?.asImages(): List<Image> = if (isNullOrBlank()) emptyList() else listOf(Image(this))

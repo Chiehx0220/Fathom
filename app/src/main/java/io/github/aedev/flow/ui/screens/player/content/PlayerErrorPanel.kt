@@ -123,7 +123,6 @@ internal fun PlayerErrorPanel(
                     PanelButtonContent(Icons.Rounded.ContentCopy, stringResource(R.string.copy_logs))
                 }
             }
-            // Row 2: open in source service site/app (full width)
             OutlinedButton(
                 onClick = { if (isYouTube) openInYouTube(context, videoId) else openInBilibili(context, videoId) },
                 shape = MaterialTheme.shapes.small,

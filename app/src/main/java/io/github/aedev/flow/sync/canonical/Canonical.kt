@@ -38,7 +38,6 @@ data class CanonicalWatchHistory(
     val isShort: Boolean = false,
     val hlc: String = "",
     val deleted: Boolean = false,
-    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
     val serviceId: Int = 0,
 )
 
@@ -101,7 +100,6 @@ data class CanonicalLike(
     val title: String = "",
     val channelName: String = "",
     val thumbnailUrl: String = "",
-    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
     val serviceId: Int = 0,
 ) {
     companion object {
@@ -176,7 +174,6 @@ data class CanonicalSubscribedChannel(
     val isMusic: Boolean = false,
     val hlc: String = "",
     val deleted: Boolean = false,
-    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
     val serviceId: Int = 0,
 )
 

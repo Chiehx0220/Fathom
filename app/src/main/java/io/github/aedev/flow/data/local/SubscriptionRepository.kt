@@ -370,7 +370,6 @@ data class ChannelSubscription(
     val isMusic: Boolean = false,
     /** When the subscription feed last fetched this channel; 0 means never. */
     val lastFeedFetchAt: Long = 0L,
-    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
     val serviceId: Int = 0,
 )
 

@@ -177,7 +177,6 @@ class HomeViewModel
         val contentSourceFilter: StateFlow<io.github.aedev.flow.data.local.HomeContentSourceFilter> =
             playerPreferences.homeContentSourceFilterIn(viewModelScope, SharingStarted.WhileSubscribed(UI_STATE_SUBSCRIPTION_TIMEOUT_MS))
 
-        /** Persists filter, reloads immediately. */
         fun setContentSourceFilter(filter: io.github.aedev.flow.data.local.HomeContentSourceFilter) {
             viewModelScope.launch(PerformanceDispatcher.diskIO) {
                 playerPreferences.setHomeContentSourceFilter(filter)

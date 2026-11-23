@@ -7,7 +7,6 @@ import io.github.aedev.flow.innertube.pages.channel.ChannelTabKind
 
 data class ChannelUiState(
     val channelId: String? = null,
-    /** Extractor service of this channel; rest of the state is generic. */
     val serviceId: Int = 0,
     val header: ChannelHeader? = null,
     /** Exactly the tabs the channel published, minus the ones the app hides. Empty until loaded. */

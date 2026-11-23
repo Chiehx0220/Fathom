@@ -53,9 +53,8 @@ internal object LocalServerBilibiliStreams {
                 StreamType.VIDEO_STREAM,
                 key,
                 video.title,
-                0,
             )
-        info.thumbnails = listOf(Image(video.thumbnailUrl, -1, -1, Image.ResolutionLevel.UNKNOWN))
+        info.thumbnails = listOf(Image(video.thumbnailUrl))
         info.description = Description(video.description, Description.PLAIN_TEXT)
         info.duration = video.durationSec.toLong()
         info.viewCount = video.viewCount
@@ -63,7 +62,7 @@ internal object LocalServerBilibiliStreams {
         info.uploadDate = DateWrapper(OffsetDateTime.ofInstant(Instant.ofEpochSecond(video.uploadTimeSec), ZoneOffset.ofHours(8)))
         info.uploaderName = video.uploader.name
         info.uploaderUrl = LocalServerBilibili.channelUrl(video.uploader.mid.toString())
-        info.uploaderAvatars = listOf(Image(video.uploader.avatarUrl, -1, -1, Image.ResolutionLevel.UNKNOWN))
+        info.uploaderAvatars = listOf(Image(video.uploader.avatarUrl))
         info.videoOnlyStreams = BilibiliStreamBridge.convertVideoFormats(video.bvid, playback.videoFormats)
         info.audioStreams = BilibiliStreamBridge.convertAudioFormats(video.bvid, playback.audioFormats)
         info.relatedItems =

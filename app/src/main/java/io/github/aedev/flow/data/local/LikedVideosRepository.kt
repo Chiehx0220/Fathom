@@ -267,7 +267,6 @@ data class LikedVideoInfo(
     // Nullable and zero by default: Gson backups written before these existed leave them unset.
     val channelId: String? = null,
     val durationSeconds: Int = 0,
-    /** org.schabi.newpipe.extractor.ServiceList id. 0 = YouTube. */
     val serviceId: Int = 0,
 ) {
     /** This like, with the channel and length [stored] already knew where this one lacks them. */

@@ -42,7 +42,7 @@ An upstream change to the symbol leaves this code compiling and silently differe
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **114** (1160 changed lines). New files: **287**.
+- Modified upstream files: **114** (1144 changed lines). New files: **287**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|
@@ -51,41 +51,41 @@ An upstream change to the symbol leaves this code compiling and silently differe
 | data/local/BackupRepository.kt | 20 | 17 |
 | data/local/SubscriptionRecordCodec.kt | 22 | 15 |
 | ui/screens/onboarding/ImportStep.kt | 25 | 6 |
-| ui/screens/search/SearchViewModel.kt | 23 | 7 |
 | data/paging/SearchPagingSource.kt | 17 | 12 |
 | ui/screens/channel/ChannelViewModel.kt | 22 | 7 |
-| ui/screens/home/HomeViewModel.kt | 27 | 2 |
+| ui/screens/search/SearchViewModel.kt | 22 | 7 |
 | data/backup/NewPipeSubscriptionCodec.kt | 23 | 5 |
-| data/video/VideoDownloadOptionsLoader.kt | 25 | 1 |
+| ui/screens/home/HomeViewModel.kt | 26 | 2 |
+| data/video/VideoDownloadOptionsLoader.kt | 24 | 1 |
 | data/repository/YouTubeRepository.kt | 16 | 7 |
 | data/update/UpdateRepository.kt | 14 | 9 |
-| data/video/VideoDownloadManager.kt | 21 | 2 |
 | player/resolver/VideoPlaybackResolver.kt | 21 | 2 |
 | data/innertube/RssSubscriptionService.kt | 19 | 3 |
-| data/local/ViewHistory.kt | 22 | 0 |
+| data/video/VideoDownloadManager.kt | 20 | 2 |
+| data/local/ViewHistory.kt | 21 | 0 |
 | ui/components/videoplayer/settings/PlayerSettingsMainPage.kt | 18 | 3 |
 | ui/screens/player/PlaybackSessionApplier.kt | 21 | 0 |
 | data/video/downloader/resolve/DownloadStreamResolver.kt | 16 | 4 |
 | ui/screens/home/HomeFeedSources.kt | 17 | 3 |
 | ui/screens/home/HomeScreen.kt | 16 | 4 |
 | utils/ShareVideo.kt | 13 | 7 |
-| data/local/dao/WatchHistoryDao.kt | 18 | 0 |
+| data/local/dao/WatchHistoryDao.kt | 17 | 0 |
 | data/subscriptions/SubscriptionFeedRepository.kt | 17 | 0 |
 | player/EnhancedPlayerManager.kt | 16 | 1 |
-| ui/screens/channel/ChannelTabController.kt | 13 | 3 |
 | data/subscriptions/SubscriptionRefreshPlanner.kt | 15 | 0 |
+| ui/screens/channel/ChannelTabController.kt | 12 | 3 |
 | ui/screens/player/effects/PlayerLoadEffects.kt | 13 | 2 |
 | data/update/GitHubRelease.kt | 7 | 7 |
 | ui/FlowNavigation.kt | 7 | 7 |
 | ui/screens/home/HomeFeedLoader.kt | 9 | 5 |
 | ui/screens/player/PlayerSecondaryMetadataLoader.kt | 10 | 4 |
 | player/stream/PlaybackLoadResolver.kt | 11 | 1 |
-| data/local/LikedVideosRepository.kt | 10 | 1 |
 | ui/FlowApp.kt | 2 | 9 |
 | ui/screens/player/WatchSessionTracker.kt | 8 | 3 |
-| ui/screens/player/content/PlayerErrorPanel.kt | 8 | 3 |
 | data/comments/CommentsPager.kt | 7 | 3 |
+| data/local/LikedVideosRepository.kt | 9 | 1 |
 | data/local/entity/VideoEntity.kt | 7 | 3 |
+| ui/screens/player/content/PlayerErrorPanel.kt | 7 | 3 |
 | ui/screens/player/dialogs/PlayerDialogsContainer.kt | 7 | 3 |
 | utils/ThumbnailUrlResolver.kt | 6 | 4 |
 | ui/screens/player/content/RelatedVideosList.kt | 6 | 3 |
@@ -97,8 +97,6 @@ An upstream change to the symbol leaves this code compiling and silently differe
 | data/video/downloader/work/DownloadTransfer.kt | 7 | 0 |
 | player/stream/InnerTubeVideoStreamExtractor.kt | 7 | 0 |
 | ui/screens/player/PlaybackLoadController.kt | 6 | 1 |
-| data/model/Models.kt | 6 | 0 |
-| sync/canonical/Canonical.kt | 6 | 0 |
 | sync/mapping/SimpleMappers.kt | 6 | 0 |
 | ui/AppHooks.kt | 2 | 4 |
 | ui/components/videoplayer/settings/PlayerSettingsSheet.kt | 6 | 0 |
@@ -106,6 +104,8 @@ An upstream change to the symbol leaves this code compiling and silently differe
 | ui/screens/player/dialogs/PlayerSettingsSheetHost.kt | 6 | 0 |
 | ui/screens/subscriptions/SubscriptionsFeedContent.kt | 4 | 2 |
 | data/local/migrations/Migrations.kt | 5 | 0 |
+| data/model/Models.kt | 5 | 0 |
+| player/datasource/YouTubeHttpDataSource.kt | 3 | 2 |
 | ... 54 more, each small | | |
 
 ## FlowNeuro (Chinese text handling)

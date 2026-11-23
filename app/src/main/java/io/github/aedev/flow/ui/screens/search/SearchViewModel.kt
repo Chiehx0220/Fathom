@@ -180,7 +180,6 @@ class SearchViewModel
             }
         }
 
-        /** Search service switch (YouTube / Bilibili). */
         fun setService(serviceId: Int) {
             val current = _uiState.value
             if (serviceId == current.serviceId) return

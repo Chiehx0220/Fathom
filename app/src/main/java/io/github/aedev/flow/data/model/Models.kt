@@ -50,7 +50,6 @@ data class Video(
     // Transient: when this video was added to the playlist currently being viewed. Not persisted
     // on the video row — populated only by playlist-scoped queries.
     val addedAtInPlaylist: Long? = null,
-    // Service of the id (serviceIdOfVideo): YouTube unless Bilibili id shape.
     val serviceId: Int = serviceIdOfVideo(id),
     // "@Name" or "/@Name" as YouTube sends it, in memory only. Nullable because LocalDataManager still
     // reads videos through Gson, which skips Kotlin defaults and would leave a non-null field null.

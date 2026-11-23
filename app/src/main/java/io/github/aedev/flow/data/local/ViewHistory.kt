@@ -218,7 +218,6 @@ class ViewHistory private constructor(
     /** Bare IDs of watched non-music non-local videos (progress > 0). */
     suspend fun getAllWatchedVideoIds(): Set<String> = dao.getAllWatchedVideoIds().toHashSet()
 
-    /** [getAllWatchedVideoIds] + serviceId. */
     suspend fun getAllWatchedVideoIdentities(): List<WatchedVideoIdentity> =
         dao.getAllWatchedVideoIdentities().map { it.copy(serviceId = serviceIdOfVideo(it.videoId, it.serviceId)) }
 

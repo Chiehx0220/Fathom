@@ -140,7 +140,6 @@ class VideoDownloadManager
             _progressUpdates.tryEmit(update)
         }
 
-        /** Latest tick; null once terminal. */
         fun latestProgress(videoId: String): DownloadProgressUpdate? = latestProgressByVideo[videoId]
 
         // ===== Directory Management =====

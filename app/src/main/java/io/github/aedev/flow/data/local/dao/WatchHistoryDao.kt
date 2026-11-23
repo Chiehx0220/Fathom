@@ -169,7 +169,6 @@ interface WatchHistoryDao {
     @Query("SELECT videoId FROM watch_history WHERE isMusic = 0 AND isLocal = 0")
     suspend fun getAllWatchedVideoIds(): List<String>
 
-    /** [getAllWatchedVideoIds] rows + serviceId. */
     @Query("SELECT videoId, serviceId FROM watch_history WHERE isMusic = 0 AND isLocal = 0")
     suspend fun getAllWatchedVideoIdentities(): List<WatchedVideoIdentity>
 
