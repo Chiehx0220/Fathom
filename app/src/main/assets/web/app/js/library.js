@@ -52,6 +52,12 @@ const LIBRARY_LISTS = {
 };
 
 FT.register('library', {
+    skeleton: (params) => {
+        const tab = LIBRARY_TABS.some((t) => t[0] === params.tab) ? params.tab : 'history';
+        const wide = FT.layout.current() === 'grid';
+        const body = tab === 'playlists' ? h('div', { class: 'grid' }, FT.ghost.items(8).map((p) => FT.playlistCard(p))) : FT.ghostBody(wide);
+        return [h('div', { class: 'head' }, h('h1', {}, FT.t('tab_library'))), FT.ghost.quiet(tabPills('library', LIBRARY_TABS, tab)), body];
+    },
     async render(root, params, scope) {
         // Legacy ?tab=feed|channels.
         if (params.tab === 'feed' || params.tab === 'channels') { location.replace('#/subscriptions?tab=' + params.tab); return; }

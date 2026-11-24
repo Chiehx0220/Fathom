@@ -1,4 +1,4 @@
-// Screen router (no reload): screen = { render(root, params, scope), keepFor?(params) → ms, ready? }.
+// Screen router (no reload): screen = { render(root, params, scope), skeleton?(params, scope) → nodes, keepFor?(params) → ms, ready? }.
 (() => {
 const h = FT.h;
 const screens = {};
@@ -136,7 +136,7 @@ const show = async () => {
     dropKept(key);
     const life = lifeOf();
     current = { screen, params, key, life, done: false };
-    root.replaceChildren(FT.loading());
+    root.replaceChildren(...(screen.skeleton ? screen.skeleton(params, life.scope) : [FT.loading()]));
     try {
         await screen.render(root, params, life.scope);
     } catch (error) {

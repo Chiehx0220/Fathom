@@ -36,7 +36,7 @@ FT.brandMark = () => FT.h('img', { class: 'brand-mark', src: document.querySelec
 
 FT.enc = encodeURIComponent;
 
-// Pictures fade in when settled (capture on document: load does not bubble, window never sees it).
+// Settled pictures fade in; capture on document, as load does not bubble to window.
 for (const type of ['load', 'error']) document.addEventListener(type, (e) => { if (e.target.tagName === 'IMG') e.target.classList.add('ld'); }, true);
 
 // Card picture: YouTube hq720 → hqdefault (480x360, cover-cropped, ~90% fewer bytes); other hosts unchanged.

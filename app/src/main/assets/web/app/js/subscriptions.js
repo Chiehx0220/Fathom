@@ -39,6 +39,9 @@ const subsPills = (tab, src, used, grp, groups) => {
 };
 
 FT.register('subscriptions', {
+    skeleton: (params) => [h('div', { class: 'head' }, h('h1', {}, FT.t('tab_subscriptions'))),
+        FT.ghost.quiet(h('div', { class: 'pills' }, SUBSCRIPTIONS_TABS.map(([id, label, icon]) => FT.pill(label, icon, id === (params.tab || 'feed'), null, 'pill-' + id)))),
+        FT.ghostBody(FT.layout.current() === 'grid')],
     // Feed memo lifetime (api.js); channels change from the watch page.
     keepFor: (params) => (params.tab === 'channels' ? 0 : 5 * 60 * 1000),
     async render(root, params, scope) {

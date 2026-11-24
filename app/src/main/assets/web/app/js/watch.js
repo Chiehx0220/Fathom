@@ -7,6 +7,7 @@ const mode = { onPlayer: true };
 FT.watchMode = mode;
 
 const comment = (c, service, url) => {
+    if (c.ghost) return FT.ghost.quiet(h('div', { class: 'comment' }, h('span', { class: 'avatar' }), h('div', { class: 'comment-body' }, h('div', { class: 'comment-head' }, FT.ghost.line('short')), h('div', { class: 'comment-text' }, FT.ghost.line(), FT.ghost.line('short')))));
     const box = h('div', { class: 'comment', tabindex: '-1', data: { f: '', key: 'c:' + c.id } },
         FT.avatar(c.author, c.authorThumbnail),
         h('div', { class: 'comment-body' },
@@ -32,6 +33,8 @@ const comment = (c, service, url) => {
     }
     return box;
 };
+
+const ghostComments = () => h('section', { class: 'comments' }, h('h2', {}, FT.t('comments')), ...FT.ghost.items(3).map((c) => comment(c)));
 
 const loadComments = async (holder, service, url, scope) => {
     let cursor = null;
@@ -217,8 +220,8 @@ const render = async (root, params, scope) => {
     const url = params.u;
     FT.queue.visit(url);
     mode.onPlayer = true;
-    const slot = h('div', { class: 'watch-slot' });
-    root.replaceChildren(slot, FT.loading());
+    const slot = h('div', { class: 'watch-slot ghost' });
+    root.replaceChildren(slot, FT.watchSkeleton(ghostComments()));
     FT.player.dock('full');
 
     const info = await FT.api.video(service, url);
@@ -237,7 +240,7 @@ const render = async (root, params, scope) => {
         const open = about.classList.toggle('open');
         aboutHint.querySelector('span:not(.i)').textContent = FT.t(open ? 'show_less' : 'show_more');
     });
-    const commentsHolder = h('section', { class: 'comments' }, h('h2', {}, FT.t('comments')), FT.loading());
+    const commentsHolder = ghostComments();
     const related = FT.related(info);
     const actions = actionRow(service, info, scope);
     const queue = FT.queue.panel();
@@ -257,6 +260,7 @@ const render = async (root, params, scope) => {
         about,
         related.length ? FT.shelf(FT.t('related'), FT.t('related_hint'), related.slice(0, 16).map((v) => FT.videoCard(v))) : null,
         commentsHolder);
+    slot.classList.remove('ghost');
     root.replaceChildren(slot, page);
     loadComments(commentsHolder, service, info.url, scope);
     // Measured once sized (layout may lag) and on change (e.g. resize).

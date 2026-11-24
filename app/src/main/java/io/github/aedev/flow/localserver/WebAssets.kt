@@ -26,6 +26,7 @@ object WebAssets {
             "app/js/dearrow.js",
             "app/js/ailist.js",
             "app/js/rating.js",
+            "app/js/ghost.js",
             "app/js/ui.js",
             "app/js/queue.js",
             "app/js/deepflow.js",

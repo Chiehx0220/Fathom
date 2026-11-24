@@ -56,8 +56,23 @@ body[data-input="keys"] .field.sel, body[data-input="keys"] .swatch.sel, body[da
 .empty h2 { color: var(--fg); font-size: 20px; font-weight: 500; }
 .spinner { width: 34px; height: 34px; border: 3px solid var(--s3); border-top-color: var(--acc); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.loading.skel { display: block; place-items: stretch; padding: 0; }
+/* Ghosts: bars in live line boxes (1lh), so height follows the loaded item. */
+.ghost .thumb::before, .ghost .thumb::after { display: none; }
+.ghost .card-title, .ghost .card-meta { display: block; }
+.gh { display: block; position: relative; height: 1lh; }
+.gh::before { content: ''; position: absolute; left: 0; top: calc(0.5lh - 0.4em); width: 92%; height: 0.8em; border-radius: 999px; }
+.gh.short::before, .card-title .gh:nth-child(2)::before { width: 64%; }
+.gh.short::before { width: 40%; }
+.card-meta .gh::before { width: 42%; height: 0.7em; top: calc(0.5lh - 0.35em); }
+.ghost .thumb, .hero.ghost, .gh::before, [inert] .avatar { background: linear-gradient(100deg, var(--s2) 30%, color-mix(in srgb, var(--fg) 7%, var(--s2)) 50%, var(--s2) 70%) 0 0 / 300% 100%; animation: ghost-sweep 1.4s linear infinite; }
+@keyframes ghost-sweep { from { background-position: 100% 0; } to { background-position: 0 0; } }
+/* Placeholder over its loaded item (sk-out) or surplus (sk-gone). */
+.ghost.sk-gone, .ghost.sk-out { pointer-events: none; animation: fade-out 0.2s var(--ease) forwards; }
+.ghost.sk-out { position: absolute; inset: 0; }
+@keyframes fade-out { to { opacity: 0; } }
 .loading { display: grid; place-items: center; padding: 14vh 0; animation: fade-in 0.2s 0.15s backwards; }
-/* Screen content eases in; the spinner waits 150 ms so quick loads never flash it. */
+/* Content eases in; spinner delayed 150 ms. */
 #screen > :not(.loading) { animation: fade-in 0.2s var(--ease); }
 @keyframes fade-in { from { opacity: 0; } }
 

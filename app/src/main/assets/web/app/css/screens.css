@@ -25,7 +25,10 @@
 .pill:hover { background: var(--s2); color: var(--fg); }
 .pill.on { background: var(--s3); color: var(--fg); }
 body[data-input="keys"] .pill.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--acc2); }
-.more { display: flex; justify-content: center; padding: 24px 0 8px; }
+.more { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 0 8px; }
+.more-note { margin: 0; color: var(--mute); font-size: 14px; }
+.more.auto:not(.manual) { padding: 0; min-height: 1px; }
+.more.auto:not(.manual) > * { display: none; }
 
 /* Search: capped and centered, rather than left-anchored, on a wide screen. */
 .searchbar { max-width: 900px; margin: 14px auto 4px; padding: 0 var(--pad-x); }

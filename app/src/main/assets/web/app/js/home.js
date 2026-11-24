@@ -31,7 +31,7 @@ const shelfOf = (scope, title, sub, items, options = {}) => {
         if (preview || (shown >= items.length && !hasMore)) { if (io) io.disconnect(); return; }
         const sentinel = h('div', { style: wide ? 'height:1px' : 'flex:none;width:1px' });
         tail.append(sentinel);
-        if (!io) { io = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) reach(sentinel); }, { root: wide ? null : row, rootMargin: '600px' }); scope.dispose(() => io.disconnect()); }
+        if (!io) { io = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) reach(sentinel); }, { root: wide ? null : row, rootMargin: '150%' }); scope.dispose(() => io.disconnect()); }
         io.observe(sentinel);
     };
     // Sentinel hit: next local chunk, else loadMore.
@@ -40,11 +40,14 @@ const shelfOf = (scope, title, sub, items, options = {}) => {
         if (shown < items.length) { step(); return; }
         if (!hasMore || loading) return;
         loading = true;
+        const pending = FT.pending(row, 12);
         options.loadMore().then((more) => {
             hasMore = more.hasMore;
             items.push(...more.items);
+            const before = row.children.length;
             step();
-        }).catch(() => { hasMore = false; if (io) io.disconnect(); }).finally(() => { loading = false; });
+            pending.settle([...row.children].slice(before));
+        }).catch(() => { pending.cancel(); hasMore = false; if (io) io.disconnect(); }).finally(() => { loading = false; });
     };
     step();
     if (preview) {
@@ -108,6 +111,7 @@ const render = async (root, params, scope) => {
     });
 
     const paintResume = (resuming) => {
+        try { localStorage.setItem(RESUME_KEY, resuming.length ? '1' : '0'); } catch (e) { /* storage blocked */ }
         const first = resuming[0] || picks[0];
         slotHero.replaceChildren(...(first && !wide ? [hero(first, resuming[0] === first)] : []));
         slotSeen.replaceChildren(...(resuming.length
@@ -165,7 +169,19 @@ const render = async (root, params, scope) => {
     });
 };
 
-FT.register('home', { keepFor: () => Infinity, render });
+// Shelf placeholders; resume shelf follows the last visit.
+const RESUME_KEY = 'ft.home.resume';
+const skeleton = (params, scope) => {
+    let resume = false;
+    try { resume = localStorage.getItem(RESUME_KEY) === '1'; } catch (e) { /* storage blocked */ }
+    const shelves = [
+        FT.layout.current() === 'grid' ? null : h('div', { class: 'hero ghost' }),
+        resume ? shelfOf(scope, FT.t('continue_watching'), FT.t('from_history'), FT.ghost.items(14), { expand: '#/history?filter=continuing', rows: 1 }) : null,
+        shelfOf(scope, FT.t('recommended'), FT.t('for_you'), FT.ghost.items(28), { expand: '#/recommended', rows: 3 }),
+    ];
+    return shelves.filter(Boolean).map(FT.ghost.quiet);
+};
+FT.register('home', { keepFor: () => Infinity, render, skeleton });
 
 // Recommended shelf as a full list.
 FT.register('recommended', {

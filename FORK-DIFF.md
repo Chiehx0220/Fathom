@@ -42,7 +42,7 @@ An upstream change to the symbol leaves this code compiling and silently differe
 
 ## Hooks in upstream files (serviceId plumbing, Bilibili branches, misc fork fixes)
 
-- Modified upstream files: **114** (1144 changed lines). New files: **287**.
+- Modified upstream files: **114** (1144 changed lines). New files: **288**.
 
 | Modified upstream file | + | - |
 |---|---:|---:|

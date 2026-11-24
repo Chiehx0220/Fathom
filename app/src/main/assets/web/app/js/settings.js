@@ -171,7 +171,17 @@ const followCaptions = (scope, root, panels, { blocked }) => {
     });
 };
 
+const ghostPanel = () => h('div', { class: 'panel' }, [3, 4, 3].map((rows) => h('section', {},
+    h('h2', {}, FT.ghost.line('short')),
+    h('div', { class: 'group' }, Array.from({ length: rows }, () => h('div', { style: 'padding: 16px 20px' }, FT.ghost.line()))))));
+
 FT.register('settings', {
+    skeleton: () => {
+        const panels = Object.keys(PANEL_ICONS).map((id) => ({ id, el: ghostPanel() }));
+        const nav = panelNav(panels);
+        return [h('div', { class: 'head' }, h('h1', {}, FT.t('tab_settings'))),
+            FT.ghost.quiet(h('div', { class: 'settings' }, nav, h('div', { class: 'panels' }, panels.map((panel) => panel.el))))];
+    },
     async render(root, params, scope) {
         const values = await FT.api.settings().catch(() => null);
         if (!scope.live()) return;

@@ -10,6 +10,8 @@ FT.register('channel', {
         let header = null;
         await FT.listView(root, {
             before: [],
+            lead: [FT.ghost.quiet(h('div', { class: 'channel-head' }, h('span', { class: 'avatar lg' }),
+                h('div', { style: 'flex:1;min-width:200px' }, h('h1', {}, FT.ghost.line()), h('p', {}, FT.ghost.line('short')))))],
             empty: { icon: 'video_library', title: FT.t('no_videos'), text: FT.t('channel_empty') },
             fetch: async (cursor) => {
                 const body = await FT.api.channel(service, id, cursor);

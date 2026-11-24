@@ -20,11 +20,16 @@ const ownPlaylistHead = (id, meta) => {
     return h('div', { class: 'head' }, title, h('span', { class: 'card-meta' }, FT.tn('count_videos', meta.videoCount)), h('span', { class: 'grow' }), rename, remove);
 };
 
+// Header placeholder with the real buttons, so wrapping and height match the loaded header.
+const ghostHead = (...buttons) => FT.ghost.quiet(h('div', { class: 'head' },
+    h('h1', { style: 'min-width:200px' }, FT.ghost.line()), h('span', { class: 'card-meta', style: 'min-width:120px' }, FT.ghost.line('short')), h('span', { class: 'grow' }), ...buttons));
+
 FT.register('mylist', {
     async render(root, params, scope) {
         const id = params.u;
         await FT.listView(root, {
             before: [],
+            lead: [ghostHead(FT.button(FT.t('rename'), 'title', null), FT.button(FT.t('delete_playlist'), 'delete', null))],
             queue: true,
             empty: { icon: 'playlist_remove', title: FT.t('playlist_empty'), text: FT.t('playlist_empty_hint') },
             decorate: (row) => { row.fromPlaylist = id; },
@@ -44,6 +49,7 @@ FT.register('playlist', {
         let meta = null;
         await FT.listView(root, {
             before: [],
+            lead: [ghostHead(FT.button(FT.t('bookmark'), 'star', null))],
             queue: true,
             empty: { icon: 'playlist_remove', title: FT.t('playlist_empty'), text: FT.t('playlist_empty_hint') },
             fetch: async (cursor) => {

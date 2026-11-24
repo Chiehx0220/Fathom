@@ -11,6 +11,8 @@
   --cookie: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10.86 2.25Q12 1 13.14 2.25Q14.28 3.5 15.89 2.99Q17.5 2.47 17.86 4.13Q18.22 5.78 19.87 6.14Q21.53 6.5 21.01 8.11Q20.5 9.72 21.75 10.86Q23 12 21.75 13.14Q20.5 14.28 21.01 15.89Q21.53 17.5 19.87 17.86Q18.22 18.22 17.86 19.87Q17.5 21.53 15.89 21.01Q14.28 20.5 13.14 21.75Q12 23 10.86 21.75Q9.72 20.5 8.11 21.01Q6.5 21.53 6.14 19.87Q5.78 18.22 4.13 17.86Q2.47 17.5 2.99 15.89Q3.5 14.28 2.25 13.14Q1 12 2.25 10.86Q3.5 9.72 2.99 8.11Q2.47 6.5 4.13 6.14Q5.78 5.78 6.14 4.13Q6.5 2.47 8.11 2.99Q9.72 3.5 10.86 2.25z'/%3E%3C/svg%3E");
   --play: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9.4 6.9v10.2l8.4-5.1z' stroke='%23000' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
+/* Appended items ease in. */
+.card, .row-item { animation: fade-in 0.2s var(--ease); }
 @media (hover: hover) { .card:hover .thumb { transform: scale(1.02); } }
 body[data-input="keys"] .card.sel .thumb, body[data-input="keys"] .row-item.sel .thumb { box-shadow: 0 0 0 4px var(--bg), 0 0 0 7px var(--acc2); transform: scale(1.04); }
 .dur { position: absolute; right: 8px; bottom: 8px; padding: 2px 7px; border-radius: 7px; background: rgba(0, 0, 0, 0.75); color: #fff; font-size: 12px; font-weight: 500; }
@@ -77,7 +79,7 @@ body:not([data-input="keys"]) .row-wrap.can-left.can-right .row { -webkit-mask-i
 .split { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 48px); padding: 8px var(--pad-x); }
 .split.single { grid-template-columns: minmax(0, 1fr); }
 .list { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.row-item { display: flex; align-items: center; gap: 16px; padding: 10px; border-radius: 20px; color: inherit; outline: none; transition: background 0.15s; }
+.row-item { position: relative; display: flex; align-items: center; gap: 16px; padding: 10px; border-radius: 20px; color: inherit; outline: none; transition: background 0.15s; }
 .row-item .thumb { width: min(240px, 38%); flex: none; border-radius: 12px; }
 .row-item:hover, .row-item.sel { background: var(--s2); }
 body[data-input="pointer"] .row-item.sel:not(:hover) { background: none; }

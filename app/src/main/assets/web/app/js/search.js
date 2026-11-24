@@ -32,6 +32,8 @@ FT.register('search', {
             root.replaceChildren(...[field, suggestions(history, () => {}), history.length ? null : FT.empty('search', FT.t('search_service', { name: FT.store.serviceName(service) }), FT.t('search_empty_hint'))].filter(Boolean));
             return;
         }
+        root.replaceChildren(field, FT.ghost.quiet(h('div', { class: 'pills' }, [['videos', 'play_circle'], ['channels', 'group'], ['playlists', 'playlist_play']]
+            .map(([id, icon], i) => FT.pill(FT.t(id), icon, i === 0, null, 'ghost-' + id)))), FT.ghostBody(FT.layout.current() === 'grid'));
         // Kinds from the first page; videos first.
         const first = await FT.api.search(service, q, null);
         if (!scope.live()) return;

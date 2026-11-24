@@ -28,6 +28,7 @@ FT.videoCard = (v, key) => {
         thumb(v), h('div', { class: 'card-title' }, v.title), h('div', { class: 'card-meta' }, meta(v)));
     el.item = v;
     el.kind = 'video';
+    if (v.ghost) return FT.ghost.card(el);
     FT.dearrow.card(el);
     FT.aiList.card(el);
     return el;
@@ -39,6 +40,7 @@ FT.videoRow = (v, key) => {
         thumb(v, false), h('div', { class: 'row-text' }, h('div', { class: 'card-title' }, v.title), h('div', { class: 'card-meta' }, meta(v))));
     el.item = v;
     el.kind = 'video';
+    if (v.ghost) return FT.ghost.card(el);
     FT.dearrow.card(el);
     FT.aiList.card(el);
     return el;
@@ -58,7 +60,7 @@ FT.playlistCard = (p) => {
     const el = h('a', { class: 'card', href: FT.link.playlist(p), tabindex: '-1', data: { f: '', key: p.id } }, box, h('div', { class: 'card-title' }, p.name));
     el.item = p;
     el.kind = 'playlist';
-    return el;
+    return p.ghost ? FT.ghost.card(el) : el;
 };
 
 // Sideways row: edge fade; arrow buttons for pointer only (CSS; swipe/remote scroll natively), not data-f.

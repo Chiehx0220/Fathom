@@ -16,7 +16,7 @@ const paneFor = (el) => {
     ];
 };
 
-// options: { fetch(cursor) -> { items, next }, decorate(el), empty: { icon, title, text }, before: [elements], queue: Play all / Shuffle }
+// options: { fetch(cursor) -> { items, next }, decorate(el), empty: { icon, title, text }, before: [elements], lead: [header placeholders until `extra`], queue: Play all / Shuffle }
 // Grid layout: card grid without the detail pane; the next page loads when `more` nears the viewport.
 FT.listView = async (root, options, scope) => {
     const wide = FT.layout.current() === 'grid';
@@ -28,6 +28,7 @@ FT.listView = async (root, options, scope) => {
     let cursor = null;
     let loading = false;
     let done = false;
+    let nearEnd = null;
 
     const showPane = (el) => { if (el && el.item && el.kind === 'video') pane.replaceChildren(...paneFor(el)); };
     scope.onSelect((el) => {
@@ -47,38 +48,57 @@ FT.listView = async (root, options, scope) => {
     };
 
     const append = (items) => {
+        const rows = [];
         for (const item of items) {
             loaded.push(item);
             const row = wide ? FT.videoCard(item) : FT.videoRow(item);
             if (options.decorate) options.decorate(row);
             row.onRemoved = () => remove(row);
             list.append(row);
+            rows.push(row);
         }
+        return rows;
     };
+
+    // Stopped page: reason and retry shown in place of the quiet trigger.
+    function retry(on) {
+        more.classList.toggle('manual', on);
+        note.hidden = !on;
+        button.replaceChildren(FT.icon(on ? 'refresh' : 'expand_more'), FT.t(on ? 'try_again' : 'load_more'));
+    }
 
     async function loadMore() {
         if (loading || done) return;
         loading = true;
+        const pending = FT.pending(list, wide ? 12 : 6, !wide);
         try {
             const page = await options.fetch(cursor);
             if (!scope.live()) return;
-            append(page.items);
+            pending.settle(append(page.items));
             cursor = page.next || null;
             done = !cursor;
             more.hidden = done;
+            retry(!done && !page.items.length);
+            if (!done && page.items.length && nearEnd) { nearEnd.unobserve(more); nearEnd.observe(more); }
         } catch (error) {
-            if (scope.live()) FT.toast(FT.t('could_not_load_more'));
+            if (scope.live()) retry(true);
         } finally {
+            pending.cancel();
             loading = false;
         }
     }
 
-    more.append(FT.button(FT.t('load_more'), 'expand_more', loadMore, '', 'load-more'));
+    const note = h('p', { class: 'more-note', hidden: true }, FT.t('could_not_load_more'));
+    const button = FT.button(FT.t('load_more'), 'expand_more', loadMore, '', 'load-more');
+    more.append(note, button);
     if (wide) {
-        const nearEnd = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) loadMore(); }, { rootMargin: '600px' });
+        more.classList.add('auto');
+        nearEnd = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) loadMore(); }, { rootMargin: '150%' });
         nearEnd.observe(more);
         scope.dispose(() => nearEnd.disconnect());
     }
+    const ghostStart = options.queue ? FT.ghost.quiet(FT.queue.buttons(() => [])) : null;
+    root.replaceChildren(...[...(options.before || []), ...(options.lead || []), ghostStart, FT.ghostBody(wide)].filter(Boolean));
     const first = await options.fetch(null);
     if (!scope.live()) return;
     if (!first.items.length && !(first.extra && first.extra.length)) {

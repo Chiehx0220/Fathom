@@ -32,6 +32,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
 FT.events.on('inbox', () => { if (!document.hidden) refresh(); });
 
 FT.register('notifications', {
+    skeleton: () => [h('div', { class: 'head' }, h('h1', {}, FT.t('notifications'))), FT.ghostBody(FT.layout.current() === 'grid')],
     async render(root, params, scope) {
         const body = await FT.api.notifications();
         if (!scope.live()) return;
