@@ -80,6 +80,8 @@ const KEEP_KEYS = new Set([
   'support_flow_dev_title',
   'support_flow_open_collective',
   'support_flow_patreon',
+  // where the original app's extraction began
+  'newpipe_extractor_credit',
 ]);
 
 // Names of Flow's engine and other products stay as they are.

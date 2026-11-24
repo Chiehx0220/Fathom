@@ -8,6 +8,7 @@
     <string name="update_flow">Atualização do Fathom</string>
     <string name="app_name_uppercase">FATHOM</string>
     <string name="settings_item_notifications_subtitle">Controle quais notificações o Fathom pode enviar</string>
+    <string name="notification_channel_new_version_description">Avisa quando uma nova versão do Fathom está disponível</string>
     <string name="notif_type_updates_subtitle">Receba notificações quando uma nova versão do Fathom estiver disponível</string>
     <string name="notif_master_toggle_subtitle">Permitir que o Fathom verifique por novos vídeos em segundo plano</string>
     <string name="notif_check_interval_dialog_body">Com que frequência o Fathom verifica se há novos vídeos nas suas inscrições.</string>
@@ -96,6 +97,15 @@
     <string name="profiles_copy_recommendations_summary">O que o Fathom aprendeu sobre o seu gosto</string>
     <string name="linked_webdav_body">Use uma pasta vazia só para o Fathom. O login é mantido apenas no armazenamento seguro deste dispositivo e é entregue aos dispositivos que você vincular.</string>
     <string name="buffer_cache_size_link_summary">Quantos vídeos e músicas o Fathom mantém armazenados</string>
+    <string name="linked_replace_words_body">O Fathom cria novas palavras de recuperação e chaves de criptografia para seus dispositivos. As palavras antigas param de funcionar: elas não podem restaurar este grupo ou ler nada sincronizado de agora em diante. Anote as palavras novas quando elas aparecerem.</string>
     <string name="linked_error_restore_unfinished">A restauração ainda não foi concluída. O Fathom vai concluí-la na próxima sincronização.</string>
+    <string name="crossfade_pause_desc">Até o Fathom reiniciar</string>
+    <string name="app_lock_summary">Pede o desbloqueio do seu celular para abrir o Fathom</string>
+    <string name="app_lock_footer">A música,os controles de mídia e o picture-in-picture continuam funcionando enquanto o Fathom está bloqueado.</string>
+    <string name="app_lock_after_description">Quanto tempo o Fathom pode ficar fora da tela até pedir o desbloqueio de novo</string>
+    <string name="app_lock_prompt_title">Desbloquear o Fathom</string>
+    <string name="app_lock_screen_title">O Fathom está bloqueado</string>
     <string name="downloads_folder_lost_body">O Fathom perdeu acesso à pasta dos downloads, como acontece após uma reinstalação. Escolha novamente para encontrar seus downloads antigos e continuar salvando nela.</string>
+    <string name="export_playlists_desc">Suas playlists, Assistir mais tarde, curtidas e Shorts Salvos em um arquivo que pode ser importado pelo Fathom</string>
+    <string name="translation_server_dialog_body">O Fathom envia o texto que você traduz para este servidor. O Fathom não tem o seu próprio servidor.</string>
 </resources>

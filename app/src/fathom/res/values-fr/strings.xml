@@ -100,4 +100,5 @@
     <string name="linked_profile_switch_body">Seul le profil utilisé peut démarrer la synchronisation, donc Fathom y redémarre d\'abord. Ensuite, activez la synchronisation ici.</string>
     <string name="buffer_cache_size_link_summary">Quelle quantité de vidéos et de musique Fathom conserve sur le disque ?</string>
     <string name="linked_replace_words_body">Fathom génère de nouveaux mots de récupération et de nouvelles clés de chiffrement pour vos appareils. Les anciens mots ne fonctionnent plus : ils ne permettent plus de restaurer ce groupe ni d\'accéder aux données synchronisées à partir de maintenant. Notez les nouveaux mots dès qu\'ils s\'affichent.</string>
+    <string name="downloads_folder_lost_body">Fathom n\'a plus accès au dossier que vous aviez choisi pour les téléchargements, comme cela arrive souvent après une réinstallation. Sélectionnez-le à nouveau pour retrouver vos anciens téléchargements et continuer à y enregistrer vos fichiers.</string>
 </resources>

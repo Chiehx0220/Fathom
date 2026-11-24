@@ -65,7 +65,7 @@
     <string name="taste_reset_music_body">Bu işlem Fathom\'un müziklerinden öğrendiklerini temizler ve sıfırdan başlar. Özetin korunur.</string>
     <string name="content_settings_shared_links_subtitle">Fathom ile paylaşılan bir videonun ne yapacağı</string>
     <string name="taste_starter_searches_detail">%1$s. Fathom ne izlediğini öğrenene kadar kullanılır.</string>
-    <string name="recap_title">Fathom Recap</string>
+    <string name="recap_title">Fathom Özeti</string>
     <string name="recap_total_time">Fathom\'da geçirilen süre</string>
     <string name="recap_empty_body">Fathom bu istatistikleri yalnızca bu cihazda tutar. Bir süre video izleyip müzik dinlediğinde burası dolacaktır.</string>
     <string name="recap_story_intro">Fathom\'da %1$s</string>
@@ -105,4 +105,7 @@
     <string name="app_lock_after_description">Tekrar sormadan önce Fathom\'un ne kadar süre ekrandan uzakta kalabileceği</string>
     <string name="app_lock_prompt_title">Fathom kilidini aç</string>
     <string name="app_lock_screen_title">Fathom kilitli</string>
+    <string name="downloads_folder_lost_body">Fathom, yeniden yüklemeden sonra olabileceği gibi, indirmeler için seçtiğiniz klasöre erişimini kaybetti. Önceki indirmelerinizi bulmak ve oraya kaydetmeye devam etmek için klasörü tekrar seçin.</string>
+    <string name="export_playlists_desc">Çalma listeleriniz, Daha sonra izle, beğeniler ve Kaydedilen Shorts, Fathom\'un içe aktarabileceği tek bir dosyada</string>
+    <string name="translation_server_dialog_body">Fathom, çevirdiğiniz metni bu sunucuya gönderir. Fathom\'un kendi sunucusu yoktur.</string>
 </resources>
