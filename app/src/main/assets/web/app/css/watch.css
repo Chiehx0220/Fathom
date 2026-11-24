@@ -58,7 +58,7 @@ body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
 .watch-info .grow { margin-right: auto; min-width: 0; }
 .watch-info .who { font-weight: 500; }
 .who-row { display: flex; flex: 1 1 100%; align-items: center; gap: 12px; }
-.who-row .who-link { flex: 1; min-width: 0; }
+.who-row .who-link { flex: 0 1 auto; min-width: 0; }
 .who-row .btn.quiet { background: transparent; color: var(--mute); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 20%, transparent); }
 .who-row .btn.quiet:hover { background: var(--s1); color: var(--fg); }
 /* Subscribed: bell + label; like/dislike: connected groups, 2px gap, outer ends round. */
@@ -86,8 +86,8 @@ body.remote-fs .stage.mini { inset: 0; width: auto; aspect-ratio: auto; }
 .watch-actions .tool.compact:not(.busy) .lbl { display: none; }
 .watch-actions .rule { align-self: center; width: 1px; height: 24px; margin: 0 2px; background: color-mix(in srgb, var(--fg) 20%, transparent); }
 .watch-actions .narrow-only { display: none; }
-@container info (min-width: 900px) {
-    .who-row .who-link { flex: 0 1 auto; }
+@container info (max-width: 560px) {
+    .who-row .who-link { flex: 1; }
 }
 @container info (max-width: 899px) {
     .watch-actions .tool { width: 46px; padding: 0; justify-content: center; }
